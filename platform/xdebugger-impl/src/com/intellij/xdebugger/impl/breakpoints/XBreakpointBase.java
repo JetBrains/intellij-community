@@ -49,7 +49,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
-import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
@@ -102,7 +102,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myBreakpointManager.getProject();
   }
 
-  protected XBreakpointManagerImpl getBreakpointManager() {
+  @ApiStatus.Internal
+  public XBreakpointManagerImpl getBreakpointManager() {
     return myBreakpointManager;
   }
 
@@ -519,7 +520,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return builder.toString();
   }
 
-  protected void updateIcon() {
+  @ApiStatus.Internal
+  public void updateIcon() {
     myIcon = calculateIcon(asProxy(this));
   }
 

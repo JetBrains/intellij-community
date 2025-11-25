@@ -30,6 +30,7 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel

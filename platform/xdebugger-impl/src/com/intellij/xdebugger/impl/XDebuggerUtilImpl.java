@@ -53,6 +53,8 @@ import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointTypeProxyKt;
+import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -77,7 +79,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointTypeProxyKt.*;
 import static org.jetbrains.concurrency.Promises.asPromise;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
@@ -304,7 +305,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final @Nullable Editor editor,
     boolean canRemove
   ) {
-    var proxyTypes = ContainerUtil.map(types, t -> asProxy(t, project));
+    var proxyTypes = ContainerUtil.map(types, t -> MonolithBreakpointTypeProxyKt.asProxy(t, project));
     var future = toggleAndReturnLineBreakpointProxy(
       project, proxyTypes, position, selectVariantByPositionColumn,
       temporary, editor, canRemove, false, null);

@@ -20,6 +20,7 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.proxy.asProxy
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.plaf.basic.BasicArrowButton
 

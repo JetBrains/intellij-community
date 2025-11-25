@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints
+package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
@@ -9,6 +9,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.util.ThrowableRunnable
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
+import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 
 private class MonolithBreakpointManager(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {

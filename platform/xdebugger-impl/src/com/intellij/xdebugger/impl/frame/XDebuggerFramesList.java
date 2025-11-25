@@ -40,6 +40,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -105,7 +106,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   public XDebuggerFramesList(@NotNull Project project, @NotNull XDebugSession session) {
-    this(project, XDebugSessionProxyKeeperKt.asProxy(session));
+    this(project, MonolithSessionProxyKt.asProxy(session));
   }
 
   @ApiStatus.Internal

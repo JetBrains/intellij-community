@@ -37,7 +37,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XSteppingSuspendContext;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.sun.jdi.Method;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +175,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     JavaDebugProcess process = debugProcess.getXdebugProcess();
     assert (process != null);
     XDebugSession xSession = process.getSession();
-    XDebugSessionProxyKeeperKt.asProxy(xSession).addSessionListener(new XDebugSessionListener() {
+    MonolithSessionProxyKt.asProxy(xSession).addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
         SuspendContextImpl suspendContext = jvmSession.getContextManager().getContext().getSuspendContext();

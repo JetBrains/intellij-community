@@ -15,8 +15,8 @@ import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
-import com.intellij.xdebugger.impl.withTemporaryXValueId
 import kotlinx.coroutines.flow.Flow
 
 private class FrontendXDebugManagerProxy : XDebugManagerProxy {

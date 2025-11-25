@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.xdebugger.impl.proxy.asProxy
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints
+package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.impl.breakpoints.*
 
 @Suppress("DEPRECATION")
 internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy() instead") internal constructor(

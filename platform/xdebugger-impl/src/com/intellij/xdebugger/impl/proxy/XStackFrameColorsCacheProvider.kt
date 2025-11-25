@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.frame
+package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -8,6 +8,7 @@ import com.intellij.psi.search.scope.NonProjectFilesScope
 import com.intellij.ui.FileColorManager
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow

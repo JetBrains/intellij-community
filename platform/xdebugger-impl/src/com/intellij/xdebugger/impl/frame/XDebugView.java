@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +64,7 @@ public abstract class XDebugView implements Disposable {
    */
   @ApiStatus.Obsolete
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
-    processSessionEvent(event, XDebugSessionProxyKeeperKt.asProxy(session));
+    processSessionEvent(event, MonolithSessionProxyKt.asProxy(session));
   }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {

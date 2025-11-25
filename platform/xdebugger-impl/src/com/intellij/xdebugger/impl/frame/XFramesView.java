@@ -43,6 +43,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
@@ -86,7 +87,7 @@ public final class XFramesView extends XDebugView {
   private boolean myRefresh;
 
   public XFramesView(@NotNull XDebugSession session) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session));
+    this(MonolithSessionProxyKt.asProxy(session));
   }
 
   public XFramesView(@NotNull XDebugSessionProxy sessionProxy) {

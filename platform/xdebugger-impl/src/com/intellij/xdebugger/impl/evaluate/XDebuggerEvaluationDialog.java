@@ -22,7 +22,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
@@ -66,7 +66,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                    @NotNull XExpression text,
                                    @Nullable XSourcePosition sourcePosition,
                                    boolean isCodeFragmentEvaluationSupported) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session),
+    this(MonolithSessionProxyKt.asProxy(session),
          editorsProvider, text, sourcePosition, isCodeFragmentEvaluationSupported);
   }
 

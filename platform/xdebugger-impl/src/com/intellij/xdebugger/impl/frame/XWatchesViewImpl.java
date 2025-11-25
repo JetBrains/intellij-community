@@ -53,6 +53,7 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -94,7 +95,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
@@ -106,7 +107,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical);
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
@@ -118,7 +119,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical, withToolbar);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical, withToolbar);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {

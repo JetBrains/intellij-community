@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.frame
+package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
@@ -9,6 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.XDebugSession
@@ -23,10 +26,12 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.asProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.frame.XSmartStepIntoHandlerEntry
+import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
+import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
@@ -270,3 +275,24 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
   }
 
 }
+
+@Service(Service.Level.PROJECT)
+internal class XDebugSessionProxyKeeper {
+  private val proxyMap = mutableMapOf<XDebugSession, XDebugSessionProxy>()
+
+  fun getOrCreateProxy(session: XDebugSession): XDebugSessionProxy {
+    return proxyMap.getOrPut(session) { MonolithSessionProxy(session) }
+  }
+
+  fun removeProxy(session: XDebugSession) {
+    proxyMap.remove(session)
+  }
+
+  companion object {
+    fun getInstanceIfExists(project: Project): XDebugSessionProxyKeeper? = project.serviceIfCreated()
+  }
+}
+
+@ApiStatus.Internal
+fun XDebugSession.asProxy(): XDebugSessionProxy =
+  project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)

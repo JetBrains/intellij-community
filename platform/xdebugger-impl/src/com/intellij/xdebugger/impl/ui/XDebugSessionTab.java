@@ -44,6 +44,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebugSessionSelectionService;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,7 +82,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
-    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
+    XDebugSessionProxy proxy = MonolithSessionProxyKt.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
     @Nullable String defaultFramesViewKey = XDebugSessionTabCustomizerKt.getDefaultFramesViewKey(session.getDebugProcess());
@@ -531,7 +533,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    */
   @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
-    showWatchesView(XDebugSessionProxyKeeperKt.asProxy(session));
+    showWatchesView(MonolithSessionProxyKt.asProxy(session));
   }
 
   public static void showWatchesView(@NotNull XDebugSessionProxy session) {
@@ -546,7 +548,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Deprecated
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
     if (session == null) return;
-    showFramesView(XDebugSessionProxyKeeperKt.asProxy(session));
+    showFramesView(MonolithSessionProxyKt.asProxy(session));
   }
 
   @ApiStatus.Internal
