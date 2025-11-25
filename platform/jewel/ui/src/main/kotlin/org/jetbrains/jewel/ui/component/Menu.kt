@@ -66,6 +66,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -85,6 +86,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.popupShadowAndBorder
@@ -746,7 +748,10 @@ internal fun MenuItemBase(
         val itemColors = style.colors.itemColors
         val itemMetrics = style.metrics.itemMetrics
 
+        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
+
+        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         CompositionLocalProvider(
             LocalContentColor provides itemColors.contentFor(itemState).value,
             LocalTextStyle provides updatedTextStyle,
@@ -765,7 +770,11 @@ internal fun MenuItemBase(
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
                     if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = null, modifier = iconModifier)
+                        Icon(
+                            key = iconKey,
+                            contentDescription = null,
+                            modifier = iconModifier.thenIf(!enabled) { disabledAppearance() },
+                        )
                     } else {
                         Box(modifier = iconModifier)
                     }
@@ -845,6 +854,7 @@ internal fun MenuSubmenuItem(
     val itemColors = style.colors.itemColors
     val menuMetrics = style.metrics
 
+    @Suppress("DEPRECATION") // Not really deprecated, will be made internal
     val backgroundColor by itemColors.backgroundFor(itemState)
     Box(
         modifier =
@@ -867,6 +877,7 @@ internal fun MenuSubmenuItem(
                     }
                 }
     ) {
+        @Suppress("DEPRECATION") // Not really deprecated, will be made internal
         CompositionLocalProvider(LocalContentColor provides itemColors.contentFor(itemState).value) {
             Row(
                 Modifier.fillMaxWidth().padding(menuMetrics.itemMetrics.contentPadding),
