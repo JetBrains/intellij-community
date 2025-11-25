@@ -5,7 +5,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -37,7 +36,7 @@ import kotlin.time.Duration.Companion.seconds
  * Command opens file.
  * Example: %openFile -file <filename from the root of the project> [-suppressErrors] [-timeout <in seconds>] [WARMUP] [-disableCodeAnalysis(-dsa) by default false]
  */
-open class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME: @NonNls String = "openFile"
     const val PREFIX: @NonNls String = "$CMD_PREFIX$NAME"
@@ -59,11 +58,11 @@ open class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutin
       }.getOrNull()
     }
   }
-  
+
   override fun getName(): String = NAME
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val arguments = extractCommandArgument(prefix)
+    val arguments = extractCommandArgument(PREFIX)
     val options = getOptions(arguments)
     val filePath = (options?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
     val timeout = options?.timeout ?: 0
@@ -101,7 +100,8 @@ open class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutin
       openFileSpan = startSpan(OPEN_FILE_SPAN_NAME).setAttribute("path", file.path)
     }
 
-    val fileEditor = openEditor(project, file)
+    val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
+      .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
 
     if (useWaitForCodeAnalysisCode(options)) {
       HighlightingTestUtil.waitForAnalysisWithNewApproach(project, spanRef, timeout, suppressErrors)
@@ -122,12 +122,6 @@ open class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutin
       job.waitForComplete()
     }
   }
-
-  protected open suspend fun openEditor(
-    project: Project,
-    file: VirtualFile,
-  ): FileEditorComposite = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
-    .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
 
   private fun useWaitForCodeAnalysisCode(options: OpenFileCommandOptions?): Boolean = options != null
                                                                                       && !options.disableCodeAnalysis
