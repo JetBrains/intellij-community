@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jbr-api" level="project" />
     <orderEntry type="module-library" exported="" scope="TEST">
@@ -23,19 +23,21 @@
           </verification>
           <exclude>
             <dependency maven-id="androidx.annotation:annotation-jvm" />
-            <dependency maven-id="junit:junit" />
             <dependency maven-id="androidx.collection:collection-jvm" />
+            <dependency maven-id="com.google.truth:truth" />
+            <dependency maven-id="junit:junit" />
             <dependency maven-id="org.jetbrains.compose.runtime:runtime-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-text-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-unit-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-util-desktop" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
             <dependency maven-id="org.jetbrains.kotlinx:atomicfu-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+            <dependency maven-id="org.jetbrains.skiko:skiko-awt" />
           </exclude>
         </properties>
         <CLASSES>

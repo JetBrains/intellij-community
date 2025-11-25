@@ -132,7 +132,7 @@ public final class GradleProjectResolverUtil {
 
     String directoryToRunTask;
     if (compositeBuildGradlePath.isEmpty()) {
-      directoryToRunTask = isUnderProjectRoot ? mainModuleConfigPath : rootProjectPath;
+      directoryToRunTask = rootProjectPath;
     }
     else {
       directoryToRunTask = mainBuildRootPath;

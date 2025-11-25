@@ -5,30 +5,30 @@ datatypes w = "http://whattf.org/datatype-draft"
 # #####################################################################
 
 ## MIME types
-		
-	form.data.mimetypelist = 
+
+	form.data.mimetypelist =
 		w:mime-type-list
-		
+
 
 ## ECMAScript Regular Expression
-		
-	form.data.pattern = 
+
+	form.data.pattern =
 		string
-		
+
 ## Temporal
-		
+
 	form.data.datetime-local =
 		w:datetime-local
-	
+
 	form.data.date =
 		w:date
-	
+
 	form.data.month =
 		w:month
-	
+
 	form.data.week =
 		w:week
-	
+
 	form.data.time =
 		w:time
 

@@ -6,29 +6,29 @@ namespace xlink = "http://www.w3.org/1999/xlink"
 # SVG 1.1 Qualified Name Module .........................................
 
 # file: svg-qname.mod
-# 
+#
 # This is SVG, a language for describing two-dimensional graphics in XML.
 # Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 #
 # Modifications Copyright 2007 Mozilla Foundation
-# 
+#
 # Revision: $Id$
-# 
+#
 # This DTD module is identified by the PUBLIC and SYSTEM identifiers:
-# 
+#
 #    PUBLIC "-//W3C//ENTITIES SVG 1.1 Qualified Name//EN"
 #    SYSTEM "http://www.w3.org/Graphics/SVG/1.1/DTD/svg-qname.mod"
-# 
+#
 # .......................................................................
 
 # Qualified Name
-# 
+#
 # This module is contained in two parts, labeled Section 'A' and 'B':
-# 
+#
 #    Section A declares parameter entities to support namespace-
 #    qualified names, namespace declarations, and name prefixing
 #    for SVG and extensions.
-# 
+#
 #    Section B declares parameter entities used to provide
 #    namespace-qualified names for all SVG element types:
 

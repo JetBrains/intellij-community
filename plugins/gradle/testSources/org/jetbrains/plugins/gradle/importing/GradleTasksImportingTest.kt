@@ -28,7 +28,7 @@ class GradleTasksImportingTest : BuildViewMessagesImportingTestCase() {
       .contains("help", "init", "wrapper", "projects", "tasks", "properties")
 
     assertThat(findTasks(path("subproject")).map { it.name })
-      .contains("help", "projects", "tasks", "properties")
+      .contains(":subproject:help", ":subproject:projects", ":subproject:tasks", ":subproject:properties")
   }
 
   @Test

@@ -49,9 +49,9 @@ attlist.foreignObject &=
     attribute height { Length.datatype },
     attribute transform { TransformList.datatype }?
 
-## 
+##
 ##       any element in foreign namespace
-##     
+##
 foreignElement =
     element * - svg:* {
         (attribute * - svg:* { text }

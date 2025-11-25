@@ -5,11 +5,8 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -89,35 +86,5 @@ public final class GradleRunnerUtil {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
     return GradleConstants.EXTENSION.equals(virtualFile.getExtension());
-  }
-
-  /**
-   * For a given IDEA module, adds settings.gradle(.kts) file from the root Gradle project as explicit commandline flag.
-   * <p>
-   * Workaround for IDEA-316566 and IDEA-317008
-   * @param module module of a Gradle-based project
-   * @param taskSettings execution settings of a task inside this module.
-   */
-  public static void addExplicitSettingsFileParameter(@NotNull Module module, @NotNull ExternalSystemTaskExecutionSettings taskSettings) {
-    if (!isGradleModule(module)) {
-      return;
-    }
-
-    String path = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-    String settingsPath = null;
-
-    String groovySettingsPath = path + "/" + GradleConstants.SETTINGS_FILE_NAME;
-    if (FileUtil.exists(groovySettingsPath)) {
-      settingsPath = groovySettingsPath;
-    }
-    String ktsSettingsPath = path + "/" + GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME;
-    if (FileUtil.exists(ktsSettingsPath)) {
-      settingsPath = ktsSettingsPath;
-    }
-
-    if (settingsPath != null) {
-      taskSettings.setScriptParameters(
-        StringUtil.notNullize(taskSettings.getScriptParameters()) + " --settings-file \"" + settingsPath + "\"");
-    }
   }
 }

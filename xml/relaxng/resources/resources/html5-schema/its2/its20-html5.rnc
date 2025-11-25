@@ -81,7 +81,7 @@ its-attribute.provenanceRecordsRef.html = attribute its-provenance-records-ref {
 
 its-attribute.locQualityIssuesRef.html = attribute its-loc-quality-issues-ref { its-locQualityIssuesRef.type }
 
-its-attribute.locQualityIssueType.html = attribute its-loc-quality-issue-type { its-locQualityIssueType.type } 
+its-attribute.locQualityIssueType.html = attribute its-loc-quality-issue-type { its-locQualityIssueType.type }
 
 its-attribute.locQualityIssueComment.html = attribute its-loc-quality-issue-comment { its-locQualityIssueComment.type }
 

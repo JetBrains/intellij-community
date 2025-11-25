@@ -1,12 +1,12 @@
 import com.intellij.codeInsight.XmlDocumentationTest
 import com.intellij.html.HtmlDocumentationTest
 import com.intellij.htmltools.codeInsight.daemon.HtmlHighlightingTest
-import com.intellij.javascript.polySymbols.css.PolySymbolsCssCodeCompletionTest
-import com.intellij.javascript.polySymbols.html.PolySymbolsHtmlDocumentationTest
-import com.intellij.javascript.polySymbols.html.PolySymbolsHtmlLookupDocumentationTest
 import com.intellij.lang.javascript.JSDocumentationTest
 import com.intellij.lang.javascript.typescript.TypeScriptDocumentationTest
 import com.intellij.lang.javascript.typescript.service.TypeScriptServiceDocumentationTest
+import com.intellij.polySymbols.js.css.PolySymbolsCssCodeCompletionTest
+import com.intellij.polySymbols.js.html.PolySymbolsHtmlDocumentationTest
+import com.intellij.polySymbols.js.html.PolySymbolsHtmlLookupDocumentationTest
 import com.intellij.react.ReactDocumentationTest
 import com.intellij.react.tsc.ReactDocumentationWithServiceTest
 import css.CssDocumentationTest

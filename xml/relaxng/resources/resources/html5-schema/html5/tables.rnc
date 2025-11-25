@@ -12,7 +12,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 #	tables.data.multilen =
 #		(	common.data.integer.positive
 #		|	common.data.percent
-#		|	xsd:token { pattern = "[0-9]+\*" } #REVISIT should this one be string? 
+#		|	xsd:token { pattern = "[0-9]+\*" } #REVISIT should this one be string?
 #		)
 
 ## Table Alignment Attributes
@@ -24,7 +24,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 		tables.attrs.align =
 			attribute align {
-				(	w:string "left" 
+				(	w:string "left"
 				|	w:string "center"
 				|	w:string "right"
 				|	w:string "justify"

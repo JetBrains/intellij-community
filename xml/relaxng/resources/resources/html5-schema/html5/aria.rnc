@@ -17,10 +17,8 @@ aria.global =
 	&	aria.prop.describedby?
 	&	aria.prop.details?
 	&	aria.state.disabled?
-	&	aria.state.dropeffect?
 	&	aria.prop.errormessage?
 	&	aria.prop.flowto?
-	&	aria.state.grabbed?
 	&	aria.prop.haspopup?
 	&	aria.state.hidden?
 	&	aria.state.invalid?
@@ -145,7 +143,6 @@ common.attrs.aria.implicit.searchbox |=
 	(	aria.prop.activedescendant?
 	&	aria.prop.autocomplete?
 	&	aria.prop.multiline?
-	&	aria.prop.placeholder?
 	&	aria.prop.readonly?
 	&	aria.prop.required?
 	)
@@ -250,6 +247,7 @@ common.attrs.aria.implicit.complementary |= common.attrs.aria.implicit.landmark
 common.attrs.aria.implicit.contentinfo |= common.attrs.aria.implicit.landmark
 common.attrs.aria.implicit.main |= common.attrs.aria.implicit.landmark
 common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
+common.attrs.aria.implicit.search |= common.attrs.aria.implicit.landmark
 
 # #####################################################################
 ## States
@@ -289,24 +287,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			|	string "false" #default
 			}
 
-## dropeffect
-	aria.state.dropeffect =
-		attribute aria-dropeffect
-			{
-				list { ("copy" | "execute" | "link" | "move" | "none" | "popup") + }
-		}
-
 ## expanded
 	aria.state.expanded =
 		attribute aria-expanded
-			{	string "true"
-			|	string "false"
-			|	string "undefined" #default
-			}
-
-## grabbed
-	aria.state.grabbed =
-		attribute aria-grabbed
 			{	string "true"
 			|	string "false"
 			|	string "undefined" #default
@@ -375,7 +358,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 ## colcount
 	aria.prop.colcount =
 		attribute aria-colcount {
-			common.data.integer.positive
+			(	common.data.integer.non-negative
+                        |	string "-1"
+                        )
 		}
 
 ## colindex
@@ -577,7 +562,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 ## rowcount
 	aria.prop.rowcount =
 		attribute aria-rowcount {
-			common.data.integer.positive
+			(	common.data.integer.non-negative
+                        |	string "-1"
+                        )
 		}
 
 ## rowindex
@@ -1290,7 +1277,6 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete?
 		&	aria.prop.multiline?
-		&	aria.prop.placeholder?
 		&	aria.prop.readonly?
 		&	aria.prop.required?
 		)
@@ -1463,7 +1449,6 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete? # not inherited
 		&	aria.prop.multiline? # not inherited
-		&	aria.prop.placeholder?
 		&	aria.prop.readonly? # not inherited
 		&	aria.prop.required?
 		)

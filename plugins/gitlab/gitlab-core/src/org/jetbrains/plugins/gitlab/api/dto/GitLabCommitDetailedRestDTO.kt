@@ -19,7 +19,7 @@ data class GitLabCommitDetailedRestDTO(
   val webUrl: String
 ) {
   data class Pipeline(
-    val id: Int,
+    val id: Long,
     val ref: String,
     val sha: String,
     val status: String

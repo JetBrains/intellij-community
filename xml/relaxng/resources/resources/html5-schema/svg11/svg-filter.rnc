@@ -2,36 +2,36 @@ default namespace = "http://www.w3.org/2000/svg"
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 
 
-## 
+##
 ##     SVG 1.1 Filter Module
 ##     file: svg-filter.rng
-## 
+##
 ##     This is SVG, a language for describing two-dimensional graphics in XML.
 ##     Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 ##
 ##     Modifications Copyright 2007 Mozilla Foundation
-## 
+##
 ##     $Id$
-##   
+##
 
-## 
+##
 ##     Filter
-## 
+##
 ##         filter, feBlend, feColorMatrix, feComponentTransfer, feComposite,
 ##         feConvolveMatrix, feDiffuseLighting, feDisplacementMap, feFlood,
 ##         feGaussianBlur, feImage, feMerge, feMergeNode, feMorphology, feOffset,
 ##         feSpecularLighting, feTile, feTurbulence, feDistantLight, fePointLight,
 ##         feSpotLight, feFuncR, feFuncG, feFuncB, feFuncA
-## 
+##
 ##     This module declares markup to provide support for filter effect.
-##   
+##
 [ xml:lang = "en" ]
 grammar {
     include "svg-basic-filter.rnc"
-    
-    ## 
+
+    ##
     ##       extend SVG.FilterPrimitive.class
-    ##     
+    ##
     SVG.FilterPrimitive.class |=
         feConvolveMatrix
         | feDiffuseLighting

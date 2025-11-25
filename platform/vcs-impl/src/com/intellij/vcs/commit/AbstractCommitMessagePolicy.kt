@@ -102,19 +102,15 @@ abstract class AbstractCommitMessagePolicy(
     }
 
     fun getCommitMessageFromProvider(project: Project, changeList: LocalChangeList): CommitMessage? {
-      DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
-        if (provider.enabled(project)) {
-          val message = provider.getMessage(project)
-          if (message != null) return message
-        }
+      val message = DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.computeSafeIfAny { provider ->
+       if (provider.enabled(project)) provider.getMessage(project) else null
       }
+      if (message != null) return message
 
-      CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
+      return CommitMessageProvider.EXTENSION_POINT_NAME.computeSafeIfAny { provider ->
         val legacyProviderMessage = provider.getCommitMessage(changeList, project)
-        if (legacyProviderMessage != null) return CommitMessage(legacyProviderMessage)
+        if (legacyProviderMessage != null) CommitMessage(legacyProviderMessage) else null
       }
-
-      return null
     }
   }
 

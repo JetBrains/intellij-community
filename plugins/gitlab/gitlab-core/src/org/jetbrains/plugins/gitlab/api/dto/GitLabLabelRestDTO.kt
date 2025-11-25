@@ -7,7 +7,7 @@ data class GitLabLabelRestDTO(
   val color: String,
   val description: String?,
   val descriptionHtml: String?,
-  val id: Int,
+  val id: Long,
   val name: @Nls String,
   val textColor: String
 )

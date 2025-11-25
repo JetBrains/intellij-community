@@ -30,7 +30,7 @@ public final class SimplePushAction extends PushActionBase {
       return DvcsBundle.message("action.push.anyway");
     }
     else {
-      return DvcsBundle.message("action.complex.push");
+      return super.getText(dialog, enabled);
     }
   }
 

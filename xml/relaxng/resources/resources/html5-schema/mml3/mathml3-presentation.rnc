@@ -8,7 +8,7 @@
 #
 #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
 #     Copyright 2012 Mozilla Foundation
-# 
+#
 #     Use and distribution of this code are permitted under the terms
 #     W3C Software Notice and License
 #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
@@ -84,21 +84,21 @@ TokenExpression = mi|mn|mo|mtext|mspace|ms
 token.content = mglyph|malignmark|text
 
 mi = element mi {mi.attributes, token.content*}
-mi.attributes = 
+mi.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt
 
 
 mn = element mn {mn.attributes, token.content*}
-mn.attributes = 
+mn.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt
 
 
 mo = element mo {mo.attributes, token.content*}
-mo.attributes = 
+mo.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt,
@@ -131,7 +131,7 @@ mo.attributes =
 # token.content, because we want to handle mtext differently than other
 # MathML "token elements" -- mike
 mtext = element mtext { mtext.attributes, mtext.content* }
-mtext.attributes = 
+mtext.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt
@@ -139,7 +139,7 @@ mtext.attributes =
 mtext.content = mglyph | malignmark | text
 
 mspace = element mspace {mspace.attributes, empty}
-mspace.attributes = 
+mspace.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt,
@@ -157,7 +157,7 @@ mspace.attributes =
 
 
 ms = element ms {ms.attributes, token.content*}
-ms.attributes = 
+ms.attributes =
   CommonAtt,
   CommonPresAtt,
   TokenAtt,
@@ -166,7 +166,7 @@ ms.attributes =
 
 
 mglyph = element mglyph {mglyph.attributes,mglyph.deprecatedattributes,empty}
-mglyph.attributes = 
+mglyph.attributes =
   CommonAtt,  CommonPresAtt,
   attribute src {xsd:anyURI}?,
   attribute width {length}?,
@@ -180,7 +180,7 @@ mglyph.deprecatedattributes =
   DeprecatedTokenAtt
 
 msline = element msline {msline.attributes,empty}
-msline.attributes = 
+msline.attributes =
   CommonAtt,  CommonPresAtt,
   attribute position {integer}?,
   attribute length {unsigned-integer}?,
@@ -189,27 +189,27 @@ msline.attributes =
   attribute mslinethickness {length | "thin" | "medium" | "thick"}?
 
 none = element none {none.attributes,empty}
-none.attributes = 
+none.attributes =
   CommonAtt,
   CommonPresAtt
 
 mprescripts = element mprescripts {mprescripts.attributes,empty}
-mprescripts.attributes = 
+mprescripts.attributes =
   CommonAtt,
   CommonPresAtt
 
 
-CommonPresAtt = 
+CommonPresAtt =
   attribute mathcolor {color}?,
   attribute mathbackground {color | "transparent"}?
 
-TokenAtt = 
+TokenAtt =
   attribute mathvariant {"normal" | "bold" | "italic" | "bold-italic" | "double-struck" | "bold-fraktur" | "script" | "bold-script" | "fraktur" | "sans-serif" | "bold-sans-serif" | "sans-serif-italic" | "sans-serif-bold-italic" | "monospace" | "initial" | "tailed" | "looped" | "stretched"}?,
   attribute mathsize {"small" | "normal" | "big" | length}?,
   attribute dir {"ltr" | "rtl"}?,
   DeprecatedTokenAtt
 
-DeprecatedTokenAtt = 
+DeprecatedTokenAtt =
   attribute fontfamily {text}?,
   attribute fontweight {"normal" | "bold"}?,
   attribute fontstyle {"normal" | "italic"}?,
@@ -220,13 +220,13 @@ DeprecatedTokenAtt =
 MalignExpression = maligngroup|malignmark
 
 malignmark = element malignmark {malignmark.attributes, empty}
-malignmark.attributes = 
+malignmark.attributes =
   CommonAtt, CommonPresAtt,
   attribute edge {"left" | "right"}?
 
 
 maligngroup = element maligngroup {maligngroup.attributes, empty}
-maligngroup.attributes = 
+maligngroup.attributes =
   CommonAtt, CommonPresAtt,
   attribute groupalign {"left" | "center" | "right" | "decimalpoint"}?
 
@@ -239,13 +239,13 @@ PresentationExpression = TokenExpression|MalignExpression|
 
 
 mrow = element mrow {mrow.attributes, MathExpression*}
-mrow.attributes = 
+mrow.attributes =
   CommonAtt, CommonPresAtt,
   attribute dir {"ltr" | "rtl"}?
 
 
 mfrac = element mfrac {mfrac.attributes, MathExpression, MathExpression}
-mfrac.attributes = 
+mfrac.attributes =
   CommonAtt, CommonPresAtt,
   attribute linethickness {length | "thin" | "medium" | "thick"}?,
   attribute numalign {"left" | "center" | "right"}?,
@@ -254,17 +254,17 @@ mfrac.attributes =
 
 
 msqrt = element msqrt {msqrt.attributes, ImpliedMrow}
-msqrt.attributes = 
+msqrt.attributes =
   CommonAtt, CommonPresAtt
 
 
 mroot = element mroot {mroot.attributes, MathExpression, MathExpression}
-mroot.attributes = 
+mroot.attributes =
   CommonAtt, CommonPresAtt
 
 
 mstyle = element mstyle {mstyle.attributes, ImpliedMrow}
-mstyle.attributes = 
+mstyle.attributes =
   CommonAtt, CommonPresAtt,
   mstyle.specificattributes,
   mstyle.generalattributes,
@@ -373,12 +373,12 @@ math.attributes &= mstyle.generalattributes
 
 
 merror = element merror {merror.attributes, ImpliedMrow}
-merror.attributes = 
+merror.attributes =
   CommonAtt, CommonPresAtt
 
 
 mpadded = element mpadded {mpadded.attributes, ImpliedMrow}
-mpadded.attributes = 
+mpadded.attributes =
   CommonAtt, CommonPresAtt,
   attribute height {mpadded-length}?,
   attribute depth {mpadded-length}?,
@@ -388,12 +388,12 @@ mpadded.attributes =
 
 
 mphantom = element mphantom {mphantom.attributes, ImpliedMrow}
-mphantom.attributes = 
+mphantom.attributes =
   CommonAtt, CommonPresAtt
 
 
 mfenced = element mfenced {mfenced.attributes, MathExpression*}
-mfenced.attributes = 
+mfenced.attributes =
   CommonAtt, CommonPresAtt,
   attribute open {text}?,
   attribute close {text}?,
@@ -401,46 +401,46 @@ mfenced.attributes =
 
 
 menclose = element menclose {menclose.attributes, ImpliedMrow}
-menclose.attributes = 
+menclose.attributes =
   CommonAtt, CommonPresAtt,
   attribute notation {text}?
 
 
 msub = element msub {msub.attributes, MathExpression, MathExpression}
-msub.attributes = 
+msub.attributes =
   CommonAtt, CommonPresAtt,
   attribute subscriptshift {length}?
 
 
 msup = element msup {msup.attributes, MathExpression, MathExpression}
-msup.attributes = 
+msup.attributes =
   CommonAtt, CommonPresAtt,
   attribute superscriptshift {length}?
 
 
 msubsup = element msubsup {msubsup.attributes, MathExpression, MathExpression, MathExpression}
-msubsup.attributes = 
+msubsup.attributes =
   CommonAtt, CommonPresAtt,
   attribute subscriptshift {length}?,
   attribute superscriptshift {length}?
 
 
 munder = element munder {munder.attributes, MathExpression, MathExpression}
-munder.attributes = 
+munder.attributes =
   CommonAtt, CommonPresAtt,
   attribute accentunder {"true" | "false"}?,
   attribute align {"left" | "right" | "center"}?
 
 
 mover = element mover {mover.attributes, MathExpression, MathExpression}
-mover.attributes = 
+mover.attributes =
   CommonAtt, CommonPresAtt,
   attribute accent {"true" | "false"}?,
   attribute align {"left" | "right" | "center"}?
 
 
 munderover = element munderover {munderover.attributes, MathExpression, MathExpression, MathExpression}
-munderover.attributes = 
+munderover.attributes =
   CommonAtt, CommonPresAtt,
   attribute accent {"true" | "false"}?,
   attribute accentunder {"true" | "false"}?,
@@ -448,12 +448,12 @@ munderover.attributes =
 
 
 mmultiscripts = element mmultiscripts {mmultiscripts.attributes, MathExpression,MultiScriptExpression*,(mprescripts,MultiScriptExpression*)?}
-mmultiscripts.attributes = 
+mmultiscripts.attributes =
   msubsup.attributes
 
 
 mtable = element mtable {mtable.attributes, TableRowExpression*}
-mtable.attributes = 
+mtable.attributes =
   CommonAtt, CommonPresAtt,
   attribute align {xsd:string {
     pattern ='\s*(top|bottom|center|baseline|axis)(\s+-?[0-9]+)?\s*'}}?,
@@ -477,12 +477,12 @@ mtable.attributes =
 
 
 mlabeledtr = element mlabeledtr {mlabeledtr.attributes, TableCellExpression+}
-mlabeledtr.attributes = 
+mlabeledtr.attributes =
   mtr.attributes
 
 
 mtr = element mtr {mtr.attributes, TableCellExpression*}
-mtr.attributes = 
+mtr.attributes =
   CommonAtt, CommonPresAtt,
   attribute rowalign {"top" | "bottom" | "center" | "baseline" | "axis"}?,
   attribute columnalign {list {columnalignstyle+} }?,
@@ -490,7 +490,7 @@ mtr.attributes =
 
 
 mtd = element mtd {mtd.attributes, ImpliedMrow}
-mtd.attributes = 
+mtd.attributes =
   CommonAtt, CommonPresAtt,
   attribute rowspan {positive-integer}?,
   attribute columnspan {positive-integer}?,
@@ -500,7 +500,7 @@ mtd.attributes =
 
 
 mstack = element mstack {mstack.attributes, MstackExpression*}
-mstack.attributes = 
+mstack.attributes =
   CommonAtt, CommonPresAtt,
   attribute align {xsd:string {
     pattern ='\s*(top|bottom|center|baseline|axis)(\s+-?[0-9]+)?\s*'}}?,
@@ -510,26 +510,26 @@ mstack.attributes =
 
 
 mlongdiv = element mlongdiv {mlongdiv.attributes, MstackExpression,MstackExpression,MstackExpression+}
-mlongdiv.attributes = 
+mlongdiv.attributes =
   msgroup.attributes,
   attribute longdivstyle {"lefttop" | "stackedrightright" | "mediumstackedrightright" | "shortstackedrightright" | "righttop" | "left/\right" | "left)(right" | ":right=right" | "stackedleftleft" | "stackedleftlinetop"}?
 
 
 msgroup = element msgroup {msgroup.attributes, MstackExpression*}
-msgroup.attributes = 
+msgroup.attributes =
   CommonAtt, CommonPresAtt,
   attribute position {integer}?,
   attribute shift {integer}?
 
 
 msrow = element msrow {msrow.attributes, MsrowExpression*}
-msrow.attributes = 
+msrow.attributes =
   CommonAtt, CommonPresAtt,
   attribute position {integer}?
 
 
 mscarries = element mscarries {mscarries.attributes, (MsrowExpression|mscarry)*}
-mscarries.attributes = 
+mscarries.attributes =
   CommonAtt, CommonPresAtt,
   attribute position {integer}?,
   attribute location {"w" | "nw" | "n" | "ne" | "e" | "se" | "s" | "sw"}?,
@@ -538,14 +538,14 @@ mscarries.attributes =
 
 
 mscarry = element mscarry {mscarry.attributes, MsrowExpression*}
-mscarry.attributes = 
+mscarry.attributes =
   CommonAtt, CommonPresAtt,
   attribute location {"w" | "nw" | "n" | "ne" | "e" | "se" | "s" | "sw"}?,
   attribute crossout {list {("none" | "updiagonalstrike" | "downdiagonalstrike" | "verticalstrike" | "horizontalstrike")*}}?
 
 
 maction = element maction {maction.attributes, MathExpression+}
-maction.attributes = 
+maction.attributes =
   CommonAtt, CommonPresAtt,
   attribute actiontype {text},
   attribute selection {positive-integer}?

@@ -60,7 +60,12 @@ import java.awt.event.MouseEvent
 private val log = logger<XLineBreakpointManager>()
 
 @Internal
-class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope, private val isEnabled: Boolean) {
+class XLineBreakpointManager(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+  private val isEnabled: Boolean,
+  private val breakpointManagerProxy: XBreakpointManagerProxy,
+) {
   private val cs = coroutineScope.childScope("XLineBreakpointManager")
 
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointProxy>()
@@ -216,9 +221,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   private fun removeBreakpoints(toRemove: Collection<XBreakpointProxy>?) {
-    val manager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     for (breakpoint in toRemove.orEmpty()) {
-      manager.removeBreakpoint(breakpoint)
+      breakpointManagerProxy.removeBreakpoint(breakpoint)
     }
   }
 

@@ -258,6 +258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
   private PanelWithFloatingToolbar myLayeredPane;
+  private EditorFloatingToolbar editorFloatingToolbar;
 
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {
@@ -1082,6 +1083,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     reinitSettings(true, true);
   }
 
+  @ApiStatus.Internal
+  public void refreshEditorFloatingToolbar() {
+    if (this.editorFloatingToolbar != null && mayShowToolbar()) {
+      Disposer.dispose(this.editorFloatingToolbar);
+      myLayeredPane.remove(this.editorFloatingToolbar);
+      UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
+        var editorFLoatingToolbar = new EditorFloatingToolbar(this);
+        myLayeredPane.add(editorFLoatingToolbar, FLOATING_TOOLBAR_LAYER);
+        this.editorFloatingToolbar = editorFLoatingToolbar;
+      }, getDisposable());
+    }
+  }
+
   @RequiresEdt
   void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
     myScheme.updateGlobalScheme();
@@ -1241,7 +1255,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLayeredPane.add(myScrollPane, SCROLL_PANE_LAYER);
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
       if (mayShowToolbar()) {
-        myLayeredPane.add(new EditorFloatingToolbar(this), FLOATING_TOOLBAR_LAYER);
+        var editorFLoatingToolbar = new EditorFloatingToolbar(this);
+        myLayeredPane.add(editorFLoatingToolbar, FLOATING_TOOLBAR_LAYER);
+        this.editorFloatingToolbar = editorFLoatingToolbar;
       }
     }, getDisposable());
     myPanel.add(myLayeredPane, BorderLayout.CENTER);

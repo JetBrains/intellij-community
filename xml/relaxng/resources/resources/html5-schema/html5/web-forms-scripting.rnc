@@ -22,6 +22,6 @@
 		scripting.attr.form.submit =
 			attribute onsubmit { string }
 		scripting.attr.form.reset =
-			attribute onreset { string } 
-		
-		
+			attribute onreset { string }
+
+

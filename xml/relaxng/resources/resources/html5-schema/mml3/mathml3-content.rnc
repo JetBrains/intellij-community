@@ -14,15 +14,15 @@
 #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
 
 include "mathml3-strict-content.rnc"{
-  cn.content = (text | mglyph | sep | PresentationExpression)* 
+  cn.content = (text | mglyph | sep | PresentationExpression)*
   cn.attributes = CommonAtt, DefEncAtt, attribute type {text}?, math-base?
 
   ci.attributes = CommonAtt, DefEncAtt, ci.type?
   ci.type = attribute type {text}
-  ci.content = (text | mglyph | PresentationExpression)* 
+  ci.content = (text | mglyph | PresentationExpression)*
 
   csymbol.attributes = CommonAtt, DefEncAtt, attribute type {text}?,cd?
-  csymbol.content = (text | mglyph | PresentationExpression)* 
+  csymbol.content = (text | mglyph | PresentationExpression)*
 
   bvar = element bvar { (ci | semantics-ci) & degree?}
 
@@ -78,7 +78,7 @@ declare = element declare {attribute type {xsd:string}?,
                            attribute scope {xsd:string}?,
                            attribute nargs {xsd:nonNegativeInteger}?,
                            attribute occurrence {"prefix"|"infix"|"function-model"}?,
-                           DefEncAtt, 
+                           DefEncAtt,
                            ContExp+}
 
 

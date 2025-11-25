@@ -101,8 +101,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.treeitem
 			|	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.doc-biblioentry
-			|	common.attrs.aria.role.doc-endnote
 			)?
 		)
 	li.inner =

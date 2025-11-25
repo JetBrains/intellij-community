@@ -18,7 +18,7 @@ object Html5TagAndAttributeNamesProvider {
    * Version of the information, should be used to calculate stub version,
    * if parser or lexer depends on the information from this object.
    */
-  const val VERSION = 3
+  const val VERSION = 4
 
   /**
    * Retrieves the set of all known HTML, SVG or MathML attributes of tags with a particular name.
@@ -79,7 +79,7 @@ object Html5TagAndAttributeNamesProvider {
     if (caseSensitive) tagToAttributeMapCaseSensitive else tagToAttributeMapCaseInsensitive
 
   private val baseHtmlAttrs = listOf(
-    "accesskey", "autocapitalize", "autofocus", "base", "class", "contenteditable", "dir", "draggable", "enterkeyhint", "hidden", "id", "inert", "inputmode", "is", "lang", "nonce", "onabort", "onauxclick", "onbeforeinput", "onbeforematch", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncontextlost", "oncontextmenu", "oncontextrestored", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerrawupdate", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwheel", "slot", "space", "spellcheck", "style", "tabindex", "title", "translate"
+    "accesskey", "autocapitalize", "autofocus", "base", "class", "contenteditable", "dir", "draggable", "enterkeyhint", "hidden", "id", "inert", "inputmode", "is", "lang", "nonce", "onabort", "onauxclick", "onbeforeinput", "onbeforematch", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncontextlost", "oncontextmenu", "oncontextrestored", "oncopy", "oncuechange", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onfocusin", "onfocusout", "onformdata", "ongotpointercapture", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onlostpointercapture", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpaste", "onpause", "onplay", "onplaying", "onpointercancel", "onpointerdown", "onpointerenter", "onpointerleave", "onpointermove", "onpointerout", "onpointerover", "onpointerrawupdate", "onpointerup", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "ontransitioncancel", "ontransitionend", "ontransitionrun", "ontransitionstart", "onvolumechange", "onwaiting", "onwheel", "popover", "slot", "space", "spellcheck", "style", "tabindex", "title", "translate"
   )
 
   private val htmlAttrs = baseHtmlAttrs + listOf(
@@ -166,7 +166,7 @@ object Html5TagAndAttributeNamesProvider {
         "blockquote" to attrs(htmlAttrs, "cite", "role"),
         "body" to attrs(htmlAttrs, "alink", "background", "bgcolor", "bottommargin", "leftmargin", "link", "marginheight", "marginwidth", "onafterprint", "onbeforeprint", "onbeforeunload", "onhashchange", "onlanguagechange", "onmessage", "onmessageerror", "onoffline", "ononline", "onpagehide", "onpageshow", "onpopstate", "onrejectionhandled", "onstorage", "onunhandledrejection", "onunload", "rightmargin", "role", "text", "topmargin", "vlink"),
         "br" to attrs(htmlAttrs, "clear", "role"),
-        "button" to attrs(htmlAttrs, "datafld", "dataformatas", "datasrc", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "name", "role", "type", "value"),
+        "button" to attrs(htmlAttrs, "datafld", "dataformatas", "datasrc", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "name", "popovertarget", "popovertargetaction", "role", "type", "value"),
         "canvas" to attrs(htmlAttrs, "height", "role", "width"),
         "caption" to attrs(htmlAttrs, "align"),
         "center" to attrs(htmlAttrs, ),
@@ -175,7 +175,7 @@ object Html5TagAndAttributeNamesProvider {
         "col" to attrs(htmlAttrs, "align", "char", "charoff", "span", "valign", "width"),
         "colgroup" to attrs(htmlAttrs, "align", "char", "charoff", "span", "valign", "width"),
         "data" to attrs(htmlAttrs, "role", "value"),
-        "datalist" to attrs(htmlAttrs, "role"),
+        "datalist" to attrs(htmlAttrs, ),
         "dd" to attrs(htmlAttrs, "role"),
         "del" to attrs(htmlAttrs, "cite", "datetime", "role"),
         "details" to attrs(htmlAttrs, "open", "role"),
@@ -209,13 +209,13 @@ object Html5TagAndAttributeNamesProvider {
         "i" to attrs(htmlAttrs, "role"),
         "iframe" to attrs(htmlAttrs, "align", "allow", "allowfullscreen", "allowtransparency", "frameborder", "height", "hspace", "loading", "longdesc", "marginheight", "marginwidth", "name", "referrerpolicy", "role", "sandbox", "scrolling", "src", "srcdoc", "vspace", "width"),
         "img" to attrs(htmlAttrs, "align", "alt", "border", "crossorigin", "decoding", "fetchpriority", "generator-unable-to-provide-required-alt", "height", "hspace", "ismap", "loading", "longdesc", "name", "referrerpolicy", "role", "sizes", "src", "srcset", "usemap", "vspace", "width"),
-        "input" to attrs(htmlAttrs, "accept", "align", "alt", "autocomplete", "capture", "checked", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "hspace", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "readonly", "required", "role", "size", "src", "step", "type", "usemap", "value", "vspace", "width"),
+        "input" to attrs(htmlAttrs, "accept", "align", "alt", "autocomplete", "capture", "checked", "datafld", "dataformatas", "datasrc", "dirname", "disabled", "form", "formaction", "formenctype", "formmethod", "formnovalidate", "formtarget", "height", "hspace", "list", "max", "maxlength", "min", "minlength", "multiple", "name", "pattern", "placeholder", "popovertarget", "popovertargetaction", "readonly", "required", "role", "size", "src", "step", "type", "usemap", "value", "vspace", "width"),
         "ins" to attrs(htmlAttrs, "cite", "datetime", "role"),
         "kbd" to attrs(htmlAttrs, "role"),
         "label" to attrs(htmlAttrs, "for"),
         "legend" to attrs(htmlAttrs, "align"),
         "li" to attrs(htmlAttrs, "role", "type", "value"),
-        "link" to attrs(htmlAttrs, "as", "blocking", "charset", "color", "crossorigin", "disabled", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "methods", "referrerpolicy", "role", "scope", "sizes", "target", "type", "updateviacache", "urn", "workertype"),
+        "link" to attrs(htmlAttrs, "as", "blocking", "charset", "color", "crossorigin", "disabled", "fetchpriority", "href", "hreflang", "imagesizes", "imagesrcset", "integrity", "media", "methods", "referrerpolicy", "role", "scope", "sizes", "target", "type", "updateviacache", "urn", "workertype"),
         "main" to attrs(htmlAttrs, "role"),
         "map" to attrs(htmlAttrs, "name"),
         "mark" to attrs(htmlAttrs, "role"),
@@ -244,7 +244,7 @@ object Html5TagAndAttributeNamesProvider {
         "ruby" to attrs(htmlAttrs, "role"),
         "s" to attrs(htmlAttrs, "role"),
         "samp" to attrs(htmlAttrs, "role"),
-        "script" to attrs(htmlAttrs, "async", "blocking", "charset", "crossorigin", "defer", "event", "for", "integrity", "language", "nomodule", "referrerpolicy", "src", "type"),
+        "script" to attrs(htmlAttrs, "async", "blocking", "charset", "crossorigin", "defer", "event", "fetchpriority", "for", "integrity", "language", "nomodule", "referrerpolicy", "src", "type"),
         "search" to attrs(htmlAttrs, "role"),
         "section" to attrs(htmlAttrs, "role"),
         "select" to attrs(htmlAttrs, "autocomplete", "datafld", "dataformatas", "datasrc", "disabled", "form", "multiple", "name", "required", "role", "size"),

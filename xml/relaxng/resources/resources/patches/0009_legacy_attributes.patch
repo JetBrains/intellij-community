@@ -1,0 +1,156 @@
+Index: community/xml/relaxng/src/resources/html5-schema/html5/applications.rnc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- html5/applications.rnc
++++ html5/applications.rnc
+@@ -9,6 +9,8 @@
+ 	common.attrs.interact &=
+ 		(	common.attrs.contenteditable?
+ 		&	common.attrs.draggable?
++		&	common.attrs.spellcheck?
++		&	common.attrs.autocapitalize?
+ 		&	common.attrs.hidden?
+ 		&	common.attrs.popover?
+ 		)
+Index: community/xml/relaxng/resources/resources/html5-schema/html5/common.rnc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- html5/common.rnc	(revision 45fa665eb292a56bb026e23924fe1486f553d056)
++++ html5/common.rnc	(revision 8c7adcbd4342523329a4fdb84e2c608cb288ea9b)
+@@ -202,6 +202,7 @@
+
+ common.attrs.other =
+ 	(	common.attrs.autofocus?
++	&	common.attrs.inputmode?
+ 	&	common.attrs.nonce?
+ 	&	common.attrs.inert?
+ 	)
+@@ -211,6 +212,11 @@
+ 			w:string "autofocus" | w:string ""
+ 		}
+
++	common.attrs.inputmode =
++		attribute inputmode {
++			string
++		}
++
+ 	common.attrs.blocking =
+ 		attribute blocking {
+ 			list { w:string "render" }
+Index: community/xml/relaxng/resources/resources/html5-schema/html5/core-scripting.rnc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- html5/core-scripting.rnc	(revision 45fa665eb292a56bb026e23924fe1486f553d056)
++++ html5/core-scripting.rnc	(revision 8c7adcbd4342523329a4fdb84e2c608cb288ea9b)
+@@ -114,7 +114,8 @@
+ ## Event Handler Attribute Definitions
+
+ 	common.attrs.scripting &=
+-		(	scripting.attr.onauxclick?
++		(	scripting.attr.onabort?
++		&	scripting.attr.onauxclick?
+ 		&	scripting.attr.onbeforeinput?
+ 		&	scripting.attr.onbeforematch?
+ 		&	scripting.attr.onblur?
+@@ -143,6 +144,8 @@
+ 		&	scripting.attr.onended?
+ 		&	scripting.attr.onerror?
+ 		&	scripting.attr.onfocus?
++		&	scripting.attr.onfocusin?
++		&	scripting.attr.onfocusout?
+ 		&	scripting.attr.onformdata?
+ 		&	scripting.attr.oninput?
+ 		&	scripting.attr.oninvalid?
+@@ -180,6 +183,10 @@
+ 		&	scripting.attr.onsuspend?
+ 		&	scripting.attr.ontimeupdate?
+ 		&	scripting.attr.ontoggle?
++		&	scripting.attr.ontransitioncancel?
++		&	scripting.attr.ontransitionend?
++		&	scripting.attr.ontransitionrun?
++		&	scripting.attr.ontransitionstart?
+ 		&	scripting.attr.onvolumechange?
+ 		&	scripting.attr.onwaiting?
+ 		&	scripting.attr.onwheel?
+@@ -187,6 +194,8 @@
+
+ 	common.attrs.other &= common.attrs.scripting
+
++	scripting.attr.onabort =
++		attribute onabort { common.data.functionbody }
+ 	scripting.attr.onauxclick =
+ 		attribute onauxclick { common.data.functionbody }
+ 	scripting.attr.onbeforeinput =
+@@ -245,8 +254,16 @@
+ 		attribute onerror { common.data.functionbody }
+ 	scripting.attr.onfocus =
+ 		attribute onfocus { common.data.functionbody }
++	scripting.attr.onfocusin =
++		attribute onfocusin { common.data.functionbody }
++	scripting.attr.onfocusout =
++		attribute onfocusout { common.data.functionbody }
++	scripting.attr.onformchange =
++		attribute onformchange { common.data.functionbody }
+ 	scripting.attr.onformdata =
+ 		attribute onformdata { common.data.functionbody }
++	scripting.attr.onforminput =
++		attribute onforminput { common.data.functionbody }
+ 	scripting.attr.oninput =
+ 		attribute oninput { common.data.functionbody }
+ 	scripting.attr.oninvalid =
+@@ -319,6 +336,14 @@
+ 		attribute ontimeupdate { common.data.functionbody }
+ 	scripting.attr.ontoggle =
+ 		attribute ontoggle { common.data.functionbody }
++	scripting.attr.ontransitioncancel =
++		attribute ontransitioncancel { common.data.functionbody }
++	scripting.attr.ontransitionend =
++		attribute ontransitionend { common.data.functionbody }
++	scripting.attr.ontransitionrun =
++		attribute ontransitionrun { common.data.functionbody }
++	scripting.attr.ontransitionstart =
++		attribute ontransitionstart { common.data.functionbody }
+ 	scripting.attr.onvolumechange =
+ 		attribute onvolumechange { common.data.functionbody }
+ 	scripting.attr.onwaiting =
+Index: community/xml/relaxng/resources/resources/html5-schema/html5/embed.rnc
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- html5/embed.rnc	(revision 45fa665eb292a56bb026e23924fe1486f553d056)
++++ html5/embed.rnc	(revision 8c7adcbd4342523329a4fdb84e2c608cb288ea9b)
+@@ -227,6 +227,7 @@
+ 			                    | popover
+ 			                    | inputmode
+ 			                    | nonce
++			                    | onabort
+ 			                    | onauxclick
+ 			                    | onbeforeinput
+ 			                    | onbeforematch
+@@ -257,6 +257,8 @@
+ 			                    | onended
+ 			                    | onerror
+ 			                    | onfocus
++			                    | onfocusin
++			                    | onfocusout
+ 			                    | onformdata
+ 			                    | oninput
+ 			                    | oninvalid
+@@ -295,6 +296,10 @@
+ 			                    | onsuspend
+ 			                    | ontimeupdate
+ 			                    | ontoggle
++			                    | ontransitioncancel
++			                    | ontransitionend
++			                    | ontransitionrun
++			                    | ontransitionstart
+ 			                    | onvolumechange
+ 			                    | onwaiting
+ 			                    | onwheel

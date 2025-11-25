@@ -8,9 +8,9 @@ import java.util.*
 data class GitLabResourceLabelEventDTO(
   val action: String,
   val createdAt: Date,
-  val id: Int,
+  val id: Long,
   val label: GitLabLabelRestDTO?,
-  val resourceId: Int,
+  val resourceId: Long,
   val resourceType: String,
   val user: GitLabUserDTO
 ) {

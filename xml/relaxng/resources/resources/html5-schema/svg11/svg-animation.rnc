@@ -2,29 +2,29 @@ default namespace = "http://www.w3.org/2000/svg"
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 
 
-## 
+##
 ##     SVG 1.1 Animation Module
 ##     file: svg-animation.rng
-## 
+##
 ##     This is SVG, a language for describing two-dimensional graphics in XML.
 ##     Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 ##
 ##     Modifications Copyright 2007 Mozilla Foundation
-## 
+##
 ##     $Id$
-##   
+##
 
-## 
+##
 ##     Animation
-## 
+##
 ##         animate, set, animateMotion, animateColor, animateTransform, mpath
-## 
+##
 ##     This module declares markup to provide support for animation.
-##   
+##
 
-## 
+##
 ##     SVG.Animation.class
-##   
+##
 [ xml:lang = "en" ]
 grammar {
     SVG.Animation.extra.class = notAllowed

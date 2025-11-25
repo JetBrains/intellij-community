@@ -96,14 +96,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 	body.attrs.onpopstate =
 		attribute onpopstate { common.data.functionbody }
 	body.attrs.onrejectionhandled =
-		attribute onrejectionhandled { common.data.functionbody }	body.attrs.onredo =
-		attribute onredo { common.data.functionbody }
-	body.attrs.onresize =
-		attribute onresize { common.data.functionbody }
+		attribute onrejectionhandled { common.data.functionbody }
 	body.attrs.onstorage =
 		attribute onstorage { common.data.functionbody }
-	body.attrs.onundo =
-		attribute onundo { common.data.functionbody }
 	body.attrs.onunhandledrejection =
 		attribute onunhandledrejection { common.data.functionbody }
 	body.attrs.onunload =
@@ -169,6 +164,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	link.attrs.workertype?
 		&	link.attrs.imagesrcset?
 		&	link.attrs.imagesizes?
+		&	common.attrs.fetchpriority?
 		#	link.attrs.title included in common.attrs
 		&	embedded.content.attrs.crossorigin?
 		&	common.attrs.blocking?

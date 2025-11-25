@@ -1,18 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.Promise
 
 
 @ApiStatus.Internal
 interface ScopeModelService {
 
-  fun loadItemsAsync(modelId: String, filterConditionType: ScopesFilterConditionType = ScopesFilterConditionType.OTHER, onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit)
+  fun loadItemsAsync(
+    modelId: String,
+    filterConditionType: ScopesFilterConditionType,
+    dataContextPromise: Promise<DataContext>,
+    onScopesUpdate: suspend (Map<String, ScopeDescriptor>?, selectedScopeId: String?) -> Unit,
+  )
 
   fun disposeModel(modelId: String)
 

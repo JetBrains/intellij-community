@@ -122,13 +122,13 @@ its-locQualityIssueType.type = w:string "terminology" | w:string "mistranslation
 
 its-locQualityIssueComment.type = string
 
-its-locQualityIssueSeverity.type =  xsd:double { minInclusive = "0" maxInclusive = "100" } 
+its-locQualityIssueSeverity.type =  xsd:double { minInclusive = "0" maxInclusive = "100" }
 
 its-locQualityIssueProfileRef.type = w:iri-ref
 
 its-locQualityIssueEnabled.type = w:string "yes" | w:string "no"
 
-its-locQualityRatingScore.type = xsd:double { minInclusive = "0" maxInclusive = "100" } 
+its-locQualityRatingScore.type = xsd:double { minInclusive = "0" maxInclusive = "100" }
 
 its-locQualityRatingVote.type = xsd:integer
 
