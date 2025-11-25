@@ -156,14 +156,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     return false;
   }
 
-  private static Map<PluginId, PluginUiModel> findInstalledPlugins(Collection<PluginDownloader> downloaders) {
-    if (downloaders.isEmpty()) return Collections.emptyMap();
-    PluginDownloader downloader = ContainerUtil.getFirstItem(downloaders);
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.getPluginSet().buildPluginIdMap().get(downloader.getId());
-    if (descriptor == null) return Collections.emptyMap();
-    return Map.of(descriptor.getPluginId(), new PluginUiModelAdapter(descriptor));
-  }
-
   public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
                                                               @NotNull PluginUpdateDialog dialog) {
     return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
