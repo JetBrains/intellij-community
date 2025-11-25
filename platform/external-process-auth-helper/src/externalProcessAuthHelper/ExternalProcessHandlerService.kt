@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper
 
-import com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService.EelExternalAppEntry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -13,13 +12,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.asOutputStream
-import com.intellij.platform.eel.provider.utils.consumeAsInputStream
+import com.intellij.platform.eel.provider.utils.serveExternalCli
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.readUtf8
 import externalApp.ExternalApp
-import externalApp.ExternalAppEntry
 import externalApp.ExternalAppHandler
 import externalApp.ExternalCli
 import io.netty.channel.ChannelHandlerContext
@@ -28,7 +26,7 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.BuiltInServerManager
@@ -36,14 +34,11 @@ import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
-import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.pathString
 
 /**
  * The provider of external application scripts called by Git when a remote operation needs communication with the user.
@@ -107,40 +102,12 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.
   fun getCallbackScriptPath(eelApi: EelApi, useBatchFile: Boolean, disposable: Disposable): Path {
     if (scriptBody == null || coroutineScope == null) throw UnsupportedOperationException("Handler ${this.javaClass} doesn't support eel external cli.")
     return runBlockingMaybeCancellable {
-      val script = eelApi.exec.createExternalCli(object : EelExecApi.LocalExternalCliOptions {
-        override val mainClass = scriptMainClass
-        override val useBatchFile = useBatchFile
+      val childScope = coroutineScope.childScope("serve external cli")
+      childScope.coroutineContext.job.cancelOnDispose(disposable)
+      eelApi.exec.serveExternalCli(childScope, scriptBody, object : EelExecApi.ExternalCliOptions {
         override val filePrefix = scriptNamePrefix
         override val envVariablesToCapture = requiredEnvVariables
-      })
-      coroutineScope.launch {
-        script.consumeInvocations { process ->
-          process.toExternalAppEntry().use { externalAppEntry ->
-            scriptBody.entryPoint(externalAppEntry)
-          }
-        }
-      }.cancelOnDispose(disposable)
-      script.path.asNioPath()
-    }
-  }
-
-  @ApiStatus.Internal
-  class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : ExternalAppEntry, AutoCloseable {
-    val myStderr: PrintStream = process.stderr.asOutputStream().let(::PrintStream)
-    val myStdout: PrintStream = process.stdout.asOutputStream().let(::PrintStream)
-    val myStdin: InputStream = process.stdin.consumeAsInputStream()
-    override fun getArgs(): Array<out String> = process.args.toTypedArray()
-    override fun getEnvironment(): Map<String, String> = process.environment
-    override fun getWorkingDirectory(): String = process.workingDir.asNioPath().pathString
-    override fun getStderr(): PrintStream = myStderr
-    override fun getStdout(): PrintStream = myStdout
-    override fun getStdin(): InputStream = myStdin
-    override fun getExecutablePath(): Path = process.executableName.asNioPath()
-
-    override fun close() {
-      stderr.use {
-        stdout.close()
-      }
+      }).asNioPath()
     }
   }
 
@@ -236,9 +203,6 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private fun runHandler(indicator: EmptyProgressIndicator, uuid: UUID, bodyContent: String): String? =
     ProgressManager.getInstance().runProcess(Computable { externalProcessHandler.invokeHandler(uuid, bodyContent) }, indicator)
 }
-
-@ApiStatus.Internal
-fun EelExecApi.ExternalCliProcess.toExternalAppEntry(): EelExternalAppEntry = EelExternalAppEntry(this)
 
 private val LOG_SERVICE = logger<ExternalProcessHandlerService<*>>()
 

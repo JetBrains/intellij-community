@@ -291,13 +291,6 @@ sealed interface EelExecApi {
     val envVariablesToCapture: List<String>
   }
 
-  @ApiStatus.Internal
-  // TODO remove when local implementation will implement the api properly
-  interface LocalExternalCliOptions : ExternalCliOptions {
-    val mainClass: Class<*>
-    val useBatchFile: Boolean
-  }
-
   // TODO Generate builder?
   @CheckReturnValue
   @ApiStatus.Internal

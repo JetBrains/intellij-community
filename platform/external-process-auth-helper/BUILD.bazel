@@ -28,6 +28,7 @@ jvm_library(
     "//libraries/netty/buffer",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/util/coroutines",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"]
 )
@@ -53,6 +54,7 @@ jvm_library(
     "@lib//:junit5",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/util/coroutines",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"]
 )

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
-import com.intellij.externalProcessAuthHelper.toExternalAppEntry
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
@@ -14,6 +13,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi.ExternalCliOptions
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.serveExternalCli
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
 import git4idea.gpg.PinentryApp
@@ -61,18 +62,14 @@ internal class PinentryService(private val cs: CoroutineScope) {
     val address = startServer() ?: return null
     return if (eelTarget != null) {
       runBlockingMaybeCancellable {
-        val script = eelTarget.exec.createExternalCli(object : ExternalCliOptions {
+        val childScope = cs.childScope("serve external cli")
+        listenJob = childScope.coroutineContext.job
+        val options = object : ExternalCliOptions {
           override val filePrefix = "pinentry-ide"
           override val envVariablesToCapture: List<String> = listOf(PINENTRY_USER_DATA_ENV)
-        })
-        listenJob = cs.launch {
-          script.consumeInvocations { process ->
-            process.toExternalAppEntry().use { externalAppEntry ->
-              PinentryApp().entryPoint(externalAppEntry)
-            }
-          }
         }
-        PinentryData(publicKeyStr, address, script.path)
+        val script = eelTarget.exec.serveExternalCli(childScope, PinentryApp(), options)
+        PinentryData(publicKeyStr, address, script)
       }
     }
     else {
