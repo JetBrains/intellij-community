@@ -45,7 +45,6 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public @NotNull EnumSet<RegExpCapability> getCapabilities(RegExpElement element) {
     Language dialect = element.getContainingFile().getLanguage();
-    assert dialect == RegExpLanguage.INSTANCE || dialect.getBaseLanguage() == RegExpLanguage.INSTANCE;
     return LanguageParserDefinitions.INSTANCE.forLanguage(dialect) instanceof RegExpParserDefinition definition
            ? definition.getCapabilities()
            : EnumSet.noneOf(RegExpCapability.class);
