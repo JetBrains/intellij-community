@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.NativeClipboard
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ide.CopyPasteManager
+import java.awt.datatransfer.ClipboardOwner
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -33,8 +34,10 @@ internal class JewelBridgeClipboard : Clipboard {
         }
     }
 
-    override val nativeClipboard: NativeClipboard
-        get() = copyPasteManager ?: error("CopyPasteManager is not available")
+    // This _needs_ to return an AWT Clipboard instance, or
+    // androidx.compose.foundation.text.input.internal.selection.ClipboardPasteState will fail to update
+    // itself. Hence, we build a facade Clipboard that delegates to the IntelliJ CopyPasteManager.
+    override val nativeClipboard: NativeClipboard by lazy { JewelAwtClipboardBridge(copyPasteManager) }
 
     override suspend fun getClipEntry(): ClipEntry? {
         logger.debug("getClipEntry called. CopyPasteManager available: ${copyPasteManager != null}")
@@ -59,5 +62,21 @@ internal class JewelBridgeClipboard : Clipboard {
         override fun getTransferData(flavor: DataFlavor?): Any {
             throw UnsupportedFlavorException(flavor)
         }
+    }
+
+    private class JewelAwtClipboardBridge(private val copyPasteManager: CopyPasteManager?) :
+        java.awt.datatransfer.Clipboard("JewelAwtClipboardBridge") {
+        private val manager
+            get() = copyPasteManager ?: error("CopyPasteManager is not available")
+
+        override fun setContents(transferable: Transferable?, clipboardOwner: ClipboardOwner?) {
+            manager.setContents(transferable ?: EmptyTransferable)
+        }
+
+        override fun getContents(requestor: Any?): Transferable? = manager.contents
+
+        override fun getAvailableDataFlavors(): Array<out DataFlavor?>? = manager.contents?.transferDataFlavors
+
+        override fun getData(flavor: DataFlavor?): Any? = flavor?.let { manager.getContents(it) }
     }
 }
