@@ -45,22 +45,18 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
     GroovyPsiElementVisitor(GroovyRedundantKotlinStdLibInspectionVisitor(holder))
 
   override fun isAvoidApplyPluginMethodInspectionAvailable(file: PsiFile): Boolean = false
-  override fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    TODO("Not yet implemented")
-  }
+  override fun getAvoidApplyPluginMethodInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 
   override fun isAvoidRepositoriesInBuildGradleInspectionAvailable(file: PsiFile): Boolean = false
-  override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    TODO("Not yet implemented")
-  }
+  override fun getAvoidRepositoriesInBuildGradleInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 
   override fun isAvoidDuplicateDependenciesInspectionAvailable(file: PsiFile): Boolean = false
-  override fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    TODO("Not yet implemented")
-  }
+  override fun getAvoidDuplicateDependenciesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 
   override fun isTaskMissingGroupAndDescriptionInspectionAvailable(file: PsiFile): Boolean = false
-  override fun getTaskMissingGroupAndDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor {
-    TODO("Not yet implemented")
-  }
+  override fun getTaskMissingGroupAndDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 }
