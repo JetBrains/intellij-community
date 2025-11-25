@@ -52,7 +52,8 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
   private val lastRequestedTimestamp = AtomicLong(0)
   private val lastExecutedTimestamp = MutableStateFlow(0L)
 
-  private val nextTask = Channel<Request>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val nextTask = Channel<Request>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST,
+                                          onUndeliveredElement = { request -> (request as? Request.Execute)?.job?.cancel() })
 
   init {
     scope.launch {
@@ -60,8 +61,7 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
       while (isActive) {
         val nextRequest = nextTask.receive()
         val nextTimestamp = nextRequest.timestamp
-        currentJob.get()?.cancelAndJoin()
-        currentJob.set(null)
+        currentJob.getAndSet(null)?.cancelAndJoin()
 
         // Workaround because there is some unexpected race with the Coroutine Completion Handler
         // Timestamps are only increasing, so nothing is broken
@@ -80,7 +80,7 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
           else -> {
             currentJob.set(nextJob)
             nextJob.invokeOnCompletion { _ ->
-              currentJob.set(null) // IJPL-159913
+              currentJob.compareAndSet(nextJob, null) // IJPL-159913
               setLastExecutedToAtLeast(nextTimestamp)
             }
             nextJob.start()
