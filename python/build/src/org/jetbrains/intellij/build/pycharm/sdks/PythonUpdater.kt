@@ -17,7 +17,9 @@ import org.jetbrains.intellij.build.pycharm.runCommand
 import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.net.HttpURLConnection
 import java.nio.file.Paths
+import kotlin.io.path.exists
 import kotlin.io.path.fileSize
 
 
@@ -64,23 +66,45 @@ class PythonUpdater {
    * Tries to get from the cache first. If it is a new resources then it downloads the resource file and the GPG signature of it.
    * Generates SHA256 and fileSize fields right after the GPG signature check.
    */
-  private fun buildResource(version: String, trackedResource: TrackedResource): Resource {
+  private fun buildResource(languageLevel: LanguageLevel, version: String, trackedResource: TrackedResource): Resource {
     val resUrl = Urls.parseEncoded("${CPYTHON_BASE_URL}/$version/${trackedResource.filename(version)}")!!
     RESOURCE_CACHE[resUrl]?.let { return it }
     println("New resource was found ${resUrl}")
 
     val ascUrl = Urls.parseEncoded("${resUrl}.asc")!!
+    val sigstoreUrl = Urls.parseEncoded("${resUrl}.sigstore")!!
     val tempPath = PathManager.getTempPath()
-    val files = listOf(resUrl, ascUrl).associateWith { url ->
+    val files = listOf(resUrl, ascUrl, sigstoreUrl).associateWith { url ->
       val fileName = PathUtilRt.getFileName(url.getPath())
       Paths.get(tempPath, "${System.nanoTime()}-${fileName}")
     }
     try {
       for ((url, path) in files) {
-        HttpRequests.request(url).saveToFile(path.toFile(), null)
+        try {
+          HttpRequests.request(url).saveToFile(path, null)
+        }
+        catch (ex: HttpRequests.HttpStatusException) {
+          if (ex.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw ex
+        }
       }
-      val (resFilePath, ascFilePath) = files.values.map { it.toAbsolutePath().toString() }.toTypedArray()
-      runCommand("gpg", "--verify", ascFilePath, resFilePath)
+      val (resFilePath, ascFilePath, sigstoreFilePath) = files.values.map { it.toAbsolutePath() }.toTypedArray()
+      if (sigstoreFilePath.exists()) {
+        val manager = requireNotNull(PYTHON_RELEASE_MANAGERS[languageLevel]) {
+          "there is no manager defined for the $languageLevel, please specify manager in the PYTHON_RELEASE_MANAGERS\n" +
+          "check here: https://www.python.org/downloads/metadata/sigstore/"
+        }
+        runCommand(
+          "cosign", "verify-blob",
+          "--new-bundle-format",
+          "--certificate-identity=${manager.identity}",
+          "--certificate-oidc-issuer=${manager.oidcIssuer}",
+          "--bundle", sigstoreFilePath.toString(),
+          resFilePath.toString()
+        )
+      }
+      else {
+        runCommand("gpg", "--verify", ascFilePath.toString(), resFilePath.toString())
+      }
       val file = files[resUrl]!!
       val sha256 = JpsChecksumUtil.getSha256Checksum(file)
       return Resource(resUrl, file.fileSize(), sha256)
@@ -90,13 +114,13 @@ class PythonUpdater {
     }
   }
 
-  private fun buildBinary(version: String, trackedResource: TrackedResource): Binary {
-    return Binary(trackedResource.os!!, trackedResource.cpuArch, listOf(buildResource(version, trackedResource)))
+  private fun buildBinary(languageLevel: LanguageLevel, version: String, trackedResource: TrackedResource): Binary {
+    return Binary(trackedResource.os!!, trackedResource.cpuArch, listOf(buildResource(languageLevel, version, trackedResource)))
   }
 
-  private fun buildRelease(version: String, resources: List<TrackedResource>, product: Product = Product.CPython): Release {
-    val sources = resources.filter { it.source }.map { buildResource(version, it) }.takeIf { it.isNotEmpty() }
-    val binaries = resources.filter { !it.source }.map { buildBinary(version, it) }.takeIf { it.isNotEmpty() }
+  private fun buildRelease(languageLevel: LanguageLevel, version: String, resources: List<TrackedResource>, product: Product = Product.CPython): Release {
+    val sources = resources.filter { it.source }.map { buildResource(languageLevel, version, it) }.takeIf { it.isNotEmpty() }
+    val binaries = resources.filter { !it.source }.map { buildBinary(languageLevel, version, it) }.takeIf { it.isNotEmpty() }
     return Release(
       version = version,
       product = product,
@@ -131,7 +155,7 @@ class PythonUpdater {
       println("Update local versions for ${languageLevel.toPythonVersion()}")
       val langLevelReleases = getLangLevelReleases(languageLevel)
       langLevelReleases.forEach { (version, resources) ->
-        releases.add(buildRelease(version, resources.sorted()))
+        releases.add(buildRelease(languageLevel, version, resources.sorted()))
       }
     }
 
@@ -139,7 +163,7 @@ class PythonUpdater {
   }
 
   companion object {
-    const val CPYTHON_BASE_URL = "https://www.python.org/ftp/python/"
+    const val CPYTHON_BASE_URL = "https://www.python.org/ftp/python"
 
     /**
      * 'OpenPGP Public Keys' section from https://www.python.org/downloads/
@@ -153,7 +177,19 @@ class PythonUpdater {
       "3A5CA953F73C700D", // Larry Hastings (3.5.x source files and tags)
       "04C367C218ADD4FF", // Benjamin Peterson (2.7.z source files and tags)
     )
+    private val PYTHON_RELEASE_MANAGERS = mapOf(
+      LanguageLevel.PYTHON37 to PythonReleaseManagers("nad@python.org", "https://github.com/login/oauth"),
+      LanguageLevel.PYTHON38 to PythonReleaseManagers("lukasz@langa.pl", "https://github.com/login/oauth"),
+      LanguageLevel.PYTHON39 to PythonReleaseManagers("lukasz@langa.pl", "https://github.com/login/oauth"),
+      LanguageLevel.PYTHON310 to PythonReleaseManagers("pablogsal@python.org", "https://accounts.google.com"),
+      LanguageLevel.PYTHON311 to PythonReleaseManagers("pablogsal@python.org", "https://accounts.google.com"),
+      LanguageLevel.PYTHON312 to PythonReleaseManagers("thomas@python.org", "https://accounts.google.com"),
+      LanguageLevel.PYTHON313 to PythonReleaseManagers("thomas@python.org", "https://accounts.google.com"),
+      LanguageLevel.PYTHON314 to PythonReleaseManagers("hugo@python.org", "https://github.com/login/oauth"),
+    )
   }
 }
+
+private data class PythonReleaseManagers(val identity: String, val oidcIssuer: String)
 
 
