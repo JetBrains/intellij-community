@@ -175,7 +175,7 @@
     </intentionAction>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.XDebuggerImplBundle">
     <group id="XDebugger.Threads.View.Popup">
       <reference ref="Debugger.PopFrame"/>
     </group>

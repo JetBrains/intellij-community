@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.idea.ActionsBundle;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -27,10 +27,10 @@ public class MarkObjectAction extends XDebuggerActionBase implements SplitDebugg
       hidden = ourHandler.isHidden(project, event);
       String text;
       if (ourHandler.isMarked(project, event)) {
-        text = ActionsBundle.message("action.Debugger.MarkObject.unmark.text");
+        text = XDebuggerImplBundle.message("action.Debugger.MarkObject.unmark.text");
       }
       else {
-        text = ActionsBundle.message("action.Debugger.MarkObject.text");
+        text = XDebuggerImplBundle.message("action.Debugger.MarkObject.text");
       }
       presentation.setText(text);
     }

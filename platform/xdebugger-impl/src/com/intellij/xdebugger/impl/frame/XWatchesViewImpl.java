@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.codeInsight.inline.completion.InlineCompletion;
@@ -53,6 +53,7 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -210,7 +211,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         @Override
         protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
           AnAction addToWatchesAction =
-            new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
+            new DumbAwareAction(XDebuggerImplBundle.message("action.Debugger.AddToWatch.text"), null, AllIcons.Debugger.AddToWatch) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e) {
                 myEvaluateComboBox.saveTextInHistory();

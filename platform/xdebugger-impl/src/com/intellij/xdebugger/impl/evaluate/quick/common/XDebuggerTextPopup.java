@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.idea.ActionsBundle;
@@ -24,6 +24,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XValueTextModificationPreparatorProviders;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -322,7 +323,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
   private class ShowAsObject extends AnAction {
     private ShowAsObject() {
-      super(ActionsBundle.message("action.Debugger.XDebuggerTextPopup.ShowAsObject.text"));
+      super(XDebuggerImplBundle.message("action.Debugger.XDebuggerTextPopup.ShowAsObject.text"));
     }
 
     @Override
