@@ -3,14 +3,11 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
-import com.jetbrains.rd.util.printlnError
+import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.TestFactory
-import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import org.junit.jupiter.params.ParameterizedTest
 import java.lang.reflect.Method
 
 /**
@@ -39,38 +36,19 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     return intercept<T?>(invocation, invocationContext)
   }
 
-  override fun interceptBeforeEachMethod(
-    invocation: InvocationInterceptor.Invocation<Void?>,
-    invocationContext: ReflectiveInvocationContext<Method?>,
-    extensionContext: ExtensionContext?,
-  ) {
-    intercept<Void?>(invocation, invocationContext)
-  }
-
   private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>): T? {
     if (invocationContext.arguments.any { it::class == BackgroundRunWithLambda::class }) {
       System.err.println("Test ${invocationContext.executable?.name} has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
       return invocation.proceed()
     }
 
-    val allowedAnnotations = listOf(TestTemplate::class, TestFactory::class, ParameterizedTest::class)
-
-    val isAllowedTest = invocationContext.executable!!.annotations.any {
-      it.annotationClass in allowedAnnotations
-    }
-
     val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable?.name}"
-
-    if (!isAllowedTest) {
-      printlnError("Method $fullMethodName will not be executed inside IDE. " +
-                   "Allowed annotations for test method ${allowedAnnotations.map { it.simpleName }}")
-      return invocation.proceed()
-    }
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(perTestSupervisorScope.coroutineContext) {
-      println("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode}")
+      logOutput("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${argumentsToString(invocationContext.arguments)}")
 
+      // TODO: use serialized lambda invocation
       IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
                                                   params = mapOf(
                                                     "testClass" to (invocationContext.targetClass.name ?: ""),
