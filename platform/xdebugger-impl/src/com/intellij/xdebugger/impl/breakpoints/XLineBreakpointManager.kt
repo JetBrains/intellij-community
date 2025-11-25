@@ -163,7 +163,7 @@ class XLineBreakpointManager(
   }
 
   fun getDocumentBreakpoints(document: Document): Collection<XLineBreakpointImpl<*>> {
-    return getDocumentBreakpointProxies(document).filterIsInstance<XLineBreakpointProxy.Monolith>().map { it.breakpoint }
+    return getDocumentBreakpointProxies(document).filterIsInstance<MonolithLineBreakpointProxy>().map { it.breakpoint }
   }
 
   @TestOnly

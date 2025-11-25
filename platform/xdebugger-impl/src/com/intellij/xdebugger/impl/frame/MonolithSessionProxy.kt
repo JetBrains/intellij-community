@@ -23,6 +23,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.asProxy
@@ -200,7 +201,7 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
   }
 
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
-    if (breakpoint !is XBreakpointProxy.Monolith) {
+    if (breakpoint !is MonolithBreakpointProxy) {
       return false
     }
     return sessionImpl.isInactiveSlaveBreakpoint(breakpoint.breakpoint)

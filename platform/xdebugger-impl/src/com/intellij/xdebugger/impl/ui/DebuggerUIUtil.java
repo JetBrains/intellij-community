@@ -74,7 +74,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxyKt.asProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";

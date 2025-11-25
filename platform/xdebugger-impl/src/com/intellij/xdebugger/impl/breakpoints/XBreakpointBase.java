@@ -49,7 +49,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 

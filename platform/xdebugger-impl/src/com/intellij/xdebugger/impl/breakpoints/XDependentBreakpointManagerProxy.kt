@@ -10,27 +10,28 @@ interface XDependentBreakpointManagerProxy {
   fun clearMasterBreakpoint(breakpoint: XBreakpointProxy)
   fun setMasterBreakpoint(breakpoint: XBreakpointProxy, masterBreakpoint: XBreakpointProxy, selected: Boolean)
 
-  class Monolith(val dependentManager: XDependentBreakpointManager): XDependentBreakpointManagerProxy {
-    override fun getMasterBreakpoint(breakpoint: XBreakpointProxy): XBreakpointProxy? {
-      val monolith = breakpoint as? XBreakpointProxy.Monolith ?: return null
-      val master = dependentManager.getMasterBreakpoint(monolith.breakpoint) ?: return null
-      return (master as XBreakpointBase<*, *, *>).asProxy()
-    }
+}
 
-    override fun isLeaveEnabled(breakpoint: XBreakpointProxy): Boolean {
-      val monolith = breakpoint as? XBreakpointProxy.Monolith ?: return false
-      return dependentManager.isLeaveEnabled(monolith.breakpoint)
-    }
+internal class MonolithDependentBreakpointManagerProxy(val dependentManager: XDependentBreakpointManager) : XDependentBreakpointManagerProxy {
+  override fun getMasterBreakpoint(breakpoint: XBreakpointProxy): XBreakpointProxy? {
+    val monolith = breakpoint as? MonolithBreakpointProxy ?: return null
+    val master = dependentManager.getMasterBreakpoint(monolith.breakpoint) ?: return null
+    return (master as XBreakpointBase<*, *, *>).asProxy()
+  }
 
-    override fun clearMasterBreakpoint(breakpoint: XBreakpointProxy) {
-      val monolith = breakpoint as? XBreakpointProxy.Monolith ?: return
-      dependentManager.clearMasterBreakpoint(monolith.breakpoint)
-    }
+  override fun isLeaveEnabled(breakpoint: XBreakpointProxy): Boolean {
+    val monolith = breakpoint as? MonolithBreakpointProxy ?: return false
+    return dependentManager.isLeaveEnabled(monolith.breakpoint)
+  }
 
-    override fun setMasterBreakpoint(breakpoint: XBreakpointProxy, masterBreakpoint: XBreakpointProxy, selected: Boolean) {
-      val breakpointMonolith = breakpoint as? XBreakpointProxy.Monolith ?: return
-      val masterMonolith = masterBreakpoint as? XBreakpointProxy.Monolith ?: return
-      dependentManager.setMasterBreakpoint(breakpointMonolith.breakpoint, masterMonolith.breakpoint, selected)
-    }
+  override fun clearMasterBreakpoint(breakpoint: XBreakpointProxy) {
+    val monolith = breakpoint as? MonolithBreakpointProxy ?: return
+    dependentManager.clearMasterBreakpoint(monolith.breakpoint)
+  }
+
+  override fun setMasterBreakpoint(breakpoint: XBreakpointProxy, masterBreakpoint: XBreakpointProxy, selected: Boolean) {
+    val breakpointMonolith = breakpoint as? MonolithBreakpointProxy ?: return
+    val masterMonolith = masterBreakpoint as? MonolithBreakpointProxy ?: return
+    dependentManager.setMasterBreakpoint(breakpointMonolith.breakpoint, masterMonolith.breakpoint, selected)
   }
 }

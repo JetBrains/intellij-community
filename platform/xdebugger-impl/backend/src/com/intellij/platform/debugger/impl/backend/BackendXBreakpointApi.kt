@@ -12,8 +12,8 @@ import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.impl.breakpoints.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.rpc.models.findValue

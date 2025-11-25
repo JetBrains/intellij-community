@@ -150,7 +150,7 @@ public class BreakpointManager {
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, XBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, MonolithBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
           }
         }
       }

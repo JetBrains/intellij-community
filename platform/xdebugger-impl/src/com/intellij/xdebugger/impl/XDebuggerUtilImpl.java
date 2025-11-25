@@ -77,7 +77,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointTypeProxyKt.*;
 import static org.jetbrains.concurrency.Promises.asPromise;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
@@ -310,7 +310,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       temporary, editor, canRemove, false, null);
     return asPromise(future).then(b -> {
       if (b == null) return null;
-      if (b instanceof XLineBreakpointProxy.Monolith monolith) {
+      if (b instanceof MonolithLineBreakpointProxy monolith) {
         return monolith.getBreakpoint();
       }
       XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(b.getId());

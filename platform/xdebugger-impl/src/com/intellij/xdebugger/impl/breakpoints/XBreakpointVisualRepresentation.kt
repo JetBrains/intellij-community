@@ -250,7 +250,7 @@ class XBreakpointVisualRepresentation(
             myBreakpoint.setFileUrl(file!!.url)
             myBreakpoint.setLine(line)
             val session = debuggerManager.currentSession
-            if (session != null && myBreakpoint is XLineBreakpointProxy.Monolith) {
+            if (session != null && myBreakpoint is MonolithLineBreakpointProxy) {
               // TODO IJPL-185322 support active breakpoint update on DnD
               session.checkActiveNonLineBreakpointOnRemoval(myBreakpoint.breakpoint)
             }

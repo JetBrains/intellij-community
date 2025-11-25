@@ -38,9 +38,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     super(type, breakpointManager, properties, state);
     myType = type;
     myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(),
-                                                                 XBreakpointProxyKt.asProxy(this),
+                                                                 MonolithBreakpointProxyKt.asProxy(this),
                                                                  !SplitDebuggerMode.isSplitDebugger(),
-                                                                 XBreakpointManagerProxyKt.asProxy(breakpointManager));
+                                                                 MonolithBreakpointManagerKt.asProxy(breakpointManager));
   }
 
   /**

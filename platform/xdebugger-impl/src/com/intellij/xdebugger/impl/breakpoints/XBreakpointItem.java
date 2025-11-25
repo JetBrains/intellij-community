@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxyKt.asProxy;
 
 @ApiStatus.Internal
 public class XBreakpointItem extends BreakpointItem {

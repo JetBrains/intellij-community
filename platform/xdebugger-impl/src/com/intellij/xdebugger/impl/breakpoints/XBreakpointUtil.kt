@@ -89,7 +89,7 @@ object XBreakpointUtil {
   fun findSelectedBreakpoint(project: Project, editor: Editor): Pair<GutterIconRenderer?, XBreakpoint<*>?> {
     val pair = findSelectedBreakpointProxy(project, editor)
     val (renderer, breakpoint) = pair
-    if (breakpoint is XBreakpointProxy.Monolith) {
+    if (breakpoint is MonolithBreakpointProxy) {
       return Pair.create(renderer, breakpoint.breakpoint)
     }
     return Pair.create(null, null)
@@ -202,7 +202,7 @@ object XBreakpointUtil {
   ): Promise<XLineBreakpoint<*>?> {
     return toggleLineBreakpointProxy(project, position, selectVariantByPositionColumn, editor, temporary, moveCaret, canRemove).asPromise()
       .then { proxy ->
-        (proxy as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpoint<*>
+        (proxy as? MonolithLineBreakpointProxy)?.breakpoint as? XLineBreakpoint<*>
       }
   }
 

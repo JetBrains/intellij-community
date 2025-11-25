@@ -38,7 +38,7 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.breakpoints.MonolithBreakpointProxyKt.asProxy;
 
 @ApiStatus.Internal
 public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Delegate {
@@ -132,7 +132,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   @Deprecated
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
-    this(project, XBreakpointManagerProxyKt.asProxy((XBreakpointManagerImpl)breakpointManager),
+    this(project, MonolithBreakpointManagerKt.asProxy((XBreakpointManagerImpl)breakpointManager),
          asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
   }
 
