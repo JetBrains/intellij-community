@@ -6,6 +6,7 @@ import com.intellij.codeInsight.javadoc.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.model.Pointer;
@@ -14,7 +15,6 @@ import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -244,7 +244,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   private @Nullable PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
     if (className != null) {
-      final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, StdFileTypes.CLASS.getDefaultExtension()));
+      final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, JavaClassFileType.INSTANCE.getDefaultExtension()));
       if (classFile != null) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(classFile);
         if (psiFile instanceof PsiJavaFile) {
@@ -255,7 +255,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     final VirtualFile[] children = dirFile.getChildren();
     for (VirtualFile child : children) {
-      if (FileTypeRegistry.getInstance().isFileOfType(child, StdFileTypes.CLASS) && child.isValid()) {
+      if (FileTypeRegistry.getInstance().isFileOfType(child, JavaClassFileType.INSTANCE) && child.isValid()) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(child);
         if (psiFile instanceof PsiJavaFile) {
           return (PsiJavaFile)psiFile;
