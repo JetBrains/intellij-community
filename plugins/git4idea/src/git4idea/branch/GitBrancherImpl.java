@@ -353,10 +353,14 @@ class GitBrancherImpl implements GitBrancher {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      execute(indicator);
-      if (myCallInAwtAfterExecution != null) {
-        Application application = ApplicationManager.getApplication();
-        application.invokeAndWait(myCallInAwtAfterExecution, application.getDefaultModalityState());
+      try {
+        execute(indicator);
+      }
+      finally {
+        if (myCallInAwtAfterExecution != null) {
+          Application application = ApplicationManager.getApplication();
+          application.invokeAndWait(myCallInAwtAfterExecution, application.getDefaultModalityState());
+        }
       }
     }
 
