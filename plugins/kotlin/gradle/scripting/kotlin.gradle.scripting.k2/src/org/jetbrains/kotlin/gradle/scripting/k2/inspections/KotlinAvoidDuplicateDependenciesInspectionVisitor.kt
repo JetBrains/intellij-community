@@ -33,16 +33,18 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
     override fun visitKtFile(file: KtFile) {
         val dependencyBlocks = file.findScriptInitializers("dependencies").mapNotNull { it.getBlock() }
 
-        // find all dependencies with their argument type in all the dependencies blocks
-        val dependencies = dependencyBlocks.flatMap { it.descendantsOfType<KtCallExpression>() }
-            .mapNotNull {
-                val dependencyType = findDependencyType(it)
-                if (dependencyType == DependencyType.SINGLE_ARGUMENT || dependencyType == DependencyType.NAMED_ARGUMENTS) it to dependencyType
-                else null
+        val dependencyToTypeList = dependencyBlocks.flatMap { it.descendantsOfType<KtCallExpression>() }
+            .mapNotNull { callExpr ->
+                val dependencyType = findDependencyType(callExpr)
+                if (dependencyType == DependencyType.SINGLE_ARGUMENT || dependencyType == DependencyType.NAMED_ARGUMENTS) {
+                    callExpr to dependencyType
+                } else {
+                    null
+                }
             }
 
         // group duplicate dependencies
-        val duplicateGroups = findDuplicateGroups(dependencies)
+        val duplicateGroups = findDuplicateGroups(dependencyToTypeList)
 
         duplicateGroups.forEach { (key, dependencies) ->
             if (isOnTheFly) reportProblemInOnTheFlyMode(key, dependencies)
