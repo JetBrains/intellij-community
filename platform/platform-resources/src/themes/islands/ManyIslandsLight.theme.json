@@ -271,6 +271,7 @@
       "cardBackground": "#F7F8FA",
       "cardBorderColor": "#F7F8FA",
       "cardHeaderTitle": "#000000",
+      "cardHeaderLinkBackground": "#EBECF0",
       "cardHeaderSubtitle": "#6C707E",
       "cardFooterForeground": "#6C707E",
       "chroniclesBackground": "#EBECF0",
