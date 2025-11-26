@@ -190,9 +190,9 @@ open class IdeStatusBarImpl @Internal constructor(
       val toolWindowWidget = ToolWindowsWidget(disposable, this)
       val toolWindowWidgetComponent = wrapCustomStatusBarWidget(toolWindowWidget)
       widgetRegistry.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
-                                                          position = Position.LEFT,
-                                                          component = toolWindowWidgetComponent,
-                                                          order = LoadingOrder.ANY))
+                                                           position = Position.LEFT,
+                                                           component = toolWindowWidgetComponent,
+                                                           order = LoadingOrder.ANY))
       Disposer.register(disposable, toolWindowWidget)
       toolWindowWidgetComponent.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
       leftPanel().add(toolWindowWidgetComponent)
@@ -540,10 +540,12 @@ open class IdeStatusBarImpl @Internal constructor(
     return notifyProgressByBalloon(type = type, htmlBody = htmlBody, icon = null, listener = null)
   }
 
-  override fun notifyProgressByBalloon(type: MessageType,
-                                       htmlBody: @NlsContexts.PopupContent String,
-                                       icon: Icon?,
-                                       listener: HyperlinkListener?): BalloonHandler {
+  override fun notifyProgressByBalloon(
+    type: MessageType,
+    htmlBody: @NlsContexts.PopupContent String,
+    icon: Icon?,
+    listener: HyperlinkListener?,
+  ): BalloonHandler {
     return createInfoAndProgressPanel().notifyByBalloon(type, htmlBody, icon, listener)
   }
 
@@ -996,7 +998,8 @@ private fun createVisibleProgress(progressModel: ProgressModel, info: TaskInfo, 
 
   if (progressModel.isFinished(info)) {
     finisher()
-  } else {
+  }
+  else {
     updater()
   }
 
