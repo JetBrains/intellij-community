@@ -16,10 +16,11 @@ open class RoundedLineBorder @JvmOverloads constructor(
   fun setColor(color: Color) {
     lineColor = color
   }
+  protected open fun getColorToDraw(c: Component): Color = lineColor ?: JBColor.border()
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val g2d = g as? Graphics2D ?: return
-    g2d.color = lineColor
+    g2d.color = getColorToDraw(c)
     RectanglePainter2D.DRAW.paint(g2d,
                                   x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble(),
                                   arcDiameter.toDouble(), LinePainter2D.StrokeType.CENTERED, thickness.toDouble(),
