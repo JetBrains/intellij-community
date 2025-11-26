@@ -1,241 +1,202 @@
-package com.intellij.database.datagrid;
+package com.intellij.database.datagrid
 
-import com.intellij.database.connection.throwable.info.ErrorInfo;
-import com.intellij.database.data.types.BaseDataTypeConversion;
-import com.intellij.database.data.types.DataTypeConversion;
-import com.intellij.database.dump.BaseGridHandler;
-import com.intellij.database.dump.DumpHandler;
-import com.intellij.database.dump.ExtractionHelper;
-import com.intellij.database.extractors.DataExtractorFactory;
-import com.intellij.database.extractors.ExtractionConfig;
-import com.intellij.database.extractors.ObjectFormatterMode;
-import com.intellij.database.run.actions.DumpSource;
-import com.intellij.database.run.actions.DumpSource.DataGridSource;
-import com.intellij.database.run.ui.DataAccessType;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCodeFragment;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.database.connection.throwable.info.ErrorInfo
+import com.intellij.database.data.types.BaseDataTypeConversion
+import com.intellij.database.data.types.DataTypeConversion
+import com.intellij.database.datagrid.GridMutator.ColumnsMutator
+import com.intellij.database.dump.BaseGridHandler
+import com.intellij.database.dump.DumpHandler
+import com.intellij.database.dump.ExtractionHelper
+import com.intellij.database.extractors.DataExtractorFactory
+import com.intellij.database.extractors.ExtractionConfig
+import com.intellij.database.extractors.ObjectFormatterMode
+import com.intellij.database.run.actions.DumpSource
+import com.intellij.database.run.actions.DumpSource.DataGridSource
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiCodeFragment
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+open class GridHelperImpl(
+  private val myPageSizeKey: String,
+  private val myLimitPageSizeKey: String,
+  private var myDefaultPageSize: Int,
+  private var myDefaultLimitPageSize: Boolean
+) : GridHelper {
+  @JvmOverloads
+  constructor(insideNotebook: Boolean = true, limitDefaultPageSizeBig: Boolean = true) : this(
+    if (insideNotebook) DEFAULT_PAGE_SIZE_PROP else DEFAULT_PAGE_SIZE_BIG_PROP,
+    if (insideNotebook) LIMIT_DEFAULT_PAGE_SIZE_PROP else LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP,
+    if (insideNotebook) DEFAULT_PAGE_SIZE else DEFAULT_PAGE_SIZE_BIG,
+    insideNotebook || limitDefaultPageSizeBig)
 
-import static com.intellij.database.run.ui.DataAccessType.DATABASE_DATA;
-import static com.intellij.util.containers.ContainerUtil.emptyList;
-
-public class GridHelperImpl implements GridHelper {
-  public static final String LIMIT_DEFAULT_PAGE_SIZE_PROP = "datagrid.limit.default.page.size";
-  public static final String DEFAULT_PAGE_SIZE_PROP = "datagrid.default.page.size";
-  public static final int DEFAULT_PAGE_SIZE = 10;
-  public static final String LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP = "datagrid.limit.default.page.size.big";
-  public static final String DEFAULT_PAGE_SIZE_BIG_PROP = "datagrid.default.page.size.big";
-  public static final int DEFAULT_PAGE_SIZE_BIG = 100;
-  private final String myPageSizeKey;
-  private final String myLimitPageSizeKey;
-  private int myDefaultPageSize;
-  private boolean myDefaultLimitPageSize;
-
-  public GridHelperImpl() {
-    this(true);
+  override fun createDataTypeConversionBuilder(): DataTypeConversion.Builder {
+    return BaseDataTypeConversion.Builder()
   }
 
-  public GridHelperImpl(boolean insideNotebook) {
-    this(insideNotebook, true);
+  override fun getDefaultMode(): ObjectFormatterMode {
+    return ObjectFormatterMode.SQL_SCRIPT
   }
 
-  public GridHelperImpl(boolean insideNotebook, boolean limitDefaultPageSizeBig) {
-    this(insideNotebook ? DEFAULT_PAGE_SIZE_PROP : DEFAULT_PAGE_SIZE_BIG_PROP,
-         insideNotebook ? LIMIT_DEFAULT_PAGE_SIZE_PROP : LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP,
-         insideNotebook ? DEFAULT_PAGE_SIZE : DEFAULT_PAGE_SIZE_BIG,
-         insideNotebook || limitDefaultPageSizeBig);
+  override fun canEditTogether(
+    grid: CoreGrid<GridRow, GridColumn>,
+    columns: MutableList<GridColumn>,
+  ): Boolean = true
+
+  override fun findUniqueColumn(
+    grid: CoreGrid<GridRow, GridColumn>,
+    columns: MutableList<GridColumn>,
+  ): GridColumn? = null
+
+  override fun getColumnIcon(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn, forDisplay: Boolean): Icon? {
+    return null
   }
 
-  public GridHelperImpl(@NotNull String pageSizeKey, @NotNull String limitPageSizeKey, int defaultPageSize, boolean defaultLimitPageSize) {
-    myPageSizeKey = pageSizeKey;
-    myLimitPageSizeKey = limitPageSizeKey;
-    myDefaultPageSize = defaultPageSize;
-    myDefaultLimitPageSize = defaultLimitPageSize;
+  override fun getVirtualFile(grid: CoreGrid<GridRow, GridColumn>): VirtualFile? {
+    return GridUtil.getVirtualFile(grid)
   }
 
-  @Override
-  public @NotNull DataTypeConversion.Builder createDataTypeConversionBuilder() {
-    return new BaseDataTypeConversion.Builder();
+  override fun applyFix(project: Project, fix: ErrorInfo.Fix, editor: Any?) {
   }
 
-  @Override
-  public @NotNull ObjectFormatterMode getDefaultMode() {
-    return ObjectFormatterMode.SQL_SCRIPT;
+  override fun getUnambiguousColumnNames(grid: CoreGrid<GridRow, GridColumn>): List<String> {
+    return emptyList()
   }
 
-  @Override
-  public boolean canEditTogether(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull List<GridColumn> columns) {
-    return true;
+  override fun canAddRow(grid: CoreGrid<GridRow, GridColumn>): Boolean {
+    return true
   }
 
-  @Override
-  public @Nullable GridColumn findUniqueColumn(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull List<GridColumn> columns) {
-    return null;
+  override fun getTableName(grid: CoreGrid<GridRow, GridColumn>): String? {
+    return null
   }
 
-  @Override
-  public @Nullable Icon getColumnIcon(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull GridColumn column, boolean forDisplay) {
-    return null;
+  override fun getNameForDump(source: DataGrid): String? {
+    return GridUtil.getEditorTabName(source)
   }
 
-  @Override
-  public @Nullable VirtualFile getVirtualFile(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return GridUtil.getVirtualFile(grid);
+  override fun getQueryText(source: DataGrid): String {
+    return ""
   }
 
-  @Override
-  public void applyFix(@NotNull Project project, ErrorInfo.@NotNull Fix fix, @Nullable Object editor) {
+  override fun isDatabaseHookUp(grid: DataGrid): Boolean {
+    return false
   }
 
-  @Override
-  public @NotNull List<String> getUnambiguousColumnNames(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return emptyList();
+  override fun getDefaultPageSize(): Int {
+    return PropertiesComponent.getInstance().getInt(myPageSizeKey, myDefaultPageSize)
   }
 
-  @Override
-  public boolean canAddRow(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return true;
-  }
-
-  @Override
-  public @Nullable String getTableName(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return null;
-  }
-
-  @Override
-  public @Nullable String getNameForDump(@NotNull DataGrid source) {
-    return GridUtil.getEditorTabName(source);
-  }
-
-  @Override
-  public @NotNull String getQueryText(@NotNull DataGrid source) {
-    return "";
-  }
-
-  @Override
-  public boolean isDatabaseHookUp(@NotNull DataGrid grid) {
-    return false;
-  }
-
-  @Override
-  public int getDefaultPageSize() {
-    return PropertiesComponent.getInstance().getInt(myPageSizeKey, myDefaultPageSize);
-  }
-
-  @Override
-  public void setDefaultPageSize(int value) {
-    PropertiesComponent.getInstance().setValue(myPageSizeKey, value, myDefaultPageSize);
+  override fun setDefaultPageSize(value: Int) {
+    PropertiesComponent.getInstance().setValue(myPageSizeKey, value, myDefaultPageSize)
   }
 
   /**
    * Sets the default page size only for this helper instance without overriding a global setting.
-   * However, a value from global setting (set by {@link #setDefaultPageSize}) will be used if it exists,
+   * However, a value from global setting (set by [.setDefaultPageSize]) will be used if it exists,
    * overriding the value set by this method.
    */
-  public void setOwnDefaultPageSize(int value) {
-    myDefaultPageSize = value;
+  fun setOwnDefaultPageSize(value: Int) {
+    myDefaultPageSize = value
   }
 
-  @Override
-  public boolean isLimitDefaultPageSize() {
-    return PropertiesComponent.getInstance().getBoolean(myLimitPageSizeKey, myDefaultLimitPageSize);
+  override fun isLimitDefaultPageSize(): Boolean {
+    return PropertiesComponent.getInstance().getBoolean(myLimitPageSizeKey, myDefaultLimitPageSize)
   }
 
 
-  @Override
-  public void setLimitDefaultPageSize(boolean value) {
-    PropertiesComponent.getInstance().setValue(myLimitPageSizeKey, value, myDefaultLimitPageSize);
+  override fun setLimitDefaultPageSize(value: Boolean) {
+    PropertiesComponent.getInstance().setValue(myLimitPageSizeKey, value, myDefaultLimitPageSize)
   }
 
   /**
    * Sets the option of limiting of the default page size only for this helper instance without overriding a global setting.
-   * However, a value from global setting (set by {@link #setLimitDefaultPageSize}) will be used if it exists,
+   * However, a value from global setting (set by [.setLimitDefaultPageSize]) will be used if it exists,
    * overriding the value set by this method.
    */
-  public void setOwnLimitDefaultPageSize(boolean value) {
-    myDefaultLimitPageSize = value;
+  fun setOwnLimitDefaultPageSize(value: Boolean) {
+    myDefaultLimitPageSize = value
   }
 
-  @Override
-  public @Nullable DumpSource<?> createDumpSource(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
-    return new DataGridSource(grid);
+  override fun createDumpSource(grid: DataGrid, e: AnActionEvent): DumpSource<*>? {
+    return DataGridSource(grid)
   }
 
-  @Override
-  public @NotNull DumpHandler<?> createDumpHandler(@NotNull DumpSource<?> source,
-                                                   @NotNull ExtractionHelper manager,
-                                                   @NotNull DataExtractorFactory factory,
-                                                   @NotNull ExtractionConfig config) {
-    DataGridSource gridSource = (DataGridSource)source;
-    DataGrid grid = gridSource.getGrid();
-    return new BaseGridHandler(grid.getProject(), grid, gridSource.getNameProvider(), manager, factory, config) {
-      @Override
-      protected DataProducer createProducer(@NotNull DataGrid grid, int index) {
-        GridModel<GridRow, GridColumn> model = grid.getDataModel(DATABASE_DATA);
-        return new IdentityDataProducerImpl(new DataConsumer.Composite(),
-                                            model.getColumns(),
-                                            new ArrayList<>(model.getRows()),
-                                            0,
-                                            0);
+  override fun createDumpHandler(
+    source: DumpSource<*>,
+    manager: ExtractionHelper,
+    factory: DataExtractorFactory,
+    config: ExtractionConfig
+  ): DumpHandler<*> {
+    val gridSource = source as DataGridSource
+    val grid = gridSource.grid
+    return object : BaseGridHandler(grid.getProject(), grid, gridSource.nameProvider, manager, factory, config) {
+      override fun createProducer(grid: DataGrid, index: Int): DataProducer {
+        val model = grid.getDataModel(DataAccessType.DATABASE_DATA)
+        return IdentityDataProducerImpl(DataConsumer.Composite(),
+                                        model.getColumns(),
+                                        ArrayList<GridRow?>(model.getRows()),
+                                        0,
+                                        0)
       }
-    };
+    }
   }
 
-  @Override
-  public boolean isMixedTypeColumns(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return true;
+  override fun isMixedTypeColumns(grid: CoreGrid<GridRow, GridColumn>): Boolean {
+    return true
   }
 
-  @Override
-  public boolean isSortingApplicable() {
-    return true;
+  override fun isSortingApplicable(): Boolean {
+    return true
   }
 
-  @Override
-  public boolean hasTargetForEditing(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return true;
+  override fun hasTargetForEditing(grid: CoreGrid<GridRow, GridColumn>): Boolean {
+    return true
   }
 
-  @Override
-  public boolean canMutateColumns(@NotNull CoreGrid<GridRow, GridColumn> grid) {
+  override fun canMutateColumns(grid: CoreGrid<GridRow, GridColumn>): Boolean {
     return grid.isEditable() && grid.isReady() &&
-           grid.getDataHookup() instanceof DocumentDataHookUp &&
-           grid.getDataHookup().getMutator() instanceof GridMutator.ColumnsMutator<GridRow, GridColumn> &&
-           grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getRowCount() != 0; // todo: check maybe it's okay to add columns to empty file
+           grid.getDataHookup() is DocumentDataHookUp &&
+           grid.getDataHookup().getMutator() is ColumnsMutator<GridRow?, GridColumn?> && grid.getDataModel(
+      DataAccessType.DATA_WITH_MUTATIONS).getRowCount() != 0 // todo: check maybe it's okay to add columns to empty file
   }
 
-  @Override
-  public boolean isEditable(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return true;
+  override fun isEditable(grid: CoreGrid<GridRow, GridColumn>): Boolean {
+    return true
   }
 
-  @Override
-  public void setFilterText(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull String text, int caretPosition) {
-    grid.setFilterText(text, caretPosition);
+  override fun setFilterText(grid: CoreGrid<GridRow, GridColumn>, text: String, caretPosition: Int) {
+    grid.setFilterText(text, caretPosition)
   }
 
-  @Override
-  public @Nullable Language getCellLanguage(@NotNull CoreGrid<GridRow, GridColumn> grid,
-                                            @NotNull ModelIndex<GridRow> row,
-                                            @NotNull ModelIndex<GridColumn> column) {
-    return null;
+  override fun getCellLanguage(
+    grid: CoreGrid<GridRow, GridColumn>,
+    row: ModelIndex<GridRow>,
+    column: ModelIndex<GridColumn>
+  ): Language? {
+    return null
   }
 
-  @Override
-  public @Nullable PsiCodeFragment createCellCodeFragment(@NotNull String text,
-                                                          @NotNull Project project,
-                                                          @NotNull CoreGrid<GridRow, GridColumn> grid,
-                                                          @NotNull ModelIndex<GridRow> row,
-                                                          @NotNull ModelIndex<GridColumn> column) {
-    return null;
+  override fun createCellCodeFragment(
+    text: String,
+    project: Project,
+    grid: CoreGrid<GridRow, GridColumn>,
+    row: ModelIndex<GridRow>,
+    column: ModelIndex<GridColumn>
+  ): PsiCodeFragment? {
+    return null
+  }
+
+  companion object {
+    const val LIMIT_DEFAULT_PAGE_SIZE_PROP: String = "datagrid.limit.default.page.size"
+    const val DEFAULT_PAGE_SIZE_PROP: String = "datagrid.default.page.size"
+    const val DEFAULT_PAGE_SIZE: Int = 10
+    const val LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP: String = "datagrid.limit.default.page.size.big"
+    const val DEFAULT_PAGE_SIZE_BIG_PROP: String = "datagrid.default.page.size.big"
+    const val DEFAULT_PAGE_SIZE_BIG: Int = 100
   }
 }
