@@ -120,6 +120,18 @@ object PluginManagerCore {
     @Volatile
     var initFuture: Deferred<PluginSet>? = null
     var ourBuildNumber: BuildNumber? = null
+
+    @Synchronized
+    fun addPluginLoadingErrors(errors: List<PluginLoadingError>) {
+      pluginErrors.addAll(errors)
+    }
+
+    @Synchronized
+    fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
+      val result = pluginErrors.toList()
+      pluginErrors.clear()
+      return result
+    }
   }
 
   @ApiStatus.Internal
@@ -184,18 +196,7 @@ object PluginManagerCore {
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.isLoaded ?: false
 
   @ApiStatus.Internal
-  fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
-    val pluginErrors = pluginsState.pluginErrors
-    synchronized(pluginErrors) {
-      if (pluginErrors.isEmpty()) {
-        return emptyList()
-      }
-
-      val errors = pluginErrors.toList()
-      pluginErrors.clear()
-      return errors
-    }
-  }
+  fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> = pluginsState.getAndClearPluginLoadingErrors()
 
   @ApiStatus.Internal
   @JvmStatic
@@ -609,12 +610,8 @@ object PluginManagerCore {
     pluginsState.pluginLoadingErrors = pluginErrorsById
 
     val errorList = preparePluginErrors(globalErrors)
-    if (!errorList.isEmpty()) {
-      val pluginErrors = pluginsState.pluginErrors
-      synchronized(pluginErrors) {
-        pluginErrors.addAll(errorList)
-        pluginErrors.addAll(actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
-      }
+    if (!errorList.isEmpty()) { // FIXME why actions is not checked here?
+      pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
     }
 
     if (initContext.checkEssentialPlugins) {
