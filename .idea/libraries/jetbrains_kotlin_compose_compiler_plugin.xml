@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jetbrains.kotlin.compose.compiler.plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.2.21-RC2">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.2.21">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21-RC2/kotlin-compose-compiler-plugin-2.2.21-RC2.jar">
-          <sha256sum>b966deee44a88b20f1567378c640e9c54496039a835675c339cf7e3b9e6c76f1</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21/kotlin-compose-compiler-plugin-2.2.21.jar">
+          <sha256sum>9b8557b39014b5064be2add4b1a6e404b778c8c7dc4f7b815f376969d6fcff99</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21-RC2/kotlin-compose-compiler-plugin-2.2.21-RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21/kotlin-compose-compiler-plugin-2.2.21.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21-RC2/kotlin-compose-compiler-plugin-2.2.21-RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21/kotlin-compose-compiler-plugin-2.2.21-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
