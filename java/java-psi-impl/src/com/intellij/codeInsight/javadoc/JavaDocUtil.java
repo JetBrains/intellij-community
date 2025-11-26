@@ -115,12 +115,15 @@ public final class JavaDocUtil {
       PsiClass aClass = classRef.isEmpty()
                         ? PsiTreeUtil.getParentOfType(context, PsiClass.class, false)
                         : findClassFromRef(manager, facade, classRef, context);
-      if (aClass == null) return null;
-      if (fragmentIndex >= 0) {
-        return findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager);
-      } else {
-        return findReference(aClass, useNavigationElement, refTextCorrected, poundIndex);
+      while (aClass != null){
+        PsiElement reference = fragmentIndex >= 0
+          ? findFragmentOwner(aClass, useNavigationElement, refTextCorrected, fragmentIndex, manager)
+          : findReference(aClass, context, useNavigationElement, refTextCorrected, poundIndex);
+          if (reference != null) return reference;
+
+          aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
       }
+      return null;
     }
   }
 
@@ -141,10 +144,11 @@ public final class JavaDocUtil {
   }
 
   private static @Nullable PsiElement findReference(@NotNull PsiClass refClass,
+                                                    PsiElement context,
                                                     boolean useNavigationElement,
                                                     String refTextCorrected,
                                                     int poundIndex) {
-    PsiElement member = findReferencedMember(refClass, refTextCorrected.substring(poundIndex + 1), refClass);
+    PsiElement member = findReferencedMember(refClass, refTextCorrected.substring(poundIndex + 1), context);
     return useNavigationElement && member != null ? member.getNavigationElement() : member;
   }
 
