@@ -2,7 +2,7 @@
 package com.intellij.lambda.sampleTestsWithPlugin
 
 import com.intellij.ide.plugins.PluginModuleDescriptor
-import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.starter.UltimateTestCases.JpsEmptyProject
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
@@ -23,7 +23,7 @@ import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
-@ExecuteInMonolithAndSplitMode
+@RunInMonolithAndSplitMode
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {

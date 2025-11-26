@@ -19,7 +19,7 @@ private val jupiterUniqueId = UniqueId.forEngine(JUPITER_ENGINE_ID)
 /**
  * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
  *
- * When a test class is annotated with [ExecuteInMonolithAndSplitMode], this engine ensures
+ * When a test class is annotated with [RunInMonolithAndSplitMode], this engine ensures
  * tests execute in two phases:
  * 1. All MONOLITH mode tests across all methods
  * 2. All SPLIT mode tests across all methods
@@ -29,7 +29,7 @@ class GroupByModeTestEngine : TestEngine {
     const val ENGINE_ID = "group-by-mode"
     val engineClassName = GroupByModeTestEngine::class.simpleName
 
-    private val annotationName = ExecuteInMonolithAndSplitMode::class.simpleName
+    private val annotationName = RunInMonolithAndSplitMode::class.simpleName
 
     private fun log(message: String) = logOutput("[$engineClassName]: $message")
   }
@@ -90,7 +90,7 @@ class GroupByModeTestEngine : TestEngine {
       .filter { className ->
         try {
           val clazz = Class.forName(className)
-          val hasAnnotation = clazz.isAnnotationPresent(ExecuteInMonolithAndSplitMode::class.java)
+          val hasAnnotation = clazz.isAnnotationPresent(RunInMonolithAndSplitMode::class.java)
           log("Class $className has @$annotationName: $hasAnnotation")
           hasAnnotation
         }

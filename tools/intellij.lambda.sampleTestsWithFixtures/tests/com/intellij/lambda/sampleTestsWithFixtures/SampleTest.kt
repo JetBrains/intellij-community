@@ -2,7 +2,7 @@
 package com.intellij.lambda.sampleTestsWithFixtures
 
 import com.intellij.lambda.sampleTestsWithFixtures.util.openNewEditor
-import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
 
-@ExecuteInMonolithAndSplitMode
+@RunInMonolithAndSplitMode
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {

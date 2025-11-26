@@ -1,6 +1,6 @@
 package com.intellij.lambda.sampleTestsWithPlugin
 
-import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.openapi.application.ApplicationManager
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest
@@ -11,7 +11,7 @@ import java.time.Instant
 import java.util.*
 import java.util.stream.Stream
 
-@ExecuteInMonolithAndSplitMode
+@RunInMonolithAndSplitMode
 class UnitSplitExampleTest {
   @TestTemplate
   fun simpleUnitTest() {

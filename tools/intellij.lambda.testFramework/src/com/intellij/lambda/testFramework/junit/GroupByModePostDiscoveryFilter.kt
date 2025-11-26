@@ -7,7 +7,7 @@ import org.junit.platform.engine.TestDescriptor
 import org.junit.platform.launcher.PostDiscoveryFilter
 
 /**
- * Filters out classes with [ExecuteInMonolithAndSplitMode] annotation from Jupiter engine execution.
+ * Filters out classes with [RunInMonolithAndSplitMode] annotation from Jupiter engine execution.
  * These classes will only be executed by [GroupByModeTestEngine].
  */
 class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {

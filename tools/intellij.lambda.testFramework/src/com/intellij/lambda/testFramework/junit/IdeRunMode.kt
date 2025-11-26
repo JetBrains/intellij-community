@@ -12,17 +12,17 @@ enum class IdeRunMode {
 
 fun getModesToRun(annotatedElement: AnnotatedElement?): List<IdeRunMode> {
   if (annotatedElement == null) return emptyList()
-  val annotation = AnnotationUtils.findAnnotation(annotatedElement, ExecuteInMonolithAndSplitMode::class.java).orNull()
+  val annotation = AnnotationUtils.findAnnotation(annotatedElement, RunInMonolithAndSplitMode::class.java).orNull()
 
   return annotation?.mode?.toList() ?: emptyList()
 }
 
 fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
-  val annotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java).orElse(
-    AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java).orNull()
+  val annotation = AnnotationUtils.findAnnotation(context.testMethod, RunInMonolithAndSplitMode::class.java).orElse(
+    AnnotationUtils.findAnnotation(context.testClass, RunInMonolithAndSplitMode::class.java).orNull()
   )
 
-  if (annotation == null) throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
+  if (annotation == null) throw IllegalStateException("The test is expected to have ${RunInMonolithAndSplitMode::javaClass.name} annotation")
 
   // Check if we're running under GroupByModeTestEngine with a mode filter
   val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orNull()

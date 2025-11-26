@@ -21,7 +21,7 @@ import java.lang.annotation.Inherited
   RemoteDevRun::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-annotation class ExecuteInMonolithAndSplitMode(vararg val mode: IdeRunMode = [IdeRunMode.MONOLITH, IdeRunMode.SPLIT])
+annotation class RunInMonolithAndSplitMode(vararg val mode: IdeRunMode = [IdeRunMode.MONOLITH, IdeRunMode.SPLIT])
 
 
 internal val isGroupedExecutionEnabled: Boolean = SystemProperties.getBooleanProperty("idea.test.grouped.execution", true)
