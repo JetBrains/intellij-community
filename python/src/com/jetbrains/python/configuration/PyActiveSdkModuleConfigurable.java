@@ -5,8 +5,10 @@ import com.intellij.application.options.ModuleAwareProjectConfigurable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.module.PyModuleService;
+import com.jetbrains.python.sdk.BasePySdkExtKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +28,11 @@ public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectCo
   protected final boolean isSuitableForModule(@NotNull Module module) {
     // One can't configure Python SDK for a random module as random module doesn't have a `baseDir`
     // which is a requirement for various SDK types.
-    return PyModuleService.getInstance().isPythonModule(module);
+    // All python modules do have it.
+    // But some IDEs might not want to see Python SDK configs for their modules even when they have `baseDir`.
+    // Those might disable the registry key.
+    return PyModuleService.getInstance().isPythonModule(module) ||
+           (Registry.is("python.show.modules.with.base.dir") && BasePySdkExtKt.getBaseDir(module) != null);
   }
 
   @Override

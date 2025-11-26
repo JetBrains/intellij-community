@@ -36,6 +36,8 @@
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
+    <!-- Only modules with `baseDir` support Python SDKs -->
+    <registryKey defaultValue="true" description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir" key="python.show.modules.with.base.dir" restartRequired="true"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
