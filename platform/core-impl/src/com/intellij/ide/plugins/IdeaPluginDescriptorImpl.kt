@@ -408,6 +408,10 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor {
 val IdeaPluginDescriptorImpl.contentModules: List<ContentModuleDescriptor>
   get() = if (this is PluginMainDescriptor) contentModules else emptyList()
 
+@get:Internal
+val IdeaPluginDescriptorImpl.isLoaded: Boolean
+  get() = pluginClassLoader != null
+
 internal fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
   if (dependencies.isEmpty()) {
     return ModuleDependencies.EMPTY

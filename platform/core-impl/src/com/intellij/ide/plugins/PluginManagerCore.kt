@@ -181,7 +181,7 @@ object PluginManagerCore {
 
   @ApiStatus.Experimental
   @JvmStatic
-  fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.pluginClassLoader != null
+  fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.isLoaded ?: false
 
   @ApiStatus.Internal
   fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
