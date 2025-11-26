@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
+import com.intellij.codeInsight.hint.api.*;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -40,6 +38,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.Range;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -56,6 +55,7 @@ import java.util.*;
  */
 public final class MethodParameterInfoHandler
   implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>,
+             LightJavaParameterInfoHandler,
              DumbAware {
   private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
@@ -100,20 +100,50 @@ public final class MethodParameterInfoHandler
     return argumentList;
   }
 
+  @Override
+  public @Nullable LightJavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
+    PsiExpressionList expressionList = findArgumentList(file, offset, -1, true);
+    if (expressionList == null) return null;
+    CandidateWithPresentation[] candidateWithPresentationArray = getMethodsWithPresentation(expressionList, false);
+    if (candidateWithPresentationArray == null) return null;
+
+    LightJavaParameterUpdateInfoContext updateInfoContext = new LightJavaParameterUpdateInfoContext(file, candidateWithPresentationArray, offset);
+    updateParameterInfoInternal(expressionList, updateInfoContext);
+
+    return new LightJavaParameterInfo(
+      ContainerUtil.map(
+        candidateWithPresentationArray, candidate -> {
+          UIPresentation presentation = getUIPresentation(candidate.presentation, updateInfoContext.getCurrentParameterIndex(),
+                                                          true, false, true);
+          return new LightJavaMethodPresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
+        }
+      ),
+      updateInfoContext.getHighlightedSignatureIndex(),
+      updateInfoContext.getCurrentParameterIndex()
+    );
+  }
+
   private static PsiExpressionList findMethodsForArgumentList(final CreateParameterInfoContext context,
                                                               final @NotNull PsiExpressionList argumentList) {
+    CandidateWithPresentation[] items = getMethodsWithPresentation(argumentList, true);
+    if (items == null) return null;
+    context.setItemsToShow(items);
+    return argumentList;
+  }
 
+  private static CandidateWithPresentation @Nullable [] getMethodsWithPresentation(@NotNull PsiExpressionList argumentList, boolean searchJavaDoc) {
     CandidateInfo[] candidates = getMethods(argumentList);
     if (candidates.length == 0) {
       return null;
     }
     PsiMethod method = argumentList.getParent() instanceof PsiCall call ? call.resolveMethod() : null;
-    CandidateWithPresentation[] items = ContainerUtil.map2Array(candidates, CandidateWithPresentation.class,
-      c -> new CandidateWithPresentation(c,
-                                         MethodPresentation.from((PsiMethod)c.getElement(),
-                                                    getCandidateInfoSubstitutor(c, method != null && c.getElement() == method))));
-    context.setItemsToShow(items);
-    return argumentList;
+    return ContainerUtil
+      .map2Array(candidates, CandidateWithPresentation.class, c ->
+        new CandidateWithPresentation(c, MethodPresentation.from(
+          (PsiMethod)c.getElement(),
+          getCandidateInfoSubstitutor(c, method != null && c.getElement() == method),
+          searchJavaDoc
+        )));
   }
 
   @Override
@@ -681,7 +711,7 @@ public final class MethodParameterInfoHandler
       return null;
     }
 
-    MethodPresentation methodPresentation = MethodPresentation.from(method, substitutor);
+    MethodPresentation methodPresentation = MethodPresentation.from(method, substitutor, true);
     return updateMethodPresentation(context, methodPresentation);
   }
 
@@ -692,10 +722,43 @@ public final class MethodParameterInfoHandler
 
   private static String updateMethodPresentation(@NotNull ParameterInfoUIContext context, @NotNull MethodPresentation methodPresentation) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    UIPresentation result = getUIPresentation(methodPresentation, context.getCurrentParameterIndex(), settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO,
+                                              context.isSingleParameterInfo(), context.isUIComponentEnabled());
+    if (context.isSingleParameterInfo()) {
+      context.setupRawUIComponentPresentation(result.text());
+      return result.text();
+    }
+    else {
+      int highlightStartOffset = -1;
+      int highlightEndOffset = -1;
+      if (result.activeParameterIndex() != null) {
+        Range<@NotNull Integer> range = result.parameterList().get(result.activeParameterIndex()).getRange();
+        highlightStartOffset = range.getFrom();
+        highlightEndOffset = range.getTo();
+      }
+
+      return context.setupUIComponentPresentation(
+        result.text(),
+        highlightStartOffset,
+        highlightEndOffset,
+        !context.isUIComponentEnabled(),
+        methodPresentation.deprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
+        false,
+        context.getDefaultParameterColor()
+      );
+    }
+  }
+
+  private static @NotNull UIPresentation getUIPresentation(@NotNull MethodPresentation methodPresentation,
+                                                           int globalParameterIndex,
+                                                           boolean showFullSignature,
+                                                           boolean isSingleParameterInfo,
+                                                           boolean isUIEnabled) {
     int numParams = methodPresentation.parameters().size();
+    ArrayList<LightJavaParameterPresentation> parameterRangeList = new ArrayList<>(numParams);
     @Nls StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
-    if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
+    if (showFullSignature && !isSingleParameterInfo) {
       if (!methodPresentation.constructor()) {
         buffer.append(methodPresentation.modifiers());
         buffer.append(methodPresentation.type());
@@ -705,32 +768,30 @@ public final class MethodParameterInfoHandler
       buffer.append("(");
     }
 
-    int currentParameter = context.getCurrentParameterIndex();
-
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
+    Integer activeParameterIndex = null;
     if (numParams > 0) {
-      if (context.isSingleParameterInfo() && methodPresentation.varArgs() && currentParameter >= numParams) currentParameter = numParams - 1;
+      if (isSingleParameterInfo && methodPresentation.varArgs() && globalParameterIndex >= numParams) globalParameterIndex = numParams - 1;
 
       for (int j = 0; j < numParams; j++) {
-        if (context.isSingleParameterInfo() && j != currentParameter) continue;
+        if (isSingleParameterInfo && j != globalParameterIndex) continue;
 
         ParameterPresentation parameterPresentation = methodPresentation.parameters().get(j);
 
         int startOffset = buffer.length();
 
-        if (context.isSingleParameterInfo()) buffer.append("<b>");
+        if (isSingleParameterInfo) buffer.append("<b>");
         buffer.append(parameterPresentation.modifiers());
         String type = parameterPresentation.type();
-        buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
+        buffer.append(isSingleParameterInfo ? StringUtil.escapeXmlEntities(type) : type);
         String name = parameterPresentation.name();
-        if (!context.isSingleParameterInfo()) {
+        if (!isSingleParameterInfo) {
           buffer.append(" ");
           buffer.append(name);
         }
-        if (context.isSingleParameterInfo()) buffer.append("</b>");
+        if (isSingleParameterInfo) buffer.append("</b>");
+        int endOffset = buffer.length();
 
-        if (context.isSingleParameterInfo()) {
+        if (isSingleParameterInfo) {
           String javaDoc = parameterPresentation.javaDoc();
           if (javaDoc != null) {
             if (javaDoc.length() < 100) {
@@ -743,44 +804,33 @@ public final class MethodParameterInfoHandler
           }
         }
         else {
-          int endOffset = buffer.length();
 
           if (j < numParams - 1) {
             buffer.append(", ");
           }
 
-          if (context.isUIComponentEnabled() &&
-              (j == currentParameter || j == numParams - 1 && parameterPresentation.varArgs() && currentParameter >= numParams)) {
-            highlightStartOffset = startOffset;
-            highlightEndOffset = endOffset;
+          if (isUIEnabled &&
+              (j == globalParameterIndex || j == numParams - 1 && parameterPresentation.varArgs() && globalParameterIndex >= numParams)) {
+            activeParameterIndex = parameterRangeList.size();
           }
         }
+
+        parameterRangeList.add(new LightJavaParameterPresentation(
+          new Range<>(startOffset, endOffset),
+          parameterPresentation.javaDoc()
+        ));
       }
     }
     else {
       buffer.append(CodeInsightBundle.message("parameter.info.no.parameters"));
     }
 
-    if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
+    if (showFullSignature && !isSingleParameterInfo) {
       buffer.append(")");
     }
 
     String text = buffer.toString();
-    if (context.isSingleParameterInfo()) {
-      context.setupRawUIComponentPresentation(text);
-      return text;
-    }
-    else {
-      return context.setupUIComponentPresentation(
-        text,
-        highlightStartOffset,
-        highlightEndOffset,
-        !context.isUIComponentEnabled(),
-        methodPresentation.deprecated() && !context.isSingleParameterInfo() && !context.isSingleOverload(),
-        false,
-        context.getDefaultParameterColor()
-      );
-    }
+    return new UIPresentation(text, parameterRangeList, activeParameterIndex);
   }
 
   private static String removeHyperlinks(String html) {
@@ -895,6 +945,10 @@ public final class MethodParameterInfoHandler
     return object instanceof CandidateWithPresentation cwp ? cwp.getMethod() : null;
   }
 
+
+  private record UIPresentation(@Nls @NotNull String text, @NotNull List<LightJavaParameterPresentation> parameterList, @Nullable Integer activeParameterIndex) {
+  }
+
   private record CandidateWithPresentation(@NotNull CandidateInfo candidateInfo, @NotNull MethodPresentation presentation) {
     public @NotNull PsiMethod getMethod() {
       return (PsiMethod)candidateInfo.getElement();
@@ -903,14 +957,17 @@ public final class MethodParameterInfoHandler
 
   private record ParameterPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, @Nullable String javaDoc,
                                        boolean varArgs) {
-    static @NotNull ParameterPresentation from(@NotNull PsiParameter param, @NotNull PsiSubstitutor substitutor) {
+    static @NotNull ParameterPresentation from(@NotNull PsiParameter param, @NotNull PsiSubstitutor substitutor, boolean searchJavadoc) {
       PsiType paramType = substitutor.substitute(param.getType());
       String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
       StringBuilder buffer = new StringBuilder();
       appendModifierList(buffer, paramType, param);
       String modifiers = buffer.toString();
       String name = param.getName();
-      String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
+      String javaDoc = null;
+      if (searchJavadoc) {
+        javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
+      }
       if (javaDoc != null) {
         javaDoc = removeHyperlinks(javaDoc);
       }
@@ -921,14 +978,14 @@ public final class MethodParameterInfoHandler
   private record MethodPresentation(@NotNull String modifiers, @NotNull String type, @NotNull String name, boolean constructor,
                                     boolean deprecated, boolean varArgs,
                                     @NotNull List<@NotNull ParameterPresentation> parameters) {
-    static @NotNull MethodPresentation from(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    static @NotNull MethodPresentation from(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean searchJavaDoc) {
       PsiType returnType = substitutor.substitute(method.getReturnType());
       String type = returnType == null ? "" : returnType.getPresentableText(true);
       StringBuilder buffer = new StringBuilder();
       appendModifierList(buffer, returnType, method);
       String modifiers = buffer.toString();
       List<ParameterPresentation> parameters =
-        ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));
+        ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor, searchJavaDoc));
       return new MethodPresentation(modifiers, type, method.getName(), method.isConstructor(), method.isDeprecated(),
                                     method.isVarArgs(), parameters);
     }
