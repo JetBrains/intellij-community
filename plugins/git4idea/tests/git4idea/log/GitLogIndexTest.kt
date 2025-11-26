@@ -13,7 +13,6 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcsUtil.VcsUtil
@@ -22,7 +21,7 @@ import git4idea.test.*
 import junit.framework.TestCase
 
 abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
-  private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
+  private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
@@ -187,7 +186,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     touch(file, "content")
     repo.addCommit("some message")
 
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = setOf(getCommitIndex(makeCommit(author, file)))
 
     append(file, "even more content")
@@ -201,7 +200,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   }
 
   fun `test author filter with different committer`() {
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = mutableSetOf<Int>()
     var hashToPick = ""
     build {
@@ -231,7 +230,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   }
 
   fun `test text and author filter`() {
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val keyword = "keyword"
     val expected = mutableSetOf<Int>()
 

@@ -713,14 +713,27 @@ f:com.intellij.vcs.log.impl.HashImpl
 - write(java.io.DataOutput):V
 f:com.intellij.vcs.log.impl.VcsUserImpl
 - com.intellij.vcs.log.VcsUser
+- sf:Companion:com.intellij.vcs.log.impl.VcsUserImpl$Companion
 - <init>(java.lang.String,java.lang.String):V
+- f:copy(java.lang.String,java.lang.String):com.intellij.vcs.log.impl.VcsUserImpl
+- bs:copy$default(com.intellij.vcs.log.impl.VcsUserImpl,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.vcs.log.impl.VcsUserImpl
 - equals(java.lang.Object):Z
 - getEmail():java.lang.String
 - getName():java.lang.String
 - hashCode():I
+bf:com.intellij.vcs.log.impl.VcsUserImpl$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.vcs.log.impl.VcsUserImpl$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.vcs.log.impl.VcsUserImpl
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.vcs.log.impl.VcsUserImpl):V
+f:com.intellij.vcs.log.impl.VcsUserImpl$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.vcs.log.util.VcsUserUtil
 - <init>():V
 - s:capitalizeName(java.lang.String):java.lang.String
+- s:createUser(java.lang.String,java.lang.String):com.intellij.vcs.log.VcsUser
 - s:emailToLowerCase(java.lang.String):java.lang.String
 - s:getFirstAndLastName(java.lang.String):com.intellij.openapi.util.Couple
 - s:getNameFromEmail(java.lang.String):java.lang.String

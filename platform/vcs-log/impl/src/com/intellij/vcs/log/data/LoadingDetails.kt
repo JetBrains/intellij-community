@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -35,7 +35,7 @@ open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: VcsLogCommitS
   override fun getChanges(parent: VcsLogCommitStorageIndex): Collection<Change> = emptyList()
 
   companion object {
-    private val STUB_USER = VcsUserImpl("", "")
+    private val STUB_USER = VcsUserUtil.createUser("", "")
   }
 }
 

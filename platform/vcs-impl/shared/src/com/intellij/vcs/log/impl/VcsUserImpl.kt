@@ -1,54 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.util.VcsUserUtil;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.util.VcsUserUtil
+import kotlinx.serialization.Serializable
 
 /**
- * Note: users are considered equal if they have the same name and email. Emails are converted to a lower case in constructor.
+ * Note: users are considered equal if they have the same name and email.
  */
-public final class VcsUserImpl implements VcsUser {
-  private final @NotNull String myName;
-  private final @NotNull String myEmail;
+@Serializable
+data class VcsUserImpl @Deprecated("Use VcsUserUtil.createUser") constructor(private val name: String, private val email: String) : VcsUser {
+  override fun getName(): String = name
 
-  public VcsUserImpl(@NotNull String name, @NotNull String email) {
-    myName = name;
-    myEmail = VcsUserUtil.emailToLowerCase(email);
-  }
+  override fun getEmail(): String = email
 
-  @Override
-  public @NotNull String getName() {
-    return myName;
-  }
-
-  @Override
-  public @NotNull String getEmail() {
-    return myEmail;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    VcsUserImpl user = (VcsUserImpl)o;
-
-    if (!myName.equals(user.myName)) return false;
-    if (!myEmail.equals(user.myEmail)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(myName, myEmail);
-  }
-
-  @Override
-  public String toString() {
-    return VcsUserUtil.toExactString(this);
+  override fun toString(): String {
+    return VcsUserUtil.toExactString(this)
   }
 }
