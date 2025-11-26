@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.content.Content
@@ -38,7 +39,7 @@ internal class BytecodeEditorSynchronizer(private val project: Project) : FileEd
    */
   private fun findContentForSourceFile(contents: Array<Content>, sourceFile: VirtualFile): Content? {
     val psiFile = PsiManager.getInstance(project).findFile(sourceFile) ?: return null
-    if (psiFile !is PsiJavaFile) return null
+    if (psiFile !is PsiClassOwner) return null
     for (psiClass in psiFile.classes) {
       val classFile = ByteCodeViewerManager.findClassFile(psiClass) ?: continue
       val content = contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == classFile } ?: continue
