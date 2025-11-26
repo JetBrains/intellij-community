@@ -191,7 +191,15 @@ private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
   }
 
   val showCountRowsAction = isSinglePage && pageModel.isTotalRowCountUpdateable() && !querying && grid.isReady()
-  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction, GridHelper.get(grid).getDefaultPageSize())
+  return ChangePageSizeActionState(
+    text,
+    description,
+    tooltip,
+    enabled,
+    pageModel.getPageSize(),
+    showCountRowsAction,
+    GridHelper.get(grid).defaultPageSizeProperty.get()
+  )
 }
 
 private fun updateIsTotalRowCountUpdateable(grid: DataGrid) {

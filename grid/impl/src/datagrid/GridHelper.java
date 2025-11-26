@@ -32,7 +32,7 @@ import static com.intellij.database.datagrid.GridUtilKt.findAllGridsInFile;
 import static com.intellij.database.extractors.ExtractionConfigKt.builder;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
 
-public interface GridHelper extends CoreGridHelper {
+public interface GridHelper extends CoreGridHelper, GridHelperPropertyProvider {
   Key<GridHelper> GRID_HELPER_KEY = new Key<>("GRID_HELPER_KEY");
 
   @NotNull
@@ -89,14 +89,6 @@ public interface GridHelper extends CoreGridHelper {
   String getQueryText(@NotNull DataGrid source);
 
   boolean isDatabaseHookUp(@NotNull DataGrid grid);
-
-  int getDefaultPageSize();
-
-  void setDefaultPageSize(int value);
-
-  boolean isLimitDefaultPageSize();
-
-  void setLimitDefaultPageSize(boolean value);
 
   @Nullable
   DumpSource<?> createDumpSource(@NotNull DataGrid grid, @NotNull AnActionEvent e);

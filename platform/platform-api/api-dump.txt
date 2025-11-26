@@ -149,6 +149,7 @@ com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 - a:installTheme(javax.swing.UIDefaults):V
 - a:isDark():Z
 - a:isInitialized():Z
+f:com.intellij.ide.util.PropertiesComponentExKt
 c:com.intellij.ide.util.treeView.NodeRenderer
 - p:getMinHeight():I
 com.intellij.ide.warmup.WarmupConfigurator

@@ -13,7 +13,6 @@ import com.intellij.database.extractors.ObjectFormatterMode
 import com.intellij.database.run.actions.DumpSource
 import com.intellij.database.run.actions.DumpSource.DataGridSource
 import com.intellij.database.run.ui.DataAccessType
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -22,17 +21,12 @@ import com.intellij.psi.PsiCodeFragment
 import javax.swing.Icon
 
 open class GridHelperImpl(
-  private val myPageSizeKey: String,
-  private val myLimitPageSizeKey: String,
-  private var myDefaultPageSize: Int,
-  private var myDefaultLimitPageSize: Boolean
-) : GridHelper {
+  private val myPropertyProvider: GridHelperPropertyProvider
+) : GridHelper, GridHelperPropertyProvider by myPropertyProvider {
   @JvmOverloads
-  constructor(insideNotebook: Boolean = true, limitDefaultPageSizeBig: Boolean = true) : this(
-    if (insideNotebook) DEFAULT_PAGE_SIZE_PROP else DEFAULT_PAGE_SIZE_BIG_PROP,
-    if (insideNotebook) LIMIT_DEFAULT_PAGE_SIZE_PROP else LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP,
-    if (insideNotebook) DEFAULT_PAGE_SIZE else DEFAULT_PAGE_SIZE_BIG,
-    insideNotebook || limitDefaultPageSizeBig)
+  constructor(insideNotebook: Boolean = IS_INSIDE_NOTEBOOK_DEFAULT_VALUE) : this(
+    GridHelperPropertyProviderImpl(insideNotebook)
+  )
 
   override fun createDataTypeConversionBuilder(): DataTypeConversion.Builder {
     return BaseDataTypeConversion.Builder()
@@ -85,41 +79,6 @@ open class GridHelperImpl(
 
   override fun isDatabaseHookUp(grid: DataGrid): Boolean {
     return false
-  }
-
-  override fun getDefaultPageSize(): Int {
-    return PropertiesComponent.getInstance().getInt(myPageSizeKey, myDefaultPageSize)
-  }
-
-  override fun setDefaultPageSize(value: Int) {
-    PropertiesComponent.getInstance().setValue(myPageSizeKey, value, myDefaultPageSize)
-  }
-
-  /**
-   * Sets the default page size only for this helper instance without overriding a global setting.
-   * However, a value from global setting (set by [.setDefaultPageSize]) will be used if it exists,
-   * overriding the value set by this method.
-   */
-  fun setOwnDefaultPageSize(value: Int) {
-    myDefaultPageSize = value
-  }
-
-  override fun isLimitDefaultPageSize(): Boolean {
-    return PropertiesComponent.getInstance().getBoolean(myLimitPageSizeKey, myDefaultLimitPageSize)
-  }
-
-
-  override fun setLimitDefaultPageSize(value: Boolean) {
-    PropertiesComponent.getInstance().setValue(myLimitPageSizeKey, value, myDefaultLimitPageSize)
-  }
-
-  /**
-   * Sets the option of limiting of the default page size only for this helper instance without overriding a global setting.
-   * However, a value from global setting (set by [.setLimitDefaultPageSize]) will be used if it exists,
-   * overriding the value set by this method.
-   */
-  fun setOwnLimitDefaultPageSize(value: Boolean) {
-    myDefaultLimitPageSize = value
   }
 
   override fun createDumpSource(grid: DataGrid, e: AnActionEvent): DumpSource<*>? {
@@ -189,14 +148,5 @@ open class GridHelperImpl(
     column: ModelIndex<GridColumn>
   ): PsiCodeFragment? {
     return null
-  }
-
-  companion object {
-    const val LIMIT_DEFAULT_PAGE_SIZE_PROP: String = "datagrid.limit.default.page.size"
-    const val DEFAULT_PAGE_SIZE_PROP: String = "datagrid.default.page.size"
-    const val DEFAULT_PAGE_SIZE: Int = 10
-    const val LIMIT_DEFAULT_PAGE_SIZE_BIG_PROP: String = "datagrid.limit.default.page.size.big"
-    const val DEFAULT_PAGE_SIZE_BIG_PROP: String = "datagrid.default.page.size.big"
-    const val DEFAULT_PAGE_SIZE_BIG: Int = 100
   }
 }
