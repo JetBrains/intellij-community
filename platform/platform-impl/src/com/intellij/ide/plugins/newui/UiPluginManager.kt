@@ -75,6 +75,12 @@ class UiPluginManager {
     }
   }
 
+  fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
+      getController().setPluginsAutoUpdateEnabled(enabled)
+    }
+  }
+
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
     return getController().loadErrors(sessionId)
   }

@@ -228,8 +228,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       UpdateOptions state = UpdateSettings.getInstance().getState();
       boolean selected = myAutoUpdateOption.isSelected();
       if (state.isPluginsAutoUpdateEnabled() != selected) {
-        state.setPluginsAutoUpdateEnabled(selected);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
+        UiPluginManager.getInstance().setPluginsAutoUpdateEnabled(selected);
       }
     }
   }
@@ -264,9 +263,7 @@ public class PluginUpdateDialog extends DialogWrapper {
                 .addAction(new NotificationAction(IdeBundle.message("updates.auto.update.title")) {
                   @Override
                   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                    UpdateSettings.getInstance().getState().setPluginsAutoUpdateEnabled(true);
-                    ApplicationManager.getApplication().getService(PluginAutoUpdateService.class)
-                      .onSettingsChanged();
+                    UiPluginManager.getInstance().setPluginsAutoUpdateEnabled(true);
                     notification.expire();
                   }
                 })

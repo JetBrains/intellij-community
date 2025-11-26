@@ -26,8 +26,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
@@ -657,6 +659,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
     return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
+  }
+
+  override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    UpdateSettings.getInstance().isPluginsAutoUpdateEnabled = enabled
+    service<PluginAutoUpdateService>().onSettingsChanged()
   }
 
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {

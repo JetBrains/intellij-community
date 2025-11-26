@@ -2015,8 +2015,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
     if (myPluginsAutoUpdateEnabled != null) {
       UpdateOptions state = UpdateSettings.getInstance().getState();
       if (state.isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
-        state.setPluginsAutoUpdateEnabled(myPluginsAutoUpdateEnabled);
-        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
+        UiPluginManager.getInstance().setPluginsAutoUpdateEnabled(myPluginsAutoUpdateEnabled);
       }
     }
 

@@ -64,6 +64,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun loadDescriptorById(pluginId: PluginId): PluginDto?
   suspend fun getCustomRepoTags(): Set<String>
   suspend fun updateCustomRepositories(repositoryUrls: List<String>)
+  suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
 
 
   companion object {
