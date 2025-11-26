@@ -9,9 +9,11 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.KeyEvent
@@ -24,7 +26,7 @@ import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.window.rememberCursorPositionProvider
+import androidx.compose.ui.window.rememberPopupPositionProviderAtPosition
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -36,21 +38,27 @@ import org.jetbrains.jewel.ui.theme.menuStyle
 public object ContextMenuRepresentation : ContextMenuRepresentation {
     @Composable
     override fun Representation(state: ContextMenuState, items: () -> List<ContextMenuItem>) {
-        val isOpen = state.status is ContextMenuState.Status.Open
+        val status = state.status
+        val currentItems by rememberUpdatedState(items)
 
-        if (isOpen) {
-            val resolvedItems by remember { derivedStateOf { items() } }
+        if (status is ContextMenuState.Status.Open) {
+            val resolvedItems by remember { derivedStateOf { currentItems() } }
 
-            if (resolvedItems.isNotEmpty()) {
-                ContextMenu(
-                    onDismissRequest = {
-                        state.status = ContextMenuState.Status.Closed
-                        true
-                    },
-                    style = JewelTheme.menuStyle,
-                ) {
-                    contextItems(resolvedItems)
-                }
+            if (resolvedItems.isEmpty()) {
+                // If there is no entry in the context menu, close it immediately.
+                state.status = ContextMenuState.Status.Closed
+                return
+            }
+
+            ContextMenu(
+                position = status.rect.center,
+                onDismissRequest = {
+                    state.status = ContextMenuState.Status.Closed
+                    true
+                },
+                style = JewelTheme.menuStyle,
+            ) {
+                contextItems(resolvedItems)
             }
         }
     }
@@ -58,6 +66,7 @@ public object ContextMenuRepresentation : ContextMenuRepresentation {
 
 @Composable
 internal fun ContextMenu(
+    position: Offset,
     onDismissRequest: (InputMode) -> Boolean,
     modifier: Modifier = Modifier,
     focusable: Boolean = true,
@@ -67,10 +76,11 @@ internal fun ContextMenu(
     var focusManager: FocusManager? by remember { mutableStateOf(null) }
     var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
     val menuController = remember(onDismissRequest) { DefaultMenuController(onDismissRequest = onDismissRequest) }
+    val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
 
     Popup(
-        popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
-        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        popupPositionProvider = rememberPopupPositionProviderAtPosition(position, style.metrics.offset),
+        onDismissRequest = { currentOnDismissRequest(InputMode.Touch) },
         properties = PopupProperties(focusable = focusable),
         onPreviewKeyEvent = { false },
         onKeyEvent = {
