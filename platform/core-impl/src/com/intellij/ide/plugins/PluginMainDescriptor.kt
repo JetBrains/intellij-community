@@ -170,17 +170,14 @@ class PluginMainDescriptor(
 
 
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
-    // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
-    if (!isMarkedForLoading) {
-      return defaultValue
-    }
-
+    val pluginClassLoader = pluginClassLoader
+                            ?: return defaultValue
     val baseName = resourceBundleBaseName
     if (baseName == null) {
       return defaultValue
     }
     return (try {
-      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(pluginClassLoader, baseName), key, defaultValue ?: "")
     }
     catch (_: MissingResourceException) {
       LOG.info("Cannot find plugin $pluginId resource-bundle: $baseName")
