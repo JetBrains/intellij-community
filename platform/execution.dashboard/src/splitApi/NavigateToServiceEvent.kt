@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 data class NavigateToServiceEvent(
-  val serviceId: RunDashboardServiceId?,
+  val serviceId: RunDashboardServiceId,
   val focus: Boolean
 )

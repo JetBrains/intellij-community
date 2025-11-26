@@ -88,7 +88,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     }
   }
 
-  fun fireNavigateToServiceEvent(serviceId: RunDashboardServiceId?, focus: Boolean){
+  fun fireNavigateToServiceEvent(serviceId: RunDashboardServiceId, focus: Boolean){
     scheduleSharedStateUpdate {
       navigateToServiceEvents.tryEmit(NavigateToServiceEvent(serviceId, focus))
     }

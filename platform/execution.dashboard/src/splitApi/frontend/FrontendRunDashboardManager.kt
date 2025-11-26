@@ -139,7 +139,6 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
   }
 
-
   fun getServicePresentations(): List<FrontendRunDashboardService> {
     return frontendDtos.value.map { dto -> FrontendRunDashboardService(dto) }
   }
