@@ -139,6 +139,9 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
             return;
           }
+          catch (ProcessCanceledException pce) {
+            throw pce;
+          }
           catch (RuntimeException ex) {
             
             File tempFile;
@@ -244,11 +247,13 @@ public final class ExportTestResultsAction extends DumbAwareAction {
         TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
-        return transform(outputFile, handler);
+        transform(outputFile, handler);
+        return true;
       }
       case BundledTemplate -> {
         try (InputStream bundledXsltUrl = getClass().getResourceAsStream("intellij-export.xsl")) {
-          return transformWithXslt(outputFile, new StreamSource(bundledXsltUrl));
+          transformWithXslt(outputFile, new StreamSource(bundledXsltUrl));
+          return true;
         }
       }
       case UserTemplate -> {
@@ -258,29 +263,26 @@ public final class ExportTestResultsAction extends DumbAwareAction {
                       ExecutionBundle.message("export.test.results.custom.template.not.found", xslFile.getPath()), null);
           return false;
         }
-        return transformWithXslt(outputFile, new StreamSource(xslFile));
+        transformWithXslt(outputFile, new StreamSource(xslFile));
+        return true;
       }
       default -> throw new IllegalArgumentException();
     }
   }
 
-  private boolean transformWithXslt(File outputFile, Source xslSource)
+  private void transformWithXslt(File outputFile, Source xslSource)
     throws TransformerConfigurationException, IOException, SAXException {
     TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler(xslSource);
     handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", myRunConfiguration.getName(),
                                                                            myRunConfiguration.getType().getDisplayName()));
 
-    return transform(outputFile, handler);
+    transform(outputFile, handler);
   }
 
-  private boolean transform(File outputFile, TransformerHandler handler) throws IOException, SAXException {
+  private void transform(File outputFile, TransformerHandler handler) throws IOException, SAXException {
     try (BufferedWriter w = new BufferedWriter(new FileWriter(outputFile, StandardCharsets.UTF_8))) {
       handler.setResult(new StreamResult(w));
       TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
-      return true;
-    }
-    catch (ProcessCanceledException e) {
-      return false;
     }
   }
 
