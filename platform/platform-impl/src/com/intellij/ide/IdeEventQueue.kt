@@ -1381,8 +1381,16 @@ fun IdeEventQueue.flushExistingEvents() {
   }
 }
 
+@Volatile
+private var lastNotificationTime: Long = 0
+
 @Suppress("HardCodedStringLiteral", "OPT_IN_USAGE")
 private fun showBalloonWithAdvice(e: Throwable) {
+  if (System.currentTimeMillis() - lastNotificationTime < 1.minutes.inWholeMilliseconds) {
+    return
+  } else {
+    lastNotificationTime = System.currentTimeMillis()
+  }
   val issueLink = "https://youtrack.jetbrains.com/issue/IJPL-219144"
   val assigneeLink = "https://jetbrains.slack.com/archives/DL4EL79HC"
   val notification = Notification("IDE-errors",
