@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl.status
@@ -108,7 +108,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
   }
 
   private fun getWidgetEffect(): WidgetEffect? {
-    return ClientProperty.get(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY)
+    return ClientProperty.get(this, WIDGET_EFFECT_KEY)
   }
 
   @TestOnly

@@ -53,7 +53,6 @@ import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.StepState
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
@@ -70,7 +69,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
-import java.awt.geom.RoundRectangle2D
 import java.util.function.Supplier
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
@@ -115,7 +113,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   private val rightPanel: JPanel
 
   private val centerPanel: JPanel
-  private var effectComponent: JComponent? = null
+  private val effectRenderer = WidgetEffectRenderer(this)
   private var info: @NlsContexts.StatusBarText String? = null
 
   private var preferredTextHeight: Int = 0
@@ -130,55 +128,10 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
-    internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
 
     private val LOG = logger<IdeStatusBarImpl>()
-
-    internal fun paintHover(
-      g: Graphics,
-      component: JComponent,
-      highlightBounds: Rectangle,
-      bg: Color,
-      statusBar: StatusBar
-    ) {
-      if (!ExperimentalUI.isNewUI() && (statusBar as? JComponent)?.getUI() is StatusBarUI) {
-        highlightBounds.y += StatusBarUI.BORDER_WIDTH.get()
-        highlightBounds.height -= StatusBarUI.BORDER_WIDTH.get()
-      }
-      g.color = bg
-      if (ExperimentalUI.isNewUI()) {
-        JBInsets.removeFrom(highlightBounds, calcHoverInsetsCorrection(component))
-        val g2 = g.create() as Graphics2D
-        try {
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-          val arc = JBUIScale.scale(4).toFloat()
-          val shape: RoundRectangle2D = RoundRectangle2D.Float(highlightBounds.x.toFloat(), highlightBounds.y.toFloat(), highlightBounds.width.toFloat(), highlightBounds.height.toFloat(), arc, arc)
-          g2.fill(shape)
-        }
-        finally {
-          g2.dispose()
-        }
-      }
-      else {
-        g.fillRect(highlightBounds.x, highlightBounds.y, highlightBounds.width, highlightBounds.height)
-      }
-    }
-
-    private fun calcHoverInsetsCorrection(effectComponent: JComponent): Insets {
-      val comp = effectComponent.insets
-      val hover = JBUI.CurrentTheme.StatusBar.hoverInsets()
-
-      // Don't allow hover be outside the component
-      @Suppress("UseDPIAwareInsets")
-      return Insets(
-        max(0, comp.top - hover.top),
-        max(0, comp.left - hover.left),
-        max(0, comp.bottom - hover.bottom),
-        max(0, comp.right - hover.right))
-    }
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -323,7 +276,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[CommonDataKeys.PROJECT] = project
     sink[PlatformDataKeys.STATUS_BAR] = this
-    sink[HOVERED_WIDGET_ID] = ClientProperty.get(effectComponent, WIDGET_ID)
+    sink[HOVERED_WIDGET_ID] = effectRenderer.getEffectWidgetId()
   }
 
   override fun setVisible(aFlag: Boolean) {
@@ -560,17 +513,16 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   private fun leftPanel(): JPanel {
-    var leftPanel = leftPanel
-    if (leftPanel == null) {
-      leftPanel = JPanel()
-      this.leftPanel = leftPanel
-      leftPanel.border = JBUI.Borders.empty(0, 4, 0, 1)
-      leftPanel.layout = BoxLayout(leftPanel, BoxLayout.X_AXIS)
-      leftPanel.isOpaque = false
-      add(leftPanel, BorderLayout.WEST)
-      this.leftPanel = leftPanel
+    var panel = leftPanel
+    if (panel == null) {
+      panel = JPanel()
+      panel.border = JBUI.Borders.empty(0, 4, 0, 1)
+      panel.layout = BoxLayout(panel, BoxLayout.X_AXIS)
+      panel.isOpaque = false
+      add(panel, BorderLayout.WEST)
+      leftPanel = panel
     }
-    return leftPanel
+    return panel
   }
 
   override fun setInfo(s: String?) {
@@ -665,55 +617,11 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   private fun applyWidgetEffect(component: JComponent?, widgetEffect: WidgetEffect?) {
-    if (effectComponent === component &&
-        (effectComponent == null || ClientProperty.get(effectComponent, WIDGET_EFFECT_KEY) == widgetEffect)) {
-      return
-    }
-
-    if (effectComponent != null) {
-      ClientProperty.put(effectComponent!!, WIDGET_EFFECT_KEY, null)
-      repaint(RelativeRectangle(effectComponent).getRectangleOn(this))
-    }
-
-    effectComponent = component
-    val effectComponent = effectComponent ?: return
-    // widgets shall not be opaque, as it may conflict with a background image, the following code can be dropped in the future
-    effectComponent.background = null
-    ClientProperty.put(effectComponent, WIDGET_EFFECT_KEY, widgetEffect)
-    if (effectComponent.isEnabled && widgetEffect != null) {
-      effectComponent.background = if (widgetEffect == WidgetEffect.HOVER) {
-        JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND
-      }
-      else {
-        JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
-      }
-    }
-    repaint(RelativeRectangle(effectComponent).getRectangleOn(this))
-  }
-
-  private fun paintWidgetEffectBackground(g: Graphics) {
-    val effectComponent = effectComponent ?: return
-    if (!effectComponent.isEnabled || !UIUtil.isAncestor(this, effectComponent) || MemoryUsagePanel.isInstance(effectComponent)) {
-      return
-    }
-
-    val highlightBounds = effectComponent.bounds
-    val point = RelativePoint(effectComponent.parent, highlightBounds.location).getPoint(this)
-    highlightBounds.location = point
-
-    val widgetEffect = ClientProperty.get(effectComponent, WIDGET_EFFECT_KEY)
-    val bg = if (widgetEffect == WidgetEffect.PRESSED) {
-      JBUI.CurrentTheme.StatusBar.Widget.PRESSED_BACKGROUND
-    }
-    else {
-      JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND
-    }
-
-    paintHover(g, effectComponent, highlightBounds, bg, this)
+    effectRenderer.applyEffect(component, widgetEffect)
   }
 
   override fun paintChildren(g: Graphics) {
-    paintWidgetEffectBackground(g)
+    effectRenderer.paintBackground(g)
     super.paintChildren(g)
     borderPainter.paintAfterChildren(this, g)
   }
@@ -728,11 +636,12 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
     val point = SwingUtilities.convertPoint(component, e.point, rightPanel)
     val widget = getVisibleChildAt(rightPanel, point)
+    val targetWidget = widget.takeIf { it !== rightPanel }
     if (e.clickCount == 0 || e.id == MouseEvent.MOUSE_RELEASED) {
-      applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.HOVER)
+      applyWidgetEffect(targetWidget, WidgetEffect.HOVER)
     }
     else if (e.clickCount == 1 && e.id == MouseEvent.MOUSE_PRESSED) {
-      applyWidgetEffect(if (widget !== rightPanel) widget else null, WidgetEffect.PRESSED)
+      applyWidgetEffect(targetWidget, WidgetEffect.PRESSED)
     }
 
     if (e.isConsumed || widget == null) {
@@ -801,12 +710,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     EdtInvocationManager.invokeLaterIfNeeded {
       val bean = widgetMap.remove(id)
       if (bean != null) {
-        effectComponent?.let {
-          if (UIUtil.isAncestor(bean.component, it)) {
-            ClientProperty.put(it, WIDGET_EFFECT_KEY, null)
-            effectComponent = null
-          }
-        }
+        effectRenderer.clearIfMatches(bean.component)
 
         val targetPanel = getTargetPanel(bean.position)
         targetPanel.remove(bean.component)
@@ -1162,9 +1066,11 @@ private fun createVisibleProgress(progressModel: ProgressModel, info: TaskInfo, 
   val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
   val activeFlow = MutableStateFlow(true)
   val updater = {
-    stateFlow.value = StepState(fraction = if (progressModel.isIndeterminate()) -1.0 else progressModel.getFraction(),
-                                text = progressModel.getText(),
-                                details = progressModel.getDetails())
+    stateFlow.value = StepState(
+      fraction = if (progressModel.isIndeterminate()) -1.0 else progressModel.getFraction(),
+      text = progressModel.getText(),
+      details = progressModel.getDetails(),
+    )
   }
 
   val finisher = { activeFlow.value = false }
@@ -1187,10 +1093,12 @@ private fun createVisibleProgress(progressModel: ProgressModel, info: TaskInfo, 
   val state = stateFlow.combine(activeFlow) { state, active -> state.takeIf { active } }
     .takeWhile { it != null }.map { it!! }
 
-  return VisibleProgress(title = info.title,
-                         clientId = clientId,
-                         canceler = { progressModel.cancel() }.takeIf { info.isCancellable },
-                         state = state)
+  return VisibleProgress(
+    title = info.title,
+    clientId = clientId,
+    canceler = { progressModel.cancel() }.takeIf { info.isCancellable },
+    state = state,
+  )
 }
 
 private class ProgressSetChangeEvent(

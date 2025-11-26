@@ -39,7 +39,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl.Companion.WIDGET_EFFECT_KEY
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
@@ -1291,7 +1290,11 @@ class InfoAndProgressPanel internal constructor(
           val bounds = bounds
           bounds.setLocation(0, 0)
           bounds.width -= counterComponent.getWidthAdditionForAlignmemt()
-          IdeStatusBarImpl.paintHover(g, this, bounds, JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND, statusBar)
+          WidgetEffectRenderer.paintHover(g = g,
+                                          component = this,
+                                          highlightBounds = bounds,
+                                          bg = JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND,
+                                          statusBar = statusBar)
         }
       }
       super.paintComponent(g)
