@@ -75,17 +75,15 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
     val project = event.project ?: return null
     return when (val state = clarifyState(event, project)) {
       null,
-      GitWidgetState.DoNotShow,
-      GitWidgetState.GitRepositoriesNotLoaded,
-        -> null
+      GitWidgetState.DoNotShow -> null
       is GitWidgetState.NoVcs -> {
         GitWidgetPlaceholder.updatePlaceholder(project, null)
         getPopupForRepoSetup(state.trustedProject, event)
       }
-      is GitWidgetState.OnRepository -> {
+      is GitWidgetState.OnRepository, GitWidgetState.GitRepositoriesNotLoaded, -> {
         val holder = GitRepositoriesHolder.getInstance(project)
-        val repo = holder.get(state.repository)
         val repositories = holder.getAll()
+        val repo = (state as? GitWidgetState.OnRepository)?.let { holder.get(it.repository) } ?: repositories.firstOrNull()
         if (repo == null || repositories.isEmpty()) null
         else GitBranchesPopup.createDefaultPopup(project, repo, repositories)
       }
