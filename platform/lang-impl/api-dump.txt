@@ -881,7 +881,6 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withLookupReason(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressMessageTitle(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
-- a:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkHomeFilter(kotlin.jvm.functions.Function1):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkName(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withSdkType(com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder

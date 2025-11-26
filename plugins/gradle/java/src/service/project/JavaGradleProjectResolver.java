@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.NioPathUtil;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +30,10 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
+import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData.AnnotationProcessorOutput;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -40,6 +44,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static org.jetbrains.plugins.gradle.service.project.GradleDetectEelToolKt.detectEel;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
 /**
@@ -403,74 +408,77 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
     var sdkName = ideaProject.getJdkName();
     if (sdkName != null) {
-      return lookupGradleJdkByName(sdkName);
+      return lookupGradleJdkByName(sdkName, detectEel(ideaProject));
     }
     return null;
   }
 
   private @Nullable Sdk lookupHolderModuleSdk(@NotNull IdeaModule ideaModule, @NotNull GradleSourceSetModel sourceSetModel) {
+    @Nullable
+    EelDescriptor eel = detectEel(ideaModule, sourceSetModel);
     var sdkName = ideaModule.getJdkName();
     if (sdkName != null) {
-      return lookupGradleJdkByName(sdkName);
+      return lookupGradleJdkByName(sdkName, eel);
     }
     var toolchainVersion = sourceSetModel.getToolchainVersion();
     if (toolchainVersion != null) {
-      return lookupGradleJdkByVersion(JavaVersion.compose(toolchainVersion));
+      return lookupGradleJdkByVersion(JavaVersion.compose(toolchainVersion), eel);
     }
     var projectSdkName = ideaModule.getProject().getJdkName();
     if (projectSdkName != null) {
-      return lookupGradleJdkByName(projectSdkName);
+      return lookupGradleJdkByName(projectSdkName, eel);
     }
     return null;
   }
 
   private @Nullable Sdk lookupSourceSetModuleSdk(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
+    var eel = detectEel(ideaModule, sourceSet);
     var sdkName = ideaModule.getJdkName();
     if (sdkName != null) {
-      return lookupGradleJdkByName(sdkName);
+      return lookupGradleJdkByName(sdkName, eel);
     }
     var javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
     if (javaToolchainHome != null) {
-      return lookupGradleJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
+      return lookupGradleJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()), eel);
     }
     var projectSdkName = ideaModule.getProject().getJdkName();
     if (projectSdkName != null) {
-      return lookupGradleJdkByName(projectSdkName);
+      return lookupGradleJdkByName(projectSdkName, eel);
     }
     return null;
   }
 
-  private @Nullable Sdk lookupGradleJdkByName(@NotNull String sdkName) {
-    var gradleJvm = lookupGradleJvmByName(sdkName);
+  private @Nullable Sdk lookupGradleJdkByName(@NotNull String sdkName, @Nullable EelDescriptor eel) {
+    var gradleJvm = lookupGradleJvmByName(sdkName, eel);
     if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByName(sdkName);
+    return ExternalSystemJdkUtil.lookupJdkByName(sdkName, eel);
   }
 
-  private @NotNull Sdk lookupGradleJdkByPath(@NotNull String sdkHome) {
-    var gradleJvm = lookupGradleJvmByPath(sdkHome);
+  private @NotNull Sdk lookupGradleJdkByPath(@NotNull String sdkHome, @Nullable EelDescriptor eel) {
+    var gradleJvm = lookupGradleJvmByPath(sdkHome, eel);
     if (gradleJvm != null) return gradleJvm;
     return ExternalSystemJdkUtil.lookupJdkByPath(sdkHome);
   }
 
-  private @Nullable Sdk lookupGradleJdkByVersion(@NotNull JavaVersion sdkVersion) {
-    var gradleJvm = lookupGradleJvmByVersion(sdkVersion);
+  private @Nullable Sdk lookupGradleJdkByVersion(@NotNull JavaVersion sdkVersion, @Nullable EelDescriptor eel) {
+    var gradleJvm = lookupGradleJvmByVersion(sdkVersion, eel);
     if (gradleJvm != null) return gradleJvm;
-    return ExternalSystemJdkUtil.lookupJdkByVersion(sdkVersion);
+    return ExternalSystemJdkUtil.lookupJdkByVersion(sdkVersion,eel);
   }
 
-  private @Nullable Sdk lookupGradleJvmByName(@NotNull String sdkName) {
+  private @Nullable Sdk lookupGradleJvmByName(@NotNull String sdkName, @Nullable EelDescriptor eel) {
     var javaVersion = JavaVersion.tryParse(sdkName);
     if (javaVersion == null) return null;
-    return lookupGradleJvmByVersion(javaVersion);
+    return lookupGradleJvmByVersion(javaVersion, eel);
   }
 
-  private @Nullable Sdk lookupGradleJvmByPath(@NotNull String sdkHome) {
+  private @Nullable Sdk lookupGradleJvmByPath(@NotNull String sdkHome, @Nullable EelDescriptor eel) {
     var javaVersion = ExternalSystemJdkUtil.getJavaVersion(sdkHome);
     if (javaVersion == null) return null;
-    return lookupGradleJvmByVersion(javaVersion);
+    return lookupGradleJvmByVersion(javaVersion, eel);
   }
 
-  private @Nullable Sdk lookupGradleJvmByVersion(@NotNull JavaVersion sdkVersion) {
+  private @Nullable Sdk lookupGradleJvmByVersion(@NotNull JavaVersion sdkVersion, @Nullable EelDescriptor eel) {
     var sdk = lookupGradleJvm();
     if (sdk == null) return null;
     if (ExternalSystemJdkUtil.matchJavaVersion(sdkVersion, sdk.getVersionString())) {

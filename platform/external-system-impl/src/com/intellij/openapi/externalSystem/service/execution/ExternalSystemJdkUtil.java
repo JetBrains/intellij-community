@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -248,20 +249,28 @@ public final class ExternalSystemJdkUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByName(@NotNull String sdkName) {
-    return SdkLookupUtil.lookupSdkBlocking(builder -> builder
-      .withSdkName(sdkName)
-      .withSdkType(getJavaSdkType())
-      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
-    );
+  public static @Nullable Sdk lookupJdkByName(@NotNull String sdkName, @Nullable EelDescriptor eel) {
+    return SdkLookupUtil.lookupSdkBlocking(((builder) -> {
+      if (eel != null) {
+        builder = builder.withEel(eel);
+      }
+      return builder.withSdkName(sdkName)
+        .withSdkType(getJavaSdkType())
+        .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
+    }));
   }
 
   @ApiStatus.Internal
-  public static @Nullable Sdk lookupJdkByVersion(@NotNull JavaVersion javaVersion) {
-    return SdkLookupUtil.lookupSdkBlocking(builder -> builder
-      .withVersionFilter(it -> matchJavaVersion(javaVersion, it))
-      .withSdkType(getJavaSdkType())
-      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+  public static @Nullable Sdk lookupJdkByVersion(@NotNull JavaVersion javaVersion, @Nullable EelDescriptor eel) {
+    return SdkLookupUtil.lookupSdkBlocking(
+      (builder) -> {
+        if (eel != null) {
+          builder = builder.withEel(eel);
+        }
+        return builder.withVersionFilter(it -> matchJavaVersion(javaVersion, it))
+          .withSdkType(getJavaSdkType())
+          .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP);
+      }
     );
   }
 
