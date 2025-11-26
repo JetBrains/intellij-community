@@ -69,12 +69,14 @@ class PluginLoadingResult {
     for (pluginList in descriptorLoadingResult.discoveredPlugins) {
       for (descriptor in pluginList.plugins) {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = pluginList.source is PluginsSourceContext.SystemPropertyProvided, initContext = initContext)
+        initAndAdd(descriptor = descriptor,
+                   overrideExistingIfCompatible = pluginList.source is PluginsSourceContext.SystemPropertyProvided,
+                   initContext = initContext)
       }
     }
   }
 
-  private fun initAndAdd(descriptor: PluginMainDescriptor, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
+  private fun initAndAdd(descriptor: PluginMainDescriptor, overrideExistingIfCompatible: Boolean, initContext: PluginInitializationContext) {
     initContext.pluginsPerProjectConfig?.let { conf ->
       if (conf.isMainProcess && descriptor.pluginId !in initContext.essentialPlugins) {
         return
@@ -109,7 +111,7 @@ class PluginLoadingResult {
     }
 
     if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, initContext.productBuildNumber) == null &&
-        (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
+        (overrideExistingIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
       PluginManagerCore.logger.info("$descriptor overrides $prevDescriptor")
       idMap[pluginId] = descriptor
       return
