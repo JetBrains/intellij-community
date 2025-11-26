@@ -6,9 +6,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShortenings
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -120,7 +123,7 @@ fun shortenReferencesInRange(
     classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
     callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
 ): List<SmartPsiElementPointer<KtElement>> = allowAnalysisFromWriteActionInEdt(file) {
-    collectPossibleReferenceShortenings(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
+    collectPossibleReferenceShorteningsForIde(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }.invokeShortening()
 
 @Suppress("unused")
@@ -208,3 +211,19 @@ private fun KDocName.deleteQualifier() {
 private inline infix fun <A, B, C> ((A) -> B).andThen(
     crossinline function: (B) -> C,
 ): (A) -> C = { function(this(it)) }
+
+context(_: KaSession)
+@ApiStatus.Internal
+fun collectPossibleReferenceShorteningsForIde(
+    file: KtFile,
+    selection: TextRange = file.textRange,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy
+): ShortenCommand = collectPossibleReferenceShortenings(
+    file,
+    selection,
+    shortenOptions,
+    classShortenStrategy,
+    callableShortenStrategy
+)

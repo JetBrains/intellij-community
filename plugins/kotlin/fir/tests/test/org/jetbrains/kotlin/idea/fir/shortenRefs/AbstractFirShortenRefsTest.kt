@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -61,7 +62,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
                 val selection = TextRange(selectionModel.selectionStart, selectionModel.selectionEnd)
                 if (!selectionModel.hasSelection()) error("No selection in input file")
                 analyze(file) {
-                    collectPossibleReferenceShortenings(
+                    collectPossibleReferenceShorteningsForIde(
                         file,
                         selection,
                         ShortenOptions.ALL_ENABLED,
