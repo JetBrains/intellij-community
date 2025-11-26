@@ -33,6 +33,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -52,8 +54,6 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
@@ -458,7 +458,7 @@ public final class DebuggerUIUtil {
     if (view == null && project != null) {
       XDebugSessionProxy proxy = getSessionProxy(e);
       if (proxy != null) {
-        XDebugSessionTab tab = proxy.getSessionTab();
+        XDebugSessionTab tab = (XDebugSessionTab)proxy.getSessionTab();
         if (tab != null) {
           return tab.getWatchesView();
         }

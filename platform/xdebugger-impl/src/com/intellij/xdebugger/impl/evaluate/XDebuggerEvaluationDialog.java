@@ -238,7 +238,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     if (myMode == EvaluationMode.EXPRESSION) {
       XExpression expression = getInputEditor().getExpression();
       if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-        XDebugSessionTab tab = mySession.getSessionTab();
+        XDebugSessionTab tab = (XDebugSessionTab)mySession.getSessionTab();
         if (tab != null) {
           tab.getWatchesView().addWatchExpression(expression, -1, true);
           getInputEditor().requestFocusInEditor();

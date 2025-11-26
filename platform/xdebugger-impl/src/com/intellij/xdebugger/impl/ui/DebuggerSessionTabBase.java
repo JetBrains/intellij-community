@@ -24,12 +24,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.frame.IXDebuggerSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class DebuggerSessionTabBase extends RunTab {
+public abstract class DebuggerSessionTabBase extends RunTab implements IXDebuggerSessionTab {
   protected ExecutionConsole myConsole;
 
   public DebuggerSessionTabBase(
@@ -82,6 +83,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
   }
 
 
+  @Override
   public void select() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 

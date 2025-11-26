@@ -126,6 +126,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return tab;
   }
 
+  @Override
   public @NotNull RunnerLayoutUi getUi() {
     return myUi;
   }
@@ -537,7 +538,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   public static void showWatchesView(@NotNull XDebugSessionProxy session) {
-    XDebugSessionTab tab = session.getSessionTab();
+    XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
     if (tab == null) return;
     tab.showView(tab.getWatchesContentId());
   }
@@ -554,7 +555,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @ApiStatus.Internal
   public static void showFramesView(@Nullable XDebugSessionProxy session) {
     if (session == null) return;
-    XDebugSessionTab tab = session.getSessionTab();
+    XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
     if (tab == null) return;
     tab.showView(tab.getFramesContentId());
   }

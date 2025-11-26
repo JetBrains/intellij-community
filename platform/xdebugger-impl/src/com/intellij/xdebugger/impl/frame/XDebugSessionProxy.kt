@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.frame
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -22,9 +24,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -53,8 +53,8 @@ interface XDebugSessionProxy {
   val coroutineScope: CoroutineScope
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?
-  val sessionTab: XDebugSessionTab?
-  val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
+  val sessionTab: IXDebuggerSessionTab?
+  val sessionTabWhenInitialized: Deferred<IXDebuggerSessionTab>
   val isStopped: Boolean
   val isPaused: Boolean
   val isSuspended: Boolean
@@ -134,4 +134,12 @@ fun interface XStackFramesListColorsCache {
 
   @RequiresEdt
   fun get(stackFrame: XStackFrame, project: Project): Color?
+}
+
+@ApiStatus.NonExtendable
+@ApiStatus.Internal
+interface IXDebuggerSessionTab : Disposable {
+  fun select()
+
+  val ui: RunnerLayoutUi
 }
