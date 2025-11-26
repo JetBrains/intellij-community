@@ -1039,10 +1039,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimization: do not travel up unnecessarily
   private void markDirtyRecursivelyInternal() {
-    for (VirtualFileSystemEntry child : cachedChildren()) {
-      child.markDirtyInternal();
-      if (child instanceof VirtualDirectoryImpl) {
-        ((VirtualDirectoryImpl)child).markDirtyRecursivelyInternal();
+    for (VirtualFile child : iterInDbChildren()) {
+      if (child instanceof VirtualFileSystemEntry _child) {
+        _child.markDirtyInternal();
+        if (_child instanceof VirtualDirectoryImpl && !_child.isRecursiveOrCircularSymlink()) {
+          ((VirtualDirectoryImpl)child).markDirtyRecursivelyInternal();
+        }
       }
     }
   }

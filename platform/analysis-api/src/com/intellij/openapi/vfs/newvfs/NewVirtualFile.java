@@ -56,8 +56,10 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Override
   public abstract void setWritable(boolean writable) throws IOException;
 
+  /** Marks this file, and all it's parents up to the root, as 'needed a refresh' */
   public abstract void markDirty();
 
+  /** {@link #markDirty()} starting from this file, and down the hierarchy -- skipping circular symlinks, if met any */
   public abstract void markDirtyRecursively();
 
   public abstract boolean isDirty();
