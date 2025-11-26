@@ -567,23 +567,24 @@ object PluginManagerCore {
       incompletePlugins = loadingResult.getIncompleteIdMap().values,
       initContext = initContext,
       disabler = { descriptor, disabledModuleToProblematicPlugin ->
-      val loadingError = pluginSetBuilder.initEnableState(
-        descriptor = descriptor,
-        idMap = idMap,
-        fullIdMap = fullIdMap,
-        fullContentModuleIdMap = fullContentModuleIdMap,
-        isPluginDisabled = initContext::isPluginDisabled,
-        errors = pluginErrorsById,
-        disabledModuleToProblematicPlugin = disabledModuleToProblematicPlugin,
-      )
-      if (loadingError != null) {
-        registerLoadingError(loadingError)
+        val loadingError = pluginSetBuilder.initEnableState(
+          descriptor = descriptor,
+          idMap = idMap,
+          fullIdMap = fullIdMap,
+          fullContentModuleIdMap = fullContentModuleIdMap,
+          isPluginDisabled = initContext::isPluginDisabled,
+          errors = pluginErrorsById,
+          disabledModuleToProblematicPlugin = disabledModuleToProblematicPlugin,
+        )
+        if (loadingError != null) {
+          registerLoadingError(loadingError)
+        }
+        if (loadingError != null || initContext.isPluginExpired(descriptor.getPluginId())) {
+          descriptor.isMarkedForLoading = false
+        }
+        !descriptor.isMarkedForLoading
       }
-      if (loadingError != null || initContext.isPluginExpired(descriptor.getPluginId())) {
-        descriptor.isMarkedForLoading = false
-      }
-      !descriptor.isMarkedForLoading
-    })
+    )
     for (loadingError in additionalErrors) {
       registerLoadingError(loadingError)
     }
