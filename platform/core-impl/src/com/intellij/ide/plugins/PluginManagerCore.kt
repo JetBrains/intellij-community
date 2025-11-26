@@ -354,24 +354,24 @@ object PluginManagerCore {
     val pluginIds = if (enabled) pluginsState.pluginsToEnable else pluginsState.pluginsToDisable
     pluginsState.pluginsToEnable = null
     pluginsState.pluginsToDisable = null
-    val applied = pluginIds != null
-    if (applied) {
-      val descriptors = ArrayList<IdeaPluginDescriptorImpl>()
-      for (descriptor in getPluginSet().allPlugins) {
-        if (pluginIds.contains(descriptor.getPluginId())) {
-          descriptor.isMarkedForLoading = enabled
-          descriptors.add(descriptor)
-        }
-      }
-      val pluginEnabler = PluginEnabler.getInstance()
-      if (enabled) {
-        pluginEnabler.enable(descriptors)
-      }
-      else {
-        pluginEnabler.disable(descriptors)
+    if (pluginIds == null) {
+      return false
+    }
+    val descriptors = ArrayList<IdeaPluginDescriptorImpl>()
+    for (descriptor in getPluginSet().allPlugins) {
+      if (pluginIds.contains(descriptor.getPluginId())) {
+        descriptor.isMarkedForLoading = enabled
+        descriptors.add(descriptor)
       }
     }
-    return applied
+    val pluginEnabler = PluginEnabler.getInstance()
+    if (enabled) {
+      pluginEnabler.enable(descriptors)
+    }
+    else {
+      pluginEnabler.disable(descriptors)
+    }
+    return true
   }
 
   @ApiStatus.Internal
