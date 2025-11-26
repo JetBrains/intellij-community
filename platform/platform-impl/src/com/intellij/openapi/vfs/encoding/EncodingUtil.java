@@ -2,9 +2,6 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -15,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -212,10 +210,8 @@ public final class EncodingUtil {
     FileType fileType = virtualFile.getFileType();
     // in lesser IDEs all special file types are plain text so check for that first
     if (fileType == FileTypes.PLAIN_TEXT) return false;
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM ||
-        fileType == ModuleFileType.INSTANCE ||
-        fileType == ProjectFileType.INSTANCE ||
-        fileType == WorkspaceFileType.INSTANCE ||
+    if (fileType instanceof InternalFileType ||
+        fileType == StdFileTypes.GUI_DESIGNER_FORM ||
         fileType == StdFileTypes.PROPERTIES ||
         fileType == StdFileTypes.XML ||
         fileType == StdFileTypes.JSPX) {
