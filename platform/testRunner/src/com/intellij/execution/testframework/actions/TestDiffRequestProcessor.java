@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -83,12 +84,24 @@ public final class TestDiffRequestProcessor {
 
       DiffContent content1 = null;
       if (file1 == null && testProxy != null) {
-        TestDiffProvider provider = ReadAction.compute(() -> getTestDiffProvider(testProxy));
+        TestDiffProvider provider = ReadAction.compute(() -> {
+          ProgressManager.checkCanceled();
+          return getTestDiffProvider(testProxy);
+        });
         if (provider != null) {
-          PsiElement expected = ReadAction.compute(() -> getExpected(provider, testProxy));
+          PsiElement expected = ReadAction.compute(() -> {
+            ProgressManager.checkCanceled();
+            return getExpected(provider, testProxy);
+          });
           if (expected != null) {
-            file1 = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(expected));
-            content1 = ReadAction.compute(() -> createPsiDiffContent(expected, text1));
+            file1 = ReadAction.compute(() -> {
+              ProgressManager.checkCanceled();
+              return PsiUtilCore.getVirtualFile(expected);
+            });
+            content1 = ReadAction.compute(() -> {
+              ProgressManager.checkCanceled();
+              return createPsiDiffContent(expected, text1);
+            });
           }
         }
       }
