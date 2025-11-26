@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nls
 class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
-  val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
+  val legacyContributors: SeLegacyContributors
 ) : Disposable {
   fun adaptedAllTabProviders(withPresentation: Boolean): Set<SeProviderId> =
     allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted && (it.isAdaptedWithPresentation == withPresentation) }?.id }.toSet()
@@ -36,7 +35,7 @@ class SeProvidersHolder(
   fun adaptedTabInfos(withPresentation: Boolean): List<SeLegacyTabInfo> =
     separateTabProviders.values.mapNotNull {
       if (!it.isAdapted || (it.isAdaptedWithPresentation != withPresentation)) return@mapNotNull null
-      val legacySeparateTabContributor = legacySeparateTabContributors[it.id] ?: return@mapNotNull null
+      val legacySeparateTabContributor = legacyContributors.separateTab[it.id] ?: return@mapNotNull null
       SeLegacyTabInfo(it.id, legacySeparateTabContributor.sortWeight, legacySeparateTabContributor.groupName)
     }
 
@@ -47,19 +46,19 @@ class SeProvidersHolder(
   override fun dispose() {
     allTabProviders.values.forEach { Disposer.dispose(it) }
     separateTabProviders.values.forEach { Disposer.dispose(it) }
-    legacyAllTabContributors.values.forEach { Disposer.dispose(it) }
-    legacySeparateTabContributors.values.forEach { Disposer.dispose(it) }
+    legacyContributors.allTab.values.forEach { Disposer.dispose(it) }
+    legacyContributors.separateTab.values.forEach { Disposer.dispose(it) }
   }
 
   fun getLegacyContributor(providerId: SeProviderId, isAllTab: Boolean): SearchEverywhereContributor<Any>? {
     return when {
-      isAllTab -> legacyAllTabContributors[providerId]
-      else -> legacySeparateTabContributors[providerId] ?: legacyAllTabContributors[providerId]
+      isAllTab -> legacyContributors.allTab[providerId]
+      else -> legacyContributors.separateTab[providerId] ?: legacyContributors.allTab[providerId]
     }
   }
 
   fun getEssentialAllTabProviderIds(): Set<SeProviderId> =
-    legacyAllTabContributors.filter {
+    legacyContributors.allTab.filter {
       (allTabProviders[it.key]?.isAdapted == false) && EssentialContributor.checkEssential(it.value)
     }.keys
 
@@ -123,8 +122,7 @@ class SeProvidersHolder(
 
       return SeProvidersHolder(allTabProviders,
                                separateTabProviders,
-                               legacyContributors,
-                               separateTabLegacyContributors)
+                               SeLegacyContributors(legacyContributors, separateTabLegacyContributors))
     }
 
     private fun createAdaptedProvidersIfNecessary(legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,

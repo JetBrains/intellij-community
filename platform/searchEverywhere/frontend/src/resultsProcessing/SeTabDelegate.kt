@@ -347,8 +347,8 @@ class SeTabDelegate(
       val isAllTab = providerIds.any { it.isWildcard }
 
       val adaptedAndAvailableToRenderRemoteProviderIds =
-        (if (isAllTab) availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyAllTabContributors.keys)?.allTab
-        else availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacySeparateTabContributors.keys)?.separateTab?.map { it.providerId })
+        (if (isAllTab) availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyContributors.allTab.keys)?.allTab
+        else availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyContributors.separateTab.keys)?.separateTab?.map { it.providerId })
           ?.filter {
             !frontendOnlyIds.contains(it)
           }
