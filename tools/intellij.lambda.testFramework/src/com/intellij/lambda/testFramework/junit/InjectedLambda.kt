@@ -4,6 +4,7 @@ import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
+import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -27,8 +28,8 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
 
     val testClass = Class.forName(className, true, plugin.pluginClassLoader)
     val testContainer = testClass.kotlin.createInstance()
-    val rawArgs = argumentsFromString(args.singleOrNull { it.key == "methodArguments" }?.value ?: "")
-    val methodArgs: List<String> = if (rawArgs.size == 1 && rawArgs.single() == "") listOf() else rawArgs
+    val serializedArgs = args.singleOrNull { it.key == "methodArguments" }?.value ?: ""
+    val methodArgs: List<Any> = deserializeArguments(serializedArgs, plugin.pluginClassLoader!!)
 
     logger.info("Starting test $className#$methodName inside ${lambdaIdeContext::class.simpleName} with args: $methodArgs")
 
@@ -46,20 +47,11 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
     }
     catch (e: NoSuchMethodException) {
       // Fallback: try to find the method by iterating one by one
-      findMethodSafely(testClass, methodName)?.let { method ->
+      findMethodSafely(testClass, methodName, methodArgs.size)?.let { method ->
         method.isAccessible = true
-        return if (methodArgs.isNotEmpty()) {
-          val typedArgs = methodArgs.mapIndexed { index, value ->
-            val type: Class<*> = method.parameterTypes[index]
-            when (type) {
-              String::class.java -> value
-              Int::class.java -> value.toInt()
-              Boolean::class.java -> value.toBoolean()
-              else -> type.cast(value)
-            }
-          }
 
-          method.invoke(testContainer, *typedArgs.toTypedArray())
+        return if (methodArgs.isNotEmpty()) {
+          method.invoke(testContainer, *methodArgs.toTypedArray())
         }
         else method.invoke(testContainer)
       } ?: error("Method $methodName found in bytecode but cannot be invoked")
@@ -77,31 +69,26 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
    * Safely finds a method by trying to load methods one by one,
    * catching exceptions for methods that cannot be loaded.
    */
-  private fun findMethodSafely(clazz: Class<*>, methodName: String): java.lang.reflect.Method? {
-    // Try to get methods one by one using getDeclaredMethod
-    // But we don't know the parameter types, so we need to iterate differently
-
-    // Use a safer approach: load the bytecode descriptor and try to match
-    try {
-      // Try no-arg method first (most common for test methods)
-      return clazz.getDeclaredMethod(methodName)
-    }
-    catch (e: NoSuchMethodException) {
-      // Method has parameters, we need more sophisticated approach
-      logger.info("Method $methodName requires parameters or doesn't exist as no-arg")
-    }
-    catch (e: NoClassDefFoundError) {
-      logger.warn("Cannot load method $methodName due to missing class", e)
+  private fun findMethodSafely(clazz: Class<*>, methodName: String, paramCount: Int): java.lang.reflect.Method? {
+    // Try no-arg method first (most common for test methods)
+    if (paramCount == 0) {
+      try {
+        return clazz.getDeclaredMethod(methodName)
+      }
+      catch (e: NoSuchMethodException) {
+        logger.info("Method $methodName requires parameters or doesn't exist as no-arg")
+      }
+      catch (e: NoClassDefFoundError) {
+        logger.warn("Cannot load method $methodName due to missing class", e)
+      }
     }
 
     // Last resort: try to iterate through declared methods with exception handling
-    val methods = mutableListOf<java.lang.reflect.Method>()
     var index = 0
     while (true) {
       try {
-        // This is a hack: try to access methods by reflection on the internal array
         val method = clazz.declaredMethods.getOrNull(index) ?: break
-        if (method.name == methodName) {
+        if (method.name == methodName && method.parameterCount == paramCount) {
           return method
         }
         index++
@@ -274,5 +261,23 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
       ((bytes[offset + 1].toInt() and 0xFF) shl 16) or
       ((bytes[offset + 2].toInt() and 0xFF) shl 8) or
       (bytes[offset + 3].toInt() and 0xFF)
+  }
+}
+
+internal fun serializeArguments(arguments: List<Any>): String {
+  if (arguments.isEmpty()) return ""
+
+  // Reuse the SerializedLambdaLoader.save() logic
+  val loader = SerializedLambdaLoader()
+  return loader.save(arguments)
+}
+
+internal fun deserializeArguments(serializedArgs: String, classLoader: ClassLoader): List<Any> {
+  if (serializedArgs.isEmpty()) return emptyList()
+
+  val inputStream = java.util.Base64.getDecoder().decode(serializedArgs).inputStream()
+  return SerializedLambdaLoader.ClassLoaderObjectInputStream(inputStream, classLoader).use { ois ->
+    @Suppress("UNCHECKED_CAST")
+    ois.readObject() as? List<Any> ?: error("Failed to deserialize arguments")
   }
 }

@@ -46,11 +46,17 @@ data class SerializedLambda(
 
 //this class is used from IntelliJ process
 class SerializedLambdaLoader {
-  fun save(obj: Any): String {
-    return ByteArrayOutputStream().use {
+  fun save(obj: Any): String = try {
+    ByteArrayOutputStream().use {
       ObjectOutputStream(it).writeObject(obj)
       Base64.getEncoder().encodeToString(it.toByteArray())
     }
+  }
+  catch (t: Throwable) {
+    throw Error("Failed to save/load the lambda. Most likely, " +
+                "the current lambda was more complex and so Kotlin compiler decided " +
+                "to generate a more complicated constructor for a wrapper class. " +
+                "Try to add java.io.Serializable, simplify the code, cleanup variables from the closure, copy parameters to the local scope. ${t.message}", t)
   }
 
   class ClassLoaderObjectInputStream(
@@ -82,20 +88,11 @@ fun <T : LambdaIdeContext> wrapLambda(obj: SuspendingSerializableConsumer<T>): S
     .map { File(it) }
     .toSet()
 
-  val persistedLambda: String
-  try {
-    persistedLambda = SerializedLambdaLoader().save(obj)
-    val reloadedLambda = SerializedLambdaLoader().load<T>(persistedLambda)
-    require(reloadedLambda.javaClass == obj.javaClass) {
-      "The reloaded lambda should have the same type as the original one. " +
-      "Reloaded Type is ${reloadedLambda.javaClass.name}, expected type is ${obj.javaClass.name}"
-    }
-  }
-  catch (t: Throwable) {
-    throw Error("Failed to save/load the lambda. Most likely, " +
-                "the current lambda was more complex and so Kotlin compiler decided " +
-                "to generate a more complicated constructor for a wrapper class. " +
-                "Try to simplify the code, cleanup variables from the closure, copy parameters to the local scope, and try again. ${t.message}", t)
+  val persistedLambda = SerializedLambdaLoader().save(obj)
+  val reloadedLambda = SerializedLambdaLoader().load<T>(persistedLambda)
+  require(reloadedLambda.javaClass == obj.javaClass) {
+    "The reloaded lambda should have the same type as the original one. " +
+    "Reloaded Type is ${reloadedLambda.javaClass.name}, expected type is ${obj.javaClass.name}"
   }
 
   return SerializedLambda(

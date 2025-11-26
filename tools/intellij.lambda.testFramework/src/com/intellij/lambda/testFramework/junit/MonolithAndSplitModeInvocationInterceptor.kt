@@ -55,7 +55,7 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
                                                   params = mapOf(
                                                     "testClass" to (invocationContext.targetClass.name ?: ""),
                                                     "testMethod" to (invocationContext.executable?.name ?: ""),
-                                                    "methodArguments" to argumentsToString(invocationContext.arguments)
+                                                    "methodArguments" to serializeArguments(invocationContext.arguments)
                                                   ))
     }
 
@@ -69,8 +69,5 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
 internal const val ARGUMENTS_SEPARATOR = "], ["
 
 internal fun argumentsToString(arguments: List<Any>): String = arguments.joinToString(ARGUMENTS_SEPARATOR, prefix = "[", postfix = "]") { it.toString() }
-
-internal fun argumentsFromString(argumentsString: String): List<String> = argumentsString.removePrefix("[").removeSuffix("]")
-  .split(ARGUMENTS_SEPARATOR).map { it.trim() }
 
 
