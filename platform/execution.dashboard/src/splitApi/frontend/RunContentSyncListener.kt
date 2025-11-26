@@ -17,8 +17,10 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class RunContentSyncListener() : ProjectRemoteTopicListener<RunContentLiveIconSyncEvent> {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
 
