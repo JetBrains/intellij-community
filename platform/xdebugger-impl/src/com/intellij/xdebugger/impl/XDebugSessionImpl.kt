@@ -203,7 +203,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     val currentConfigurationName = computeConfigurationName()
     if (oldSessionData == null || oldSessionData.configurationName != currentConfigurationName) {
-      oldSessionData = XDebugSessionData(myProject, currentConfigurationName)
+      oldSessionData = XDebugSessionData(currentConfigurationName)
     }
     this.sessionData = oldSessionData
     this.sessionDataId = sessionData.storeGlobally(tabCoroutineScope, this)
