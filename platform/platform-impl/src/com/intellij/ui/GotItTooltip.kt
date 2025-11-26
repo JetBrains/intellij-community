@@ -409,50 +409,50 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
         }
       }
     }
-    val balloon = createBalloon().also {
-      val dispatcherDisposable = Disposer.newDisposable()
-      Disposer.register(this, dispatcherDisposable)
+    val balloon = createBalloon()
+    val dispatcherDisposable = Disposer.newDisposable()
+    Disposer.register(this, dispatcherDisposable)
 
-      it.addListener(object : JBPopupListener {
-        override fun beforeShown(event: LightweightWindowEvent) {
-          GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
-        }
-
-        override fun onClosed(event: LightweightWindowEvent) {
-          HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
-          ClientProperty.put(tracker.component as JComponent, BALLOON_PROPERTY, null)
-          Disposer.dispose(dispatcherDisposable)
-
-          if (event.isOk) {
-            currentlyShown?.let { tooltip ->
-              Disposer.dispose(tooltip)
-              tooltip.nextToShow = null
-            }
-            currentlyShown = null
-
-            gotIt()
-          }
-          else {
-            pendingRefresh = true
-          }
-        }
-      })
-
-      IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
-        if (e is KeyEvent && KeymapUtil.isEventForAction(e, GotItComponentBuilder.CLOSE_ACTION_NAME)) {
-          it.hide(true)
-          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
-          true
-        }
-        else false
-      }, dispatcherDisposable)
-
-      HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
-        it.isDisposed
+    balloon.addListener(object : JBPopupListener {
+      override fun beforeShown(event: LightweightWindowEvent) {
+        GotItUsageCollector.instance.logOpen(id, savedCount("$PROPERTY_PREFIX.$id") + 1)
       }
 
-      onBalloonCreated(it)
+      override fun onClosed(event: LightweightWindowEvent) {
+        HelpTooltip.setMasterPopupOpenCondition(tracker.component, null)
+        ClientProperty.put(tracker.component as JComponent, BALLOON_PROPERTY, null)
+        Disposer.dispose(dispatcherDisposable)
+
+        if (event.isOk) {
+          currentlyShown?.let { tooltip ->
+            Disposer.dispose(tooltip)
+            tooltip.nextToShow = null
+          }
+          currentlyShown = null
+
+          gotIt()
+        }
+        else {
+          pendingRefresh = true
+        }
+      }
+    })
+
+    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher { e ->
+      if (e is KeyEvent && KeymapUtil.isEventForAction(e, GotItComponentBuilder.CLOSE_ACTION_NAME)) {
+        balloon.hide(true)
+        GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.EscapeShortcutPressed)
+        true
+      }
+      else false
+    }, dispatcherDisposable)
+
+    HelpTooltip.setMasterPopupOpenCondition(tracker.component) {
+      balloon.isDisposed
     }
+
+    onBalloonCreated(balloon)
+
     this.balloon = balloon
     ClientProperty.put(component, BALLOON_PROPERTY, balloon)
 
