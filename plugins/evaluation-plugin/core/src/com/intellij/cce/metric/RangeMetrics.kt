@@ -68,7 +68,6 @@ abstract class SumRangeMetricBase(filters: Map<String, String>) : RangeMetricBas
 
 interface RangeFilter {
   fun filter(ranges: List<CodeCommentRange>, filters: Map<String, String>): List<CodeCommentRange> {
-    if (filters["category"] == null) return ranges
     return ranges.filter {
       filters.all { (k, v) ->
         when (k) {
