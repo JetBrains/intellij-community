@@ -2874,6 +2874,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
                 }
 
+                @TestMetadata("ifsWithoutElse.kt")
+                public void testIfsWithoutElse() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/ifsWithoutElse.kt");
+                }
+
                 @TestMetadata("lambdaExpression.kt")
                 public void testLambdaExpression() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression.kt");

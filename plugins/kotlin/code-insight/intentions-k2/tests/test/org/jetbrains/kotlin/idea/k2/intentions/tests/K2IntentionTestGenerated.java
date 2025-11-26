@@ -11717,6 +11717,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
             }
 
+            @TestMetadata("ifsWithoutElse.kt")
+            public void testIfsWithoutElse() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifsWithoutElse.kt");
+            }
+
             @TestMetadata("lambdaExpression.kt")
             public void testLambdaExpression() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression.kt");
