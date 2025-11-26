@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.processLaunchers.LaunchRequest
 import com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher
@@ -19,7 +20,15 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 
 
-internal object ExecServiceImpl : ExecService {
+@Service(Service.Level.APP)
+internal class ExecServiceImpl private constructor() : ExecService {
+  private val execLimiter = ConcurrencyLimiter {
+    when (it) {
+      ConcurrentProcessWeight.LIGHT -> Registry.intValue("python.execService.limit.light")
+      ConcurrentProcessWeight.MEDIUM -> Registry.intValue("python.execService.limit.medium")
+      ConcurrentProcessWeight.HEAVY -> Registry.intValue("python.execService.limit.heavy")
+    }
+  }
 
   override suspend fun executeGetProcess(binary: BinaryToExec, args: Args, scopeToBind: CoroutineScope?, options: ExecGetProcessOptions): Result<Process, ExecuteGetProcessError<*>> {
     val launcher = create(binary, args, options, scopeToBind).getOr { return it }
@@ -51,45 +60,56 @@ internal object ExecServiceImpl : ExecService {
         return@coroutineScope it.asPyError()
       }
 
-      val description = options.processDescription
-                        ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
-      val process = processLauncher.start().getOr {
-        val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
-                                                                                                              ?: "unknown")
-        return@coroutineScope processLauncher.createExecError(
-          messageToUser = message,
-          errorReason = it.error
-        )
+      return@coroutineScope execLimiter.exec(options.weight) {
+        executeProcessGetResultImpl(binary, options, processLauncher, processInteractiveHandler)
       }
-
-      val result = try {
-        withTimeout(options.timeout) {
-          val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, processLauncher.args, process)
-
-          val successResult = interactiveResult.getOr { failure ->
-            val (output, customErrorMessage) = failure.error
-            val additionalMessage = customErrorMessage ?: run {
-              PyExecBundle.message("py.exec.exitCode.error", description, output.exitCode)
-            }
-            return@withTimeout processLauncher.createExecError(
-              messageToUser = additionalMessage,
-              errorReason = ExecErrorReason.UnexpectedProcessTermination(output),
-              loggedProcessId = process.loggedProcess.id,
-            )
-          }
-          Result.success(successResult)
-        }
-      }
-      catch (_: TimeoutCancellationException) {
-        processLauncher.killAndJoin()
-        processLauncher.createExecError(
-          messageToUser = PyExecBundle.message("py.exec.timeout.error", description, options.timeout),
-          errorReason = ExecErrorReason.Timeout,
-          loggedProcessId = process.loggedProcess.id,
-        )
-      }
-      return@coroutineScope result
     }
+  }
+
+  private suspend fun <T> executeProcessGetResultImpl(
+    binary: BinaryToExec,
+    options: ExecOptions,
+    processLauncher: ProcessLauncher,
+    processInteractiveHandler: ProcessInteractiveHandler<T>,
+  ): Result<T, ExecError> {
+    val description = options.processDescription
+                      ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
+    val process = processLauncher.start().getOr {
+      val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
+                                                                                                            ?: "unknown")
+      return processLauncher.createExecError(
+        messageToUser = message,
+        errorReason = it.error
+      )
+    }
+
+    val result = try {
+      withTimeout(options.timeout) {
+        val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, processLauncher.args, process)
+
+        val successResult = interactiveResult.getOr { failure ->
+          val (output, customErrorMessage) = failure.error
+          val additionalMessage = customErrorMessage ?: run {
+            PyExecBundle.message("py.exec.exitCode.error", description, output.exitCode)
+          }
+          return@withTimeout processLauncher.createExecError(
+            messageToUser = additionalMessage,
+            errorReason = ExecErrorReason.UnexpectedProcessTermination(output),
+            loggedProcessId = process.loggedProcess.id,
+          )
+        }
+        Result.success(successResult)
+      }
+    }
+    catch (_: TimeoutCancellationException) {
+      processLauncher.killAndJoin()
+      processLauncher.createExecError(
+        messageToUser = PyExecBundle.message("py.exec.timeout.error", description, options.timeout),
+        errorReason = ExecErrorReason.Timeout,
+        loggedProcessId = process.loggedProcess.id,
+      )
+    }
+    return result
   }
 }
 
