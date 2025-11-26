@@ -37,17 +37,19 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   }
 
   private fun <T> intercept(invocation: InvocationInterceptor.Invocation<T?>, invocationContext: ReflectiveInvocationContext<Method?>): T? {
+    val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable?.name}"
+
+    logOutput("Executing test method \"$fullMethodName\" inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${argumentsToString(invocationContext.arguments)}")
+
     if (invocationContext.arguments.any { it::class == BackgroundRunWithLambda::class }) {
-      System.err.println("Test ${invocationContext.executable?.name} has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
+      logOutput("Test \"$fullMethodName\" has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
+
+      // executing the code from the test as is (it will invoke lambda execution in IDE itself)
       return invocation.proceed()
     }
 
-    val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable?.name}"
-
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(perTestSupervisorScope.coroutineContext) {
-      logOutput("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${argumentsToString(invocationContext.arguments)}")
-
       // TODO: use serialized lambda invocation
       IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
                                                   params = mapOf(
@@ -56,6 +58,8 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
                                                     "methodArguments" to argumentsToString(invocationContext.arguments)
                                                   ))
     }
+
+    // the code from the test is executed on IDE side
     invocation.skip()
     return null
   }

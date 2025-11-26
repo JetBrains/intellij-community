@@ -12,6 +12,7 @@ import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.currentClassLogger
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.NamedLambda
@@ -19,6 +20,11 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+import java.io.Serializable
+import java.util.stream.Stream
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
@@ -53,6 +59,56 @@ class SampleTest {
     Unit
   }
 
+
+  private fun simpleParamProvider(): Stream<Arguments> {
+    return Stream.of(
+      Arguments.of(1, "one"),
+      Arguments.of(2, "two"),
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("simpleParamProvider")
+  // BackgroundRunWithLambda must be the last parameter
+  fun `simple parameterized test`(param: Int, str: String, ide: BackgroundRunWithLambda) = runBlocking {
+    ide.apply {
+      run {
+        Logger.getInstance("test").warn("Param: $param $str Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+      }
+
+      runInBackend {
+        Logger.getInstance("test").warn("Param: $param $str Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+      }
+    }
+    Unit
+  }
+
+  data class CustomParam(val param: Int, val str: String) : Serializable
+
+  private fun customParamProvider(): Stream<CustomParam> {
+    return Stream.of(
+      CustomParam(1, "one"),
+      CustomParam(2, "two")
+    )
+  }
+
+  @ParameterizedTest
+  @MethodSource("customParamProvider")
+  // BackgroundRunWithLambda must be the last parameter
+  fun `custom parameterized test`(param: CustomParam, ide: BackgroundRunWithLambda) = runBlocking {
+    ide.apply {
+      run {
+        Logger.getInstance("test").warn("Param: $param Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+      }
+
+      runInBackend {
+        Logger.getInstance("test").warn("Param: $param Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+      }
+    }
+    Unit
+  }
+
+  // Do not use this example - only for the development purpose of Lambda test framework
   @TestTemplate
   fun `named lambda test`(ide: BackgroundRunWithLambda) = runBlocking {
     ide.runNamedLambdaInBackend(HelloBackendOnlyLambda::class)

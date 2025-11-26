@@ -30,7 +30,7 @@ object IdeInstance {
 
       stopIde()
       currentIdeMode = runMode
-      ConfigurationStorage.Companion.splitMode(currentIdeMode == IdeRunMode.SPLIT)
+      ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
 
       val testContext = Starter.newContextWithLambda(runMode.name,
                                                      UltimateTestCases.JpsEmptyProject,

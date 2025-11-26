@@ -15,9 +15,10 @@ import java.lang.annotation.Inherited
 @Inherited
 @ExtendWith(
   //TestApplicationExtension::class,
+  StartIdeBeforeEachCallback::class,
   MonolithAndSplitModeTestTemplateProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
-  MonolithAndSplitModeParameterizedTestSupport::class,
+  BackgroundRunWithLambdaParameterResolver::class,
   RemoteDevRun::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
