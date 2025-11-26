@@ -120,8 +120,16 @@ internal class ToolingProxyConnector(
       ProgressManager.checkCanceled()
       val message = receive()
       if (message != null) {
-        if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
-          return
+        try {
+          if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
+            return
+          }
+        }
+        catch (e: InterruptedException) {
+          throw e
+        }
+        catch (e: RuntimeException) {
+          log.error("Unexpected error during communication with Tooling proxy", e)
         }
       }
       Thread.yield()

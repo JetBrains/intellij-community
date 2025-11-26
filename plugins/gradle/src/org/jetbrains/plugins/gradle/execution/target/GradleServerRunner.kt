@@ -11,11 +11,15 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.BaseOutputReader
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 internal class GradleServerRunner(private val connection: TargetProjectConnection,
                                   private val consumerOperationParameters: ConsumerOperationParameters,
@@ -59,6 +63,12 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val targetProjectBasePath = projectUploadRoot.getTargetUploadPath().apply(remoteEnvironment)
     val localProjectBasePath = projectUploadRoot.localRootPath.toString()
     val targetPlatform = remoteEnvironment.targetPlatform
+    val samePlatform = try {
+      targetProjectBasePath.getPathPlatform() == localProjectBasePath.getPathPlatform()
+    }
+    catch (_: InvalidPathException) {
+      false
+    }
 
     val connectorFactory = ToolingProxyConnector.ToolingProxyConnectorFactory(
       classloaderHolder,
@@ -80,14 +90,24 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           }
         }
         is org.jetbrains.plugins.gradle.tooling.proxy.StandardError -> {
-          targetProgressIndicator.addText(
-            resolveFistPath(it.text.useLocalLineSeparators(targetPlatform), targetProjectBasePath, localProjectBasePath, targetPlatform),
-            ProcessOutputType.STDERR)
+          val text = replaceTargetPathsWithLocal(
+            it.text.useLocalLineSeparators(targetPlatform),
+            targetProjectBasePath,
+            localProjectBasePath,
+            samePlatform,
+            targetPlatform
+          )
+          targetProgressIndicator.addText(text, ProcessOutputType.STDERR)
         }
         is org.jetbrains.plugins.gradle.tooling.proxy.StandardOutput -> {
-          targetProgressIndicator.addText(
-            resolveFistPath(it.text.useLocalLineSeparators(targetPlatform), targetProjectBasePath, localProjectBasePath, targetPlatform),
-            ProcessOutputType.STDOUT)
+          val text = replaceTargetPathsWithLocal(
+            it.text.useLocalLineSeparators(targetPlatform),
+            targetProjectBasePath,
+            localProjectBasePath,
+            samePlatform,
+            targetPlatform
+          )
+          targetProgressIndicator.addText(text, ProcessOutputType.STDOUT)
         }
         else -> {
           consumerOperationParameters.buildProgressListener.onEvent(it)
@@ -116,35 +136,52 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
   }
 
   @NlsSafe
-  private fun resolveFistPath(
+  private fun replaceTargetPathsWithLocal(
     @NlsSafe text: String,
     targetProjectBasePath: String,
     localProjectBasePath: String,
+    samePlatform: Boolean,
     targetPlatform: TargetPlatform,
   ): String {
     val pathIndexStart = text.indexOf(targetProjectBasePath)
-    if (pathIndexStart == -1) return text
+    if (pathIndexStart == -1) {
+      return text
+    }
+    // we could just replace the entire path
+    if (samePlatform) {
+      return text.replace(targetProjectBasePath, localProjectBasePath)
+    }
 
-    val delimiter = if (pathIndexStart == 0) ' '
-    else {
+    if (pathIndexStart != 0) {
       val char = text[pathIndexStart - 1]
-      if (char != '\'' && char != '\"') ' ' else char
+      // the path is escaped with ' or " -> we could define the end of the path string
+      if (char == '\'' || char == '\"') {
+        var pathIndexEnd = text.indexOf(char, pathIndexStart)
+        if (pathIndexEnd == -1) {
+          pathIndexEnd = text.indexOf('\n', pathIndexStart)
+        }
+
+        if (pathIndexEnd == -1) pathIndexEnd = text.length
+        val subPathStart = pathIndexStart + targetProjectBasePath.length
+        // we've faced with a broken string, there is nothing we could do to separate the path from the text content
+        if (subPathStart >= pathIndexEnd) {
+          return text
+        }
+
+        val isUri = text.substring(maxOf(0, pathIndexStart - 7), maxOf(0, pathIndexStart - 1)).endsWith("file:/")
+        val path = text.substring(subPathStart, pathIndexEnd).useLocalFileSeparators(targetPlatform.platform, isUri)
+
+        val buf = StringBuilder()
+        buf.append(text.subSequence(0, pathIndexStart))
+        buf.append(localProjectBasePath.useLocalFileSeparators(Platform.current(), isUri))
+        buf.append(path)
+        buf.append(text.substring(pathIndexEnd))
+        return buf.toString()
+      }
     }
-    var pathIndexEnd = text.indexOf(delimiter, pathIndexStart)
-    if (pathIndexEnd == -1) {
-      pathIndexEnd = text.indexOf('\n', pathIndexStart)
-    }
-
-    if (pathIndexEnd == -1) pathIndexEnd = text.length
-
-    val isUri = text.substring(maxOf(0, pathIndexStart - 7), maxOf(0, pathIndexStart - 1)).endsWith("file:/")
-    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform.platform, isUri)
-
-    val buf = StringBuilder()
-    buf.append(text.subSequence(0, pathIndexStart))
-    buf.append(localProjectBasePath.useLocalFileSeparators(Platform.current(), isUri))
-    buf.append(path)
-    buf.append(text.substring(pathIndexEnd))
-    return buf.toString()
+    return text
   }
+
+  private fun String.getPathPlatform(): EelOsFamily = Path.of(this).getEelDescriptor().osFamily
+
 }
