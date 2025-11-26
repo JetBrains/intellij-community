@@ -9,4 +9,4 @@ import org.jetbrains.annotations.ApiStatus
  * Internal implementation of Language that is used in "Run Anything" popup. User for reporting statistics.
  */
 @ApiStatus.Internal
-object RunAnythingLanguage : Language("SearchEverywhere"), DependentLanguage
+object RunAnythingLanguage : Language("RunAnything"), DependentLanguage
