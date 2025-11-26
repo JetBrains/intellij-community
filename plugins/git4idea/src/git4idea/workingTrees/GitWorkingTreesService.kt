@@ -2,21 +2,27 @@
 package git4idea.workingTrees
 
 import com.intellij.dvcs.repo.repositoryId
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import git4idea.GitRemoteBranch
+import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.commands.Git
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.io.path.Path
 
 @Service(Service.Level.PROJECT)
 internal class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
@@ -83,6 +89,12 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
       else {
         Result.createFailure(commandResult.errorOutputAsHtmlString)
       }
+    }
+  }
+
+  fun openWorkingTreeProject(tree: GitWorkingTree, cs: CoroutineScope) {
+    cs.launch(Dispatchers.Default) {
+      PlatformProjectOpenProcessor.getInstance().openProjectAndFile(Path(tree.path.path), false, OpenProjectTask.build())
     }
   }
 }

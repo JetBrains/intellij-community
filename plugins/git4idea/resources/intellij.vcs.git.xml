@@ -237,6 +237,7 @@
 
     <group id="Git.Branch.Backend.Checkout">
       <action class="git4idea.actions.ref.GitCheckoutAction"/>
+      <action class="git4idea.actions.workingTree.GitOpenExistingWorkingTreeForLocalBranchAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <add-to-group group-id="Git.Branch.Checkout" anchor="first"/>
