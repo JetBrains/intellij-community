@@ -191,6 +191,8 @@ class FrontendXDebuggerSession private constructor(
 
   private val dropFrameHandler = FrontendDropFrameHandler(id, scope)
 
+  private var localTabLayouter: XDebugTabLayouter? = null
+
   init {
     DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.initialSuspendData?.applyToCurrents()
@@ -318,6 +320,8 @@ class FrontendXDebuggerSession private constructor(
   private suspend fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
     val (tabInfo, pausedFlow) = tabDto
     if (tabInfo !is XDebuggerSessionTabInfo) return
+
+    localTabLayouter = tabInfo.localLayouter
     val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
@@ -444,7 +448,7 @@ class FrontendXDebuggerSession private constructor(
   private fun getCurrentSuspendContext() = suspendContext.get()
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    return sessionDto.tabLayouter.createLayouter(tabScope)
+    return localTabLayouter ?: createLayouter(id, tabScope)
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {

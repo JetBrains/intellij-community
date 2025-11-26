@@ -6,9 +6,10 @@ import com.intellij.ide.rpc.getComponent
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.getPreferredFocusedComponent
-import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterDto
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebugTabLayouterEvent
 import com.intellij.ui.content.Content
+import com.intellij.xdebugger.impl.rpc.XDebugSessionTabApi
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +17,13 @@ import kotlinx.coroutines.launch
 
 private class FrontendXDebugTabLayouter(
   private val cs: CoroutineScope,
-  private val dto: XDebugTabLayouterDto,
+  private val sessionId: XDebugSessionId,
 ) : XDebugTabLayouter() {
 
   override fun registerAdditionalContent(ui: RunnerLayoutUi) {
     cs.launch(Dispatchers.EDT) {
       val contents = hashMapOf<Int, Content>()
-      dto.events.toFlow().collect { e ->
+      XDebugSessionTabApi.getInstance().tabLayouterEvents(sessionId).collect { e ->
         when (e) {
           is XDebugTabLayouterEvent.ContentCreated -> {
             val content = e.createContent(ui) ?: return@collect
@@ -48,8 +49,8 @@ private class FrontendXDebugTabLayouter(
   }
 }
 
-internal fun XDebugTabLayouterDto.createLayouter(cs: CoroutineScope): XDebugTabLayouter {
-  return localLayouter ?: FrontendXDebugTabLayouter(cs, this)
+internal fun createLayouter(id: XDebugSessionId, cs: CoroutineScope): XDebugTabLayouter {
+  return FrontendXDebugTabLayouter(cs, id)
 }
 
 private fun XDebugTabLayouterEvent.ContentCreated.createContent(ui: RunnerLayoutUi): Content? {
