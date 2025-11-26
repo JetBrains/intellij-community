@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -212,7 +212,7 @@ class StatusBarWidgetsManager(
 
     incModificationCount()
 
-    StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatusBarWidgetFactory> {
+    StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(parentScope, object : ExtensionPointListener<StatusBarWidgetFactory> {
       override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
         if (LightEdit.owns(project) && extension !is LightEditCompatible) {
           return
@@ -261,13 +261,12 @@ private fun createWidget(
  * Wrapper for V2 status bar widgets (those using WidgetPresentationFactory).
  * Implements ChildStatusBarWidget to support child status bars in detached windows.
  */
-private class WidgetPresentationWrapper(
+internal class WidgetPresentationWrapper(
   private val id: String,
   private val factory: WidgetPresentationFactory,
   private val dataContext: WidgetPresentationDataContext,
   private val scope: CoroutineScope,
 ) : StatusBarWidget, CustomStatusBarWidget, ChildStatusBarWidget {
-
   override fun ID(): String = id
 
   override fun install(statusBar: StatusBar) {}
@@ -289,18 +288,14 @@ private class WidgetPresentationWrapper(
     return WidgetPresentationWrapper(
       id = id,
       factory = factory,
-      dataContext = createChildWidgetPresentationDataContext(childStatusBar),
+      dataContext = object : WidgetPresentationDataContext {
+        override val project: Project
+          get() = requireNotNull(childStatusBar.project) { "Project is null for child status bar, probably already disposed" }
+
+        override val currentFileEditor: StateFlow<FileEditor?>
+          get() = childStatusBar.currentEditor
+      },
       scope = childScope,
     )
-  }
-}
-
-internal fun createChildWidgetPresentationDataContext(childStatusBar: IdeStatusBarImpl): WidgetPresentationDataContext {
-  return object : WidgetPresentationDataContext {
-    override val project: Project
-      get() = requireNotNull(childStatusBar.project) { "Project is null for child status bar, probably already disposed" }
-
-    override val currentFileEditor: StateFlow<FileEditor?>
-      get() = childStatusBar.currentEditor
   }
 }

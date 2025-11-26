@@ -28,7 +28,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
@@ -39,7 +42,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
-import com.intellij.openapi.wm.impl.status.widget.createChildWidgetPresentationDataContext
+import com.intellij.openapi.wm.impl.status.widget.WidgetPresentationWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -55,7 +58,6 @@ import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -152,7 +154,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
         try {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
-          val arc = scale(4).toFloat()
+          val arc = JBUIScale.scale(4).toFloat()
           val shape: RoundRectangle2D = RoundRectangle2D.Float(highlightBounds.x.toFloat(), highlightBounds.y.toFloat(), highlightBounds.width.toFloat(), highlightBounds.height.toFloat(), arc, arc)
           g2.fill(shape)
         }
@@ -222,7 +224,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
 
     // Propagate ALL existing widgets to the new child
-    LOG.info("createChild: propagating ${widgetMap.size} existing widgets to new child")
+    LOG.debug { "createChild: propagating ${widgetMap.size} existing widgets to new child" }
     for (bean in widgetMap.values) {
       propagateWidgetToChild(bean.widget, bean.position, bean.order, bar)
     }
@@ -302,7 +304,10 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       return it
     }
 
-    val infoAndProgressPanel = InfoAndProgressPanel(statusBar = this, coroutineScope = coroutineScope.childScope())
+    val infoAndProgressPanel = InfoAndProgressPanel(
+      statusBar = this,
+      coroutineScope = coroutineScope.childScope("InfoAndProgressPanel of $this"),
+    )
     centerPanel.add(infoAndProgressPanel.component)
     this.infoAndProgressPanel = infoAndProgressPanel
     return infoAndProgressPanel
@@ -389,7 +394,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     addWidget(widget, Position.RIGHT, anchor)
   }
 
-  internal suspend fun init(project: Project, frame: IdeFrame, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
+  internal suspend fun init(project: Project, frame: IdeFrame, extraItems: List<Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.serviceAsync<StatusBarWidgetsManager>()
     val items = span("status bar pre-init") {
       service.init(frame)
@@ -400,7 +405,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   //=== BATCH INIT: Optimized for performance, still propagates ===
-  private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
+  private suspend fun doInit(widgets: List<Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
     val anyModality = ModalityState.any().asContextElement()
 
     // Create components in parallel (performance optimization)
@@ -418,7 +423,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
 
     withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
-      LOG.info("doInit: adding ${beans.size} widgets, children=${children.size}")
+      LOG.debug { "doInit: adding ${beans.size} widgets, children=${children.size}" }
 
       // Add all to self
       for (bean in beans) {
@@ -428,7 +433,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
       // Propagate all to existing children
       if (children.isNotEmpty()) {
-        LOG.info("doInit: propagating ${beans.size} widgets to ${children.size} children")
+        LOG.debug { "doInit: propagating ${beans.size} widgets to ${children.size} children" }
         for (bean in beans) {
           for (child in children) {
             propagateWidgetToChild(bean.widget, bean.position, bean.order, child)
@@ -1118,32 +1123,10 @@ internal fun adaptV2Widget(
   parentCoroutineScope: CoroutineScope,
   presentationFactory: (WidgetPresentationDataContext, CoroutineScope) -> WidgetPresentation,
 ): StatusBarWidget {
-  return object : StatusBarWidget, CustomStatusBarWidget, ChildStatusBarWidget {
-    private val coroutineScope = parentCoroutineScope.childScope(id)
-
-    override fun ID(): String = id
-
-    override fun getComponent(): JComponent {
-      return createComponentByWidgetPresentation(
-        presentation = presentationFactory(dataContext, coroutineScope),
-        project = dataContext.project,
-        scope = coroutineScope,
-      )
-    }
-
-    override fun dispose() {
-      coroutineScope.cancel()
-    }
-
-    override fun createForChild(childStatusBar: IdeStatusBarImpl): StatusBarWidget {
-      return adaptV2Widget(
-        id = id,
-        dataContext = createChildWidgetPresentationDataContext(childStatusBar),
-        parentCoroutineScope = childStatusBar.coroutineScope,
-        presentationFactory = presentationFactory,
-      )
-    }
+  val factory = object : WidgetPresentationFactory {
+    override fun createPresentation(context: WidgetPresentationDataContext, scope: CoroutineScope) = presentationFactory(context, scope)
   }
+  return WidgetPresentationWrapper(id = id, factory = factory, dataContext = dataContext, scope = parentCoroutineScope.childScope(id))
 }
 
 private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {

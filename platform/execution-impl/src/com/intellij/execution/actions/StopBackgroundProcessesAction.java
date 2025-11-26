@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -14,13 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.containers.ContainerUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -101,22 +100,26 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
 
   }
 
-  private static @Unmodifiable @NotNull List<Pair<TaskInfo, ProgressModel>>  getCancellableProcesses(@Nullable Project project) {
+  private static @Unmodifiable @NotNull List<Pair<TaskInfo, ProgressModel>> getCancellableProcesses(@Nullable Project project) {
     IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(project);
     StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
     if (statusBar == null) return Collections.emptyList();
 
-    return ContainerUtil.findAll(statusBar.getBackgroundProcessModels(),
-                                 pair -> pair.first.isCancellable() && !pair.second.isStopping(pair.first));
+    return statusBar.getBackgroundProcessModels().stream()
+      .filter(pair -> {
+        TaskInfo taskInfo = pair.getFirst();
+        return taskInfo.isCancellable() && !pair.getSecond().isStopping(taskInfo);
+      })
+      .toList();
   }
 
-  private static @NotNull List<StopAction.HandlerItem> getItemsList(@NotNull List<? extends Pair<TaskInfo, ProgressModel>> tasks) {
+  private static @NotNull List<StopAction.HandlerItem> getItemsList(@NotNull List<Pair<TaskInfo, ProgressModel>> tasks) {
     List<StopAction.HandlerItem> items = new ArrayList<>(tasks.size());
     for (final Pair<TaskInfo, ProgressModel> eachPair : tasks) {
-      items.add(new StopAction.HandlerItem(eachPair.first.getTitle(), AllIcons.Process.Step_passive, false) {
+      items.add(new StopAction.HandlerItem(eachPair.getFirst().getTitle(), AllIcons.Process.Step_passive, false) {
         @Override
         void stop() {
-          eachPair.second.cancel();
+          eachPair.getSecond().cancel();
         }
       });
     }

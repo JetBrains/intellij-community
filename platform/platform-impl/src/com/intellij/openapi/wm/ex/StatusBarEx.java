@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,7 +34,6 @@ public interface StatusBarEx extends StatusBar {
   @ApiStatus.Obsolete
   void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info);
 
-
   /**
    * @deprecated Progresses in the StatusBar now use the {@link ProgressModel} API instead of {@link ProgressIndicator}.
    * See {@link ProgressIndicator} notice.
@@ -47,7 +46,7 @@ public interface StatusBarEx extends StatusBar {
     return ContainerUtil.map(getBackgroundProcessModels(), pair -> new Pair<>(pair.getFirst(), pair.getSecond().getProgressIndicator()));
   }
 
-  List<Pair<TaskInfo, ProgressModel>> getBackgroundProcessModels();
+  List<kotlin.Pair<TaskInfo, ProgressModel>> getBackgroundProcessModels();
 
   boolean isProcessWindowOpen();
 
