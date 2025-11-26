@@ -174,7 +174,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
   override fun updateNotifications(file: VirtualFile) {
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (file.isValid) {
+      if (runReadAction { file.isValid }) {
         val fileEditorManager = project.serviceAsync<FileEditorManager>()
         doUpdateNotifications(file, fileEditorManager)
       }
@@ -258,7 +258,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
           val componentProvider = result.orElse(null)
           withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
-            if (!file.isValid || project.isDisposed) {
+            if (runReadAction { !file.isValid || project.isDisposed }) {
               return@withContext
             }
             for (fileEditor in fileEditors) {
