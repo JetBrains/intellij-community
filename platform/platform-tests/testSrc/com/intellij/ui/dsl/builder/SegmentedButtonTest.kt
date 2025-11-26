@@ -13,10 +13,9 @@ import org.junit.jupiter.api.assertThrows
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import javax.swing.JComboBox
+import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
-import kotlin.test.fail
+import kotlin.test.*
 
 class SegmentedButtonTest {
 
@@ -75,7 +74,7 @@ class SegmentedButtonTest {
   }
 
   private fun validate(panel: DialogPanel) {
-    val button1 = UIUtil.findComponentOfType(panel, ActionButtonWithText::class.java) ?: fail()
+    val button1 = findSegmentedButtons(panel).first()
     val presentation = button1.presentation
 
     assertEquals(presentation.text, rendererText)
@@ -143,8 +142,7 @@ class SegmentedButtonTest {
       }
     }
 
-    val button = UIUtil.findComponentOfType(panel, ActionButtonWithText::class.java) ?: fail()
-    val segmentedButtonComponent = button.parent
+    val segmentedButtonComponent = findSegmentedButtons(panel).first().parent
     assertEquals(segmentedButtonComponent, label.labelFor)
   }
 
@@ -177,14 +175,36 @@ class SegmentedButtonTest {
       }
     }
 
-    val button = UIUtil.findComponentOfType(panel, ActionButtonWithText::class.java) ?: fail()
-    val segmentedButtonComponent = button.parent
+    val segmentedButtonComponent = findSegmentedButtons(panel).first().parent
     assertEquals(segmentedButtonComponent, label.labelFor)
 
     segmentedButton.items = listOf(1, 2, 3, 4) // Exceeds maxButtonsCount and forces a rebuild of the SegmentedButton
 
     val comboBox = UIUtil.findComponentOfType(panel, JComboBox::class.java) ?: fail()
     assertEquals(comboBox, label.labelFor)
+  }
+
+  @Test
+  fun testEnabledBeforePanelBuilder() {
+    val enabledPanel = panel {
+      row {
+        segmentedButton(listOf("a", "b", "c")) { text = it }
+      }
+    }
+
+    for (button in findSegmentedButtons(enabledPanel)) {
+      assertTrue(button.isEnabled)
+    }
+
+    val disabledPanel = panel {
+      row {
+        segmentedButton(listOf("a", "b", "c")) { text = it }.enabled(false)
+      }
+    }
+
+    for (button in findSegmentedButtons(disabledPanel)) {
+      assertFalse(button.isEnabled)
+    }
   }
 
   @Test
@@ -213,5 +233,9 @@ class SegmentedButtonTest {
     panel.doLayout()
     assertEquals(segmentedButton.selectedItem, item2)
     panel.paint(g)
+  }
+
+  private fun findSegmentedButtons(parent: JComponent): List<ActionButtonWithText> {
+    return UIUtil.findComponentsOfType(parent, ActionButtonWithText::class.java)
   }
 }
