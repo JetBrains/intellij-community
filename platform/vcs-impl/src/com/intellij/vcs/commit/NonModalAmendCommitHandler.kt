@@ -88,7 +88,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   private fun setAmendDetails(amendDetails: EditedCommitDetails) {
     setAmendAuthor(amendDetails.currentUser, amendDetails.author)
     setAmendMessage(workflowHandler.getCommitMessage(), amendDetails.fullMessage)
-    setEditedCommit(EditedCommitPresentation.Details(amendDetails))
+    setEditedCommit(amendDetails)
   }
 
   private fun setEditedCommit(amendDetails: EditedCommitPresentation?) {

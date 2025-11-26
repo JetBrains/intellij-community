@@ -8,17 +8,16 @@ import com.intellij.vcs.log.VcsUser
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface EditedCommitDetails {
-  val currentUser: VcsUser?
-  val committer: VcsUser
-  val author: VcsUser
-  val commitHash: Hash
-  val subject: @NlsSafe String
-  val fullMessage: @NlsSafe String
-  val changes: Collection<Change>
-}
+class EditedCommitDetails @ApiStatus.Internal constructor(
+  val currentUser: VcsUser?,
+  val committer: VcsUser,
+  val author: VcsUser,
+  val commitHash: Hash,
+  val subject: @NlsSafe String,
+  val fullMessage: @NlsSafe String,
+  val changes: Collection<Change>,
+) : EditedCommitPresentation
 
 sealed interface EditedCommitPresentation {
   object Loading : EditedCommitPresentation
-  class Details(delegate: EditedCommitDetails) : EditedCommitPresentation, EditedCommitDetails by delegate
 }

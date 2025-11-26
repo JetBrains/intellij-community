@@ -688,20 +688,13 @@ f:com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitNodeKt
 - sf:insertEditedCommitNode(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder,com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
-f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation$Details
-- com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
-- com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
-- <init>(com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails):V
-- getAuthor():com.intellij.vcs.log.VcsUser
-- getChanges():java.util.Collection
-- getCommitHash():com.intellij.vcs.log.Hash
-- getCommitter():com.intellij.vcs.log.VcsUser
-- getCurrentUser():com.intellij.vcs.log.VcsUser
-- getFullMessage():java.lang.String
-- getSubject():java.lang.String
+- sf:Companion:com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation$Companion
+f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation$Loading
 - com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 - sf:INSTANCE:com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation$Loading
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.vcs.log.impl.HashImpl
 - com.intellij.vcs.log.Hash
 - asString():java.lang.String
