@@ -5,7 +5,6 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -19,10 +18,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
@@ -147,7 +146,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
               val sessionData = (debugSession as XDebugSessionImpl).sessionData
-              val watchesManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager
+              val watchesManager = XDebugManagerProxy.getInstance().getWatchesManager(project)
               watchesManager.setWatchEntries(sessionData.configurationName, emptyList())
               watchesRemoved = true
             }
@@ -225,7 +224,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
-        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatchEntries(confNameForWatches)
+        val watches = XDebugManagerProxy.getInstance().getWatchesManager(project).getWatchEntries(confNameForWatches)
         watches.any { watch -> watch.expression.expression == needAddToWatch }
       }
       proposeSelectionChangeRestore(position)

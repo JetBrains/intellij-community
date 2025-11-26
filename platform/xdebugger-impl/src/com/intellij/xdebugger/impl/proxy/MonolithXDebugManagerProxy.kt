@@ -7,6 +7,7 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -14,8 +15,8 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
@@ -47,6 +48,10 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   // This method is not supported in monolith mode
   override fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId? = null
 
+  override fun getWatchesManager(project: Project): XDebuggerWatchesManager {
+    return getManagerImpl(project).watchesManager
+  }
+
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
     val sessionImpl = (session as MonolithSessionProxy).sessionImpl
     return withCoroutineScopeForId(block) { scope ->
@@ -56,14 +61,14 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
-    val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
-    return managerImpl.currentSessionFlow.map { it?.asProxy() }
+    return getManagerImpl(project).currentSessionFlow.map { it?.asProxy() }
   }
 
   override fun getSessions(project: Project): List<XDebugSessionProxy> {
-    val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
-    return managerImpl.debugSessions.map { it.asProxy() }
+    return getManagerImpl(project).debugSessions.map { it.asProxy() }
   }
+
+  private fun getManagerImpl(project: Project): XDebuggerManagerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     val manager = XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl

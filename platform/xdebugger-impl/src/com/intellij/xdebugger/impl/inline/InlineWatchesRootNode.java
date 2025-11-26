@@ -4,11 +4,10 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -61,8 +60,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
         return myInlinesGroup.getChildren();
       }
     };
-    List<InlineWatch> inlineWatches = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(tree.getProject()))
-      .getWatchesManager().getInlineWatches();
+    List<InlineWatch> inlineWatches = XDebugManagerProxy.getInstance().getWatchesManager(tree.getProject()).getInlineWatches();
 
     for (InlineWatch inlineWatch : inlineWatches) {
       myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, inlineWatch, stackFrame));

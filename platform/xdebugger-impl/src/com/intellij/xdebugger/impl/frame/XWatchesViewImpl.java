@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,13 +36,15 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XEvaluationListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueContainer;
-import com.intellij.xdebugger.impl.*;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
@@ -53,8 +54,8 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
@@ -492,8 +493,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   private XDebuggerWatchesManager getWatchesManager() {
-    return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(getTree().getProject()))
-      .getWatchesManager();
+    return XDebugManagerProxy.getInstance().getWatchesManager(getTree().getProject());
   }
 
   @Override

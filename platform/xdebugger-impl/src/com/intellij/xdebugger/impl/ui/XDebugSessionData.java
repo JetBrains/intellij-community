@@ -4,10 +4,9 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import org.jetbrains.annotations.ApiStatus;
@@ -50,8 +49,7 @@ public class XDebugSessionData extends UserDataHolderBase {
   @Deprecated
   public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
     if (myProject == null) return;
-    XDebuggerManagerImpl instance = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
-    instance.getWatchesManager().setWatches(myConfigurationName, watchExpressions);
+    XDebugManagerProxy.getInstance().getWatchesManager(myProject).setWatches(myConfigurationName, watchExpressions);
   }
 
   /**
@@ -60,8 +58,7 @@ public class XDebugSessionData extends UserDataHolderBase {
   @Deprecated
   public @NotNull List<XExpression> getWatchExpressions() {
     if (myProject == null) return Collections.emptyList();
-    XDebuggerManagerImpl instance = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
-    return instance.getWatchesManager().getWatches(myConfigurationName);
+    return XDebugManagerProxy.getInstance().getWatchesManager(myProject).getWatches(myConfigurationName);
   }
 
   public boolean isBreakpointsMuted() {

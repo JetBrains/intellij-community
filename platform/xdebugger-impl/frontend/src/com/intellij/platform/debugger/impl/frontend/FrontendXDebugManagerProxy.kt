@@ -8,11 +8,12 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
@@ -55,22 +56,28 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
-    return FrontendXDebuggerManager.getInstance(project).currentSession
+    return getFrontendManager(project).currentSession
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
-    return FrontendXDebuggerManager.getInstance(project).currentSessionFlow
+    return getFrontendManager(project).currentSessionFlow
   }
 
   override fun getSessions(project: Project): List<XDebugSessionProxy> {
-    return FrontendXDebuggerManager.getInstance(project).sessions
+    return getFrontendManager(project).sessions
   }
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
-    return FrontendXDebuggerManager.getInstance(project).breakpointsManager
+    return getFrontendManager(project).breakpointsManager
   }
 
   override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
     return XDebuggerExecutionPointManager.getInstance(project)
   }
+
+  override fun getWatchesManager(project: Project): XDebuggerWatchesManager {
+    return getFrontendManager(project).watchesManager
+  }
+
+  private fun getFrontendManager(project: Project): FrontendXDebuggerManager = FrontendXDebuggerManager.getInstance(project)
 }

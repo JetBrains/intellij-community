@@ -5,10 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.WatchesManagerState;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +39,7 @@ final class XDebuggerWatchesProvider extends WorkingContextProvider {
   }
 
   private static @NotNull XDebuggerWatchesManager getWatchManager(@NotNull Project project) {
-    return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getWatchesManager();
+    return XDebugManagerProxy.getInstance().getWatchesManager(project);
   }
 
   @Override
