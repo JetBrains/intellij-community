@@ -721,15 +721,6 @@ f:com.intellij.xdebugger.impl.ui.TextViewer
 - <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,Z):V
 - <init>(java.lang.String,com.intellij.openapi.project.Project,Z):V
 - setText(java.lang.String):V
-c:com.intellij.xdebugger.impl.ui.XDebugSessionData
-- com.intellij.openapi.util.UserDataHolderBase
-- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- <init>(java.util.List,java.lang.String):V
-- getConfigurationName():java.lang.String
-- getWatchExpressions():java.util.List
-- isBreakpointsMuted():Z
-- setBreakpointsMuted(Z):V
-- setWatchExpressions(java.util.List):V
 f:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt
 - sf:allowFramesViewCustomization(com.intellij.xdebugger.XDebugProcess):Z
 - sf:forceShowNewDebuggerUi(com.intellij.xdebugger.XDebugProcess):Z

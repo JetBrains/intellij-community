@@ -12,6 +12,15 @@ Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - getMarkup(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 - markValue(com.intellij.xdebugger.frame.XValue,com.intellij.xdebugger.impl.ui.tree.ValueMarkup):org.jetbrains.concurrency.Promise
 - unmarkValue(com.intellij.xdebugger.frame.XValue):org.jetbrains.concurrency.Promise
+c:com.intellij.xdebugger.impl.ui.XDebugSessionData
+- com.intellij.openapi.util.UserDataHolderBase
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(java.util.List,java.lang.String):V
+- getConfigurationName():java.lang.String
+- getWatchExpressions():java.util.List
+- isBreakpointsMuted():Z
+- setBreakpointsMuted(Z):V
+- setWatchExpressions(java.util.List):V
 c:com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 - <init>(java.lang.String,java.awt.Color,java.lang.String):V
 - getColor():java.awt.Color
