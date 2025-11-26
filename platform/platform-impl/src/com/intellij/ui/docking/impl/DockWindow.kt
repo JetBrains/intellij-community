@@ -9,7 +9,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
@@ -33,7 +32,6 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.awt.BorderLayout
 import java.awt.Window
 import java.awt.event.KeyEvent
@@ -49,10 +47,8 @@ internal class DockWindow(
   isDialog: Boolean,
   val supportReopen: Boolean,
   coroutineScope: CoroutineScope,
-) : FrameWrapper(project = dockManager.project,
-                 dimensionKey = dimensionKey ?: "dock-window-$id",
-                 isDialog = isDialog,
-                 coroutineScope = coroutineScope) {
+) : FrameWrapper(project = dockManager.project, dimensionKey = dimensionKey
+                                                               ?: "dock-window-$id", isDialog = isDialog, coroutineScope = coroutineScope) {
   var northPanelAvailable: Boolean = false
     private set
   private val northPanel = VerticalBox()
@@ -71,10 +67,13 @@ internal class DockWindow(
       if (mainStatusBar != null) {
         val frame = getFrame()
         if (frame is IdeFrame) {
-          val dockContainer = container as? DockableEditorTabbedContainer
-          val currentFileEditorFlow: StateFlow<FileEditor?> =
-            dockContainer?.splitters?.currentFileEditorFlow ?: MutableStateFlow(null)
-
+          val dockContainer = container
+          val currentFileEditorFlow = if (dockContainer is DockableEditorTabbedContainer) {
+            dockContainer.splitters.currentFileEditorFlow
+          }
+          else {
+            MutableStateFlow(null)
+          }
           statusBar = mainStatusBar.createChild(
             coroutineScope = coroutineScope.childScope("DockWindow $id"),
             frame = frame,
@@ -142,10 +141,8 @@ internal class DockWindow(
 
     // Close the container if it's empty, and we've just removed the last tool window
     dockManager.project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerListener.ToolWindowManagerEventType) {
-        // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
-        if (eventType == ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow
-            || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
+      override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerListener.ToolWindowManagerEventType) { // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
+        if (eventType == ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.UnregisterToolWindow) {

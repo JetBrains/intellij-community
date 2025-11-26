@@ -65,6 +65,7 @@ import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -88,11 +89,11 @@ private val minIconHeight: Int
  * Interface for widgets that can be recreated for child status bars (detached windows).
  * Preferred over [StatusBarWidget.Multiframe] as it provides full context for recreation.
  */
-interface ChildStatusBarWidget {
+internal interface ChildStatusBarWidget {
   fun createForChild(childStatusBar: IdeStatusBarImpl): StatusBarWidget
 }
 
-open class IdeStatusBarImpl @ApiStatus.Internal constructor(
+open class IdeStatusBarImpl @Internal constructor(
   parentCs: CoroutineScope,
   private val getProject: () -> Project?,
   addToolWindowWidget: Boolean,
@@ -106,7 +107,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     PRESSED
   }
 
-  private val widgetMap = LinkedHashMap<String, WidgetBean>()
+  private val widgetRegistry = WidgetRegistry()
   private var leftPanel: JPanel? = null
 
   private var rightPanelLayout = GridBagLayout()
@@ -153,11 +154,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   //=== CREATE CHILD: New child gets all existing widgets ===
   @RequiresEdt
-  override fun createChild(
-    coroutineScope: CoroutineScope,
-    frame: IdeFrame,
-    currentFileEditorFlow: StateFlow<FileEditor?>,
-  ): StatusBar {
+  @Internal
+  override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, currentFileEditorFlow: StateFlow<FileEditor?>): StatusBar {
     EDT.assertIsEdt()
     val bar = IdeStatusBarImpl(
       parentCs = coroutineScope,
@@ -177,9 +175,9 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
 
     // Propagate ALL existing widgets to the new child
-    LOG.debug { "createChild: propagating ${widgetMap.size} existing widgets to new child" }
-    for (bean in widgetMap.values) {
-      propagateWidgetToChild(bean.widget, bean.position, bean.order, bar)
+    LOG.debug { "createChild: propagating ${widgetRegistry.size} existing widgets to new child" }
+    for (bean in widgetRegistry.getAllBeans()) {
+      propagateWidgetToChild(widget = bean.widget, position = bean.position, anchor = bean.order, child = bar)
     }
 
     return bar
@@ -220,10 +218,10 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
       val toolWindowWidget = ToolWindowsWidget(disposable, this)
       val toolWindowWidgetComponent = wrapCustomStatusBarWidget(toolWindowWidget)
-      widgetMap.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
-                                                      position = Position.LEFT,
-                                                      component = toolWindowWidgetComponent,
-                                                      order = LoadingOrder.ANY))
+      widgetRegistry.put(toolWindowWidget.ID(), WidgetBean(widget = toolWindowWidget,
+                                                          position = Position.LEFT,
+                                                          component = toolWindowWidgetComponent,
+                                                          order = LoadingOrder.ANY))
       Disposer.register(disposable, toolWindowWidget)
       toolWindowWidgetComponent.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
       leftPanel().add(toolWindowWidgetComponent)
@@ -315,13 +313,13 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   @RequiresEdt
   fun setCentralWidget(id: String, component: JComponent?) {
     if (component == null) {
-      widgetMap.remove(id)
+      widgetRegistry.remove(id)
     }
     else {
       val widget = object : StatusBarWidget {
         override fun ID(): String = id
       }
-      widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
+      widgetRegistry.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
     }
 
     val infoAndProgressPanel = createInfoAndProgressPanel()
@@ -342,7 +340,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   @RequiresEdt
-  @ApiStatus.Internal
+  @Internal
   fun addWidget(widget: StatusBarWidget, anchor: LoadingOrder) {
     addWidget(widget, Position.RIGHT, anchor)
   }
@@ -410,14 +408,13 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   private fun sortRightWidgets() {
-    val sorted = mutableListOf<Orderable>()
-    widgetMap.values.filterTo(sorted) { it.position == Position.RIGHT }
+    val sorted = widgetRegistry.filterByPosition(Position.RIGHT)
 
     // inject not available extension to make sort correct —
     // e.g. `after PowerSaveMode` must work even if `PowerSaveMode` widget is disabled,
     // because `PowerSaveMode` can specify something like `after Encoding`
     StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
-      .filter { !widgetMap.containsKey(it.id) }
+      .filter { it.id != null && !widgetRegistry.containsKey(it.id!!) }
       .mapTo(sorted) {
         object : Orderable {
           override val orderId: String?
@@ -445,7 +442,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   private fun addWidgetToSelf(bean: WidgetBean, parentDisposable: Disposable? = null) {
     LOG.debug { "addWidgetToSelf: ${bean.widget.ID()}" }
 
-    widgetMap.put(bean.widget.ID(), bean)
+    widgetRegistry.put(bean.widget.ID(), bean)
 
     val effectiveDisposable = parentDisposable ?: disposable
     Disposer.register(effectiveDisposable, bean.widget)
@@ -567,7 +564,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
    * This isn't a problem for current usage when the subscription is performed on the first remote client's connection, but may need to be
    * corrected for potential future usages.
    */
-  @ApiStatus.Internal
+  @Internal
   fun getVisibleProcessFlow(): Flow<VisibleProgress> {
     return flow {
       var firstTime = true
@@ -708,7 +705,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   override fun removeWidget(id: String) {
     EdtInvocationManager.invokeLaterIfNeeded {
-      val bean = widgetMap.remove(id)
+      val bean = widgetRegistry.remove(id)
       if (bean != null) {
         effectRenderer.clearIfMatches(bean.component)
 
@@ -748,31 +745,27 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
   }
 
-  override fun getWidget(id: String): StatusBarWidget? = widgetMap.get(id)?.widget
+  override fun getWidget(id: String): StatusBarWidget? = widgetRegistry.getWidget(id)
 
   override val allWidgets: Collection<StatusBarWidget>?
-    get() = widgetMap.values.map { it.widget }
+    get() = widgetRegistry.getAllWidgets()
 
-  override fun getWidgetAnchor(id: String): @NonNls String? = widgetMap.get(id)?.anchor
+  override fun getWidgetAnchor(id: String): @NonNls String? = widgetRegistry.getAnchor(id)
 
   //todo: make private after removing all external usages
-  @ApiStatus.Internal
-  fun getWidgetComponent(id: String): JComponent? = widgetMap.get(id)?.component
+  @Internal
+  fun getWidgetComponent(id: String): JComponent? = widgetRegistry.getComponent(id)
 
   override val project: Project?
     get() = getProject()
 
+  @get:Internal
   override val currentEditor: StateFlow<FileEditor?>
     get() = currentFileEditorFlow ?: defaultEditorFlow
 
   private val defaultEditorFlow: StateFlow<FileEditor?> by lazy {
-    val project = project
-    if (project != null) {
-      project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
-    }
-    else {
-      MutableStateFlow(null)
-    }
+    val project = project ?: return@lazy MutableStateFlow(null)
+    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -816,27 +809,6 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
-}
-
-private enum class Position {
-  LEFT,
-  RIGHT,
-  CENTER
-}
-
-private class WidgetBean(
-  @JvmField val widget: StatusBarWidget,
-  @JvmField val position: Position,
-  @JvmField val component: JComponent,
-  override val order: LoadingOrder,
-) : Orderable {
-  val anchor: String
-    get() = order.toString()
-
-  override val orderId: String
-    get() = widget.ID()
-
-  override fun toString(): String = "Widget(id=$orderId, order=$order, position=$position)"
 }
 
 @RequiresEdt
@@ -1048,7 +1020,7 @@ private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 class VisibleProgress(
   val title: @NlsContexts.ProgressTitle String,
   val clientId: ClientId?,
