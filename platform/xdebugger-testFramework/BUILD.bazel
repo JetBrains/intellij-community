@@ -20,6 +20,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.testFramework` end

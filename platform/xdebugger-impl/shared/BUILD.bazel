@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/kernel/shared:kernel",
+    "//platform/util/concurrency",
     "//platform/xdebugger-api:debugger",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
@@ -31,6 +32,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
     "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

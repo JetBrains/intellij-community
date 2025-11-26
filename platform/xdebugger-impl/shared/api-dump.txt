@@ -1,0 +1,19 @@
+e:com.intellij.xdebugger.impl.XSourceKind
+- java.lang.Enum
+- sf:ALTERNATIVE:com.intellij.xdebugger.impl.XSourceKind
+- sf:MAIN:com.intellij.xdebugger.impl.XSourceKind
+- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.XSourceKind
+- s:values():com.intellij.xdebugger.impl.XSourceKind[]
+Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
+- canMarkValue(com.intellij.xdebugger.frame.XValue):Z
+- clear():V
+- s:createValueMarkers(com.intellij.xdebugger.frame.XValueMarkerProvider):com.intellij.xdebugger.impl.frame.XValueMarkers
+- getAllMarkers():java.util.Map
+- getMarkup(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.impl.ui.tree.ValueMarkup
+- markValue(com.intellij.xdebugger.frame.XValue,com.intellij.xdebugger.impl.ui.tree.ValueMarkup):org.jetbrains.concurrency.Promise
+- unmarkValue(com.intellij.xdebugger.frame.XValue):org.jetbrains.concurrency.Promise
+c:com.intellij.xdebugger.impl.ui.tree.ValueMarkup
+- <init>(java.lang.String,java.awt.Color,java.lang.String):V
+- getColor():java.awt.Color
+- getText():java.lang.String
+- getToolTipText():java.lang.String

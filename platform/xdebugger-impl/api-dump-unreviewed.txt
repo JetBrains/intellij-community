@@ -93,12 +93,6 @@ f:com.intellij.xdebugger.impl.XDebuggerHistoryManager$XDebuggerHistoryPathMacroF
 - com.intellij.openapi.application.PathMacroFilter
 - <init>():V
 - skipPathMacros(org.jdom.Element):Z
-e:com.intellij.xdebugger.impl.XSourceKind
-- java.lang.Enum
-- sf:ALTERNATIVE:com.intellij.xdebugger.impl.XSourceKind
-- sf:MAIN:com.intellij.xdebugger.impl.XSourceKind
-- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.XSourceKind
-- s:values():com.intellij.xdebugger.impl.XSourceKind[]
 com.intellij.xdebugger.impl.XSourcePositionEx
 - com.intellij.xdebugger.XSourcePosition
 - getPositionUpdateFlow():kotlinx.coroutines.flow.Flow
@@ -490,14 +484,6 @@ c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
 - com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.frame.XStackFrame):V
 - rebuildView():V
-Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
-- canMarkValue(com.intellij.xdebugger.frame.XValue):Z
-- clear():V
-- s:createValueMarkers(com.intellij.xdebugger.frame.XValueMarkerProvider):com.intellij.xdebugger.impl.frame.XValueMarkers
-- getAllMarkers():java.util.Map
-- getMarkup(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.impl.ui.tree.ValueMarkup
-- markValue(com.intellij.xdebugger.frame.XValue,com.intellij.xdebugger.impl.ui.tree.ValueMarkup):org.jetbrains.concurrency.Promise
-- unmarkValue(com.intellij.xdebugger.frame.XValue):org.jetbrains.concurrency.Promise
 a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - com.intellij.xdebugger.impl.frame.XDebugView
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.impl.frame.XValueMarkers):V
@@ -1015,11 +1001,6 @@ a:com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase
 - p:createCenterPanel():javax.swing.JComponent
 - getConfiguredMarkup():com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 - getPreferredFocusedComponent():javax.swing.JComponent
-c:com.intellij.xdebugger.impl.ui.tree.ValueMarkup
-- <init>(java.lang.String,java.awt.Color,java.lang.String):V
-- getColor():java.awt.Color
-- getText():java.lang.String
-- getToolTipText():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - com.intellij.ide.dnd.aware.DnDAwareTree
 - com.intellij.openapi.Disposable
