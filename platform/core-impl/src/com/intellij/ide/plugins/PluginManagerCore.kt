@@ -132,6 +132,15 @@ object PluginManagerCore {
       pluginErrors.clear()
       return result
     }
+
+    @Synchronized
+    fun consumeStartupActionsPluginsToEnableDisable(): Pair<Set<PluginId>, Set<PluginId>> {
+      val toEnable = pluginsToEnable ?: emptySet()
+      val toDisable = pluginsToDisable ?: emptySet()
+      pluginsToEnable = null
+      pluginsToDisable = null
+      return toEnable to toDisable
+    }
   }
 
   @ApiStatus.Internal
@@ -346,33 +355,6 @@ object PluginManagerCore {
   @ApiStatus.Internal
   fun clearLoadingErrorsFor(pluginId: PluginId) {
     pluginsState.pluginLoadingErrors = pluginsState.pluginLoadingErrors?.minus(pluginId)
-  }
-
-  @ApiStatus.Internal
-  @Synchronized
-  @JvmStatic
-  fun onEnable(enabled: Boolean): Boolean {
-    val pluginIds = if (enabled) pluginsState.pluginsToEnable else pluginsState.pluginsToDisable
-    pluginsState.pluginsToEnable = null
-    pluginsState.pluginsToDisable = null
-    if (pluginIds == null) {
-      return false
-    }
-    val descriptors = ArrayList<IdeaPluginDescriptorImpl>()
-    for (descriptor in getPluginSet().allPlugins) {
-      if (pluginIds.contains(descriptor.getPluginId())) {
-        descriptor.isMarkedForLoading = enabled
-        descriptors.add(descriptor)
-      }
-    }
-    val pluginEnabler = PluginEnabler.getInstance()
-    if (enabled) {
-      pluginEnabler.enable(descriptors)
-    }
-    else {
-      pluginEnabler.disable(descriptors)
-    }
-    return true
   }
 
   @ApiStatus.Internal
@@ -905,6 +887,9 @@ object PluginManagerCore {
     }
     return true
   }
+
+  @ApiStatus.Internal
+  fun consumeStartupActionsPluginsToEnableDisable(): Pair<Set<PluginId>, Set<PluginId>> = pluginsState.consumeStartupActionsPluginsToEnableDisable()
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("The platform code should use [JAVA_PLUGIN_ALIAS_ID] instead, plugins aren't supposed to use this")

@@ -10,7 +10,7 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.StartupPluginLoadingErrorReporter
 import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.notification.NotificationAction
@@ -335,7 +335,7 @@ private suspend fun reportPluginErrors() {
       .createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
-        PluginManagerMain.onEvent(event.description)
+        StartupPluginLoadingErrorReporter.onEvent(event.description)
       }
       .addActions(actions)
       .notify(null)
@@ -359,7 +359,7 @@ private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction>
       errors.removeAt(errors.lastIndex)
 
       actions.add(NotificationAction.createSimpleExpiring(text) {
-        PluginManagerMain.onEvent(description)
+        StartupPluginLoadingErrorReporter.onEvent(description)
       })
     }
     else {
