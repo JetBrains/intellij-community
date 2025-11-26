@@ -86,6 +86,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.plaf.basic.ComboPopup
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.minutes
 
 @Suppress("FunctionName")
@@ -1372,7 +1373,9 @@ fun IdeEventQueue.flushExistingEvents() {
         dispatchEvent(nextEvent)
       }
       catch (e: Exception) {
-        Logs.LOG.error(e)
+        if (e !is CancellationException && e !is ControlFlowException) {
+          Logs.LOG.error(e)
+        }
       }
     }
   }
