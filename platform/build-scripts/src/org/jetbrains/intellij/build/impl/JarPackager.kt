@@ -796,9 +796,8 @@ class JarPackager private constructor(
 }
 
 private fun getCanonicalPath(mavenPaths: List<String>, file: Path): String {
-  @Suppress("IO_FILE_USAGE")
   return mavenPaths.singleOrNull()
-         ?: mavenPaths.firstOrNull { it.endsWith(java.io.File.separatorChar + file.fileName.toString()) }
+         ?: mavenPaths.firstOrNull { it.endsWith("/${file.fileName}") }
          ?: throw IllegalStateException("Cannot find canonical path for $file in $mavenPaths")
 }
 
@@ -808,10 +807,10 @@ private fun toCanonicalReportPath(file: Path, buildPaths: BuildPaths): String {
   for (root in listOf(bazelMavenHome, mavenHome, projectHome)) {
     if (file.startsWith(root)) {
       val macro = if (root === projectHome) $$"$PROJECT_DIR$/" else $$"$MAVEN_REPOSITORY$/"
-      return macro + root.relativize(file).toString()
+      return macro + root.relativize(file).invariantSeparatorsPathString
     }
   }
-  return file.toString()
+  return file.invariantSeparatorsPathString
 }
 
 private val bazelMavenHome = USER_HOME.resolve(".m2/repository-do-not-use-maven-repository-with-bazel")
