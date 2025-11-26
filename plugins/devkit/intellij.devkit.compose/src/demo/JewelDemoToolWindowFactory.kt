@@ -14,7 +14,6 @@ import javax.swing.JComponent
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     // Enable custom popup rendering to use JBPopup instead of the default Compose implementation
-    JewelFlags.useCustomPopupRenderer = true
 
     toolWindow.addComposeTab(DevkitComposeBundle.message("jewel.tw.tab.title.components")) { ComponentShowcaseTab(project) }
 
