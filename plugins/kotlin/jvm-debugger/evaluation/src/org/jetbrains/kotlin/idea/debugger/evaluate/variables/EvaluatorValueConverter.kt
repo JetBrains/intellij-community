@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.isSubtype
 import com.sun.jdi.*
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.findMethod
-import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder.Result
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import kotlin.jvm.internal.Ref

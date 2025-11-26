@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.isSubtype
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as creation stacktrace separator in kotlinx.coroutines
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
@@ -79,8 +81,9 @@ fun Type.isBaseContinuationImpl() =
 fun Type.isCoroutineScope() =
     isSubtype("kotlinx.coroutines.CoroutineScope")
 
-fun Type.isSubTypeOrSame(className: String) =
-    name() == className || isSubtype(className)
+@Deprecated("Use isSubTypeOrSame from com.intellij.debugger.engine.evaluation.expression instead")
+fun Type.isSubTypeOrSame(className: String): Boolean = isSubtype(AsmType.getObjectType(className))
+
 
 fun ReferenceType.isSuspendLambda() =
     SUSPEND_LAMBDA_CLASSES.any { isSubtype(it) }

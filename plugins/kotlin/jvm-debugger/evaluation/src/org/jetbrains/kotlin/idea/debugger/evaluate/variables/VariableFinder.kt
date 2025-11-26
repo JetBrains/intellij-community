@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.isSubtype
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*

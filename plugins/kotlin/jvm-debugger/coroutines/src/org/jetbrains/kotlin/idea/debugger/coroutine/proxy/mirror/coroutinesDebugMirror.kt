@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
+import com.intellij.debugger.engine.isSubTypeOrSame
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 
 class DebugProbesImpl private constructor(context: DefaultExecutionContext) :

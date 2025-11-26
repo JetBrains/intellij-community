@@ -3,11 +3,14 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.ClientEvaluationExceptionType
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
 import com.intellij.debugger.engine.evaluation.expression.*
+import com.intellij.debugger.engine.extractTypeFromClientException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.application.runReadAction
@@ -23,7 +26,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.BitUtil
 import com.sun.jdi.*
-import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
@@ -38,7 +40,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
@@ -210,29 +211,15 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun checkCauseOfEvaluateException(cause: Throwable, hasCast: Boolean): StatisticsEvaluationResult {
         if (cause is InvocationException) {
-            try {
-                val exceptionFromCodeFragment = cause.exception()
-                val type = exceptionFromCodeFragment.type()
-                if (type.signature().equals("Ljava/lang/IllegalArgumentException;")) {
-                    if (DebuggerUtils.tryExtractExceptionMessage(exceptionFromCodeFragment) == "argument type mismatch") {
-                        return StatisticsEvaluationResult.MISCOMPILED
-                    }
-                }
-                if (type.signature().startsWith("Ljava/lang/invoke/")
-                    || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")
-                    || type.isSubTypeOrSame("java.lang.LinkageError")
-                ) {
-                    return StatisticsEvaluationResult.MISCOMPILED
-                }
-                if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
-                    return if (hasCast) StatisticsEvaluationResult.USER_EXCEPTION else StatisticsEvaluationResult.MISCOMPILED
-                }
+            val exceptionFromCodeFragment = cause.exception()
+
+            val result = extractTypeFromClientException(exceptionFromCodeFragment, hasCast)
+
+            return when(result) {
+                ClientEvaluationExceptionType.MISCOMPILED -> StatisticsEvaluationResult.MISCOMPILED
+                ClientEvaluationExceptionType.USER_EXCEPTION -> StatisticsEvaluationResult.USER_EXCEPTION
+                ClientEvaluationExceptionType.ERROR_DURING_PARSING_EXCEPTION -> StatisticsEvaluationResult.ERROR_DURING_PARSING_EXCEPTION
             }
-            catch (e: Throwable) {
-                LOG.error("Can't extract error type from InvocationException", e)
-                return StatisticsEvaluationResult.ERROR_DURING_PARSING_EXCEPTION
-            }
-            return StatisticsEvaluationResult.USER_EXCEPTION
         }
 
         if (isSpecialException(cause)) {

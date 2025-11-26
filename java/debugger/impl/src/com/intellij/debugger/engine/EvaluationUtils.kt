@@ -6,7 +6,11 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Type
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
@@ -15,6 +19,7 @@ import kotlinx.coroutines.completeWith
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
+import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 /**
  * Find some suspend context in which evaluation is possible.
@@ -135,4 +140,70 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   }
 
   return actionResult.await()
+}
+
+@ApiStatus.Internal
+fun Type.isSubtype(className: String): Boolean = isSubtype(AsmType.getObjectType(className))
+
+@ApiStatus.Internal
+fun Type.isSubTypeOrSame(className: String): Boolean =
+  name() == className || isSubtype(className)
+
+@ApiStatus.Internal
+fun Type.isSubtype(type: AsmType): Boolean {
+  if (this.signature() == type.descriptor) {
+    return true
+  }
+
+  if (type.sort != AsmType.OBJECT || this !is ClassType) {
+    return false
+  }
+
+  val superTypeName = type.className
+
+  if (allInterfaces().any { it.name() == superTypeName }) {
+    return true
+  }
+
+  var superClass = superclass()
+  while (superClass != null) {
+    if (superClass.name() == superTypeName) {
+      return true
+    }
+    superClass = superClass.superclass()
+  }
+
+  return false
+}
+
+@ApiStatus.Internal
+enum class ClientEvaluationExceptionType {
+  USER_EXCEPTION,
+  MISCOMPILED,
+  ERROR_DURING_PARSING_EXCEPTION
+}
+
+@ApiStatus.Internal
+fun extractTypeFromClientException(exceptionFromCodeFragment: ObjectReference, hasCast: Boolean): ClientEvaluationExceptionType {
+  try {
+    val type = exceptionFromCodeFragment.type()
+    if (type.signature().equals("Ljava/lang/IllegalArgumentException;")) {
+      if (DebuggerUtils.tryExtractExceptionMessage(exceptionFromCodeFragment) == "argument type mismatch") {
+        return ClientEvaluationExceptionType.MISCOMPILED
+      }
+    }
+    if (type.signature().startsWith("Ljava/lang/invoke/")
+        || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")
+        || type.isSubTypeOrSame("java.lang.LinkageError")
+    ) {
+      return ClientEvaluationExceptionType.MISCOMPILED
+    }
+    if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
+      return if (hasCast) ClientEvaluationExceptionType.USER_EXCEPTION else ClientEvaluationExceptionType.MISCOMPILED
+    }
+    return ClientEvaluationExceptionType.USER_EXCEPTION
+  } catch (e: Throwable) {
+    logger<DebugProcessImpl>().error("Can't extract error type from InvocationException", e)
+    return ClientEvaluationExceptionType.ERROR_DURING_PARSING_EXCEPTION
+  }
 }
