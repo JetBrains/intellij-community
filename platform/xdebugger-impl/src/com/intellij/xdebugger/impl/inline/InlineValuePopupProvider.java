@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;

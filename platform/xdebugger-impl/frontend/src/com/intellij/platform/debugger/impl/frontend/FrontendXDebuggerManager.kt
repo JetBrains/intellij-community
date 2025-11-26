@@ -23,7 +23,7 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

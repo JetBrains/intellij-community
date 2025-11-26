@@ -13,7 +13,7 @@ import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;

@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.Disposable
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.frame.XExecutionStack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred

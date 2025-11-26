@@ -61,6 +61,7 @@ jvm_library(
     "//platform/eel",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5/codeInsight",
+    "//platform/xdebugger-impl/shared",
   ],
   exports = [
     "//java/testFramework/shared",

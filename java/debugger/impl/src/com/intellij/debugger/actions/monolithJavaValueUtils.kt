@@ -7,7 +7,7 @@ import com.intellij.frontend.FrontendType
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.runBlocking
 

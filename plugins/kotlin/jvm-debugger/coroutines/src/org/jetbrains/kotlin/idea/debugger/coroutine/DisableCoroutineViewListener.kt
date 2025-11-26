@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 
 private class DisableCoroutineViewListener : XDebuggerManagerProxyListener {
     override fun sessionStarted(session: XDebugSessionProxy) {

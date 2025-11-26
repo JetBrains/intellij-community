@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl/concurrency",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
     "//platform/platform-impl:ide-impl",
     "//platform/execution-impl",
     "//platform/projectModel-api:projectModel",

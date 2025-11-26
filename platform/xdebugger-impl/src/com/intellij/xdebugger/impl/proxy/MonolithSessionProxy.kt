@@ -28,9 +28,9 @@ import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.XSmartStepIntoHandlerEntry
-import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
+import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab

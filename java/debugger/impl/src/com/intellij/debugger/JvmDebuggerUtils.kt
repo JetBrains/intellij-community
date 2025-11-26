@@ -8,7 +8,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import org.jetbrains.annotations.ApiStatus

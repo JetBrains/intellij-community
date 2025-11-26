@@ -52,7 +52,7 @@ import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointTypeProxyKt;
 import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy;

@@ -11,7 +11,7 @@ import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.ComponentUtil
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog

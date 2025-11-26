@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;

@@ -2,7 +2,7 @@
 package com.jetbrains.python.debugger.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl

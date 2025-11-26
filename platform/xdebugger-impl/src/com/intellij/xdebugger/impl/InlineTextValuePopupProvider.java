@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineValuePopupProvider;
 import com.intellij.xdebugger.impl.inline.XDebuggerTextInlayPopup;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;

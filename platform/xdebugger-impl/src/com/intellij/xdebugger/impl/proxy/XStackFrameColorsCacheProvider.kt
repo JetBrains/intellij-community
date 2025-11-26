@@ -8,7 +8,7 @@ import com.intellij.psi.search.scope.NonProjectFilesScope
 import com.intellij.ui.FileColorManager
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
+import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow

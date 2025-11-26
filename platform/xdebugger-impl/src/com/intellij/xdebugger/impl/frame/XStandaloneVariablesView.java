@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;

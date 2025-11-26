@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
   </component>
   <component name="copyright">
     <Base>

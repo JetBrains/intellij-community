@@ -8,7 +8,7 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManagerListener
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.proxy.asProxy
 import org.jetbrains.annotations.ApiStatus
 

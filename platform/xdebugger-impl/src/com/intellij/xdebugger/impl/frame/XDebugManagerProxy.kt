@@ -7,6 +7,7 @@ import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
@@ -15,12 +16,12 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This is a set of util functions that can be used in the shared code with [XDebugSessionProxy], RPC ID, etc.
+ * This is a set of util functions that can be used in the shared code with [com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy], RPC ID, etc.
  *
  * This manager and all its usages should be moved to the frontend module in the future.
  * For now, it is kept here to avoid breaking the LUXed implementation.
  *
- * @see XDebugSessionProxy
+ * @see com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
  */
 @ApiStatus.Internal
 interface XDebugManagerProxy {
