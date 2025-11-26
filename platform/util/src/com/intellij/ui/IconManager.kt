@@ -88,7 +88,7 @@ interface IconManager {
 
   fun createRowIcon(vararg icons: Icon): RowIcon
 
-  fun registerIconLayer(flagMask: Int, icon: Icon)
+  fun registerIconLayer(flagMask: Int, icon: Icon?)
 
   fun tooltipOnlyIfComposite(icon: Icon): Icon
 
@@ -131,7 +131,7 @@ private object DummyIconManager : IconManager {
     return DummyRowIcon(icons)
   }
 
-  override fun registerIconLayer(flagMask: Int, icon: Icon) {
+  override fun registerIconLayer(flagMask: Int, icon: Icon?) {
   }
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
