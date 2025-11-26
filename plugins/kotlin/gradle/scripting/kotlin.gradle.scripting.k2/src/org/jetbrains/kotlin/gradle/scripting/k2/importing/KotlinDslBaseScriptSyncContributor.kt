@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
 import org.gradle.tooling.model.dsl.GradleDslBaseScriptModel
-import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.BaseScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.getGradleTemplatesNames
@@ -52,7 +52,7 @@ internal class KotlinDslBaseScriptSyncContributor : GradleSyncContributor {
                 )
             }
 
-            GradleKotlinScriptService.getInstance(context.project).updateStorage(
+            GradleKotlinScriptEntityProvider.getInstance(context.project).updateStorage(
                 storage,
                 models,
                 definitions,

@@ -7,7 +7,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asNio
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
-import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.collectErrors
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.getKotlinDslScripts
@@ -80,7 +80,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
             )
         )
 
-        GradleKotlinScriptService.getInstance(project).updateStorage(scriptData, builder)
+        GradleKotlinScriptEntityProvider.getInstance(project).updateStorage(scriptData, builder)
 
         return builder.toSnapshot()
     }

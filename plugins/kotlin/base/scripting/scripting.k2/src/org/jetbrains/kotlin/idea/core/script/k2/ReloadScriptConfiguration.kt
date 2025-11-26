@@ -29,10 +29,9 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationProviderExtension
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptEntities
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
@@ -112,8 +111,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
         val virtualFile = ktFile.alwaysVirtualFile
 
         scope.launch {
-            definition.getConfigurationProviderExtension(project).removeConfiguration(virtualFile)
-            project.removeScriptEntities(listOf(virtualFile))
+            definition.getScriptEntityProvider(project).removeKotlinScriptEntity(virtualFile)
             ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
             KotlinScriptResolutionService.getInstance(project).process(virtualFile)
 

@@ -158,7 +158,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
     }
 
     private fun isImported(virtualFile: VirtualFile, project: Project): Boolean =
-        GradleKotlinScriptService.getInstance(project).getConfiguration(virtualFile) != null
+        GradleKotlinScriptEntityProvider.getInstance(project).getKotlinScriptEntity(virtualFile) != null
 
     private fun linkProject(
         project: Project,

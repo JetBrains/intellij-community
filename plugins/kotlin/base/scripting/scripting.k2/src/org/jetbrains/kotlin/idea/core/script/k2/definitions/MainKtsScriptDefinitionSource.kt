@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationProviderExtension
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsEntityProvider
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
@@ -26,7 +26,7 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
-            val mainKtsConfigurationProvider = MainKtsConfigurationProvider.getInstance(project)
+            val mainKtsConfigurationProvider = MainKtsEntityProvider.getInstance(project)
 
             return discoveredDefinitions.map { definition ->
                 val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {
@@ -39,7 +39,7 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                             title = ".main.kts"
                             templateName = "Kotlin Script MainKts"
                         })
-                        configurationProviderExtension {
+                        scriptEntityProvider {
                             mainKtsConfigurationProvider
                         }
                     }

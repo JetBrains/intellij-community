@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -45,23 +44,21 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
-class GradleKotlinScriptService(override val project: Project) : ScriptConfigurationProviderExtension {
+class GradleKotlinScriptEntityProvider(override val project: Project) : KotlinScriptEntityProvider(project) {
     private val urlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
 
-    private val VirtualFile.virtualFileUrl: VirtualFileUrl
-        get() = toVirtualFileUrl(urlManager)
-
-    override suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
+    override suspend fun updateWorkspaceModel(
+        virtualFile: VirtualFile,
+        definition: ScriptDefinition
+    ) {
         val configuration = refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), definition, project)
 
-        val currentStorage = project.workspaceModel.currentSnapshot.toBuilder()
+        val currentStorage = currentSnapshot.toBuilder()
         project.updateKotlinScriptEntities(KotlinGradleScriptEntitySource) { storage ->
             currentStorage.updateStorage(virtualFile, configuration)
             storage.applyChangesFrom(currentStorage)
         }
-
-        return configuration
     }
 
     fun updateStorage(
@@ -294,6 +291,6 @@ class GradleKotlinScriptService(override val project: Project) : ScriptConfigura
 
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): GradleKotlinScriptService = project.service()
+        fun getInstance(project: Project): GradleKotlinScriptEntityProvider = project.service()
     }
 }

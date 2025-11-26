@@ -7,21 +7,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptConfigurationProviderExtension
-import org.jetbrains.kotlin.idea.core.script.k2.modules.updateKotlinScriptEntities
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
@@ -32,11 +26,14 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
-class DefaultScriptConfigurationHandler(
-    override val project: Project, val coroutineScope: CoroutineScope
-) : ScriptConfigurationProviderExtension {
-
-    override suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
+class DefaultKotlinScriptEntityProvider(
+    override val project: Project,
+    val coroutineScope: CoroutineScope
+) : KotlinScriptEntityProvider(project) {
+    override suspend fun updateWorkspaceModel(
+        virtualFile: VirtualFile,
+        definition: ScriptDefinition
+    ) {
         val definitionJdk = definition.compilationConfiguration[ScriptCompilationConfiguration.jvm.jdkHome]
         val configuration = getInitialConfiguration(definitionJdk, definition)
 
@@ -84,8 +81,6 @@ class DefaultScriptConfigurationHandler(
         }
 
         project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)
-
-        return result
     }
 
     private fun getInitialConfiguration(
@@ -101,16 +96,10 @@ class DefaultScriptConfigurationHandler(
         }
     }
 
-    private val urlManager: VirtualFileUrlManager
-        get() = project.workspaceModel.getVirtualFileUrlManager()
-
-    private val VirtualFile.virtualFileUrl: VirtualFileUrl
-        get() = toVirtualFileUrl(urlManager)
-
     companion object {
         @JvmStatic
-        fun getInstance(project: Project): DefaultScriptConfigurationHandler = project.service()
+        fun getInstance(project: Project): DefaultKotlinScriptEntityProvider = project.service()
     }
-
-    object DefaultScriptEntitySource : EntitySource
 }
+
+object DefaultScriptEntitySource : EntitySource

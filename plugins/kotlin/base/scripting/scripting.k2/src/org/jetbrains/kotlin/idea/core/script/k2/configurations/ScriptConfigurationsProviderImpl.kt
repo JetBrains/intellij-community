@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k2.toConfigurationResult
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
@@ -112,7 +113,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
-        return definition.getConfigurationProviderExtension(project).getConfiguration(file.alwaysVirtualFile)
+        return definition.getScriptEntityProvider(project).getKotlinScriptEntity(file.alwaysVirtualFile)?.toConfigurationResult()
     }
 
     companion object {

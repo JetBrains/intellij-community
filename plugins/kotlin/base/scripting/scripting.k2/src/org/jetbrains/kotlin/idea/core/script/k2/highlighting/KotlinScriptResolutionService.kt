@@ -18,7 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationProviderExtension
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
@@ -106,11 +106,13 @@ class KotlinScriptResolutionService(
         if (virtualFiles.none() || virtualFiles.any { !KotlinScriptProcessingFilter.shouldProcessScript(project, it) }) return
 
         val definitionByFile = virtualFiles.associateWith { it.findScriptDefinition() }
-        val configurationProviderExtension = definitionByFile.firstNotNullOf { it.value.getConfigurationProviderExtension(project) }
+        val configurationProviderExtension = definitionByFile.firstNotNullOf { it.value.getScriptEntityProvider(project) }
 
         assert(!application.isWriteAccessAllowed)
         definitionByFile.forEach { (virtualFile, definition) ->
-            configurationProviderExtension.getConfiguration(virtualFile) ?: configurationProviderExtension.createConfiguration(virtualFile, definition)
+            with(configurationProviderExtension) {
+                getKotlinScriptEntity(virtualFile) ?: updateWorkspaceModel(virtualFile, definition)
+            }
         }
     }
 

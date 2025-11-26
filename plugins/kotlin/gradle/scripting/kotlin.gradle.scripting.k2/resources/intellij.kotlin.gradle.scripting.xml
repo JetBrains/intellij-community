@@ -47,7 +47,7 @@
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService$GradleWorkspaceModelListener"
+    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider$GradleWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 </idea-plugin>
