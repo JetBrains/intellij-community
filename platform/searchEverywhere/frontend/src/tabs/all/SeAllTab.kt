@@ -63,6 +63,8 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
     return delegate.getPreviewInfo(itemData, true)
   }
 
+  override suspend fun essentialProviderIds(): Set<SeProviderId> = delegate.essentialProviderIds()
+
   companion object {
     @ApiStatus.Internal
     const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
