@@ -228,24 +228,20 @@ internal object ChangeTypeQuickFixFactories {
 
     val returnTypeRequired =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBody ->
-            val returnExpr = diagnostic.psi
-            return@ModCommandBased registerRequireReturnTypeFix(returnExpr)
+            createRequireReturnTypeFix(diagnostic.psi)
         }
 
     val returnTypeRequiredWarning =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBodyWarning ->
-            val returnExpr = diagnostic.psi
-            return@ModCommandBased registerRequireReturnTypeFix(returnExpr)
+            createRequireReturnTypeFix(diagnostic.psi)
         }
 
     val returnTypeRequiredWithImplicitType =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnInFunctionWithExpressionBodyAndImplicitType ->
-            val returnExpr = diagnostic.psi
-            return@ModCommandBased registerRequireReturnTypeFix(returnExpr)
+            createRequireReturnTypeFix(diagnostic.psi)
         }
 
-    context(s: KaSession)
-    private fun registerRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
+    private fun KaSession.createRequireReturnTypeFix(returnExpr: KtReturnExpression): List<ModCommandAction> {
         val psi = returnExpr.targetSymbol?.psi
         val declaration = psi as? KtCallableDeclaration ?: (psi as? KtPropertyAccessor)?.property
             ?: return emptyList()
@@ -255,7 +251,7 @@ internal object ChangeTypeQuickFixFactories {
             UpdateTypeQuickFix(
                 declaration,
                 TargetType.ENCLOSING_DECLARATION,
-                s.createTypeInfo(declaration.returnType(expressionType))
+                createTypeInfo(declaration.returnType(expressionType))
             )
         )
     }

@@ -1,4 +1,4 @@
-// "Change type of enclosing property 'a' to 'String'" "true"
+// "Specify 'String' type for enclosing property 'a'" "true"
 // K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 
 val a

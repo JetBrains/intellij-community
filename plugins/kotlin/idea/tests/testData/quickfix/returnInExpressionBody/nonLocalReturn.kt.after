@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'a' to 'Unit'" "true"
+// "Specify 'Unit' return type for enclosing function 'a'" "true"
 
 fun a(): Unit = run { r<caret>eturn }
 

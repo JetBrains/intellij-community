@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'test' to 'String'" "true"
+// "Specify 'String' return type for enclosing function 'test'" "true"
 fun test(i: Int) {
     return when (i) {
         0 -> ""<caret>

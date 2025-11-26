@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'test' to 'CharSequence'" "true"
+// "Specify 'CharSequence' return type for enclosing function 'test'" "true"
 fun test(x: CharSequence) {
     if (true) return "foo"<caret>
     return x

@@ -1,4 +1,4 @@
-// "Change return type to 'Int'" "true"
+// "Specify 'Int' return type" "true"
 abstract class A {
     abstract fun foo() : Int;
 }

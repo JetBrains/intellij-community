@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'm' to 'String'" "true"
+// "Specify 'String' return type for enclosing function 'm'" "true"
 // K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 fun foo(s: String): String = s
 

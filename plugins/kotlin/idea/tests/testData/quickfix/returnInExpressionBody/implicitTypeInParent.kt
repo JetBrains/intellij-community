@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'Derived.implicitFunReturnType' to 'Int'" "true"
+// "Specify 'Int' return type for enclosing function 'Derived.implicitFunReturnType'" "true"
 // K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 interface Base {
     fun implicitFunReturnType() = 1

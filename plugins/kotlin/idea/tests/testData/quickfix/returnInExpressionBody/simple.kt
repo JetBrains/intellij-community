@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'a' to 'String'" "true"
+// "Specify 'String' return type for enclosing function 'a'" "true"
 // K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 
 fun a() = r<caret>eturn ""

@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'foo' to 'T'" "true"
+// "Specify 'T' return type for enclosing function 'foo'" "true"
 interface T
 
 fun foo() {
