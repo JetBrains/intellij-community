@@ -11,14 +11,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 internal class ChangesViewWorkflowManagerImpl(
   private val project: Project,
 ) : ChangesViewWorkflowManager(), Disposable {
-  private val _allowExcludeFromCommit = MutableStateFlow(false)
-  override val allowExcludeFromCommit: StateFlow<Boolean> = _allowExcludeFromCommit.asStateFlow()
+  override val allowExcludeFromCommit = MutableStateFlow(false)
 
   private var _commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
@@ -69,12 +66,13 @@ internal class ChangesViewWorkflowManagerImpl(
     if (handler != null) {
       handler.addActivityListener(object : ChangesViewCommitWorkflowHandler.ActivityListener {
         override fun activityStateChanged() {
-          _allowExcludeFromCommit.value = handler.isActive
+          allowExcludeFromCommit.value = handler.isActive
         }
       })
-      _allowExcludeFromCommit.value = handler.isActive
-    } else {
-      _allowExcludeFromCommit.value = false
+      allowExcludeFromCommit.value = handler.isActive
+    }
+    else {
+      allowExcludeFromCommit.value = false
     }
     project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
   }
