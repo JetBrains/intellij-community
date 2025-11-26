@@ -4,7 +4,7 @@
 // K2_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
 
 fun <caret>foo(): String {
-    return return "42"
+    return "42"
 }
 
 // IGNORE_K1
