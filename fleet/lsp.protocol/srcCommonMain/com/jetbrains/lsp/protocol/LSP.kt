@@ -764,6 +764,9 @@ sealed interface WorkDoneProgress {
     }
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workDoneProgressParams">workDoneProgressParams (LSP spec)</a>
+ */
 interface WorkDoneProgressParams {
     /**
      * An optional token that a server can use to report work done progress.

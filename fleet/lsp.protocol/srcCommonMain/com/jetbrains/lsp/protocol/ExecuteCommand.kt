@@ -4,6 +4,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandOptions">executeCommandOptions (LSP spec)</a>
+ */
 @Serializable
 data class ExecuteCommandOptions(
     val commands: List<String>,
@@ -12,6 +15,8 @@ data class ExecuteCommandOptions(
 /**
  * Represents parameters for executing a command.
  * Extends WorkDoneProgressParams.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandParams">executeCommandParams (LSP spec)</a>
  */
 @Serializable
 data class ExecuteCommandParams(
