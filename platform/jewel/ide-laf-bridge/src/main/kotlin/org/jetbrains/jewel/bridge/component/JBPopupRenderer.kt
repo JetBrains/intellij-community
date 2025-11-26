@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -40,6 +41,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale
@@ -97,13 +100,21 @@ private fun JBPopup(
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
+    var isVisible by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(isVisible) {
+        if (isVisible == false) {
+            currentOnDismissRequest?.invoke()
+        }
+    }
 
     Layout(
         content = {},
         modifier =
             Modifier.onGloballyPositioned { childCoordinates ->
                 childCoordinates.parentCoordinates?.let {
-                    parentBoundsInRoot.value = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(owner)
+                    if (owner.isShowing) {
+                        parentBoundsInRoot.value = it.boundsInRoot().roundToIntRect().fromRelativeToScreen(owner)
+                    }
                 }
             },
         measurePolicy = { _, _ -> layout(0, 0) {} },
@@ -152,12 +163,23 @@ private fun JBPopup(
                     onPreviewKeyEvent?.invoke(composeEvent) == true || onKeyEvent?.invoke(composeEvent) == true
 
                 if (!consumed && composeEvent.isDismissRequest()) {
-                    currentOnDismissRequest?.invoke()
+                    isVisible = false
                     true
                 } else {
                     consumed
                 }
             }
+            .addListener(
+                object : JBPopupListener {
+                    override fun beforeShown(event: LightweightWindowEvent) {
+                        isVisible = true
+                    }
+
+                    override fun onClosed(event: LightweightWindowEvent) {
+                        isVisible = false
+                    }
+                }
+            )
             .createPopup()
     }
 
