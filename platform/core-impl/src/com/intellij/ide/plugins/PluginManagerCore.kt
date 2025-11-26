@@ -114,12 +114,10 @@ object PluginManagerCore {
      * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
      */
     var shadowedBundledPlugins: Set<PluginId> = Collections.emptySet()
-    var isRunningFromSources: Boolean? = null
     @Volatile
     var thirdPartyPluginsNoteAccepted: Boolean? = null
     @Volatile
     var initFuture: Deferred<PluginSet>? = null
-    var ourBuildNumber: BuildNumber? = null
 
     @Synchronized
     fun addPluginLoadingErrors(errors: List<PluginLoadingError>) {
@@ -143,6 +141,9 @@ object PluginManagerCore {
     }
   }
 
+  private var isRunningFromSources: Boolean? = null
+  private var ourBuildNumber: BuildNumber? = null
+
   @ApiStatus.Internal
   var pluginsStateSupplier: (() -> PluginsMutableState)? = null
 
@@ -159,11 +160,11 @@ object PluginManagerCore {
    */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
-    var result = pluginsState.isRunningFromSources
+    var result = isRunningFromSources
     if (result == null) {
       // MPS is always loading platform classes from jars even though there is a project directory present
       result = !PlatformUtils.isMPS() && Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
-      pluginsState.isRunningFromSources = result
+      isRunningFromSources = result
     }
     return result
   }
@@ -402,7 +403,7 @@ object PluginManagerCore {
   @JvmStatic
   val buildNumber: BuildNumber
     get() {
-      var result = pluginsState.ourBuildNumber
+      var result = ourBuildNumber
       if (result == null) {
         result = BuildNumber.fromPluginCompatibleBuild()
         if (logger.isDebugEnabled()) {
@@ -422,7 +423,7 @@ object PluginManagerCore {
             }
           }
         }
-        pluginsState.ourBuildNumber = result
+        ourBuildNumber = result
       }
       return result
     }
