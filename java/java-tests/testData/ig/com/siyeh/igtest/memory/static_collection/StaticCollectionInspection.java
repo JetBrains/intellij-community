@@ -1,16 +1,14 @@
-package com.siyeh.igtest.performance;
-
 import java.util.*;
 
 public class StaticCollectionInspection {
   // with warning
-  private static final Map s_map1 = new HashMap(10);
-  private static final List s_list2 = new ArrayList(10);
-  private static final Set s_set3 = new HashSet<>();
-  private static /* final */ Map s_map4 = Map.of("key", "value");
-  private static /* final */ List s_list5 = List.of("a", "b");
+  private static final Map <warning descr="Static collection 's_map1'">s_map1</warning> = new HashMap(10);
+  private static final List <warning descr="Static collection 's_list2'">s_list2</warning> = new ArrayList(10);
+  private static final Set <warning descr="Static collection 's_set3'">s_set3</warning> = new HashSet<>();
+  private static /* final */ Map <warning descr="Static collection 's_map4'">s_map4</warning> = Map.of("key", "value");
+  private static /* final */ List <warning descr="Static collection 's_list5'">s_list5</warning> = List.of("a", "b");
 
-  private static final Map s_map6;
+  private static final Map <warning descr="Static collection 's_map6'">s_map6</warning>;
   static {
     s_map6 = new HashMap<>();
   }
