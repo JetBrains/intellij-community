@@ -26,7 +26,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringOperation;
-import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +69,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
     synchronized (myLock) {
       for (int i = myShreds.size() - 1; i >= 0; i--) {
         PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
-        if (!(EDT.isCurrentThreadEdt() || shred.isValid())) continue;
+        if (!shred.isValid()) continue;
         Segment hostRangeMarker = shred.getHostRangeMarker();
         if (hostRangeMarker == null) continue;
         int hShredEndOffset = hostRangeMarker.getEndOffset();
@@ -365,7 +364,7 @@ public final class DocumentWindowImpl extends UserDataHolderBase implements Disp
 
   @Override
   public long getModificationStamp() {
-    return EDT.isCurrentThreadEdt() || isValid() ? myDelegate.getModificationStamp() : -1;
+    return isValid() ? myDelegate.getModificationStamp() : -1;
   }
 
   @Override

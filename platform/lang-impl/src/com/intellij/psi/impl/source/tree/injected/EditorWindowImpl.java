@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.CopyProvider;
@@ -105,6 +105,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull LogicalPosition hostToInjected(@NotNull LogicalPosition hPos) {
+    assertValid();
     DocumentEx hostDocument = myDelegate.getDocument();
     int hLineEndOffset =
       hPos.line >= hostDocument.getLineCount() ? hostDocument.getTextLength() : hostDocument.getLineEndOffset(hPos.line);
@@ -124,6 +125,8 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
+    assertValid();
+
     int offset = logicalPositionToOffset(pos);
     LogicalPosition samePos = offsetToLogicalPosition(offset);
 
@@ -341,6 +344,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+    assertValid();
     Point2D pp = p.getX() >= 0 && p.getY() >= 0 ? p : new Point2D.Double(Math.max(p.getX(), 0), Math.max(p.getY(), 0));
     LogicalPosition hostPos = myDelegate.visualToLogicalPosition(myDelegate.xyToVisualPosition(pp));
     return logicalToVisualPosition(hostToInjected(hostPos));
@@ -358,6 +362,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(final int offset) {
+    assertValid();
     int lineNumber = myDocumentWindow.getLineNumber(offset);
     int lineStartOffset = myDocumentWindow.getLineStartOffset(lineNumber);
     int column = calcLogicalColumnNumber(offset - lineStartOffset, lineNumber, lineStartOffset);
@@ -371,23 +376,27 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public @NotNull LogicalPosition xyToLogicalPosition(final @NotNull Point p) {
+    assertValid();
     LogicalPosition hostPos = myDelegate.xyToLogicalPosition(p);
     return hostToInjected(hostPos);
   }
 
   @Override
   public @NotNull Point logicalPositionToXY(final @NotNull LogicalPosition pos) {
+    assertValid();
     LogicalPosition hostPos = injectedToHost(pos);
     return myDelegate.logicalPositionToXY(hostPos);
   }
 
   @Override
   public @NotNull Point visualPositionToXY(final @NotNull VisualPosition pos) {
+    assertValid();
     return logicalPositionToXY(visualToLogicalPosition(pos));
   }
 
   @Override
   public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    assertValid();
     LogicalPosition hostLogical = injectedToHost(visualToLogicalPosition(pos));
     VisualPosition hostVisual = myDelegate.logicalToVisualPosition(hostLogical);
     return myDelegate.visualPositionToPoint2D(hostVisual);
@@ -395,6 +404,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
 
   @Override
   public void repaint(final int startOffset, final int endOffset) {
+    assertValid();
     myDelegate.repaint(myDocumentWindow.injectedToHost(startOffset), myDocumentWindow.injectedToHost(endOffset));
   }
 
@@ -574,11 +584,13 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   // assuming there is no folding in injected documents
   @Override
   public @NotNull VisualPosition logicalToVisualPosition(final @NotNull LogicalPosition pos) {
+    assertValid();
     return new VisualPosition(pos.line, pos.column);
   }
 
   @Override
   public @NotNull LogicalPosition visualToLogicalPosition(final @NotNull VisualPosition pos) {
+    assertValid();
     return new LogicalPosition(pos.line, pos.column);
   }
 
