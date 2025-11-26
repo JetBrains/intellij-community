@@ -22,7 +22,13 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   private final long myModificationStamp;
 
   public DummyHolderViewProvider(@NotNull PsiManager manager) {
-    super(manager, new LightVirtualFile("DummyHolder", UnknownFileType.INSTANCE, ""), false);
+    super(manager,
+          LightVirtualFile.builder()
+            .name("DummyHolder")
+            .fileType(UnknownFileType.INSTANCE)
+            .creationTrace("DummyHolderViewProvider")
+            .build(),
+          false);
     myModificationStamp = LocalTimeCounter.currentTime();
   }
 

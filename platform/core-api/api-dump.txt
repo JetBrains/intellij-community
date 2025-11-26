@@ -1626,6 +1626,19 @@ com.intellij.psi.util.PsiModificationTracker
 com.intellij.psi.util.PsiModificationTracker$Listener
 - a:modificationCountChanged():V
 Fc:com.intellij.psi.util.PsiTreeUtil
+c:com.intellij.testFramework.LightVirtualFile
+- s:builder():com.intellij.testFramework.LightVirtualFile$Builder
+f:com.intellij.testFramework.LightVirtualFile$Builder
+- build():com.intellij.testFramework.LightVirtualFile
+- charset(java.nio.charset.Charset):com.intellij.testFramework.LightVirtualFile$Builder
+- content(java.lang.CharSequence):com.intellij.testFramework.LightVirtualFile$Builder
+- creationTrace(java.lang.Object):com.intellij.testFramework.LightVirtualFile$Builder
+- fileType(com.intellij.openapi.fileTypes.FileType):com.intellij.testFramework.LightVirtualFile$Builder
+- language(com.intellij.lang.Language):com.intellij.testFramework.LightVirtualFile$Builder
+- modificationStamp(J):com.intellij.testFramework.LightVirtualFile$Builder
+- name(java.lang.String):com.intellij.testFramework.LightVirtualFile$Builder
+a:com.intellij.testFramework.LightVirtualFileBase
+- <init>(java.lang.String,com.intellij.openapi.fileTypes.FileType,J,java.lang.Object):V
 com.intellij.testIntegration.TestFramework
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName

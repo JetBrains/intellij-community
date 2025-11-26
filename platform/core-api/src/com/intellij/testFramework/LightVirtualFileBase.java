@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,20 +17,38 @@ import java.io.IOException;
 
 /**
  * In-memory implementation of {@link VirtualFile}.
+ *
+ * @see LightVirtualFile
  */
 public abstract class LightVirtualFileBase extends VirtualFile implements VirtualFileWithAssignedFileType {
-  private FileType myFileType;
-  private @NlsSafe String myName;
+  private @Nullable FileType myFileType;
+  private @NlsSafe @NotNull String myName;
   private long myModStamp;
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private VirtualFile myOriginalFile;
 
-  public LightVirtualFileBase(final @NlsSafe String name, final FileType fileType, final long modificationStamp) {
+  public LightVirtualFileBase(@NlsSafe @NotNull String name, @Nullable FileType fileType, long modificationStamp) {
+    this(name, fileType, modificationStamp, DEFAULT_CREATION_TRACE);
+  }
+
+  /**
+   * Use this constructor if you want to register a custom creation trace or avoid registering it at all.
+   * Please don't pass {@code null} as the creation trace without a good reason.
+   *
+   * @param name the name of the file.
+   * @param fileType the file type of the file.
+   * @param modificationStamp the modification stamp of the file. The default option is {@link com.intellij.util.LocalTimeCounter#currentTime}
+   * @param creationTrace the creation trace to register, {@code null}, or {@link #DEFAULT_CREATION_TRACE} to infer it from the current stack trace.
+   */
+  public LightVirtualFileBase(@NlsSafe @NotNull String name,
+                              @Nullable FileType fileType,
+                              long modificationStamp,
+                              @Nullable Object creationTrace) {
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
-    registerCreationTrace();
+    registerCreationTrace(creationTrace);
   }
 
   public void setFileType(FileType fileType) {
@@ -169,7 +188,7 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
 
   void assertWritable() {
     if (!isWritable()) {
-      throw new IncorrectOperationException("File is not writable: "+this);
+      throw new IncorrectOperationException("File is not writable: " + this);
     }
   }
 
@@ -209,12 +228,25 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
   }
 
-  private void registerCreationTrace() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null || application.isUnitTestMode()) {
-      return;
+  private void registerCreationTrace(@Nullable Object creationTrace) {
+    if (creationTrace == DEFAULT_CREATION_TRACE) {
+      creationTrace = getDefaultCreationTrace();
     }
 
-    PsiInvalidElementAccessException.setCreationTrace(this, new Throwable());
+    if (creationTrace != null) {
+      PsiInvalidElementAccessException.setCreationTrace(this, creationTrace);
+    }
   }
+
+  private static @Nullable Object getDefaultCreationTrace() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isUnitTestMode()) {
+      return null;
+    }
+
+    return new Throwable();
+  }
+
+  /** marker object saying that the creation trace should be inferred with the default algorithm */
+  static final @NotNull Object DEFAULT_CREATION_TRACE = ObjectUtils.sentinel("default creation trace");
 }
