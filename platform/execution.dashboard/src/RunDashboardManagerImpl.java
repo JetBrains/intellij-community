@@ -101,8 +101,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus){
     RunDashboardService service = findService(descriptorId);
-    RunDashboardServiceId serviceId = (service == null) ? null : service.getUuid();
-    mySharedState.fireNavigateToServiceEvent(serviceId, focus);
+    if (service == null) return;
+
+    mySharedState.fireNavigateToServiceEvent(service.getUuid(), focus);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
