@@ -878,7 +878,7 @@ public final class FileManagerImpl implements FileManagerEx {
       return true;
     }
 
-    if (context == CodeInsightContexts.anyContext()) {
+    if (context == CodeInsightContexts.anyContext() || file instanceof LightVirtualFile) {
       return true;
     }
 
