@@ -17860,6 +17860,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         public void testVariableWithoutInitializer() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
         }
+
+        @TestMetadata("withReturnInExpressionBody.kt")
+        public void testWithReturnInExpressionBody() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/withReturnInExpressionBody.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyProperty.kt")
+        public void testWithReturnInExpressionBodyProperty() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyProperty.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyPropertyAccessor.kt")
+        public void testWithReturnInExpressionBodyPropertyAccessor() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyPropertyAccessor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

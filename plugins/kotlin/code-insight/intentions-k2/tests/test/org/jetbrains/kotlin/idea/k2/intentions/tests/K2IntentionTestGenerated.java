@@ -1391,6 +1391,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testVariableWithoutInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
         }
+
+        @TestMetadata("withReturnInExpressionBody.kt")
+        public void testWithReturnInExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBody.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyProperty.kt")
+        public void testWithReturnInExpressionBodyProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyProperty.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyPropertyAccessor.kt")
+        public void testWithReturnInExpressionBodyPropertyAccessor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyPropertyAccessor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -240,9 +240,12 @@ object CallableReturnTypeUpdaterUtils {
                 }
                 addAll(smartCastTypes)
             }
-            if (declaration is KtFunction && !declaration.hasBlockBody() && declaration.bodyExpression is KtReturnExpression) {
-                addIfNotNull((declaration.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType)
+
+            when (declaration) {
+                is KtFunction -> addIfNotNull((declaration.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType)
+                is KtProperty -> addAll(declaration.accessors.mapNotNull { (it.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType })
             }
+
             if (this.isEmpty()) {
                 add(declaration.returnType)
             }
