@@ -28,18 +28,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
-import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
@@ -320,16 +317,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         private var startNotifiedJob: Job? = null
 
         override fun startNotified(event: ProcessEvent) {
+          emitLiveIconUpdate(project, toolWindowId, alive = true)
+
           startNotifiedJob = descriptor.coroutineScope.launch {
             withContext(Dispatchers.EDT) {
               content.icon = getLiveIndicator(descriptor.icon)
-              var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
-              if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
-                toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
-              }
-              toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
-
-              emitLiveIconUpdate(project, toolWindowId, alive = true)
             }
           }
 
@@ -634,10 +626,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
-    val base = toolWindowIdToBaseIcon.get(toolWindow.id)
-    toolWindow.setIcon(if (alive) getLiveIndicator(base) else base ?: EmptyIcon.ICON_13)
-
-    emitLiveIconUpdate(project, toolWindow.id, alive = false)
+    emitLiveIconUpdate(project, toolWindow.id, alive)
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {

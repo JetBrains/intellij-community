@@ -2,18 +2,17 @@
 package com.intellij.execution.rpc
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.broadcast
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 val RPC_SYNC_RUN_TOPIC: ProjectRemoteTopic<RunContentLiveIconSyncEvent> =
   ProjectRemoteTopic("SyncRunContentTopic", RunContentLiveIconSyncEvent.serializer())
 
 @ApiStatus.Internal
 fun emitLiveIconUpdate(project: Project, toolwindowId: String, alive: Boolean){
-  if(!IdeProductMode.isBackend) return
   RPC_SYNC_RUN_TOPIC.broadcast(project, RunContentLiveIconSyncEvent(toolwindowId, alive))
 }
 
