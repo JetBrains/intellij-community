@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(element),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(element),
 ): KtElement? = shortenReferencesInRange(
     file = element.containingKtFile,
     selection = element.textRange,
@@ -79,8 +79,8 @@ fun deprecatedShortenReferences(
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(elements.firstOrNull()),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(elements.firstOrNull()),
 ) {
     val elementPointers = elements.map { it.createSmartPointer() }
 
@@ -120,8 +120,8 @@ fun shortenReferencesInRange(
     file: KtFile,
     selection: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(file),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(file),
 ): List<SmartPsiElementPointer<KtElement>> = allowAnalysisFromWriteActionInEdt(file) {
     collectPossibleReferenceShorteningsForIde(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }.invokeShortening()
@@ -218,8 +218,8 @@ fun collectPossibleReferenceShorteningsForIde(
     file: KtFile,
     selection: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(file),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(file),
 ): ShortenCommand = collectPossibleReferenceShortenings(
     file,
     selection,
@@ -227,3 +227,12 @@ fun collectPossibleReferenceShorteningsForIde(
     classShortenStrategy,
     callableShortenStrategy
 )
+
+
+@ApiStatus.Internal
+fun ShortenStrategy.Companion.defaultClassShortenStrategyForIde(context: KtElement?): (KaClassLikeSymbol) -> ShortenStrategy =
+    defaultClassShortenStrategy
+
+@ApiStatus.Internal
+fun ShortenStrategy.Companion.defaultCallableShortenStrategyForIde(context: KtElement?): (KaCallableSymbol) -> ShortenStrategy =
+    defaultCallableShortenStrategy
