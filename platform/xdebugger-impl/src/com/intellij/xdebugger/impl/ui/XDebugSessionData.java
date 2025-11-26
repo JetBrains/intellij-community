@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
+import static com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt.createMutableStateFlow;
 
 public class XDebugSessionData extends UserDataHolderBase {
   public static final DataKey<XDebugSessionData> DATA_KEY = DataKey.create("XDebugSessionData");

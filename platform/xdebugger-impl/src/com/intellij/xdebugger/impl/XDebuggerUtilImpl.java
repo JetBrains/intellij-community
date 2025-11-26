@@ -605,7 +605,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   /**
-   * @see CoroutineUtilsKt#performDebuggerActionAsync
+   * @see DebuggerAsyncActionUtilsKt#performDebuggerActionAsync
    */
   public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
     action.run();

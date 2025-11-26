@@ -11,45 +11,10 @@ import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-// Used only for Java code, since MutableStateFlow function cannot be called there.
-internal fun <T> createMutableStateFlow(initialValue: T): MutableStateFlow<T> {
-  return MutableStateFlow(initialValue)
-}
-
-internal fun <T, R> mapFlow(f: Flow<T>, mapper: (T) -> R): Flow<R> = f.map(mapper)
-
-// Used only for Java code, since MutableSharedFlow function cannot be called there.
-internal fun <T> createMutableSharedFlow(replay: Int, extraBufferCapacity: Int): MutableSharedFlow<T> {
-  return MutableSharedFlow(replay, extraBufferCapacity)
-}
-
-@Service(Service.Level.PROJECT)
-internal class XDebugSessionSelectionService(project: Project, scope: CoroutineScope) {
-  init {
-    scope.launch {
-      XDebugManagerProxy.getInstance().getCurrentSessionFlow(project).collectLatest { currentSession ->
-        // switch to EDT, so select can execute immediately (it uses invokeLaterIfNeeded)
-        withContext(Dispatchers.EDT) {
-          currentSession?.sessionTab?.select()
-        }
-      }
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun startCurrentSessionListening(project: Project) {
-      project.service<XDebugSessionSelectionService>()
-    }
-  }
-}
 
 internal fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
   performDebuggerActionAsync(e.project, e.dataContext, action)
@@ -68,7 +33,7 @@ internal fun performDebuggerActionAsync(
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
     if (project != null && editor != null) {
       withContext(Dispatchers.EDT) {
-        XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
+        XDebuggerManagerApi.Companion.getInstance().reshowInlays(project.projectId(), editor.editorId())
       }
     }
   }
