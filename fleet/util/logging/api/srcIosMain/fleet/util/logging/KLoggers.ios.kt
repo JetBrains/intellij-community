@@ -131,6 +131,10 @@ private fun getLogger(name: String): KLogger {
   })
 }
 
+// TODO: I'm pretty sure this can misbehave. The first parameter is not a string, it's a format string.
+// It then accepts parameters to log. I just had a situation where the log was misinterpreted and some random
+// piece of memory was printed into the log. This would randomly segfault. The only reason I'm not fixing it now
+// properly.
 internal fun consoleTrace(message: String) {
   NSLog("[TRACE] $message")
 }
