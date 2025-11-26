@@ -60,8 +60,10 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
-import kotlinx.collections.immutable.persistentHashSetOf
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -119,8 +121,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   private var preferredTextHeight: Int = 0
 
-  @Volatile
-  private var children = persistentHashSetOf<IdeStatusBarImpl>()
+  private val childManager = ChildStatusBarManager(this, widgetRegistry)
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
@@ -146,41 +147,11 @@ open class IdeStatusBarImpl @Internal constructor(
     return this
   }
 
-  private fun updateChildren(consumer: (IdeStatusBarImpl) -> Unit) {
-    for (child in children) {
-      consumer(child)
-    }
-  }
-
   //=== CREATE CHILD: New child gets all existing widgets ===
   @RequiresEdt
   @Internal
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, currentFileEditorFlow: StateFlow<FileEditor?>): StatusBar {
-    EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(
-      parentCs = coroutineScope,
-      getProject = ::project,
-      addToolWindowWidget = false,
-      currentFileEditorFlow = currentFileEditorFlow,
-    )
-    bar.isVisible = isVisible
-
-    synchronized(this) {
-      children = children.add(bar)
-    }
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
-      synchronized(this) {
-        children = children.remove(bar)
-      }
-    }
-
-    // Propagate ALL existing widgets to the new child
-    LOG.debug { "createChild: propagating ${widgetRegistry.size} existing widgets to new child" }
-    for (bean in widgetRegistry.getAllBeans()) {
-      propagateWidgetToChild(widget = bean.widget, position = bean.position, anchor = bean.order, child = bar)
-    }
-
-    return bar
+    return childManager.createChild(coroutineScope, currentFileEditorFlow)
   }
 
   override val component: JComponent?
@@ -279,10 +250,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   override fun setVisible(aFlag: Boolean) {
     super.setVisible(aFlag)
-
-    for (child in children) {
-      child.isVisible = aFlag
-    }
+    childManager.setVisibilityForAll(aFlag)
   }
 
   override fun addWidget(widget: StatusBarWidget) {
@@ -374,8 +342,6 @@ open class IdeStatusBarImpl @Internal constructor(
     }
 
     withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
-      LOG.debug { "doInit: adding ${beans.size} widgets, children=${children.size}" }
-
       // Add all to self
       for (bean in beans) {
         addWidgetToSelf(bean, parentDisposable)
@@ -383,12 +349,9 @@ open class IdeStatusBarImpl @Internal constructor(
       sortRightWidgets()
 
       // Propagate all to existing children
-      if (children.isNotEmpty()) {
-        LOG.debug { "doInit: propagating ${beans.size} widgets to ${children.size} children" }
+      if (!childManager.isEmpty()) {
         for (bean in beans) {
-          for (child in children) {
-            propagateWidgetToChild(bean.widget, bean.position, bean.order, child)
-          }
+          childManager.propagateToAll(bean.widget, bean.position, bean.order)
         }
       }
     }
@@ -439,7 +402,7 @@ open class IdeStatusBarImpl @Internal constructor(
 
   //=== CORE: Add widget to THIS status bar only (no propagation) ===
   @RequiresEdt
-  private fun addWidgetToSelf(bean: WidgetBean, parentDisposable: Disposable? = null) {
+  internal fun addWidgetToSelf(bean: WidgetBean, parentDisposable: Disposable? = null) {
     LOG.debug { "addWidgetToSelf: ${bean.widget.ID()}" }
 
     widgetRegistry.put(bean.widget.ID(), bean)
@@ -456,32 +419,9 @@ open class IdeStatusBarImpl @Internal constructor(
     panel.revalidate()
   }
 
-  //=== PROPAGATION: Create child-specific widget and add to child ===
-  private fun propagateWidgetToChild(widget: StatusBarWidget, position: Position, anchor: LoadingOrder, child: IdeStatusBarImpl) {
-    val childWidget: StatusBarWidget = when (widget) {
-      is ChildStatusBarWidget -> {
-        LOG.debug { "propagateWidgetToChild: ChildStatusBarWidget ${widget.ID()}" }
-        widget.createForChild(child)
-      }
-      is Multiframe -> {
-        LOG.debug { "propagateWidgetToChild: Multiframe ${widget.ID()}" }
-        widget.copy()
-      }
-      else -> return
-    }
-
-    val component = wrap(childWidget)
-    if (component is StatusBarWidgetWrapper) {
-      component.beforeUpdate()
-    }
-    child.addWidgetToSelf(WidgetBean(childWidget, position, component, anchor))
-  }
-
   //=== PUBLIC API: Add widget + propagate to all children ===
   @RequiresEdt
   private fun addWidget(widget: StatusBarWidget, position: Position, anchor: LoadingOrder) {
-    LOG.debug { "addWidget: ${widget.ID()}, children=${children.size}" }
-
     val component = wrap(widget)
     if (component is StatusBarWidgetWrapper) {
       component.beforeUpdate()
@@ -494,9 +434,7 @@ open class IdeStatusBarImpl @Internal constructor(
     }
 
     // Propagate to all existing children
-    for (child in children) {
-      propagateWidgetToChild(widget, position, anchor, child)
-    }
+    childManager.propagateToAll(widget, position, anchor)
 
     fireWidgetAdded(widget = widget, anchor = anchor.toString())
   }
@@ -590,12 +528,12 @@ open class IdeStatusBarImpl @Internal constructor(
 
   override fun startRefreshIndication(tooltipText: @NlsContexts.Tooltip String?) {
     createInfoAndProgressPanel().setRefreshVisible(tooltipText)
-    updateChildren { it.startRefreshIndication(tooltipText) }
+    childManager.updateAll { it.startRefreshIndication(tooltipText) }
   }
 
   override fun stopRefreshIndication() {
     createInfoAndProgressPanel().setRefreshHidden()
-    updateChildren(IdeStatusBarImpl::stopRefreshIndication)
+    childManager.updateAll { it.stopRefreshIndication() }
   }
 
   override fun notifyProgressByBalloon(type: MessageType, htmlBody: @NlsContexts.PopupContent String): BalloonHandler {
@@ -716,7 +654,7 @@ open class IdeStatusBarImpl @Internal constructor(
         Disposer.dispose(bean.widget)
         fireWidgetRemoved(id)
       }
-      updateChildren { it.removeWidget(id) }
+      childManager.updateAll { it.removeWidget(id) }
     }
   }
 
@@ -741,7 +679,7 @@ open class IdeStatusBarImpl @Internal constructor(
         widgetComponent.repaint()
         fireWidgetUpdated(id)
       }
-      updateChildren { it.updateWidget(id) }
+      childManager.updateAll { it.updateWidget(id) }
     }
   }
 
@@ -875,7 +813,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
   })
 }
 
-private fun wrap(widget: StatusBarWidget): JComponent {
+internal fun wrap(widget: StatusBarWidget): JComponent {
   val result = if (widget is CustomStatusBarWidget) {
     return wrapCustomStatusBarWidget(widget)
   }
@@ -989,7 +927,7 @@ private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEven
   }
 }
 
-private interface StatusBarWidgetWrapper {
+internal interface StatusBarWidgetWrapper {
   fun beforeUpdate()
 }
 

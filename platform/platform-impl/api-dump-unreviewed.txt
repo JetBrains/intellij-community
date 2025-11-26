@@ -10317,7 +10317,6 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - addWidget(com.intellij.openapi.wm.StatusBarWidget,com.intellij.openapi.Disposable):V
 - addWidget(com.intellij.openapi.wm.StatusBarWidget,java.lang.String):V
 - addWidget(com.intellij.openapi.wm.StatusBarWidget,java.lang.String,com.intellij.openapi.Disposable):V
-- createChild(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.wm.IdeFrame,kotlin.jvm.functions.Function0):com.intellij.openapi.wm.StatusBar
 - findChild(java.awt.Component):com.intellij.openapi.wm.StatusBar
 - fireNotificationPopup(javax.swing.JComponent,java.awt.Color):V
 - getAccessibleContext():javax.accessibility.AccessibleContext
@@ -10325,7 +10324,6 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - getBackgroundProcessModels():java.util.List
 - getComponent():javax.swing.JComponent
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
-- getCurrentEditor():kotlin.jvm.functions.Function0
 - getInfo():java.lang.String
 - getPreferredSize():java.awt.Dimension
 - getProject():com.intellij.openapi.project.Project
