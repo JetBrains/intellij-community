@@ -198,7 +198,7 @@ private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
     enabled,
     pageModel.getPageSize(),
     showCountRowsAction,
-    GridHelper.get(grid).defaultPageSizeProperty.get()
+    GridHelper.get(grid).properties.defaultPageSizeProperty
   )
 }
 

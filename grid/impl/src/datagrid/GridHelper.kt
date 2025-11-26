@@ -1,188 +1,189 @@
-package com.intellij.database.datagrid;
+package com.intellij.database.datagrid
 
-import com.intellij.database.connection.throwable.info.ErrorInfo;
-import com.intellij.database.data.types.DataTypeConversion;
-import com.intellij.database.dump.DumpHandler;
-import com.intellij.database.dump.ExtractionHelper;
-import com.intellij.database.extractors.*;
-import com.intellij.database.run.actions.DumpSource;
-import com.intellij.database.run.ui.grid.DefaultGridColumnLayout;
-import com.intellij.database.run.ui.grid.GridRowComparator;
-import com.intellij.database.run.ui.table.TableResultView;
-import com.intellij.database.util.Out;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.database.connection.throwable.info.ErrorInfo
+import com.intellij.database.data.types.DataTypeConversion
+import com.intellij.database.dump.DumpHandler
+import com.intellij.database.dump.ExtractionHelper
+import com.intellij.database.extractors.*
+import com.intellij.database.run.actions.DumpSource
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.grid.DefaultGridColumnLayout
+import com.intellij.database.run.ui.grid.GridRowComparator
+import com.intellij.database.run.ui.table.TableResultView
+import com.intellij.database.util.Out
+import com.intellij.ide.util.treeView.smartTree.TreeElement
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.JBIterable
+import java.util.function.Consumer
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.List;
-import java.util.Objects;
+interface GridHelper : CoreGridHelper {
+  fun createDataTypeConversionBuilder(): DataTypeConversion.Builder
 
-import static com.intellij.database.datagrid.GridUtil.getSelectedGridRows;
-import static com.intellij.database.datagrid.GridUtilKt.findAllGridsInFile;
-import static com.intellij.database.extractors.ExtractionConfigKt.builder;
-import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
+  val defaultMode: ObjectFormatterMode
 
-public interface GridHelper extends CoreGridHelper, GridHelperPropertyProvider {
-  Key<GridHelper> GRID_HELPER_KEY = new Key<>("GRID_HELPER_KEY");
+  val properties: GridHelperPropertyProvider
 
-  @NotNull
-  DataTypeConversion.Builder createDataTypeConversionBuilder();
+  fun canEditTogether(grid: CoreGrid<GridRow, GridColumn>, columns: MutableList<GridColumn>): Boolean
 
-  @NotNull ObjectFormatterMode getDefaultMode();
-
-  boolean canEditTogether(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull List<GridColumn> columns);
-
-  default boolean canSortTogether(@NotNull CoreGrid<GridRow, GridColumn> grid,
-                                  @NotNull List<ModelIndex<GridColumn>> oldOrdering,
-                                  List<ModelIndex<GridColumn>> newColumns) {
-    return true;
+  fun canSortTogether(
+    grid: CoreGrid<GridRow, GridColumn>,
+    oldOrdering: List<ModelIndex<GridColumn>>,
+    newColumns: List<ModelIndex<GridColumn>>?
+  ): Boolean {
+    return true
   }
 
-  @Nullable
-  GridColumn findUniqueColumn(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull List<GridColumn> columns);
+  fun findUniqueColumn(grid: CoreGrid<GridRow, GridColumn>, columns: MutableList<GridColumn>): GridColumn?
 
-  @Nullable
-  Icon getColumnIcon(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull GridColumn column, boolean forDisplay);
+  fun getColumnIcon(grid: CoreGrid<GridRow, GridColumn>, column: GridColumn, forDisplay: Boolean): Icon?
 
-  @Nullable VirtualFile getVirtualFile(@NotNull CoreGrid<GridRow, GridColumn> grid);
+  fun getVirtualFile(grid: CoreGrid<GridRow, GridColumn>): VirtualFile?
 
-  default @NotNull JBIterable<TreeElement> getChildrenFromModel(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return JBIterable.empty();
+  fun getChildrenFromModel(grid: CoreGrid<GridRow, GridColumn>): JBIterable<TreeElement> {
+    return JBIterable.empty()
   }
 
-  default @Nullable String getLocationString(@Nullable PsiElement element) {
-    return null;
+  fun getLocationString(element: PsiElement?): String? {
+    return null
   }
 
-  default void setFilterSortHighlighter(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull Editor editor) {
+  fun setFilterSortHighlighter(grid: CoreGrid<GridRow, GridColumn>, editor: Editor) {
   }
 
-  default void updateFilterSortPSI(@NotNull CoreGrid<GridRow, GridColumn> grid) {
+  fun updateFilterSortPSI(grid: CoreGrid<GridRow, GridColumn>) {
   }
 
-  void applyFix(@NotNull Project project, @NotNull ErrorInfo.Fix fix, @Nullable Object editor);
+  fun applyFix(project: Project, fix: ErrorInfo.Fix, editor: Any?)
 
-  @NotNull
-  List<String> getUnambiguousColumnNames(@NotNull CoreGrid<GridRow, GridColumn> grid);
+  fun getUnambiguousColumnNames(grid: CoreGrid<GridRow, GridColumn>): List<String>
 
-  boolean canAddRow(@NotNull CoreGrid<GridRow, GridColumn> grid);
+  fun canAddRow(grid: CoreGrid<GridRow, GridColumn>): Boolean
 
-  boolean hasTargetForEditing(@NotNull CoreGrid<GridRow, GridColumn> grid); // DBE-12001
+  fun hasTargetForEditing(grid: CoreGrid<GridRow, GridColumn>): Boolean // DBE-12001
 
-  @Nullable
-  String getTableName(@NotNull CoreGrid<GridRow, GridColumn> grid);
+  fun getTableName(grid: CoreGrid<GridRow, GridColumn>): String?
 
-  @Nullable
-  String getNameForDump(@NotNull DataGrid source);
+  fun getNameForDump(source: DataGrid): String?
 
-  @Nullable
-  String getQueryText(@NotNull DataGrid source);
+  fun getQueryText(source: DataGrid): String?
 
-  boolean isDatabaseHookUp(@NotNull DataGrid grid);
+  fun isDatabaseHookUp(grid: DataGrid): Boolean
 
-  @Nullable
-  DumpSource<?> createDumpSource(@NotNull DataGrid grid, @NotNull AnActionEvent e);
+  fun createDumpSource(grid: DataGrid, e: AnActionEvent): DumpSource<*>?
 
-  @NotNull
-  DumpHandler<?> createDumpHandler(@NotNull DumpSource<?> source,
-                                   @NotNull ExtractionHelper manager,
-                                   @NotNull DataExtractorFactory factory,
-                                   @NotNull ExtractionConfig config);
+  fun createDumpHandler(
+    source: DumpSource<*>,
+    manager: ExtractionHelper,
+    factory: DataExtractorFactory,
+    config: ExtractionConfig
+  ): DumpHandler<*>
 
-  default boolean isDumpEnabled(@NotNull DumpSource<?> source) {
-    return true;
+  fun isDumpEnabled(source: DumpSource<*>): Boolean {
+    return true
   }
 
-  default void syncExtractorsInNotebook(@NotNull DataGrid grid, @NotNull DataExtractorFactory factory) {
-    findAllGridsInFile(grid).forEach((g) -> {
-      DataExtractorFactory f = g.getUserData(DataExtractorFactories.GRID_DATA_EXTRACTOR_FACTORY_KEY);
-      if (f == null || !factory.getId().equals(f.getId())) {
-        DataExtractorFactories.setExtractorFactory(g, factory);
+  fun syncExtractorsInNotebook(grid: DataGrid, factory: DataExtractorFactory) {
+    findAllGridsInFile(grid).forEach(Consumer { g: DataGrid? ->
+      val f = g!!.getUserData(DataExtractorFactories.GRID_DATA_EXTRACTOR_FACTORY_KEY)
+      if (f == null || factory.id != f.id) {
+        DataExtractorFactories.setExtractorFactory(g, factory)
       }
-    });
+    })
   }
 
-  default boolean isLoadWholeTableWhenPaginationIsOff(@NotNull DataGrid grid) {
-    return false;
+  fun isLoadWholeTableWhenPaginationIsOff(grid: DataGrid): Boolean {
+    return false
   }
 
-  static @NotNull GridHelper get(@NotNull CoreGrid<?, ?> grid) {
-    return Objects.requireNonNull(GRID_HELPER_KEY.get(grid));
+  fun createColumnLayout(resultView: TableResultView, grid: DataGrid): GridColumnLayout<GridRow, GridColumn> {
+    return DefaultGridColumnLayout(resultView, grid)
   }
 
-  static boolean supportsTableStatistics(DataGrid grid) {
-    if (grid == null) return false;
-
-    if (grid.getResultView() instanceof TableResultView tableResultView) {
-      return tableResultView.getStatisticsHeader() != null;
-    } else {
-      return false;
-    }
+  fun getColumnTooltipHtml(grid: CoreGrid<GridRow, GridColumn>, columnIdx: ModelIndex<GridColumn>): @NlsContexts.Tooltip String? {
+    return null
   }
 
-  default @NotNull GridColumnLayout<GridRow, GridColumn> createColumnLayout(@NotNull TableResultView resultView, @NotNull DataGrid grid) {
-    return new DefaultGridColumnLayout(resultView, grid);
+  @NlsSafe
+  fun getDatabaseSystemName(grid: CoreGrid<GridRow, GridColumn>): @NlsSafe String? {
+    return null
   }
 
-  static void set(@NotNull CoreGrid<?, ?> grid, @NotNull GridHelper helper) {
-    GRID_HELPER_KEY.set(grid, helper);
+  fun isEditable(grid: CoreGrid<GridRow, GridColumn>): Boolean
+
+  fun createComparator(column: GridColumn): GridRowComparator? {
+    return GridRowComparator.create(column)
   }
 
-  default @NlsContexts.Tooltip @Nullable String getColumnTooltipHtml(@NotNull CoreGrid<GridRow, GridColumn> grid, @NotNull ModelIndex<GridColumn> columnIdx) {
-    return null;
-  }
-
-  default @NlsSafe @Nullable String getDatabaseSystemName(@NotNull CoreGrid<GridRow, GridColumn> grid) {
-    return null;
-  }
-
-  boolean isEditable(@NotNull CoreGrid<GridRow, GridColumn> grid);
-
-  default @Nullable GridRowComparator createComparator(@NotNull GridColumn column) {
-    return GridRowComparator.create(column);
-  }
-
-  default @NotNull Out extractValues(@NotNull DataGrid dataGrid,
-                                     @NotNull DataExtractor extractor,
-                                     @NotNull Out out,
-                                     boolean selection,
-                                     boolean transpositionAllowed) {
-    GridModel<GridRow, GridColumn> model = dataGrid.getDataModel(DATA_WITH_MUTATIONS);
-    int[] columns = (selection ? dataGrid.getSelectionModel().getSelectedColumns() : model.getColumnIndices()).asArray();
-    List<GridRow> rows = selection ? getSelectedGridRows(dataGrid) : model.getRows();
-    boolean transposed = transpositionAllowed && dataGrid.getResultView().isTransposed();
-    ExtractionConfig config = builder()
+  fun extractValues(
+    dataGrid: DataGrid,
+    extractor: DataExtractor,
+    out: Out,
+    selection: Boolean,
+    transpositionAllowed: Boolean
+  ): Out {
+    val model = dataGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS)
+    val columns = (if (selection) dataGrid.getSelectionModel().getSelectedColumns() else model.getColumnIndices()).asArray()
+    val rows = if (selection) GridUtil.getSelectedGridRows(dataGrid) else model.getRows()
+    val transposed = transpositionAllowed && dataGrid.getResultView().isTransposed()
+    val config = builder()
       .setTransposed(transposed)
       .setAddGeneratedColumns(!DataExtractorFactories.getSkipGeneratedColumns(dataGrid))
       .setAddComputedColumns(!DataExtractorFactories.getSkipComputedColumns(dataGrid))
-      .build();
+      .build()
     GridExtractorsUtilCore.extract(out, config,
-                                   model.getAllColumnsForExtraction(columns),
-                                   extractor, rows, columns);
+                                   model.getAllColumnsForExtraction(*columns),
+                                   extractor, rows, *columns)
 
-    return out;
+    return out
   }
 
-  @SuppressWarnings("UnusedReturnValue")
-  default @NotNull Out extractValuesForCopy(@NotNull DataGrid dataGrid,
-                                     @NotNull DataExtractor extractor,
-                                     @NotNull Out out,
-                                     boolean selection,
-                                     boolean transpositionAllowed) {
-    return extractValues(dataGrid, extractor, out, selection, transpositionAllowed);
+  fun extractValuesForCopy(
+    dataGrid: DataGrid,
+    extractor: DataExtractor,
+    out: Out,
+    selection: Boolean,
+    transpositionAllowed: Boolean
+  ): Out {
+    return extractValues(dataGrid, extractor, out, selection, transpositionAllowed)
   }
 
-  default boolean isColumnContainNestedTables(@Nullable GridModel<GridRow, GridColumn> gridModel, @NotNull GridColumn column) {
-    return false;
+  fun isColumnContainNestedTables(gridModel: GridModel<GridRow, GridColumn>?, column: GridColumn): Boolean {
+    return false
+  }
+
+  companion object {
+    @JvmStatic
+    fun get(grid: CoreGrid<*, *>): GridHelper {
+      return GRID_HELPER_KEY.get(grid)!!
+    }
+
+    @JvmStatic
+    fun supportsTableStatistics(grid: DataGrid?): Boolean {
+      if (grid == null) return false
+
+      val tableResultView = grid.getResultView()
+      if (tableResultView is TableResultView) {
+        return tableResultView.statisticsHeader != null
+      }
+      else {
+        return false
+      }
+    }
+
+    @JvmStatic
+    fun set(grid: CoreGrid<*, *>, helper: GridHelper) {
+      GRID_HELPER_KEY.set(grid, helper)
+    }
+
+    @JvmStatic
+    val GRID_HELPER_KEY: Key<GridHelper?> = Key<GridHelper?>("GRID_HELPER_KEY")
   }
 }

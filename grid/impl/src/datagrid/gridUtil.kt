@@ -35,8 +35,8 @@ private fun getOuterFileEditor(grid: DataGrid?): FileEditor? {
 }
 
 fun setPageSize(hookUp: GridDataHookUp<GridRow, GridColumn>, helper: GridHelper) {
-  hookUp.pageModel.pageSize = if (helper.defaultLimitPageSizeProperty.get()) {
-    helper.defaultPageSizeProperty.get()
+  hookUp.pageModel.pageSize = if (helper.properties.defaultLimitPageSizeProperty) {
+    helper.properties.defaultPageSizeProperty
   } else {
     GridPagingModel.UNLIMITED_PAGE_SIZE
   }

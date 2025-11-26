@@ -97,7 +97,7 @@ internal class ArrayWrapper(private val v: Array<Any?>) : LazyValueWrapper<Simpl
 internal class ColumnsWrapper(private val grid: DataGrid, private val rowIdx: ModelIndex<GridRow>) : LazyValueWrapper<Node>() {
   override fun createValue(): String {
     val formatter = grid.objectFormatter
-    val mode = GridHelper.get(grid).getDefaultMode()
+    val mode = GridHelper.get(grid).defaultMode
     return children()
       .take(MAX_NUMBER_OF_VALUES_TO_SHOW)
       .joinToString(prefix = "{", postfix = "}") { (column, value) ->

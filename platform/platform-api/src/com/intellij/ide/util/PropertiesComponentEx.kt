@@ -71,6 +71,10 @@ fun propComponentProperty(project: Project? = null, defaultValue: Int = 0): Read
   return PropertiesComponentIntProperty(project, null, defaultValue)
 }
 
+fun propComponentProperty(project: Project? = null, name: String, defaultValue: Int = 0): ReadWriteProperty<Any?, Int> {
+  return PropertiesComponentIntProperty(project, name, defaultValue)
+}
+
 fun propComponentProperty(project: Project? = null, defaultValue: String = ""): ReadWriteProperty<Any, String> {
   return PropertiesComponentStringProperty(project, null, defaultValue)
 }

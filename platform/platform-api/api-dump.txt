@@ -150,6 +150,8 @@ com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 - a:isDark():Z
 - a:isInitialized():Z
 f:com.intellij.ide.util.PropertiesComponentExKt
+- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,I):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,I,I,java.lang.Object):kotlin.properties.ReadWriteProperty
 c:com.intellij.ide.util.treeView.NodeRenderer
 - p:getMinHeight():I
 com.intellij.ide.warmup.WarmupConfigurator

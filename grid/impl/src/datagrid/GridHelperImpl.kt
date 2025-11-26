@@ -21,8 +21,8 @@ import com.intellij.psi.PsiCodeFragment
 import javax.swing.Icon
 
 open class GridHelperImpl(
-  private val myPropertyProvider: GridHelperPropertyProvider
-) : GridHelper, GridHelperPropertyProvider by myPropertyProvider {
+  override val properties: GridHelperPropertyProvider
+) : GridHelper {
   @JvmOverloads
   constructor(insideNotebook: Boolean = IS_INSIDE_NOTEBOOK_DEFAULT_VALUE) : this(
     GridHelperPropertyProviderImpl(insideNotebook)
@@ -32,9 +32,7 @@ open class GridHelperImpl(
     return BaseDataTypeConversion.Builder()
   }
 
-  override fun getDefaultMode(): ObjectFormatterMode {
-    return ObjectFormatterMode.SQL_SCRIPT
-  }
+  override val defaultMode: ObjectFormatterMode get() = ObjectFormatterMode.SQL_SCRIPT
 
   override fun canEditTogether(
     grid: CoreGrid<GridRow, GridColumn>,
