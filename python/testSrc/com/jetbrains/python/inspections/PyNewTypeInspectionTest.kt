@@ -76,8 +76,8 @@ abstract class PyNewTypeInspectionTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<out PyInspection> = PyNewTypeInspection::class.java
 }
 
-class PyNewTypeInspectionTestPython38 : PyNewTypeInspectionTest() {
-  override fun getProjectDescriptor(): LightProjectDescriptor? {
+class PyNewTypeInspectionTestPython39 : PyNewTypeInspectionTest() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
     return PyLightProjectDescriptor(LanguageLevel.PYTHON39);
   }
 }
