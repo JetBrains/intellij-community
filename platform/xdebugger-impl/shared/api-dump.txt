@@ -1,3 +1,5 @@
+c:com.intellij.xdebugger.impl.DebuggerSupport
+- <init>():V
 e:com.intellij.xdebugger.impl.XSourceKind
 - java.lang.Enum
 - sf:ALTERNATIVE:com.intellij.xdebugger.impl.XSourceKind
@@ -18,6 +20,24 @@ com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 - a:getCaptionAboveOf():java.lang.String
 - a:hasSeparatorAbove():Z
 - setWithSeparator(Z):V
+a:com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- <init>():V
+- a:isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- isHidden(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- a:perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- com.intellij.openapi.actionSystem.AnAction
+- p:<init>():V
+- p:<init>(Z):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- isDumbAware():Z
+- p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:isHidden(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- pf:performWithHandler(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - canMarkValue(com.intellij.xdebugger.frame.XValue):Z
 - clear():V
