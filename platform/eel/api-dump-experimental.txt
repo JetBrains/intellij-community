@@ -9,23 +9,19 @@
 *a:com.intellij.platform.eel.EelConnectionError
 - java.io.IOException
 - com.intellij.platform.eel.EelNetworkError
-- getMessage():java.lang.String
 *c:com.intellij.platform.eel.EelConnectionError$ConnectionProblem
 - com.intellij.platform.eel.EelConnectionError
 - <init>(java.lang.String):V
-- getMessage():java.lang.String
 *c:com.intellij.platform.eel.EelConnectionError$ResolveFailure
 - com.intellij.platform.eel.EelConnectionError
 - <init>(java.lang.String):V
-- getMessage():java.lang.String
 *c:com.intellij.platform.eel.EelConnectionError$SocketAllocationError
 - com.intellij.platform.eel.EelConnectionError
 - <init>(java.lang.String):V
-- getMessage():java.lang.String
 *c:com.intellij.platform.eel.EelConnectionError$UnknownFailure
 - com.intellij.platform.eel.EelConnectionError
 - <init>(java.lang.String):V
-- getMessage():java.lang.String
+- <init>(java.lang.String,java.lang.Throwable):V
 *:com.intellij.platform.eel.EelDescriptor
 - *a:getName():java.lang.String
 - *a:getOsFamily():com.intellij.platform.eel.EelOsFamily

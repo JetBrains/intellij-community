@@ -465,33 +465,38 @@ sealed interface EelNetworkError : EelError
  * An error that can happen during the creation of a connection to a remote server
  */
 @ApiStatus.Experimental
-sealed class EelConnectionError(override val message: String) : EelNetworkError, IOException() {
+sealed class EelConnectionError : EelNetworkError, IOException {
+  constructor(message: String) : super(message)
+  constructor(message: String, cause: Throwable) : super(message, cause)
 
   /**
    * Returned when the remote host cannot create an object of a socket.
    */
   @ApiStatus.Experimental
   @Deprecated("Unlikely to happen, to be merged into `Other`")
-  open class SocketAllocationError(override val message: String) : EelConnectionError(message)
+  open class SocketAllocationError(message: String) : EelConnectionError(message)
 
   /**
    * Returned when there is a problem with resolve of the hostname.
    */
   @ApiStatus.Experimental
-  open class ResolveFailure(override val message: String) : EelConnectionError(message)
+  open class ResolveFailure(message: String) : EelConnectionError(message)
 
   /**
    * Returned when there was a problem with establishing a connection to a resolved server
    */
   @ApiStatus.Experimental
-  open class ConnectionProblem(override val message: String) : EelConnectionError(message)
+  open class ConnectionProblem(message: String) : EelConnectionError(message)
 
   /**
    * Unknown failure during a connection establishment
    */
   // TODO Rename to `Other`
   @ApiStatus.Experimental
-  open class UnknownFailure(override val message: String) : EelConnectionError(message)
+  open class UnknownFailure : EelConnectionError {
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+  }
 }
 
 

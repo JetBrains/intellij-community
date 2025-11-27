@@ -151,7 +151,7 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
     }
   }
   catch (e: IOException) {
-    throw EelConnectionError.UnknownFailure(e.toString())
+    throw EelConnectionError.UnknownFailure(e.toString(), e)
   }
   if (!socketChannel.isConnected) {
     // TODO IMO Timeouts deserve a dedicated exception.
@@ -168,7 +168,7 @@ private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): Connec
     }
   }
   catch (e: IOException) {
-    throw EelConnectionError.UnknownFailure(e.localizedMessage)
+    throw EelConnectionError.UnknownFailure(e.localizedMessage, e)
   }
   args.configureServerSocket(ConfigurableServerSocketImpl(channel.socket()))
   return ConnectionAcceptorImpl(channel)
