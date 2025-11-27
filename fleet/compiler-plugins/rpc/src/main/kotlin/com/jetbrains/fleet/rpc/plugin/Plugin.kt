@@ -13,15 +13,6 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 
 @OptIn(ExperimentalCompilerApi::class)
 class RpcCommandLineProcessor : CommandLineProcessor {
-  override val pluginId: String = "rpc"
+  override val pluginId: String = "rpc-compiler-plugin"
   override val pluginOptions: Collection<AbstractCliOption> = emptyList()
-}
-
-@OptIn(ExperimentalCompilerApi::class)
-class RpcComponentRegistrar : CompilerPluginRegistrar() {
-  override val supportsK2: Boolean = true
-  override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-    val messageCollector = configuration.get(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
-    IrGenerationExtension.registerExtension(ServiceGenerationExtension(messageCollector))
-  }
 }

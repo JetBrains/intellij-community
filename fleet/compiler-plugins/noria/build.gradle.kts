@@ -56,6 +56,15 @@ kotlin {
   }
 }
 
+sourceSets {
+  val main by getting
+  when {
+    KOTLIN_VERSION.startsWith("2.2") -> main.kotlin.srcDir("src/main/kotlin22")
+    KOTLIN_VERSION.startsWith("2.3") -> main.kotlin.srcDir("src/main/kotlin23")
+    else -> error("Unsupported Kotlin version: $KOTLIN_VERSION")
+  }
+}
+
 gradlePlugin {
   plugins {
     create("noriaGradle") {
