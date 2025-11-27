@@ -291,6 +291,7 @@ class McpServerService(val cs: CoroutineScope) {
       val httpRequest = currentCoroutineContext().httpRequestOrNull
       val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
       val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
+      @Suppress("IncorrectCancellationExceptionHandling")
       val project = try {
         if (!projectPathFromMcpRequest.isNullOrBlank()) {
           logger.trace { "Project path specified in MCP request: $projectPathFromMcpRequest" }
@@ -305,6 +306,15 @@ class McpServerService(val cs: CoroutineScope) {
         else {
           null
         }
+      }
+      catch (tce: TimeoutCancellationException) {
+        logger.trace { "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}" }
+        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been timed out: ${tce.message}").toSdkToolCallResult()
+      }
+      // handle it here because it incorrectly handled in the MCP SDK
+      catch (ce: CancellationException) {
+        //logger.trace { "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}" }
+        return@RegisteredTool McpToolCallResult.error(errorMessage = "Calling of tool '${descriptor.name}' has been cancelled: ${ce.message}").toSdkToolCallResult()
       }
       catch (mcpError: McpExpectedError) {
         return@RegisteredTool McpToolCallResult.error(errorMessage = mcpError.mcpErrorText, structuredContent = mcpError.mcpErrorStructureContent).toSdkToolCallResult()
