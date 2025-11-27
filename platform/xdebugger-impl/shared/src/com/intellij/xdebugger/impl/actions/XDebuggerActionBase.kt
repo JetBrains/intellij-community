@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.ui.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.DebuggerSupport
 
 abstract class XDebuggerActionBase protected constructor(private val myHideDisabledInPopup: Boolean = false) : AnAction() {

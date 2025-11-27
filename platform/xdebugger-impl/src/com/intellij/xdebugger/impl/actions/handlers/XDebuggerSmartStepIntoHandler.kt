@@ -54,7 +54,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
-import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.DebuggerColors

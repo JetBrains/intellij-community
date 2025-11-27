@@ -5,9 +5,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
-import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
+import com.intellij.xdebugger.impl.DebuggerSupport
 
 open class StepOverAction : XDebuggerActionBase(), DumbAware, SplitDebuggerAction {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {

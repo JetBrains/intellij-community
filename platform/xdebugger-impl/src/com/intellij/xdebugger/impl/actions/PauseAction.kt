@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
-import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 
 open class PauseAction : DumbAwareAction(), SplitDebuggerAction {

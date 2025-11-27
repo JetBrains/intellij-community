@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 
 open class ForceStepOverAction : XDebuggerActionBase(), SplitDebuggerAction {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {

@@ -16,10 +16,10 @@
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

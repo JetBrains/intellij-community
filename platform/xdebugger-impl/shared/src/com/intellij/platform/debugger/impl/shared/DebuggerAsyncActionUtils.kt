@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl
+package com.intellij.platform.debugger.impl.shared
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,12 +15,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-internal fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
+
+@ApiStatus.Internal
+fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
   performDebuggerActionAsync(e.project, e.dataContext, action)
 }
 
-internal fun performDebuggerActionAsync(
+@ApiStatus.Internal
+fun performDebuggerActionAsync(
   project: Project?,
   dataContext: DataContext,
   action: suspend () -> Unit,
