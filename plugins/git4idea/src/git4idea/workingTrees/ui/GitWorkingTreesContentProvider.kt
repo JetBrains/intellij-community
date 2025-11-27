@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees.ui
 
 import com.intellij.icons.AllIcons
@@ -23,10 +23,10 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.repo.GitRepositoryModel
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeActionsDataKeys
+import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesService
 import java.awt.Component
 import java.awt.Point
@@ -88,13 +88,13 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
-      sink[GitWorkingTreeActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList
-      sink[GitWorkingTreeActionsDataKeys.GIT_REPOSITORY_MODEL_ID] = model.repository?.repositoryId
+      sink[GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES] = list.selectedValuesList
+      sink[GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY] = model.repository
     }
   }
 
   private class WorkingTreesListModel(project: Project) : DefaultListModel<GitWorkingTree>() {
-    var repository: GitRepositoryModel? = null
+    var repository: GitRepository? = null
       private set
 
     init {
@@ -105,7 +105,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       clear()
       val currentRepository = GitWorkingTreesService.getInstance(project).getSingleRepositoryInProjectRootOrNull()
       repository = currentRepository
-      val workingTrees = currentRepository?.state?.workingTrees
+      val workingTrees = currentRepository?.workingTreeHolder?.getWorkingTrees()
       if (workingTrees != null && workingTrees.size > 1) {
         workingTrees.forEach {
           if (it.isMain) {

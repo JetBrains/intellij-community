@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees.ui
 
 import com.intellij.CommonBundle
@@ -11,12 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.vcs.impl.shared.RepositoryId
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
-import git4idea.actions.workingTree.GitWorkingTreeActionsDataKeys
-import git4idea.actions.workingTree.GitWorkingTreeActionsDataKeys.SELECTED_WORKING_TREES
+import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
+import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
 import git4idea.workingTrees.GitWorkingTreesCommandService
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
@@ -31,19 +31,19 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val data = e.getData(SELECTED_WORKING_TREES)
-    val repositoryId = e.getData(GitWorkingTreeActionsDataKeys.GIT_REPOSITORY_MODEL_ID)
-    e.presentation.isEnabled = isEnabledFor(data, e.project, repositoryId)
+    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
+    e.presentation.isEnabled = isEnabledFor(data, e.project, repository)
   }
 
-  private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: RepositoryId?): Boolean {
+  private fun isEnabledFor(trees: List<GitWorkingTree>?, project: Project?, repository: GitRepository?): Boolean {
     return project != null && repository != null && !trees.isNullOrEmpty() && trees.all { !it.isCurrent && !it.isMain }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val data = e.getData(SELECTED_WORKING_TREES)
-    val repositoryId = e.getData(GitWorkingTreeActionsDataKeys.GIT_REPOSITORY_MODEL_ID)
-    if (!isEnabledFor(data, project, repositoryId)) return
+    val repository = e.getData(GitWorkingTreeTabActionsDataKeys.CURRENT_REPOSITORY)
+    if (!isEnabledFor(data, project, repository)) return
 
     val result = if (data!!.size == 1) {
       val tree = data.first()
@@ -64,17 +64,17 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
     if (result != Messages.YES) return
     GitWorkingTreesService.getInstance(project).coroutineScope.launch(Dispatchers.IO) {
       for (tree in data) {
-        delete(project, tree, repositoryId!!)
+        delete(project, tree, repository!!)
       }
     }
   }
 
-  private suspend fun delete(project: Project, tree: GitWorkingTree, repositoryId: RepositoryId) {
+  private suspend fun delete(project: Project, tree: GitWorkingTree, repository: GitRepository) {
     val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
       service<GitWorkingTreesCommandService>().deleteWorkingTree(project, tree)
     }
     if (commandResult.success()) {
-      GitWorkingTreesService.getInstance(project).reloadRepository(repositoryId)
+      repository.workingTreeHolder.reload()
       VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.WORKING_TREE_DELETED,
                                                      "",
                                                      GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", tree.path.presentableUrl))

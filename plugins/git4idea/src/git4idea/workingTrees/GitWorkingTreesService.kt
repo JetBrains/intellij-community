@@ -1,13 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.workingTrees
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.platform.vcs.impl.shared.RepositoryId
-import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.repo.GitRepositoryModel
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 
@@ -23,30 +22,22 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
   /**
    * So far only the case `single repository in project root` is supported for working trees
    */
-  fun getSingleRepositoryInProjectRootOrNull(): GitRepositoryModel? {
-    val baseDirectories = project.getBaseDirectories()
-    if (baseDirectories.size != 1) {
+  fun getSingleRepositoryInProjectRootOrNull(): GitRepository? {
+    val projectRoot = getOnlyProjectRootOrNull()
+    if (projectRoot == null) {
       return null
     }
-    val projectRoot = baseDirectories.first()
-    val holder = GitRepositoriesHolder.getInstance(project)
-    if (!holder.initialized) {
+    val repositories = GitRepositoryManager.getInstance(project).repositories
+    val repository = repositories.singleOrNull() ?: return null
+    if (projectRoot != repository.root) {
       return null
     }
-    val repositoryModels = holder.getAll()
-    if (repositoryModels.isEmpty()) {
-      return null
-    }
-    if (repositoryModels.size > 1) {
-      return null
-    }
+    return repository
+  }
 
-    val model = repositoryModels[0]
-    val modelRoot = model.root.virtualFile ?: return null
-    if (modelRoot != projectRoot) {
-      return null
-    }
-    return model
+  private fun getOnlyProjectRootOrNull(): VirtualFile? {
+    val baseDirectories = project.getBaseDirectories()
+    return baseDirectories.singleOrNull()
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
@@ -65,11 +56,5 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
   fun workingTreesTabClosedByUser() {
     PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, true)
-  }
-
-  fun reloadRepository(repositoryId: RepositoryId) {
-    val repositoryModel = GitRepositoriesHolder.getInstance(project).get(repositoryId) ?: return
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(repositoryModel.root) ?: return
-    repository.workingTreeHolder.reload()
   }
 }
