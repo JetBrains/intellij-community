@@ -21,6 +21,8 @@ import java.nio.ByteBuffer
 internal class StreamClosedAwareEelReceiveChannel(
   private val delegate: EelReceiveChannel,
 ) : EelReceiveChannel {
+  override val prefersDirectBuffers: Boolean = delegate.prefersDirectBuffers
+
   override suspend fun receive(dst: ByteBuffer): ReadResult {
     try {
       return delegate.receive(dst)

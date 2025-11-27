@@ -61,8 +61,8 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
   }
 
   private suspend fun listenOnUnixSocket(socketFile: Path): ListenOnUnixSocketResult = withContext(Dispatchers.IO) {
-    val tx = EelPipe()
-    val rx = EelPipe()
+    val tx = EelPipe(prefersDirectBuffers = true)
+    val rx = EelPipe(prefersDirectBuffers = true)
     val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
     // TODO serverChannel.configureBlocking(false)
 

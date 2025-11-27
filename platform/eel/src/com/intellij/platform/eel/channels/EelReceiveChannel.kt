@@ -46,4 +46,11 @@ interface EelReceiveChannel {
    * The method is idempotent. Nothing happens if [closeForReceive] is called for an already closed or a broken channel.
    */
   suspend fun closeForReceive()
+
+  /**
+   * Returns true if the channel implementation works faster with [java.nio.DirectByteBuffer].
+   *
+   * See also [com.intellij.platform.eel.EelLowLevelObjectsPool.directByteBuffers].
+   */
+  val prefersDirectBuffers: Boolean
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.platform.eel.EelLowLevelObjectsPool
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.*
 import com.intellij.util.io.computeDetached
@@ -12,17 +13,20 @@ import kotlinx.coroutines.flow.flow
 import java.io.*
 import java.net.Socket
 import java.nio.ByteBuffer
-import java.nio.channels.ReadableByteChannel
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
-import java.nio.channels.WritableByteChannel
+import java.nio.channels.*
 import java.nio.charset.Charset
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 
 internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel, private val availableDelegate: () -> Int) : EelReceiveChannel {
+  private val selector: Selector?
+
   init {
-    if (readableByteChannel is java.nio.channels.SocketChannel) {
+    selector = selectorForNioChannel(readableByteChannel)
+    if (selector != null) {
       readableByteChannel.configureBlocking(false)
+      readableByteChannel.register(selector, SelectionKey.OP_READ)
     }
   }
 
@@ -32,18 +36,15 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
     return withContext(Dispatchers.IO) {
       var read = 0
       try {
-        if (readableByteChannel is java.nio.channels.SelectableChannel) {
-          Selector.open().use { selector ->
-            readableByteChannel.register(selector, SelectionKey.OP_READ)
-            do {
-              while (selector.select(100) == 0) {  // I choose 100 ms at random.
-                ensureActive()
-              }
-              selector.selectedKeys().clear()
-              read = readableByteChannel.read(dst)
+        if (selector != null && readableByteChannel is SelectableChannel) {
+          do {
+            while (selector.select(100) == 0) {  // I choose 100 ms at random.
+              ensureActive()
             }
-            while (read == 0)
+            selector.selectedKeys().clear()
+            read = readableByteChannel.read(dst)
           }
+          while (read == 0)
         }
         else {
           read = computeDetached {
@@ -62,8 +63,9 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
 
   override suspend fun closeForReceive() {
     withContext(Dispatchers.IO + NonCancellable) {
+      selector?.let(selectorPool::returnBack)
       // Hello Java!
-      if (readableByteChannel is java.nio.channels.SocketChannel) {
+      if (readableByteChannel is SocketChannel) {
         readableByteChannel.shutdownInput()
       }
       else {
@@ -71,15 +73,26 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
       }
     }
   }
+
+  override val prefersDirectBuffers: Boolean =
+    readableByteChannel is FileChannel
+    || readableByteChannel is DatagramChannel
+    || readableByteChannel is SocketChannel
+    || readableByteChannel is AsynchronousSocketChannel
+    || readableByteChannel is Pipe.SourceChannel
 }
 
 internal class NioWriteToEelAdapter(
   private val writableByteChannel: WritableByteChannel,
   private val flushable: Flushable? = null,
 ) : EelSendChannel {
+  private val selector: Selector?
+
   init {
-    if (writableByteChannel is java.nio.channels.SelectableChannel) {
+    selector = selectorForNioChannel(writableByteChannel)
+    if (selector != null) {
       writableByteChannel.configureBlocking(false)
+      writableByteChannel.register(selector, SelectionKey.OP_WRITE)
     }
   }
 
@@ -93,18 +106,14 @@ internal class NioWriteToEelAdapter(
     if (!src.hasRemaining()) return
     withContext(Dispatchers.IO) {
       try {
-        if (writableByteChannel is java.nio.channels.SelectableChannel) {
-          Selector.open().use { selector ->
-            writableByteChannel.register(selector, SelectionKey.OP_WRITE)
-
-            do {
-              while (selector.select(100) == 0) {  // I choose 100 ms at random.
-                ensureActive()
-              }
-              selector.selectedKeys().clear()
+        if (selector != null && writableByteChannel is SelectableChannel) {
+          do {
+            while (selector.select(100) == 0) {  // I choose 100 ms at random.
+              ensureActive()
             }
-            while (writableByteChannel.write(src) == 0)
+            selector.selectedKeys().clear()
           }
+          while (writableByteChannel.write(src) == 0)
         }
         else {
           computeDetached {
@@ -121,6 +130,7 @@ internal class NioWriteToEelAdapter(
 
   override suspend fun close(err: Throwable?) {
     withContext(Dispatchers.IO + NonCancellable) {
+      selector?.let(selectorPool::returnBack)
       try {
         flushable?.flush()
       }
@@ -129,7 +139,7 @@ internal class NioWriteToEelAdapter(
       }
 
       // Hello Java!
-      if (writableByteChannel is java.nio.channels.SocketChannel) {
+      if (writableByteChannel is SocketChannel) {
         writableByteChannel.shutdownOutput()
       }
       else {
@@ -137,6 +147,13 @@ internal class NioWriteToEelAdapter(
       }
     }
   }
+
+  override val prefersDirectBuffers: Boolean =
+    writableByteChannel is FileChannel
+    || writableByteChannel is DatagramChannel
+    || writableByteChannel is SocketChannel
+    || writableByteChannel is AsynchronousSocketChannel
+    || writableByteChannel is Pipe.SinkChannel
 }
 
 internal class InputStreamAdapterImpl(
@@ -233,11 +250,13 @@ internal class OutputStreamAdapterImpl(
   }
 }
 
-internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: EelReceiveChannel, bufferSize: Int): ReceiveChannel<ByteBuffer> {
+internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: EelReceiveChannel): ReceiveChannel<ByteBuffer> {
   val channel = Channel<ByteBuffer>()
   launch {
+    @OptIn(EelDelicateApi::class)
+    val pool = if (receiveChannel.prefersDirectBuffers) EelLowLevelObjectsPool.directByteBuffers else EelLowLevelObjectsPool.fakeByteBufferPool
     while (true) {
-      val buffer = ByteBuffer.allocate(bufferSize)
+      val buffer = pool.borrow()
       try {
         val r = receiveChannel.receive(buffer)
         when (r) {
@@ -246,6 +265,7 @@ internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: Ee
             break
           }
           ReadResult.NOT_EOF -> {
+            // Direct buffers are likely to get lost from the pool and collected by GC, but it just brings a tiny performance penalty.
             channel.send(buffer.flip())
           }
         }
@@ -305,4 +325,21 @@ internal fun ByteBuffer.putPartially(src: ByteBuffer): Int {
   }
   val bytesRead = bytesBeforeRead - src.remaining()
   return bytesRead
+}
+
+private val selectorPool = EelLowLevelObjectsPool<Selector>(
+  10, // 10 is chosen at random.
+  factory = Selector::open,
+  returnValidator = {
+    it.keys().forEach(SelectionKey::cancel)
+    true
+  }
+)
+
+@OptIn(ExperimentalContracts::class)
+private fun selectorForNioChannel(channel: java.nio.channels.Channel): Selector? {
+  contract {
+    returnsNotNull() implies (channel is SelectableChannel)
+  }
+  return if (channel is SelectableChannel) selectorPool.borrow() else null
 }

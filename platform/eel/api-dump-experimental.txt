@@ -452,6 +452,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 *:com.intellij.platform.eel.channels.EelReceiveChannel
 - a:available():I
 - a:closeForReceive(kotlin.coroutines.Continuation):java.lang.Object
+- a:getPrefersDirectBuffers():Z
 - a:receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.channels.EelReceiveChannelException
 - com.intellij.platform.eel.channels.EelChannelException
@@ -461,6 +462,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - f:getChannel():com.intellij.platform.eel.channels.EelReceiveChannel
 *:com.intellij.platform.eel.channels.EelSendChannel
 - *a:close(java.lang.Throwable,kotlin.coroutines.Continuation):java.lang.Object
+- a:getPrefersDirectBuffers():Z
 - *a:isClosed():Z
 *f:com.intellij.platform.eel.channels.EelSendChannelException
 - com.intellij.platform.eel.channels.EelChannelException

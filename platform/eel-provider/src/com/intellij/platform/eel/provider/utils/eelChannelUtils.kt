@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.Cancellation.ensureActive
+import com.intellij.platform.eel.EelLowLevelObjectsPool
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
@@ -60,13 +61,13 @@ fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatcher
   OutputStreamAdapterImpl(this, blockingContext)
 
 /**
- * Reads data from [receiveChannel] with buffer as big as [bufferSize] and returns it from channel (until [receiveChannel] is closed)
+ * Reads data from [receiveChannel] and returns it from channel (until [receiveChannel] is closed)
  * Each buffer is fresh (not reused) but not flipped.
  * Errors are thrown out of the channel (directly or wrapped with [IOException] if not throwable).
  */
 @ApiStatus.Internal
-fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChannel, bufferSize: Int = DEFAULT_BUFFER_SIZE): ReceiveChannel<ByteBuffer> =
-  consumeReceiveChannelAsKotlinImpl(receiveChannel, bufferSize)
+fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChannel): ReceiveChannel<ByteBuffer> =
+  consumeReceiveChannelAsKotlinImpl(receiveChannel)
 
 /**
  * Collect data from channel line-by-line using [charset] to convert bytes to chars.
@@ -124,7 +125,7 @@ interface EelPipe {
 }
 
 @ApiStatus.Internal
-fun EelPipe(debugLabel: String = ""): EelPipe = EelPipeImpl(debugLabel)
+fun EelPipe(debugLabel: String = "", prefersDirectBuffers: Boolean): EelPipe = EelPipeImpl(debugLabel, prefersDirectBuffers)
 
 
 /**
@@ -181,47 +182,56 @@ suspend fun copy(
   var sendBackoff = backoff()
   var receiveBackoff = backoff()
 
-  val buffer = ByteBuffer.allocate(bufferSize)
-  while (true) {
-    buffer.clear()
-    // read data
-    try {
-      val r = src.receive(buffer)
-      if (r == EOF) {
-        break
-      }
-      else {
-        receiveBackoff = backoff()
-      }
-    }
-    catch (error: IOException) {
-      when (onReadError(error)) {
-        OnError.RETRY -> {
-          delay(receiveBackoff.next())
-          continue
-        }
-        OnError.EXIT -> throw CopyError.InError(error)
-      }
-    }
-    buffer.flip()
-    do {
-      // write data
+  @OptIn(EelDelicateApi::class)
+  val pool =
+    if (src.prefersDirectBuffers || dst.prefersDirectBuffers) EelLowLevelObjectsPool.directByteBuffers
+    else EelLowLevelObjectsPool.fakeByteBufferPool
+  val buffer = pool.borrow()
+  try {
+    while (true) {
+      buffer.clear()
+      // read data
       try {
-        dst.sendWholeBuffer(buffer)
-        sendBackoff = backoff()
+        val r = src.receive(buffer)
+        if (r == EOF) {
+          break
+        }
+        else {
+          receiveBackoff = backoff()
+        }
       }
       catch (error: IOException) {
-        when (onWriteError(error)) {
+        when (onReadError(error)) {
           OnError.RETRY -> {
-            delay(sendBackoff.next())
+            delay(receiveBackoff.next())
             continue
           }
-          OnError.EXIT -> throw CopyError.OutError(error)
+          OnError.EXIT -> throw CopyError.InError(error)
         }
       }
+      buffer.flip()
+      do {
+        // write data
+        try {
+          dst.sendWholeBuffer(buffer)
+          sendBackoff = backoff()
+        }
+        catch (error: IOException) {
+          when (onWriteError(error)) {
+            OnError.RETRY -> {
+              delay(sendBackoff.next())
+              continue
+            }
+            OnError.EXIT -> throw CopyError.OutError(error)
+          }
+        }
+      }
+      while (buffer.hasRemaining())
+      ensureActive()
     }
-    while (buffer.hasRemaining())
-    ensureActive()
+  }
+  finally {
+    pool.returnBack(buffer)
   }
 }
 
