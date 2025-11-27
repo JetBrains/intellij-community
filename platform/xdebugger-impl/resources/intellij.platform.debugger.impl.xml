@@ -179,7 +179,7 @@
                  description="Enables remove/disable all but this breakpoint actions"
                  key="debugger.remove.disable.actions"/>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Debugger implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
                  key="xdebugger.toolwindow.split"
                  restartRequired="true"/>
