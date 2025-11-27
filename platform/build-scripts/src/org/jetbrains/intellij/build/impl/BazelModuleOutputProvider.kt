@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 
@@ -19,7 +20,8 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHo
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
+    val result = getModuleOutputRootsImpl(module, forTests).mapNotNull { moduleOutput ->
+      if (Files.notExists(moduleOutput)) return@mapNotNull null
       var fileContent: ByteArray? = null
       readZipFile(moduleOutput) { name, data ->
         if (name == relativePath) {
@@ -77,14 +79,19 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHo
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
-    val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
-    val jars = jarsRelative.map { projectHome.resolve(it) }
+    val jars = getModuleOutputRootsImpl(module, forTests)
     for (path in jars) {
       check(path.isRegularFile()) {
         "Module output '$path' does not exists, required for module ${module.name}. Locally please run ./bazel-build-all.cmd"
       }
     }
+    return jars
+  }
+
+  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+    val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
+    val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+    val jars = jarsRelative.map { projectHome.resolve(it) }
     return jars
   }
 }
