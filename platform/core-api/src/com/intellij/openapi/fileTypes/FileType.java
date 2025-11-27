@@ -77,4 +77,11 @@ public interface FileType {
     // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
     return null;
   }
+
+  /**
+   * @return true if the charset is hard-coded, false if file type does not restrict encoding
+   */
+  default boolean isCharsetHardcoded() {
+    return false;
+  }
 }

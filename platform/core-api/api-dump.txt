@@ -699,6 +699,7 @@ com.intellij.openapi.fileTypes.FileType
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - a:isBinary():Z
+- isCharsetHardcoded():Z
 - isReadOnly():Z
 com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -711,6 +712,7 @@ com.intellij.openapi.fileTypes.INativeFileType
 - a:useNativeIcon():Z
 com.intellij.openapi.fileTypes.InternalFileType
 - com.intellij.openapi.fileTypes.FileType
+- isCharsetHardcoded():Z
 - isReadOnly():Z
 com.intellij.openapi.fileTypes.OSFileIdeAssociation
 - getExtensionMode():com.intellij.openapi.fileTypes.OSFileIdeAssociation$ExtensionMode
