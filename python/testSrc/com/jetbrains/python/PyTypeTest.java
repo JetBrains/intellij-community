@@ -3273,8 +3273,7 @@ public class PyTypeTest extends PyTestCase {
                                                     expr = UserId""");
 
         for (TypeEvalContext context : getTypeEvalContexts(definition)) {
-          PyCallableType callableType = assertInstanceOf(context.getType(definition), PyCallableType.class);
-          assertInstanceOf(callableType.getReturnType(context), PyTypingNewType.class);
+          assertInstanceOf(context.getType(definition), PyTypingNewTypeFactoryType.class);
         }
 
         final PyExpression instance = parseExpr("""

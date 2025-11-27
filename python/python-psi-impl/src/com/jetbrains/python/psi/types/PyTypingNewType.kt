@@ -7,8 +7,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypingNewType(
-  @ApiStatus.Internal val classType: PyClassType,
+  val classType: PyClassType,
   private val name: String,
   private val declaration: PyTargetExpression?,
 ) : PyClassType by classType {
@@ -101,4 +102,14 @@ class PyTypingNewType(
     }
     return visitor.visitPyClassType(this)
   }
+}
+
+/**
+ * Represents a type of callable object returned in runtime by `typing.NewType()`.
+ * For type annotations {@link com.jetbrains.python.psi.types.PyTypingNewType} is used.
+ */
+@ApiStatus.Internal
+class PyTypingNewTypeFactoryType(private val type: PyTypingNewType)
+  : PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi(type.classType.toInstance())), type.toInstance()) {
+  override fun getName(): String = type.name
 }
