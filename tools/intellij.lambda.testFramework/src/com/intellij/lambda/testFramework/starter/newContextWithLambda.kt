@@ -1,9 +1,9 @@
 package com.intellij.lambda.testFramework.starter
 
-import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.runner.Starter
 
 fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, vararg additionalPluginModules: String): IDETestContext {
@@ -15,6 +15,7 @@ fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, vararg
       //backend can't be started in headless mode, would fail
       contextToApplyHeadless.applyVMOptionsPatch {
         inHeadlessMode()
+        //inUnitTestMode()
       }
     }
   }

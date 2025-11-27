@@ -216,6 +216,8 @@ data class VMOptions(
   fun inHeadlessMode(): Unit = addSystemProperty("java.awt.headless", true)
   fun hasHeadlessMode(): Boolean = data.any { it.contains("-Djava.awt.headless=true") }
 
+  fun inUnitTestMode(): Unit = addSystemProperty("idea.is.unit.test", true)
+
   fun disableStartupDialogs() {
     addSystemProperty("jb.consents.confirmation.enabled", false)
     addSystemProperty("jb.privacy.policy.text", "<!--999.999-->")
