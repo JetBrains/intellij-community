@@ -4,14 +4,15 @@ package com.intellij.platform.searchEverywhere.frontend
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 
-@ApiStatus.Internal
-data class SeEmptyResultInfo(val chunks: List<SeEmptyResultInfoChunk>)
+@ApiStatus.Experimental
+class SeEmptyResultInfo(val chunks: List<SeEmptyResultInfoChunk>)
 
-@ApiStatus.Internal
-data class SeEmptyResultInfoChunk(
-  val text: String,
+@ApiStatus.Experimental
+class SeEmptyResultInfoChunk(
+  val text: @Nls String,
   val onNewLine: Boolean = false,
   val attrs: SimpleTextAttributes = StatusText.DEFAULT_ATTRIBUTES,
   val listener: ActionListener? = null,

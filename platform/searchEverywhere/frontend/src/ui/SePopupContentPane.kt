@@ -859,12 +859,12 @@ class SePopupContentPane(
 
     val vm = vmState.value ?: return
     val emptyResultInfo = vm.currentTab.getEmptyResultInfo(DataManager.getInstance().getDataContext(this@SePopupContentPane))
-    emptyResultInfo?.chunks?.forEach { (text, newLine, attrs, listener) ->
-      if (newLine) {
-        resultList.emptyText.appendLine(text, attrs, listener)
+    emptyResultInfo?.chunks?.forEach { chunk ->
+      if (chunk.onNewLine) {
+        resultList.emptyText.appendLine(chunk.text, chunk.attrs, chunk.listener)
       }
       else {
-        resultList.emptyText.appendText(text, attrs, listener)
+        resultList.emptyText.appendText(chunk.text, chunk.attrs, chunk.listener)
       }
     }
   }

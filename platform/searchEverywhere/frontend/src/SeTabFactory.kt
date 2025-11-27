@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 interface SeTabFactory {
   val id: String
 

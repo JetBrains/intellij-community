@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 interface SeTab : Disposable {
   val name: @Nls String
   val id: String

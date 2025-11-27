@@ -24,11 +24,12 @@ import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@Internal
+@ApiStatus.Experimental
 class SeTabDelegate(
   val project: Project?,
   private val session: SeSession,
