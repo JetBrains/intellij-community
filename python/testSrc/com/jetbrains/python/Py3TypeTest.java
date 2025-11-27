@@ -4380,6 +4380,17 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  public void testNewTypeBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTest("(int) -> UserId", """
+        from typing import NewType
+        UserId = NewType('UserId', int)
+        expr = UserId
+        """
+      );
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
