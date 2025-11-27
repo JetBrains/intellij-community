@@ -11,9 +11,14 @@ public interface Iconable {
   int ICON_FLAG_READ_STATUS = 0x0002;
 
   /**
+   * If set, skip any potentially slow computations
+   */
+  int ICON_FLAG_FAST_ONLY = 0x80000000;
+
+  /**
    * See also {@link IconManager#registerIconLayer(int, Icon)}
    */
-  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS})
+  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS, ICON_FLAG_FAST_ONLY})
   @interface IconFlags {}
 
   Icon getIcon(@IconFlags int flags);

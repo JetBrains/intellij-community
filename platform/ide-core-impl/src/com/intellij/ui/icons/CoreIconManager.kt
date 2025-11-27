@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.Iconable.ICON_FLAG_FAST_ONLY
 import com.intellij.openapi.util.findIconUsingDeprecatedImplementation
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.registry.Registry
@@ -147,6 +148,9 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val layersFromProviders = ArrayList<Icon>()
     for (provider in IconLayerProvider.EP_NAME.extensionList) {
+      if (BitUtil.isSet(flags, ICON_FLAG_FAST_ONLY)) {
+        continue
+      }
       provider.getLayerIcon(instance, BitUtil.isSet(flags, ElementBase.FLAGS_LOCKED))?.let {
         layersFromProviders.add(it)
       }
@@ -269,6 +273,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
       // the CoreIconManager.<init> may be called multiple times in tests
       staticRegisterIconLayer(Iconable.ICON_FLAG_VISIBILITY, null)
       staticRegisterIconLayer(Iconable.ICON_FLAG_READ_STATUS, null)
+      staticRegisterIconLayer(Iconable.ICON_FLAG_FAST_ONLY, null)
     }
 
     private fun staticRegisterIconLayer(flagMask: Int, icon: Icon?) {

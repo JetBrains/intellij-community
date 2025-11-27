@@ -96,6 +96,7 @@ com.intellij.openapi.util.Factory
 com.intellij.openapi.util.Getter
 - java.util.function.Supplier
 com.intellij.openapi.util.Iconable
+- sf:ICON_FLAG_FAST_ONLY:I
 - sf:ICON_FLAG_READ_STATUS:I
 - sf:ICON_FLAG_VISIBILITY:I
 - a:getIcon(I):javax.swing.Icon
