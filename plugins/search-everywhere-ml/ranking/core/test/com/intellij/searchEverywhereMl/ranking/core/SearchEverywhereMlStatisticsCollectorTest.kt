@@ -3,6 +3,7 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.internal.statistic.eventLog.events.*
@@ -20,6 +21,7 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatistics
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_ID
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.SESSION_STARTED
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.STATE_CHANGED
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -37,6 +39,11 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       closePopup()
     }
+  }
+
+  @Before
+  fun setup() {
+    setRegistryPropertyForTest(SearchEverywhereFeature.registryKey, "false")
   }
 
   @Test
