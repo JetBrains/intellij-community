@@ -15,8 +15,6 @@ public final class MavenConstants {
 
   public static final String MAVEN_3_XMLNS = "http://maven.apache.org/POM/4.0.0";
   public static final String MAVEN_3_XMLNS_HTTPS = "https://maven.apache.org/POM/4.0.0";
-  public static final String MAVEN_3_XSD = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
-  public static final String MAVEN_3_XSD_HTTPS = "https://maven.apache.org/xsd/maven-4..0.xsd";
 
 
   public static final String POM_EXTENSION = "pom";

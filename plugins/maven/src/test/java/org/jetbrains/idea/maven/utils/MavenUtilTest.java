@@ -119,6 +119,8 @@ public class MavenUtilTest extends MavenTestCase {
                                              "https://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd https://maven.apache.org/maven-v4_1_0.xsd"));
     assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0",
                                              "https://maven.apache.org/POM/4.1.0\nhttps://maven.apache.org/xsd/maven-4.1.0.xsd\n https://maven.apache.org/maven-v4_1_0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0",
+                                             "https://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0-with-some-additional-pref.xsd"));
   }
 
   public void testBaseDir() {
