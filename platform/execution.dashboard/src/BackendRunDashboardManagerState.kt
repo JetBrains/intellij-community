@@ -29,10 +29,11 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
 
   private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
 
-  private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(RunDashboardCoroutineScopeProvider.getInstance(project)
-                                                                          .cs.childScope("Backend run dashboard shared state updates"))
+  private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(
+    RunDashboardCoroutineScopeProvider.getInstance(project).createChildNamedScope("Backend run dashboard shared state updates"),
+    OverlappingTasksStrategy.SCHEDULE_FOR_LATER)
 
-  private fun scheduleSharedStateUpdate(update: SequentialComputationRequest) {
+  private fun scheduleSharedStateUpdate(update: Runnable) {
     sharedStateUpdatesQueue.submit(update)
   }
 
