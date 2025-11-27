@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -49,6 +50,9 @@ import java.awt.GridBagLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorCompletionService
+import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.TableModelEvent
 import javax.swing.table.DefaultTableCellRenderer
@@ -352,8 +356,9 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
           val rows = tableModel.items.filter { it.mergedStatus.isBlank() }.toList()
           val total = rows.size
           var processed = 0
+          val completion = ExecutorCompletionService<Boolean>(pool)
           val tasks = rows.map { row ->
-            pool.submit<Boolean> {
+            completion.submit(Callable {
               indicator.checkCanceled()
               val comparator = DeepComparator(project, dataProvider, dataProvider.dataPack, reposWithTarget, row.branch.name)
               val result = comparator.compare()
@@ -364,9 +369,27 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
               indicator.text = GitBundle.message("find.merged.local.branches.progress.processed", processed, total)
               indicator.fraction = processed.toDouble() / total
               merged
+            })
+          } // wait for completion off-EDT, but be responsive to cancellation
+          try {
+            var completed = 0
+            while (completed < tasks.size) {
+              // Throw PCE as soon as user cancels
+              indicator.checkCanceled()
+              val finished = completion.poll(100, TimeUnit.MILLISECONDS)
+              if (finished != null) {
+                // Propagate possible exceptions for parity with Future#get
+                finished.get()
+                completed++
+              }
             }
-          } // wait for completion off-EDT
-          tasks.forEach { it.get() }
+          }
+          catch (e: ProcessCanceledException) {
+            // Cancel all running tasks and interrupt compare() to stop ASAP
+            tasks.forEach { it.cancel(true) }
+            pool.shutdownNow()
+            throw e
+          }
         }
         finally {
           pool.shutdown()
