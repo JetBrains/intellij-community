@@ -62,6 +62,7 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
     call("runSerializedLambda", LambdaRdSerializedLambda, void).async
+    call("cleanUp", void, void).async
     call("requestFocus", bool, bool).async
     call("isFocused", void, bool).async
     call("visibleFrameNames", void, immutableList(string)).async

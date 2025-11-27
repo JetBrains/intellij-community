@@ -190,12 +190,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           WinFocusStealer.setFocusStealingEnabled(true)
         }
 
-        val ideContext = when (session.rdIdeType) {
-          LambdaRdIdeType.BACKEND -> LambdaBackendContextClass()
-          LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass()
-          LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
-        }
-
 
         val testModuleDescriptor = run {
           val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
@@ -211,6 +205,27 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
 
         LOG.info("All test code will be loaded using '${testModuleDescriptor?.pluginClassLoader}'")
+
+        fun getLambdaIdeContext(): LambdaIdeContext {
+          val currentTestCoroutineScope = CoroutineScope(Dispatchers.Default + CoroutineName("Lambda test session scope") + SupervisorJob())
+
+          currentTestCoroutineScope.coroutineContext.job.invokeOnCompletion {
+            LOG.info("Test coroutine scope is completed")
+          }
+          return when (session.rdIdeType) {
+            LambdaRdIdeType.BACKEND -> LambdaBackendContextClass(currentTestCoroutineScope.coroutineContext)
+            LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass(currentTestCoroutineScope.coroutineContext)
+            LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass(currentTestCoroutineScope.coroutineContext)
+          }
+        }
+
+        var ideContext = getLambdaIdeContext()
+
+        session.cleanUp.setSuspend(sessionBgtDispatcher) { _, _ ->
+          LOG.info("Resetting scopes")
+          ideContext.coroutineContext.job.cancelAndJoin()
+          ideContext = getLambdaIdeContext()
+        }
 
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
@@ -264,13 +279,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           try {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
-
-            withContext(Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")) {
+            withContext(Dispatchers.Default + CoroutineName("Lambda task: ${serializedLambda.stepName}")) {
               runLogged(serializedLambda.stepName, 10.minutes) {
                 val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
                 URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use {
-                  SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
-                    .accept(ideContext)
+                  withContext(ideContext.coroutineContext) {
+                    SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
+                      .accept(ideContext)
+                  }
                 }
               }
 

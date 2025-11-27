@@ -264,12 +264,12 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
   }
 }
 
-internal fun serializeArguments(arguments: List<Any>): String {
+internal fun serializeArguments(methodName: String, arguments: List<Any>): String {
   if (arguments.isEmpty()) return ""
 
   // Reuse the SerializedLambdaLoader.save() logic
   val loader = SerializedLambdaLoader()
-  return loader.save(arguments)
+  return loader.save(methodName, arguments)
 }
 
 internal fun deserializeArguments(serializedArgs: String, classLoader: ClassLoader): List<Any> {

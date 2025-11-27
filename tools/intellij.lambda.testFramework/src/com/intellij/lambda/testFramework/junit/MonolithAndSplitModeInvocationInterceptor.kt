@@ -60,7 +60,7 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
                                                   params = mapOf(
                                                     "testClass" to (invocationContext.targetClass.name ?: ""),
                                                     "testMethod" to (invocationContext.executable?.name ?: ""),
-                                                    "methodArguments" to serializeArguments(invocationContext.arguments)
+                                                    "methodArguments" to serializeArguments(fullMethodName, invocationContext.arguments)
                                                   ))
     }
 

@@ -10,17 +10,22 @@ import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.job
 
-context(_: LambdaBackendContext)
+context(lambdaBackendContext: LambdaBackendContext)
 suspend fun openNewProjectAndEditor(relativePath: String) {
   val disposable = Disposer.newDisposable("Dialog setup")
+  lambdaBackendContext.addPostCleanup {
+    Disposer.dispose(disposable)
+  }
   TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
   GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
 
   val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
+  lambdaBackendContext.addPostCleanup {
+    codeInsightFixture.tearDown()
+  }
   codeInsightFixture.setUp()
   writeAction {
     codeInsightFixture.openFileInEditor(
@@ -46,9 +51,5 @@ suspend fun openNewProjectAndEditor(relativePath: String) {
         )
         .virtualFile
     )
-  }
-  currentCoroutineContext().job.invokeOnCompletion {
-    codeInsightFixture.tearDown()
-    Disposer.dispose(disposable)
   }
 }
