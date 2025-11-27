@@ -112,13 +112,16 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find a VM options file
 )
 
+SET "ARG_FILE=%TMP%\ij-launcher-%RANDOM%%RANDOM%.tmp"
+
+ECHO|SET /P="-cp " > "%ARG_FILE%"
 @@class_path@@
 
 :: ---------------------------------------------------------------------
 :: Run the IDE.
 :: ---------------------------------------------------------------------
 "%JAVA_EXE%" ^
-  -cp "%CLASS_PATH%" ^
+  @"%ARG_FILE%" ^
   "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
   "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
   %ACC% ^
@@ -126,3 +129,5 @@ IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   @@ide_jvm_args@@ ^
   @@main_class_name@@ ^
   %*
+
+DEL "%ARG_FILE%" > NUL
