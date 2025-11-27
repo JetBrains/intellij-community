@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleColle
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import org.gradle.api.Plugin;
@@ -17,6 +18,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
@@ -27,6 +29,7 @@ import org.gradle.jvm.toolchain.JavaInstallationMetadata;
 import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.jvm.toolchain.JavaToolchainSpec;
 import org.gradle.jvm.toolchain.internal.JavaToolchain;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +88,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   }
 
   private static @Nullable Integer getJavaToolchainVersion(@NotNull Project project) {
-    JavaToolchainSpec toolchain = JavaPluginUtil.getToolchain(project);
+    JavaToolchainSpec toolchain = getToolchain(project);
     if (toolchain == null) return null;
     return toolchain.getLanguageVersion()
       .map(JavaLanguageVersion::asInt)
@@ -841,5 +844,22 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         externalSourceSet.addSource(generatedSourceType, generatedDirectorySet);
       }
     }
+  }
+
+  private static @Nullable JavaPluginExtension getJavaPluginExtension(@NotNull Project project) {
+    if (GradleVersionSpecificsUtil.isPluginExtensionSupported(GradleVersion.current())) {
+      return project.getExtensions().findByType(JavaPluginExtension.class);
+    }
+    return null;
+  }
+
+  private static @Nullable JavaToolchainSpec getToolchain(@NotNull Project project) {
+    if (GradleVersionSpecificsUtil.isJavaToolchainSupported(GradleVersion.current())) {
+      JavaPluginExtension javaExtension = getJavaPluginExtension(project);
+      if (javaExtension != null) {
+        return javaExtension.getToolchain();
+      }
+    }
+    return null;
   }
 }
