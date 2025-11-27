@@ -495,7 +495,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                             additionalTabComponentManager.id, tabClosedChannel,
                                             runContentDescriptorId, myShowTabDeferred)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
-        addAdditionalTabsToManager(additionalTabComponentManager)
         // This is a mock tab used in backend only
         // Using a RunTab as a mock component let us reuse context reusing,
         // e.g. execution environment is present in the context of the mock descriptor
@@ -514,7 +513,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
         val disposable = localTabScope.asDisposable()
-        addAdditionalConsolesToManager(runTab.consoleManger, disposable)
+        addAdditionalTabsAndConsolesToManager(runTab.consoleManger, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
@@ -571,20 +570,14 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
   }
 
-  private fun addAdditionalTabsToManager(additionalTabComponentManager: XDebugSessionAdditionalTabComponentManager) {
-    val runConfiguration = executionEnvironment?.runProfile
-    if (runConfiguration is RunConfigurationBase<*>) {
-      runConfiguration.createAdditionalTabComponents(additionalTabComponentManager, debugProcess.processHandler)
-    }
-  }
-
-  private fun addAdditionalConsolesToManager(
+  private fun addAdditionalTabsAndConsolesToManager(
     consoleManager: LogConsoleManager,
     disposable: Disposable,
   ) {
     val runConfiguration = executionEnvironment?.runProfile
     if (runConfiguration is RunConfigurationBase<*>) {
       val logFilesManager = LogFilesManager(project, consoleManager, disposable)
+      // Triggers additional tabs creation along with consoles via createAdditionalTabComponents
       logFilesManager.addLogConsoles(runConfiguration, debugProcess.processHandler)
     }
   }
