@@ -7,6 +7,7 @@
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.kotlin.gradle.codeInsight.common"/>
     <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

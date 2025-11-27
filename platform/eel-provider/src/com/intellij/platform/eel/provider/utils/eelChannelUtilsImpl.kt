@@ -170,7 +170,8 @@ internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: Ee
             channel.send(buffer.flip())
           }
         }
-      } catch (e: IOException) {
+      }
+      catch (e: IOException) {
         channel.close(e)
         break
       }

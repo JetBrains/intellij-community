@@ -25,6 +25,7 @@ public final class ContainerUtil {
   @ApiStatus.Internal
   public static final class Options {
     @ApiStatus.Internal
+    @SuppressWarnings("StaticNonFinalField")
     public static boolean RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE;
   }
   private static final int INSERTION_SORT_THRESHOLD = 10;
@@ -36,7 +37,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link java.util.HashMap#HashMap()}
+   * @deprecated Use {@link HashMap#HashMap()}
    */
   @Contract(pure = true)
   @Deprecated
@@ -547,7 +548,6 @@ public final class ContainerUtil {
     }
   }
 
-  @Deprecated
   private static final @Unmodifiable class ImmutableListBackedByList<E> extends ImmutableList<E> {
     private final List<? extends E> myStore;
 
@@ -571,7 +571,6 @@ public final class ContainerUtil {
     }
   }
 
-  @Deprecated
   private static final @Unmodifiable class ImmutableListBackedByArray<E> extends ImmutableList<E> {
     private final E[] myStore;
 
@@ -838,7 +837,6 @@ public final class ContainerUtil {
    * @return true if all {@link Processor#process(Object)} returned true; false otherwise
    */
   public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<? super T> processor) {
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = list.size(); i < size; i++) {
       T t = list.get(i);
       if (!processor.process(t)) {
@@ -1129,12 +1127,7 @@ public final class ContainerUtil {
   }
 
   public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
-    for (T t : collection) {
-      if (!condition.value(t)) {
-        return false;
-      }
-    }
-    return true;
+    return and(collection, condition);
   }
 
   @Contract(mutates = "param1")
@@ -1479,7 +1472,7 @@ public final class ContainerUtil {
   public static @NotNull <T> Iterable<T> concat(@NotNull Iterable<? extends T> it1, @NotNull Iterable<? extends T> it2) {
     return new Iterable<T>() {
       @Override
-      public void forEach(java.util.function.Consumer<? super T> action) {
+      public void forEach(Consumer<? super T> action) {
         it1.forEach(action);
         it2.forEach(action);
       }
@@ -2451,7 +2444,6 @@ public final class ContainerUtil {
     List<@NotNull T> result = null;
     for (int i = 0; i < list.size(); i++) {
       T t = list.get(i);
-      //noinspection ConstantValue
       if (t == null) {
         throw new IllegalArgumentException("get(" + i + ") = null");
       }
@@ -2675,7 +2667,7 @@ public final class ContainerUtil {
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)<br>
    *
-   * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
+   * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently race-prone and
    * therefore can return an array with null elements at the end.
    */
   @Contract(value = " -> new", pure = true)
@@ -3053,7 +3045,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated use {@link java.util.WeakHashMap} instead
+   * @deprecated use {@link WeakHashMap} instead
    */
   @Contract(value = " -> new", pure = true)
   @Deprecated

@@ -298,7 +298,7 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
     private static @NotNull List<LookupElement> getElementsFromDict(final @NotNull PyDictLiteralExpression dict) {
       return Arrays.stream(dict.getElements())
         .map(e -> PyUtil.as(e.getKey(), PyStringLiteralExpression.class))
-        .filter(k-> k != null)
+        .filter(k -> k != null)
         .map(k -> createLookUpElement(k.getStringValue()))
         .collect(Collectors.toList());
     }
@@ -317,7 +317,7 @@ public final class PyStringFormatCompletionContributor extends CompletionContrib
 
     private static @Nullable LookupElement getKeywordArgument(final @NotNull PyKeywordArgument arg) {
       final String keyword = arg.getKeyword();
-      return keyword != null ?  createLookUpElement(keyword) : null;
+      return keyword != null ? createLookUpElement(keyword) : null;
     }
   }
 

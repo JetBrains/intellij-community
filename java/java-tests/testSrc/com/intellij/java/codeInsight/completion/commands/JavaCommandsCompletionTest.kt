@@ -215,7 +215,10 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("copy ref", ignoreCase = true) })
+    val item = elements.first { element -> element.lookupString.contains("copy ref", ignoreCase = true) }
+    val preview = (item.`as`(CommandCompletionLookupElement::class.java))?.preview
+    assertEquals("Copy reference for 'foo'.", (preview as IntentionPreviewInfo.Html).content().toString())
+    selectItem(item)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
@@ -1672,6 +1675,21 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       return
     }
     assertEquals(TextRange(0, 82), completionLookupElement.highlighting?.range)
+  }
+
+  fun testParameterInfo() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class B<T> {
+        static void main() {
+            call("A".<caret>);
+        }
+    
+        private static void call(String number) {}
+    }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element ->
+      element.lookupString.contains("Parameter info", ignoreCase = true) })
   }
 
   private class TestHintManager : HintManagerImpl() {

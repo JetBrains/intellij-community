@@ -100,6 +100,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
+    <LockReqPsiOps
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqPsiOps"/>
     <cancellationCheckProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckProvider"/>

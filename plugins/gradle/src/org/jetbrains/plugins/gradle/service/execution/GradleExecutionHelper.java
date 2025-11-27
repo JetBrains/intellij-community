@@ -167,6 +167,48 @@ public final class GradleExecutionHelper {
     return getBuildEnvironment(connection, context);
   }
 
+  public static <Model> @NotNull Model getModel(
+    @NotNull ProjectConnection connection,
+    @NotNull GradleExecutionContext context,
+    @NotNull Class<Model> modelClass
+  ) {
+    Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+      .spanBuilder("GetModel")
+      .setAttribute("modelClass", modelClass.getName())
+      .startSpan();
+    try (Scope ignore = span.makeCurrent()) {
+      ExternalSystemTaskId taskId = context.getTaskId();
+      ExternalSystemTaskNotificationListener listener = context.getListener();
+
+      ModelBuilder<Model> modelBuilder = connection.model(modelClass);
+
+      modelBuilder.withCancellationToken(context.getCancellationToken());
+
+      setupJavaHome(modelBuilder, context.getSettings(), taskId, listener, null);
+
+      // do not use connection.getModel methods since it doesn't allow to handle progress events
+      // and we can miss gradle tooling client side events like distribution download.
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+      modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
+      modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+      modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
+      modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
+
+      return modelBuilder.get();
+    }
+    catch (CancellationException ce) {
+      throw ce;
+    }
+    catch (Exception ex) {
+      span.recordException(ex);
+      span.setStatus(StatusCode.ERROR);
+      throw new RuntimeException(String.format("Failed to obtain model %s from Gradle daemon.", modelClass.getSimpleName()), ex);
+    }
+    finally {
+      span.end();
+    }
+  }
+
   /**
    * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead
    */

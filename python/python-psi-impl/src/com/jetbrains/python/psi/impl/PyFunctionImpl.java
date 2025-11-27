@@ -389,7 +389,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return null;
     }
-    return PyUnionType.union(types);
+    return PyUnionType.unionOrNever(types);
   }
 
   @Override
@@ -740,7 +740,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (decos.length > 0) {
         for (int i = decos.length - 1; i >= 0; i -= 1) {
           PyDecorator deco = decos[i];
-          List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, TypeEvalContext.codeInsightFallback(getProject()));
+          List<PyKnownDecorator> knownDecorators =
+            PyKnownDecoratorUtil.asKnownDecorators(deco, TypeEvalContext.codeInsightFallback(getProject()));
           for (PyKnownDecorator decorator : knownDecorators) {
             if (decorator.isClassMethod() || decorator.isStaticMethod()) {
               return decorator;

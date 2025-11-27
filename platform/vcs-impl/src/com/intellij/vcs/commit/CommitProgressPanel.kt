@@ -78,10 +78,14 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 @OptIn(FlowPreview::class)
-open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
+open class CommitProgressPanel(project: Project, parentDisposable: Disposable) : CommitProgressUi, InclusionListener, DocumentListener, Disposable {
   private val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("CommitProgressPanel", Dispatchers.EDT)
 
-  constructor(project: Project, commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) : this(project) {
+  init {
+    Disposer.register(parentDisposable, this)
+  }
+
+  constructor(project: Project, commitWorkflowUi: CommitWorkflowUi, commitMessage: EditorTextComponent) : this(project, commitWorkflowUi) {
     setup(commitWorkflowUi, commitMessage, empty())
   }
 
@@ -124,7 +128,6 @@ open class CommitProgressPanel(project: Project) : CommitProgressUi, InclusionLi
     panel.add(failuresPanel)
     panel.border = border
 
-    Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
 

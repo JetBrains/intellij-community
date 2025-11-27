@@ -74,7 +74,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      GitLabNoteEditingViewModel.forNewNote(cs, project, mergeRequest, currentUser).apply {
+      GitLabNoteEditingViewModel.forNewNote(cs, project, projectData, mergeRequest, currentUser).apply {
         onDoneIn(cs) {
           text.value = ""
         }
@@ -153,7 +153,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note, htmlConverter).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, projectData, item.note, htmlConverter).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

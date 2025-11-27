@@ -25,8 +25,7 @@ internal class SubSimpleEntityImpl(private val dataSource: SubSimpleEntityData) 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -58,8 +57,7 @@ internal class SubSimpleEntityImpl(private val dataSource: SubSimpleEntityData) 
   }
 
 
-  internal class Builder(result: SubSimpleEntityData?) : ModifiableWorkspaceEntityBase<SubSimpleEntity, SubSimpleEntityData>(
-    result), SubSimpleEntityBuilder {
+  internal class Builder(result: SubSimpleEntityData?) : ModifiableWorkspaceEntityBase<SubSimpleEntity, SubSimpleEntityData>(result), SubSimpleEntityBuilder {
     internal constructor() : this(SubSimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -184,8 +182,7 @@ internal class SubSimpleEntityData : WorkspaceEntityData<SubSimpleEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return SubSimpleEntity(version, name, isSimple, entitySource) {
-    }
+    return SubSimpleEntity(version, name, isSimple, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

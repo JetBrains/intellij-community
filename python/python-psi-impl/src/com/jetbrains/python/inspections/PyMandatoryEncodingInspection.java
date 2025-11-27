@@ -52,6 +52,7 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFile(@NotNull PyFile node) {
       if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;

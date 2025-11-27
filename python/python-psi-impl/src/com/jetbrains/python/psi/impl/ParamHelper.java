@@ -42,6 +42,7 @@ public final class ParamHelper {
   /**
    * Runs a {@link ParamWalker ParamWalker} down the array of parameters, recursively descending into tuple parameters.
    * If the array is from PyParamaterList.getParameters(), parameters are visited in the order of textual appearance
+   *
    * @param params where to walk
    * @param walker the walker with callbacks.
    */
@@ -135,7 +136,9 @@ public final class ParamHelper {
   public static @NotNull String getNameInSignature(@NotNull PyCallableParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
-    if (parameter.isPositionalContainer()) sb.append("*");
+    if (parameter.isPositionalContainer()) {
+      sb.append("*");
+    }
     else if (parameter.isKeywordContainer()) sb.append("**");
 
     final String name = parameter.getName();
@@ -178,25 +181,28 @@ public final class ParamHelper {
   public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void enterTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when all nested parameters of a given tuple parameter are visited.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when a named parameter is encountered.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
@@ -241,5 +247,4 @@ public final class ParamHelper {
     );
     return result;
   }
-
 }

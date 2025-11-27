@@ -2,6 +2,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.ElementType;
+import java.util.Comparator;
 import java.util.function.Supplier;
 
 @NullMarked
@@ -11,6 +12,10 @@ class Main {
     Main.<<warning descr="Non-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(() -> getNullableObject());
     Main.<<warning descr="Non-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> Object>fNonNullBound(Main::getNullableObject);
 
+  }
+
+  Comparator<String> getComparator() {
+    return Comparator.<<warning descr="Non-null type parameter 'T' cannot be instantiated with @Nullable type">@Nullable</warning> String>naturalOrder();
   }
 
   static <T extends @Nullable Object> T fNullableBound(Supplier<T> supplier){

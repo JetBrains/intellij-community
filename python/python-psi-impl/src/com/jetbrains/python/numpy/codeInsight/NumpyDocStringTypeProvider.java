@@ -34,7 +34,10 @@ import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Secti
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +99,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     NUMPY_ALIAS_TO_REAL_TYPE.put("non-zero int", "int");
   }
 
-  private static @Nullable NumpyDocString forFunction(@NotNull PyFunction function, @Nullable PsiElement reference, @Nullable String knownSignature) {
+  private static @Nullable NumpyDocString forFunction(@NotNull PyFunction function,
+                                                      @Nullable PsiElement reference,
+                                                      @Nullable String knownSignature) {
     String docString = function.getDocStringValue();
     if (docString == null) {
       // Docstring for constructor can be found in the docstring of class
@@ -193,7 +198,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
+                                           @NotNull PyCallSiteExpression callSite,
+                                           @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
@@ -250,7 +257,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter,
+                                                @NotNull PyFunction function,
+                                                @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final String name = parameter.getName();
       if (name != null) {
@@ -279,7 +288,7 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   private static boolean isApplicable(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module != null){
+    if (module != null) {
       if (PyDocumentationSettings.getInstance(module).isNumpyFormat(element.getContainingFile())) {
         return true;
       }
@@ -382,7 +391,8 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
       if (paramType != null) {
         if (isUfuncType(function, paramType)) {
-          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or numpy.core.multiarray.ndarray or collections.abc.Iterable", function);
+          return getPsiFacade(function).parseTypeAnnotation("numbers.Number or numpy.core.multiarray.ndarray or collections.abc.Iterable",
+                                                            function);
         }
         final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {

@@ -223,9 +223,11 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                               getDeclaration(targetOrCall))
     }
 
-    private fun createTypedNamedTupleReplaceType(anchor: PsiElement,
-                                                 fields: ImmutableNTFields,
-                                                 qualifierType: PyClassLikeType): PyCallableType {
+    private fun createTypedNamedTupleReplaceType(
+      anchor: PsiElement,
+      fields: ImmutableNTFields,
+      qualifierType: PyClassLikeType,
+    ): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
       val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(anchor.project)
@@ -244,10 +246,12 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return PyCallableTypeImpl(parameters, resultType)
     }
 
-    private fun createUntypedNamedTupleReplaceType(anchor: PsiElement,
-                                                   fields: ImmutableNTFields,
-                                                   qualifierType: PyClassLikeType,
-                                                   context: TypeEvalContext): PyCallableType? {
+    private fun createUntypedNamedTupleReplaceType(
+      anchor: PsiElement,
+      fields: ImmutableNTFields,
+      qualifierType: PyClassLikeType,
+      context: TypeEvalContext,
+    ): PyCallableType? {
       val call = anchor as? PyCallExpression ?: return null
       val parameters = mutableListOf<PyCallableParameter>()
       val resultType = qualifierType.toInstance()
@@ -317,10 +321,12 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return result
     }
 
-    private fun parseNamedTupleField(anchor: PsiElement,
-                                     type: String?,
-                                     hasDefault: Boolean,
-                                     context: TypeEvalContext): PyNamedTupleType.FieldTypeAndDefaultValue {
+    private fun parseNamedTupleField(
+      anchor: PsiElement,
+      type: String?,
+      hasDefault: Boolean,
+      context: TypeEvalContext,
+    ): PyNamedTupleType.FieldTypeAndDefaultValue {
       val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) }
       val defaultValue = if (hasDefault) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
       return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)

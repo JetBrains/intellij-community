@@ -67,7 +67,7 @@ class RawPluginDescriptor(
   val contentModules: List<ContentModuleElement>,
 
   /** Specifies the visibility of this content module. Irrelevant for a main plugin descriptor or config-file in a `<depends>` tag */
-  val moduleVisibility: ModuleVisibility,
+  val moduleVisibility: ModuleVisibilityValue,
 
   val dependencies: List<DependenciesElement>,
 )

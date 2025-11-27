@@ -5,7 +5,6 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.GeneratedBuilder
-import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
 import com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +17,7 @@ class WriteOptionsBuilder(
 ) {
   private var append: Boolean = false
 
-  private var creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE
+  private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
   private var truncateExisting: Boolean = true
 
@@ -26,18 +25,18 @@ class WriteOptionsBuilder(
     this.append = arg
   }
 
-  fun creationMode(arg: FileWriterCreationMode): WriteOptionsBuilder = apply {
+  fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): WriteOptionsBuilder = apply {
     this.creationMode = arg
   }
 
   fun allowCreate(): WriteOptionsBuilder =
-    creationMode(FileWriterCreationMode.ALLOW_CREATE)
+    creationMode(EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE)
 
   fun onlyCreate(): WriteOptionsBuilder =
-    creationMode(FileWriterCreationMode.ONLY_CREATE)
+    creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_CREATE)
 
   fun onlyOpenExisting(): WriteOptionsBuilder =
-    creationMode(FileWriterCreationMode.ONLY_OPEN_EXISTING)
+    creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING)
 
   fun path(arg: EelPath): WriteOptionsBuilder = apply {
     this.path = arg
@@ -59,7 +58,7 @@ class WriteOptionsBuilder(
 @GeneratedBuilder.Result
 internal class WriteOptionsImpl(
   override val append: Boolean,
-  override val creationMode: FileWriterCreationMode,
+  override val creationMode: EelFileSystemApi.FileWriterCreationMode,
   override val path: EelPath,
   override val truncateExisting: Boolean,
 ) : WriteOptions

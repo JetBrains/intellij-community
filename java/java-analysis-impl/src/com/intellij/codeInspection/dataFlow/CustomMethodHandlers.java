@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -230,6 +230,15 @@ public final class CustomMethodHandlers {
                            "newConcurrentHashMap", "newTreeMap").parameterCount(0)),
               toValue((arguments, state, factory, method) -> COLLECTION_SIZE.asDfType(intValue(0)).meet(LOCAL_OBJECT)));
 
+  private static final CallMatcher IMMUTABLE_CALLS = anyOf(
+    staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
+    staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
+    staticCall(JAVA_UTIL_LIST, "of", "copyOf"),
+    staticCall(JAVA_UTIL_SET, "of", "copyOf"),
+    staticCall(JAVA_UTIL_MAP, "of", "ofEntries", "copyOf"),
+    staticCall(JAVA_UTIL_ARRAYS, "asList")
+  );
+
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
@@ -246,6 +255,15 @@ public final class CustomMethodHandlers {
   @Contract("null -> false")
   public static boolean isConstantCall(PsiMethod method) {
     return CONSTANT_CALLS.methodMatches(method);
+  }
+
+  /**
+   * @param method method to check
+   * @return true if the method returns an immutable result, false otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isImmutableCall(PsiMethod method) {
+    return IMMUTABLE_CALLS.methodMatches(method);
   }
 
   private static @NotNull DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {

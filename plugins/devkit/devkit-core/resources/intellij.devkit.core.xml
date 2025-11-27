@@ -1,4 +1,4 @@
-<idea-plugin visibility="public" package="org.jetbrains.idea.devkit">
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
@@ -77,6 +77,7 @@
       order="last"
       implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginModuleReferencesQueryExecutor"/>
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginAliasReferencesQueryExecutor"/>
     <usageTypeProvider implementation="org.jetbrains.idea.devkit.findUsages.PluginModuleUsageTypeProvider" order="first"/>
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
@@ -550,6 +551,13 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
 
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.WrongPluginModuleAliasInspection"
+                     key="inspection.plugin.module.alias.name"/>
+
     <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      enabledByDefault="true"
@@ -763,6 +771,10 @@
     <addServiceAnnotationProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
+
+    <LockReqPsiOps
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
@@ -787,6 +799,11 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqPsiOps"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -887,7 +904,7 @@
       <action id="DevKit.NewAction" class="org.jetbrains.idea.devkit.actions.templates.NewActionAction"
               icon="AllIcons.Actions.RunAnything"/>
       <action id="DevKit.NewService" class="org.jetbrains.idea.devkit.actions.templates.NewServiceAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.Service"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Service"/>
       <action id="DevKit.NewState" class="org.jetbrains.idea.devkit.actions.templates.NewPersistentStateAction"
               icon="AllIcons.Ide.ConfigFile"/>
       <action id="DevKit.NewMessageBundleObject" class="org.jetbrains.idea.devkit.actions.templates.NewMessageBundleAction"
@@ -920,11 +937,6 @@
     <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="UpdateIdeFromSourcesSettings"
-            class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
-
-    <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
-      <add-to-group group-id="Internal.Dump"/>
-    </action>
+    <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
   </actions>
 </idea-plugin>

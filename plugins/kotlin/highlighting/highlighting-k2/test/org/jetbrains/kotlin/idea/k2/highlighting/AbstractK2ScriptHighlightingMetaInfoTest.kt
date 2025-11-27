@@ -8,6 +8,7 @@ import com.intellij.testFramework.registerExtension
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -31,7 +32,7 @@ abstract class AbstractK2ScriptHighlightingMetaInfoTest : AbstractK2Highlighting
         if (scriptFile != null) {
             registerScriptTestDefinition(project, globalDirectives)
             runWithModalProgressBlocking(project, "AbstractK2LocalInspectionTest") {
-                KotlinScriptResolutionService.getInstance(project).process(scriptFile)
+                KotlinScriptResolutionService.getInstance(project).process(scriptFile.alwaysVirtualFile)
             }
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectPropertyBased
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
@@ -89,7 +89,7 @@ class InvokeFindUsages(file: PsiFile): ActionOnFile(file) {
             }
             is KtClassOrObject -> KotlinClassFindUsagesOptions(project).apply {
                 searchExpected = true
-                searchConstructorUsages = true
+                isConstructorUsages = true
                 isMethodsUsages = false
                 isFieldsUsages = false
                 isDerivedClasses = false

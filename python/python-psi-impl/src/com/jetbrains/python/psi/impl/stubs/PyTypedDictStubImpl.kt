@@ -15,10 +15,12 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL
 import java.io.IOException
 import java.util.*
 
-class PyTypedDictStubImpl private constructor(private val myCalleeName: QualifiedName,
-                                              override val name: String,
-                                              override val fields: List<PyTypedDictFieldStub>,
-                                              override val isRequired: Boolean = true) : PyTypedDictStub {
+class PyTypedDictStubImpl private constructor(
+  private val myCalleeName: QualifiedName,
+  override val name: String,
+  override val fields: List<PyTypedDictFieldStub>,
+  override val isRequired: Boolean = true,
+) : PyTypedDictStub {
 
   override fun getTypeClass(): Class<PyTypedDictStubType> {
     return PyTypedDictStubType::class.java
@@ -97,7 +99,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
     @Throws(IOException::class)
     private fun deserializeFields(stream: StubInputStream, fieldsCount: Int): List<PyTypedDictFieldStub> {
-      val fields =  ArrayList<PyTypedDictFieldStub>(fieldsCount)
+      val fields = ArrayList<PyTypedDictFieldStub>(fieldsCount)
 
       for (i in 0 until fieldsCount) {
         val name = stream.readNameString()

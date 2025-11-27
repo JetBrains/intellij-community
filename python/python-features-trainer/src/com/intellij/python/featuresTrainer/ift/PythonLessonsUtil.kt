@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pythonSdk
@@ -33,7 +33,7 @@ object PythonLessonsUtil {
   fun LessonContext.showWarningIfPython3NotFound() {
     task {
       val callbackId = LearningUiManager.addCallback {
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
+        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
       }
       stateCheck { isPython3Installed(project) }
       showWarning(PythonLessonsBundle.message("python.3.required.warning.message", callbackId)) {
@@ -42,13 +42,15 @@ object PythonLessonsUtil {
     }
   }
 
-  fun prepareFeedbackDataForOnboardingLesson(project: Project,
-                                             configPropertyName: String,
-                                             reportTitle: String,
-                                             feedbackReportId: String,
-                                             primaryLanguage: LangSupport,
-                                             lessonEndInfo: LessonEndInfo,
-                                             usedInterpreterAtStart: String) {
+  fun prepareFeedbackDataForOnboardingLesson(
+    project: Project,
+    configPropertyName: String,
+    reportTitle: String,
+    feedbackReportId: String,
+    primaryLanguage: LangSupport,
+    lessonEndInfo: LessonEndInfo,
+    usedInterpreterAtStart: String,
+  ) {
     if (!shouldCollectFeedbackResults()) {
       return
     }
@@ -68,6 +70,7 @@ object PythonLessonsUtil {
     }
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"
+
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization") // a very strange warning report here
     val startInterpreter = if (usedInterpreterAtStart == usedInterpreter) "same" else usedInterpreterAtStart
 

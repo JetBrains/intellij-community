@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.TestLoggerFactory
@@ -229,12 +230,12 @@ class PluginSetLoadingTest {
     // FIXME these plugins are not related, but one of them loads => depends on implicit order
     plugin("foo") {
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "common.module" }
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("foo"))
     plugin("bar") {
       content {
-        module("bar.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "common.module" }
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
@@ -249,12 +250,12 @@ class PluginSetLoadingTest {
     plugin("foo") {
       incompatibleWith = listOf("bar")
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "common.module" }
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("foo"))
     plugin("bar") {
       content {
-        module("bar.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "common.module" }
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
@@ -266,7 +267,7 @@ class PluginSetLoadingTest {
     plugin("foo") {
       packagePrefix = "common.module"
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "common.module" }
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("foo"))
     val pluginSet = buildPluginSet()
@@ -280,12 +281,12 @@ class PluginSetLoadingTest {
   fun `package prefix collision does not prevent plugin from loading if module is optional`() {
     plugin("foo") {
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.OPTIONAL) { packagePrefix = "common.module" }
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("foo"))
     plugin("bar") {
       content {
-        module("bar.module", loadingRule = ModuleLoadingRule.OPTIONAL) { packagePrefix = "common.module" }
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "common.module" }
       }
     }.buildDir(pluginsDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
@@ -416,9 +417,9 @@ class PluginSetLoadingTest {
   fun `additional core plugin aliases`() {
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
-        module("embedded.module", loadingRule = ModuleLoadingRule.EMBEDDED) { packagePrefix = "embedded" }
-        module("required.module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "required" }
-        module("optional.module", loadingRule = ModuleLoadingRule.OPTIONAL) { packagePrefix = "optional" }
+        module("embedded.module", loadingRule = ModuleLoadingRuleValue.EMBEDDED) { packagePrefix = "embedded" }
+        module("required.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "required" }
+        module("optional.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { packagePrefix = "optional" }
       }
     }.buildDir(pluginsDirPath.resolve("core"))
     val pluginSet = buildPluginSet()
@@ -450,7 +451,7 @@ class PluginSetLoadingTest {
     val dPath = pluginsDirPath.resolve("d")
     plugin("d") {
       content {
-        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("d.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           dependencies {
             plugin("BBB")
           }
@@ -460,7 +461,7 @@ class PluginSetLoadingTest {
 
     plugin("a") {
       content {
-        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("a.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           dependencies {
             plugin("BBB")
           }
@@ -470,8 +471,8 @@ class PluginSetLoadingTest {
 
     plugin("b") {
       content {
-        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("b1", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           pluginAlias("BBB")
           dependencies {
             module("b1")
@@ -491,7 +492,7 @@ class PluginSetLoadingTest {
     val dPath = pluginsDirPath.resolve("d")
     plugin("d") {
       content {
-        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("d.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           dependencies {
             plugin("BBB")
           }
@@ -501,7 +502,7 @@ class PluginSetLoadingTest {
 
     plugin("a") {
       content {
-        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("a.a", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           dependencies {
             plugin("BBB")
           }
@@ -511,14 +512,14 @@ class PluginSetLoadingTest {
 
     plugin("b") {
       content {
-        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("b1", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           pluginAlias("BBB")
           dependencies {
             module("b1")
           }
         }
-        module("b0", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("b0", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           dependencies {
             module("unresolved")
           }
@@ -549,7 +550,7 @@ class PluginSetLoadingTest {
     for (id in ids) {
       plugin("intellij.textmate.$id") {
         content {
-          module("intellij.textmate.impl.$id", loadingRule = ModuleLoadingRule.REQUIRED) {
+          module("intellij.textmate.impl.$id", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
             dependencies {
               plugin("com.intellij.modules.spellchecker")
             }
@@ -563,7 +564,7 @@ class PluginSetLoadingTest {
           isSeparateJar = true
           pluginAlias("com.intellij.modules.spellchecker")
         }
-        module("intellij.required", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("intellij.required", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
       }
     }.buildDir(pluginsDirPath.resolve("core"))
     val pluginSet = buildPluginSet()

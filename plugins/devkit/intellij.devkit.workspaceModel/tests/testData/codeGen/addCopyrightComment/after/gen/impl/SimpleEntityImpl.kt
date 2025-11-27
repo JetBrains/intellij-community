@@ -26,8 +26,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -152,8 +151,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return SimpleEntity(name, entitySource) {
-    }
+    return SimpleEntity(name, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

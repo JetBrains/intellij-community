@@ -4,7 +4,7 @@ package fleet.preferences
 import fleet.util.multiplatform.Actual
 import kotlinx.browser.window
 
-@Actual("fleetProperty")
+@Actual
 fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? = when (name) {
   "fleet.ai.service.configuration.url" -> url("aiconfig")
   "fleet.ai.service.url" -> url("ai")

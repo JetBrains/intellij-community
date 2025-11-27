@@ -45,7 +45,7 @@ fun GitRepository.gitAsBytes(command: String): ByteArray {
   return gitAsBytes(project, command)
 }
 fun gitAsBytes(project: Project, command: String): ByteArray {
-  val workingDir = VfsUtil.findFileByIoFile(ourCurrentDir(), true)!!
+  val workingDir = VfsUtil.findFile(ourCurrentDir(), true)!!
   val split = splitCommandInParameters(command)
   val handler = GitBinaryHandler(project, workingDir, getGitCommandInstance(split[0]))
   handler.addParameters(split.subList(1, split.size))

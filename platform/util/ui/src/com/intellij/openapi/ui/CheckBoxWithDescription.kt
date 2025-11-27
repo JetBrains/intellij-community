@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui
 
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JLabel
@@ -11,6 +12,7 @@ import javax.swing.border.EmptyBorder
 
 
 @Deprecated("Use Kotlin UI DSL 2, for description use {@link com.intellij.ui.dsl.builder.Cell#comment}", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
 class CheckBoxWithDescription(val checkBox: JCheckBox, description: String?) : JPanel() {
   init {
     layout = BorderLayout()

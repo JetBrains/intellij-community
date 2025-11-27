@@ -63,11 +63,13 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExperimentalVersionOverloading
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
      IgnorableReturnValue
      InitializedLazyImpl
+     IntroducedAt
      kotlin.kotlin_builtins
      KotlinNothingValueException
      KotlinNullPointerException

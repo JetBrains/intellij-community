@@ -1,9 +1,9 @@
+from _typeshed import Incomplete
 from datetime import tzinfo
-from typing import Any
 
 class OffsetTzInfo(tzinfo):
-    offset: Any
-    name: Any
+    offset: Incomplete
+    name: Incomplete
     def __init__(self, offset, name) -> None: ...
     def utcoffset(self, dt): ...
     def tzname(self, dt): ...

@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
@@ -30,11 +31,11 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
     private val conversion = CallChainConversion(
         FqName("kotlin.runCatching"), // FQNs are hardcoded instead of specifying their names via reflection because
         FqName("kotlin.getOrThrow"),  // referencing function which has generics isn't yet supported in Kotlin KT-12140
-        "run"
+        StandardKotlinNames.run
     )
 
     override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainExpressions): String =
-        KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", conversion.replacement)
+        KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", conversion.replacementName)
 
     override fun createQuickFix(
         element: KtQualifiedExpression,

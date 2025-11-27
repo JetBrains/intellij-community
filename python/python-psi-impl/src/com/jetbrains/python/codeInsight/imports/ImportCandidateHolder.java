@@ -100,7 +100,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    * @param source     known ImportElement to import the name; its 'as' clause is used if present.
    * @return a properly qualified name.
    */
-  public static @NotNull String getQualifiedName(@NotNull String name, @Nullable QualifiedName importPath, @Nullable PyImportElement source) {
+  public static @NotNull String getQualifiedName(@NotNull String name,
+                                                 @Nullable QualifiedName importPath,
+                                                 @Nullable PyImportElement source) {
     final StringBuilder sb = new StringBuilder();
     if (source != null) {
       final PsiElement parent = source.getParent();

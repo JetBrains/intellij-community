@@ -27,7 +27,7 @@ class PipenvViewModel<P : PathHolder>(
     defaultPathSupplier = {
       when (fileSystem) {
         is FileSystem.Eel -> {
-          if (fileSystem.eelApi == localEel) getPipEnvExecutable().getOrNull()?.let { PathHolder.Eel(it) } as P?
+          if (fileSystem.eelApi == localEel) getPipEnvExecutable()?.let { PathHolder.Eel(it) } as P?
           else null // getPipEnvExecutable() works only with localEel currently
         }
         else -> null

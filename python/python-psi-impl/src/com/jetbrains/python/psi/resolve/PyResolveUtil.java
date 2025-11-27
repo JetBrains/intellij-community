@@ -233,7 +233,7 @@ public final class PyResolveUtil {
   /**
    * Resolve a symbol by its qualified name, climbing up from the specified scope until the first component
    * of the qualified is resolved and then following the chain of type members.
-   * <p> 
+   * <p>
    * This type of resolve is stub-safe, i.e. it's not supposed to cause any un-stubbing of external files unless it is explicitly
    * allowed by the given type evaluation context.
    *
@@ -393,7 +393,7 @@ public final class PyResolveUtil {
    * <i>Note: the returned stream could contain null values.</i>
    */
   private static @NotNull StreamEx<PsiElement> fullMultiResolveLocally(@NotNull PyReferenceExpression referenceExpression,
-                                                              @NotNull Set<PyReferenceExpression> visited) {
+                                                                       @NotNull Set<PyReferenceExpression> visited) {
     return StreamEx
       .of(resolveLocally(referenceExpression))
       .flatMap(
@@ -520,7 +520,8 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  public static @NotNull List<@NotNull PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveDeclaration(@NotNull PsiReference reference,
+                                                                           @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();

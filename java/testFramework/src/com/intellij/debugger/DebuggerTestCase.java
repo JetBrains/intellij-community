@@ -229,13 +229,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        XDebugSessionImpl session =
-          (XDebugSessionImpl)XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, myDebuggerSession);
           }
-        });
+        };
+        XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+          .environment(myExecutionEnvironment)
+          .startSession().getSession();
         session.activateSession(false); // activate the session immediately
       }
       catch (ExecutionException e) {
@@ -552,12 +554,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     assertNotNull(debuggerSession);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, debuggerSession);
           }
-        });
+        };
+        XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+          .environment(environment)
+          .startSession();
       }
       catch (ExecutionException e) {
         fail(e.getMessage());

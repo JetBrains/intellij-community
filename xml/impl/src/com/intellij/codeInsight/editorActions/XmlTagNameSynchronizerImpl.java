@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
@@ -56,7 +57,7 @@ final class XmlTagNameSynchronizerImpl implements DocumentListener, CaretListene
   private static final Key<XmlTagNameSynchronizerImpl> SYNCHRONIZER_KEY = XmlTagNameSynchronizer.Companion.getSYNCHRONIZER_KEY$intellij_xml_impl();
   private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
   private static final TreeSet<Segment> allMarkers = new TreeSet<>(Comparator.comparingInt(Segment::getStartOffset));
-  private final PsiDocumentManagerBase myDocumentManager;
+  private final PsiDocumentManagerEx myDocumentManager;
   private final Language myLanguage;
   private final EditorImpl myEditor;
   private final Project myProject;
@@ -65,7 +66,7 @@ final class XmlTagNameSynchronizerImpl implements DocumentListener, CaretListene
   XmlTagNameSynchronizerImpl(EditorImpl editor, Project project, Language language) {
     myEditor = editor;
     myLanguage = language;
-    myDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    myDocumentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     myProject = project;
   }
 

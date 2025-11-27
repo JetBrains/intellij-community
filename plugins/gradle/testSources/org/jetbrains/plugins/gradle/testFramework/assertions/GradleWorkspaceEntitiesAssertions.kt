@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
@@ -19,6 +20,7 @@ internal fun assertGradleBuildEntity(
   project: Project,
   buildUrl: VirtualFileUrl,
   externalProjectId: ExternalProjectEntityId,
+  projectIds: List<GradleProjectEntityId>,
   name: String? = buildUrl.fileName,
 ) {
   val buildId = GradleBuildEntityId(externalProjectId, buildUrl)
@@ -35,6 +37,9 @@ internal fun assertGradleBuildEntity(
   assertEquals(externalProjectId, buildEntity.externalProject.symbolicId) {
     "GradleBuildEntity with url = $buildUrl should be attached to an ExternalProjectEntity with proper symbolic ID"
   }
+  assertEqualsUnordered(projectIds, buildEntity.projects.map { it.symbolicId }) {
+    "GradleBuildEntity with url = $buildUrl should have projects with expected symbolic IDs."
+  }
 }
 
 internal fun assertGradleProjectEntity(
@@ -46,7 +51,7 @@ internal fun assertGradleProjectEntity(
   identityPath: String,
   projectName: String = projectUrl.fileName,
 ) {
-  val projectId = GradleProjectEntityId(buildId, projectUrl)
+  val projectId = GradleProjectEntityId(buildId, identityPath)
   val projectEntity = project.workspaceModel.currentSnapshot.resolve(projectId)
   assertNotNull(projectEntity) {
     "GradleProjectEntity with symbolic ID = $projectId should be available in the storage."
@@ -56,6 +61,9 @@ internal fun assertGradleProjectEntity(
   }
   assertEquals(projectName, projectEntity.name) {
     "GradleProjectEntity with `url` = $projectUrl should have expected project `name`."
+  }
+  assertEquals(buildId, projectEntity.build.symbolicId) {
+    "GradleProjectEntity with `url` = $projectUrl should be attached to a GradleBuildEntity with expected symbolic ID"
   }
   assertEquals(buildId, projectEntity.buildId) {
     "GradleProjectEntity with `url` = $projectUrl should have expected `buildId` of the build it belongs to."

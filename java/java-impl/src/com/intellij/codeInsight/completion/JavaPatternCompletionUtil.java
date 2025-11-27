@@ -106,7 +106,7 @@ public final class JavaPatternCompletionUtil {
    * @param currentPosition the current position within the deconstruction component
    * @return the PsiRecordComponent associated with the deconstruction component, or null if not found
    */
-  static @Nullable PsiRecordComponent getRecordComponentForDeconstructionComponent(@NotNull PsiElement currentPosition) {
+  public static @Nullable PsiRecordComponent getRecordComponentForDeconstructionComponent(@NotNull PsiElement currentPosition) {
     PsiDeconstructionList deconstructionList = PsiTreeUtil.getParentOfType(currentPosition, PsiDeconstructionList.class);
     if (deconstructionList == null) return null;
     PsiDeconstructionPattern deconstructionPattern = ObjectUtils.tryCast(deconstructionList.getParent(), PsiDeconstructionPattern.class);

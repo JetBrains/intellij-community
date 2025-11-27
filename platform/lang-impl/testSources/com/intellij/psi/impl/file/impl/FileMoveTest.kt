@@ -4,7 +4,6 @@ package com.intellij.psi.impl.file.impl
 import com.intellij.codeInsight.multiverse.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -17,7 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.LogLevelWithClass
+import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
@@ -27,13 +26,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 
-@LogLevelWithClass(
-  category = CodeInsightContextManagerImpl::class,
-  level = LogLevel.TRACE
-)
-@com.intellij.testFramework.junit5.LogLevel(
-  category = "#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache",
-  level = LogLevel.TRACE
+@EnableTracingFor(
+  categories = ["#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache"],
+  categoryClasses = [CodeInsightContextManagerImpl::class]
 )
 @TestApplication
 internal class FileMoveTest {

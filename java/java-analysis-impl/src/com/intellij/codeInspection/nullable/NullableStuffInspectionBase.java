@@ -533,13 +533,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private void checkGenericClassOnReturn(@Nullable PsiType expectedType,
                                              @NotNull PsiExpression returnValue) {
         PsiType returnType = returnValue.getType();
-        JavaTypeNullabilityUtil.NullabilityConflict
-          conflict = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
-                                                                                REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
-        if (conflict == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
-        String messageKey = conflict == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
+        JavaTypeNullabilityUtil.NullabilityConflictContext
+          context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
+                                                                               REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
+        if (context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
+        String messageKey = context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
                             "returning.a.class.with.notnull.arguments" : "returning.a.class.with.nullable.arguments";
-        reportProblem(holder, returnValue, messageKey);
+
+        reportProblem(holder, returnValue, LocalQuickFix.EMPTY_ARRAY,
+                      messageKey, new Object[]{""},
+                      messageKey, new Object[]{NullableStuffInspectionUtil.getTypePresentationInNullabilityConflict(context)});
       }
 
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
@@ -587,9 +590,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
                                @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey, Object... args) {
-    holder.registerProblem(anchor,
-                           JavaAnalysisBundle.message(messageKey, args),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
+    reportProblem(holder, anchor, fixes, messageKey, args, messageKey, args);
+  }
+
+  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
+                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String descriptionKey, @NotNull Object @NotNull[] descriptionArgs,
+                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String tooltipKey, @NotNull Object @NotNull[] tooltipArgs) {
+    ProblemsHolder.ProblemBuilder builder = holder.problem(anchor, JavaAnalysisBundle.message(descriptionKey, descriptionArgs))
+      .tooltip(JavaAnalysisBundle.message(tooltipKey, tooltipArgs))
+      .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    for (LocalQuickFix quickFix : fixes) {
+      builder.fix(quickFix);
+    }
+    builder.register();
   }
 
   private static boolean isNullableNotNullCollectionConflict(@Nullable PsiType expectedType,

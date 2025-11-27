@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.completion.PlainPrefixMatcher;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
@@ -70,7 +71,7 @@ public final class SubtypesMacro extends Macro {
 
     final Set<LookupElement> set = new LinkedHashSet<>();
     JavaTemplateUtil.addTypeLookupItem(set, type);
-    CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
+    CodeInsightUtil.processSubTypes(type, element, false, PlainPrefixMatcher.ALWAYS_TRUE,
                                     psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));
     return set.toArray(LookupElement.EMPTY_ARRAY);
   }

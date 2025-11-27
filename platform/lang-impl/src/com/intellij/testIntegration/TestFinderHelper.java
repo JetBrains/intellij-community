@@ -108,13 +108,13 @@ public final class TestFinderHelper {
   }
 
   public static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
-    String[] words = NameUtilCore.splitNameIntoWords(testName);
+    List<@NotNull String> words = NameUtilCore.splitNameIntoWordList(testName);
     List<Pair<String, Integer>> result = new ArrayList<>();
 
-    for (int from = 0; from < words.length; from++) {
-      for (int to = from; to < words.length; to++) {
-        result.add(new Pair<>(StringUtil.join(words, from, to + 1, ""),
-                              words.length - from + to));
+    for (int from = 0; from < words.size(); from++) {
+      for (int to = from; to < words.size(); to++) {
+        result.add(new Pair<>(StringUtil.join(words.subList(from, to + 1), ""),
+                              words.size() - from + to));
       }
     }
 

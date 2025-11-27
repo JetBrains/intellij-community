@@ -104,7 +104,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     LookupElementRenderer renderer = myDelegate.getExpensiveRenderer();
     return renderer == null ? null : new LookupElementRenderer<LookupElementDecorator<?>>() {
       @Override
-      public void renderElement(LookupElementDecorator<?> element, LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementDecorator<?> element, @NotNull LookupElementPresentation presentation) {
         //noinspection unchecked
         renderer.renderElement(element.myDelegate, presentation);
       }

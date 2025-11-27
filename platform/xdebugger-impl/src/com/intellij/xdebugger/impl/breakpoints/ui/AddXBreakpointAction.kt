@@ -10,7 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

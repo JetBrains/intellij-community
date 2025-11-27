@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface PyFileStub extends PsiFileStub<PyFile> {
   List<String> getDunderAll();
+
   BitSet getFutureFeatures();
+
   String getDeprecationMessage();
 }

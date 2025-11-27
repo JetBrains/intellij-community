@@ -69,7 +69,7 @@ public final class WSLUtil {
    * @return root for WSL executable or null if unavailable
    */
   private static @Nullable Path getExecutableRootPath() {
-    String localAppDataPath = System.getenv().get("LOCALAPPDATA");
+    String localAppDataPath = System.getenv("LOCALAPPDATA");
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 

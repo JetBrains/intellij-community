@@ -33,7 +33,7 @@ class SeRunConfigurationsItem(
 }
 
 @ApiStatus.Internal
-class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider() {
+class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeCommandsProviderInterface {
   override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   override val id: String get() = SeProviderIdUtils.RUN_CONFIGURATIONS_ID
   override val displayName: @Nls String get() = contributor.fullGroupName
@@ -59,6 +59,10 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
 
   override suspend fun canBeShownInFindResults(): Boolean {
     return contributor.showInFindResults()
+  }
+
+  override fun getSupportedCommands(): List<SeCommandInfo> {
+    return contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
   }
 
   override fun dispose() {

@@ -116,6 +116,8 @@ com.intellij.ide.wizard.StepListener
 - java.util.EventListener
 - a:stateChanged():V
 c:com.intellij.notification.Notification
+a:com.intellij.notification.NotificationAction
+- s:createExpiring(java.lang.String,java.lang.String,java.util.function.BiConsumer):com.intellij.notification.NotificationAction
 com.intellij.notification.NotificationGroupManager
 - s:getInstance():com.intellij.notification.NotificationGroupManager
 - a:getNotificationGroup(java.lang.String):com.intellij.notification.NotificationGroup

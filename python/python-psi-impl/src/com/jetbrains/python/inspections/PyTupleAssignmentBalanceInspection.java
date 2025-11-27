@@ -45,6 +45,7 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
@@ -107,7 +108,7 @@ public final class PyTupleAssignmentBalanceInspection extends PyInspection {
 
     private static int countStarExpressions(PyExpression @NotNull [] expressions) {
       if (expressions.length != 0 && !LanguageLevel.forElement(expressions[0]).isPython2()) {
-        return (int) Arrays
+        return (int)Arrays
           .stream(expressions)
           .filter(PyStarExpression.class::isInstance)
           .count();

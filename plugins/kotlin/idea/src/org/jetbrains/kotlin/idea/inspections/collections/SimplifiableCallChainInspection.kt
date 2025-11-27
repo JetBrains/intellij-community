@@ -54,19 +54,19 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 // Do not apply on maps due to lack of relevant stdlib functions
                 val firstReceiverType = firstResolvedCall.resultingDescriptor?.extensionReceiverParameter?.type
                 if (firstReceiverType != null) {
-                    if (conversion.replacement == MAP_NOT_NULL && KotlinBuiltIns.isPrimitiveArray(firstReceiverType)) return@check false
+                    if (conversion.replacementName == MAP_NOT_NULL && KotlinBuiltIns.isPrimitiveArray(firstReceiverType)) return@check false
                     val builtIns = context[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type?.builtIns ?: return@check false
                     val firstReceiverRawType = firstReceiverType.constructor.declarationDescriptor?.defaultType
                     if (firstReceiverRawType.isMap(builtIns)) return@check false
                 }
-                if (conversion.replacement.startsWith(JOIN_TO)) {
+                if (conversion.replacementName.startsWith(JOIN_TO)) {
                     // Function parameter in map must have String result type
                     if (!firstResolvedCall.hasLastFunctionalParameterWithResult(context) {
                             it.isSubtypeOf(JsPlatformAnalyzerServices.builtIns.charSequence.defaultType)
                         }
                     ) return@check false
                 }
-                if (conversion.replacement in listOf(MAX_BY, MIN_BY, MIN_BY_OR_NULL, MAX_BY_OR_NULL)) {
+                if (conversion.replacementName in listOf(MAX_BY, MIN_BY, MIN_BY_OR_NULL, MAX_BY_OR_NULL)) {
                     val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgument(context)?.returnType ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }
@@ -78,7 +78,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                     if (parent !is KtPostfixExpression || parent.operationToken != KtTokens.EXCLEXCL) return@check false
                 }
 
-                if (conversion.firstName == MAP && conversion.secondName == SUM && conversion.replacement == SUM_OF) {
+                if (conversion.firstName == MAP && conversion.secondName == SUM && conversion.replacementName == SUM_OF) {
                     val lastFunctionalArgument = firstResolvedCall.lastFunctionalArgument(context) ?: return@check false
                     val type = lastFunctionalArgument.returnType ?: return@check false
                     val isInt = KotlinBuiltIns.isInt(type)
@@ -93,8 +93,8 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 }
                 if (conversion.firstName == MAP && conversion.secondName == TO_MAP) {
                     val argumentSize = expression.callExpression?.valueArguments?.size ?: return@check false
-                    if (conversion.replacement == ASSOCIATE && argumentSize != 0
-                        || conversion.replacement == ASSOCIATE_TO && argumentSize != 1
+                    if (conversion.replacementName == ASSOCIATE && argumentSize != 0
+                        || conversion.replacementName == ASSOCIATE_TO && argumentSize != 1
                     ) return@check false
                 }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
@@ -102,11 +102,11 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
 
             val associateFunction = getAssociateFunction(conversion, expression.receiverExpression)
                 ?.let { (associateFunction, associateFunctionName) ->
-                    conversion = conversion.copy(replacement = associateFunctionName)
+                    conversion = conversion.copy(replacementFqName = conversion.replacementFqName.sibling(Name.identifier(associateFunctionName)))
                     associateFunction
                 }
 
-            val replacement = conversion.replacement
+            val replacement = conversion.replacementName
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
                 callChainExpressions.firstCalleeExpression.textRange.shiftRight(-expression.startOffset),
@@ -164,8 +164,8 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
     }
 
     private fun getAssociateFunction(conversion: CallChainConversion, expression: KtExpression): Pair<AssociateFunction, String>? {
-        val isAssociateTo = conversion.replacement == ASSOCIATE_TO
-        if (conversion.replacement != ASSOCIATE && !isAssociateTo) return null
+        val isAssociateTo = conversion.replacementName == ASSOCIATE_TO
+        if (conversion.replacementName != ASSOCIATE && !isAssociateTo) return null
         if (expression !is KtDotQualifiedExpression) return null
         val (associateFunction, problemHighlightType) =
             AssociateFunctionUtil.getAssociateFunctionAndProblemHighlightType(expression) ?: return null

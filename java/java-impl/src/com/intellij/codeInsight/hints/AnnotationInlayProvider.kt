@@ -22,7 +22,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.annotations.PropertyKey
@@ -55,18 +57,51 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     if (project.isDefault) return null
     return object : SharedBypassCollector {
       override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+        if (element is PsiTypeParameterListOwner) {
+          sink.whenOptionEnabled(SHOW_EXTERNAL) {
+            val originalOwner = element.originalElement
+            if (originalOwner !is PsiCompiledElement || originalOwner !is PsiTypeParameterListOwner) {
+              return@whenOptionEnabled
+            }
+            val typeParameterList = originalOwner.typeParameterList ?: return@whenOptionEnabled
+            for ((index, originalParameter) in typeParameterList.typeParameters.withIndex()) {
+              val parameter = element.typeParameters.getOrNull(index) ?: return@whenOptionEnabled
+              val manager = ExternalAnnotationsManager.getInstance(project)
+              processTypeParameterRecursively(parameter, originalParameter, sink)
+              parameter.extendsList.referenceElements.zip(originalParameter.extendsList.referencedTypes)
+                .forEach { pair: Pair<PsiJavaCodeReferenceElement?, PsiClassType?> ->
+                  val referenceElement = pair.first
+                  val classType = pair.second
+                  if (referenceElement == null || classType == null) {
+                    return@forEach
+                  }
+                  classType.annotations
+                    .filter(manager::isExternalAnnotation)
+                    .forEach {
+                      sink.addAnnotationPresentation(it, project, InlineInlayPosition(referenceElement.textRange.startOffset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+                    }
+                }
+              if (originalParameter.superTypes.size == 1 && parameter.extendsList.referenceElements.isEmpty()) {
+                if (originalParameter.superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+                  manager.findExternalAnnotations(originalParameter)
+                    .forEach {
+                      // it is not really correct, because
+                      // annotations should be applied to object, like: `T extends @NotNull Object`
+                      // but it is too long, so let's apply it to type parameters
+                      sink.addAnnotationPresentation(it, project, InlineInlayPosition(parameter.textRange.startOffset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+                    }
+                }
+              }
+            }
+          }
+        }
         if (element is PsiTypeElement) {
           sink.whenOptionEnabled(SHOW_EXTERNAL) {
             val originalElement = element.originalElement
+            val typeParameter = PsiTreeUtil.getParentOfType(element, PsiTypeParameter::class.java)
+            if (typeParameter != null) return@whenOptionEnabled
             if (originalElement is PsiTypeElement && originalElement is PsiCompiledElement) {
-              val type = originalElement.type
-              val offset = element.textRange.startOffset
-              val manager = ExternalAnnotationsManager.getInstance(project)
-              type.annotations
-                .filter(manager::isExternalAnnotation)
-                .forEach {
-                  sink.addAnnotationPresentation(it, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
-                }
+              showPsiTypeElement(originalElement, element, sink)
             }
           }
         }
@@ -100,6 +135,78 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               .forEach { sink.addAnnotationIfNotDuplicated(it) }
           }
         }
+      }
+
+      private fun showPsiTypeElement(
+        originalElement: PsiTypeElement,
+        element: PsiTypeElement,
+        sink: InlayTreeSink,
+      ) {
+        val type = originalElement.type
+        val offset = element.textRange.startOffset
+        val manager = ExternalAnnotationsManager.getInstance(project)
+        type.annotations
+          .filter(manager::isExternalAnnotation)
+          .forEach {
+            sink.addAnnotationPresentation(it, project, InlineInlayPosition(offset, false), HINT_FORMAT, TYPE_ANNOTATION_PAYLOADS)
+          }
+      }
+
+      private fun processTypeParameterRecursively(parameter: PsiTypeParameter, originalParameter: PsiTypeParameter, sink: InlayTreeSink) {
+        fun recursiveProcessTypeElement(element: PsiElement, originalElement: PsiElement) {
+          if (element is PsiTypeElement && originalElement is PsiTypeElement) {
+            showPsiTypeElement(originalElement, element, sink)
+          }
+          element.children
+            .filter {
+              it is PsiTypeElement ||
+              it is PsiJavaCodeReferenceElement ||
+              it is PsiReferenceParameterList
+            }.zip(
+              originalElement.children
+                .filter {
+                  it is PsiTypeElement ||
+                  it is PsiJavaCodeReferenceElement
+                })
+            .forEach {
+              val nestedElement = it.first
+              val nestedOriginalElement = it.second
+              if (nestedElement is PsiTypeElement && nestedOriginalElement is PsiTypeElement) {
+                recursiveProcessTypeElement(nestedElement, nestedOriginalElement)
+              }
+              if (nestedElement is PsiReferenceParameterList && nestedOriginalElement is PsiReferenceParameterList) {
+                nestedElement.typeParameterElements.zip(nestedOriginalElement.typeParameterElements).forEach { nested ->
+                  recursiveProcessTypeElement(nested.first, nested.second)
+                }
+              }
+              if (nestedElement is PsiJavaCodeReferenceElement && nestedOriginalElement is PsiJavaCodeReferenceElement) {
+                val originalTypeParameterElements = nestedOriginalElement.parameterList?.typeParameterElements
+                val typeParameterElements = nestedElement.parameterList?.typeParameterElements
+                if (typeParameterElements != null && originalTypeParameterElements != null) {
+                  typeParameterElements.zip(originalTypeParameterElements).forEach { nested ->
+                    recursiveProcessTypeElement(nested.first, nested.second)
+                  }
+                }
+              }
+            }
+        }
+
+        parameter.extendsList.referenceElements.zip(originalParameter.superTypes)
+          .forEach {
+            val referenceElement = it.first
+            val originalType = it.second
+            if (referenceElement == null || originalType !is PsiClassReferenceType) return@forEach
+            val parameterList = referenceElement.parameterList
+            val originalParameterList = originalType.reference.parameterList
+            if (parameterList == null || originalParameterList == null) return@forEach
+            parameterList.typeParameterElements.zip(originalParameterList.typeParameterElements)
+              .forEach { pair ->
+                val parameter = pair.first
+                val originalParameter = pair.second
+                if (parameter == null || originalParameter == null) return@forEach
+                recursiveProcessTypeElement(parameter, originalParameter)
+              }
+          }
       }
     }
   }

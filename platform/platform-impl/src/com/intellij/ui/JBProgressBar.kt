@@ -15,7 +15,9 @@
  */
 package com.intellij.ui
 
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JProgressBar
 
 @Deprecated("use {@link JProgressBar}", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
 open class JBProgressBar : JProgressBar()

@@ -25,17 +25,17 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Intention to merge the if clauses in the case of nested ifs where only the inner if contains code (the outer if only contains the inner one)
  * For instance,
  * if a:
- *   if b:
- *    # stuff here
+ * if b:
+ * # stuff here
  * into
  * if a and b:
- *   #stuff here
+ * #stuff here
  */
 public final class PyJoinIfIntention extends PsiUpdateModCommandAction<PyIfStatement> {
   public PyJoinIfIntention() {
     super(PyIfStatement.class);
   }
-  
+
   @Override
   public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.join.if");

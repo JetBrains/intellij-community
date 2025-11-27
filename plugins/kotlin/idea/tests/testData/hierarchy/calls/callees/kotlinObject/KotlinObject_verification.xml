@@ -1,7 +1,5 @@
 <node text="KClient  ()" base="true">
-  <node text="JA.foo(String)(2 usages)  ()">
-    <node text="PrintStream.println(String)  (java.io)"/>
-  </node>
+  <node text="JA.foo(String)(2 usages)  ()"/>
   <node text="KA.name(2 usages)  ()"/>
   <node text="packageFun(String)(2 usages)  ()"/>
   <node text="packageVal  ()"/>

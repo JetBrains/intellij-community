@@ -113,31 +113,31 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
                                                        <file>Foo.java</file>
                                                        <line>4</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>5</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>6</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>7</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem>
                                                      <problem>
                                                        <file>Foo.java</file>
                                                        <line>8</line>
                                                        <problem_class>Simplifiable conditional expression</problem_class>
-                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0' #loc</description>
+                                                       <description>&lt;code&gt;0 == 0 ? 0 : 0&lt;/code&gt; can be simplified to '0'</description>
                                                      </problem></problems>""");
 
     InspectionTestUtil.compareWithExpected(expectedDfaResults, dfaResults, false);

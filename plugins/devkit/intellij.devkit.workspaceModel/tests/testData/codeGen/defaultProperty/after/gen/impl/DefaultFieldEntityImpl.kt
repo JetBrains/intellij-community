@@ -26,14 +26,12 @@ import com.intellij.workspaceModel.test.api.TestData
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -69,8 +67,7 @@ internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntity
   }
 
 
-  internal class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(
-    result), DefaultFieldEntityBuilder {
+  internal class Builder(result: DefaultFieldEntityData?) : ModifiableWorkspaceEntityBase<DefaultFieldEntity, DefaultFieldEntityData>(result), DefaultFieldEntityBuilder {
     internal constructor() : this(DefaultFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

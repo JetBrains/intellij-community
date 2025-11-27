@@ -189,6 +189,8 @@ class _Params(TypedDict, total=False):
     default_search: str | None
     dynamic_mpd: bool | None
     extractor_args: Mapping[str, Mapping[str, Any]] | None
+    js_runtimes: dict[str, dict[str, str] | None]
+    remote_components: set[Literal["ejs:npm", "ejs:github"]]
     encoding: str | None
     extract_flat: bool | Literal["in_playlist", "discard", "discard_in_playlist"] | None
     live_from_start: bool | None

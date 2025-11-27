@@ -2,8 +2,8 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.asProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.xdebugger.impl.proxy.asProxy
 
 internal fun Any.asBreakpointProxyOrNull(): XBreakpointProxy? {
   val breakpoint = this

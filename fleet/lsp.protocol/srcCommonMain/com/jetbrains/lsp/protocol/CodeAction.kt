@@ -12,6 +12,9 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionOptions">codeActionOptions (LSP spec)</a>
+ */
 @Serializable
 data class CodeActionOptions(
     /**
@@ -40,6 +43,8 @@ data class CodeActionOptions(
  *
  * The set of kinds is open and client needs to announce the kinds it supports
  * to the server during initialization.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionKind">codeActionKind (LSP spec)</a>
  */
 @Serializable
 @JvmInline
@@ -127,6 +132,8 @@ value class CodeActionKind(val value: String) {
 
 /**
  * Parameters for a code action request.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionParams">codeActionParams (LSP spec)</a>
  */
 @Serializable
 data class CodeActionParams(
@@ -154,6 +161,8 @@ data class CodeActionParams(
 /**
  * Contains additional diagnostic information about the context in which
  * a code action is run.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext">codeActionContext (LSP spec)</a>
  */
 @Serializable
 data class CodeActionContext(
@@ -183,6 +192,9 @@ data class CodeActionContext(
     val triggerKind: CodeActionTriggerKind? = null
 )
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionTriggerKind">codeActionTriggerKind (LSP spec)</a>
+ */
 @Serializable(with = CodeActionTriggerKind.Serializer::class)
 enum class CodeActionTriggerKind(val value: Int) {
     Invoked(1),
@@ -203,6 +215,8 @@ enum class CodeActionTriggerKind(val value: Int) {
  *
  * A CodeAction must set either `edit` and/or a `command`. If both are supplied,
  * the `edit` is applied first, then the `command` is executed.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeAction">codeAction (LSP spec)</a>
  */
 @Serializable
 data class CodeAction(

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,10 @@ public final class PyABCUtil {
     return isSubclass(subClass, superClassName, true, context);
   }
 
-  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName, boolean inherited, @Nullable TypeEvalContext context) {
+  public static boolean isSubclass(@NotNull PyClass subClass,
+                                   @NotNull String superClassName,
+                                   boolean inherited,
+                                   @Nullable TypeEvalContext context) {
     if (PyNames.CALLABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.CALL, inherited, context);
     }
@@ -51,7 +53,8 @@ public final class PyABCUtil {
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
       return (hasIter && (hasMethod(subClass, PyNames.NEXT, inherited, context) || hasMethod(subClass,
-                                                                                          PyNames.DUNDER_NEXT, inherited, context))) || hasGetItem;
+                                                                                             PyNames.DUNDER_NEXT, inherited, context))) ||
+             hasGetItem;
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN, inherited, context);
     if (PyNames.SIZED.equals(superClassName)) {

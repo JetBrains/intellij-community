@@ -6,11 +6,9 @@ import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -21,9 +19,11 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.attachAsChildTo
-import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.FileColorManager
 import com.intellij.util.ThreeState
 import com.intellij.util.asDisposable
+import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -32,7 +32,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
@@ -45,6 +44,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -178,7 +178,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun triggerUpdate(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
-      session.rebuildViews()
+      session.frontendUpdate()
     }
   }
 
@@ -191,12 +191,29 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  @OptIn(AwaitCancellationAndInvoke::class)
-  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
-    return channelFlow {
-      val suspendContextModel = suspendContextId.findValue() ?: return@channelFlow
-      attachAsChildTo(suspendContextModel.coroutineScope)
+  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    val scope = session.coroutineScope.childScopeCancelledOnSessionEvents("RunningExecutionStacksScope", session)
+    return createExecutionStacksEventFlow(session, scope) { container ->
+      session.debugProcess.computeRunningExecutionStacks(container)
+    }
+  }
 
+  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
+    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
+    val session = suspendContextModel.session
+    return createExecutionStacksEventFlow(session, suspendContextModel.coroutineScope) { container ->
+      suspendContextModel.suspendContext.computeExecutionStacks(container)
+    }
+  }
+
+  private fun createExecutionStacksEventFlow(
+    session: XDebugSessionImpl,
+    scope: CoroutineScope,
+    computeExecutionStacks: (XSuspendContext.XExecutionStackContainer) -> Unit
+  ) : Flow<XExecutionStacksEvent> {
+    return channelFlow {
+      attachAsChildTo(scope)
       val container = object : XSuspendContext.XExecutionStackContainer {
         @Volatile
         var obsolete = false
@@ -206,9 +223,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         }
 
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val session = suspendContextModel.session
           val stacks = executionStacks.map { stack ->
-            stack.toRpc(suspendContextModel.coroutineScope, session)
+            stack.toRpc(scope, session)
           }
           trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
           if (last) {
@@ -220,34 +236,25 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
         }
       }
-      suspendContextModel.suspendContext.computeExecutionStacks(container)
+      computeExecutionStacks(container)
+
       awaitClose {
         container.obsolete = true
       }
     }.buffer(Channel.UNLIMITED)
   }
 
-  override suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      session.fileColorsComputer.fileColors.collect { (virtualFile, colorState) ->
-        val serializedState = when (colorState) {
-          is ColorState.Computed -> SerializedColorState.Computed(colorState.color.rpcId())
-          ColorState.Computing -> SerializedColorState.Computing
-          ColorState.NoColor -> SerializedColorState.NoColor
-        }
-        // TODO[IJPL-177087]: send in batches to optimize throughput?
-        send(XFileColorDto(virtualFile.rpcId(), serializedState))
-      }
-    }
-  }
+  private fun CoroutineScope.childScopeCancelledOnSessionEvents(name: String, session: XDebugSessionImpl): CoroutineScope =
+    childScope(name).also { childScope ->
+      val listener = object : XDebugSessionListener {
+        override fun sessionPaused() { childScope.cancel() }
 
-  override suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId) {
-    val session = sessionId.findValue() ?: return
-    val file = virtualFileId.virtualFile() ?: return
-    // TODO[IJPL-177087]: collect in batches to optimize throughput?
-    session.fileColorsComputer.sendRequest(file)
-  }
+        override fun sessionResumed() { childScope.cancel() }
+
+        override fun sessionStopped() { childScope.cancel() }
+      }
+      session.addSessionListener(listener, childScope.asDisposable())
+    }
 
   override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
     val session = sessionDataId.findValue()?.session ?: return
@@ -322,7 +329,7 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
   }
   val evaluatorDto = XDebuggerEvaluatorDto(isDocumentEvaluator)
   return XStackFrameDto(id, sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, computeTextPresentation(),
-                        captionInfo(), customBackgroundInfo(), canDrop(session))
+                        captionInfo(), backgroundInfo(session.project), canDrop(session))
 }
 
 internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
@@ -347,11 +354,15 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
   }
 }
 
-private fun XStackFrame.customBackgroundInfo(): XStackFrameCustomBackgroundInfo? {
-  if (this !is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
-    return null
+private fun XStackFrame.backgroundInfo(project: Project): XStackFrameBackgroundColor? {
+  if (this is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
+    return XStackFrameBackgroundColor(backgroundColor?.rpcId())
   }
-  return XStackFrameCustomBackgroundInfo(backgroundColor?.rpcId())
+  val file = sourcePosition?.file ?: return null
+  val fileColor = runReadAction {
+    FileColorManager.getInstance(project).getFileColor(file)
+  } ?: return null
+  return XStackFrameBackgroundColor(fileColor.rpcId())
 }
 
 private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {

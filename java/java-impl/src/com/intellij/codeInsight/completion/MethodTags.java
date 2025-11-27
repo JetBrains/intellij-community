@@ -196,17 +196,17 @@ public final class MethodTags {
     if (referenceName == null) {
       return Collections.emptySet();
     }
-    String[] strings = NameUtilCore.nameToWords(referenceName);
-    if (strings.length == 0) {
+    List<@NotNull String> strings = NameUtilCore.nameToWordList(referenceName);
+    if (strings.isEmpty()) {
       return Collections.emptySet();
     }
-    Tag[] canBeFirst = getTags(strings[0]);
+    Tag[] canBeFirst = getTags(strings.getFirst());
     Set<Tag> result = new HashSet<>();
     for (Tag firstPart : canBeFirst) {
       StringJoiner joiner = new StringJoiner("");
       joiner.add(firstPart.name);
-      for (int i = 1; i < strings.length; i++) {
-        String string = strings[i];
+      for (int i = 1; i < strings.size(); i++) {
+        String string = strings.get(i);
         joiner.add(string);
       }
       result.add(new Tag(joiner.toString(), firstPart.matcher));

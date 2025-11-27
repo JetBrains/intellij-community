@@ -9,13 +9,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaDocElementType.ALL_JAVADOC_ELEMENTS;
 import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
 
 /**
@@ -175,41 +177,36 @@ public final class JavadocTypedHandler extends TypedHandlerDelegate {
     if (element == null) {
       return false;
     }
-    ASTNode astNode = BasicJavaAstTreeUtil.toNode(element);
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_PARAMETER_REF)) {
-      astNode = astNode.getTreeParent();
+    if (element instanceof PsiDocParamRef) {
+      element = element.getParent();
     }
 
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_TAG, BASIC_DOC_SNIPPET_TAG, BASIC_DOC_INLINE_TAG) &&
-        "param".equals(BasicJavaAstTreeUtil.getTagName(astNode)) &&
-        isTypeParamBracketClosedAfterParamTag(astNode, offset)) {
+    if (element instanceof PsiDocTag tag && "param".equals(tag.getName()) && isTypeParamBracketClosedAfterParamTag(tag, offset)) {
       return false;
     }
 
-
     // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_DOC_INLINE_TAG, BASIC_DOC_SNIPPET_TAG) ||
-        BasicJavaAstTreeUtil.getParentOfType(astNode, ParentAwareTokenSet.create(BASIC_DOC_INLINE_TAG, BASIC_DOC_SNIPPET_TAG)) != null) {
+    if (PsiTreeUtil.getParentOfType(element, PsiInlineDocTag.class, false) != null) {
       return false;
     }
 
     ASTNode node = element.getNode();
     return node != null
            && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
-               || BASIC_ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
+               || ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
   }
 
-  private static boolean isTypeParamBracketClosedAfterParamTag(ASTNode tag, int bracketOffset) {
-    ASTNode paramToDocument = getDocumentingParameter(tag);
+  private static boolean isTypeParamBracketClosedAfterParamTag(PsiDocTag tag, int bracketOffset) {
+    PsiElement paramToDocument = getDocumentingParameter(tag);
     if (paramToDocument == null) return false;
 
     TextRange paramRange = paramToDocument.getTextRange();
     return paramRange.getEndOffset() == bracketOffset;
   }
 
-  private static @Nullable ASTNode getDocumentingParameter(@NotNull ASTNode tag) {
-    for (ASTNode element = tag.getFirstChildNode(); element != null; element = element.getTreeNext()) {
-      if (BasicJavaAstTreeUtil.is(element, BASIC_DOC_PARAMETER_REF)) {
+  private static @Nullable PsiElement getDocumentingParameter(@NotNull PsiDocTag tag) {
+    for (PsiElement element = tag.getFirstChild(); element != null; element = element.getNextSibling()) {
+      if (element instanceof PsiDocParamRef) {
         return element;
       }
     }

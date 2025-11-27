@@ -26,7 +26,7 @@ class KotlinUAnonymousClass(
 
     override val sourcePsi: KtClassOrObject? = ktClass
 
-    override fun getSourceElement() = sourcePsi ?: this
+    override fun getSourceElement(): PsiElement = sourcePsi ?: this
 
     override fun getOriginalElement(): PsiElement? = super<AbstractKotlinUClass>.getOriginalElement()
 

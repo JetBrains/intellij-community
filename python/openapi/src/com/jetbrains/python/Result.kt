@@ -14,6 +14,11 @@ import org.jetbrains.annotations.Nls
  * Operation result to be used as `Maybe` instead of checked exceptions.
  * Unlike Kotlin `Result`, [ERR] could be anything (i.e [String]).
  *
+ * Warning:
+ * This class is for *user* errors (IO errors like: no Internet conn., file provided by user is malformed, external process died).
+ * Code bugs (NPE, CNFE, AOOBE e.t.c.) are *developer* errors, and must be represented as exceptions.
+ * Do not wrap every single `Throwable` into this class.
+ *
  * Typical usages:
  *
  * ```kotlin
@@ -91,12 +96,20 @@ sealed class Result<out SUCC, out ERR> {
       is Failure -> Failure(onErr(error))
     }
 
+  /**
+   * Returns `null` if error, effectively *discarding* an error.
+   * Use with care, only if:
+   * 1. Error is insignificant (most errors are worth reporting to user!)
+   * 2. You are sure this error has already been reported by other parts of the code
+   */
   val successOrNull: SUCC? get() = if (this is Success) result else null
   val errorOrNull: ERR? get() = if (this is Failure) error else null
 
 
   /**
-   * Like Rust `unwrap`: returns result or throws exception. Use when error is unexpected
+   * Like Rust `unwrap`: returns result or throws an exception. Use when error is unexpected (you are 100% it simply can't happen).
+   * I.e: you access a file which is a part of the bundle. Unexistence is a serious bug.
+   * This function is also good for tests.
    */
   fun orThrow(onError: (ERR) -> Throwable = { e -> if (e is Throwable) e else AssertionError(e) }): SUCC {
     when (this) {
@@ -128,8 +141,24 @@ fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, 
     is Failure -> this
   }
 
-fun <T> Result<T, *>.orLogException(logger: Logger): T? = orLogExceptionImpl(logger, false)
-fun <T> Result<T, *>.orLogExceptionAsWarn(logger: Logger): T? = orLogExceptionImpl(logger, true)
+/**
+ * Log an error to [logger] or return a result.
+ * [logAsError] is rarely needed flag to log using `ERR` level (`WARN` is used otherwise).
+ *
+ * Do you need this method?
+ * Can you show this error to a user?
+ * If no (i.e. your process is in the background or does some bulk processing) then use this method.
+ *
+ * [logAsError] or not?
+ * The default (`WARN`) level is for "rainy day", but still fully supported scenarios.
+ * `WARN` logs are usually read by support engineers in their attempts to find user environment problem or misconfiguration.
+ * Think: No Internet connection, external process died unexpectedly, file can't be accessed, provided `pyproject.toml` is malformed.
+ *
+ * `ERR` mode is reported to the exception analyzer, and it is almost always a *developer* problem. This is an issue *we* must fix.
+ * In most cases exceptions/errors are the best tools for such cases, but sometimes we can __live with this bug for some time__ i.e:
+ * IO access from EDT. It can also be used in tests.
+ */
+fun <T> Result<T, *>.orLogException(logger: Logger, logAsError: Boolean = false): T? = orLogExceptionImpl(logger, asWarn = !logAsError)
 
 private fun <T> Result<T, *>.orLogExceptionImpl(logger: Logger, asWarn: Boolean): T? =
   when (val r = this) {
@@ -179,10 +208,22 @@ inline fun <S, E, E2> Result<S, E>.mapError(code: (E) -> E2): Result<S, E2> =
   }
 
 // aliases to drop-in replace for kotlin Result
-fun <S, E> Result<S, E>.getOrLogException(logger: Logger): S? = this.orLogException(logger)
-fun <S, E> Result<S, E>.getOrLogExceptionAsWarn(logger: Logger): S? = this.orLogExceptionAsWarn(logger)
+
+/**
+ * Read [Result.successOrNull] first!
+ */
 fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull
 val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
 val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
+
+/**
+ * Read [Result.orThrow] first!
+ */
 fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
 
+
+/**
+ * See [Result.mapSuccess]
+ */
+inline fun <S, E, E2> Iterable<Result<S, E>>.mapError(code: (E) -> E2): List<Result<S, E2>> =
+  map { it.mapError(code) }

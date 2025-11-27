@@ -33,7 +33,7 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
@@ -51,6 +51,8 @@ import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
+  private val logger = thisLogger()
+
   init {
     // new SDK configurator obsoletes this engine
     if (enableSDKAutoConfigurator) {
@@ -88,6 +90,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         if (module.isDisposed) return
         project.service<MyCoroutineScopeProvider>().coroutineScope.launch {
           val sdkInfos = findSuitableCreateSdkInfos(module)
+          thisLogger().debug { "Suitable sdkInfos: $sdkInfos" }
           withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
             val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
             lifetime.use { configureSdk(project, module, sdkInfos) }
@@ -241,7 +244,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    sdkCreator(true).getOrLogException(thisLogger())
+    sdkCreator(true).orLogException(logger)
     return true
   }
 

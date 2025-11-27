@@ -167,12 +167,12 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
               }
               if (!newInfos.isEmpty()) {
                 int size = newInfos.size(); // size == 1 most of the time
+                //noinspection ForLoopReplaceableByForEach
                 for (int i = 0; i < size; i++) {
-                  myHighlights.add(newInfos.get(i));
                   final HighlightInfo info = newInfos.get(i);
+                  myHighlights.add(info);
                   if (info.getSeverity() == HighlightSeverity.ERROR) {
                     myHasErrorSeverity = true;
-                    break;
                   }
                 }
               }
@@ -203,8 +203,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     });
     if (LOG.isTraceEnabled()) {
       List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
-      LOG.trace("GHP finished: myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
-                StringUtil.join(errors, "\n"));
+      LOG.trace("GHP finished: progress=" + progress+ " myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+                StringUtil.join(ContainerUtil.getFirstItems(errors, 20), "\n"));
     }
   }
 
@@ -241,7 +241,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
       runnable.run();
       return true;
     }
-    return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
+    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runnable, resultSink);
   }
 
   @ApiStatus.Internal

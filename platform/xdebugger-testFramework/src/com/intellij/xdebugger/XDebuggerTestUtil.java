@@ -29,7 +29,6 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -355,7 +354,7 @@ public class XDebuggerTestUtil {
       XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
       XDebugSessionProxy sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(session.getProject(), session.getId());
       if (sessionProxy != null) {
-        XDebugSessionTab sessionTab = sessionProxy.getSessionTab();
+        var sessionTab = sessionProxy.getSessionTab();
         if (sessionTab != null) {
           Disposer.dispose(sessionTab);
         }

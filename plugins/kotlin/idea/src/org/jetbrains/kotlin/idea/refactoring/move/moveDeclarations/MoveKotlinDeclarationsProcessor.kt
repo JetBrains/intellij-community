@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -152,7 +153,7 @@ open class MoveKotlinDeclarationsProcessor(
                 val results = ReferencesSearch
                     .search(lightElement, searchScope)
                     .asIterable()
-                    .mapNotNullTo(ArrayList()) { ref ->
+                    .mapNotNullTo(Collections.synchronizedList(ArrayList())) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
                             KotlinMoveRenameUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
                         } else null
@@ -160,7 +161,7 @@ open class MoveKotlinDeclarationsProcessor(
 
               val name = lightElement.kotlinFqName?.quoteIfNeeded()?.asString()
                 if (name != null) {
-                    fun searchForKotlinNameUsages(results: ArrayList<UsageInfo>) {
+                    fun searchForKotlinNameUsages(results: MutableList<UsageInfo>) {
                         TextOccurrencesUtil.findNonCodeUsages(
                             lightElement,
                             searchScope,
@@ -190,7 +191,7 @@ open class MoveKotlinDeclarationsProcessor(
                             results
                         )
 
-                        ArrayList<UsageInfo>().also { searchForKotlinNameUsages(it) }.forEach { kotlinNonCodeUsage ->
+                        Collections.synchronizedList(ArrayList<UsageInfo>()).also { searchForKotlinNameUsages(it) }.forEach { kotlinNonCodeUsage ->
                             if (results.none { it.intersectsWith(kotlinNonCodeUsage) }) {
                                 results.add(kotlinNonCodeUsage)
                             }

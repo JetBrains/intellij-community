@@ -74,6 +74,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.featuresTrainer` end

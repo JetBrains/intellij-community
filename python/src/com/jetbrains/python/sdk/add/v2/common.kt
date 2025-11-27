@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -63,6 +64,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInterpreterModel<P>) {
@@ -72,6 +74,9 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
 
   internal val propertyGraph
     get() = model.propertyGraph
+
+  protected abstract val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?>?
+  protected abstract val toolExecutablePersister: suspend (P) -> Unit
 
   abstract fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor)
   abstract fun onShown(scope: CoroutineScope)
@@ -84,6 +89,7 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   protected abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk>
 
   protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    savePathToExecutableToProperties(null)
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
     moduleOrProject.project.excludeInnerVirtualEnv(sdk)
@@ -108,6 +114,17 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
                                   TaskCancellation.cancellable()) {
       setupSdk(moduleOrProject)
     }
+  }
+
+  /**
+   * Saves the provided path to an executable in the properties of the environment
+   *
+   * @param [pathHolder] The path holder of the path to the executable that needs to be saved. This may be null when we try to find the tool automatically.
+   */
+  protected suspend fun savePathToExecutableToProperties(pathHolder: P?) {
+    val savingPath = pathHolder ?: toolExecutable?.get()?.pathHolder ?: return
+    if (!model.fileSystem.isLocal) return
+    toolExecutablePersister(savingPath)
   }
 
   open suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> = Result.success(Unit)
@@ -314,5 +331,12 @@ internal suspend fun BinaryToExec.getToolVersion(toolVersionPrefix: String): PyR
   else {
     val versionPresentation = StringUtil.shortenTextWithEllipsis(version, 250, 0, true)
     PyResult.localizedError(message("selected.tool.is.wrong", toolVersionPrefix.trim(), versionPresentation))
+  }
+}
+
+internal fun savePathForEelOnly(pathHolder: PathHolder, pathPersister: (Path) -> Unit) {
+  when (pathHolder) {
+    is PathHolder.Eel -> pathPersister(pathHolder.path)
+    is PathHolder.Target -> Unit
   }
 }

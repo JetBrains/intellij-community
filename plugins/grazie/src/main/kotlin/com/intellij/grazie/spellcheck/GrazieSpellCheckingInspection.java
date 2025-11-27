@@ -2,11 +2,11 @@
 package com.intellij.grazie.spellcheck;
 
 import ai.grazie.nlp.langs.LanguageISO;
+import ai.grazie.spell.suggestion.ranker.AsciiRanker;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.grazie.GrazieConfig;
-import com.intellij.grazie.spellcheck.diacritic.Diacritics;
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -289,7 +289,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
       return SpellCheckerManager.getInstance(project).getSuggestions(word)
         .stream()
         .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
-        .noneMatch(suggestion -> Diacritics.equalsIgnoringDiacritics(word, suggestion));
+        .noneMatch(suggestion -> AsciiRanker.equalsIgnoringDiacritics(word, suggestion));
     }
 
     private static boolean isOnlyEnglishDictionaryEnabled(Project project) {

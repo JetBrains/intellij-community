@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.syntax.element
 
+import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes.WHITE_SPACE
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
@@ -9,7 +10,7 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType as JToken
 
 object SyntaxElementTypes {
   val JAVA_PLAIN_COMMENT_BIT_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(JToken.END_OF_LINE_COMMENT, JToken.C_STYLE_COMMENT)
-  val JAVA_COMMENT_BIT_SET: SyntaxElementTypeSet = JAVA_PLAIN_COMMENT_BIT_SET + JavaDocSyntaxElementType.DOC_COMMENT
+  val JAVA_COMMENT_BIT_SET: SyntaxElementTypeSet = JAVA_PLAIN_COMMENT_BIT_SET + JavaDocSyntaxElementType.DOC_COMMENT + JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT
   val JAVA_COMMENT_OR_WHITESPACE_BIT_SET: SyntaxElementTypeSet = JAVA_COMMENT_BIT_SET + WHITE_SPACE
 
   val KEYWORD_BIT_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
@@ -101,4 +102,17 @@ object SyntaxElementTypes {
   )
 
   val ALL_LITERALS: SyntaxElementTypeSet = INTEGER_LITERALS + REAL_LITERALS + TEXT_LITERALS + LITERAL_BIT_SET
+
+
+  val SHIFT_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.LTLT, JavaSyntaxTokenType.GTGT, JavaSyntaxTokenType.GTGTGT)
+
+  val ADDITIVE_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.PLUS, JavaSyntaxTokenType.MINUS)
+
+  val MULTIPLICATIVE_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaSyntaxTokenType.ASTERISK, JavaSyntaxTokenType.DIV, JavaSyntaxTokenType.PERC)
+
+  val ASSIGNMENT_OPS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
+    JavaSyntaxTokenType.EQ, JavaSyntaxTokenType.ASTERISKEQ, JavaSyntaxTokenType.DIVEQ, JavaSyntaxTokenType.PERCEQ,
+    JavaSyntaxTokenType.PLUSEQ, JavaSyntaxTokenType.MINUSEQ,
+    JavaSyntaxTokenType.LTLTEQ, JavaSyntaxTokenType.GTGTEQ, JavaSyntaxTokenType.GTGTGTEQ, JavaSyntaxTokenType.ANDEQ,
+    JavaSyntaxTokenType.OREQ, JavaSyntaxTokenType.XOREQ)
 }

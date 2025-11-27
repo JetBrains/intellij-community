@@ -219,8 +219,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     if (patternIndex < myMinNameLength * 2) {
       return null;
     }
-    boolean isAscii = AsciiUtils.isAscii(name);
-    return matchWildcards(name, 0, 0, isAscii);
+    return matchWildcards(name, 0, 0);
   }
 
   private @Nullable FList<TextRange> matchBySubstring(@NotNull String name) {
@@ -258,8 +257,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
    */
   private @Nullable FList<TextRange> matchWildcards(@NotNull String name,
                                           int patternIndex,
-                                          int nameIndex,
-                                          boolean isAsciiName) {
+                                                    int nameIndex) {
     if (nameIndex < 0) {
       return null;
     }
@@ -267,7 +265,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
       if (patternIndex == myPattern.length) {
         return FList.emptyList();
       }
-      return matchFragment(name, patternIndex, nameIndex, isAsciiName);
+      return matchFragment(name, patternIndex, nameIndex);
     }
 
     do {
@@ -287,8 +285,8 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     }
 
     return matchSkippingWords(name, patternIndex,
-                              findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName),
-                              true, isAsciiName);
+                              findNextPatternCharOccurrence(name, nameIndex, patternIndex),
+                              true);
   }
 
   private boolean isTrailingSpacePattern() {
@@ -306,8 +304,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
   private @Nullable FList<TextRange> matchSkippingWords(@NotNull String name,
                                               final int patternIndex,
                                               int nameIndex,
-                                              boolean allowSpecialChars,
-                                              boolean isAsciiName) {
+                                              boolean allowSpecialChars) {
     int maxFoundLength = 0;
     while (nameIndex >= 0) {
       int fragmentLength = seemsLikeFragmentStart(name, patternIndex, nameIndex) ? maxMatchingFragment(name, patternIndex, nameIndex) : 0;
@@ -319,12 +316,12 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
         if (!isMiddleMatch(name, patternIndex, nameIndex)) {
           maxFoundLength = fragmentLength;
         }
-        FList<TextRange> ranges = matchInsideFragment(name, patternIndex, nameIndex, isAsciiName, fragmentLength);
+        FList<TextRange> ranges = matchInsideFragment(name, patternIndex, nameIndex, fragmentLength);
         if (ranges != null) {
           return ranges;
         }
       }
-      int next = findNextPatternCharOccurrence(name, nameIndex + 1, patternIndex, isAsciiName);
+      int next = findNextPatternCharOccurrence(name, nameIndex + 1, patternIndex);
       nameIndex = allowSpecialChars ? next : checkForSpecialChars(name, nameIndex + 1, next, patternIndex);
     }
     return null;
@@ -332,11 +329,10 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
 
   private int findNextPatternCharOccurrence(@NotNull String name,
                                             int startAt,
-                                            int patternIndex,
-                                            boolean isAsciiName) {
+                                            int patternIndex) {
     return !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
-           ? indexOfWordStart(name, patternIndex, startAt, isAsciiName)
-           : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
+           ? indexOfWordStart(name, patternIndex, startAt)
+           : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex);
   }
 
   private int checkForSpecialChars(String name, int start, int end, int patternIndex) {
@@ -370,10 +366,9 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
 
   private @Nullable FList<TextRange> matchFragment(@NotNull String name,
                                                    int patternIndex,
-                                                   int nameIndex,
-                                                   boolean isAsciiName) {
+                                                   int nameIndex) {
     int fragmentLength = maxMatchingFragment(name, patternIndex, nameIndex);
-    return fragmentLength == 0 ? null : matchInsideFragment(name, patternIndex, nameIndex, isAsciiName, fragmentLength);
+    return fragmentLength == 0 ? null : matchInsideFragment(name, patternIndex, nameIndex, fragmentLength);
   }
 
   private int maxMatchingFragment(@NotNull String name, int patternIndex, int nameIndex) {
@@ -404,18 +399,17 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
   private @Nullable FList<TextRange> matchInsideFragment(@NotNull String name,
                                                int patternIndex,
                                                int nameIndex,
-                                               boolean isAsciiName,
                                                int fragmentLength) {
     // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isMiddleMatch(name, patternIndex, nameIndex)
                       ? 3 : 1;
 
-    FList<TextRange> camelHumpRanges = improveCamelHumps(name, patternIndex, nameIndex, isAsciiName, fragmentLength, minFragment);
+    FList<TextRange> camelHumpRanges = improveCamelHumps(name, patternIndex, nameIndex, fragmentLength, minFragment);
     if (camelHumpRanges != null) {
       return camelHumpRanges;
     }
 
-    return findLongestMatchingPrefix(name, patternIndex, nameIndex, isAsciiName, fragmentLength, minFragment);
+    return findLongestMatchingPrefix(name, patternIndex, nameIndex, fragmentLength, minFragment);
   }
 
   private boolean isMiddleMatch(@NotNull String name, int patternIndex, int nameIndex) {
@@ -426,7 +420,6 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
   private @Nullable FList<TextRange> findLongestMatchingPrefix(@NotNull String name,
                                                                int patternIndex,
                                                                int nameIndex,
-                                                               boolean isAsciiName,
                                                                int fragmentLength, int minFragment) {
     if (patternIndex + fragmentLength >= myPattern.length) {
       return FList.singleton(TextRange.from(nameIndex, fragmentLength));
@@ -438,13 +431,13 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     while (i >= minFragment || (i > 0 && isWildcard(patternIndex + i))) {
       FList<TextRange> ranges;
       if (isWildcard(patternIndex + i)) {
-        ranges = matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName);
+        ranges = matchWildcards(name, patternIndex + i, nameIndex + i);
       }
       else {
-        int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i + 1, patternIndex + i, isAsciiName);
+        int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i + 1, patternIndex + i);
         nextOccurrence = checkForSpecialChars(name, nameIndex + i, nextOccurrence, patternIndex + i);
         if (nextOccurrence >= 0) {
-          ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false, isAsciiName);
+          ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false);
         } else {
           ranges = null;
         }
@@ -464,12 +457,11 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
   private FList<TextRange> improveCamelHumps(@NotNull String name,
                                              int patternIndex,
                                              int nameIndex,
-                                             boolean isAsciiName,
                                              int maxFragment,
                                              int minFragment) {
     for (int i = minFragment; i < maxFragment; i++) {
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
-        FList<TextRange> ranges = findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i, isAsciiName);
+        FList<TextRange> ranges = findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i);
         if (ranges != null) {
           return prependRange(ranges, nameIndex, i);
         }
@@ -484,10 +476,9 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
 
   private FList<TextRange> findUppercaseMatchFurther(String name,
                                                      int patternIndex,
-                                                     int nameIndex,
-                                                     boolean isAsciiName) {
-    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex, isAsciiName);
-    return matchWildcards(name, patternIndex, nextWordStart, isAsciiName);
+                                                     int nameIndex) {
+    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
+    return matchWildcards(name, patternIndex, nextWordStart);
   }
 
   private boolean isFirstCharMatching(@NotNull String name, int nameIndex, int patternIndex) {
@@ -522,7 +513,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
   }
 
-  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom, boolean isAsciiName) {
+  private int indexOfWordStart(@NotNull String name, int patternIndex, int startFrom) {
     final char p = myPattern[patternIndex];
     if (startFrom >= name.length() ||
         myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
@@ -531,7 +522,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     int i = startFrom;
     boolean isSpecialSymbol = !Character.isLetterOrDigit(p);
     while (true) {
-      i = indexOfIgnoreCase(name, i, p, patternIndex, isAsciiName);
+      i = indexOfIgnoreCase(name, i, p, patternIndex);
       if (i < 0) return -1;
 
       if (isSpecialSymbol || NameUtilCore.isWordStart(name, i)) return i;
@@ -540,8 +531,8 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     }
   }
 
-  private int indexOfIgnoreCase(String name, int fromIndex, char p, int patternIndex, boolean isAsciiName) {
-    if (isAsciiName && Strings.isAscii(p)) {
+  private int indexOfIgnoreCase(String name, int fromIndex, char p, int patternIndex) {
+    if (Strings.isAscii(p)) {
       char pUpper = toUpperCase[patternIndex];
       char pLower = toLowerCase[patternIndex];
       for (int i = fromIndex; i < name.length(); i++) {

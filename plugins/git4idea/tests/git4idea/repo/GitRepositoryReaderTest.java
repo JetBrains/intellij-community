@@ -111,7 +111,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   public void testBranches() throws Exception {
     Assume.assumeTrue(Registry.is("git.read.branches.from.disk")); // not a valid git repository: .git/objects is missing
 
-    Collection<GitRemote> remotes = GitConfig.read(new File(myGitDir, "config")).parseRemotes();
+    Collection<GitRemote> remotes = GitConfig.read(myProject, getProjectNioRoot()).parseRemotes();
     GitBranchState state = myRepositoryReader.readState(remotes);
 
     assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());

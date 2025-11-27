@@ -45,6 +45,7 @@ public final class PyDictCreationInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       if (node.getAssignedValue() instanceof PyDictLiteralExpression) {
@@ -61,8 +62,9 @@ public final class PyDictCreationInspection extends PyInspection {
 
         while (statement instanceof PyAssignmentStatement assignmentStatement) {
           final List<Pair<PyExpression, PyExpression>> targets = getDictTargets(target, name, assignmentStatement);
-          if (targets == null)
+          if (targets == null) {
             return;
+          }
           if (!targets.isEmpty()) {
             registerProblem(node,
                             PyPsiBundle.message("INSP.dict.creation.this.dictionary.creation.could.be.rewritten.as.dictionary.literal"),
@@ -87,8 +89,9 @@ public final class PyDictCreationInspection extends PyInspection {
           targets.add(targetToValue);
         }
       }
-      else
+      else {
         return null;
+      }
     }
     return targets;
   }

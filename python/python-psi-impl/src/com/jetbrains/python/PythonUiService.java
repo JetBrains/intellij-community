@@ -25,11 +25,11 @@ import java.util.List;
 @ApiStatus.Experimental
 public class PythonUiService {
 
-  public void showBalloonInfo(Project project, @PopupContent String message) {}
+  public void showBalloonInfo(Project project, @PopupContent String message) { }
 
-  public void showBalloonWarning(Project project, @PopupContent String message) {}
+  public void showBalloonWarning(Project project, @PopupContent String message) { }
 
-  public void showBalloonError(Project project, @PopupContent String message) {}
+  public void showBalloonError(Project project, @PopupContent String message) { }
 
   public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
     return null;
@@ -55,7 +55,7 @@ public class PythonUiService {
                                  PsiElement element,
                                  String newName,
                                  boolean searchInComments,
-                                 boolean searchTextOccurrences) {}
+                                 boolean searchTextOccurrences) { }
 
   public LocalQuickFix createPyChangeSignatureQuickFixForMismatchingMethods(PyFunction function, PyFunction method) {
     return null;
@@ -119,6 +119,5 @@ public class PythonUiService {
                               @ListItem String initialValue,
                               @Nullable Icon icon) {
     return -1;
-
   }
 }

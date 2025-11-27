@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
@@ -397,7 +398,9 @@ public class BuilderHandler {
   static @NotNull String getBuilderClassName(@NotNull PsiClass psiClass, @Nullable String returnTypeName) {
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
-    return replace(builderClassNamePattern, "*", capitalize(StringUtil.notNullize(returnTypeName)));
+    final String typeName = StringUtil.notNullize(returnTypeName);
+    final boolean isPrimitiveTypeName = TypeConversionUtil.isPrimitive(typeName);
+    return replace(builderClassNamePattern, "*", isPrimitiveTypeName ? capitalize(typeName) : typeName);
   }
 
   static boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName, int paramCount) {

@@ -3,15 +3,12 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -29,8 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-
-  private static final Logger LOG = Logger.getInstance(PsiTypeElementImpl.class);
 
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
@@ -166,8 +161,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     for (int i = providers.size() - 1; i >= 0; i--) {
       TypeAnnotationProvider provider = providers.get(i);
       result = ellipsis && i == 0 ?
-               new PsiEllipsisType(result, provider).withContainerNullability(createTypeElementPointer(this)) :
-               new PsiArrayType(result, provider).withContainerNullability(createTypeElementPointer(this));
+               new PsiEllipsisType(result, provider).withContainerNullability(findContainerNullabilityContext(this)) :
+               new PsiArrayType(result, provider).withContainerNullability(findContainerNullabilityContext(this));
     }
     providers.clear();
     return result;
@@ -519,82 +514,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public static PsiTypeElementPointer createTypeElementPointer(@NotNull PsiTypeElement typeElement) {
-    if (typeElement instanceof ClsTypeElementImpl) {
-      return PsiTypeElementPointer.constant(typeElement);
-    }
-    PsiElement parent = getAnchorParent(typeElement);
-    if ((parent instanceof JavaStubPsiElement) && (parent instanceof PsiMethod || parent instanceof PsiVariable)) {
-      PsiModifierListOwner owner = (PsiModifierListOwner)parent;
-      PsiTypeElement ownerType =
-        parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement() : ((PsiVariable)parent).getTypeElement();
-      if (ownerType == null) return PsiTypeElementPointer.constant(typeElement);
-      int[] pathFromRoot = getPathFromRoot(ownerType, typeElement);
-      if (pathFromRoot == null) return PsiTypeElementPointer.constant(typeElement);
-      return computeTypeElementPointerFromTypeOwner(owner, pathFromRoot, new WeakReference<>(typeElement));
-    }
-    return PsiTypeElementPointer.constant(typeElement);
-  }
-
-  private static @NotNull PsiTypeElementPointer computeTypeElementPointerFromTypeOwner(@NotNull PsiModifierListOwner owner,
-                                                                                       int @NotNull [] root,
-                                                                                       @NotNull WeakReference<PsiTypeElement> reference) {
-    return new PsiTypeElementPointer() {
-
-      @Override
-      public @Nullable PsiTypeElement retrieveElement() {
-        PsiTypeElement element = reference.get();
-        if (element != null && element.isValid()) return element;
-        if (!owner.isValid()) return null;
-        PsiElement parentTypeElement =
-          owner instanceof PsiMethod ? ((PsiMethod)owner).getReturnTypeElement() : ((PsiVariable)owner).getTypeElement();
-        if (parentTypeElement == null) return null;
-        PsiElement typeElement = parentTypeElement;
-        for (int i : root) {
-          List<@NotNull PsiElement> filtered = ContainerUtil.filter(typeElement.getChildren(),
-                                                                    t -> t instanceof PsiTypeElement ||
-                                                                         t instanceof PsiJavaCodeReferenceElement ||
-                                                                         t instanceof PsiReferenceParameterList);
-          if (i >= filtered.size()) return null;
-          typeElement = filtered.get(i);
-        }
-        if (typeElement instanceof PsiTypeElement) {
-          return (PsiTypeElement)typeElement;
-        }
-
-        LOG.error("Can't decode PsiTypeElement with indexes",
-                  new Attachment("memberType.txt", parentTypeElement.getText() + "\n" + Arrays.toString(root)));
-        return null;
+  @Nullable
+  public static PsiModifierListOwner findContainerNullabilityContext(@NotNull PsiTypeElement typeElement) {
+    PsiElement parent = typeElement.getContext();
+    while (parent != null) {
+      if(parent instanceof PsiModifierListOwner) {
+        return (PsiModifierListOwner)parent;
       }
-    };
-  }
-
-  private static int @Nullable [] getPathFromRoot(@NotNull PsiTypeElement targetParent, @NotNull PsiTypeElement child) {
-    IntList result = new IntArrayList();
-    PsiElement currentChild = child;
-    while (true) {
-      if (currentChild == targetParent) {
-        return result.toIntArray();
-      }
-      PsiElement parent = currentChild.getParent();
-      if (parent instanceof PsiTypeElement ||
-          parent instanceof PsiJavaCodeReferenceElement ||
-          parent instanceof PsiReferenceParameterList) {
-        List<PsiElement> psiTypeElementChildren =
-          ContainerUtil.filter(parent.getChildren(),
-                               t -> t instanceof PsiTypeElement ||
-                                    t instanceof PsiJavaCodeReferenceElement ||
-                                    t instanceof PsiReferenceParameterList);
-        int index = psiTypeElementChildren.indexOf(currentChild);
-        result.add(0, index);
-        currentChild = parent;
-        continue;
-      }
-      LOG.error("Can't code PsiTypeElement with indexes",
-                new Attachment("memberType.txt", targetParent.getText() + "\n" + child.getText()));
-
-      return null;
+      parent = parent.getContext();
     }
+    return null;
   }
 }

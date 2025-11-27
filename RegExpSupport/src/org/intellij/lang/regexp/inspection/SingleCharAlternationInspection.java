@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -38,20 +38,19 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     @Override
     public void visitRegExpPattern(RegExpPattern pattern) {
       final RegExpBranch[] branches = pattern.getBranches();
-      if (branches.length < 2) {
+      if (branches.length < 2 || !ContainerUtil.and(branches, SingleCharAlternationVisitor::isSingleChar)) {
         return;
       }
-      if (!ContainerUtil.and(branches, SingleCharAlternationVisitor::isSingleChar)) {
-        return;
-      }
-      final String text = buildReplacementText(pattern);
+      final String replacement = RegExpReplacementUtil.escapeForContext(buildReplacementText(pattern), pattern.getContainingFile());
       myHolder.registerProblem(pattern, RegExpBundle.message("inspection.warning.single.character.alternation.in.regexp"),
-                               new SingleCharAlternationFix(text));
+                               new SingleCharAlternationFix(replacement));
     }
 
     private static boolean isSingleChar(RegExpBranch branch) {
       final RegExpAtom[] atoms = branch.getAtoms();
-      return atoms.length == 1 && atoms[0] instanceof RegExpChar;
+      if (atoms.length != 1) return false;
+      RegExpAtom atom = atoms[0];
+      return atom instanceof RegExpChar || atom instanceof RegExpSimpleClass;
     }
 
     private static class SingleCharAlternationFix extends PsiUpdateModCommandQuickFix {
@@ -93,51 +92,56 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
     final StringBuilder text = new StringBuilder("[");
     for (RegExpBranch branch : pattern.getBranches()) {
       for (PsiElement child : branch.getChildren()) {
-        if (!(child instanceof RegExpChar ch)) {
-          return null;
+        if (child instanceof RegExpSimpleClass simpleClass) {
+          text.append(simpleClass.getUnescapedText());
         }
-        final IElementType type = ch.getNode().getFirstChildNode().getElementType();
-        if (type == RegExpTT.REDUNDANT_ESCAPE) {
-          final int value = ch.getValue();
-          if (value == ']') {
-            text.append(ch.getUnescapedText());
+        else if (child instanceof RegExpChar ch) {
+          final IElementType type = ch.getNode().getFirstChildNode().getElementType();
+          if (type == RegExpTT.REDUNDANT_ESCAPE) {
+            final int value = ch.getValue();
+            if (value == ']') {
+              text.append(ch.getUnescapedText());
+            }
+            else if (value == '-' && text.length() != 1) {
+              text.append("\\-");
+            }
+            else {
+              text.append((char)value);
+            }
           }
-          else if (value == '-' && text.length() != 1) {
-            text.append("\\-");
+          else if (type == RegExpTT.ESC_CHARACTER) {
+            final int value = ch.getValue();
+            switch (value) {
+              case '.', '$', '?', '*', '+', '|', '{', '(', ')' -> text.append((char)value);
+              case '^' -> {
+                if (text.length() == 1) {
+                  text.append(ch.getUnescapedText());
+                }
+                else {
+                  text.append((char)value);
+                }
+              }
+              default -> text.append(ch.getUnescapedText());
+            }
           }
           else {
-            text.append((char)value);
-          }
-        }
-        else if (type == RegExpTT.ESC_CHARACTER) {
-          final int value = ch.getValue();
-          switch (value) {
-            case '.', '$', '?', '*', '+', '|', '{', '(', ')' -> text.append((char)value);
-            case '^' -> {
-              if (text.length() == 1) {
+            final int value = ch.getValue();
+            switch (value) {
+              case ']':
+                text.append("\\]");
+                break;
+              case '-':
+                if (text.length() != 1) {
+                  text.append("\\-");
+                  break;
+                }
+              default:
                 text.append(ch.getUnescapedText());
-              }
-              else {
-                text.append((char)value);
-              }
             }
-            default -> text.append(ch.getUnescapedText());
           }
         }
         else {
-          final int value = ch.getValue();
-          switch (value) {
-            case ']':
-              text.append("\\]");
-              break;
-            case '-':
-              if (text.length() != 1) {
-                text.append("\\-");
-                break;
-              }
-            default:
-              text.append(ch.getUnescapedText());
-          }
+          return null;
         }
       }
     }

@@ -45,8 +45,8 @@ public final class JavaSharedImplUtil {
     if (allAnnotations == null) return null;
     for (int i = 0, size = allAnnotations.size(); i < size; i++) {
       type = ((ellipsisType && i == size - 1) ?
-              new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.createTypeElementPointer(typeElement) ) :
-              type.createArrayType().withContainerNullability(PsiTypeElementImpl.createTypeElementPointer(typeElement)))
+              new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(typeElement) ) :
+              type.createArrayType().withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(typeElement)))
         .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 

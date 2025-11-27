@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public final class RecordAugmentProvider extends PsiAugmentProvider implements DumbAware {
   @Override
@@ -63,14 +66,13 @@ public final class RecordAugmentProvider extends PsiAugmentProvider implements D
     return methods;
   }
 
-  private static @Nullable PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
+  private static @Nullable PsiMethod getCanonicalConstructor(@NotNull PsiExtensibleClass aClass,
                                                              List<PsiMethod> ownMethods,
                                                              @NotNull PsiRecordHeader recordHeader) {
     String className = aClass.getName();
     if (className == null) return null;
-    for (PsiMethod method : ownMethods) {
-      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return null;
-    }
+    if (hasConstructor(aClass, ownMethods)) return null;
+
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
     String sb = className + recordHeader.getText() + "{"
                 + StringUtil.join(recordHeader.getRecordComponents(), c -> "this." + c.getName() + "=" + c.getName() + ";", "\n")
@@ -78,13 +80,36 @@ public final class RecordAugmentProvider extends PsiAugmentProvider implements D
     PsiMethod nonPhysical;
     try {
       nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       return null;
     }
     PsiModifierList classModifierList = aClass.getModifierList();
     AccessModifier modifier = classModifierList == null ? AccessModifier.PUBLIC : AccessModifier.fromModifierList(classModifierList);
     nonPhysical.getModifierList().setModifierProperty(modifier.toPsiModifier(), true);
     return new LightRecordCanonicalConstructor(nonPhysical, aClass);
+  }
+
+  private static boolean hasConstructor(@NotNull PsiExtensibleClass aClass, List<PsiMethod> ownMethods) {
+    Supplier<Boolean> hasConstructorFinder = () -> {
+      for (PsiMethod method : ownMethods) {
+        if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return true;
+      }
+      return false;
+    };
+    DumbService dumbService = DumbService.getInstance(aClass.getProject());
+    AtomicBoolean hasConstructor = new AtomicBoolean(false);
+    if (dumbService.isAlternativeResolveEnabled()) {
+      hasConstructor.set(hasConstructorFinder.get());
+    }
+    else {
+      //it is necessary to check with alternative resolver
+      //because it is necessary to find its super class (in dumb mode)
+      dumbService.runWithAlternativeResolveEnabled(() -> {
+        hasConstructor.set(hasConstructorFinder.get());
+      });
+    }
+    return hasConstructor.get();
   }
 
   private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {

@@ -62,9 +62,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;
@@ -1208,10 +1208,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           return true;
         }
       }
-      if (info.getHighlighter() != null && !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, info.getHighlighter())) {
-        return true;
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter == null || CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, highlighter)) {
+        foundInfoList.add(info);
       }
-      foundInfoList.add(info);
       return true;
     }
 
@@ -1545,6 +1545,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull HighlightingSessionImpl session,
                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("submitInBackground: " + virtualFile + "; viewProvider.hashCode()={"+psiFile.getViewProvider().hashCode()+"}");
+    }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         HighlightingPass[] passes = ReadAction.compute(() -> {
@@ -1609,7 +1612,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
           myPassExecutorService.submitPasses(document, session.getCodeInsightContext(), virtualFile, psiFile, fileEditor, passes, progress);
         }
-//        clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
+        //clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
       }), progress);
     }
@@ -1641,6 +1644,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     });
 
     for (RangeHighlighter highlighter : invalid) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(" + document + "): " + highlighter);
+      }
       highlighter.dispose();
     }
   }

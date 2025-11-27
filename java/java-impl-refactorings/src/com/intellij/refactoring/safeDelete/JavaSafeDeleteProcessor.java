@@ -361,7 +361,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public UsageInfo @Nullable [] preprocessUsages(@NotNull Project project, UsageInfo @NotNull [] usages) {
-    List<UsageInfo> result = new ArrayList<>();
+    List<UsageInfo> result = Collections.synchronizedList(new ArrayList<>());
     List<UsageInfo> overridingMethods = new ArrayList<>();
     List<SafeDeleteParameterCallHierarchyUsageInfo> delegatingParams = new ArrayList<>();
     List<SafeDeleteMemberCalleeUsageInfo> calleesSafeToDelete = new ArrayList<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -11,6 +11,11 @@ import com.intellij.ui.ColorHexUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -25,7 +30,20 @@ open class RegistryValue @Internal constructor(
   val key: @NonNls String,
   private val keyDescriptor: RegistryKeyDescriptor?
 ) {
+  companion object {
+    private const val NO_COROUTINES_DIAGNOSTIC = "There is no kotlinx.coroutines library in this environment"
+  }
+
   private val listeners: MutableList<RegistryValueListener> = ContainerUtil.createLockFreeCopyOnWriteList()
+  private val flow = try {
+    MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST, extraBufferCapacity = 1)
+  } catch (e : Throwable) {
+    when (e) {
+      // in maven RMI, there are no coroutines
+      is ClassNotFoundException, is NoClassDefFoundError -> null
+      else -> throw e
+    }
+  }
 
   var isChangedSinceAppStart: Boolean = false
     private set
@@ -255,6 +273,8 @@ open class RegistryValue @Internal constructor(
       listener.afterValueChanged(this)
     }
 
+    flow?.tryEmit(value)
+
     if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
       registry.getStoredProperties().remove(key)
     }
@@ -302,6 +322,34 @@ open class RegistryValue @Internal constructor(
       listeners.remove(listener)
     }
   }
+
+  /** Returns a flow that emits when the raw string value changes. */
+  @ApiStatus.Experimental
+  fun asStringFlow(): Flow<String> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to a boolean.
+   * Note that this will throw if the raw string value cannot be parsed as a boolean.
+   * @see asBoolean
+   */
+  @ApiStatus.Experimental
+  fun asBooleanFlow(): Flow<Boolean> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toBoolean() }.distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to an integer.
+   * Note that this will throw if the raw string value cannot be parsed as an integer.
+   * @see asInteger
+   */
+  @ApiStatus.Experimental
+  fun asIntegerFlow(): Flow<Int> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toInt() }.distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to a double.
+   * Note that this will throw if the raw string value cannot be parsed as a double.
+   * @see asDouble
+   */
+  @ApiStatus.Experimental
+  fun asDoubleFlow(): Flow<Double> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toDouble() }.distinctUntilChanged()
 
   internal fun resetCache() {
     stringCachedValue = null

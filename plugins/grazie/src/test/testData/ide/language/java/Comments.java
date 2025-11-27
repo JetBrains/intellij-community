@@ -109,4 +109,13 @@ class ForMultiLanguageSupport {
   // Памылка друку ў word: У мяне добры <TYPO descr="Typo: In word 'домн'">домн</TYPO>.
 
   // <TYPO descr="Typo: In word 'Timout'">Timout</TYPO>
+
+
+  /**
+   * @param main (Opening bracket,
+   *             closing bracket)
+   */
+  void test(int main) {
+
+  }
 }

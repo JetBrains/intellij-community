@@ -7,7 +7,6 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
-import java.io.IOException
 import java.nio.channels.SocketChannel
 
 internal class SocketAdapter(channel: SocketChannel) : EelTunnelsApi.Connection {

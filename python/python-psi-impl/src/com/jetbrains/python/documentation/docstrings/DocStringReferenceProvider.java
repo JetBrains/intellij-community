@@ -106,6 +106,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     }
     return result;
   }
+
   private static List<PsiReference> referencesFromNames(@NotNull PyStringLiteralExpression element,
                                                         int offset,
                                                         @NotNull StructuredDocString docString,
@@ -135,7 +136,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                                   @Nullable ReferenceType nameRefType) {
     final List<PsiReference> result = new ArrayList<>();
     for (SectionBasedDocString.SectionField field : fields) {
-      for (Substring nameSub: field.getNamesAsSubstrings()) {
+      for (Substring nameSub : field.getNamesAsSubstrings()) {
         if (nameRefType != null && nameSub != null && !nameSub.isEmpty()) {
           final TextRange range = nameSub.getTextRange().shiftRight(offset);
           result.add(new DocStringParameterReference(element, range, nameRefType));
@@ -173,9 +174,9 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     String foundTag = null;
     for (String paramTag : paramTags) {
       int tagPos = docString.indexOf(paramTag, pos);
-      while(tagPos >= 0 && tagPos + paramTag.length() < docString.length() &&
-            Character.isLetterOrDigit(docString.charAt(tagPos + paramTag.length()))) {
-        tagPos = docString.indexOf(paramTag, tagPos+1);
+      while (tagPos >= 0 && tagPos + paramTag.length() < docString.length() &&
+             Character.isLetterOrDigit(docString.charAt(tagPos + paramTag.length()))) {
+        tagPos = docString.indexOf(paramTag, tagPos + 1);
       }
       if (tagPos >= 0 && tagPos < result) {
         foundTag = paramTag;

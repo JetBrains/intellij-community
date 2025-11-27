@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URISyntaxException;
 
-public final class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingParametersProvider {
+final class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingParametersProvider {
   @Override
   public @NotNull String augmentUrl(@NotNull String originalUrl) {
     return augmentUrl(originalUrl, ApplicationInfo.getInstance().getBuild().getProductCode());

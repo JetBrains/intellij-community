@@ -169,7 +169,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public static boolean isSixWithMetaclassCall(@NotNull PyExpression expression) {
-    if (expression instanceof PyCallExpression){
+    if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
 
       if (callee instanceof PyReferenceExpression) {
@@ -425,7 +425,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private static @NotNull List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type,
                                                              boolean addThisType,
                                                              @NotNull TypeEvalContext context,
-                                                             @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache) throws MROException {
+                                                             @NotNull Map<PyClassLikeType, Ref<List<PyClassLikeType>>> cache)
+    throws MROException {
     final Ref<List<PyClassLikeType>> computed = cache.get(type);
     if (computed != null) {
       if (computed.isNull()) {
@@ -689,8 +690,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public @NotNull List<PyFunction> multiFindInitOrNew(boolean inherited, @Nullable TypeEvalContext context) {
     final MultiNameFinder<PyFunction> processor = isNewStyleClass(context)
-      ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
-      : new MultiNameFinder<>(PyNames.INIT);
+                                                  ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
+                                                  : new MultiNameFinder<>(PyNames.INIT);
 
     visitMethods(processor, inherited, context);
     return processor.myResult;
@@ -1046,7 +1047,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
-  public boolean visitClassAttributes(Processor<? super PyTargetExpression> processor, boolean inherited, final @Nullable TypeEvalContext context) {
+  public boolean visitClassAttributes(Processor<? super PyTargetExpression> processor,
+                                      boolean inherited,
+                                      final @Nullable TypeEvalContext context) {
     List<PyTargetExpression> methods = getClassAttributes();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
@@ -1257,7 +1260,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public boolean isNewStyleClass(@Nullable TypeEvalContext context) {
     return NotNullLazyValue.<ParameterizedCachedValue<Boolean, TypeEvalContext>>lazy(() -> {
       return CachedValuesManager.getManager(getProject())
-        .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT), false);
+        .createParameterizedCachedValue(param -> new Result<>(calculateNewStyleClass(param), PsiModificationTracker.MODIFICATION_COUNT),
+                                        false);
     }).getValue().getValue(context);
   }
 
@@ -1790,7 +1794,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private static @Nullable PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                               @NotNull TypeEvalContext context) {
-    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
+    final PsiElement element =
+      ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType) {

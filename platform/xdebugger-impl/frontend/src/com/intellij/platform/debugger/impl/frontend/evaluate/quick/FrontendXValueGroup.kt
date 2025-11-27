@@ -4,7 +4,6 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.debugger.impl.rpc.XValueGroupDto
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueGroup
@@ -18,9 +17,7 @@ internal class FrontendXValueGroup(
   hasParentValue: Boolean,
 ) : XValueGroup(xValueGroupDto.groupName) {
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
-    XValueApi.getInstance().computeXValueGroupChildren(xValueGroupDto.id)
-  }
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue, xValueGroupDto.id)
 
   override fun computeChildren(node: XCompositeNode) {
     xValueContainer.computeChildren(node)

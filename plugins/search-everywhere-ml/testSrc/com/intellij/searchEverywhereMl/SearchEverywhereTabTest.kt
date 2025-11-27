@@ -74,7 +74,7 @@ internal class SearchEverywhereTabTest : BasePlatformTestCase() {
   }
 
   private fun SearchEverywhereTab.Companion.findTabWithActiveExperiment(experimentCondition: (ActiveExperiment) -> Boolean): Pair<SearchEverywhereTab.TabWithMlRanking, Int>? {
-   return SearchEverywhereTab.allTabs
+   return SearchEverywhereTab.tabsWithLogging
      .asSequence()
      .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
      .filter { it.isExperimentEnabled }

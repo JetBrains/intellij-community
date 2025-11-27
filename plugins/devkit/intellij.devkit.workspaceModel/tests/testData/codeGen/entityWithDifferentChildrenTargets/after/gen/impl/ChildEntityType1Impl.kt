@@ -30,12 +30,9 @@ import com.intellij.workspaceModel.test.api.EntityWithChildrenBuilder
 internal class ChildEntityType1Impl(private val dataSource: ChildEntityType1Data) : ChildEntityType1, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithChildren::class.java, ChildEntityType1::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithChildren::class.java, ChildEntityType1::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    private val connections = listOf<ConnectionId>(
-      PARENT_CONNECTION_ID,
-    )
+    private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
 
   }
 
@@ -58,8 +55,7 @@ internal class ChildEntityType1Impl(private val dataSource: ChildEntityType1Data
   }
 
 
-  internal class Builder(result: ChildEntityType1Data?) : ModifiableWorkspaceEntityBase<ChildEntityType1, ChildEntityType1Data>(
-    result), ChildEntityType1Builder {
+  internal class Builder(result: ChildEntityType1Data?) : ModifiableWorkspaceEntityBase<ChildEntityType1, ChildEntityType1Data>(result), ChildEntityType1Builder {
     internal constructor() : this(ChildEntityType1Data())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,9 +132,8 @@ internal class ChildEntityType1Impl(private val dataSource: ChildEntityType1Data
       get() {
         val _diff = diff
         return if (_diff != null) {
-          @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? EntityWithChildrenBuilder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as EntityWithChildrenBuilder)
+          @OptIn(EntityStorageInstrumentationApi::class) 
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? EntityWithChildrenBuilder) ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as EntityWithChildrenBuilder)
         }
         else {
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as EntityWithChildrenBuilder

@@ -424,7 +424,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             items = TerminalUiSettingsManager.CursorShape.entries,
             renderer = textListCellRenderer { it?.text },
           ).bindItem(optionsProvider::cursorShape.toNullableProperty())
-        }
+        }.layout(RowLayout.INDEPENDENT)
       }
     }
   }

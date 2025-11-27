@@ -99,6 +99,7 @@ private val nbsp = Pattern.compile("&nbsp;")
 private val tab = Pattern.compile("&#9;")
 
 fun isSpaceEntity(text: String): Boolean = text == nbsp.pattern() || text == tab.pattern()
+fun isShyEntity(text: String): Boolean = text == "&shy;"
 
 private fun inlineEntity(content: TextContent?, pattern: Pattern, space: Char): TextContent? {
   if (content == null) return null

@@ -5,10 +5,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.eel.LocalEelApi
 import com.intellij.python.community.impl.poetry.common.poetryPath
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.dsl.builder.Panel
@@ -39,7 +39,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
-internal class EnvironmentCreatorPoetry<P: PathHolder>(
+internal class EnvironmentCreatorPoetry<P : PathHolder>(
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
   errorSink: ErrorSink,
@@ -47,6 +47,10 @@ internal class EnvironmentCreatorPoetry<P: PathHolder>(
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val toolValidator: ToolValidator<P> = model.poetryViewModel.toolValidator
   override val installationVersion: String = "1.8.0"
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.poetryViewModel.poetryExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> PropertiesComponent.getInstance().poetryPath = path.toString() }
+  }
 
   private val isInProjectEnvFlow = MutableStateFlow(service<PoetryConfigService>().state.isInProjectEnv)
   private val isInProjectEnvProp = propertyGraph.property(isInProjectEnvFlow.value)
@@ -99,21 +103,10 @@ internal class EnvironmentCreatorPoetry<P: PathHolder>(
     }
   }
 
-  override suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?) {
-    if ((model.fileSystem as? FileSystem.Eel)?.eelApi !is LocalEelApi) return
-
-    val savingPath = (pathHolder as? PathHolder.Eel)?.path
-                     ?: (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
-
-    savingPath?.let {
-      PropertiesComponent.getInstance().poetryPath = it.toString()
-    }
-  }
-
   override suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk> {
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
     return when (basePythonBinaryPath) {
-      is PathHolder.Eel -> createNewPoetrySdk(moduleBasePath,  baseSdks, basePythonBinaryPath.path, installPackages)
+      is PathHolder.Eel -> createNewPoetrySdk(moduleBasePath, baseSdks, basePythonBinaryPath.path, installPackages)
       else -> return PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
   }

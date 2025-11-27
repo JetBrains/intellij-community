@@ -8,11 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
-import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
-import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.components.returnType
-import org.jetbrains.kotlin.analysis.api.components.scopeContext
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -266,7 +262,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
      */
     private fun getMatchersWithUserPrefixes(): List<Pair<PrefixMatcher, String>> {
         val prefix = prefixMatcher.prefix
-        val prefixWords = if (StringUtil.isCapitalized(prefix)) emptyArray() else NameUtil.splitNameIntoWords(prefix)
+        val prefixWords = if (StringUtil.isCapitalized(prefix)) emptyList() else NameUtil.splitNameIntoWordList(prefix)
 
         return prefixWords.indices.map { index ->
             val userPrefix = prefixWords.take(index).joinToString("")

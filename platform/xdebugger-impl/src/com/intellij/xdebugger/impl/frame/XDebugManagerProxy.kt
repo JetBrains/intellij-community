@@ -6,10 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -68,6 +69,9 @@ interface XDebugManagerProxy {
    * It's not supported in monolith mode.
    */
   fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId?
+
+
+  fun getWatchesManager(project: Project): XDebuggerWatchesManager
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")

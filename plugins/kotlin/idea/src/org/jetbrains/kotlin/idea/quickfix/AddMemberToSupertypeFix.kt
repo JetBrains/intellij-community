@@ -83,7 +83,7 @@ abstract class AddMemberToSupertypeFix(element: KtCallableDeclaration, private v
             val modifierToken = insertedMemberElement.modalityModifier()?.node?.elementType as? KtModifierKeywordToken
                 ?: return@executeWriteCommand
             if (insertedMemberElement.implicitModality() == modifierToken) {
-                RemoveModifierFixBase.invokeImpl(insertedMemberElement, modifierToken)
+                RemoveModifierFixBase.removeModifier(insertedMemberElement, modifierToken)
             }
         }
     }

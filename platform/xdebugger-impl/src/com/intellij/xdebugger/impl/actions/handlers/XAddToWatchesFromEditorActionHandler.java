@@ -64,7 +64,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
       .onSuccess(text -> {
         if (text == null) return;
         UIUtil.invokeLaterIfNeeded(() -> {
-          XDebugSessionTab tab = session.getSessionTab();
+          XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
           if (tab != null) {
             ((XWatchesViewImpl)tab.getWatchesView()).addWatchExpression(XExpressionImpl.fromText(text), -1, true, true);
           }

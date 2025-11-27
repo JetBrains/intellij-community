@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -14,7 +16,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.AppUIUtil
@@ -23,6 +24,7 @@ import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
+import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -72,8 +74,8 @@ internal suspend fun configureCssUiDefaults() {
     span("html style patching") {
       // create a separate copy for each case
       val globalStyleSheet = createGlobalStyleSheet()
-      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
-      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
     }
   }
 }
@@ -88,7 +90,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
     }
 
     // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-    if (SystemInfoRt.isLinux) {
+    if (OS.CURRENT == OS.Linux) {
       preloadFontJob?.join()
     }
   }
@@ -102,7 +104,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
 
   // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
   // and to compute system font data, we need to know `Label.font` UI default (that's why we compute base LaF first)
-  if (!isHeadless && !SystemInfoRt.isMac) {
+  if (!isHeadless && OS.CURRENT != OS.macOS) {
     JBUIScale.preload {
       runActivity("base LaF defaults getting") { baseLaF.defaults }
     }
@@ -113,7 +115,7 @@ internal fun scheduleInitAwtToolkit(scope: CoroutineScope, lockSystemDirsJob: Jo
   val task = scope.launch {
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit to avoid unnecessary focus stealing and space switching on macOS.
-    if (SystemInfoRt.isMac) {
+    if (OS.CURRENT == OS.macOS) {
       lockSystemDirsJob.join()
     }
 
@@ -195,7 +197,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 private fun blockATKWrapper() {
   // the registry must not be used here, because this method is called before application loading
   @Suppress("SpellCheckingInspection")
-  if (!SystemInfoRt.isLinux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
+  if (OS.CURRENT != OS.Linux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
     return
   }
 
@@ -238,8 +240,8 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (t: Throwable) {
-          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $t")
+        catch (e: Throwable) {
+          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $e")
         }
       }
     }

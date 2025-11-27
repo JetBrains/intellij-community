@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes.viewModel
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -12,6 +12,7 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.ui.split.createComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -30,7 +31,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * @see [com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi.getBackendChangesViewEvents]
  */
-internal class RpcChangesViewProxy(private val project: Project, scope: CoroutineScope) : ChangesViewProxy(scope) {
+internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : ChangesViewProxy(project, scope) {
   private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
 
   private val _eventsForFrontend =
@@ -42,11 +43,15 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
 
   val inclusionModel = MutableStateFlow<InclusionModel?>(null)
 
+  val diffableSelection = MutableStateFlow<ChangesViewDiffableSelection?>(null)
+
   private var _panel: JComponent? = null
   override val panel: JComponent
     get() = _panel ?: error("Panel is not initialized yet")
 
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  override val diffRequests = MutableSharedFlow<Pair<ChangesViewDiffAction, ClientId>>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   override fun setInclusionModel(model: InclusionModel?) {
     inclusionModel.value = model
@@ -59,8 +64,6 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
   }
-
-  override fun getActions(): List<AnAction> = emptyList()
 
   override fun isModelUpdateInProgress(): Boolean = false
 
@@ -76,10 +79,6 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
   }
 
   override fun resetViewImmediatelyAndRefreshLater() {
-  }
-
-  override fun setShowCheckboxes(value: Boolean) {
-    _eventsForFrontend.tryEmit(BackendChangesViewEvent.ToggleCheckboxes(value))
   }
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
@@ -112,6 +111,10 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
   }
 
   fun refreshPerformed(counter: Int) = refresher.refreshPerformed(counter)
+
+  fun selectionUpdated(selection: ChangesViewDiffableSelection?) {
+    diffableSelection.value = selection
+  }
 }
 
 private val REFRESH_TIMEOUT = 1.minutes
@@ -121,6 +124,7 @@ private class BackendRemoteCommitChangesViewModelRefresher(
   private val requestsSink: MutableSharedFlow<in BackendChangesViewEvent.RefreshRequested>,
 ) {
   private val refreshRequestCounter = AtomicInteger(0)
+
   /**
    * Once backend was notified about refresh applied with the given counter,
    * all the pending callbacks having counter less than or equal to it will be executed.

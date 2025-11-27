@@ -4,15 +4,16 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -23,13 +24,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class InlineWatchesRootNode extends WatchesRootNode {
   private final @NotNull XWatchesView myWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
 
   /**
-   * @deprecated Use {@link InlineWatchesRootNode#InlineWatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   * @deprecated Use {@link InlineWatchesRootNode#InlineWatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean, XDebuggerTreeState)} instead
    */
   @Deprecated(forRemoval = true)
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
@@ -40,15 +42,16 @@ public class InlineWatchesRootNode extends WatchesRootNode {
                                boolean watchesInVariables) {
     this(tree, watchesView,
          Objects.requireNonNull(((XVariablesView)watchesView).getSession()).getSessionData().getConfigurationName(),
-         stackFrame, watchesInVariables);
+         stackFrame, watchesInVariables, null);
   }
 
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
                                @NotNull XWatchesView watchesView,
                                @NotNull String configurationName,
                                @Nullable XStackFrame stackFrame,
-                               boolean watchesInVariables) {
-    super(tree, watchesView, configurationName, stackFrame, watchesInVariables);
+                               boolean watchesInVariables,
+                               XDebuggerTreeState stateToRecover) {
+    super(tree, watchesView, configurationName, stackFrame, watchesInVariables, stateToRecover);
     myWatchesView = watchesView;
     myInlinesGroup = new InlinesGroup(XDebuggerBundle.message("debugger.inline.watches.group.name"), true);
     myInlinesRootNode = new XValueGroupNodeImpl(tree, this, myInlinesGroup) {
@@ -57,8 +60,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
         return myInlinesGroup.getChildren();
       }
     };
-    List<InlineWatch> inlineWatches = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(tree.getProject()))
-      .getWatchesManager().getInlineWatches();
+    List<InlineWatch> inlineWatches = XDebugManagerProxy.getInstance().getWatchesManager(tree.getProject()).getInlineWatches();
 
     for (InlineWatch inlineWatch : inlineWatches) {
       myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, inlineWatch, stackFrame));

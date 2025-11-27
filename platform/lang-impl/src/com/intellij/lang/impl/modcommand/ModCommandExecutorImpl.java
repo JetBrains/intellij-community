@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -104,6 +105,9 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
     if (command instanceof ModNavigate nav) {
       return executeNavigate(project, nav, editor);
+    }
+    if (command instanceof ModRegisterTabOut tabOut) {
+      return executeTabOut(project, tabOut, editor);
     }
     if (command instanceof ModHighlight highlight) {
       return executeHighlight(project, highlight);
@@ -416,7 +420,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
       String name = chooser.title();
       if (actions.size() == 1) {
-        ModCommandAction action = actions.get(0).action();
+        ModCommandAction action = actions.getFirst().action();
         ModCommandExecutor.executeInteractively(restored, name, editor, () -> {
           if (action.getPresentation(restored) == null) return ModCommand.nop();
           return action.perform(restored);
@@ -471,6 +475,22 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (selectionStart != -1 && selectionEnd != -1) {
       fileEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
+    return true;
+  }
+
+  private static boolean executeTabOut(@NotNull Project project, ModRegisterTabOut tabOut, @Nullable Editor editor) {
+    VirtualFile file = actualize(tabOut.file());
+    if (file == null) return false;
+    int rangeStart = tabOut.rangeStart();
+    int rangeEnd = tabOut.rangeEnd();
+    int target = tabOut.target();
+
+    Editor fileEditor = getEditor(project, editor, file);
+
+    if (fileEditor == null) return false;
+    WriteAction.run(() -> {
+      TabOutScopesTracker.getInstance().registerScopeRange(fileEditor, rangeStart, rangeEnd, target);
+    });
     return true;
   }
 

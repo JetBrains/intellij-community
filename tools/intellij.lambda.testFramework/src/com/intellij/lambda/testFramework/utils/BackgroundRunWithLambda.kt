@@ -8,38 +8,47 @@ import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambda
+import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerializedLambda
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.reflect.KClass
 
 class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) : IBackgroundRun by delegate {
-  internal suspend fun LambdaRdTestSession.runLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  @Deprecated("Use LambdaRdTestSession.run instead")
+  internal suspend fun LambdaRdTestSession.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
     runLambda.startSuspending(rdSession.protocol!!.lifetime,
                               LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
   }
 
-  suspend fun runLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
-    return rdSession.runLambda(namedLambdaClass, params)
+  @Deprecated("Use LambdaRdTestSession.run instead")
+  suspend fun runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+    return rdSession.runNamedLambda(namedLambdaClass, params)
   }
 
-  suspend fun runLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
-    return (backendRdSession ?: rdSession).runLambda(namedLambdaClass, params)
+  @Deprecated("Use LambdaRdTestSession.runInBackend instead")
+  suspend fun runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+    return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
   }
 
 
-  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(crossinline lambda: suspend T.() -> Unit) {
-    val exec = SerializedLambda.Companion.fromLambdaWithCoroutineScope(lambda)
-    runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime,
-                                        LambdaRdSerializedLambda(exec.clazzName, exec.methodName, exec.serializedDataBase64,
-                                                                 exec.classPath.map { it.canonicalPath }))
+  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(name: String? = null, crossinline lambda: suspend T.() -> Unit) {
+    val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
+    val lambda = LambdaRdSerializedLambda("${this@run.protocol!!.name}: ${name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))}",
+                                          exec.serializedDataBase64,
+                                          exec.classPath.map { it.canonicalPath })
+    runLogged(lambda.stepName) {
+      runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime, lambda)
+    }
   }
 
-  suspend inline fun runSerializedLambda(crossinline lambda: suspend LambdaFrontendContext.() -> Unit) {
-    return rdSession.runSerializedLambda(lambda)
+  suspend inline fun run(name: String? = null, crossinline lambda: suspend LambdaFrontendContext.() -> Unit) {
+    return rdSession.run(name, lambda)
   }
 
-  suspend inline fun runSerializedLambdaInBackend(crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
-    return (backendRdSession ?: rdSession).runSerializedLambda(lambda)
+  suspend inline fun runInBackend(name: String? = null, crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
+    return (backendRdSession ?: rdSession).run(name, lambda)
   }
 }

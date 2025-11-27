@@ -5,4 +5,3 @@
 val test : <caret>
 
 // ELEMENT: Int
-// USE_EXPENSIVE_RENDERER

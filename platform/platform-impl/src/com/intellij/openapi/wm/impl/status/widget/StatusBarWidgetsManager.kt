@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.impl.status.ChildStatusBarWidget
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
 import com.intellij.platform.util.coroutines.childScope
@@ -211,7 +212,7 @@ class StatusBarWidgetsManager(
 
     incModificationCount()
 
-    StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatusBarWidgetFactory> {
+    StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(parentScope, object : ExtensionPointListener<StatusBarWidgetFactory> {
       override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
         if (LightEdit.owns(project) && extension !is LightEditCompatible) {
           return
@@ -237,7 +238,7 @@ class StatusBarWidgetsManager(
           incModificationCount()
         }
       }
-    }, this)
+    })
 
     return widgets
   }
@@ -252,21 +253,49 @@ private fun createWidget(
     return factory.createWidget(dataContext.project, parentScope)
   }
 
-  return object : StatusBarWidget, CustomStatusBarWidget {
-    private val scope = lazy { parentScope.childScope(name = "${factory.id}-widget-scope") }
-
-    override fun ID(): String = factory.id
-
-    override fun getComponent(): JComponent {
-      val scope = scope.value
-      return createComponentByWidgetPresentation(factory.createPresentation(dataContext, scope), dataContext.project, scope)
-    }
-
-    override fun dispose() {
-      if (scope.isInitialized()) {
-        scope.value.cancel()
-      }
-    }
-  }
+  val widgetScope = parentScope.childScope("${factory.id}-widget")
+  return WidgetPresentationWrapper(id = factory.id, factory = factory, dataContext = dataContext, scope = widgetScope)
 }
 
+/**
+ * Wrapper for V2 status bar widgets (those using WidgetPresentationFactory).
+ * Implements ChildStatusBarWidget to support child status bars in detached windows.
+ */
+internal class WidgetPresentationWrapper(
+  private val id: String,
+  private val factory: WidgetPresentationFactory,
+  private val dataContext: WidgetPresentationDataContext,
+  private val scope: CoroutineScope,
+) : StatusBarWidget, CustomStatusBarWidget, ChildStatusBarWidget {
+  override fun ID(): String = id
+
+  override fun install(statusBar: StatusBar) {}
+
+  override fun getComponent(): JComponent {
+    return createComponentByWidgetPresentation(
+      factory.createPresentation(dataContext, scope),
+      dataContext.project,
+      scope
+    )
+  }
+
+  override fun dispose() {
+    scope.cancel()
+  }
+
+  override fun createForChild(childStatusBar: IdeStatusBarImpl): StatusBarWidget {
+    val childScope = childStatusBar.coroutineScope.childScope("$id-widget")
+    return WidgetPresentationWrapper(
+      id = id,
+      factory = factory,
+      dataContext = object : WidgetPresentationDataContext {
+        override val project: Project
+          get() = requireNotNull(childStatusBar.project) { "Project is null for child status bar, probably already disposed" }
+
+        override val currentFileEditor: StateFlow<FileEditor?>
+          get() = childStatusBar.currentEditor
+      },
+      scope = childScope,
+    )
+  }
+}

@@ -758,7 +758,6 @@ f:com.intellij.openapi.vcs.changes.ChangesPreprocess
 com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-- a:isAllowExcludeFromCommit():Z
 - a:resetViewImmediatelyAndRefreshLater():V
 - a:scheduleRefresh(java.lang.Runnable):V
 com.intellij.openapi.vcs.changes.ChangesViewI
@@ -778,7 +777,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
 - s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
-- isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
@@ -796,12 +794,16 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier
 - <init>(com.intellij.openapi.project.Project):V
 - get():java.lang.String
 Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+- sf:Companion:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
+- a:getAllowExcludeFromCommit():kotlinx.coroutines.flow.StateFlow
 - f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$ChangesViewWorkflowListener
 - java.util.EventListener
 - a:commitWorkflowChanged():V
+f:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.DiffPreviewProvider
 - a:createDiffRequestProcessor():com.intellij.diff.impl.DiffRequestProcessor
 - a:getEditorTabName(com.intellij.diff.impl.DiffRequestProcessor):java.lang.String
@@ -2261,6 +2263,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - sf:getToolWindowFor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.wm.ToolWindow
 - sf:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- f:isCommitToolWindowEnabled():kotlinx.coroutines.flow.StateFlow
 - sf:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isContentSelected(java.lang.String):Z
 - sf:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
@@ -3502,7 +3505,6 @@ a:com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 - p:<init>(com.intellij.openapi.vcs.FilePath):V
 - p:<init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):V
 - p:<init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
-- p:<init>(java.lang.String):V
 - a:contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - getFileSystem():com.intellij.openapi.vfs.VirtualFileSystem
@@ -3550,11 +3552,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFile
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsFileRevision):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsFileRevision):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision):V
-- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision,com.intellij.openapi.vfs.VirtualFileSystem):V
-- <init>(java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision):V
-- <init>(java.lang.String,com.intellij.openapi.vcs.history.VcsFileRevision,com.intellij.openapi.vfs.VirtualFileSystem):V
-- <init>(java.lang.String,B[],java.lang.String):V
-- <init>(java.lang.String,B[],java.lang.String,com.intellij.openapi.vfs.VirtualFileSystem):V
 - contentsToByteArray():B[]
 - getCharset():java.nio.charset.Charset
 - getFileRevision():com.intellij.openapi.vcs.history.VcsFileRevision
@@ -3564,8 +3561,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFile
 c:com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 - com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vfs.VirtualFile):V
-- <init>(java.lang.String,com.intellij.openapi.vfs.VirtualFile):V
-- <init>(java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFileSystem):V
 - contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - isDirectory():Z
@@ -3954,7 +3949,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - activate():Z
 - deactivate(Z):V
-- dispose():V
 - endExecution():V
 - expand(java.lang.Object):V
 - getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi
@@ -4080,7 +4074,7 @@ c:com.intellij.vcs.commit.CommitProgressPanel
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.openapi.vcs.changes.InclusionListener
 - com.intellij.vcs.commit.CommitProgressUi
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitWorkflowUi,com.intellij.ui.EditorTextComponent):V
 - addCommitCheckFailure(com.intellij.vcs.commit.CommitCheckFailure):V
 - p:buildErrorText():java.lang.String

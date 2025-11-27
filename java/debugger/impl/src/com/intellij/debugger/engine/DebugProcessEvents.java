@@ -390,6 +390,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadDeathRequest()),
                                    event -> {
                                      ThreadReference thread = ((ThreadDeathEvent)event).thread();
+
+                                     mySteppingProgressTracker.processTheadDeath(thread);
+
+                                     ThreadSteppingMonitor.checkSteppingIsOverOnThreadDeath((SuspendManagerImpl)getSuspendManager(), thread);
+
                                      machineProxy.threadStopped(thread);
                                      forEachSafe(myDebugProcessListeners, it -> it.threadStopped(this, thread));
                                    });
@@ -519,6 +524,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void processStepEvent(@NotNull SuspendContextImpl suspendContext, StepEvent event) {
     logSuspendContext(suspendContext, () -> "process step event");
     final ThreadReference thread = event.thread();
+
+    Requestor requestor = RequestManagerImpl.findRequestor(event.request());
+    if (requestor != null) {
+      getRequestsManager().deleteRequest(requestor);
+    }
+
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
@@ -567,19 +578,25 @@ public class DebugProcessEvents extends DebugProcessImpl {
         StatisticsStorage.stepRequestCompleted(this, commandToken);
         showStatusText("");
         stopWatchingMethodReturn();
-        getSuspendManager().voteSuspend(suspendContext);
-        if (hint != null) {
-          final MethodFilter methodFilter = hint.getMethodFilter();
-          if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-            String methodName = namedMethodFilter.getMethodName();
-            String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
-            XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
-            DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
+        RequestHint lastHint = hint;
+        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            getSuspendManager().voteSuspend(suspendContext);
+            if (lastHint != null) {
+              final MethodFilter methodFilter = lastHint.getMethodFilter();
+              if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !lastHint.wasStepTargetMethodMatched()) {
+                String methodName = namedMethodFilter.getMethodName();
+                String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
+                XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+                DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
+              }
+              if (lastHint.wasStepTargetMethodMatched()) {
+                suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), lastHint);
+              }
+            }
           }
-          if (hint.wasStepTargetMethodMatched()) {
-            suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
-          }
-        }
+        });
       }
       return;
     }
@@ -632,7 +649,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         logSuspendContext(suspendContext, () -> "start locatable event processing");
-        final SuspendManager suspendManager = getSuspendManager();
+        final SuspendManagerImpl suspendManager = (SuspendManagerImpl)getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
@@ -665,7 +682,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD &&
                   myRunToCursorManager.shouldTryToPauseAnotherHit(suspendContext)) {
                 postponeSuspendRunToCursorBP = true;
-              } else {
+              } else if (mySteppingProgressTracker.isSuspendAllStepping() ||
+                         !suspendManager.getSuspendAllContexts().isEmpty() ||
+                         requestor instanceof SyntheticBreakpoint
+              ) {
                 // notify only if the current session is not one with evaluations hidden from the user
                 if (!checkContextIsFromImplicitThread(suspendContext)) {
                   notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
@@ -673,6 +693,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
                 suspendManager.voteResume(suspendContext);
                 return;
+              } else {
+                suspendContext.threadFilterWasPassed = false;
               }
             }
           }

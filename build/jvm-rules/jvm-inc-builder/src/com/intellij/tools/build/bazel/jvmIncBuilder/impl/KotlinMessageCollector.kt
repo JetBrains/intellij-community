@@ -22,7 +22,7 @@ class KotlinMessageCollector(
     val kind = kind(severity)
     if (kind != null) {
       if (location != null) {
-        text += "\n\t${location.path} (${location.line}:${location.column})"
+        text += "\n\t${location.path}:${location.line}:${location.column}"
       }
       diagnosticSink.report(Message.create(myOwner, kind, text))
     }

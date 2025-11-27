@@ -67,7 +67,34 @@ public final class ObjectTree {
       if (isDisposed(parent)) {
         return false;
       }
-      register(parent, child);
+      if (parent == child) {
+        throw new IllegalArgumentException("Cannot register to itself: " + parent);
+      }
+
+      myDisposedObjects.remove(child);
+      if (child instanceof Disposer.CheckedDisposableImpl) {
+        // if we dispose a child and then register it back, it means it's not disposed anymore
+        ((Disposer.CheckedDisposableImpl)child).isDisposed = false;
+      }
+
+      ObjectNode parentNode = getParentNode(parent).findOrCreateChildNode(parent);
+      ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
+      myObject2ParentNode.put(child, parentNode);
+
+      assert childNode.getObject() == child;
+      checkWasNotAddedAlreadyAsChild(parentNode, childNode);
+
+      // parent could be disposed outside our lock while we are messing with the pointers here - undo registering in this case
+      if (isDisposed(parent)) {
+        List<Disposable> disposables = new ArrayList<>();
+        childNode.removeChildNodesRecursively(disposables, this, null, null);
+        for (Disposable disposable : disposables) {
+          myObject2ParentNode.remove(disposable);
+        }
+        parentNode.removeChildNode(childNode);
+        return false;
+      }
+
       return true;
     }
   }

@@ -1,4 +1,4 @@
-// "Change return type of enclosing function 'foo' to 'U'" "true"
+// "Specify 'U' return type for enclosing function 'foo'" "true"
 interface T
 interface U
 

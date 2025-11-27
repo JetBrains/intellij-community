@@ -20,7 +20,6 @@ internal class InlineCompletionHandlerImpl(
 ) : InlineCompletionHandler(scope, editor, parentDisposable) {
 
   init {
-    addEventListener(InlineCompletionNoSuggestionsListener(editor))
     InlineCompletionOnboardingListener.createIfOnboarding(editor)?.let(::addEventListener)
   }
 

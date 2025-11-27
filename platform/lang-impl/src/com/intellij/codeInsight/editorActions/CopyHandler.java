@@ -72,7 +72,9 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
     try {
       typingActionsExtension.startCopy(project, editor);
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.compute(() -> getSelectionAction(editor, project, file, options)),
+        () -> ReadAction.nonBlocking(() -> getSelectionAction(editor, project, file, options))
+          .expireWhen(() -> editor.isDisposed() || !file.isValid())
+          .executeSynchronously(),
         ActionsBundle.message("action.EditorCopy.text"), true, project);
     }
     finally {

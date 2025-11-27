@@ -1,9 +1,10 @@
-from _typeshed import Incomplete
+import logging
 
 from hvac.api.vault_api_base import VaultApiBase
 
 DEFAULT_MOUNT_POINT: str
-logger: Incomplete
+
+logger: logging.Logger
 
 class Azure(VaultApiBase):
     def configure(self, tenant_id, resource, environment=None, client_id=None, client_secret=None, mount_point="azure"): ...

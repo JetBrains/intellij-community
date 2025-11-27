@@ -111,6 +111,12 @@ fun JEditorUiComponent.shouldContainText(expectedText: String, message: String? 
   }
 }
 
+fun JEditorUiComponent.shouldNotContainText(notExpectedText: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): JEditorUiComponent {
+  return should(message ?: "Editor should not contain text: $notExpectedText", timeout) {
+    !text.contains(notExpectedText)
+  }
+}
+
 val enabled: UiComponent.() -> Boolean = { isEnabled() }
 
 val notEnabled: UiComponent.() -> Boolean = { !isEnabled() }

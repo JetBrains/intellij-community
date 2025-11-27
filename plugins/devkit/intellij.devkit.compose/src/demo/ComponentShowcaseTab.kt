@@ -52,7 +52,8 @@ internal fun ComponentShowcaseTab(project: Project) {
   VerticallyScrollableContainer {
     Row(
       modifier =
-        Modifier.trackComponentActivation(LocalComponent.current)
+        Modifier
+          .trackComponentActivation(LocalComponent.current)
           .fillMaxSize()
           .background(bgColor)
           .padding(16.dp),
@@ -68,6 +69,8 @@ internal fun ComponentShowcaseTab(project: Project) {
 private fun RowScope.ColumnOne() {
   Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
     var activated by remember { mutableStateOf(false) }
+    val popupData = remember { listOf("Hello", "World", "Super long string to test how overflow would work") }
+
     Text(
       "Here is a selection of our finest components(activated: $activated):",
       Modifier.onActivated { activated = it },
@@ -78,16 +81,17 @@ private fun RowScope.ColumnOne() {
     val focusRequester = remember { FocusRequester() }
 
     ListComboBox(
-      items = remember { listOf("Hello", "World") },
+      items = popupData,
       selectedIndex = selectedItem,
       onSelectedItemChange = { selectedItem = it },
       modifier =
         Modifier
+          .widthIn(min = 200.dp, max = 350.dp)
           .focusRequester(focusRequester)
           .onFirstVisible { focusRequester.requestFocus() },
     )
     ListComboBox(
-      items = remember { listOf("Hello", "World") },
+      items = popupData,
       selectedIndex = selectedItem,
       onSelectedItemChange = { selectedItem = it },
       enabled = false,

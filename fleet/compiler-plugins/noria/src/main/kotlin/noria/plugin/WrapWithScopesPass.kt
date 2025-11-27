@@ -4,41 +4,35 @@ import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
-import org.jetbrains.kotlin.backend.jvm.codegen.isExtensionFunctionType
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
+import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.getAnnotation
+import org.jetbrains.kotlin.ir.util.dumpKotlinLike
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.irCall
-import org.jetbrains.kotlin.ir.util.superTypes
-
-fun IrType.isNoriaReceiver(): Boolean {
-  return classOrNull?.isClassWithFqName(NoriaRuntime.NoriaContextFqn.toUnsafe()) == true
-    || classOrNull?.superTypes()?.any { it.isNoriaReceiver() } == true
-}
 
 object WrapWithScopesPass : IrGenerationExtension {
   override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-    //log("processing module ${moduleFragment.dump()}")
     moduleFragment.transform(object : IrElementTransformerVoidWithContext() {
 
       var caller: IrFunction? = null
       private var nextId = 0
-      private var optOutAnnotationCount = 0
+      private var explicitGroupsAnnotationCount = 0
 
       override fun visitFunctionNew(declaration: IrFunction): IrStatement {
         val oldCaller = caller
         caller = declaration
-        val hasOptOutAnnotation = declaration.hasOptOutFromInnerScopesAnnotation
-        optOutAnnotationCount += hasOptOutAnnotation.toInt()
+        val hasExplicitGroupsAnnotation = declaration.hasExplicitGroupsComposableAnnotation
+        if (hasExplicitGroupsAnnotation) {
+          explicitGroupsAnnotationCount++
+        }
         val declarationPrime = if (oldCaller == null) {
           val oldNextId = nextId
           nextId = 0
@@ -49,43 +43,83 @@ object WrapWithScopesPass : IrGenerationExtension {
         else {
           super.visitFunctionNew(declaration)
         }
-        optOutAnnotationCount -= hasOptOutAnnotation.toInt()
+        if (hasExplicitGroupsAnnotation) {
+          explicitGroupsAnnotationCount--
+        }
         caller = oldCaller
         return declarationPrime
       }
 
       override fun visitCall(expression: IrCall): IrExpression {
         return super.visitCall(expression).let { expressionPrime ->
-          if (optOutAnnotationCount == 0) {
+          if (explicitGroupsAnnotationCount == 0) {
             (expressionPrime as? IrCall)?.let { call ->
-              call.withExtensionReceiver { extensionReceiver, newCallBuilder ->
+              val calledFunction = call.symbol.owner
+              val shouldWrapWithScope = if (calledFunction.name.identifierOrNullIfSpecial == "invoke") {
+                calledFunction
+                  .parameters
+                  .any {
+                    it is IrValueParameter &&
+                    (it.kind == IrParameterKind.DispatchReceiver || it.kind == IrParameterKind.ExtensionReceiver) &&
+                    call.arguments[it.indexInParameters]!!.type.shouldBeWrappedWithScopes
+                  } ||
+                calledFunction.shouldBeWrappedWithScopes
+              }
+              else {
+                calledFunction.shouldBeWrappedWithScopes
+              }
+              if (shouldWrapWithScope) {
                 caller?.let { caller ->
-                  DeclarationIrBuilder(generatorContext = IrGeneratorContextBase(pluginContext.irBuiltIns),
-                                       symbol = caller.symbol)
-                    .irBlock(resultType = call.type) {
-                      val receiverTmp = irTemporary(extensionReceiver)
+                  val noriaContextParameter = calledFunction.parameters.find {
+                    it.name == NoriaParamTransformer.NoriaContextParameterName
+                  }
+                  checkNotNull(noriaContextParameter) {
+                    "Function ${calledFunction.name} has @Composable annotation, but doesn't have a NoriaContext parameter:\n${expression.dumpKotlinLike()}"
+                  }
 
-                      +irCall(rtEnterScope)
-                        .apply {
-                          arguments[0] = irGet(receiverTmp)
-                          arguments[1] = irInt(++nextId)
-                        }
+                  val noriaContextArgument = checkNotNull(call.arguments[noriaContextParameter.indexInParameters]) {
+                    "Function ${calledFunction.name} has @Composable annotation, but NoriaContext parameter is missing from the call"
+                  }
 
-                      val resultTmp = newCallBuilder(receiverTmp)
-                      +irCall(rtExitScope)
-                        .apply {
-                          arguments[0] = irGet(receiverTmp)
-                        }
+                  return DeclarationIrBuilder(
+                    generatorContext = IrGeneratorContextBase(pluginContext.irBuiltIns),
+                    symbol = caller.symbol
+                  ).irBlock(resultType = call.type) {
+                    val contextTmp = irTemporary(noriaContextArgument)
 
-                      +irGet(resultTmp)
+                    +irCall(rtEnterScope).apply {
+                      arguments[0] = irGet(contextTmp)
+                      arguments[1] = irInt(++nextId)
                     }
-                } ?: call
+
+                    val resultTmp = irTemporary(
+                      irCall(call, call.symbol).apply {
+                        arguments[noriaContextParameter.indexInParameters] = irGet(contextTmp)
+                      }) //irTemporary(call)
+
+                    +irCall(rtExitScope).apply {
+                      arguments[0] = irGet(contextTmp)
+                    }
+
+                    +irGet(resultTmp)
+                  }
+
+                }
+              }
+              else {
+                call
               }
             } ?: expressionPrime
           }
           else {
-            expression
+            expressionPrime
           }
+        }
+      }
+
+      override fun visitFileNew(declaration: IrFile): IrFile {
+        return includeFileNameInExceptionTrace(declaration) {
+          super.visitFileNew(declaration)
         }
       }
 
@@ -97,51 +131,14 @@ object WrapWithScopesPass : IrGenerationExtension {
         funByName("RTexitScope", NoriaRuntime.NoriaRuntimeFqn, pluginContext, moduleFragment)
       }
     }, null)
-    //log("after: ${moduleFragment.dump()}")
   }
 }
 
-private fun IrCall.withExtensionReceiver(block: (IrExpression?, IrStatementsBuilder<*>.(IrVariable) -> IrVariable) -> IrExpression): IrExpression {
-  val extensionParameter = symbol.owner.parameters.firstOrNull { it.kind == IrParameterKind.ExtensionReceiver }
-  val firstValueArgument = symbol.owner.parameters.firstOrNull { it.kind == IrParameterKind.Regular || it.kind == IrParameterKind.Context }
-  return when {
-    symbol.owner.hasOptOutFromOuterScopesAnnotation -> this
-    extensionParameter?.type?.isNoriaReceiver() == true -> {
-      arguments[extensionParameter]?.let { extensionReceiver ->
-        block(extensionReceiver) { receiverTmp ->
-          irTemporary(
-            irCall(this@withExtensionReceiver, this@withExtensionReceiver.symbol)
-              .apply {
-                this.arguments[extensionParameter] = irGet(receiverTmp)
-              })
-        }
-      } ?: this
-    }
-    firstValueArgument != null && isExtensionFunctionOnNoriaContext(firstValueArgument) -> {
-      val extensionReceiver = arguments[firstValueArgument]
-      block(extensionReceiver) { receiverTmp ->
-        irTemporary(
-          irCall(this@withExtensionReceiver, this@withExtensionReceiver.symbol)
-            .apply {
-              arguments[firstValueArgument] = irGet(receiverTmp)
-            })
-      }
-    }
-    else -> this
-  }
-}
+private val IrAnnotationContainer.shouldBeWrappedWithScopes: Boolean
+  get() = hasComposableAnnotation && !hasReadonlyComposableAnnotation
 
-val IrAnnotationContainer.hasOptOutFromOuterScopesAnnotation: Boolean
-  get() = getAnnotation(NoriaRuntime.OptOutFromOuterScopes) != null
+val IrAnnotationContainer.hasExplicitGroupsComposableAnnotation: Boolean
+  get() = hasAnnotation(NoriaRuntime.ExplicitGroupsComposable)
 
-val IrAnnotationContainer.hasOptOutFromInnerScopesAnnotation: Boolean
-  get() = getAnnotation(NoriaRuntime.OptOutFromInnerScopes) != null
-
-private fun IrCall.isExtensionFunctionOnNoriaContext(firstValueParameter: IrValueParameter): Boolean {
-  return (dispatchReceiver?.type
-            ?.takeIf { it.isExtensionFunctionType } // function is an extension function
-            ?.let { it as? IrSimpleType }?.arguments?.firstOrNull()?.typeOrNull?.isNoriaReceiver() == true // extension receiver is NoriaContext
-          && arguments[firstValueParameter]?.type?.isNoriaReceiver() == true) // the first argument (extension receiver) is NoriaContext
-}
-
-private fun Boolean.toInt() = if (this) 1 else 0
+val IrAnnotationContainer.hasReadonlyComposableAnnotation: Boolean
+  get() = hasAnnotation(NoriaRuntime.ReadOnlyComposable)

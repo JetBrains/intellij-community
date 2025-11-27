@@ -13,13 +13,13 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
-import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
+import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.KotlinGradleScriptEntitySource
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import java.util.function.Function
 import javax.swing.JComponent
 
-class OpenAdvancedSettingsNotificationProvider() : EditorNotificationProvider {
+class OpenAdvancedSettingsNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile

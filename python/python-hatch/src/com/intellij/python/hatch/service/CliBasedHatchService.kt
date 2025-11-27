@@ -61,7 +61,7 @@ internal class CliBasedHatchService private constructor(
     }
   }
 
-  override suspend fun isHatchManagedProject(): PyResult<Boolean> {
+  override suspend fun isHatchManagedProject(): Boolean {
     val isHatchManaged = withContext(Dispatchers.IO) {
       when {
         workingDirectoryPath.resolve("hatch.toml").exists() -> true
@@ -72,7 +72,7 @@ internal class CliBasedHatchService private constructor(
         }
       }
     }
-    return Result.success(isHatchManaged)
+    return isHatchManaged
   }
 
 

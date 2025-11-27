@@ -1,6 +1,8 @@
 <idea-plugin package="org.jetbrains.idea.devkit.debugger">
   <dependencies>
     <plugin id="com.intellij.java"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
   </dependencies>
   <resource-bundle>messages.DevKitDebuggerBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">

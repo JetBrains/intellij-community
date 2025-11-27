@@ -4,11 +4,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.application.PipelineCall
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.request.receiveText
 import io.ktor.server.response.respond
@@ -28,17 +24,14 @@ import io.ktor.utils.io.KtorDsl
 import io.modelcontextprotocol.kotlin.sdk.JSONRPCMessage
 import io.modelcontextprotocol.kotlin.sdk.JSONRPCRequest
 import io.modelcontextprotocol.kotlin.sdk.Method
-import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
-import io.modelcontextprotocol.kotlin.sdk.server.Server
+import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import io.modelcontextprotocol.kotlin.sdk.server.SseServerTransport
+import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
+import io.modelcontextprotocol.kotlin.sdk.shared.Transport
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.*
 import kotlin.coroutines.CoroutineContext
 
 private val logger = logger<RoutingContext>()
@@ -46,7 +39,7 @@ private val logger = logger<RoutingContext>()
 @KtorDsl
 fun Application.mcpPatched(
   prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit,
-  block: suspend (ApplicationCall) -> Server,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transports = ConcurrentMap<String, SseServerTransport>()
   val streamableSessions = ConcurrentMap<String, StreamableSession>()
@@ -83,19 +76,19 @@ fun Application.mcpPatched(
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: suspend (ApplicationCall) -> Server,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
 
-  val server = block(call)
+  val serverSession = block(call, transport)
 
-  server.onClose {
+  serverSession.onClose {
     logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
     transports.remove(transport.sessionId)
   }
 
-  server.connect(transport)
   logger.trace { "Server connected to transport for sessionId: ${transport.sessionId}" }
+  awaitCancellation()
 }
 
 internal fun ServerSSESession.mcpSseTransport(
@@ -137,7 +130,7 @@ internal suspend fun RoutingContext.mcpPostEndpoint(
 
 private suspend fun RoutingContext.handleStreamablePost(
   sessions: ConcurrentMap<String, StreamableSession>,
-  block: suspend (ApplicationCall) -> Server,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ) {
   val rawBody = try {
     call.receiveText()
@@ -225,10 +218,10 @@ private suspend fun RoutingContext.findStreamableSession(
 private suspend fun createStreamableSession(
   applicationCall: ApplicationCall,
   sessions: ConcurrentMap<String, StreamableSession>,
-  block: suspend (ApplicationCall) -> Server,
+  block: suspend (ApplicationCall, Transport) -> ServerSession,
 ): StreamableSession {
   val transport = StreamableHttpServerTransport()
-  val server = block(applicationCall)
+  val serverSession = block(applicationCall, transport)
 
   transport.onError {
     logger.error("Error in Streamable HTTP transport", it)
@@ -237,14 +230,14 @@ private suspend fun createStreamableSession(
     logger.trace { "Streamable HTTP transport closed for session ${transport.sessionId}" }
     sessions.remove(transport.sessionId)
   }
-  server.onClose {
+  serverSession.onClose {
     logger.trace { "Server closed for Streamable HTTP session ${transport.sessionId}" }
     sessions.remove(transport.sessionId)
   }
 
-  server.connect(transport)
+  serverSession.connect(transport)
 
-  val session = StreamableSession(transport, server)
+  val session = StreamableSession(transport, serverSession)
   sessions[transport.sessionId] = session
   logger.trace { "Streamable HTTP session started with id ${transport.sessionId}" }
   return session
@@ -280,7 +273,7 @@ private suspend fun RoutingContext.respondJsonError(status: HttpStatusCode, code
 }
 
 private data class ParsedMessages(val messages: List<JSONRPCMessage>, val isBatch: Boolean)
-private data class StreamableSession(val transport: StreamableHttpServerTransport, val server: Server)
+private data class StreamableSession(val transport: StreamableHttpServerTransport, val server: ServerSession)
 
 //–– your custom context element
 class HttpRequestElement(val request: ApplicationRequest) : CoroutineContext.Element {

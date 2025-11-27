@@ -7,6 +7,13 @@ from braintree.amex_express_checkout_card import AmexExpressCheckoutCard as Amex
 from braintree.android_pay_card import AndroidPayCard as AndroidPayCard
 from braintree.apple_pay_card import ApplePayCard as ApplePayCard
 from braintree.apple_pay_gateway import ApplePayGateway as ApplePayGateway
+from braintree.bank_account_instant_verification_gateway import (
+    BankAccountInstantVerificationGateway as BankAccountInstantVerificationGateway,
+)
+from braintree.bank_account_instant_verification_jwt import BankAccountInstantVerificationJwt as BankAccountInstantVerificationJwt
+from braintree.bank_account_instant_verification_jwt_request import (
+    BankAccountInstantVerificationJwtRequest as BankAccountInstantVerificationJwtRequest,
+)
 from braintree.blik_alias import BlikAlias as BlikAlias
 from braintree.braintree_gateway import BraintreeGateway as BraintreeGateway
 from braintree.client_token import ClientToken as ClientToken
@@ -62,10 +69,12 @@ from braintree.paypal_payment_resource import PayPalPaymentResource as PayPalPay
 from braintree.plan import Plan as Plan
 from braintree.plan_gateway import PlanGateway as PlanGateway
 from braintree.processor_response_types import ProcessorResponseTypes as ProcessorResponseTypes
+from braintree.receiver import Receiver as Receiver
 from braintree.resource_collection import ResourceCollection as ResourceCollection
 from braintree.risk_data import RiskData as RiskData
 from braintree.samsung_pay_card import SamsungPayCard as SamsungPayCard
 from braintree.search import Search as Search
+from braintree.sender import Sender as Sender
 from braintree.sepa_direct_debit_account import SepaDirectDebitAccount as SepaDirectDebitAccount
 from braintree.settlement_batch_summary import SettlementBatchSummary as SettlementBatchSummary
 from braintree.signature_service import SignatureService as SignatureService
@@ -84,9 +93,11 @@ from braintree.transaction_details import TransactionDetails as TransactionDetai
 from braintree.transaction_gateway import TransactionGateway as TransactionGateway
 from braintree.transaction_line_item import TransactionLineItem as TransactionLineItem
 from braintree.transaction_search import TransactionSearch as TransactionSearch
+from braintree.transaction_us_bank_account_request import TransactionUsBankAccountRequest as TransactionUsBankAccountRequest
 from braintree.transfer import Transfer as Transfer
 from braintree.unknown_payment_method import UnknownPaymentMethod as UnknownPaymentMethod
 from braintree.us_bank_account import UsBankAccount as UsBankAccount
+from braintree.us_bank_account_verification import UsBankAccountVerification as UsBankAccountVerification
 from braintree.validation_error_collection import ValidationErrorCollection as ValidationErrorCollection
 from braintree.venmo_account import VenmoAccount as VenmoAccount
 from braintree.venmo_profile_data import VenmoProfileData as VenmoProfileData

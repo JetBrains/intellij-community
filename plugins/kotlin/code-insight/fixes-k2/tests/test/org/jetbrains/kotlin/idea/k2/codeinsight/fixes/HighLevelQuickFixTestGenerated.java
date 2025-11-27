@@ -5318,6 +5318,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/assignedInFunInClass.kt");
             }
 
+            @TestMetadata("callWithTypeArguments.kt")
+            public void testCallWithTypeArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/callWithTypeArguments.kt");
+            }
+
             @TestMetadata("callableRef.kt")
             public void testCallableRef() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/callableRef.kt");
@@ -5346,6 +5351,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("fromDelegateConstructorCall.kt")
             public void testFromDelegateConstructorCall() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
+            }
+
+            @TestMetadata("fromQualifiedCallExpression.kt")
+            public void testFromQualifiedCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromQualifiedCallExpression.kt");
             }
 
             @TestMetadata("fromUnqualifiedCallExpression.kt")
@@ -8019,6 +8029,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("binaryExpressions.kt")
+        public void testBinaryExpressions() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/binaryExpressions.kt");
+        }
+
         @TestMetadata("if.kt")
         public void testIf() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/if.kt");
@@ -8027,6 +8042,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("ignoredWithAnnotation.kt")
         public void testIgnoredWithAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/ignoredWithAnnotation.kt");
+        }
+
+        @TestMetadata("nestedBinaryExpressions.kt")
+        public void testNestedBinaryExpressions() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/nestedBinaryExpressions.kt");
         }
 
         @TestMetadata("parentheses.kt")
@@ -10331,6 +10351,40 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("withComments.kt")
         public void testWithComments() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/namedLambdaContextParameter/withComments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration")
+    public static class NavigateToConflictingDeclaration extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classifierRedeclaration.kt")
+        public void testClassifierRedeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/classifierRedeclaration.kt");
+        }
+
+        @TestMetadata("conflictingOverloads.kt")
+        public void testConflictingOverloads() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/conflictingOverloads.kt");
+        }
+
+        @TestMetadata("redeclaration.kt")
+        public void testRedeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/redeclaration.kt");
+        }
+
+        @TestMetadata("redeclaration_local.kt")
+        public void testRedeclaration_local() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/redeclaration_local.kt");
         }
     }
 
@@ -12665,6 +12719,60 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("return.kt")
         public void testReturn() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/replaceWithSafeCall/return.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/returnInExpressionBody")
+    public static class ReturnInExpressionBody extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitTypeInParent.kt")
+        public void testExplicitTypeInParent() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/explicitTypeInParent.kt");
+        }
+
+        @TestMetadata("explicitTypeInParentProperty.kt")
+        public void testExplicitTypeInParentProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/explicitTypeInParentProperty.kt");
+        }
+
+        @TestMetadata("implicitTypeInParent.kt")
+        public void testImplicitTypeInParent() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/implicitTypeInParent.kt");
+        }
+
+        @TestMetadata("implicitTypeInParentProperty.kt")
+        public void testImplicitTypeInParentProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/implicitTypeInParentProperty.kt");
+        }
+
+        @TestMetadata("insideCall.kt")
+        public void testInsideCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/insideCall.kt");
+        }
+
+        @TestMetadata("nonLocalReturn.kt")
+        public void testNonLocalReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/nonLocalReturn.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/simple.kt");
+        }
+
+        @TestMetadata("simpleProperty.kt")
+        public void testSimpleProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/returnInExpressionBody/simpleProperty.kt");
         }
     }
 

@@ -22,12 +22,12 @@ import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfi
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptOutsiderFileConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.*
 import org.jetbrains.kotlin.idea.core.script.k1.removeScriptDependenciesNotificationPanel
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.shared.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -186,7 +186,7 @@ class DefaultScriptingSupport(val manager: ScriptConfigurationManager) {
                 if (forceSync) {
                     loaders.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
                 } else {
-                    val autoReloadEnabled = KotlinScriptingSettingsImpl.getInstance(project).autoReloadConfigurations(scriptDefinition)
+                    val autoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(scriptDefinition)
                     val forceSkipNotification = skipNotification || autoReloadEnabled
 
                     // sync loaders can do something, let's recheck

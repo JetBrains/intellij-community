@@ -65,6 +65,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "@lib//:junit4",
     "//platform/lang-impl",
     "//libraries/kotlinx/serialization/core",

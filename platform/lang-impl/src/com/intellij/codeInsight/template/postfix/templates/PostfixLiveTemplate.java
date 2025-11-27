@@ -3,6 +3,8 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.OffsetTranslator;
+import com.intellij.codeInsight.completion.command.CommandCompletionFactory;
+import com.intellij.codeInsight.completion.command.CommandCompletionService;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
@@ -22,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,8 +86,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     Editor editor = callback.getEditor();
     CharSequence charsSequence = editor.getDocument().getCharsSequence();
     int offset = editor.getCaretModel().getOffset();
-    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
+    Language language = getLanguage(callback);
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, offset);
+      key = adjustWithCommandCompletion(key, editor.getProject(), language, charsSequence, offset);
       if (key != null && isApplicableTemplate(provider, key, callback.getFile(), editor)) {
         return key;
       }
@@ -92,13 +97,40 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return null;
   }
 
+  private static String adjustWithCommandCompletion(@Nullable String key,
+                                                    @Nullable Project project,
+                                                    @Nullable Language language,
+                                                    @NotNull CharSequence sequence,
+                                                    int offset) {
+    if (key == null) return key;
+    if (project == null) return key;
+    if (language == null) return key;
+    boolean showAsSeparateGroup = PostfixTemplatesSettings.getInstance().isShowAsSeparateGroup();
+    if (!showAsSeparateGroup) return key;
+    CommandCompletionService completionService = project.getService(CommandCompletionService.class);
+    CommandCompletionFactory completionServiceFactory = completionService.getFactory(language);
+    if (completionServiceFactory == null) return key;
+    Character filterSuffix = completionServiceFactory.filterSuffix();
+    if (filterSuffix == null) return key;
+    if (!key.startsWith(String.valueOf(filterSuffix))) return key;
+    int indexOf = sequence.subSequence(0, offset).toString().lastIndexOf(key);
+    if (indexOf < 1) return key;
+    if (sequence.subSequence(indexOf - 1, indexOf + key.length()).toString().equals(filterSuffix + key)) {
+      return filterSuffix + key;
+    }
+    return key;
+  }
+
   @Override
   public @Nullable @NlsSafe String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     int currentOffset = editor.getCaretModel().getOffset();
-    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
+    Language language = getLanguage(callback);
+    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(language)) {
       ProgressManager.checkCanceled();
-      String key = computeTemplateKeyWithoutContextChecking(provider, editor.getDocument().getCharsSequence(), currentOffset);
+      CharSequence charsSequence = editor.getDocument().getCharsSequence();
+      String key = computeTemplateKeyWithoutContextChecking(provider, charsSequence, currentOffset);
+      key = adjustWithCommandCompletion(key, editor.getProject(), language, charsSequence, currentOffset);
       if (key != null) return key;
     }
     return null;

@@ -3,6 +3,7 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
+import com.intellij.ide.gdpr.trace.TraceConsentManager;
 import com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,10 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
   private static boolean isTraceDataCollectionAllowedByMetadata(@NotNull String metadata) {
     if (metadata.length() <= METADATA_LICENSE_TYPE_INDEX) {
+      return false;
+    }
+    TraceConsentManager traceConsentManager = TraceConsentManager.getInstance();
+    if (traceConsentManager == null || !traceConsentManager.canDisplayTraceConsent()) {
       return false;
     }
     DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();

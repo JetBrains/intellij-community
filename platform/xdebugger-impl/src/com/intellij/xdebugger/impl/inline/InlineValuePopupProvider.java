@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public interface InlineValuePopupProvider {
                          @NotNull Editor editor,
                          @NotNull Point point,
                          @Nullable Runnable hideRunnable) {
-    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+    if (session instanceof MonolithSessionProxy monolith) {
       showPopup(xValueNode, monolith.getSession(), position, treeCreator, editor, point, hideRunnable);
     }
     else {

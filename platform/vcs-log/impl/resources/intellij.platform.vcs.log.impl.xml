@@ -67,6 +67,8 @@
                     serviceImplementation="com.intellij.vcs.log.impl.IdeVcsProjectLog"/>
     <postStartupActivity implementation="com.intellij.vcs.log.impl.IdeVcsProjectLog$InitLogStartupActivity"/>
 
+    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsLogToolWindowMaximizedStateHandler"/>
+
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"

@@ -12,9 +12,6 @@ import org.jetbrains.intellij.build.telemetry.TraceManager
 
 class TeamCityBuildMessageLogger : BuildMessageLogger() {
   companion object {
-    @JvmField
-    val FACTORY: () -> BuildMessageLogger = ::TeamCityBuildMessageLogger
-
     private fun print(messageId: String, argument: String) {
       println(SpanAwareServiceMessage(span = Span.current(), messageName = messageId, argument = argument))
     }

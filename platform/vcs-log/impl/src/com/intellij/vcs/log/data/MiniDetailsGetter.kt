@@ -11,20 +11,22 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
 
-class MiniDetailsGetter internal constructor(project: Project,
-                                             storage: VcsLogStorage,
-                                             logProviders: Map<VirtualFile, VcsLogProvider>,
-                                             private val topCommitsDetailsCache: TopCommitsCache,
-                                             private val index: VcsLogIndex,
-                                             parentDisposable: Disposable) :
+class MiniDetailsGetter internal constructor(
+  project: Project,
+  storage: VcsLogStorage,
+  logProviders: Map<VirtualFile, VcsLogProvider>,
+  private val topCommitsDetailsCache: TopCommitsCache,
+  private val index: VcsLogIndex,
+  parentDisposable: Disposable,
+) :
   AbstractDataGetter<VcsCommitMetadata>(storage, logProviders, parentDisposable) {
 
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
@@ -49,7 +51,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
-    if (!EventQueue.isDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       thisLogger().assertTrue(commitsToLoad.none(), "Requesting loading commits in background thread is not supported.")
       return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
     }
@@ -66,7 +68,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   private fun getFromCacheAndCleanOldPlaceholder(commit: VcsLogCommitStorageIndex): VcsCommitMetadata? {
-    if (!EventQueue.isDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
     val details = cache.getIfPresent(commit)
@@ -134,10 +136,12 @@ class MiniDetailsGetter internal constructor(project: Project,
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  override fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,
-                                             root: VirtualFile,
-                                             hashes: List<String>,
-                                             consumer: Consumer<in VcsCommitMetadata>) {
+  override fun doLoadCommitsDataFromProvider(
+    logProvider: VcsLogProvider,
+    root: VirtualFile,
+    hashes: List<String>,
+    consumer: Consumer<in VcsCommitMetadata>,
+  ) {
     logProvider.readMetadata(root, hashes, consumer)
   }
 

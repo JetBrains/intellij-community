@@ -6,13 +6,11 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -151,7 +149,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
     }
 
-    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
+    return JavaDocElementType.DOC_COMMENT_TOKENS.contains(type) || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
   }
 
   private void init(ASTNode child) {
@@ -214,7 +212,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1109,13 +1107,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (JavaBinaryOperations.ADDITIVE_OPS.contains(i)) {
+      else if (ElementType.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (JavaBinaryOperations.MULTIPLICATIVE_OPS.contains(i)) {
+      else if (ElementType.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(i)) {
+      else if (ElementType.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {
@@ -1126,7 +1124,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitField(@NotNull PsiField field) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1203,7 +1201,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -2049,8 +2047,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private boolean isAllowedToMoveSemicolonInLongCallChain() {
     if (!myJavaSettings.WRAP_SEMICOLON_AFTER_CALL_CHAIN) return false;
-
-    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) return false;
 
     if(!(myChild1 instanceof PsiMethodCallExpression) || myType1 != JavaElementType.METHOD_CALL_EXPRESSION) return false;
 

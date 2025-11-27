@@ -165,6 +165,13 @@ private fun canPassThrough(expression: KtExpression?): Boolean = when (expressio
         true
 }
 
+private fun hasReturn(element: PsiElement?): Boolean =
+    when(element) {
+        is KtReturnExpression -> true
+        is KtBlockExpression -> element.children.any(::hasReturn)
+        else -> false
+}
+
 private fun buildNextBranch(ifExpression: KtIfExpression): KtExpression? {
     var nextSibling = ifExpression.getNextSiblingIgnoringWhitespaceAndComments() ?: return null
     return when (nextSibling) {
@@ -172,6 +179,7 @@ private fun buildNextBranch(ifExpression: KtIfExpression): KtExpression? {
             if (nextSibling.then == null) null else nextSibling
 
         else -> {
+            if (!hasReturn(ifExpression.then)) return null
             val builder = StringBuilder()
             while (true) {
                 builder.append(nextSibling.text)

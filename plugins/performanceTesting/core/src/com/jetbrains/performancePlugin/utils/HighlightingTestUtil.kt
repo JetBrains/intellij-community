@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.delay
 import java.util.concurrent.TimeoutException
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -36,16 +37,23 @@ class HighlightingTestUtil {
     }
 
     @JvmStatic
-    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeout: Long, suppressErrors: Boolean) {
-      val timeoutDuration = if (timeout == 0L) 5.minutes else timeout.seconds
+    suspend fun waitForAnalysisWithNewApproach(project: Project, span: Span?, timeout: Long?, suppressErrors: Boolean?) {
+      val timeoutDuration = if (timeout == 0L || timeout == null) 5.minutes else timeout.seconds
       try {
-        project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !suppressErrors)
+        project.service<CodeAnalysisStateListener>().waitAnalysisToFinish(timeoutDuration, !(suppressErrors ?: true))
       }
       catch (e: TimeoutException) {
         span?.setAttribute("timeout", "true")
       }
       finally {
         span?.end()
+      }
+    }
+
+    suspend fun waitForCondition(checkInterval: Long = 500, condition: suspend () -> Boolean) {
+      while (true) {
+        if (condition()) return
+        delay(checkInterval)
       }
     }
   }

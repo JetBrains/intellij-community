@@ -44,7 +44,8 @@ fun analyzeResult(aliasData: IntroduceTypeAliasData): IntroduceTypeAliasAnalysis
         (psiFactory.createBlockCodeFragment("val a: Int", aliasData.targetSibling.parent).getContentElement().children[0] as KtProperty).apply {
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
                 typeReference!!.replace(
-                    aliasData.originalTypeElement.parent as? KtTypeReference
+                    aliasData.originalTypeElement as? KtTypeReference
+                        ?: aliasData.originalTypeElement.parent as? KtTypeReference
                         ?: if (aliasData.originalTypeElement is KtTypeElement) psiFactory.createType(
                             aliasData.originalTypeElement
                         ) else psiFactory.createType(aliasData.originalTypeElement.text)
@@ -96,7 +97,7 @@ private fun findReferencesToReplaceWithTypeParameters(
         if (newReference !in forcedCandidates) { //skip for resolved references
             val originalSymbol = (originalReference.type as? KaClassType)?.symbol
             val newSymbol = (newReference.type as? KaClassType)?.symbol
-            if (originalSymbol == newSymbol) continue
+            if (originalSymbol == newSymbol && originalSymbol != null) continue
         }
 
         with(K2SemanticMatcher) {

@@ -518,7 +518,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return ContainerUtil.mapNotNull(elements,
                                     element -> {
                                       if (element instanceof PsiFileSystemItem) {
-                                        return buildFileLookupElement(location.getContainingFile(), (PsiFileSystemItem)element, existingNames);
+                                        return buildFileLookupElement(location.getContainingFile(), (PsiFileSystemItem)element,
+                                                                      existingNames);
                                       }
                                       else if (element instanceof PsiNamedElement) {
                                         return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
@@ -552,7 +553,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result;
   }
 
-  public static @Nullable LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<? super String> existingNames) {
+  public static @Nullable LookupElementBuilder buildFileLookupElement(PsiFile file,
+                                                                      PsiFileSystemItem item,
+                                                                      @Nullable Set<? super String> existingNames) {
     final String s = FileUtilRt.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {

@@ -31,8 +31,8 @@ public class PyFunctionTypeAnnotation extends PyElementImpl {
 
   public @NotNull PyParameterTypeList getParameterTypeList() {
     return findNotNullChildByClass(PyParameterTypeList.class);
-  }  
-  
+  }
+
   public @Nullable PyExpression getReturnType() {
     return findChildByClass(PyExpression.class);
   }

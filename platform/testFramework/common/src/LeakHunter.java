@@ -32,6 +32,7 @@ import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.IgnoredTraverseEntry;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,7 @@ public final class LeakHunter {
   private static void waitForIndicesToUpdate() {
     ProjectManager projectManager = ApplicationManager.getApplication() == null ? null : ProjectManager.getInstance();
     for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         UIUtil.dispatchAllInvocationEvents();
         while (DumbService.getInstance(project).isDumb()) {
           DumbService.getInstance(project).waitForSmartMode(100L);
@@ -200,7 +201,7 @@ public final class LeakHunter {
     // which then are stored in the leak-hunter own queue even though they are no longer reachable
     waitForIndicesToUpdate();
 
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       UIUtil.dispatchAllInvocationEvents();
       // Remove expired invocations, so they are not used as object roots.
       LaterInvocator.purgeExpiredItems();

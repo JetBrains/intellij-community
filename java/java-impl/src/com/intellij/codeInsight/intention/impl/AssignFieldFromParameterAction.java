@@ -115,7 +115,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
                                                        @NotNull PsiField field,
                                                        @NotNull PsiParameter parameter,
                                                        @NotNull Editor editor) throws IncorrectOperationException {
-    return addFieldAssignmentStatement(project, field, parameter, editor.asPsiNavigator());
+    return addFieldAssignmentStatement(project, field, parameter, editor.asModNavigator());
   }
 
   /**

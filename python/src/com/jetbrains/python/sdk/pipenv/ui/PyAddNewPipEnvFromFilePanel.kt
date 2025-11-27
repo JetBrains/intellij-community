@@ -29,7 +29,7 @@ class PyAddNewPipEnvFromFilePanel(private val module: Module) : JPanel() {
   init {
     PyPackageCoroutine.launch(project = module.project) {
       pipEnvPathField.apply {
-        getPipEnvExecutable().getOrNull()?.pathString?.also { text = it }
+        getPipEnvExecutable()?.pathString?.also { text = it }
 
         addBrowseFolderListener(module.project, withContext(Dispatchers.IO) { FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor() }
           .withTitle(PyBundle.message("python.sdk.pipenv.select.executable.title")))

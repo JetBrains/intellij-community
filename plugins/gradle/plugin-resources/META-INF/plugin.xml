@@ -16,9 +16,13 @@
       ]]>
   </description>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.externalSystem</depends>
   <depends optional="true" config-file="gradle-properties.xml">com.intellij.properties</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.externalSystem"/>
+    <module name="intellij.platform.externalSystem.impl"/>
+  </dependencies>
 
   <resource-bundle>messages.GradleBundle</resource-bundle>
 

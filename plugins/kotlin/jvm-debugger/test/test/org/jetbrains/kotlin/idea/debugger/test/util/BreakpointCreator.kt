@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
+import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
@@ -40,6 +41,8 @@ internal class BreakpointCreator(
     private val logger: (String) -> Unit,
     private val preferences: DebuggerPreferences
 ) {
+    var wasUsedOnlyDefaultSuspendPolicy = true
+
     fun createBreakpoints(file: PsiFile) {
         val document = runReadAction { PsiDocumentManager.getInstance(project).getDocument(file) } ?: return
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
@@ -85,7 +88,8 @@ internal class BreakpointCreator(
                         val lambdaOrdinal = getPropertyFromComment(comment, "lambdaOrdinal")?.toInt()
                         val conditionalReturn = getPropertyFromComment(comment, "conditionalReturn").toBoolean()
                         val condition = getPropertyFromComment(comment, "condition")
-                        createLineBreakpoint(breakpointManager, file, lineIndex, lambdaOrdinal, conditionalReturn, condition)
+                        val suspendPolicy = getPropertyFromComment(comment, "suspendPolicy")
+                        createLineBreakpoint(breakpointManager, file, lineIndex, lambdaOrdinal, conditionalReturn, condition, suspendPolicy)
                     }
                     comment.startsWith("//FunctionBreakpoint!") -> {
                         createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
@@ -109,7 +113,7 @@ internal class BreakpointCreator(
 
             when (kind) {
                 "line" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
-                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, false, null)
+                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, false, null, null)
                 }
                 "fun" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
                     createFunctionBreakpoint(breakpointManager, psiFile, lineNumber, true)
@@ -173,7 +177,8 @@ internal class BreakpointCreator(
         lineIndex: Int,
         lambdaOrdinal: Int?,
         conditionalReturn: Boolean,
-        condition: String?
+        condition: String?,
+        suspendPolicy: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
         val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != JavaLineBreakpointProperties.NO_LAMBDA) it - 1 else it }
@@ -203,6 +208,15 @@ internal class BreakpointCreator(
             if (condition != null) {
                 javaBreakpoint.setCondition(TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition))
                 suffix += " condition = $condition"
+            }
+
+            if (suspendPolicy != null) {
+                wasUsedOnlyDefaultSuspendPolicy = false
+                val okVariants = listOf(DebuggerSettings.SUSPEND_ALL, DebuggerSettings.SUSPEND_THREAD)
+                if (!okVariants.contains(suspendPolicy)) {
+                    error("Unknown suspend policy: $suspendPolicy")
+                }
+                javaBreakpoint.suspendPolicy = suspendPolicy
             }
 
             BreakpointManager.addBreakpoint(javaBreakpoint)

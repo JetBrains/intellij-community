@@ -86,22 +86,21 @@ public final class ObjectNode {
   /**
    * {@code predicate} is used only for direct children
    */
-  void removeChildNodesRecursively(@NotNull List<? super Disposable> disposables,
+  void removeChildNodesRecursively(@NotNull List<? super Disposable> result,
                                    @NotNull ObjectTree tree,
                                    @Nullable Throwable trace,
                                    @Nullable Predicate<? super Disposable> predicate) {
-    myChildren.removeChildren(predicate, childNode -> {
+    myChildren.removeChildrenIf(predicate, childNode -> {
       // predicate is used only for direct children
-      childNode.removeChildNodesRecursively(disposables, tree, trace, null);
+      childNode.removeChildNodesRecursively(result, tree, trace, null);
       // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
       Disposable object = childNode.getObject();
       boolean alreadyDisposed = tree.rememberDisposedTrace(object, trace) != null;
       if (!alreadyDisposed) {
-        disposables.add(object);
+        result.add(object);
       }
     });
   }
-
 
   @NotNull
   Disposable getObject() {
@@ -187,7 +186,7 @@ public final class ObjectNode {
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
+    public void removeChildrenIf(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
       Iterator<Map.Entry<Disposable, ObjectNode>> iterator = myChildren.entrySet().iterator();
       while (iterator.hasNext()) {
         Map.Entry<Disposable, ObjectNode> entry = iterator.next();
@@ -242,7 +241,7 @@ public final class ObjectNode {
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
+    public void removeChildrenIf(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
       for (int i = myChildren.size() - 1; i >= 0; i--) {
         ObjectNode childNode = myChildren.get(i);
         Disposable object = childNode.getObject();
@@ -272,7 +271,7 @@ public final class ObjectNode {
     @NotNull // return a new instance of NodeChildren when the underlying data-structure changed, e.g., list->map
     NodeChildren addChildNode(@NotNull ObjectNode node);
 
-    void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
+    void removeChildrenIf(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
     @NotNull
     @Unmodifiable Collection<ObjectNode> getAllNodes();
@@ -295,7 +294,7 @@ public final class ObjectNode {
     }
 
     @Override
-    public void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
+    public void removeChildrenIf(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer) {
     }
 
     @Override

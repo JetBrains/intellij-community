@@ -187,7 +187,12 @@ internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpret
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
       icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonParserIcons.PythonFile)
-      val title = interpreter.ui?.toolName ?: message("sdk.rendering.detected.grey.text")
+      val title = interpreter.ui?.toolName ?:
+      if (interpreter.isBase) {
+        message("sdk.rendering.detected.grey.text.system")
+      }else {
+        message("sdk.rendering.detected.grey.text.venv")
+      }
       append(String.format("Python %-4s", interpreter.pythonInfo.languageLevel))
       append(" (" + replaceHomePathToTilde(interpreter.homePath.toString()) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
@@ -217,7 +222,7 @@ private val userHomePath = lazy {
 
 /**
  * Replaces [userHomePath] in  [sdkHomePath] to `~`
- * Use [com.jetbrains.python.PathShorter] instead
+ * Use [com.jetbrains.python.PathShortener] instead
  */
 @ApiStatus.Internal
 @Deprecated("Use PathShorter")

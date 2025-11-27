@@ -21,7 +21,7 @@ import java.util.Set;
 
 final class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private static final int CURR_VERSION = 8;
+  private static final int CURR_VERSION = 10;
 
   public static final String SCHEME_NAME_OTHER = "Other";
   public static final String[] KNOWN_NAMES = {
@@ -29,7 +29,17 @@ final class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector
     "Darcula Contrast",
     "Darcula",
     "Obsidian",
-    "Visual Studio",
+    "Rider Dark",
+    "Rider Islands Dark",
+    "Rider Light",
+    "Rider Melon Light",
+    "Rider Melon Dark",
+    "ReSharper Dark",
+    "ReSharper Light",
+    "Visual Studio Dark",
+    "Visual Studio Light",
+    "Visual Assist Dark",
+    "Visual Assist Light",
     "Solarized",
     "Wombat",
     "Monokai",
@@ -44,9 +54,8 @@ final class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector
     "Flash Builder",
     "IdeaLight",
     "High contrast",
-    "ReSharper",
-    "Rider",
     "IntelliJ Light",
+    "Islands Dark",
     "Light",
     "Dark",
     SCHEME_NAME_OTHER

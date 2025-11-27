@@ -29,6 +29,7 @@ version = pluginVersion
 
 repositories {
   mavenCentral()
+  maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
   if ("SNAPSHOT" in KOTLIN_VERSION || "dev" in KOTLIN_VERSION) {
     maven("https://packages.jetbrains.team/maven/p/kt/bootstrap")
     mavenLocal()
@@ -36,7 +37,7 @@ repositories {
 }
 
 dependencies {
-  compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:$KOTLIN_VERSION")
+  compileOnly("org.jetbrains.kotlin:kotlin-compiler:$KOTLIN_VERSION")
   implementation("org.jetbrains.kotlin:kotlin-gradle-plugin-api:$KOTLIN_VERSION")
 }
 
@@ -50,6 +51,7 @@ kotlin {
     jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(KOTLIN_LANGUAGE_VERSION))
     languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.fromVersion(KOTLIN_API_VERSION))
+    freeCompilerArgs.add("-Xcontext-parameters")
     // FREE COMPILER ARGS PLACEHOLDER PLEASE DO NOT CHANGE IT BEFORE DISCUSS IN #ij-monorepo-kotlin
   }
 }

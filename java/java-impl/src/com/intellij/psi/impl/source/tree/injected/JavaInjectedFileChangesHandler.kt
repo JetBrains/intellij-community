@@ -16,6 +16,7 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
 import com.intellij.psi.util.createSmartPointer
@@ -31,7 +32,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     myHostDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
-          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) { thisDoc ->
+          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerEx).addRunOnCommit(myHostDocument) { thisDoc ->
             rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }

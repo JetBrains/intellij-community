@@ -14,12 +14,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
+import com.intellij.platform.debugger.impl.frontend.frame.*
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -36,8 +34,10 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.frame.XSmartStepIntoHandlerEntry
+import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
+import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
@@ -158,7 +158,7 @@ class FrontendXDebuggerSession private constructor(
     get() = sessionTabDeferred
 
   override val sessionName: String = sessionDto.sessionName
-  override val sessionData: XDebugSessionData = FrontendXDebugSessionData(project, sessionDto.sessionDataDto, tabScope, sessionStateFlow)
+  override val sessionData: XDebugSessionData = FrontendXDebugSessionData(sessionDto.sessionDataDto, tabScope, sessionStateFlow)
 
   override val restartActions: List<AnAction>
     get() = sessionDto.restartActions.mapNotNull { it.action() }
@@ -190,6 +190,8 @@ class FrontendXDebuggerSession private constructor(
     get() = activeNonLineBreakpoint
 
   private val dropFrameHandler = FrontendDropFrameHandler(id, scope)
+
+  private var localTabLayouter: XDebugTabLayouter? = null
 
   init {
     DebuggerInlayListener.getInstance(project).startListening()
@@ -318,6 +320,8 @@ class FrontendXDebuggerSession private constructor(
   private suspend fun initTabInfo(tabDto: XDebuggerSessionTabDto) {
     val (tabInfo, pausedFlow) = tabDto
     if (tabInfo !is XDebuggerSessionTabInfo) return
+
+    localTabLayouter = tabInfo.localLayouter
     val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
@@ -429,16 +433,22 @@ class FrontendXDebuggerSession private constructor(
     return currentContext.isStepping
   }
 
-  override fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
-    getCurrentSuspendContext()?.computeExecutionStacks(provideContainer())
+  override fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+    getCurrentSuspendContext()?.computeExecutionStacks(container)
+  }
+
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+    coroutineScope.launch {
+      XDebugSessionApi.getInstance()
+        .computeRunningExecutionStacks(id)
+        .collectExecutionStackEvents(project, coroutineScope, container)
+    }
   }
 
   private fun getCurrentSuspendContext() = suspendContext.get()
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    // Additional tabs are not supported in RemDev
-    val monolithLayouter = XDebugMonolithUtils.findSessionById(id)?.debugProcess?.createTabLayouter()
-    return monolithLayouter ?: object : XDebugTabLayouter() {} // TODO support additional tabs in RemDev
+    return localTabLayouter ?: createLayouter(id, tabScope)
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
@@ -446,7 +456,9 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun rebuildViews() {
-    cs.launch {
+    cs.launch(Dispatchers.EDT) {
+      // trigger optimistically
+      eventsDispatcher.multicaster.settingsChanged()
       XDebugSessionApi.getInstance().triggerUpdate(id)
     }
   }
@@ -466,8 +478,12 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
-  override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
-    return FrontendXStackFramesListColorsCache(this, framesList)
+  override fun createFileColorsCache(onAllComputed: () -> Unit): XStackFramesListColorsCache {
+    return XStackFramesListColorsCache { stackFrame, _ ->
+      require(stackFrame is FrontendXStackFrame) { "Expected FrontendXStackFrame, got ${stackFrame::class.java}" }
+
+      stackFrame.backgroundColor
+    }
   }
 
   override fun areBreakpointsMuted(): Boolean {
@@ -540,10 +556,10 @@ class FrontendXDebuggerSession private constructor(
  * Note that data added to [com.intellij.openapi.util.UserDataHolder] is not synced with backend.
  */
 private class FrontendXDebugSessionData(
-  project: Project, sessionDataDto: XDebugSessionDataDto,
+  sessionDataDto: XDebugSessionDataDto,
   cs: CoroutineScope,
   sessionStateFlow: StateFlow<XDebugSessionState>,
-) : XDebugSessionData(project, sessionDataDto.configurationName) {
+) : XDebugSessionData(sessionDataDto.configurationName) {
   private val id = sessionDataDto.id
   private val muteBreakpointsBackendSyncFlow = MutableSharedFlow<Boolean>(extraBufferCapacity = 1,
                                                                           onBufferOverflow = BufferOverflow.DROP_OLDEST)

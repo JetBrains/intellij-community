@@ -75,7 +75,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   private final Supplier<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
     new SynchronizedClearableLazy<>(() -> {
-      if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.error("Configurable names must not be loaded on EDT");
       }
 
@@ -742,13 +742,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
-          Color descriptorBg;
-          if (StartupUiUtil.isUnderDarcula()) {
-            descriptorBg = ColorUtil.brighter(UIUtil.getListBackground(), 1);
-          }
-          else {
-            descriptorBg = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND;
-          }
+          Color descriptorBg = JBUI.CurrentTheme.BigPopup.getListSettingsBackground();
           panel.setBackground(descriptorBg);
           nameComponent.setBackground(descriptorBg);
         }

@@ -43,7 +43,8 @@ public class ListCreationQuickFix extends PsiUpdateModCommandQuickFix {
     assignedValue.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(assignedValue), text));
   }
 
-  private static @NotNull List<PyExpression> buildLiteralItems(@NotNull PyExpression assignedValue, List<PyExpressionStatement> statements) {
+  private static @NotNull List<PyExpression> buildLiteralItems(@NotNull PyExpression assignedValue,
+                                                               List<PyExpressionStatement> statements) {
     final List<PyExpression> values = new ArrayList<>();
 
     ContainerUtil.addAll(values, ((PyListLiteralExpression)assignedValue).getElements());

@@ -3,12 +3,18 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface GradleServerConfigurationProvider : TargetEnvironmentConfigurationProvider {
+
   fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort? = null
-  fun getClientCommunicationAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
-                                    gradleServerHostPort: HostPort): HostPort? = null
+
+  fun getClientCommunicationAddress(
+    taskId: ExternalSystemTaskId?,
+    targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
+    gradleServerHostPort: HostPort,
+  ): HostPort? = null
 }

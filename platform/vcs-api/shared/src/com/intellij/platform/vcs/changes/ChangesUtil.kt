@@ -82,4 +82,7 @@ object ChangesUtil {
            status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
            status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
+
+  @JvmStatic
+  fun matches(change: Change, path: FilePath): Boolean = path == getAfterPath(change) || path == getBeforePath(change)
 }

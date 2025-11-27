@@ -77,7 +77,7 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
         PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(myReturnTypeFqName), function);
       }
     }
-    
+
     PsiComment typeComment = function.getTypeComment();
     if (typeComment != null) {
       StringBuilder typeCommentAnnotation = new StringBuilder(typeComment.getText());

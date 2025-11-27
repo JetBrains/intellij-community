@@ -34,10 +34,16 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-@State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
-  Storage("grazie_global.xml"),
-  Storage(value = "grazi_global.xml", deprecated = true)
-], category = SettingsCategory.CODE)
+@State(
+  name = "GraziConfig",
+  presentableName = GrazieConfig.PresentableNameGetter::class,
+  storages = [
+    Storage("grazie_global.xml"),
+    Storage(value = "grazi_global.xml", deprecated = true)
+  ],
+  category = SettingsCategory.CODE,
+  additionalExportDirectory = "grazie",
+)
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
   enum class Version : VersionedState.Version<State> {
     INITIAL,
@@ -135,6 +141,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     }
 
     fun withLanguages(langs: Set<Lang>): State = copy(enabledLanguages = langs)
+    fun withCheckingContext(context: CheckingContext): State = copy(checkingContext = context)
     fun withAutoFix(autoFix: Boolean): State = copy(autoFix = autoFix)
     fun withOxfordSpelling(useOxford: Boolean): State = copy(useOxfordSpelling = useOxford)
     fun withParameter(domain: TextStyleDomain, language: Language, parameter: Parameter, value: String?): State {

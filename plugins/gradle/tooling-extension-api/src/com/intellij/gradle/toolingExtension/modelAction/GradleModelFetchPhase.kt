@@ -80,12 +80,18 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
     val PROJECT_SOURCE_SET_DEPENDENCY_PHASE: GradleModelFetchPhase = BuildFinished(2000, "DEPENDENCY_MODEL_PHASE")
 
     /**
+     *
+     */
+    @JvmField
+    val SCRIPT_MODEL_PHASE: GradleModelFetchPhase = BuildFinished(3000, "SCRIPT_MODEL_PHASE")
+
+    /**
      * In this phase, Gradle model providers fetch rest of Gradle models, which needed for rich experience in IntelliJ IDEA.
      * It is a code insight in Gradle scripts, data for run configuration creation and for code completion in him,
      * data for code profiling, etc.
      */
     @JvmField
-    val ADDITIONAL_MODEL_PHASE: GradleModelFetchPhase = BuildFinished(3000, "ADDITIONAL_MODEL_PHASE")
+    val ADDITIONAL_MODEL_PHASE: GradleModelFetchPhase = BuildFinished(4000, "ADDITIONAL_MODEL_PHASE")
   }
 }
 

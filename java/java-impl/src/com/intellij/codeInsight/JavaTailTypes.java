@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.simple.BracesTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,23 +123,24 @@ public final class JavaTailTypes {
     }
   };
   private static final String ARROW = " -> ";
-  public static final TailType CASE_ARROW = new TailType() {
+  public static final ModNavigatorTailType CASE_ARROW = new ModNavigatorTailType() {
     @Override
-    public int processTail(@NotNull Editor editor, int tailOffset) {
-      Document document = editor.getDocument();
+    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+      Document document = navigator.getDocument();
+      if (!isApplicable(project, document, tailOffset)) return tailOffset;
       document.insertString(tailOffset, ARROW);
-      return moveCaret(editor, tailOffset, ARROW.length());
+      return moveCaret(navigator, tailOffset, ARROW.length());
     }
 
-    @Override
-    public boolean isApplicable(@NotNull InsertionContext context) {
-      Document document = context.getDocument();
+    public boolean isApplicable(@NotNull Project project, @NotNull Document document, int tailOffset) {
       CharSequence chars = document.getCharsSequence();
-      int offset = CharArrayUtil.shiftForward(chars, context.getTailOffset(), " \n\t");
+      int offset = CharArrayUtil.shiftForward(chars, tailOffset, " \n\t");
       if (CharArrayUtil.regionMatches(chars, offset, "->")) {
         return false;
       }
-      PsiElement element = context.getFile().findElementAt(context.getStartOffset());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file == null) return false;
+      PsiElement element = file.findElementAt(tailOffset - 1);
       return PsiUtil.isJavaToken(element, JavaTokenType.DEFAULT_KEYWORD) ||
              PsiUtil.isJavaToken(element, JavaTokenType.CASE_KEYWORD) ||
              PsiTreeUtil.getParentOfType(element, PsiCaseLabelElementList.class) != null;
@@ -154,7 +156,7 @@ public final class JavaTailTypes {
   public static final ModNavigatorTailType TRY_LBRACE = BRACES;
   public static final ModNavigatorTailType DO_LBRACE = BRACES;
 
-  public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
+  public static ModNavigatorTailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
     boolean ruleFormatSwitch = SwitchUtils.isRuleFormatSwitch(block);
     if (ruleFormatSwitch) {
       //for not completed code with `:`
@@ -163,12 +165,12 @@ public final class JavaTailTypes {
         for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
           if (child instanceof PsiErrorElement &&
               ContainerUtil.exists(child.getChildren(), t -> t instanceof PsiJavaToken && ((PsiJavaToken)t).getTokenType() == COLON)) {
-            return TailTypes.caseColonType();
+            return (ModNavigatorTailType)TailTypes.caseColonType();
           }
         }
       }
     }
-    return ruleFormatSwitch ? CASE_ARROW : TailTypes.caseColonType();
+    return ruleFormatSwitch ? CASE_ARROW : (ModNavigatorTailType)TailTypes.caseColonType();
   }
 
 

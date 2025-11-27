@@ -8,11 +8,15 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
+import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
+import com.intellij.platform.searchEverywhere.frontend.withPrevious
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.*
@@ -20,25 +24,24 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupHeaderPane(
   private val project: Project?,
   coroutineScope: CoroutineScope,
-  private val configuration: StateFlow<Configuration>,
+  private val configurationFlow: StateFlow<Configuration>,
   private val resizeIfNecessary: () -> Unit,
 ) : NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
@@ -74,7 +77,6 @@ class SePopupHeaderPane(
         setFilterActions(emptyList(), null)
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
       }
-
     }
 
     panel.background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
@@ -82,20 +84,20 @@ class SePopupHeaderPane(
     panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                          JBUI.CurrentTheme.BigPopup.headerBorder())
 
-    val initialConfiguration = configuration.value
+    val initialConfiguration = configurationFlow.value
 
     initialConfiguration.tabs.ifEmpty {
-      listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.ID))
+      listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.PRIORITY, SeAllTab.ID))
     }.forEach { tab ->
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
 
-    setSelectedIndexSafe(initialConfiguration.selectedTab.value)
+    setSelectedIndexSafe(initialConfiguration.selectedIndexFlow.value)
 
     add(panel)
 
     tabbedPane.addChangeListener {
-      val tabs = configuration.value.tabs
+      val tabs = configurationFlow.value.tabs
       if (tabbedPane.selectedIndex < 0 || tabbedPane.selectedIndex >= tabs.size) return@addChangeListener
 
       val tabId = tabs[tabbedPane.selectedIndex].reportableId
@@ -105,35 +107,55 @@ class SePopupHeaderPane(
     }
 
     coroutineScope.launch {
-      configuration.collectLatest { configuration ->
-        withContext(Dispatchers.EDT) {
-          val uiSelectedTabIndex = tabbedPane.selectedIndex
-          tabbedPane.removeAll()
+      configurationFlow.withPrevious().collectLatest { (old, new) ->
+        updateTabs(old ?: initialConfiguration, new)
+      }
+    }
+  }
 
-          if (configuration.tabs.isNotEmpty()) {
-            for (tab in configuration.tabs) {
-              tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
-            }
+  private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
+    withContext(Dispatchers.EDT) {
+      val prevSelectedTabId = old.tabs.getOrNull(old.selectedIndexFlow.value)?.id
+      tabbedPane.removeAll()
 
-            if (uiSelectedTabIndex in configuration.tabs.indices) {
-              configuration.selectedTab.value = uiSelectedTabIndex
-            }
+      if (new.tabs.isEmpty()) {
+        tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
+        return@withContext
+      }
 
-            tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
-          }
-          else {
-            tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
-          }
-        }
+      for (tab in new.tabs) {
+        tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
+      }
 
-        this@launch.launch {
-          configuration.deferredTabs.collect { tab ->
-            withContext(Dispatchers.EDT) {
-              tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
-            }
+      new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(prevSelectedTabId)
+    }
+
+    bindSelectedTab(new)
+  }
+
+  private suspend fun bindSelectedTab(configuration: Configuration) = coroutineScope {
+    tabbedPane.selectedIndex = configuration.selectedIndexFlow.value
+
+    val changeListener = javax.swing.event.ChangeListener {
+      configuration.selectedIndexFlow.value = tabbedPane.selectedIndex
+    }
+
+    tabbedPane.addChangeListener(changeListener)
+
+    val job = launch {
+      configuration.selectedIndexFlow.collectLatest { tabIndex ->
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (tabbedPane.selectedIndex != tabIndex && tabIndex >= 0 && tabIndex < tabbedPane.tabCount) {
+            tabbedPane.removeChangeListener(changeListener)
+            tabbedPane.selectedIndex = tabIndex
+            tabbedPane.addChangeListener(changeListener)
           }
         }
       }
+    }
+
+    job.invokeOnCompletion {
+      tabbedPane.removeChangeListener(changeListener)
     }
   }
 
@@ -196,22 +218,22 @@ class SePopupHeaderPane(
     }
   }
 
-  class Tab(val name: @Nls String, val id: String, val reportableId: String) {
-    constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.reportableTabId)
+  class Tab(val name: @Nls String, val id: String, val priority: Int, val reportableId: String) {
+    constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.priority, tabVm.reportableTabId)
   }
 
   class Configuration(
     val tabs: List<Tab>,
-    val deferredTabs: Flow<Tab>,
-    val selectedTab: MutableStateFlow<Int>,
-    val showInFindToolWindowAction: AnAction?,
+    val selectedIndexFlow: MutableStateFlow<Int>
   ) {
     companion object {
       fun createInitial(
-        initialTabs: List<Tab>,
+        initialTabs: List<SeDummyTabVm>,
         selectedTabId: String,
-      ): Configuration =
-        Configuration(initialTabs, emptyFlow(), MutableStateFlow(initialTabs.indexOfFirst { it.id == selectedTabId }), null)
+      ): Configuration = initialTabs.let {
+        val initialTabs = initialTabs.map { Tab(it) }
+        Configuration(initialTabs, MutableStateFlow(initialTabs.indexOfTabWithIdOrZero(selectedTabId)))
+      }
     }
   }
 
@@ -219,3 +241,7 @@ class SePopupHeaderPane(
     private const val MAX_FILTER_WIDTH = 100
   }
 }
+
+private fun List<SePopupHeaderPane.Tab>.indexOfTabWithIdOrZero(tabId: String?): Int = tabId?.let {
+  indexOfFirst { it.id == tabId }.takeIf { it != -1 }
+} ?: 0

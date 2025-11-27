@@ -21,7 +21,7 @@ class SearchEverywhereMlExperimentTest : BasePlatformTestCase() {
 
   fun `test no experiment group higher than total number of groups`() {
     // For context, see IDEA-322948. Basically, we want to make sure that all experiments we defined are accessible
-    SearchEverywhereTab.allTabs
+    SearchEverywhereTab.tabsWithLogging
       .filterIsInstance<SearchEverywhereTab.TabWithExperiments>()
       .associateWith { it.experiments.keys }
       .mapValues { it ->

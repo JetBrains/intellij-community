@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 /**
  * This class contains various threading assertions.
@@ -155,7 +156,9 @@ public final class ThreadingAssertions {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       if (!application.isReadAccessAllowed()) {
-        getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION));
+        RuntimeExceptionWithAttachments exception = createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
+        processExceptionWithThreadLocal(exception);
+        getLogger().error(exception);
       }
       else {
         trySoftAssertReadAccessWhenLocksAreForbidden(application);
@@ -239,7 +242,9 @@ public final class ThreadingAssertions {
   }
 
   private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw createThreadAccessException(message);
+    RuntimeExceptionWithAttachments exception = createThreadAccessException(message);
+    processExceptionWithThreadLocal(exception);
+    throw exception;
   }
 
   private static @NotNull RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
@@ -266,4 +271,14 @@ public final class ThreadingAssertions {
   private static @NotNull String describe(@Nullable Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
+
+  private static void processExceptionWithThreadLocal(Throwable e) {
+    Consumer<Throwable> consumer = inputEventWithoutWriteIntentLock.get();
+    if (consumer != null) {
+      consumer.accept(e);
+    }
+  }
+
+  @Internal
+  public static final ThreadLocal<@Nullable Consumer<Throwable>> inputEventWithoutWriteIntentLock = ThreadLocal.withInitial(() -> null);
 }

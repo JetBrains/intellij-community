@@ -28,7 +28,6 @@ class EelParametrizedClassShowCaseTest(val eelProvider: EelHolder) {
     when (val type = eelProvider.type) {
       is Docker -> {
         println("I am on docker")
-        type.target
       }
       Local -> Unit //no target for local
       is Wsl -> Unit

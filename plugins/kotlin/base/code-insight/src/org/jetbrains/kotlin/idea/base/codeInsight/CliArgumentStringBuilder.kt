@@ -47,8 +47,8 @@ object CliArgumentStringBuilder {
         val specialCompilerArgument = featuresWithComplexArguments[this to state]
 
         return when {
-            shouldBeFeatureEnabled && dedicatedFlag != null -> dedicatedFlag
             specialCompilerArgument != null -> specialCompilerArgument
+            shouldBeFeatureEnabled && dedicatedFlag != null -> dedicatedFlag
             else -> "$LANGUAGE_FEATURE_FLAG_PREFIX${state.sign}$name"
         }
     }

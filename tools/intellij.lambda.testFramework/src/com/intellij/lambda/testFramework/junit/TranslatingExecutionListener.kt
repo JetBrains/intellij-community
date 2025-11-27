@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.util.containers.orNull
 import org.junit.platform.engine.EngineExecutionListener
 import org.junit.platform.engine.TestDescriptor
@@ -104,7 +105,9 @@ class TranslatingExecutionListener(
       else -> testMethodName.substringBefore("(").takeIf { it.isNotEmpty() } ?: testMethodName
     }
 
-    val syntheticId = modeContainer.uniqueId.append("test", jupiterDescriptor.uniqueId.toString())
+    // filter only test and invocation segments
+    val syntheticId = jupiterDescriptor.uniqueId.segments.filterNot { it.type in listOf("engine", "class") }
+      .fold(modeContainer.uniqueId) { acc, segment -> acc.append(segment) }
 
     val synthetic = object : AbstractTestDescriptor(
       syntheticId,

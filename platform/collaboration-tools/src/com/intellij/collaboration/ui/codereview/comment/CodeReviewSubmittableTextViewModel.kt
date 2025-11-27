@@ -53,6 +53,17 @@ abstract class CodeReviewSubmittableTextViewModelBase(
     }
   }
 
+  protected fun launchTask(task: suspend () -> Unit) {
+    taskLauncher.launch {
+      _state.value = ComputedResult.loading()
+      try {
+        task()
+      } finally {
+        _state.value = null
+      }
+    }
+  }
+
   protected fun submit(submitter: suspend (String) -> Unit) {
     taskLauncher.launch {
       val newText = text.first()

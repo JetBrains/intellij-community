@@ -169,7 +169,8 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
                                                                              offset);
     if (targetEditor != null) {
       builder.run(targetEditor, true);
-    } else {
+    }
+    else {
       builder.runNonInteractively(true);
     }
   }

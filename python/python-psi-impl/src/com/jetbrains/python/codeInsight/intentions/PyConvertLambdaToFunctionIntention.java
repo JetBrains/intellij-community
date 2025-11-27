@@ -47,7 +47,8 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
       return false;
     }
 
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       if (lambdaExpression.getBody() != null) {
         final ControlFlow flow = ControlFlowCache.getControlFlow(lambdaExpression);
@@ -62,7 +63,8 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";
       while (IntroduceValidator.isDefinedInScope(name, lambdaExpression)) {
@@ -84,11 +86,12 @@ public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAct
       PyFunction function = functionBuilder.buildFunction();
 
       final PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression,
-                                                                 PyStatement.class);
+                                                                PyStatement.class);
       if (statement != null) {
         final PsiElement statementParent = statement.getParent();
-        if (statementParent != null)
+        if (statementParent != null) {
           function = (PyFunction)statementParent.addBefore(function, statement);
+        }
       }
 
       function = CodeInsightUtilCore

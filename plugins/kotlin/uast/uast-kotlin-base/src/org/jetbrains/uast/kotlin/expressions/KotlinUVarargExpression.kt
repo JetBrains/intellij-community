@@ -54,7 +54,7 @@ class KotlinUVarargExpression(
     override val returnType: PsiType?
         get() = null
 
-    override fun resolve() = null
+    override fun resolve(): Nothing? = null
 
     override val receiver: UExpression?
         get() = null

@@ -29,9 +29,36 @@ class InlineStackFrame(
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)
     }
 
+    private val inlineDepth: Int?
+        get() = (descriptor.frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth
+
     override fun getBackgroundColor(): Color? =
         EditorColorsManager.getInstance()
             .schemeForCurrentUITheme
             .getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
             .backgroundColor
+
+    override fun toString(): String {
+        val mainString = super.toString()
+        val inlineDepth = inlineDepth ?: return mainString
+        return "$mainString (inline depth = $inlineDepth)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is InlineStackFrame) {
+            return false
+        }
+        if (!super.equals(other)) {
+            return false
+        }
+        val thisInlineDepth = inlineDepth ?: return false
+        val otherInlineDepth = other.inlineDepth ?: return false
+        return thisInlineDepth == otherInlineDepth
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + inlineDepth.hashCode()
+        return result
+    }
 }

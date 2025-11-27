@@ -42,7 +42,10 @@ interface PluginManagerCore {
   fun getPlugin(pluginId: PluginId): PluginDescriptor?
   fun getLoadedPlugins(): Array<PluginDescriptor>
   fun arePluginsInitialized(): Boolean
+  fun isLoaded(pluginId: PluginId): Boolean
 }
+
+fun Driver.isPluginLoaded(id: String): Boolean = utility<PluginManagerCore>().isLoaded(utility<PluginId>().getId(id))
 
 @Remote("com.intellij.openapi.extensions.PluginDescriptor")
 interface PluginDescriptor {

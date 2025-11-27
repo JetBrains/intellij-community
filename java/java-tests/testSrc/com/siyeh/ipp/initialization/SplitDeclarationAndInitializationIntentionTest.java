@@ -10,6 +10,8 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase {
 
+  public void testSimple() { doTest(); }
+  public void testSimpleStatic() { doTest(); }
   public void testArrayInitializer() { doTest(); }
   public void testArray() { doTest(); }
   public void testFieldUsedBeforeInitializer() { doTest(); }
@@ -19,8 +21,13 @@ public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase 
   public void testMultipleFieldsSingleDeclaration3() { doTest(); }
   public void testNotInsideCodeBlock() { doTest(); }
   public void testRecordStaticField() { doTest(); }
+  public void testWithInjection() { doTest(); }
+  public void testExistingInitializerAfterInstance() { doTest(); }
+  public void testExistingInitializerStaticMismatch() { doTest(); }
+  public void testNoInitializer() { assertIntentionNotAvailable(); }
   public void testInsideCodeBlock() { assertIntentionNotAvailable(); }
   public void testRecord() { assertIntentionNotAvailable(); }
+  public void testInterface() { assertIntentionNotAvailable(); }
   public void testImplicitClass() { assertIntentionNotAvailable(); }
 
   @Override

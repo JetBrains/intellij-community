@@ -1824,7 +1824,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.performance.CollectionsMustHaveInitialCapacityInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DynamicRegexReplaceableByCompiledPattern" bundle="messages.InspectionGadgetsBundle"
                      key="dynamic.regex.replaceable.by.compiled.pattern.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.performance.DynamicRegexReplaceableByCompiledPatternInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldMayBeStatic" bundle="messages.InspectionGadgetsBundle" key="field.may.be.static.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"

@@ -50,7 +50,7 @@ object LogFactoryHandler {
   inline fun <reified T : AgentTestLoggerFactory> assertLoggerFactory() {
     assert(Logger.getFactory()::class.java == T::class.java) {
       "Logger Factory was overridden during test method execution. " +
-      "Inspect logs to find stack trace of the overrider. " +
+      "Inspect logs to find stack trace of the overrider (${Logger.getFactory()::class.java}). " +
       "Overriding logger factory leads to breaking distributes test log processing."
     }
   }

@@ -3,9 +3,11 @@ package com.intellij.openapi.application
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.CustomConfigMigrationOption.SetProperties
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.StoragePathMacros
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -13,6 +15,7 @@ import java.nio.file.Path
 object InitialConfigImportState {
   const val FIRST_SESSION_KEY: String = "intellij.first.ide.session"
   const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY: String = "intellij.config.imported.in.current.session"
+  const val CONFIG_IMPORTED_FROM_PATH: String = "intellij.config.imported.from"
   const val CUSTOM_MARKER_FILE_NAME: String = "migrate.config"
   const val FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME: String = "frontend-to-migrate"
   const val MIGRATION_INSTALLED_PLUGINS_TXT: String = "migration_installed_plugins.txt"
@@ -49,4 +52,16 @@ object InitialConfigImportState {
   fun isStartupWizardEnabled(): Boolean =
     !AppMode.isRemoteDevHost() &&
     System.getProperty("intellij.startup.wizard", if (ApplicationManagerEx.isInIntegrationTest()) "false" else "true").toBoolean()
+
+  @JvmStatic
+  @Throws(IOException::class)
+  fun writeOptionsForRestart(newConfigDir: Path) {
+    val properties = buildList {
+      add(FIRST_SESSION_KEY)
+      if (isConfigImported()) {
+        add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)
+      }
+    }
+    SetProperties.setToTrue(properties).writeConfigMarkerFile(newConfigDir)
+  }
 }

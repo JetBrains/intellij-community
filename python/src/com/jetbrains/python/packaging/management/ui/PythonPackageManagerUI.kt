@@ -142,8 +142,8 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
   @ApiStatus.Internal
   suspend fun <T> executeCommand(
     progressTitle: @Nls String,
-    operation: suspend (() -> PyResult<T>?),
-  ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager.project, sink, progressTitle) {
+    operation: suspend (() -> PyResult<T>),
+  ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager, sink, progressTitle) {
 
     operation()
   }

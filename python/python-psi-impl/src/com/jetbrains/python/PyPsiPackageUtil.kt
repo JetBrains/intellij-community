@@ -38,7 +38,7 @@ object PyPsiPackageUtil {
     return buildMap {
       try {
         val resourceAsStream = requireNotNull(PyPsiPackageUtil::class.java.getClassLoader().getResourceAsStream("tools/packages"))
-                                             { "tool/packages is missed in distribution "}
+        { "tool/packages is missed in distribution " }
         for (line in ResourceUtil.loadText(resourceAsStream).lines()) {
           val split = line.trim().split(" ")
           check(split.size == 2) { "Each line should contain exactly two names: $line" }

@@ -36,7 +36,7 @@ class KotlinUTypeCheckExpression(
             }
         }
 
-    override val operationKind =
+    override val operationKind: UastBinaryExpressionWithTypeKind.InstanceCheck =
         if (sourcePsi.isNegated)
             KotlinBinaryExpressionWithTypeKinds.NEGATED_INSTANCE_CHECK
         else

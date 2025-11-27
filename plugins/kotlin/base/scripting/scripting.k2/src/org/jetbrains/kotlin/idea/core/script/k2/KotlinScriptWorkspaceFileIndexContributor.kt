@@ -7,6 +7,10 @@ import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNo
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.java.workspace.fileIndex.JvmPackageRootData
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -16,7 +20,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRoot
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.relativeLocation
+import java.io.File
 
 class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptLibraryEntity> {
     override val entityClass: Class<KotlinScriptLibraryEntity>
@@ -50,5 +54,16 @@ class KotlinScriptExternalLibrariesNodesProvider : ExternalLibrariesWorkspaceMod
         return ExternalLibrariesWorkspaceModelNode(
             project, dependencies, emptyList(), "Script: $scriptFileName", KotlinIcons.SCRIPT, settings
         )
+    }
+
+    private fun VirtualFile.relativeLocation(project: Project): String {
+        val scriptPath = project.guessProjectDir()?.path?.let {
+            FileUtil.getRelativePath(
+                it,
+                this.path,
+                File.separatorChar
+            )
+        } ?: this.path
+        return scriptPath.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
     }
 }

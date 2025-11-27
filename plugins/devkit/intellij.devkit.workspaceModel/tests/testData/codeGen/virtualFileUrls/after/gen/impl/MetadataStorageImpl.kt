@@ -15,49 +15,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.EntityWithUrls",
-                                  entityDataFqName = "com.intellij.workspaceModel.test.api.impl.EntityWithUrlsData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "simpleUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "nullableUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "listOfUrls",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
-                              ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(
-                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))),
-                                                                            primitive = primitiveTypeListNotNullable), withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "dataClassWithUrl",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                  fqName = "com.intellij.workspaceModel.test.api.DataClassWithUrl",
-                                                                                  properties = listOf(
-                                                                                    OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false, name = "url",
-                                                                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                          isNullable = false,
-                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                                                        withDefault = false)),
-                                                                                  supertypes = listOf())), withDefault = false)),
-                                  extProperties = listOf(), isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.EntityWithUrls", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.EntityWithUrlsData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "simpleUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "nullableUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "listOfUrls", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl"))), primitive = primitiveTypeListNotNullable), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "dataClassWithUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.DataClassWithUrl", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "url", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf())), withDefault = false)), extProperties = listOf(), isAbstract = false)
 
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.EntityWithUrls", metadataHash = 671526655)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.EntityWithUrls", metadataHash = 418453287)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.DataClassWithUrl", metadataHash = 58767177)
   }
 

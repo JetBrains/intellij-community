@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.codeInsight.inline.completion.InlineCompletion;
@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -37,12 +36,15 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XEvaluationListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.*;
+import com.intellij.xdebugger.frame.XValueContainer;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
@@ -52,8 +54,11 @@ import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -91,7 +96,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
@@ -103,7 +108,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical);
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
@@ -115,7 +120,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical, withToolbar);
+    this(MonolithSessionProxyKt.asProxy(session), watchesInVariables, vertical, withToolbar);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
@@ -208,7 +213,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         @Override
         protected ComboBox<XExpression> createComboBox(CollectionComboBoxModel<XExpression> model, int width) {
           AnAction addToWatchesAction =
-            new DumbAwareAction(ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH), null, AllIcons.Debugger.AddToWatch) {
+            new DumbAwareAction(XDebuggerImplBundle.message("action.Debugger.AddToWatch.text"), null, AllIcons.Debugger.AddToWatch) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e) {
                 myEvaluateComboBox.saveTextInHistory();
@@ -476,19 +481,19 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
+  protected XValueContainerNode.Root<XValueContainer> doCreateNewRootNode(@Nullable XStackFrame stackFrame,
+                                                                          @Nullable XDebuggerTreeState stateToRecover) {
     if (inlineWatchesEnabled) {
-      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
+      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables, stateToRecover);
     }
     else {
-      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
+      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables, stateToRecover);
     }
     return myRootNode;
   }
 
   private XDebuggerWatchesManager getWatchesManager() {
-    return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(getTree().getProject()))
-      .getWatchesManager();
+    return XDebugManagerProxy.getInstance().getWatchesManager(getTree().getProject());
   }
 
   @Override

@@ -30,7 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
+public class PyStringLiteralExpressionImpl extends PyElementImpl
+  implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
   private volatile @Nullable String myStringValue;
   private volatile @Nullable List<TextRange> myValueTextRanges;
@@ -184,5 +185,4 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public int valueOffsetToTextOffset(int valueOffset) {
     return createLiteralTextEscaper().getOffsetInHost(valueOffset, getStringValueTextRange());
   }
-
 }

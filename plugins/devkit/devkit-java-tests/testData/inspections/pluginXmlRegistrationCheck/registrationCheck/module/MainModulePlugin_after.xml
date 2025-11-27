@@ -24,6 +24,8 @@
     <myPlugin.filetype.myExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
     <myPlugin.filetype.myOwnExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
 
+    <applicationService serviceInterface="MyServiceInterface" serviceImplementation="MyServiceImplementation2"/>
+
   </extensions>
 
   <actions>

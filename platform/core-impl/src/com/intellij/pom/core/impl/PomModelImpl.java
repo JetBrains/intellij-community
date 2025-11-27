@@ -26,7 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -178,7 +178,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void commitTransaction(@NotNull PsiFile containingFileByTree, @Nullable Document document) {
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
 
     boolean isFromCommit = manager.isCommitInProgress();
@@ -255,7 +255,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Contract("_,null -> null")
   private @Nullable Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
 
@@ -277,7 +277,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
     if (psiFile != null) {
-      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
+      ((SmartPointerManagerEx) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
       if (psiFile instanceof PsiFileImpl) {
         ((PsiFileImpl)psiFile).beforeAstChange();
       }

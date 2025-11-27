@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
@@ -45,7 +46,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -488,7 +488,7 @@ public class PythonTask {
   public final @NotNull String runNoConsole() throws ExecutionException {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "This method can't run under write action";
       output = manager.runProcessWithProgressSynchronously(() -> getOutputInternal(), myRunTabTitle, false, myModule.getProject());
     }
@@ -504,7 +504,7 @@ public class PythonTask {
   }
 
   private @NotNull Output getOutputInternal() throws ExecutionException {
-    assert !SwingUtilities.isEventDispatchThread();
+    assert !EDT.isCurrentThreadEdt();
     final ProcessHandler process = createProcess(new HashMap<>());
     final OutputListener listener = new OutputListener();
     process.addProcessListener(listener);

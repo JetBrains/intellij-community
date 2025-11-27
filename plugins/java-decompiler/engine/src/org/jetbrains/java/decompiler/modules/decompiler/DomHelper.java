@@ -471,7 +471,7 @@ public final class DomHelper {
             }
 
             if (addhd) {
-              LinkedList<Statement> lstStack = new LinkedList<>();
+              List<Statement> lstStack = new ArrayList<>();
               lstStack.add(handler);
 
               while (!lstStack.isEmpty()) {

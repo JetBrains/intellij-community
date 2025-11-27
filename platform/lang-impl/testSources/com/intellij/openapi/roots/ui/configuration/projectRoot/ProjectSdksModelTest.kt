@@ -17,6 +17,9 @@ import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Test
+import kotlin.io.path.absolute
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.pathString
 
 class ProjectSdksModelTest : LightPlatformTestCase() {
   private val model = ProjectSdksModel()
@@ -71,7 +74,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
 
   private inner class DownloadSdkTest {
     val type = SimpleJavaSdkType.getInstance()
-    val plannedDir = createTempDir("planned-dir-")
+    val plannedDir = createTempDirectory("planned-dir-").absolute()
     val sdkName = "test-name"
 
     fun task(action: () -> Unit) {
@@ -94,7 +97,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
       try {
         model.setupInstallableSdk(type, object : SdkDownloadTask {
           override fun getSuggestedSdkName() = sdkName
-          override fun getPlannedHomeDir() = plannedDir.absolutePath
+          override fun getPlannedHomeDir() = plannedDir.pathString
           override fun getPlannedVersion() = "1.2.3"
           override fun doDownload(indicator: ProgressIndicator) {
             ApplicationManager.getApplication().assertIsNonDispatchThread()

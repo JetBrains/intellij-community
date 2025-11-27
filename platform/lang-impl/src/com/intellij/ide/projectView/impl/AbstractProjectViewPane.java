@@ -39,6 +39,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.treeStructure.BgtAwareTreeModel;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.ui.treeStructure.TreeStateListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -76,6 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -104,6 +106,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
+
+  @Nullable ProjectViewUpdateCause updateFromRootCause;
 
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
@@ -134,7 +138,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   private void rebuildCompletely(boolean wait) {
-    ActionCallback callback = updateFromRoot(true);
+    ActionCallback callback = updateFromRoot(true, ProjectViewUpdateCause.EXTENSIONS_CHANGED);
     if (wait) {
       callback.waitFor(5000);
     }
@@ -220,16 +224,50 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     myTreeStructure = null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths, @NotNull ProjectViewUpdateCause cause) {
+    updateFromRootCause = cause;
+    try {
+      return updateFromRoot(restoreExpandedPaths);
+    }
+    finally {
+      updateFromRootCause = null;
+    }
+  }
+
+  /**
+   * Refreshes the entire tree asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #updateFromRoot(boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   * @param restoreExpandedPaths determines whether the currently expanded paths should be preserved after refresh if possible
+   * @return a callback that will be invoked when the refresh is done
+   */
   public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
+  /**
+   * Refreshes the specified node asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #updateFrom(Object, boolean, boolean, ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   * @param forceResort not used, kept for compatibility reasons
+   * @param updateStructure if {@code true}, then all children are updated recursively as well
+   */
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
+    updateFrom(element, forceResort, updateStructure, guessProjectViewUpdateCauseByCaller(AbstractProjectViewPane.class));
+  }
+
+  @ApiStatus.Internal
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure, @NotNull ProjectViewUpdateCause cause) {
     if (element instanceof PsiElement) {
       var support = getAsyncSupport();
-      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure, List.of(cause));
     }
     else if (element instanceof TreePath) {
       var support = getAsyncSupport();
-      if (support != null) support.update((TreePath)element, updateStructure);
+      if (support != null) support.update((TreePath)element, updateStructure, List.of(cause));
     }
   }
 
@@ -971,7 +1009,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
       return new DnDDragStartBean(new TransferableWrapper() {
         @Override
         public List<File> asFileList() {
-          return PsiCopyPasteManager.asFileList(psiElements);
+          return ReadAction.compute(() -> PsiCopyPasteManager.asFileList(psiElements));
         }
 
         @Override

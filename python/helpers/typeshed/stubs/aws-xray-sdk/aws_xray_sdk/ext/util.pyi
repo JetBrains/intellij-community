@@ -5,7 +5,7 @@ from aws_xray_sdk.core.models.trace_header import TraceHeader
 
 first_cap_re: Final[re.Pattern[str]]
 all_cap_re: Final[re.Pattern[str]]
-UNKNOWN_HOSTNAME: str = "UNKNOWN HOST"
+UNKNOWN_HOSTNAME: Final = "UNKNOWN HOST"
 
 def inject_trace_header(headers, entity) -> None: ...
 def calculate_sampling_decision(trace_header, recorder, sampling_req): ...

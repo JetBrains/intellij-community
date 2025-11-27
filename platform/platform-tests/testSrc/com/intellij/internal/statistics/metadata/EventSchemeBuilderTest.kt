@@ -25,7 +25,8 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class EventSchemeBuilderTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
-    RegisteredLogDescriptionsProcessor.reset(false)
+    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(false)
+    RegisteredLogDescriptionsProcessor.resetDescriptions()
   }
 
   fun `test generate string field validated by regexp`() {
@@ -129,7 +130,8 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
    * when [RegisteredLogDescriptionsProcessor.isRegistered] is true.
    */
   fun `test generate registered descriptions1`() {
-    RegisteredLogDescriptionsProcessor.reset(true)
+    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
+    RegisteredLogDescriptionsProcessor.resetDescriptions()
     val groupDescription = "Test group description5"
     val eventDescription = "Description of test event"
     val fieldDescription = "Number of elements in event"
@@ -152,7 +154,8 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
    * registered group description.
    */
   fun `test generate registered descriptions for the same groups with different descriptions`() {
-    RegisteredLogDescriptionsProcessor.reset(true)
+    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
+    RegisteredLogDescriptionsProcessor.resetDescriptions()
     val groupDescription = "Test group description"
     val eventDescription = "Description of test event"
     val fieldDescription = "Number of elements in event"
@@ -176,7 +179,8 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
    * Validates the error message when attempting to overwrite an existing event description.
    */
   fun `test generate registered descriptions for the same events with different descriptions`() {
-    RegisteredLogDescriptionsProcessor.reset(true)
+    RegisteredLogDescriptionsProcessor.configureDescriptionRegistration(true)
+    RegisteredLogDescriptionsProcessor.resetDescriptions()
     val groupDescription = "Test group description"
     val eventDescription = "Description of test event"
     val fieldDescription = "Number of elements in event"

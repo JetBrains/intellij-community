@@ -123,7 +123,7 @@ class KotlinUElvisExpression(
     override val javaPsi: PsiElement? = null
     override val sourcePsi: PsiElement = elvisExpression
     override val psi: PsiElement = sourcePsi
-    override val kind = KotlinSpecialExpressionKinds.ELVIS
+    override val kind: UastSpecialExpressionKind = KotlinSpecialExpressionKinds.ELVIS
 
     override val uAnnotations: List<UAnnotation>
         get() {

@@ -601,6 +601,10 @@ public final class TerminalToolWindowManager implements Disposable {
       return Unit.INSTANCE;
     });
     content.putUserData(TERMINAL_WIDGET_KEY, null);
+
+    if (myToolWindow != null && myToolWindow.getContentManager().isEmpty()) {
+      myToolWindow.hide();
+    }
   }
 
   public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {

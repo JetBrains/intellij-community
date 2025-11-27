@@ -34,7 +34,7 @@ private class EntitiesRegistrar(
       }
       if (clazz != null) {
         if (typeMetadata is FinalClassMetadata.ObjectMetadata) {
-          registerSingletonSerializer(kryo) { clazz.getDeclaredField("INSTANCE").get(0) }
+          registerSingletonSerializer(kryo) { clazz.getDeclaredField("INSTANCE").apply { isAccessible = true }.get(0) }
         }
         else {
           kryo.register(clazz)

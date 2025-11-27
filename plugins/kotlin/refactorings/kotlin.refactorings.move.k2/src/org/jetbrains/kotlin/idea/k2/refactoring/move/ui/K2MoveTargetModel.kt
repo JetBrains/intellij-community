@@ -187,7 +187,7 @@ sealed class K2MoveTargetModel(
 
         private var selectedFile: KtFile? = null
         private val mppSuffixObservableProperty: AtomicProperty<String?> =
-            AtomicProperty(findFileSuffix(fileName))
+            AtomicProperty(findSourceSetStemInFileName(fileName))
 
         override fun updateDirectory(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             super.updateDirectory(onError, revalidateButtons)
@@ -231,7 +231,7 @@ sealed class K2MoveTargetModel(
                     } else {
                         onError(null, fileChooser)
                     }
-                    mppSuffixObservableProperty.set(findFileSuffix(fileName))
+                    mppSuffixObservableProperty.set(findSourceSetStemInFileName(fileName))
                     revalidateButtons()
                 }
             })
@@ -240,7 +240,7 @@ sealed class K2MoveTargetModel(
         override val sourceSetSuffix: ObservableProperty<String?>
             get() = mppSuffixObservableProperty
 
-        private fun findFileSuffix(fileName: String): String? {
+        private fun findSourceSetStemInFileName(fileName: String): String? {
             val sourceRootVirtualFile = directory.sourceRoot ?: return null
             val sourceRootPsiDir = sourceRootVirtualFile.toPsiDirectory(directory.project) ?: return null
             val suffix = findSourceSetNameStem(sourceRootPsiDir)
@@ -296,7 +296,7 @@ sealed class K2MoveTargetModel(
             return if (destinationTargetType == MoveTargetType.CLASS && selectedClass != null) {
                 K2MoveTargetDescriptor.ClassOrObject(selectedClass)
             } else {
-                val fileNameWithKmpSuffixHandled = findSuffixedFileName(fileName, kmpSourceRoot)
+                val fileNameWithKmpSuffixHandled = findFileNameWithSourceSetStemSuffix(fileName, kmpSourceRoot)
                 K2MoveTargetDescriptor.File(fileNameWithKmpSuffixHandled, pkgName, kmpSourceRoot ?: directory)
             }
         }
@@ -350,9 +350,9 @@ sealed class K2MoveTargetModel(
             revalidateButtons: () -> Unit,
             installTitleElement: Row.() -> Unit,
         ) {
-            val iconInfoObservableProperty = observableUiSettings.mppDeclarationsSettingObservable
+            val iconInfoObservableProperty = observableUiSettings.mppDeclarationsSetting
                 .and(observableUiSettings.sourceSetSuffix.transform { it.isNullOrBlank() })
-            val iconWarningObservableProperty = observableUiSettings.mppDeclarationsSettingObservable
+            val iconWarningObservableProperty = observableUiSettings.mppDeclarationsSetting
                 .and(observableUiSettings.sourceSetSuffix.transform { !it.isNullOrBlank() })
 
             row {
@@ -361,7 +361,7 @@ sealed class K2MoveTargetModel(
                         installTitleElement()
                         icon(AllIcons.General.ContextHelp).align(AlignX.RIGHT).gap(RightGap.SMALL).applyToComponent {
                             toolTipText = RefactoringBundle.message("tooltip.text.move.kmp.target.file")
-                        }.visibleIf(observableUiSettings.mppDeclarationsSettingObservable)
+                        }.visibleIf(observableUiSettings.mppDeclarationsSetting)
                     }
                 }
                 installFileChooser(onError, revalidateButtons)
@@ -382,9 +382,9 @@ sealed class K2MoveTargetModel(
                             else -> ""
                         }
                     }
-                ).visibleIf(observableUiSettings.mppDeclarationsSettingObservable)
+                ).visibleIf(observableUiSettings.mppDeclarationsSetting)
                 // placeholder to avoid resizing on changes in the settings
-                label("").visibleIf(observableUiSettings.mppDeclarationsSettingObservable.equalsTo(false))
+                label("").visibleIf(observableUiSettings.mppDeclarationsSetting.equalsTo(false))
                     .applyToComponent { preferredSize = warningLabel.component.preferredSize }
             }
         }

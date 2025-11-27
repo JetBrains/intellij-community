@@ -13,7 +13,7 @@ import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
@@ -42,13 +42,13 @@ class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.project.analysis"))
     val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
-    val canManage = if (checkToml) hatchService.isHatchManagedProject().getOrLogException(LOGGER) == true else true
+    val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     when {
       canManage && checkExistence -> {
-        val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().getOrLogException(LOGGER)?.pythonVirtualEnvironment
+        val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull().orLogException(LOGGER)?.pythonVirtualEnvironment
         when (defaultEnv) {
           is PythonVirtualEnvironment.Existing -> EnvCheckerResult.EnvFound(defaultEnv.pythonInfo, intentionName)
           is PythonVirtualEnvironment.NotExisting, null -> envNotFound

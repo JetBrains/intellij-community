@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.dev
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -20,25 +19,31 @@ import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SupportedDistribution
-import org.jetbrains.intellij.build.impl.buildPlugins
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
+import org.jetbrains.intellij.build.impl.plugins.buildPlugins
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal suspend fun buildPlugins(
+internal data class PluginsLayoutResult(
+  @JvmField val pluginEntries: List<PluginBuildDescriptor>,
+  @JvmField val additionalPlugins: List<Pair<Path, List<Path>>>?,
+)
+
+internal suspend fun buildPluginsForDevMode(
   request: BuildRequest,
   context: BuildContext,
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildPlatformJob: Job,
+  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   moduleOutputPatcher: ModuleOutputPatcher,
-): Pair<List<PluginBuildDescriptor>, List<Pair<Path, List<Path>>>?> {
+): PluginsLayoutResult {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
@@ -56,26 +61,25 @@ internal suspend fun buildPlugins(
     buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
+      os = null,
       targetDir = pluginRootDir,
       state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
-      context = context,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,
-      os = null,
       descriptorCacheContainer = platform.descriptorCacheContainer,
-      pluginBuilt = { layout, pluginDirOrFile ->
-        handleCustomPlatformSpecificAssets(
-          layout = layout,
-          targetPlatform = targetPlatform,
-          context = context,
-          pluginDir = pluginDirOrFile,
-          isDevMode = true,
-        )
-      },
-    )
+      context = context,
+    ) { layout, pluginDirOrFile ->
+      handleCustomPlatformSpecificAssets(
+        layout = layout,
+        targetPlatform = targetPlatform,
+        context = context,
+        pluginDir = pluginDirOrFile,
+        isDevMode = true,
+      )
+    }
   }
-  val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
-  return pluginEntries to additionalPlugins
+  val additionalPlugins = copyAdditionalPlugins(pluginRootDir, context)
+  return PluginsLayoutResult(pluginEntries, additionalPlugins)
 }
 
 private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: PluginLayout, context: BuildContext): Boolean {
@@ -91,7 +95,7 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
          satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
-private suspend fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
   val bundledPluginModules = context.getBundledPluginModules()
   val result = LinkedHashSet<String>(bundledPluginModules.size + additionalModules.size)
   result.addAll(bundledPluginModules)

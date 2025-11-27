@@ -26,6 +26,7 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -481,5 +482,15 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       return true;
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public void deleteAllStepRequests() {
+    List<Requestor> stepRequestors =
+      ContainerUtil.filter(myRequestorToBelongedRequests.keySet(), request -> request instanceof StepRequestor);
+
+    for (Requestor request : stepRequestors) {
+      deleteRequest(request);
+    }
   }
 }

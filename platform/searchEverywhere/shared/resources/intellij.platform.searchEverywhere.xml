@@ -6,6 +6,10 @@
     <extensionPoint name="searchEverywhere.itemsProviderFactory"
                     interface="com.intellij.platform.searchEverywhere.SeItemsProviderFactory"
                     dynamic="true"/>
+
+    <extensionPoint name="searchEverywhere.legacyItemPresentationProvider"
+                    interface="com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

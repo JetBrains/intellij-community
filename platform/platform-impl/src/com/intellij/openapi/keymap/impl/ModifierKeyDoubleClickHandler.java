@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -103,15 +103,14 @@ public final class ModifierKeyDoubleClickHandler {
       if (dispatchers.isEmpty()) {
         return false;
       }
-      return WriteIntentReadAction.<Boolean, RuntimeException>compute(() -> {
-        boolean innerResult = false;
-        for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
-          if (dispatcher.dispatch(keyEvent)) {
-            innerResult = true;
-          }
+
+      boolean innerResult = false;
+      for (MyDispatcher dispatcher : doubleClickHandler.myDispatchers.values()) {
+        if (dispatcher.dispatch(keyEvent)) {
+          innerResult = true;
         }
-        return innerResult;
-      });
+      }
+      return innerResult;
     }
   }
 

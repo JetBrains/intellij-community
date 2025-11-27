@@ -2,8 +2,10 @@
 package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -15,6 +17,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
@@ -29,8 +32,12 @@ import kotlin.io.path.pathString
 
 internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
   : CustomExistingEnvironmentSelector<P>("uv", model, module) {
-  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.uvViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.UV
+  override val toolState: ToolValidator<P> = model.uvViewModel.toolValidator
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> setUvExecutable(path) }
+  }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val sdkHomePath = selectedEnv.get()?.homePath
@@ -74,7 +81,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
                        ?: return@mapNotNull null
 
       val pathHolder = PathHolder.Eel(pythonBinaryPath) as P
-      DetectedSelectableInterpreter(pathHolder, pythonInfo, false)
+      DetectedSelectableInterpreter(pathHolder, pythonInfo, false, UV_UI_INFO)
     }
     return existingEnvs
   }

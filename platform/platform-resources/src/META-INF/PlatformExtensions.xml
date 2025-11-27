@@ -11,7 +11,7 @@
     />
 
     <applicationService
-            serviceInterface="com.intellij.openapi.application.impl.TransferredWriteActionService"
+            serviceInterface="com.intellij.util.concurrency.TransferredWriteActionService"
             serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
     />
 
@@ -916,6 +916,14 @@
     />
 
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
+    <inline.completion.suppress.state.supplier
+      implementation="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateByInlinePromptSupplier"/>
+    <inline.edit.awaiter implementation="com.intellij.codeInsight.inline.edit.InlineCompletionAwaiter"/>
+    <editorActionHandler
+      action="CallInlineCompletionAction"
+      id="inline.edit.no.suggestions.hint"
+      order="last"
+      implementationClass="com.intellij.codeInsight.inline.completion.action.CallInlineCompletionAction$ShowNoSuggestionsHintIfNeededHandler"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
@@ -1639,8 +1647,8 @@
                        key="notification.group.failed.to.generate.module.descriptors"/>
     <notificationGroup id="Ultimate Installed" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="notification.group.advertiser.try.ultimate.installed"/>
-    <notificationGroup id="Mac15 Local Network" displayType="BALLOON" bundle="messages.IdeCoreBundle" key="mac15.local.network.issue.title"/>
     <notificationGroup id="code.style.cache.dump" displayType="BALLOON" hideFromSettings="true" isLogByDefault="false"/>
+    <notificationGroup id="proxy.auth.failed" displayType="STICKY_BALLOON" bundle="messages.UIBundle" key="proxy.auth.notification.title"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -2118,9 +2126,6 @@
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="intellij.platform.kernel.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="intellij.platform.project.xml">

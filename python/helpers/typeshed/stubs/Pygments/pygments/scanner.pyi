@@ -1,15 +1,15 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class EndOfText(RuntimeError): ...
 
 class Scanner:
-    data: Any
-    data_length: Any
+    data: Incomplete
+    data_length: Incomplete
     start_pos: int
     pos: int
-    flags: Any
-    last: Any
-    match: Any
+    flags: Incomplete
+    last: Incomplete
+    match: Incomplete
     def __init__(self, text, flags: int = 0) -> None: ...
     @property
     def eos(self): ...

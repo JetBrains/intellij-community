@@ -2,13 +2,11 @@
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.logging.*;
 
 import static com.intellij.openapi.diagnostic.AsyncLogKt.log;
@@ -108,13 +106,12 @@ public class JulLogger extends Logger {
     }
   }
 
-  @ApiStatus.Internal
   public static void configureLogFileAndConsole(
     @NotNull Path logFilePath,
     boolean appendToFile,
     boolean enableConsoleLogger,
     boolean showDateInConsole,
-    boolean enablePersistingAttachments,
+    boolean writeAttachments,
     @Nullable Runnable onRotate,
     @Nullable Filter filter,
     @Nullable Path inMemoryLogPath
@@ -124,7 +121,7 @@ public class JulLogger extends Logger {
 
     rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout, filter));
 
-    if (enablePersistingAttachments) {
+    if (writeAttachments) {
       rootLogger.addHandler(configureAttachmentHandler(logFilePath, filter));
     }
 
@@ -133,15 +130,13 @@ public class JulLogger extends Logger {
     }
 
     if (inMemoryLogPath != null) {
-      rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath));
+      rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath, filter));
     }
   }
 
-  private static @NotNull Handler configureAttachmentHandler(@NotNull Path path, @Nullable Filter filter) {
+  private static Handler configureAttachmentHandler(Path path, @Nullable Filter filter) {
     AttachmentHandler handler = new AttachmentHandler(path);
-    if (filter != null) {
-      handler.setFilter(filter);
-    }
+    if (filter != null) handler.setFilter(filter);
     return handler;
   }
 
@@ -149,44 +144,32 @@ public class JulLogger extends Logger {
     OptimizedConsoleHandler consoleHandler = new OptimizedConsoleHandler();
     consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
     consoleHandler.setLevel(Level.WARNING);
-    if (filter != null) {
-      consoleHandler.setFilter(filter);
-    }
+    if (filter != null) consoleHandler.setFilter(filter);
     return consoleHandler;
   }
 
-  private static InMemoryHandler configureInMemoryHandler(Path logFilePath) {
+  private static Handler configureInMemoryHandler(Path logFilePath, @Nullable Filter filter) {
     InMemoryHandler inMemoryHandler = new InMemoryHandler(logFilePath);
     inMemoryHandler.setFormatter(new IdeaLogRecordFormatter());
     inMemoryHandler.setLevel(Level.FINEST);
+    if (filter != null) inMemoryHandler.setFilter(filter);
     return inMemoryHandler;
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private static RollingFileHandler configureFileHandler(
-    @NotNull Path logFilePath,
+  private static Handler configureFileHandler(
+    Path logFilePath,
     boolean appendToFile,
     @Nullable Runnable onRotate,
-    long limit,
-    int count,
+    @SuppressWarnings("SameParameterValue") long limit,
+    @SuppressWarnings("SameParameterValue") int count,
     IdeaLogRecordFormatter layout,
     @Nullable Filter filter
   ) {
     RollingFileHandler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
     fileHandler.setFormatter(layout);
     fileHandler.setLevel(Level.FINEST);
-    if (filter != null) {
-      fileHandler.setFilter(filter);
-    }
+    if (filter != null) fileHandler.setFilter(filter);
     return fileHandler;
-  }
-
-  public static Filter createFilter(@NotNull List<String> classesToFilter) {
-    return record -> {
-      String loggerName = record.getLoggerName();
-      boolean isFiltered = ContainerUtil.exists(classesToFilter, loggerName::startsWith);
-      return !isFiltered || record.getLevel().intValue() > Level.FINE.intValue();
-    };
   }
 
   private static final class OptimizedConsoleHandler extends ConsoleHandler {

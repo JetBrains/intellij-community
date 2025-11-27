@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
-import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.rpc.util.textRange
+import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
@@ -14,6 +14,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XInlineBreakpointVariantDto
+import com.intellij.platform.debugger.impl.shared.InlineBreakpointsCache
+import com.intellij.platform.debugger.impl.shared.proxy.InlineLightBreakpoint
+import com.intellij.platform.debugger.impl.shared.proxy.InlineVariantWithMatchingBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInlineVariantProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.*
 import kotlinx.coroutines.CoroutineScope

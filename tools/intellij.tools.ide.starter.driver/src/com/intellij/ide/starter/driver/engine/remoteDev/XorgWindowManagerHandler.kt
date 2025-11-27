@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.driver.engine.remoteDev
 
+import com.intellij.driver.sdk.waitNotNull
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getProcessList
@@ -9,11 +10,12 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlin.io.path.div
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 object XorgWindowManagerHandler {
 
   fun provideDisplay(): Int {
-    return getRunningDisplays().firstOrNull() ?: throw IllegalStateException("No display found")
+    return waitNotNull("There is a display", 5.seconds) { getRunningDisplays().firstOrNull() }
   }
 
   // region Fluxbox

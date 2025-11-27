@@ -43,8 +43,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
-
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
   private MySelectionListener mySelectionListener;
@@ -119,16 +117,21 @@ public abstract class XVariablesViewBase extends XDebugView {
     return node;
   }
 
-  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
-    XValueContainerNode root;
+  @ApiStatus.Internal
+  protected XValueContainerNode.Root doCreateNewRootNode(@Nullable XStackFrame stackFrame, @Nullable XDebuggerTreeState stateToRecover) {
     if (stackFrame == null) {
       // do not set leaf=false here, otherwise info messages do not appear, see IDEA-200865
-      root = new XValueContainerNode<XValueContainer>(getTree(), null, false, new XValueContainer() {}) {};
+      return new XValueContainerNode.Root<XValueContainer>(getTree(), null, false, new XValueContainer() {}, stateToRecover) {};
     }
     else {
-      root = new XStackFrameNode(getTree(), stackFrame);
+      return new XStackFrameNode(getTree(), stackFrame, stateToRecover);
     }
-    return root;
+  }
+
+  @ApiStatus.NonExtendable
+  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
+    XDebuggerTreeState state = stackFrame != null ? myTreeStates.get(stackFrame.getEqualityObject()) : null;
+    return doCreateNewRootNode(stackFrame, state);
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,

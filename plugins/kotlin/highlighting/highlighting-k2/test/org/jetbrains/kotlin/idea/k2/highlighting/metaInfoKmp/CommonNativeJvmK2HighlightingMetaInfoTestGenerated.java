@@ -351,6 +351,11 @@ public abstract class CommonNativeJvmK2HighlightingMetaInfoTestGenerated extends
             runTest("../../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
+        @TestMetadata("NamedDestructuring.kt")
+        public void testNamedDestructuring() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/NamedDestructuring.kt");
+        }
+
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/NonNullAssertion.kt");

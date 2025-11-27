@@ -1,4 +1,5 @@
 @file:JvmName("PyNamespacePackageUtil")
+
 package com.jetbrains.python.psi.resolve
 
 import com.intellij.psi.PsiDirectory

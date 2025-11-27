@@ -8,16 +8,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
+import com.intellij.openapi.projectRoots.belongsToEel
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -34,7 +38,8 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   val sdkName = params.sdkName
   val sdkType = params.sdkType
   val testSdkSequence = params.testSdkSequence
-  val project = params.project
+  val project: Project? = params.project
+  val eel: EelDescriptor? = params.eelDescriptor ?: project?.getEelDescriptor()
   val progressMessageTitle = params.progressMessageTitle
 
   val sdkHomeFilter = params.sdkHomeFilter
@@ -75,7 +80,12 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   fun checkSdkHomeAndVersion(sdk: Sdk?): Boolean {
     if (sdk == null) return false
 
-    val sdkHome = runCatching { sdk.homePath }.getOrNull() ?: return false
+    val eel = this@SdkLookupContext.eel
+    if (eel != null && !sdk.belongsToEel(eel)) {
+      return false
+    }
+
+    val sdkHome = sdk.homePath ?: return false
     return params.sdkHomeFilter?.invoke(sdkHome) != false && checkSdkVersion(sdk)
   }
 

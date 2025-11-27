@@ -70,7 +70,8 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
 
     String originalQuote = stringElement.getQuote();
     boolean entireLiteralCanBeConverted = ContainerUtil.all(stringLiteral.getStringElements(),
-                                                            s -> s.getQuote().equals(originalQuote) && PyQuotesUtil.canBeConverted(s, true));
+                                                            s -> s.getQuote().equals(originalQuote) &&
+                                                                 PyQuotesUtil.canBeConverted(s, true));
     if (entireLiteralCanBeConverted) {
       stringLiteral.getStringElements().forEach(PyQuotedStringIntention::convertStringElement);
     }

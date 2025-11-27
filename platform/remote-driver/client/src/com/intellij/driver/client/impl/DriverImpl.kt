@@ -204,7 +204,7 @@ open class DriverImpl(host: JmxHost, override val isRemDevMode: Boolean) : Drive
             remote.value,
             method.name,
             convertArgsToPass(rdTarget, args),
-            (project as? RefWrapper?)?.getRef(),
+            convertArgToPass(project, rdTarget) as Ref?,
             remote.serviceInterface.takeIf { it.isNotBlank() },
             rdTarget
           )

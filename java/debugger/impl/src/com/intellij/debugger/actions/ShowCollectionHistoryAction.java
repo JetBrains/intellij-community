@@ -14,7 +14,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -46,9 +45,9 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase implement
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     XValueNodeImpl node = getNode(e);
-    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
+    return new ValueCollector(e.getProject()) {
       @Override
-      public void handleInCollector(Project project, String value, XDebuggerTree tree) {
+      public void handleInCollector(Project project, String value) {
         if (session == null || node == null) {
           return;
         }
@@ -59,8 +58,7 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase implement
 
   @Override
   protected void handle(Project project,
-                        String value,
-                        XDebuggerTree tree) { }
+                        String value) { }
 
   private static XValueNodeImpl getNode(@NotNull AnActionEvent e) {
     List<XValueNodeImpl> selectedNodes = XDebuggerTreeActionBase.getSelectedNodes(e.getDataContext());

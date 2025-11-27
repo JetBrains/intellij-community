@@ -14,6 +14,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.shared.proxy.InlineLightBreakpoint
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInlineVariantProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.BitUtil
@@ -31,21 +36,6 @@ import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
-
-/**
- * Light breakpoint is a temporary placeholder for an actual breakpoint.
- * If a breakpoint exists, use [asInlineLightBreakpoint] to wrap it into a light breakpoint.
- * If a breakpoint is not created on the backend yet, this interface can be used for rendering not-yet-existing breakpoint
- * for a smooth RemDev experience.
- */
-@ApiStatus.Internal
-interface InlineLightBreakpoint {
-  val highlightRange: XLineBreakpointHighlighterRange
-  val icon: Icon
-  val tooltipDescription: String
-  val breakpointProxy: XBreakpointProxy?
-
-}
 
 @ApiStatus.Internal
 fun XLineBreakpointProxy.asInlineLightBreakpoint(): InlineLightBreakpoint = object : InlineLightBreakpoint {

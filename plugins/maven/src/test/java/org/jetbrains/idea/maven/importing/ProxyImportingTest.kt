@@ -16,6 +16,8 @@ import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
 class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
+
   lateinit var myRepositoryFixture: MavenHttpRepositoryServerFixture
   lateinit var myProxyFixture: MavenHttpProxyServerFixture
   lateinit var myHelper: MavenCustomRepositoryHelper

@@ -143,6 +143,14 @@ build --nobuild_runfile_links
 # https://bazel.build/reference/command-line-reference#build-flag--test_summary
 test --test_summary=detailed
 
+# streamed tests output by default
+# https://bazel.build/reference/command-line-reference#build-flag--test_output
+test --test_output=streamed
+
 # https://bazel.build/reference/test-encyclopedia
 # https://bazel.build/reference/command-line-reference#flag--test_timeout
 test --test_timeout=60,300,900,14400
+
+# A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
+common --action_env=ANDROID_HOME=
+common --action_env=ANDROID_SDK_HOME=

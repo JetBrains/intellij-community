@@ -16,7 +16,7 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.*
@@ -76,7 +76,7 @@ class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
           }
         } ?: return EnvCheckerResult.CannotConfigure
         val tomlContentResult = withContext(Dispatchers.Default) { PyProjectToml.parse(tomlFileContent) }
-        val tomlContent = tomlContentResult.getOrLogException(logger) ?: return EnvCheckerResult.CannotConfigure
+        val tomlContent = tomlContentResult.orLogException(logger) ?: return EnvCheckerResult.CannotConfigure
         val project = tomlContent.project ?: return EnvCheckerResult.CannotConfigure
         project.name ?: module.name
       }

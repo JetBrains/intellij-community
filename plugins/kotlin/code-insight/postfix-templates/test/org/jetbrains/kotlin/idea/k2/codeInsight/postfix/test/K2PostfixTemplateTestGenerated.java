@@ -510,6 +510,21 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("qualifiedCallInsideWithCall.kt")
+        public void testQualifiedCallInsideWithCall() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("qualifiedCallInsideWithProperty.kt")
+        public void testQualifiedCallInsideWithProperty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("qualifiedCallWithLambda.kt")
+        public void testQualifiedCallWithLambda() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();

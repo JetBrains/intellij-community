@@ -6,13 +6,14 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 
 internal class CommittedDocumentsConstraint(
   private val project: Project,
 ) : ReadConstraint {
 
   override fun isSatisfied(): Boolean {
-    val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
     return !manager.isCommitInProgress && !manager.hasEventSystemEnabledUncommittedDocuments()
   }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
@@ -73,10 +74,12 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
 
     val offset = editor.caretModel.offset
     try {
+      PsiUtilCore.ensureValid(psiFile)
       val actionResult: GTDUActionResult? = underModalProgress(
         project,
         CodeInsightBundle.message("progress.title.resolving.reference")
       ) {
+        PsiUtilCore.ensureValid(psiFile)
         gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
       }
       when (actionResult) {

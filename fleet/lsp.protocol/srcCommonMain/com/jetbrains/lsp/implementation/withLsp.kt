@@ -1,7 +1,7 @@
 package com.jetbrains.lsp.implementation
 
 import com.jetbrains.lsp.protocol.*
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -41,7 +41,7 @@ suspend fun withLsp(
     body: suspend CoroutineScope.(LspClient) -> Unit,
 ) {
     coroutineScope {
-        val outgoingRequests = ConcurrentHashMap<StringOrInt, OutgoingRequest>()
+        val outgoingRequests = MultiplatformConcurrentHashMap<StringOrInt, OutgoingRequest>()
         val idGen = AtomicInt(0)
         val lspClient = object : LspClient {
             override suspend fun <Params, Result, Error> request(
@@ -104,7 +104,7 @@ suspend fun withLsp(
 
         launch(createCoroutineContext(lspClient)) {
             withSupervisor { supervisor ->
-                val incomingRequestsJobs = ConcurrentHashMap<StringOrInt, Job>()
+                val incomingRequestsJobs = MultiplatformConcurrentHashMap<StringOrInt, Job>()
                 incoming.consumeEach { jsonMessage ->
                     when {
                         jsonMessage !is JsonObject || jsonMessage["jsonrpc"] != JsonPrimitive("2.0") -> {
@@ -186,7 +186,7 @@ suspend fun withLsp(
                                     outgoing.send(LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage))
                                 }
                             }.also { requestJob ->
-                                incomingRequestsJobs.put(request.id, requestJob)
+                                incomingRequestsJobs[request.id] = requestJob
                                 requestJob.invokeOnCompletion {
                                     incomingRequestsJobs.remove(request.id)
                                 }

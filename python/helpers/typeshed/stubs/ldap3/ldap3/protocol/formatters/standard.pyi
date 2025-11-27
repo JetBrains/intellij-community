@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
-standard_formatter: Any
+standard_formatter: Incomplete
 
 def find_attribute_helpers(attr_type, name, custom_formatter): ...
 def format_attribute_values(schema, name, values, custom_formatter): ...

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.popup.util.*;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

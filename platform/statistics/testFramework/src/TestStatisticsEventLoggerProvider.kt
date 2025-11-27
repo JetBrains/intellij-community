@@ -4,8 +4,15 @@ package com.intellij.internal.statistic
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 
-class TestStatisticsEventLoggerProvider(recorder: String) : StatisticsEventLoggerProvider(recorder, 1, DEFAULT_SEND_FREQUENCY_MS, DEFAULT_MAX_FILE_SIZE_BYTES) {
-  override val logger: TestStatisticsEventLogger = TestStatisticsEventLogger()
+class TestStatisticsEventLoggerProvider(recorder: String, val escapeChars: Boolean) : StatisticsEventLoggerProvider(
+  recorder,
+  1,
+  DEFAULT_SEND_FREQUENCY_MS,
+  DEFAULT_MAX_FILE_SIZE_BYTES,
+  false,
+  escapeChars // not relevant because the `logger` is overridden in this class
+) {
+  override val logger: TestStatisticsEventLogger = TestStatisticsEventLogger(escapeChars = escapeChars)
 
   override fun isRecordEnabled(): Boolean = true
 

@@ -27,6 +27,6 @@ fun ElementPattern<String>.toRpc(): RpcPrefixCondition {
 
   ccLogger.warn("Unsupported condition: $this", Throwable())
 
-  // todo there is no way to serialize a pattern yet
+  // todo IJPL-218873 there is no way to serialize a pattern yet
   return RpcPrefixCondition.AlwaysTrue
 }

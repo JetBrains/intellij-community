@@ -84,7 +84,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
             var parameterName = unfilledParameterFromParamSpec.getParameter().getName();
             var paramSpecTypeName = unfilledParameterFromParamSpec.getParamSpecType().getVariableName();
             if (parameterName != null) {
-              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.parameter.for.paramspec", parameterName, paramSpecTypeName));
+              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
+                                                                paramSpecTypeName));
             }
           }
 
@@ -151,7 +152,8 @@ final class PyTypeCheckerInspectionProblemRegistrar {
     }
 
     if (expectedSubstitutedName != null) {
-      return PyPsiBundle.message("INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName, actualTypeName);
+      return PyPsiBundle.message("INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName,
+                                 actualTypeName);
     }
     else {
       return PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName);

@@ -99,7 +99,7 @@ object CollaborationToolsUIUtil {
 
   private class ValidatorActivatable(
     private val errorValue: SingleValueModel<@Nls String?>,
-    private val component: JComponent
+    private val component: JComponent,
   ) : Activatable {
     private var validatorDisposable: Disposable? = null
     private var validator: ComponentValidator? = null
@@ -362,8 +362,10 @@ fun HorizontalListPanel(gap: Int = 0): JPanel =
   }
 
 @Suppress("FunctionName")
-fun ScrollablePanel(@MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
-                    layout: LayoutManager? = null): JPanel =
+fun ScrollablePanel(
+  @MagicConstant(intValues = [SwingConstants.HORIZONTAL.toLong(), SwingConstants.VERTICAL.toLong()]) orientation: Int,
+  layout: LayoutManager? = null,
+): JPanel =
   OrientableScrollablePanel(orientation, layout)
 
 private class OrientableScrollablePanel(private val orientation: Int, layout: LayoutManager?) : JPanel(layout), Scrollable {
@@ -401,6 +403,12 @@ private class OrientableScrollablePanel(private val orientation: Int, layout: La
 fun ClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
   ClippingRoundedPanel(arcRadius, layoutManager).apply {
     border = RoundedLineBorder(borderColor, (arcRadius + 1) * 2)
+  }
+
+@Suppress("FunctionName")
+fun FocusAwareClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
+  ClippingRoundedPanel(arcRadius, layoutManager).apply {
+    border = FocusAwareRoundedLineBorder(borderColor, (arcRadius + 1) * 2)
   }
 
 /**

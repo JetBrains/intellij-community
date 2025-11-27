@@ -32,6 +32,8 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(RunDashboardCoroutineScopeProvider.getInstance(project)
                                                                           .cs.childScope("Backend run dashboard shared state updates"))
 
+  private val navigateToServiceEvents = MutableSharedFlow<NavigateToServiceEvent>(1, 100, BufferOverflow.DROP_OLDEST)
+
   private fun scheduleSharedStateUpdate(update: SequentialComputationRequest) {
     sharedStateUpdatesQueue.submit(update)
   }
@@ -84,6 +86,16 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
       }
       sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid, effectiveStatus.id))
     }
+  }
+
+  fun fireNavigateToServiceEvent(serviceId: RunDashboardServiceId, focus: Boolean){
+    scheduleSharedStateUpdate {
+      navigateToServiceEvents.tryEmit(NavigateToServiceEvent(serviceId, focus))
+    }
+  }
+
+  fun getNavigateToServiceEvents() : Flow<NavigateToServiceEvent> {
+    return navigateToServiceEvents.asSharedFlow()
   }
 
   fun getStatuses(): Flow<ServiceStatusDto> {

@@ -14,6 +14,7 @@ import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler
 import com.intellij.remoteServer.util.ServerRuntimeException
 import com.jetbrains.python.Result
@@ -60,6 +61,9 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
+  targetEnv.uploadVolumes.forEach { _, volume ->
+    volume.upload(".", TargetProgressIndicator.EMPTY)
+  }
   val args = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }
@@ -92,11 +96,12 @@ private class TargetProcessCommands(
   private val targetEnv: TargetEnvironment,
   private val cmdLine: TargetedCommandLine,
 ) : ProcessCommands {
-  override val env: Map<String, String>
-    get() = cmdLine.environmentVariables
-
-  override val cwd: String?
-    get() = cmdLine.workingDirectory
+  override val info: ProcessCommandsInfo
+    get() = ProcessCommandsInfo(
+      env = cmdLine.environmentVariables,
+      cwd = cmdLine.workingDirectory,
+      target = targetEnv.request.configuration?.displayName ?: PyExecBundle.message("py.exec.target.name.default")
+    )
 
   private var process: Process? = null
 

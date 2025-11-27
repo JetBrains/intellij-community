@@ -213,7 +213,8 @@ public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotationValue);
       builder.replaceRange(TextRange.create(0, returnTypeText.length()), returnTypeText);
-      final Editor targetEditor = PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
+      final Editor targetEditor =
+        PythonUiService.getInstance().openTextEditor(project, annotatedFunction.getContainingFile().getVirtualFile(), offset);
       if (targetEditor != null) {
         builder.run(targetEditor, true);
       }

@@ -1,19 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 
 interface GitLabNoteAdminActionsViewModel {
   val busy: Flow<Boolean>
 
-  val editVm: Flow<CodeReviewTextEditingViewModel?>
+  val editVm: Flow<GitLabCodeReviewTextEditingViewModel?>
 
   /**
    * Whether the note can be edited.
@@ -42,7 +42,8 @@ private val LOG = logger<GitLabNoteAdminActionsViewModel>()
 class GitLabNoteAdminActionsViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val note: MutableGitLabNote
+  projectData: GitLabProject,
+  private val note: MutableGitLabNote,
 ) : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
@@ -50,11 +51,11 @@ class GitLabNoteAdminActionsViewModelImpl(
   override val busy: Flow<Boolean> = taskLauncher.busy
 
   private val isEditing = MutableStateFlow(false)
-  override val editVm: Flow<CodeReviewTextEditingViewModel?> = isEditing.transformLatest { editing ->
+  override val editVm: Flow<GitLabCodeReviewTextEditingViewModel?> = isEditing.transformLatest { editing ->
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, note) {
+        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, projectData, note) {
           stopEditing()
         }
         editVm.requestFocus()

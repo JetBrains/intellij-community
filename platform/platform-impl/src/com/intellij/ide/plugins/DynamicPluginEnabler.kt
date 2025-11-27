@@ -108,20 +108,22 @@ class DynamicPluginEnabler : PluginEnabler {
   }
 }
 
-private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>): List<IdeaPluginDescriptorImpl>? {
+private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>): List<PluginMainDescriptor>? {
   val result = descriptors.mapNotNull {
     runCatching { findInstalledPlugin(it) }
       .getOrLogException(LOG)
   }
-  return if (result.size == descriptors.size) result else null
+  if (result.size != descriptors.size) {
+    return null
+  }
+  return result.distinct() // drop duplicates just in case
 }
 
-private fun findInstalledPlugin(descriptor: IdeaPluginDescriptor): IdeaPluginDescriptorImpl {
+private fun findInstalledPlugin(descriptor: IdeaPluginDescriptor): PluginMainDescriptor {
   return when (descriptor) {
-    is IdeaPluginDescriptorImpl -> descriptor
+    is IdeaPluginDescriptorImpl -> descriptor.getMainDescriptor()
     is PluginNode -> {
       val pluginId = descriptor.pluginId
-
       PluginManagerCore.getPluginSet().findInstalledPlugin(pluginId)
       ?: throw IllegalStateException("Plugin '$pluginId' is not installed")
     }

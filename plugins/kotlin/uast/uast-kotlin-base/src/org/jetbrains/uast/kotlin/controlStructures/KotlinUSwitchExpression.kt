@@ -33,7 +33,7 @@ class KotlinUSwitchExpression(
             }
         }
 
-    override fun asRenderString() = buildString {
+    override fun asRenderString(): String = buildString {
         val expr = expression?.let { "(" + it.asRenderString() + ") " } ?: ""
         appendLine("switch $expr {")
         appendLine(body.asRenderString())

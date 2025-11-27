@@ -47,7 +47,7 @@ public abstract class PythonPathCache {
       return null;
     }
     final List<PsiElement> elements = references.get();
-    if(elements != null && ! elements.stream().allMatch(PsiElement::isValid)) {
+    if (elements != null && !elements.stream().allMatch(PsiElement::isValid)) {
       // At least one element is invalid
       return null;
     }

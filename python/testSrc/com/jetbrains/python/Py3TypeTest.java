@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
@@ -1748,7 +1749,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1761,7 +1762,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1778,7 +1779,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1792,7 +1793,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
+    doMultiFileTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from mod import func
             
       expr = func
@@ -1979,7 +1980,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAdd() {
-    doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
+    doTest("(str, x: int, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -1997,7 +1998,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAddSeveralParameters() {
-    doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
+    doTest("(str, bool, x: int, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -2015,7 +2016,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateRemove() {
-    doTest("(args: tuple[bool, ...]) -> bool",
+    doTest("(*args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -2033,7 +2034,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateTransform() {
-    doTest("(str, args: tuple[bool, ...]) -> bool",
+    doTest("(str, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -2056,7 +2057,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-51329
   public void testBitwiseOrOperatorOverloadUnion() {
-    doTest("UnionType",
+    doTest("UnionType | Self",
            """
              class MyMeta(type):
                  def __or__(self, other):
@@ -3190,7 +3191,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-61883
   public void testParamSpecConcatenateTransformWithPEP695Syntax() {
-    doTest("(str, args: tuple[bool, ...]) -> bool",
+    doTest("(str, *args: bool) -> bool",
            """
             from typing import Callable, Concatenate
             
@@ -4147,6 +4148,17 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-81684
+  public void testFunctionAlwaysRaisesReturnsNever() {
+    // The function actually returns NoReturn, but its get converted to Never upon assignment to expr
+    doTest("Never", """
+      def f():
+          raise Exception()
+    
+      expr = f()
+    """);
+  }
+
   // PY-85078
   public void testComprehensionIfClauseNarrows() {
     doTest("str", """
@@ -4202,6 +4214,127 @@ public class Py3TypeTest extends PyTestCase {
           """);
       });
     });
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      _: Callable[[int], object] = lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContextSplitDefinition() {
+    doTest("int", """
+      from typing import Callable
+      
+      a: Callable[[int], int]
+      a = lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesAssignmentContextSplitDefinitionClass() {
+    doTest("int", """
+      from typing import Callable
+      
+      class C:
+        attr: Callable[[int], str]
+        def __init__(self):
+          self.attr = lambda expr: str(expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesParameterContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f(fn: Callable[[int], object]): ...
+      
+      f(lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterUsesReturnContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f() -> Callable[[int], object]:
+        return lambda expr: expr
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaUsesGenericContext() {
+    doTest("int", """
+      from typing import Callable
+      
+      def f[T](t: T, fn: Callable[[T], object]) -> T:
+      
+      f(1, lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaUsesGenericContextReceiver() {
+    doTest("int", """
+      from typing import Callable
+      
+      class A[T]:
+          def f(self, fn: Callable[[T], object]) -> T:
+      
+      A[int]().f(lambda expr: expr)
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaParameterDoesntEndlessRecursion() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("Any", "_ = lambda expr: expr");
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedFunctionReturnValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+      def f():
+          return lambda x: x + 1
+      expr = f()
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedVariableValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+      t = lambda x: x + 1
+      expr = t
+      """);
+  }
+
+  @TestFor(issues="PY-28130")
+  public void testLambdaAsNonAnnotatedParameterValue() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTest("Any", """
+      from typing import Callable
+      
+      def f(fn): ...
+      
+      f(lambda expr: 42)
+      """);
+  }
+
+  // PY-85526
+  public void testNewType() {
+    doTest("(int) -> UserId", """
+      from typing import NewType
+      UserId = NewType('UserId', int)
+      expr = UserId
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

@@ -171,6 +171,7 @@ internal abstract class ProcessOutputTest {
             ),
             args = command.drop(1),
             env = mapOf(),
+            target = "Local",
             lines = MutableSharedFlow(),
             exitInfo = MutableStateFlow(null),
         )

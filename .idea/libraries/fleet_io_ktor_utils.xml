@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.utils" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-utils-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-utils-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3.jar">
-          <sha256sum>33333937b98fc0c8e943ee4b10b3ea66b49782dfb569c44c142da4f32d85dffc</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.3.2/ktor-utils-jvm-3.3.2.jar">
+          <sha256sum>cdb1b7188f2e55bb7d7a93b5ef64025946f9e9f420cdba0a09560c1c04d9eedd</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.3.2/ktor-utils-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.3.2/ktor-utils-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

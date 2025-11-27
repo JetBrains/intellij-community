@@ -14,10 +14,12 @@ import java.util.List;
 /**
  * Describes "from ... import" statements.
  */
-public interface PyFromImportStatement extends PyAstFromImportStatement, PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub>,
-                                               PyImplicitImportNameDefiner {
+public interface PyFromImportStatement
+  extends PyAstFromImportStatement, PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub>,
+          PyImplicitImportNameDefiner {
   /**
    * Returns a reference the module from which import is required.
+   *
    * @return reference to module. If the 'from' reference is relative and consists entirely of dots, null is returned.
    */
   @Override

@@ -2,12 +2,14 @@
 package com.intellij.platform.vcs.impl.shared.ui
 
 import com.intellij.idea.AppModeAssertions
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.platform.vcs.impl.shared.CaseSensitivityInfoHolder
+import com.intellij.platform.vcs.impl.shared.ProjectBasePathHolder
 import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -33,7 +35,7 @@ internal object VcsPresentablePath {
     getPresentablePath(project, filePath, acceptEmptyPath = true)
 
   private fun getPresentablePath(project: Project?, filePath: FilePath, acceptEmptyPath: Boolean): @NlsSafe @SystemDependent String {
-    val projectDir = project?.basePath
+    val projectDir = project?.service<ProjectBasePathHolder>()?.getPresentablePath()
     if (projectDir != null) {
       val rootRelativePath = getRootRelativePath(project, projectDir, filePath, acceptEmptyPath)
       if (rootRelativePath != null) return getSystemDependentPath(rootRelativePath)

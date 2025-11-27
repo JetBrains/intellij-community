@@ -28,7 +28,9 @@ import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
 public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
 
   @Override
-  public @Nullable Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+  public @Nullable Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget,
+                                                @NotNull TypeEvalContext context,
+                                                @Nullable PsiElement anchor) {
     if (!(referenceTarget instanceof PyDecoratable pyDecoratable)) {
       return null;
     }

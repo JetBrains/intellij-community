@@ -14,7 +14,7 @@ const val UTIL_8_JAR: String = "util-8.jar"
 
 internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
-private val USER_HOME = Path.of(System.getProperty("user.home"))
+internal val USER_HOME = Path.of(System.getProperty("user.home"))
 internal val MAVEN_REPO: Path = Path.of(getMavenRepositoryPath())
 
 sealed interface Source {

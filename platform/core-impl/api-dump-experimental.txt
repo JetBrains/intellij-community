@@ -77,9 +77,9 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - getLanguage():com.intellij.lang.Language
 - getReferences():com.intellij.psi.PsiReference[]
 a:com.intellij.psi.impl.PsiDocumentManagerBase
-- com.intellij.psi.PsiDocumentManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.event.DocumentListener
+- com.intellij.psi.PsiDocumentManager
 - *:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 *:com.intellij.psi.impl.PsiDocumentTransactionListenerBackgroundable
 - com.intellij.psi.impl.PsiDocumentTransactionListener
@@ -108,6 +108,7 @@ com.intellij.psi.impl.file.impl.FileManager
 - *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 - *a:getCachedPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
+- *a:getCachedPsiFiles(com.intellij.openapi.vfs.VirtualFile):java.util.List
 a:com.intellij.psi.impl.source.PsiFileImpl
 - com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.ui.Queryable

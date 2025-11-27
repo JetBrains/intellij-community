@@ -3,7 +3,6 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
@@ -19,12 +18,8 @@ import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import java.awt.Color
 
 internal class FrontendXStackFrame(
@@ -32,7 +27,7 @@ internal class FrontendXStackFrame(
   private val project: Project,
   private val suspendContextLifetimeScope: CoroutineScope,
   private val sourcePosition: XSourcePositionDto?,
-  private val customBackgroundInfo: XStackFrameCustomBackgroundInfo?,
+  private val bgColor: XStackFrameBackgroundColor?,
   private val equalityObject: XStackFrameEqualityObject?,
   private val evaluatorDto: XDebuggerEvaluatorDto,
   private val captionInfo: XStackFrameCaptionInfo,
@@ -43,18 +38,10 @@ internal class FrontendXStackFrame(
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
   }
 
-  private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false) {
-    XExecutionStackApi.getInstance().computeVariables(id)
-  }
+  private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false, id)
 
-  val fileId: VirtualFileId? get() = sourcePosition?.fileId
-
-  // TODO[IJPL-177087]: collapse these two into a three-state value? (NoCustomBackground/WithCustomBackground(null)/WithCustomBackground(color)?
-  //  Is it worth it?
-  val requiresCustomBackground: Boolean
-    get() = customBackgroundInfo != null
-  val customBackgroundColor: Color?
-    get() = customBackgroundInfo?.backgroundColor?.color()
+  val backgroundColor: Color?
+    get() = bgColor?.colorId?.color()
 
   val canDropFlow: MutableStateFlow<CanDropState> = MutableStateFlow(CanDropState.fromThreeState(canDrop))
 
@@ -91,23 +78,19 @@ internal class FrontendXStackFrame(
     currentUiPresentation.value.customizePresentation(component)
   }
 
-  override fun customizePresentation(): Flow<XStackFrameUiPresentationContainer> {
-    return channelFlow {
-      suspendContextLifetimeScope.launch {
-        XExecutionStackApi.getInstance().computeUiPresentation(id).collectLatest { presentation ->
-          val presentation = XStackFrameUiPresentationContainer().apply {
-            setIcon(presentation.iconId?.icon())
-            setToolTipText(presentation.tooltipText)
-            presentation.fragments.forEach { (text, attributes) ->
-              append(text, attributes.toSimpleTextAttributes())
-            }
-          }
-          send(presentation)
-          currentUiPresentation.value = presentation
-        }
+  fun newUiPresentation(presentation: XStackFramePresentation) {
+    val presentationContainer = XStackFrameUiPresentationContainer().apply {
+      setIcon(presentation.iconId?.icon())
+      setToolTipText(presentation.tooltipText)
+      presentation.fragments.forEach { (text, attributes) ->
+        append(text, attributes.toSimpleTextAttributes())
       }
-      awaitClose()
     }
+    currentUiPresentation.value = presentationContainer
+  }
+
+  override fun customizePresentation(): Flow<XStackFrameUiPresentationContainer> {
+    return currentUiPresentation
   }
 
   override fun hasSeparatorAbove(): Boolean {

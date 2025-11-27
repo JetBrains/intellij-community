@@ -59,7 +59,7 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.IdeScriptReportSink"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage"
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl"/>
 
     <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptTrafficLightRendererContributor"/>

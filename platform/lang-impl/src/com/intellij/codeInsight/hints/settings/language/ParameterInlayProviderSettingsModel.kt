@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
@@ -21,11 +22,12 @@ import org.jetbrains.annotations.ApiStatus
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language
-) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ParameterInlayProviderSettingsModel.ID, language) {
+) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ID, language) {
   companion object {
     val ID: String = "parameter.hints.old"
   }
 
+  @Deprecated("Not used in new UI")
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String
@@ -66,7 +68,11 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    fun createPass() = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    fun createPass(): ParameterHintsPass {
+      return ParameterHintsPass(file, editor, HintInfoFilter { true }, true).also {
+        it.setContext(defaultContext())
+      }
+    }
 
     val pass = createPass()
     ProgressManager.getInstance().runProcess({

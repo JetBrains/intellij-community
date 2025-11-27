@@ -6,12 +6,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         UIUtil.invokeLaterIfNeeded(() -> {
-          XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).getWatchesManager();
+          XDebuggerWatchesManager watchesManager = XDebugManagerProxy.getInstance().getWatchesManager(session.getProject());
           XSourcePosition caretPosition = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
           if (text != null) {
             watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, false);

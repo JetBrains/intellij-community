@@ -3,13 +3,14 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link com.intellij.java.syntax.parser.JavaParser} instead
  */
 @Deprecated
-public class JavaParser extends BasicJavaParser {
+public class JavaParser {
   public static final JavaParser INSTANCE = new JavaParser();
 
   private final FileParser myFileParser;
@@ -30,42 +31,36 @@ public class JavaParser extends BasicJavaParser {
     myPatternParser = new PatternParser(this);
   }
 
-  @Override
   public @NotNull FileParser getFileParser() {
     return myFileParser;
   }
 
-  @Override
   public @NotNull ModuleParser getModuleParser() {
     return myModuleParser;
   }
 
-  @Override
   public @NotNull DeclarationParser getDeclarationParser() {
     return myDeclarationParser;
   }
 
-  @Override
   public @NotNull StatementParser getStatementParser() {
     return myStatementParser;
   }
 
-  @Override
   public @NotNull ExpressionParser getExpressionParser() {
     return myExpressionParser;
   }
 
-  @Override
   public @NotNull ReferenceParser getReferenceParser() {
     return myReferenceParser;
   }
 
-  @Override
   public @NotNull PatternParser getPatternParser() {
     return myPatternParser;
   }
 
-  @Override
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory() {
     return JavaElementTypeFactory.INSTANCE;
   }

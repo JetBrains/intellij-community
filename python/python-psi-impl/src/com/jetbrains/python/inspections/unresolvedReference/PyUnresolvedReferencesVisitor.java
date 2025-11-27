@@ -41,8 +41,7 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -137,8 +136,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
       if (!ignoreUnresolved) {
         HighlightSeverity severity = reference instanceof PsiReferenceEx
-                                           ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
-                                           : HighlightSeverity.ERROR;
+                                     ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
+                                     : HighlightSeverity.ERROR;
         if (severity == null) {
           if (isAwaitCallToImportedNonAsyncFunction(reference)) {
             // special case: type of prefixExpression.getQualifier() is null but we want to check whether the called function is async
@@ -166,7 +165,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             String unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberMissingAttr, myTypeEvalContext);
             registerProblem(
               node,
-              PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender, referencedName),
+              PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender,
+                                  referencedName),
               ProblemHighlightType.WEAK_WARNING,
               null,
               reference.getRangeInElement()
@@ -364,6 +364,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       myUnresolvedRefs.add(problemInfo);
       isAddedToInstallAllFix = true;
     }
+
+    ContainerUtil.addIfNotNull(fixes, getAddSourceRootQuickFix(node));
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
@@ -713,6 +715,10 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   protected @Nullable LocalQuickFix getInstallAllPackagesQuickFix() {
+    return null;
+  }
+
+  protected @Nullable LocalQuickFix getAddSourceRootQuickFix(@NotNull PyElement node) {
     return null;
   }
 

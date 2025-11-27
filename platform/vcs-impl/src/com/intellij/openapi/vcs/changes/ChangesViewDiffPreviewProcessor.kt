@@ -5,6 +5,8 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
@@ -14,9 +16,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_E
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -32,7 +38,7 @@ private fun wrap(
 private fun wrapNode(project: Project, node: ChangesBrowserNode<*>): Wrapper? {
   return when (val nodeObject = node.userObject) {
     is Change -> ChangeWrapper(nodeObject, node.let(::wrapNodeToTag))
-    is VirtualFile -> if (findTagNode(node)?.userObject == MODIFIED_WITHOUT_EDITING_TAG) wrapHijacked(project, nodeObject) else null
+    is VirtualFile -> if (node.isUnderTag(MODIFIED_WITHOUT_EDITING_TAG)) wrapHijacked(project, nodeObject) else null
     else -> null
   }
 }
@@ -43,25 +49,8 @@ private fun wrapHijacked(project: Project, file: VirtualFile): Wrapper? {
 }
 
 private fun wrapNodeToTag(node: ChangesBrowserNode<*>): ChangesBrowserNode.Tag? {
-  return findChangeListNode(node)?.let { ChangeListWrapper(it.userObject) }
-         ?: findAmendNode(node)?.let { AmendChangeWrapper(it.userObject) }
-}
-
-private fun findTagNode(node: ChangesBrowserNode<*>): TagChangesBrowserNode? = findNodeOfType(node)
-private fun findChangeListNode(node: ChangesBrowserNode<*>): ChangesBrowserChangeListNode? = findNodeOfType(node)
-private fun findAmendNode(node: ChangesBrowserNode<*>): EditedCommitNode? = findNodeOfType(node)
-
-private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: ChangesBrowserNode<*>): T? {
-  if (node is T) return node
-
-  var parent = node.parent
-  while (parent != null) {
-    if (parent is T) return parent
-
-    parent = parent.parent
-  }
-
-  return null
+  return node.findChangeListNode()?.let { ChangeListWrapper(it.userObject) }
+         ?: node.findAmendNode()?.let { AmendChangeWrapper(it.userObject) }
 }
 
 @ApiStatus.Internal
@@ -78,6 +67,16 @@ class ChangesViewDiffPreviewProcessor(
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingsListener())
 
     TreeHandlerChangesTreeTracker(tree, this, handler).track()
+  }
+
+  fun subscribeOnAllowExcludeFromCommit() {
+    VcsDisposable.getInstance(project).coroutineScope.launch {
+      project.serviceAsync<ChangesViewWorkflowManager>().allowExcludeFromCommit.collect {
+        withContext(Dispatchers.EDT) {
+          setAllowExcludeFromCommit(it)
+        }
+      }
+    }.cancelOnDispose(this)
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {

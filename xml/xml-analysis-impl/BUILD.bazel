@@ -35,7 +35,6 @@ jvm_library(
     "//libraries/xerces",
     "//platform/polySymbols",
   ],
-  exports = ["//xml/xml-analysis-api:analysis"],
   runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.xml.analysis.impl` end

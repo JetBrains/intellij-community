@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -188,20 +188,23 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                        @NotNull PsiComment comment,
                                        @NotNull Document document,
                                        @NotNull Set<? super PsiElement> processedComments) {
-    final FoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
-                                                                                        element -> isCustomRegionElement(element),
-                                                                                        isCollapseCommentByDefault(comment));
-    if (commentDescriptor != null) {
-      if (comment instanceof PsiDocComment && ((PsiDocComment)comment).isMarkdownComment()) {
-        // Hack: Markdown comments aren't documented in the Commenter for the Java language
-        // To avoid the `/** */` tokens, we remove them
-        String placeHolderText = commentDescriptor.getPlaceholderText();
-        if (placeHolderText != null) {
-          placeHolderText = StringUtil.trimEnd(StringUtil.trimStart(placeHolderText, "/**"), "*/");
-          commentDescriptor.setPlaceholderText(placeHolderText);
-        }
-      }
+    final FoldingDescriptor commentDescriptor;
+    if (comment instanceof PsiDocComment && ((PsiDocComment)comment).isMarkdownComment()) {
+      // FIXME: inline documentation comments aren't supported in the Commenter interface
+      if (!processedComments.add(comment)) return;
+      String placeholder = CommentFoldingUtil.getCommentPlaceholder(document, JavaDocElementType.DOC_COMMENT, comment.getTextRange());
+      if (placeholder == null) placeholder = "/// ...";
+      // Hack: Markdown comments aren't documented in the Commenter for the Java language
+      // To avoid the `/** */` tokens, we remove them
+      placeholder = StringUtil.trimEnd(StringUtil.trimStart(placeholder, "/**"), "*/");
+      commentDescriptor = new FoldingDescriptor(comment.getNode(), comment.getTextRange(), null, placeholder, isCollapseCommentByDefault(comment), Collections.emptySet());
+    } else {
+      commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
+                                                                  element -> isCustomRegionElement(element),
+                                                                  isCollapseCommentByDefault(comment));
+    }
 
+    if (commentDescriptor != null) {
       list.add(commentDescriptor);
     }
   }
@@ -425,7 +428,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       // So, our point is to preserve fold descriptor referencing javadoc PSI element.
       if (candidate != null && candidate.getTextRange().equals(range)) {
         ASTNode node = candidate.getNode();
-        if (node != null && node.getElementType() == JavaDocElementType.DOC_COMMENT) {
+        if (node != null && JavaDocElementType.DOC_COMMENT_TOKENS.contains(node.getElementType())) {
           anchorElementToUse = candidate;
         }
       }

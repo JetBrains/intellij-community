@@ -64,7 +64,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     List<String> matchArgs = getMatchArgs(classType, context);
     for (int i = 0; i < arguments.size(); i++) {
       final var member = arguments.get(i);
-      if (member instanceof PyKeywordPattern keywordPattern)  {
+      if (member instanceof PyKeywordPattern keywordPattern) {
         if (getMemberType(classType, keywordPattern.getKeyword(), context) == null) {
           return false;
         }
@@ -90,14 +90,14 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   public @Nullable PyType getCaptureTypeForChild(@NotNull PyPattern pattern, @NotNull TypeEvalContext context) {
     pattern = as(PsiTreeUtil.findFirstParent(pattern, el -> this.getArgumentList() == el.getParent()), PyPattern.class);
     if (pattern == null) return null;
-    
+
     if (pattern instanceof PyKeywordPattern keywordPattern) {
       if (context.getType(this) instanceof PyClassType classType) {
         return Ref.deref(getMemberType(classType, keywordPattern.getKeyword(), context));
       }
       return null;
     }
-    
+
     final List<PyPattern> arguments = getArgumentList().getPatterns();
     int index = arguments.indexOf(pattern);
     if (index < 0) return null;
@@ -145,7 +145,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     if (matchArgs == null) {
       matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
     }
-    
+
     return matchArgs;
   }
 

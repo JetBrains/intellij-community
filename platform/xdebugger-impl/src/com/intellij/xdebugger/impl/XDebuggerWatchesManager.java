@@ -26,7 +26,9 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import kotlinx.coroutines.CoroutineScope;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,8 +227,9 @@ public final class XDebuggerWatchesManager {
   }
 
   private Stream<XInlineWatchesView> getWatchesViews() {
-    return XDebugManagerProxy.getInstance().getSessions(myProject).stream()
+    return StreamEx.of(XDebugManagerProxy.getInstance().getSessions(myProject))
       .map(XDebugSessionProxy::getSessionTab)
+      .select(XDebugSessionTab.class)
       .filter(t -> t != null && t.getWatchesView() instanceof XInlineWatchesView)
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }

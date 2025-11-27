@@ -25,6 +25,7 @@ import kotlin.io.path.writeText
 
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
@@ -42,7 +43,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     connection.setRequestMethod("GET")
     connection.connect()
     val response = getResponse(connection)
-    MavenLog.LOG.warn("Response $response")
+    MavenLog.LOG.warn("Response ${response.take(50)}")
     val responseCode = connection.responseCode
     connection.disconnect()
 

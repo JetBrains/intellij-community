@@ -1391,6 +1391,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         public void testVariableWithoutInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
         }
+
+        @TestMetadata("withReturnInExpressionBody.kt")
+        public void testWithReturnInExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBody.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyProperty.kt")
+        public void testWithReturnInExpressionBodyProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyProperty.kt");
+        }
+
+        @TestMetadata("withReturnInExpressionBodyPropertyAccessor.kt")
+        public void testWithReturnInExpressionBodyPropertyAccessor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/withReturnInExpressionBodyPropertyAccessor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -3252,6 +3267,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("funWithCustomUnitClass.kt")
         public void testFunWithCustomUnitClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/funWithCustomUnitClass.kt");
+        }
+
+        @TestMetadata("funWithReturnStmt.kt")
+        public void testFunWithReturnStmt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/funWithReturnStmt.kt");
         }
 
         @TestMetadata("funWithThrow.kt")
@@ -9083,6 +9103,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/conflictPackage.kt");
         }
 
+        @TestMetadata("constructorWithConflictingUsage.kt")
+        public void testConstructorWithConflictingUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceImportAlias/constructorWithConflictingUsage.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/function.kt");
@@ -11705,6 +11730,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("ifWithoutElse.kt")
             public void testIfWithoutElse() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
+            }
+
+            @TestMetadata("ifsWithoutElse.kt")
+            public void testIfsWithoutElse() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifsWithoutElse.kt");
             }
 
             @TestMetadata("lambdaExpression.kt")

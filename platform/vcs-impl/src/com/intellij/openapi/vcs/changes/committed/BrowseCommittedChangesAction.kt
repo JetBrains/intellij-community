@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -42,7 +44,7 @@ private class BrowseCommittedChangesAction : DumbAwareAction() {
     val project = e.project!!
     val file = e.getData(VIRTUAL_FILE)!!
     val vcs = getVcsForFile(file, project)!!
-    val settings = getChangeBrowserSettings(vcs)
+    val settings = project.service<ChangeBrowserSettingsHolder>().getChangeBrowserSettings(vcs)
 
     if (CommittedChangesFilterDialog(project, vcs.committedChangesProvider!!.createFilterUI(true), settings).showAndGet()) {
       showCommittedChanges(vcs, file, settings)
@@ -50,14 +52,19 @@ private class BrowseCommittedChangesAction : DumbAwareAction() {
   }
 }
 
-private fun getChangeBrowserSettings(vcs: AbstractVcs): ChangeBrowserSettings {
-  return vcs.configuration.changeBrowserSettings.computeIfAbsent(vcs.name) { vcsName ->
-    vcs.committedChangesProvider!!.createDefaultSettings().also {
-      vcs.project.stateStore.initPersistencePlainComponent(
-        component = it,
-        key = "VcsManager.ChangeBrowser.$vcsName",
-        pluginId = PluginManagerCore.CORE_ID,
-      )
+@Service(Service.Level.PROJECT)
+internal class ChangeBrowserSettingsHolder {
+  private val changeBrowserSettings = mutableMapOf<String, ChangeBrowserSettings>()
+
+  fun getChangeBrowserSettings(vcs: AbstractVcs): ChangeBrowserSettings {
+    return changeBrowserSettings.computeIfAbsent(vcs.name) { vcsName ->
+      vcs.committedChangesProvider!!.createDefaultSettings().also {
+        vcs.project.stateStore.initPersistencePlainComponent(
+          component = it,
+          key = "VcsManager.ChangeBrowser.$vcsName",
+          pluginId = PluginManagerCore.CORE_ID,
+        )
+      }
     }
   }
 }

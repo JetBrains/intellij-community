@@ -402,6 +402,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NotNull
   @Unmodifiable
+  List<IntentionAction> getAvailableQuickFixes(@TestDataFile String @NotNull ... filePaths);
+
+  @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableIntentions();
 
   /**
@@ -629,6 +633,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NotNull
   PsiManager getPsiManager();
+
+  @Nullable
+  PsiManager getPsiManagerOrNull();
 
   /**
    * @return {@code null} if the only item was auto-completed.

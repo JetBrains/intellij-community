@@ -48,8 +48,10 @@ public final class PyClassicStyleClassInspection extends PyInspection {
       if (!node.isNewStyleClass(myTypeEvalContext) && nameNode != null) {
         PyExpression[] superClassExpressions = node.getSuperClassExpressions();
         if (superClassExpressions.length == 0) {
-          registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.classic.class.usage.old.style.class"), new TransformClassicClassQuickFix());
-        } else {
+          registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.classic.class.usage.old.style.class"),
+                          new TransformClassicClassQuickFix());
+        }
+        else {
           registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.classic.class.usage.old.style.class.ancestors"));
         }
       }

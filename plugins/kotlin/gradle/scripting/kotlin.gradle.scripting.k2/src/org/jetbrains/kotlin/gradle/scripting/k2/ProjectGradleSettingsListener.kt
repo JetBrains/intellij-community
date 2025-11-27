@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
+import org.jetbrains.kotlin.idea.core.script.v1.awaitExternalSystemInitialization
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -23,7 +22,7 @@ class ProjectGradleSettingsListener(
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
         coroutineScope.launchTracked {
-            awaitExternalSystemInitialization()
+            project.awaitExternalSystemInitialization()
             settings.forEach {
                 val gradleVersion = getGradleVersion(project, it)
                 edtWriteAction {
@@ -37,20 +36,12 @@ class ProjectGradleSettingsListener(
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
         val buildRootsManager = GradleBuildRootsLocator.getInstance(project)
         coroutineScope.launchTracked {
-            awaitExternalSystemInitialization()
+            project.awaitExternalSystemInitialization()
             settings.forEach {
                 val gradleVersion = getGradleVersion(project, it)
                 edtWriteAction {
                     buildRootsManager.loadLinkedRoot(it, gradleVersion)
                 }
-            }
-        }
-    }
-
-    private suspend fun awaitExternalSystemInitialization() {
-        suspendCancellableCoroutine { continuation ->
-            ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-                continuation.resumeWith(Result.success(Unit))
             }
         }
     }

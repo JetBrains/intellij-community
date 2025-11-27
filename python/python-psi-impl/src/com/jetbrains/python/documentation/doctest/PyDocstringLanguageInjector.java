@@ -33,7 +33,8 @@ import java.util.List;
 
 public class PyDocstringLanguageInjector implements LanguageInjector {
   @Override
-  public void getLanguagesToInject(final @NotNull PsiLanguageInjectionHost host, final @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
+  public void getLanguagesToInject(final @NotNull PsiLanguageInjectionHost host,
+                                   final @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (!(host instanceof PyStringLiteralExpression)) {
       return;
     }
@@ -45,7 +46,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       int end = host.getTextLength() - 1;
       final String text = host.getText();
 
-      final Pair<String,String> quotes = PyStringLiteralCoreUtil.getQuotes(text);
+      final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(text);
       final List<String> strings = StringUtil.split(text, "\n", false);
 
       boolean gotExample = false;
@@ -57,51 +58,60 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
         final String trimmedString = string.trim();
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
-          if (!endsWithSlash)
-            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+          if (!endsWithSlash) {
+            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+          }
         }
         final String closingQuote = quotes == null ? text.substring(0, 1) : quotes.second;
 
         if (endsWithSlash && !trimmedString.endsWith("\\")) {
           endsWithSlash = false;
           injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
-                                            TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)),  null, null);
+                                            TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)), null,
+                                            null);
         }
 
         if (trimmedString.startsWith(">>>")) {
-          if (trimmedString.endsWith("\\"))
+          if (trimmedString.endsWith("\\")) {
             endsWithSlash = true;
+          }
 
-          if (!gotExample)
+          if (!gotExample) {
             start = currentPosition;
+          }
 
           gotExample = true;
           end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
         }
         else if (trimmedString.startsWith("...") && gotExample) {
-          if (trimmedString.endsWith("\\"))
+          if (trimmedString.endsWith("\\")) {
             endsWithSlash = true;
+          }
 
           end = getEndOffset(currentPosition, string, maxPosition, closingQuote);
         }
         currentPosition += string.length();
       }
-      if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+      if (gotExample && start < end) {
+        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+      }
     }
   }
 
   private static int getEndOffset(int start, String s, int maxPosition, String closingQuote) {
     int end;
     int length = s.length();
-    if (s.trim().endsWith(closingQuote))
+    if (s.trim().endsWith(closingQuote)) {
       length -= 3;
-    else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'")))
+    }
+    else if (start + length == maxPosition && (s.trim().endsWith("\"") || s.trim().endsWith("'"))) {
       length -= 1;
+    }
 
     end = start + length;
-    if (s.endsWith("\n"))
+    if (s.endsWith("\n")) {
       end -= 1;
+    }
     return end;
   }
 }

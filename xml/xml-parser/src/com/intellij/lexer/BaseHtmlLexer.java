@@ -172,7 +172,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
                                  myEmbeddedContentProviders.stream()
                                    .map(provider -> new Pair<>(provider, provider.getState()))
                                    .filter(pair -> pair.second != null)
-                                   .collect(Collectors.toMap(p -> p.first, p -> p.second)));
+                                   .collect(Collectors.toMap(p -> p.first, p -> p.second)), myHtmlEmbedmentInfo);
   }
 
   @Override
@@ -181,6 +181,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
     myDelegate.restore(((HtmlLexerPosition)position).myDelegateLexerPosition);
     Map<HtmlEmbeddedContentProvider, Object> providersState = ((HtmlLexerPosition)position).myProvidersState;
     myEmbeddedContentProviders.forEach(provider -> provider.restoreState(providersState.get(provider)));
+    myHtmlEmbedmentInfo = ((HtmlLexerPosition)position).myHtmlEmbedmentInfo;
   }
 
   protected void skipEmbedment(@NotNull HtmlEmbedment embedment) {
@@ -231,13 +232,20 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
     private final int myState;
     final LexerPosition myDelegateLexerPosition;
     final Map<HtmlEmbeddedContentProvider, Object> myProvidersState;
+    final HtmlEmbedment myHtmlEmbedmentInfo;
 
-    HtmlLexerPosition(int offset, int state, LexerPosition delegateLexerPosition, Map<HtmlEmbeddedContentProvider, Object> providersState) {
-
+    HtmlLexerPosition(
+      int offset,
+      int state,
+      LexerPosition delegateLexerPosition,
+      Map<HtmlEmbeddedContentProvider, Object> providersState,
+      HtmlEmbedment info
+    ) {
       myOffset = offset;
       myState = state;
       myDelegateLexerPosition = delegateLexerPosition;
       myProvidersState = providersState;
+      myHtmlEmbedmentInfo = info;
     }
 
     @Override

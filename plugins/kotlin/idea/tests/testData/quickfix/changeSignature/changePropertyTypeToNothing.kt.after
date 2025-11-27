@@ -1,4 +1,4 @@
-// "Change type of enclosing property 'Test.bar' to 'Nothing'" "true"
+// "Specify 'Nothing' type for enclosing property 'Test.bar'" "true"
 
 class Test {
     val bar: Nothing = TODO()

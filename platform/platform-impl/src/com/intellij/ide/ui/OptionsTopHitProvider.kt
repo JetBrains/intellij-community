@@ -39,7 +39,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     }
 
     @VisibleForTesting
-    fun buildMatcher(pattern: String?): Matcher = WordPrefixMatcher(pattern)
+    fun buildMatcher(pattern: String): Matcher = WordPrefixMatcher(pattern)
 
     @JvmStatic
     fun messageApp(property: @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String): @Nls String {

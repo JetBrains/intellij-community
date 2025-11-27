@@ -5,7 +5,6 @@ import com.intellij.codeInsight.multiverse.*
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.rootManager
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
@@ -13,7 +12,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.LogLevelWithClass
+import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.ensureActive
@@ -24,9 +23,8 @@ import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
-@LogLevelWithClass(
-  category = CodeInsightContextManagerImpl::class,
-  level = LogLevel.TRACE
+@EnableTracingFor(
+  categoryClasses = [CodeInsightContextManagerImpl::class],
 )
 internal class FileContextTest {
   companion object {

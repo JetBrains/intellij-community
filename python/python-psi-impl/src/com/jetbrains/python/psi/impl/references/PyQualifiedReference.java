@@ -17,6 +17,8 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -28,7 +30,9 @@ import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -213,7 +217,20 @@ public class PyQualifiedReference extends PyReferenceImpl {
     else {
       final PyClassType guessedType = guessClassTypeByName();
       if (guessedType != null) {
-        Collections.addAll(variants, guessedType.getCompletionVariants(myElement.getName(), myElement, ctx));
+        ContainerUtil.addAll(variants, ContainerUtil.map(guessedType.getCompletionVariants(myElement.getName(), myElement, ctx), entry ->
+          entry instanceof LookupElementBuilder e
+            ? e.withInsertHandler(new InsertHandler<LookupElement>() {
+              @Override
+              public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+                PyClassNameCompletionContributor.InsertHandlers.addImportForLookupElement(context, item, context.getTailOffset() - 1);
+                if (e.getInsertHandler() != null) {
+                  PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+                  e.handleInsert(context);
+                }
+              }
+            })
+            : element)
+        );
       }
       if (qualifier instanceof PyReferenceExpression) {
         Collections.addAll(variants, collectSeenMembers(qualifier.getText(), ctx));
@@ -235,7 +252,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
-          return new PyClassTypeImpl(classes.iterator().next(), false);
+          return new PyClassTypeImpl(classes.iterator().next(), true);
         }
       }
     }

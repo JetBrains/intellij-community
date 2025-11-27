@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 OID_CONTROL: str
 OID_EXTENSION: str
@@ -26,4 +26,4 @@ def decode_oids(sequence): ...
 def decode_syntax(syntax): ...
 def oid_to_string(oid): ...
 
-Oids: Any
+Oids: Incomplete

@@ -313,7 +313,7 @@ public final class PsiImplUtil {
       node = node.getTreeNext();
     }
 
-    return node == null || node.getElementType() != JavaDocElementType.DOC_COMMENT ? null : node;
+    return node == null || !JavaDocElementType.DOC_COMMENT_TOKENS.contains(node.getElementType()) ? null : node;
   }
 
   /**

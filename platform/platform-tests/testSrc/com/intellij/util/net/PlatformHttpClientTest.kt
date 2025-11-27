@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtures
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.junit5.http.localhostHttpServer
 import com.intellij.testFramework.junit5.http.url
 import com.intellij.util.io.HttpRequests
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URI
+import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
@@ -34,7 +36,11 @@ class PlatformHttpClientTest {
   private val serverFixture: TestFixture<HttpServer> = localhostHttpServer()
   private val server: HttpServer get() = serverFixture.get()
   private val serverRequest: HttpRequest get() = PlatformHttpClient.request(URI(server.url))
-  private val client = PlatformHttpClient.client()
+  private val clientFixture = testFixture {
+    val client = PlatformHttpClient.client()
+    initialized(client, tearDown = client::close)
+  }
+  private val client: HttpClient get() = clientFixture.get()
 
   @Test fun fileUrl(@TempDir tempDir: Path) {
     val data = "data"
@@ -171,16 +177,16 @@ class PlatformHttpClientTest {
     assertThat(response.body()).isEmpty()
   }
 
-  @Test fun permissionDenied() {
+  @Test fun accessDenied() {
     server.createContext("/") { ex ->
-      ex.sendResponseHeaders(HttpURLConnection.HTTP_UNAUTHORIZED, -1)
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_FORBIDDEN, -1)
       ex.close()
     }
     val response = client.send(serverRequest, HttpResponse.BodyHandlers.ofString())
     assertThatThrownBy { PlatformHttpClient.checkResponse(response) }
       .isInstanceOf(HttpRequests.HttpStatusException::class.java)
       .extracting { (it as? HttpRequests.HttpStatusException)?.statusCode }
-      .isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)
+      .isEqualTo(HttpURLConnection.HTTP_FORBIDDEN)
   }
 
   @Test

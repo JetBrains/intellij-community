@@ -178,8 +178,23 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public @NotNull String getPathElementId() {
-    var value = getEqualityObject();
-    return value == null ? "" : value.toString();
+    if (shouldUseSimplifiedProjectTreeState()) {
+      String name = getName();
+      return name == null ? "<noname>" : name;
+    }
+    else {
+      var value = getEqualityObject();
+      return value == null ? "" : value.toString();
+    }
+  }
+
+  @Override
+  public @Nullable String getPathElementType() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return GENERIC_PROJECT_VIEW_NODE_TYPE;
+    } else {
+      return null;
+    }
   }
 
   protected static boolean canRealModuleNameBeHidden() {

@@ -7,6 +7,7 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.containers.MultiMap
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
@@ -30,14 +31,14 @@ internal class BackendXValueApi : XValueApi {
     return xValueModel.computeTooltipPresentation()
   }
 
-  override fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
-    val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
-    return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
+  override fun computeChildren(id: XContainerId): Flow<XValueComputeChildrenEvent> {
+    return computeChildrenInternal(id)
   }
 
-  override fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent> {
-    val xValueModel = xValueGroupId.findValue() ?: return emptyFlow()
-    return computeContainerChildren(xValueModel.cs, xValueModel.xValueGroup, xValueModel.session)
+  override fun computeExpandedChildren(frameId: XStackFrameId, root: XDebuggerTreeExpandedNode): Flow<PreloadChildrenEvent> {
+    return channelFlow {
+      processExpandedChildren(frameId, this, root)
+    }
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
@@ -170,7 +171,7 @@ private class AddNextChildrenCallbackHandler(cs: CoroutineScope) {
 }
 
 @Suppress("OPT_IN_USAGE")
-internal fun computeContainerChildren(
+private fun computeContainerChildren(
   parentCs: CoroutineScope,
   xValueContainer: XValueContainer,
   session: XDebugSessionImpl,
@@ -317,6 +318,84 @@ private sealed interface RawComputeChildrenEvent {
       return XValueComputeChildrenEvent.TooManyChildren(remaining, addNextChildrenCallbackHandler.setAddNextChildrenCallback(addNextChildren))
     }
   }
+}
+
+private fun computeChildrenInternal(containerId: XContainerId): Flow<XValueComputeChildrenEvent> {
+  val (container, scope, session) = when (containerId) {
+    is XStackFrameId -> {
+      val stackFrameModel = containerId.findValue() ?: return emptyFlow()
+      Triple(stackFrameModel.stackFrame, stackFrameModel.coroutineScope, stackFrameModel.session)
+    }
+    is XValueGroupId -> {
+      val xGroupModel = containerId.findValue() ?: return emptyFlow()
+      Triple(xGroupModel.xValueGroup, xGroupModel.cs, xGroupModel.session)
+    }
+    is XValueId -> {
+      val xValueModel = BackendXValueModel.findById(containerId) ?: return emptyFlow()
+      Triple(xValueModel.xValue, xValueModel.cs, xValueModel.session)
+    }
+  }
+  return computeContainerChildren(scope, container, session)
+}
+
+/**
+ * Match [XContainerId] children with [XDebuggerTreeExpandedNode] children, and start child computation if matched.
+ */
+private suspend fun processExpandedChildren(id: XContainerId, producerScope: ProducerScope<PreloadChildrenEvent>, root: XDebuggerTreeExpandedNode) {
+  val name2Child = MultiMap<String, XDebuggerTreeExpandedNode>()
+  for (child in root.children) {
+    name2Child.putValue(child.name, child)
+  }
+
+  val childrenEventsFlow = computeChildrenInternal(id)
+  childrenEventsFlow.collect { event ->
+    val childrenToLoad = collectChildrenToLoad(event, name2Child)
+    // notify which children are going to be preloaded
+    for ((childId, _) in childrenToLoad) {
+      producerScope.send(PreloadChildrenEvent.ToBePreloaded(childId))
+    }
+    // then pass the original event
+    producerScope.send(PreloadChildrenEvent.ExpandedChildrenEvent(id, event))
+    // and then start children loading
+    for ((childId, node) in childrenToLoad) {
+      producerScope.launch {
+        processExpandedChildren(childId, producerScope, node)
+      }
+    }
+  }
+}
+
+private fun collectChildrenToLoad(
+  event: XValueComputeChildrenEvent,
+  name2Child: MultiMap<String, XDebuggerTreeExpandedNode>,
+): List<Pair<XContainerId, XDebuggerTreeExpandedNode>> {
+  if (event !is XValueComputeChildrenEvent.AddChildren) return emptyList()
+  val children = mutableListOf<Pair<XContainerId, XDebuggerTreeExpandedNode>>()
+  val namedContainers = collectNamedChildren(event)
+
+  for ((name, childId) in namedContainers) {
+    val nodes = name2Child.get(name)
+    val node = nodes.firstOrNull() ?: continue
+    nodes.remove(node)
+
+    children += childId to node
+  }
+  return children
+}
+
+private fun collectNamedChildren(event: XValueComputeChildrenEvent.AddChildren): List<Pair<String, XContainerId>> {
+  val nameAndId = mutableListOf<Pair<String, XContainerId>>()
+  for (group in event.topGroups) {
+    nameAndId += group.groupName to group.id
+  }
+  for (value in event.topValues + event.children) {
+    val name = value.name ?: continue
+    nameAndId += name to value.id
+  }
+  for (group in event.bottomGroups) {
+    nameAndId += group.groupName to group.id
+  }
+  return nameAndId
 }
 
 private fun <T> ReceiveChannel<T>.asColdFlow(): Flow<T> = flow {

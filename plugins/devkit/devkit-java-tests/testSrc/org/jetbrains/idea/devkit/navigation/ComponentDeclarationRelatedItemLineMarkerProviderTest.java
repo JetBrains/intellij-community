@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/navigation/componentDeclaration")
@@ -28,7 +28,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
     GutterMark gutter = myFixture.findGutter("MyComponent.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("MyComponent"),
-                                                  DevKitIcons.Gutter.Plugin, "component");
+                                                  DevkitCoreIcons.Gutter.Plugin, "component");
   }
 
   public void testComponentMultipleDeclarations() {
@@ -37,7 +37,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
     GutterMark gutter = myFixture.findGutter("MyComponent.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("ActualImplementation", "MyComponent"),
-                                                  DevKitIcons.Gutter.Plugin, "component");
+                                                  DevkitCoreIcons.Gutter.Plugin, "component");
   }
 
   public void testComponentInterfaceMultipleDeclarations() {
@@ -46,7 +46,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
     GutterMark gutter = myFixture.findGutter("MyComponentInterface.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("AnotherComponent", "MyComponent"),
-                                                  DevKitIcons.Gutter.Plugin, "component");
+                                                  DevkitCoreIcons.Gutter.Plugin, "component");
   }
 
   private static String buildTooltipText(String... componentFqns) {

@@ -22,9 +22,11 @@ class PyTensorFlowImportResolver : PyImportResolver {
 
   private fun isTensorFlowMember(name: QualifiedName) = name.firstComponent == "tensorflow" && name.componentCount > 1
 
-  private fun resolveImportReference(name: QualifiedName,
-                                     context: PyQualifiedNameResolveContext,
-                                     pathConfig: Map<String, String>): PsiElement? {
+  private fun resolveImportReference(
+    name: QualifiedName,
+    context: PyQualifiedNameResolveContext,
+    pathConfig: Map<String, String>,
+  ): PsiElement? {
     val path = pathConfig[name.components[1]]
     if (path != null) {
       return takeFirstResolvedInTensorFlow("$path.${name.removeHead(2)}", context)

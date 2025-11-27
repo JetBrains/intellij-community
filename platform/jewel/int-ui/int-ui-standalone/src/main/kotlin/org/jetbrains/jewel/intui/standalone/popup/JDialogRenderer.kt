@@ -462,7 +462,21 @@ private fun Point.fromCurrentScreenToGlobal(window: Window): Point {
 private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key == Key.Escape
 
 private val <T> CompositionLocal<T>.currentOrNull
-    @Composable get() = runCatching { current }.getOrNull()
+    @Composable get() = customRunCatching { current }.getOrNull()
+
+// see https://issuetracker.google.com/issues/417989445
+//     https://issuetracker.google.com/issues/449904737
+// according to Google folks, invoking @Composable callables inside try-catch-finally leads to runtime crashes,
+// but the affected code was already here before me,
+// and I am but one Kotlin QA engineer who's completely clueless about this codebase otherwise
+private inline fun <R> customRunCatching(block: () -> R): Result<R> {
+    @Suppress("TooGenericExceptionCaught")
+    return try {
+        Result.success(block())
+    } catch (e: Throwable) {
+        Result.failure(e)
+    }
+}
 
 private val AWTKeyEvent.keyLocationForCompose
     get() = if (keyLocation == KEY_LOCATION_UNKNOWN) KEY_LOCATION_STANDARD else keyLocation

@@ -172,7 +172,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @ApiStatus.Experimental
-  protected @NotNull CodeInsightContext getContext() {
+  public @NotNull CodeInsightContext getContext() {
     if (myContext == null) {
       LOG.error("context was not set to highlighting pass " + this);
       myContext = CodeInsightContexts.anyContext();

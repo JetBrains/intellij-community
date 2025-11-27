@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -92,7 +92,7 @@ private class NewScriptDependenciesNotificationPanel(
 
             @Suppress("DEPRECATION")
             val scriptDefinition = file.findScriptDefinition(project) ?: return@createActionLabel
-            KotlinScriptingSettingsImpl.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
+            KotlinScriptingSettings.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
         }
     }
 }

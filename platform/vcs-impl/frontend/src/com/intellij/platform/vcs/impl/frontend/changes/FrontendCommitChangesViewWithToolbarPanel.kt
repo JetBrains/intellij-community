@@ -9,31 +9,52 @@ import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
+import com.intellij.util.asDisposable
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
 
 internal class FrontendCommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
   cs: CoroutineScope,
   val inclusionModel: ChangesViewDelegatingInclusionModel,
 ) : CommitChangesViewWithToolbarPanel(changesView, cs) {
+  private val diffableSelectionHelper = ChangesViewDiffableSelectionHelper(changesView)
+
   init {
     changesView.setInclusionModel(inclusionModel)
-    ChangeListsViewModel.getInstance(project).changeLists.onEach { scheduleRefresh() }.launchIn(cs)
+    ChangeListsViewModel.getInstance(project).changeListsState.onEach { scheduleRefresh() }.launchIn(cs)
     cs.launch {
       subscribeToBackendEvents()
     }
+    cs.launch {
+      forwardDiffActionsToBackend()
+    }
+    cs.launch {
+      diffableSelectionHelper.diffableSelection.collectLatest {
+        ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), it)
+      }
+    }
+    changesView.addSelectionListener({ diffableSelectionHelper.tryUpdateSelection() }, cs.asDisposable())
   }
 
   override fun getModelData(): ModelData {
-    val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value
-    return ModelData(changeLists.lists, emptyList(), emptyList()) { true }
+    val changeListsState = ChangeListsViewModel.getInstance(project).changeListsState.value
+    return ModelData(
+      changeLists = changeListsState.changeLists,
+      unversionedFiles = changeListsState.unversionedFiles,
+      ignoredFiles = changeListsState.ignoredFiles.takeIf { ChangesViewSettings.getInstance(project).showIgnored }.orEmpty(),
+    ) { true }
   }
 
   override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
@@ -42,8 +63,18 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   private suspend fun subscribeToBackendEvents() {
     durable {
       ChangesViewApi.getInstance().getBackendChangesViewEvents(project.projectId()).collect { event ->
-        handleBackendEvent(event)
+        try {
+          handleBackendEvent(event)
+        } catch (e: Exception) {
+          LOG.error(e, "Failed to handle event $event")
+        }
       }
+    }
+  }
+
+  private suspend fun forwardDiffActionsToBackend() {
+    diffRequests.collectLatest { (action, _) ->
+      ChangesViewDiffApi.getInstance().performDiffAction(project.projectId(), action)
     }
   }
 
@@ -52,7 +83,6 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
-      is BackendChangesViewEvent.ToggleCheckboxes -> changesView.setShowCheckboxes(event.showCheckboxes)
     }
   }
 
@@ -66,8 +96,6 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   companion object {
-    private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
-
     fun create(project: Project, cs: CoroutineScope): FrontendCommitChangesViewWithToolbarPanel {
       val tree = LocalChangesListView(project)
       val inclusionModel = ChangesViewDelegatingInclusionModel(project, cs)
@@ -76,3 +104,4 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     }
   }
 }
+

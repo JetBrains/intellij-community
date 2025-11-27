@@ -41,7 +41,7 @@ interface FloatingToolbarProvider {
 
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   fun onHiddenByEsc(dataContext: DataContext) {}
 
   companion object {

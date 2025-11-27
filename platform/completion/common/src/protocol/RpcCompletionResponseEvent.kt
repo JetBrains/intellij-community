@@ -17,7 +17,16 @@ sealed interface RpcCompletionResponseEvent {
   @Serializable
   data class NewItems(
     val newItems: List<RpcCompletionItem>,
-    val completionListOrder: RpcCompletionListOrder,
+    val completionArrangement: RpcCompletionArrangement,
+  ) : RpcCompletionResponseEvent
+
+  /**
+   * This event is sent when all items are already emitted,
+   * but the prefix changed without completion restaring, and we need to re-sort items.
+   */
+  @Serializable
+  data class NewArrangement(
+    val completionArrangement: RpcCompletionArrangement,
   ) : RpcCompletionResponseEvent
 
   /**

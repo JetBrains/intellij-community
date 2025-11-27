@@ -5,10 +5,13 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import org.jetbrains.annotations.ApiStatus
 
-class PyTypingNewType(private val classType: PyClassType,
-                      private val name: String,
-                      private val declaration: PyTargetExpression?) : PyClassType by classType {
+class PyTypingNewType(
+  @ApiStatus.Internal val classType: PyClassType,
+  private val name: String,
+  private val declaration: PyTargetExpression?,
+) : PyClassType by classType {
 
   override fun getName(): String = name
 

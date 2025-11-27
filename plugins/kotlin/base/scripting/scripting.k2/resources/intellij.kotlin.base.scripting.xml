@@ -47,13 +47,11 @@
     <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
                  description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage"
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler"/>
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptWorkspaceFileIndexContributor"/>
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptExternalLibrariesNodesProvider"/>
@@ -92,6 +90,10 @@
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService$KotlinScriptWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <group id="KotlinScripts.ReloadConfigurationActionGroup"/>

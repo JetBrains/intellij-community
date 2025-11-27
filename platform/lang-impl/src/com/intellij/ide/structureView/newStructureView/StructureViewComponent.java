@@ -61,6 +61,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -377,7 +378,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @ApiStatus.Internal
-  public final void getViewActions(@NotNull DefaultActionGroup result) {
+  public void getViewActions(@NotNull DefaultActionGroup result) {
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
@@ -429,6 +430,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return result;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<AnAction> getHeaderActions() {
+    return Collections.emptyList();
+  }
 
   protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     Grouper[] groupers = myTreeModel.getGroupers();
@@ -618,7 +623,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void dispose() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
+    LOG.assertTrue(EDT.isCurrentThreadEdt(), Thread.currentThread().getName());
     myDisposed = true;
     myFileEditor = null;
   }

@@ -29,7 +29,9 @@ import java.util.function.Consumer;
 public class PyRefactoringUiService {
   public void performIntroduceWithDialog(IntroduceOperation operation,
                                          @NlsContexts.DialogTitle String dialogTitle,
-                                         IntroduceValidator validator, String id, Consumer<? super IntroduceOperation> performRefactoringCallback) {
+                                         IntroduceValidator validator,
+                                         String id,
+                                         Consumer<? super IntroduceOperation> performRefactoringCallback) {
 
   }
 

@@ -216,7 +216,8 @@ public class PyCustomMember extends UserDataHolderBase {
         targetClass = (PyClass)resolveTarget;
       }
 
-      return PyCustomMemberProvider.getInstance().createPyCustomMemberTarget(this, targetClass, context, resolveTarget, myTypeCallback, myCustomTypeInfo, myResolveToInstance);
+      return PyCustomMemberProvider.getInstance()
+        .createPyCustomMemberTarget(this, targetClass, context, resolveTarget, myTypeCallback, myCustomTypeInfo, myResolveToInstance);
     }
     return null;
   }
@@ -284,5 +285,4 @@ public class PyCustomMember extends UserDataHolderBase {
     myCustomTypeInfo = customInfo;
     return this;
   }
-
 }

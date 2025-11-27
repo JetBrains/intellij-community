@@ -30,6 +30,7 @@ fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
 }
 
 @ApiStatus.Internal
+@JvmName("isNewFrontendServiceViewEnabled")
 fun isNewFrontendServiceViewEnabled(): Boolean {
   // Split debugger's frontend works with a frontend run dashboard entities, same for backend. So registry flags must be in sync
   // when it comes to testing either the debugger or service view.

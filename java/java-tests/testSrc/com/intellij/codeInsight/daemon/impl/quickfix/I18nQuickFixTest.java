@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   protected void tearDown() throws Exception {
     try {
       // avoid "memory/disk conflict" when the document for changed annotation.xml stays in memory
-      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).clearUncommittedDocuments();
+      ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).clearUncommittedDocuments();
     }
     catch (Throwable e) {
       addSuppressedException(e);

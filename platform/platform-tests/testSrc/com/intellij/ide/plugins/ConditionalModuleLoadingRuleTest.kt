@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.plugins.*
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-class ConditionalModuleLoadingRuleTest {
+class ConditionalModuleLoadingRuleValueTest {
   init {
     Logger.setFactory(TestLoggerFactory::class.java)
     Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
@@ -31,7 +32,7 @@ class ConditionalModuleLoadingRuleTest {
   fun `plugin loads only in frontend mode with a missing dependency and required-if-available on backend`(appMode: String) {
     plugin("foo") {
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.OPTIONAL, requiredIfAvailable = "intellij.platform.backend") {
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL, requiredIfAvailable = "intellij.platform.backend") {
           dependencies { module("unavailable") }
         }
       }
@@ -52,7 +53,7 @@ class ConditionalModuleLoadingRuleTest {
   fun `plugin loads only in backend mode with a missing dependency and required-if-available on frontend`(appMode: String) {
     plugin("foo") {
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.OPTIONAL, requiredIfAvailable = "intellij.platform.frontend") {
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL, requiredIfAvailable = "intellij.platform.frontend") {
           dependencies { module("unavailable") }
         }
       }
@@ -73,7 +74,7 @@ class ConditionalModuleLoadingRuleTest {
   fun `plugin loads only in monolith mode with a missing dependency and required-if-available on frontend-split`(appMode: String) {
     plugin("foo") {
       content {
-        module("foo.module", loadingRule = ModuleLoadingRule.OPTIONAL, requiredIfAvailable = "intellij.platform.frontend.split") {
+        module("foo.module", loadingRule = ModuleLoadingRuleValue.OPTIONAL, requiredIfAvailable = "intellij.platform.frontend.split") {
           dependencies { module("unavailable") }
         }
       }
@@ -93,8 +94,8 @@ class ConditionalModuleLoadingRuleTest {
   fun `content module with required-if-available and a dependency on an optional content module may break plugin loading`() {
     plugin("foo") {
       content {
-        module("foo.optional", loadingRule = ModuleLoadingRule.OPTIONAL) {}
-        module("foo.maybe.req", loadingRule = ModuleLoadingRule.OPTIONAL, requiredIfAvailable = "intellij.platform.backend") {
+        module("foo.optional", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
+        module("foo.maybe.req", loadingRule = ModuleLoadingRuleValue.OPTIONAL, requiredIfAvailable = "intellij.platform.backend") {
           dependencies { module("foo.optional") }
         }
       }

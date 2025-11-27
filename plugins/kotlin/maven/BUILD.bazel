@@ -37,6 +37,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/statistics",
+    "//xml/xml-analysis-api:analysis",
     "//plugins/kotlin/code-insight/descriptions",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/formatter",

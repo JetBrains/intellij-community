@@ -131,7 +131,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         PyExpression[] elements = ((PySequenceExpression)rhs).getElements();
         List<PyType> types = new ArrayList<>(elements.length);
         for (PyExpression element : elements) {
-          PyType type = PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);
+          PyType type =
+            PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);
           if (type == null) {
             return null;
           }
@@ -201,7 +202,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public static @Nullable Ref<PyType> createAssertionType(@Nullable PyType initial,
                                                           @Nullable PyType suggested,
                                                           boolean positive,
-                                                          boolean forceStrictNarrow, 
+                                                          boolean forceStrictNarrow,
                                                           @NotNull TypeEvalContext context) {
     if (suggested == null) return null;
     if (positive) {
@@ -281,7 +282,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
     return null;
   }
-  
+
   private static @Nullable PyType intersect(@Nullable PyType initial, @Nullable PyType suggested) {
     // TODO: if we had IntersectionType, here it would be created. Also, final classes can be handled here
     if (initial instanceof PyNeverType) {
@@ -301,7 +302,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   /**
    * @param transformToDefinition if true the result type will be Type[T], not T itself.
    */
-  private static @Nullable PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
+  private static @Nullable PyType transformTypeFromAssertion(@Nullable PyType type,
+                                                             boolean transformToDefinition,
+                                                             @NotNull TypeEvalContext context,
                                                              @Nullable PyExpression typeElement) {
     /*
      * We need to distinguish:
@@ -348,7 +351,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     pushAssertion(expr, positive, false, isStrictNarrowingAllowed(), suggestedType);
   }
 
-  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, boolean forceStrictNarrow, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+  private void pushAssertion(@Nullable PyExpression expr,
+                             boolean positive,
+                             boolean allowAnyExpr,
+                             boolean forceStrictNarrow,
+                             @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     expr = PyPsiUtils.flattenParens(expr);
     if (expr instanceof PySequenceExpression seqExpr) {
       PyExpression[] elements = seqExpr.getElements();
@@ -388,11 +395,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return null;
     };
   }
-  
+
   private static @Nullable PsiElement skipNotAndParens(@Nullable PsiElement element) {
     if (element == null) return null;
     for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
-      if (!(e instanceof PyParenthesizedExpression) && 
+      if (!(e instanceof PyParenthesizedExpression) &&
           !(e instanceof PyPrefixExpression prefixExpr && prefixExpr.getOperator() == PyTokenTypes.NOT_KEYWORD)) {
         return e;
       }
@@ -406,8 +413,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (parent instanceof PyConditionalExpression cond && PsiTreeUtil.isAncestor(cond.getCondition(), node, false)) return true;
     if (parent instanceof PyBinaryExpression binExpr && (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR))) return true;
     if (parent instanceof PyAssertStatement) return true;
-    if (parent instanceof PyGeneratorExpression gen && 
-        ContainerUtil.or(gen.getIfComponents(), it -> PsiTreeUtil.isAncestor(it.getTest(), node, false))) return true;
+    if (parent instanceof PyGeneratorExpression gen &&
+        ContainerUtil.or(gen.getIfComponents(), it -> PsiTreeUtil.isAncestor(it.getTest(), node, false))) {
+      return true;
+    }
     return false;
   }
 

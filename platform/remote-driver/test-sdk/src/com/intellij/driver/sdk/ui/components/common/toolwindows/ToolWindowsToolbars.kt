@@ -11,27 +11,27 @@ import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.popup
 
 open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
-  fun stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java, locator)
-  fun stripeButton(accessibleName: String) = stripeButton { byAccessibleName(accessibleName) }
+  fun stripeButton(locator: QueryBuilder.() -> String): StripeButtonUi = x(StripeButtonUi::class.java, locator)
+  fun stripeButton(accessibleName: String): StripeButtonUi = stripeButton { byAccessibleName(accessibleName) }
 }
 
 class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
-  val projectButton = stripeButton("Project")
-  val runButton = stripeButton("Run")
-  val buildButton = stripeButton("Build")
-  val gitButton = stripeButton("Git")
-  val commitButton = stripeButton("Commit")
-  val structureButton = stripeButton("Structure")
-  val servicesButton = stripeButton("Services")
-  val terminalButton = stripeButton("Terminal")
-  val problemsButton = stripeButton("Problems")
-  val moreButton = stripeButton("More")
-  val debugButton = stripeButton("Debug")
-  val findButton = stripeButton("Find")
-  val cmakeButton = stripeButton("CMake")
-  val profilerButton = stripeButton("Profiler")
-  val jpaButton = stripeButton("JPA Console")
-  val persistenceButton = stripeButton("Persistence")
+  val projectButton: StripeButtonUi = stripeButton("Project")
+  val runButton: StripeButtonUi = stripeButton("Run")
+  val buildButton: StripeButtonUi = stripeButton("Build")
+  val gitButton: StripeButtonUi = stripeButton("Git")
+  val commitButton: StripeButtonUi = stripeButton("Commit")
+  val structureButton: StripeButtonUi = stripeButton("Structure")
+  val servicesButton: StripeButtonUi = stripeButton("Services")
+  val terminalButton: StripeButtonUi = stripeButton("Terminal")
+  val problemsButton: StripeButtonUi = stripeButton("Problems")
+  val moreButton: StripeButtonUi = stripeButton("More")
+  val debugButton: StripeButtonUi = stripeButton("Debug")
+  val findButton: StripeButtonUi = stripeButton("Find")
+  val cmakeButton: StripeButtonUi = stripeButton("CMake")
+  val profilerButton: StripeButtonUi = stripeButton("Profiler")
+  val jpaButton: StripeButtonUi = stripeButton("JPA Console")
+  val persistenceButton: StripeButtonUi = stripeButton("Persistence")
 
   fun IdeaFrameUI.openMoreToolWindow(name: String) {
     moreButton.click()
@@ -40,19 +40,19 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
-  val notificationsButton = stripeButton("Notifications")
-  val gradleButton = stripeButton("Gradle")
-  val mavenButton = stripeButton("Maven")
-  val databaseButton = stripeButton("Database")
-  val aiAssistantButton = stripeButton("AI Chat")
-  val mesonButton = stripeButton("Meson")
+  val notificationsButton: StripeButtonUi = stripeButton("Notifications")
+  val gradleButton: StripeButtonUi = stripeButton("Gradle")
+  val mavenButton: StripeButtonUi = stripeButton("Maven")
+  val databaseButton: StripeButtonUi = stripeButton("Database")
+  val aiAssistantButton: StripeButtonUi = stripeButton("AI Chat")
+  val mesonButton: StripeButtonUi = stripeButton("Meson")
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
   val button: StripeButtonComponent
     get() = driver.cast(component, StripeButtonComponent::class)
 
-  fun isSelected() = driver.withContext(OnDispatcher.EDT) {
+  fun isSelected(): Boolean = driver.withContext(OnDispatcher.EDT) {
     button.isSelected()
   }
 
@@ -95,7 +95,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun stretchHeight(value: Int)
   }
 
-  @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")
+  @Remote($$"com.intellij.ide.actions.ActivateToolWindowAction$Manager")
   interface ActivateToolWindowActionManager {
     fun getActionIdForToolWindow(id: String): String
   }

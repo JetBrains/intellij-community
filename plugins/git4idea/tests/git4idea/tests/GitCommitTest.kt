@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.Executor.overwrite
+import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
@@ -16,23 +21,35 @@ import git4idea.checkin.isCommitRenamesSeparately
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersion
 import git4idea.i18n.GitBundle
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.addCommit
+import git4idea.test.assertCommitted
+import git4idea.test.assertMessage
+import git4idea.test.assertStagedChanges
+import git4idea.test.checkout
+import git4idea.test.createFileStructure
+import git4idea.test.createSubRepository
+import git4idea.test.message
+import git4idea.test.tac
 import org.junit.Assume.assumeTrue
 import java.io.File
 
-class GitCommitTest : GitSingleRepoTest() {
+internal abstract class GitCommitTestBase(val useIndexInfoStagedChangesSaver: Boolean) : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
 
   override fun setUp() {
     super.setUp()
-
     val point = Extensions.getRootArea().getExtensionPoint(GitCheckinExplicitMovementProvider.EP_NAME)
     point.registerExtension(myMovementProvider, testRootDisposable)
 
     commitContext.isCommitRenamesSeparately = true
+    Registry.get("git.commit.staged.saver.use.index.info").setValue(useIndexInfoStagedChangesSaver, testRootDisposable)
   }
+
+  protected abstract fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`()
+  protected abstract fun `verify test commit with excluded added-deleted and added files`()
 
   // IDEA-50318
   fun `test merge commit with spaces in path`() {
@@ -360,15 +377,13 @@ class GitCommitTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore`() {
+  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() {
     `assume version where git reset returns 0 exit code on success `()
 
     tac("c.java", "initial")
     generateCaseRename("a.java", "A.java")
-    val STAGED_CONTENT = "staged"
     overwrite("c.java", STAGED_CONTENT)
     git("add c.java")
-    val UNSTAGED_CONTENT = "unstaged"
     overwrite("c.java", UNSTAGED_CONTENT)
 
     val changes = assertChangesWithRefresh {
@@ -388,10 +403,37 @@ class GitCommitTest : GitSingleRepoTest() {
       modified("c.java")
     }
 
-    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
-    // so we are not doing it, at least until IDEA supports Git index
-    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
-    assertEquals(UNSTAGED_CONTENT, git("show :c.java"))
+    `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`()
+  }
+
+  fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore both staged and unstaged`() {
+    `assume version where git reset returns 0 exit code on success `()
+    Registry.get("git.commit.staged.saver.use.index.info").setValue(true, testRootDisposable)
+
+    tac("c.java", "initial")
+    generateCaseRename("a.java", "A.java")
+    overwrite("c.java", STAGED_CONTENT)
+    git("add c.java")
+    overwrite("c.java", UNSTAGED_CONTENT)
+
+    val changes = assertChangesWithRefresh {
+      rename("a.java", "A.java")
+      modified("c.java")
+    }
+
+    commit(listOf(changes[0]))
+
+    repo.assertCommitted {
+      rename("a.java", "A.java")
+    }
+    assertChangesWithRefresh {
+      modified("c.java")
+    }
+    repo.assertStagedChanges {
+      modified("c.java")
+    }
+
+    assertEquals(STAGED_CONTENT, git("show :c.java"))
     assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
@@ -409,7 +451,7 @@ class GitCommitTest : GitSingleRepoTest() {
     addCommit("initial a.java")
     git("mv -f a.java A.java")
     val additionalContent = "non-staged content"
-    append("A.java", additionalContent)
+    Executor.append("A.java", additionalContent)
 
     val changes = assertChangesWithRefresh {
       rename("a.java", "A.java")
@@ -490,7 +532,8 @@ class GitCommitTest : GitSingleRepoTest() {
 
       commit(changes, originalMessage)
       assertNoChanges()
-    } finally {
+    }
+    finally {
       navigationConfiguration.links = oldLinks
     }
 
@@ -652,16 +695,7 @@ class GitCommitTest : GitSingleRepoTest() {
 
     commit(listOf(changes[0]))
 
-    assertChangesWithRefresh {
-      added("c.txt")
-    }
-    repo.assertStagedChanges {
-      added("c.txt")
-    }
-    assertMessage("comment", repo.message("HEAD"))
-    repo.assertCommitted {
-      modified("a.txt")
-    }
+    `verify test commit with excluded added-deleted and added files`()
   }
 
   fun `test commit with deleted-added file`() {
@@ -941,6 +975,33 @@ class GitCommitTest : GitSingleRepoTest() {
     assertEquals(GitBundle.message("gpg.error.see.documentation.link.text"), action.templateText)
   }
 
+  fun `test commit with excluded staged submodule`() {
+    tac("a", "old content")
+
+    overwrite("a", "new content")
+
+    val submodule = repo.createSubRepository("submodule", addToGitIgnore = false)
+    git("add submodule ${submodule.root.path}")
+
+    repo.assertStagedChanges {
+      added("submodule")
+    }
+
+    val changes = assertChangesWithRefresh {
+      modified("a")
+      added("submodule")
+    }
+
+    commit(listOf(changes[0]))
+
+    repo.assertCommitted {
+      modified("a")
+    }
+    repo.assertStagedChanges {
+      added("submodule")
+    }
+  }
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
@@ -958,9 +1019,11 @@ class GitCommitTest : GitSingleRepoTest() {
 
     override fun getCommitMessage(originalCommitMessage: String): String = description
 
-    override fun collectExplicitMovements(project: Project,
-                                          beforePaths: MutableList<FilePath>,
-                                          afterPaths: MutableList<FilePath>): MutableCollection<Movement> {
+    override fun collectExplicitMovements(
+      project: Project,
+      beforePaths: MutableList<FilePath>,
+      afterPaths: MutableList<FilePath>,
+    ): MutableCollection<Movement> {
       val beforeMap = beforePaths.filter { it.name.endsWith(".before") }
         .associate { it.name.removeSuffix(".before") to it }
 
@@ -975,6 +1038,55 @@ class GitCommitTest : GitSingleRepoTest() {
       }
 
       return movedChanges
+    }
+  }
+
+  companion object {
+    protected const val STAGED_CONTENT = "staged"
+    protected const val UNSTAGED_CONTENT = "unstaged"
+  }
+}
+
+internal class GitCommitWithResetAddTest : GitCommitTestBase(false) {
+  override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() {
+    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
+    // so we are not doing it, at least until IDEA supports Git index
+    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
+    assertEquals(UNSTAGED_CONTENT, git("show :c.java"))
+    assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
+  }
+
+  override fun `verify test commit with excluded added-deleted and added files`() {
+    assertChangesWithRefresh {
+      added("c.txt")
+    }
+    repo.assertStagedChanges {
+      added("c.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
+    }
+  }
+}
+
+internal class GitCommitWithIndexInfoTest : GitCommitTestBase(true) {
+  override fun `verify test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore unstaged`() {
+    assertEquals(STAGED_CONTENT, git("show :c.java"))
+    assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
+  }
+
+  override fun `verify test commit with excluded added-deleted and added files`() {
+    assertChangesWithRefresh {
+      added("c.txt")
+    }
+    repo.assertStagedChanges {
+      added("b.txt")
+      added("c.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("a.txt")
     }
   }
 }

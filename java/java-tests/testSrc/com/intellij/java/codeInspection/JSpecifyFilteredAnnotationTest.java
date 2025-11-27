@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -41,6 +42,7 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -561,11 +563,10 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
 
     @Override
-    protected void reportProblem(@NotNull ProblemsHolder holder,
-                                 @NotNull PsiElement anchor,
-                                 LocalQuickFix @NotNull [] fixes,
-                                 @NotNull String messageKey, Object... args) {
-      switch (messageKey) {
+    protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
+                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String descriptionKey, @NotNull Object @NotNull[] descriptionArgs,
+                                 @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String tooltipKey, @NotNull Object @NotNull[] tooltipArgs) {
+      switch (descriptionKey) {
         case "inspection.nullable.problems.primitive.type.annotation", "inspection.nullable.problems.receiver.annotation",
              "inspection.nullable.problems.outer.type", "inspection.nullable.problems.at.reference.list",
              "inspection.nullable.problems.at.constructor", "inspection.nullable.problems.at.enum.constant" ->

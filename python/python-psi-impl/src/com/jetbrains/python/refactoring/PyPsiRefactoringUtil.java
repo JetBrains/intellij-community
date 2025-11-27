@@ -82,22 +82,22 @@ public final class PyPsiRefactoringUtil {
    * @return actually inserted element as for {@link PsiElement#add(PsiElement)}
    */
   public static @NotNull PsiElement addElementToStatementList(@NotNull PsiElement element,
-                                                     @NotNull PyStatementList statementList,
-                                                     boolean toTheBeginning) {
+                                                              @NotNull PyStatementList statementList,
+                                                              boolean toTheBeginning) {
     final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
     // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
     if (prevElem != null && PyUtilCore.onSameLine(statementList, prevElem)) {
-        final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
-        final Document document = statementList.getContainingFile().getFileDocument();
-        final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
-        // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
-        // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
-        final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
-        document.insertString(statementList.getTextRange().getStartOffset(), text);
-        manager.commitDocument(document);
-        statementList = container.getStatementList();
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+      final Document document = statementList.getContainingFile().getFileDocument();
+      final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
+      // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
+      // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
+      final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
+      document.insertString(statementList.getTextRange().getStartOffset(), text);
+      manager.commitDocument(document);
+      statementList = container.getStatementList();
     }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
@@ -171,7 +171,8 @@ public final class PyPsiRefactoringUtil {
         for (PyFunction function : PyTypeUtil.getMembersOfType(type, PyFunction.class, false, context)) {
           final String name = function.getName();
           if (name != null) {
-            if (!functions.containsKey(name) || PyiUtil.isOverload(functions.get(name), context) && !PyiUtil.isOverload(function, context)) {
+            if (!functions.containsKey(name) ||
+                PyiUtil.isOverload(functions.get(name), context) && !PyiUtil.isOverload(function, context)) {
               functions.put(name, function);
             }
           }

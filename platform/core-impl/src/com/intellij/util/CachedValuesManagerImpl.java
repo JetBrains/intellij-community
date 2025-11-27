@@ -64,13 +64,22 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
     return myFactory.createParameterizedCachedValue(userDataHolder, provider, trackValue);
   }
 
+  private boolean isFromMyProject(@NotNull CachedValue<?> v) {
+    if (v instanceof CachedValueBase<?>) {
+      return ((CachedValueBase<?>)v).isFromMyProject(myProject);
+    }
+    else {
+      return true;
+    }
+  }
+
   @Override
   public @Nullable <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
                                         @NotNull Key<CachedValue<T>> key,
                                         @NotNull CachedValueProvider<T> provider,
                                         boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
-    if (value instanceof CachedValueBase && ((CachedValueBase<?>)value).isFromMyProject(myProject)) {
+    if (value != null && isFromMyProject(value)) {
       Supplier<T> data = value.getUpToDateOrNull();
       if (data != null) {
         return data.get();
@@ -116,7 +125,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
     CachedValueLeakChecker.checkProviderDoesNotLeakPSI(provider, key, dh);
     CachedValue<T> value = myFactory.createCachedValue(dh, provider, trackValue);
-    assert ((CachedValueBase<?>)value).isFromMyProject(myProject);
+    assert isFromMyProject(value);
     return value;
   }
 

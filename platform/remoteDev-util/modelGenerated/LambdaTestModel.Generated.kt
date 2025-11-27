@@ -56,7 +56,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = -767247982527285380L
+        const val serializationHash = -2449379606805544707L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -195,8 +195,7 @@ data class LambdaRdKeyValueEntry (
  * #### Generated from [LambdaTestModel.kt]
  */
 data class LambdaRdSerializedLambda (
-    val clazzName: String,
-    val methodName: String,
+    val stepName: String,
     val serializedDataBase64: String,
     val classPath: List<String>
 ) : IPrintable {
@@ -208,16 +207,14 @@ data class LambdaRdSerializedLambda (
         
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): LambdaRdSerializedLambda  {
-            val clazzName = buffer.readString()
-            val methodName = buffer.readString()
+            val stepName = buffer.readString()
             val serializedDataBase64 = buffer.readString()
             val classPath = buffer.readList { buffer.readString() }
-            return LambdaRdSerializedLambda(clazzName, methodName, serializedDataBase64, classPath)
+            return LambdaRdSerializedLambda(stepName, serializedDataBase64, classPath)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerializedLambda)  {
-            buffer.writeString(value.clazzName)
-            buffer.writeString(value.methodName)
+            buffer.writeString(value.stepName)
             buffer.writeString(value.serializedDataBase64)
             buffer.writeList(value.classPath) { v -> buffer.writeString(v) }
         }
@@ -235,8 +232,7 @@ data class LambdaRdSerializedLambda (
         
         other as LambdaRdSerializedLambda
         
-        if (clazzName != other.clazzName) return false
-        if (methodName != other.methodName) return false
+        if (stepName != other.stepName) return false
         if (serializedDataBase64 != other.serializedDataBase64) return false
         if (classPath != other.classPath) return false
         
@@ -245,8 +241,7 @@ data class LambdaRdSerializedLambda (
     //hash code trait
     override fun hashCode(): Int  {
         var __r = 0
-        __r = __r*31 + clazzName.hashCode()
-        __r = __r*31 + methodName.hashCode()
+        __r = __r*31 + stepName.hashCode()
         __r = __r*31 + serializedDataBase64.hashCode()
         __r = __r*31 + classPath.hashCode()
         return __r
@@ -255,8 +250,7 @@ data class LambdaRdSerializedLambda (
     override fun print(printer: PrettyPrinter)  {
         printer.println("LambdaRdSerializedLambda (")
         printer.indent {
-            print("clazzName = "); clazzName.print(printer); println()
-            print("methodName = "); methodName.print(printer); println()
+            print("stepName = "); stepName.print(printer); println()
             print("serializedDataBase64 = "); serializedDataBase64.print(printer); println()
             print("classPath = "); classPath.print(printer); println()
         }

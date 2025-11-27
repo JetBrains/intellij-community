@@ -25,6 +25,7 @@ import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.containers.FileCollectionFactory
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import kotlinx.coroutines.*
 import org.jdom.output.Format
 import org.jdom.output.XMLOutputter
 import org.jetbrains.annotations.ApiStatus
@@ -36,12 +37,15 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.*
 import java.io.*
+import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
+import java.util.function.Predicate
 import java.util.regex.Pattern
 import java.util.zip.CRC32
 
@@ -1104,6 +1108,47 @@ class MavenProjectsTree(val project: Project) {
 
   }
 
+  internal suspend fun collectProblems() {
+    val existingFiles = ConcurrentHashMap<File, Boolean>()
+    val fileExistsPredicate = Predicate { f: File -> existingFiles.computeIfAbsent(f) { file: File -> Files.exists(file.toPath()) } }
+
+    coroutineScope {
+      withContext(Dispatchers.IO) {
+        projects.forEach { project ->
+          launch(CoroutineName("collecting problems in ${project.name}")) {
+            tracer.spanBuilder("collectProblems").useWithScope {
+              project.collectProblems(fileExistsPredicate) // fill problem cache
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  fun read(path: Path) {
+    if (!Files.exists(path)) return
+    DataInputStream(BufferedInputStream(Files.newInputStream(path))).use { inputStream ->
+      var storageVersion = ""
+      try {
+        storageVersion = inputStream.readUTF()
+        val storageVersionNumber = storageVersion.getStorageVersionNumber()
+
+        myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
+        myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
+        myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
+        myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
+
+        if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
+          myRootProjects.addAll(readProjectsRecursively(inputStream, this))
+        }
+      }
+      catch (e: IOException) {
+        MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
+      }
+    }
+  }
+
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
@@ -1118,33 +1163,6 @@ class MavenProjectsTree(val project: Project) {
       catch (_: Exception) {
         0
       }
-    }
-
-    @JvmStatic
-    @ApiStatus.Internal
-    fun read(project: Project, path: Path): MavenProjectsTree {
-      val tree = MavenProjectsTree(project)
-      if (!Files.exists(path)) return tree
-      DataInputStream(BufferedInputStream(Files.newInputStream(path))).use { inputStream ->
-        var storageVersion = ""
-        try {
-          storageVersion = inputStream.readUTF()
-          val storageVersionNumber = storageVersion.getStorageVersionNumber()
-
-          tree.myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
-          tree.myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
-          tree.myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
-          tree.myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
-
-          if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
-            tree.myRootProjects.addAll(readProjectsRecursively(inputStream, tree))
-          }
-        }
-        catch (e: IOException) {
-          MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
-        }
-      }
-      return tree
     }
 
     @Throws(IOException::class)

@@ -4,13 +4,13 @@ package com.intellij.platform.searchEverywhere.frontend.actions
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeNewSearchToggleAction : ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+class SeNewSearchToggleAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean =

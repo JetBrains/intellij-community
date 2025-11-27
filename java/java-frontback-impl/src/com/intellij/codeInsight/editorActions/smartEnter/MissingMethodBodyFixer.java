@@ -2,64 +2,55 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
+import java.util.Objects;
+
+import static com.intellij.psi.PsiModifier.*;
 
 public class MissingMethodBodyFixer implements Fixer {
-
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_FIELD)) {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
+    if (psiElement instanceof PsiField field) {
       // replace something like `void x` with `void x() {...}`
       // while it's ambiguous whether user wants a field or a method, declaring a field is easier (just append a semicolon),
       // so completing a method looks more useful
-      if (BasicJavaAstTreeUtil.getInitializer(astNode) != null) return;
-      ASTNode lastChild = astNode.getLastChildNode();
-      PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(lastChild);
-      if (!(psiElement instanceof PsiErrorElement)) return;
-      if (!((PsiErrorElement)psiElement).getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) return;
+      if (field.hasInitializer()) return;
+      PsiElement lastChild = field.getLastChild();
+      if (!(lastChild instanceof PsiErrorElement)) return;
+      if (!((PsiErrorElement)lastChild).getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) return;
+      PsiModifierList modifiers = field.getModifierList();
+      if (modifiers == null) return;
       // Impossible modifiers for a method
-      if (BasicJavaAstTreeUtil.hasModifierProperty(astNode, JavaTokenType.TRANSIENT_KEYWORD) ||
-          BasicJavaAstTreeUtil.hasModifierProperty(astNode, JavaTokenType.VOLATILE_KEYWORD)) {
-        return;
-      }
-      ASTNode typeElement = BasicJavaAstTreeUtil.getTypeElement(astNode);
-      if (typeElement == null || !typeElement.getText().equals("void")) return;
-      int endOffset = astNode.getTextRange().getEndOffset();
-      editor.getDocument().insertString(endOffset, "()");
-      editor.getDocument().insertString(endOffset + 2, "{}");
+      if (modifiers.hasExplicitModifier(TRANSIENT) || modifiers.hasExplicitModifier(VOLATILE)) return;
+      if (!PsiTypes.voidType().equals(field.getType())) return;
+      int endOffset = field.getTextRange().getEndOffset();
+      editor.getDocument().insertString(endOffset, "(){}");
       editor.getCaretModel().moveToOffset(endOffset + 1);
       processor.registerUnresolvedError(endOffset + 1);
       processor.setSkipEnter(true);
       return;
     }
-    if (!(BasicJavaAstTreeUtil.is(astNode, BASIC_METHOD))) return;
-    if (!shouldMethodHaveBody(BasicJavaAstTreeUtil.toPsi(astNode))) return;
+    if (!(psiElement instanceof PsiMethod method)) return;
+    if (!shouldHaveBody(method)) return;
 
-    final ASTNode body = BasicJavaAstTreeUtil.getCodeBlock(astNode);
+    final PsiCodeBlock body = method.getBody();
     final Document doc = editor.getDocument();
     if (body != null) {
       // See IDEADEV-1093. This is quite hacky heuristic but it seem to be best we can do.
       String bodyText = body.getText();
       if (bodyText.startsWith("{")) {
-        final ASTNode statement = BasicJavaAstTreeUtil.findChildByType(body, STATEMENT_SET);
-        if (statement != null) {
-          if (BasicJavaAstTreeUtil.is(statement, BASIC_DECLARATION_STATEMENT)) {
-            PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(statement);
-            if (psiElement != null && PsiTreeUtil.getDeepestLast(psiElement) instanceof PsiErrorElement) {
-              ASTNode containingClass = BasicJavaAstTreeUtil.getParentOfType(astNode, CLASS_SET);
-              if (containingClass != null && BasicJavaAstTreeUtil.getRBrace(containingClass) == null) {
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length > 0) {
+          if (statements[0] instanceof PsiDeclarationStatement) {
+            if (PsiTreeUtil.getDeepestLast(statements[0]) instanceof PsiErrorElement) {
+              if (Objects.requireNonNull(method.getContainingClass()).getRBrace() == null) {
                 doc.insertString(body.getTextRange().getStartOffset() + 1, "\n}");
               }
             }
@@ -68,18 +59,19 @@ public class MissingMethodBodyFixer implements Fixer {
       }
       return;
     }
-    ASTNode throwList = BasicJavaAstTreeUtil.findChildByType(astNode, BASIC_THROWS_LIST);
-    if (throwList != null) {
-      int endOffset = throwList.getTextRange().getEndOffset();
-      if (endOffset < doc.getTextLength() && doc.getCharsSequence().charAt(endOffset) == ';') {
-        doc.deleteString(endOffset, endOffset + 1);
-      }
-      processor.insertBracesWithNewLine(editor, endOffset);
+    int endOffset = method.getThrowsList().getTextRange().getEndOffset();
+    if (endOffset < doc.getTextLength() && doc.getCharsSequence().charAt(endOffset) == ';') {
+      doc.deleteString(endOffset, endOffset + 1);
     }
+    doc.insertString(endOffset, "{\n}");
   }
 
-  private static boolean shouldMethodHaveBody(@Nullable PsiElement method){
-    return AfterSemicolonEnterProcessor.shouldHaveBody(
-      BasicJavaAstTreeUtil.toNode(method));
+  static boolean shouldHaveBody(PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+    if (method.hasModifierProperty(ABSTRACT) || method.hasModifierProperty(NATIVE)) return false;
+    if (method.hasModifierProperty(PRIVATE)) return true;
+    if (containingClass.isInterface() && !method.hasModifierProperty(DEFAULT) && !method.hasModifierProperty(STATIC)) return false;
+    return true;
   }
 }

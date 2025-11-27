@@ -5,9 +5,11 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,14 +19,22 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.ListenableToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
+import com.intellij.util.cancelOnDispose
 import com.intellij.vcs.git.branch.popup.GitBranchesPopup
 import com.intellij.vcs.git.isCodeWithMe
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.rpc.GitWidgetState
+import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import icons.DvcsImplIcons
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -65,17 +75,15 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
     val project = event.project ?: return null
     return when (val state = clarifyState(event, project)) {
       null,
-      GitWidgetState.DoNotShow,
-      GitWidgetState.GitRepositoriesNotLoaded,
-        -> null
+      GitWidgetState.DoNotShow -> null
       is GitWidgetState.NoVcs -> {
         GitWidgetPlaceholder.updatePlaceholder(project, null)
         getPopupForRepoSetup(state.trustedProject, event)
       }
-      is GitWidgetState.OnRepository -> {
+      is GitWidgetState.OnRepository, GitWidgetState.GitRepositoriesNotLoaded, -> {
         val holder = GitRepositoriesHolder.getInstance(project)
-        val repo = holder.get(state.repository)
         val repositories = holder.getAll()
+        val repo = (state as? GitWidgetState.OnRepository)?.let { holder.get(it.repository) } ?: repositories.firstOrNull()
         if (repo == null || repositories.isEmpty()) null
         else GitBranchesPopup.createDefaultPopup(project, repo, repositories)
       }
@@ -92,15 +100,16 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
       GitWidgetStateHolder.getInstance(project).state.value.also {
         event.presentation.putClientProperty(GIT_WIDGET_STATE_KEY, it)
       }
-    } else state
+    }
+    else state
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return super.createCustomComponent(presentation, place).apply { maximumSize = Dimension(Int.MAX_VALUE, maximumSize.height) }
   }
 
-  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    super.updateCustomComponent(component, presentation)
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return GitBranchToolbarComboButton(model)
   }
 
   private fun updateNoVcs(project: Project, e: AnActionEvent) {
@@ -139,7 +148,8 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
   }
 
   private fun getPopupForRepoSetup(trustedProject: Boolean, event: AnActionEvent): ListPopup {
-    val group = if (trustedProject) getCreateRepoActionGroup() else {
+    val group = if (trustedProject) getCreateRepoActionGroup()
+    else {
       @Suppress("DialogTitleCapitalization")
       val separator = Separator(GitBundle.message("action.main.toolbar.git.project.not.trusted.separator.text"))
       val trustProjectAction = ActionManager.getInstance().getAction("ShowTrustProjectDialog")
@@ -164,6 +174,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), ActionRemoteBeh
       DvcsImplIcons.Outgoing.takeIf { presentation.syncStatus.outgoing },
     )
     return if (inOutIcons.isEmpty()) null else RowIcon(*inOutIcons.toTypedArray())
+  }
+}
+
+private class GitBranchToolbarComboButton(model: ToolbarComboButtonModel) : ListenableToolbarComboButton(model) {
+  override fun installListeners(project: Project?, disposable: Disposable) {
+    if (project == null) return
+
+    GitDisposable.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
+      GitWidgetStateHolder.getInstance(project).state.collectLatest {
+        updateWidgetAction()
+      }
+    }.cancelOnDispose(disposable)
   }
 }
 

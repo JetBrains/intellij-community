@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix.Companion.removeModifierFix
 import org.jetbrains.kotlin.idea.quickfix.convertMemberToExtensionAndPrepareBodySelection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -23,13 +23,11 @@ internal object DeclarationCantBeInlinedFixFactories {
         val containingClass = function.containingClass() ?: return@IntentionBased emptyList()
 
         val fix = when {
-            containingClass.isInterface() -> ConvertMemberToExtensionFix(function)
+            containingClass.isInterface() ->
+                ConvertMemberToExtensionFix(function)
+
             function.hasModifier(KtTokens.OPEN_KEYWORD) ->
-                RemoveModifierFixBase(
-                    element = function,
-                    modifier = KtTokens.OPEN_KEYWORD,
-                    isRedundant = false
-                ).asIntention()
+                removeModifierFix(function, KtTokens.OPEN_KEYWORD).asIntention()
 
             else -> null
         } ?: return@IntentionBased emptyList()

@@ -59,6 +59,14 @@ public abstract class NotificationAction extends DumbAwareAction {
 
   public static @NotNull NotificationAction createExpiring(
     @NotNull @NotificationContent String text,
+    @NotNull String actionId,
+    @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action
+  ) {
+    return new Simple(text, action, true, action, actionId);
+  }
+
+  public static @NotNull NotificationAction createExpiring(
+    @NotNull @NotificationContent String text,
     @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action
   ) {
     return new Simple(text, action, true, action, null);

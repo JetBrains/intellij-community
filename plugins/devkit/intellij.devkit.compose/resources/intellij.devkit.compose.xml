@@ -36,17 +36,18 @@
                  restartRequired="true" description="Enables Compose UI previews tool window"/>
     <library.toolWindow id="ComposeUIPreview" anchor="right"
                         factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
-                        icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"
+                        icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"
                         librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
     <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
+
   </extensions>
 
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"/>
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
       <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
 
@@ -60,6 +61,8 @@
     <!-- Legacy actions, only available from Search Everywhere -->
     <action id="ComposeShowcase" class="com.intellij.devkit.compose.showcase.ComposeShowcaseAction"/>
     <action id="JewelActionSystemTest" class="com.intellij.devkit.compose.demo.ActionSystemTestAction"/>
+
+    <action id="LockReqAnalysis" internal="true" class="com.intellij.devkit.compose.threadingModelHelper.LockReqAction"/>
 
     <group id="ComposePreviewActions.Title" searchable="false">
       <action id="ComposePreviewRefresh"

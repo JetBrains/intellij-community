@@ -2,9 +2,11 @@
 package com.intellij.openapi.ui
 
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JLabel
 
 @Deprecated("Use Kotlin UI DSL 2, for description use {@link com.intellij.ui.dsl.builder.Cell#comment}", level = DeprecationLevel.HIDDEN)
+@ApiStatus.ScheduledForRemoval
 class DescriptionLabel(text: String?) : JLabel() {
   init {
     setText(text)

@@ -8,7 +8,6 @@ import com.intellij.modcommand.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
@@ -91,7 +90,6 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     ) : KotlinPsiUpdateModCommandAction<E, C>(null, elementClass),
         ContextProvider<E, C> {
 
-        @OptIn(KaAllowAnalysisOnEdt::class)
         final override fun getElementContext(
             actionContext: ActionContext,
             element: E,

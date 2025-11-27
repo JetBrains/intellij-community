@@ -23,13 +23,17 @@ import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.*
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
+import org.jetbrains.jps.model.library.JpsTypedLibrary
 import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.EnumSet
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.walk
 
@@ -56,7 +60,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
         val module = context.findRequiredModule(moduleName)
         // We pack sources of libraries which are included in compilation classpath for platform API modules.
         // This way we'll get source files of all libraries useful for plugin developers, and the size of the archive will be reasonable.
-        if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
+        if (isRelevantLibrarySourcesModule(moduleName, context)) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
           libraries.mapTo(debugMapping) { "${it.name} for $moduleName" }
@@ -131,6 +135,11 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
 
     context.notifyArtifactBuilt(targetFile)
   }
+}
+
+private fun isRelevantLibrarySourcesModule(moduleName: String, context: BuildContext): Boolean {
+  return (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null
+          || moduleName.startsWith("intellij.libraries.compose."))
 }
 
 @OptIn(ExperimentalPathApi::class)

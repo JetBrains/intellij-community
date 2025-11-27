@@ -6,7 +6,7 @@ class ComponentElement(
   @JvmField val implementationClass: String?,
   @JvmField val headlessImplementationClass: String?,
   @JvmField val loadForDefaultProject: Boolean,
-  @JvmField val os: OS?,
+  @JvmField val os: OSValue?,
   @JvmField val overrides: Boolean,
   @JvmField val options: Map<String, String>
 ) {

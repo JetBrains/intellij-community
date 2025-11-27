@@ -27,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
+import com.intellij.platform.debugger.impl.shared.proxy.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -53,6 +54,8 @@ import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointTypeProxyKt;
+import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -77,7 +80,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxyKt.asProxy;
 import static org.jetbrains.concurrency.Promises.asPromise;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
@@ -304,13 +306,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final @Nullable Editor editor,
     boolean canRemove
   ) {
-    var proxyTypes = ContainerUtil.map(types, t -> asProxy(t, project));
+    var proxyTypes = ContainerUtil.map(types, t -> MonolithBreakpointTypeProxyKt.asProxy(t, project));
     var future = toggleAndReturnLineBreakpointProxy(
       project, proxyTypes, position, selectVariantByPositionColumn,
       temporary, editor, canRemove, false, null);
     return asPromise(future).then(b -> {
       if (b == null) return null;
-      if (b instanceof XLineBreakpointProxy.Monolith monolith) {
+      if (b instanceof MonolithLineBreakpointProxy monolith) {
         return monolith.getBreakpoint();
       }
       XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(b.getId());
@@ -603,7 +605,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   /**
-   * @see CoroutineUtilsKt#performDebuggerActionAsync
+   * @see DebuggerAsyncActionUtilsKt#performDebuggerActionAsync
    */
   public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
     action.run();

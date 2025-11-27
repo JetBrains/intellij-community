@@ -2,6 +2,11 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.searchComponents.ExtendableSearchTextField
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -23,6 +28,17 @@ open class SeTextField(private val initialText: String?, private val resultListA
         isInitialSearchPattern = false
       }
     })
+
+    // IJPL-188794 Quick definition popup does not update in RemDev. Disable it in RemDev
+    if (IdeProductMode.isFrontend) {
+      val actionQuickImplementations = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)
+      val emptyAction = object : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+          // do nothing
+        }
+      }
+      emptyAction.registerCustomShortcutSet(actionQuickImplementations.shortcutSet, this)
+    }
   }
 
   fun configure(lastSearchText: String?, onTextChanged: (String) -> Unit) {

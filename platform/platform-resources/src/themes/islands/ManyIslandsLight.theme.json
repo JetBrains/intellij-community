@@ -56,12 +56,14 @@
       "selectedBackground": "BackgroundMid",
       "hoverBackground": "#0000000D",
       "separatorColor": "#00000012",
-      "foreground": "#00000099"
+      "foreground": "Gray6"
     },
 
     "MainToolbar": {
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent",
+      "Icon.hoverBackground": "Gray11",
+      "Dropdown.hoverBackground": "Gray11",
       "Button.arc.compact": 8
     },
 
@@ -119,6 +121,8 @@
 
       "tabInsets": "-6,8,-6,8",
       "tabInsets.compact": "-2,6,-2,4",
+      "verticalTabInsets": "-2,10,-2,10",
+      "verticalTabInsets.compact": "0,10,0,10",
       "tabContentActionsRightInsets": "0,2,0,2"
     },
 
@@ -194,7 +198,10 @@
       }
     },
 
-    "SearchEverywhere.Header.insets": "2,4,0,9",
+    "SearchEverywhere": {
+      "Header.insets": "2,4,0,9",
+      "List.settingsBackground": "PopupBackground"
+    },
 
     "HelpBrowser.UserMessage.background": "#EDEEF2",
 

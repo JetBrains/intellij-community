@@ -11,6 +11,7 @@ import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
+import com.intellij.idea.ApplicationStartArguments
 import com.intellij.idea.LoggerFactory
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.*
@@ -133,7 +134,7 @@ fun startApplication(
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
   val initBaseLafJob = scope.launch {
-    initUi(initAwtToolkitJob, isHeadless, scope)
+    initUi(initAwtToolkitJob, isHeadless, asyncScope = scope)
   }
 
   var initUiScale: Job? = null
@@ -210,14 +211,15 @@ fun startApplication(
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
-  val configImportDeferred: Deferred<Job?> = scope.async {
+  val configImportDeferred = scope.async {
     importConfigIfNeeded(
-      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig,
-      appStarterDeferred, euaDocumentDeferred, initLafJob)
+      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args,
+      customTargetDirectoryToImportConfig, appStarterDeferred, euaDocumentDeferred, initLafJob
+    )
   }
 
   configImportDeferred.invokeOnCompletion {
-    // In case of patch update from Community Edition to Single Product we need to rename IDE folder on MacOS and rename Desktop shortcuts on Windows.
+    // after updating from a Community Edition to a single product we need to rename the macOS app bundle
     migrateCommunityToSingleProductIfNeeded(args)
   }
 
@@ -280,7 +282,7 @@ fun startApplication(
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
     }
 
-    val args = args.filterNot { CommandLineArgs.isKnownArgument(it) }
+    val args = ApplicationStartArguments.stripKnownArguments(args)
     loadApp(app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob, args, initEventQueueJob)
   }
 
@@ -295,7 +297,7 @@ fun startApplication(
     // must be scheduled before preparing app start
     configImportDeferred.join()
 
-    withContext(mainScope.coroutineContext + CoroutineName("appStarter set")) {
+    withContext(@Suppress("CoroutineContextWithJob") mainScope.coroutineContext + CoroutineName("appStarter set")) {
       appStarter.prepareStart(args)
       appStartPreparedJob.complete(Unit)
     }
@@ -421,7 +423,7 @@ private fun checkDirectories(scope: CoroutineScope, lockSystemDirJob: Job): Job 
   val homePath = PathManager.getHomeDir().toString()
   val configPath = PathManager.getConfigDir()
   val systemPath = PathManager.getSystemDir()
-  if (!span("system dirs checking") { checkDirectories(homePath = homePath, configPath = configPath, systemPath = systemPath) }) {
+  if (!span("system dirs checking") { checkDirectories(homePath, configPath, systemPath) }) {
     exitProcess(AppExitCodes.DIR_CHECK_FAILED)
   }
 }
@@ -444,8 +446,8 @@ private suspend fun checkDirectories(homePath: String, configPath: Path, systemP
   }
 
   return withContext(Dispatchers.IO) {
-    val logPath = Path.of(PathManager.getLogPath()).normalize()
-    val tempPath = Path.of(PathManager.getTempPath()).normalize()
+    val logPath = PathManager.getLogDir().normalize()
+    val tempPath = PathManager.getTempDir().normalize()
     // directories might be nested, hence should be checked sequentially
     checkDirectory(configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
     checkDirectory(systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
@@ -454,26 +456,26 @@ private suspend fun checkDirectories(homePath: String, configPath: Path, systemP
   }
 }
 
-private fun checkDirectory(directory: Path, kind: Int, property: String): Boolean {
+private fun checkDirectory(dir: Path, kind: Int, property: String): Boolean {
   try {
-    Files.createDirectories(directory)
+    Files.createDirectories(dir)
   }
   catch (e: Exception) {
     val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
     val problem = BootstrapBundle.message("bootstrap.error.problem.dir")
-    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, dir, e.javaClass.name, e.message)
     StartupErrorReporter.showError(title, message)
     return false
   }
 
-  val tempFile = directory.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
+  val tempFile = dir.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
   try {
     Files.writeString(tempFile, "-", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
   }
   catch (e: Exception) {
     val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
     val problem = BootstrapBundle.message("bootstrap.error.problem.file")
-    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, dir, e.javaClass.name, e.message)
     StartupErrorReporter.showError(title, message)
     return false
   }
@@ -581,11 +583,12 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}
-    ${PathManager.PROPERTY_HOME_PATH}=${logPath(PathManager.getHomePath())}
-    ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
-    ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemPath())}
-    ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsPath())}
-    ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}""")
+    ${PathManager.PROPERTY_HOME_PATH}=${logPath(PathManager.getHomeDir())}
+    ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigDir())}
+    ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemDir())}
+    ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsDir())}
+    ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogDir())}"""
+  )
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
   log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
@@ -597,11 +600,10 @@ private fun logEnvVar(log: Logger, variable: String) {
   }
 }
 
-private fun logPath(path: String): String {
+private fun logPath(path: Path): String {
   try {
-    val configured = Path.of(path)
-    val real = configured.toRealPath()
-    return if (configured == real) path else "$path -> $real"
+    val real = path.toRealPath()
+    return if (path == real) path.toString() else "$path -> $real"
   }
   catch (e: Exception) {
     return "$path -> ${e.javaClass.name}: ${e.message}"
@@ -620,8 +622,7 @@ private fun shouldLoadShellEnv(log: Logger): Boolean {
   }
 
   val shLvl = System.getenv("SHLVL")
-  @Suppress("RemoveUnnecessaryParentheses")
-  if (shLvl != null && (shLvl.toIntOrNull() ?: 1) > 0) {
+  if (shLvl != null && @Suppress("RemoveUnnecessaryParentheses") (shLvl.toIntOrNull() ?: 1) > 0) {
     log.info("skipping shell environment: the IDE is likely launched from a terminal (SHLVL=${shLvl})")
     return false
   }
@@ -636,9 +637,9 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   try {
     val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
     val env = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(null, null, null), timeoutMillis).first
-    if ("LANG" !in env && "LC_ALL" !in env && "LC_CTYPE" !in env) {
+    if ("LANG" !in env && "LC_ALL" !in env && @Suppress("SpellCheckingInspection") "LC_CTYPE" !in env) {
       val value = EnvironmentUtil.setLocaleEnv(env, Charset.defaultCharset())
-      log.info("LC_CTYPE=${value}")
+      log.info(@Suppress("SpellCheckingInspection") "LC_CTYPE=${value}")
     }
     envFuture.complete(env.toImmutableMap())
     return true

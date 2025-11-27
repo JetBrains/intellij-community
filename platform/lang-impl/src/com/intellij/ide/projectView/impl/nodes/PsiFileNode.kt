@@ -8,6 +8,8 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.ide.util.treeView.PathElementIdProvider
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -34,7 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSettings?)
-  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText {
+  : BasePsiNode<PsiFile>(project, value, viewSettings), NavigatableWithText, PathElementIdProvider {
   public override fun getChildrenImpl(): Collection<AbstractTreeNode<*>>? {
     val project = project
     val jarRoot = jarRoot
@@ -188,6 +190,24 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
 
   override fun contains(file: VirtualFile): Boolean {
     return super.contains(file) || isArchive && Comparing.equal(VfsUtil.getLocalFile(file), virtualFile)
+  }
+
+  override fun getPathElementId(): String {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return name ?: "<noname>"
+    }
+    else {
+      return TreeState.defaultPathElementId(this)
+    }
+  }
+
+  override fun getPathElementType(): String? {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return GENERIC_PROJECT_VIEW_NODE_TYPE
+    }
+    else {
+      return null
+    }
   }
 }
 

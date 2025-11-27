@@ -1,15 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
-import com.intellij.modcompletion.CompletionItem;
-import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,27 +21,28 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A wrapper around {@link CompletionItem} that adapts it to {@link LookupElement}.
+ * A wrapper around {@link ModCompletionItem} that adapts it to {@link LookupElement}.
  */
 @NotNullByDefault
 @ApiStatus.Internal
-public final class CompletionItemLookupElement extends LookupElement {
-  private final CompletionItem item;
+public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor {
+  private final ModCompletionItem item;
   private volatile @Nullable ModCommand myCachedCommand;
 
-  CompletionItemLookupElement(CompletionItem item) {
+  CompletionItemLookupElement(ModCompletionItem item) {
     this.item = item;
   }
 
   /**
    * @return the completion item wrapped by this element.
    */
-  public CompletionItem item() {
+  public ModCompletionItem item() {
     return item;
   }
 
@@ -51,11 +55,11 @@ public final class CompletionItemLookupElement extends LookupElement {
    * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
    * @return the command to perform the completion (e.g., insert the lookup string).
    * The command must assume that the selection range is already deleted. May return the cached command without recomputing.
-   * @see CompletionItem#perform(ActionContext, CompletionItem.InsertionContext) 
+   * @see ModCompletionItem#perform(ActionContext, ModCompletionItem.InsertionContext) 
    */
   @RequiresReadLock
-  public ModCommand computeCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
-    if (!insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
+  public ModCommand computeCommand(ActionContext actionContext, ModCompletionItem.InsertionContext insertionContext) {
+    if (!insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return item.perform(actionContext, insertionContext);
     }
     ModCommand command = getCachedCommand(actionContext, insertionContext);
@@ -69,24 +73,29 @@ public final class CompletionItemLookupElement extends LookupElement {
 
   /**
    * Cached command in case if it was already computed and stored before for the given context.
-   * May be used instead of {@link #computeCommand(ActionContext, CompletionItem.InsertionContext)} to optimize performance.
+   * May be used instead of {@link #computeCommand(ActionContext, ModCompletionItem.InsertionContext)} to optimize performance.
    * 
    * @param actionContext action context where the completion is performed. 
    *                      The selection range denotes the prefix text inserted during the current completion session.
    *                      The command must ignore it, as at the time it will be applied, the selection range will be deleted. 
    * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
    * @return the command to perform the completion (e.g., insert the lookup string); null if it's not yet cached.
-   * @see #computeCommand(ActionContext, CompletionItem.InsertionContext)
+   * @see #computeCommand(ActionContext, ModCompletionItem.InsertionContext)
    */
-  public @Nullable ModCommand getCachedCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
+  public @Nullable ModCommand getCachedCommand(ActionContext actionContext, ModCompletionItem.InsertionContext insertionContext) {
     ModCommand command = myCachedCommand;
-    if (command == null || !insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
+    if (command == null || !insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return null;
     }
     if (isApplicableToContext(command, actionContext)) {
       return command;
     }
     return null;
+  }
+
+  @Override
+  public Class<?> getSubstitutedClass() {
+    return item.getClass();
   }
 
   private static boolean isApplicableToContext(ModCommand command, ActionContext context) {
@@ -108,6 +117,16 @@ public final class CompletionItemLookupElement extends LookupElement {
   }
 
   @Override
+  public boolean isValid() {
+    return item.isValid();
+  }
+
+  @Override
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return item.autoCompletionPolicy();
+  }
+
+  @Override
   public String getLookupString() {
     return item.mainLookupString();
   }
@@ -126,19 +145,29 @@ public final class CompletionItemLookupElement extends LookupElement {
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    CompletionItemPresentation itemPresentation = item.presentation();
+    ModCompletionItemPresentation itemPresentation = item.presentation();
     // TODO: apply styles when possible
     MarkupText mainText = itemPresentation.mainText();
-    presentation.setItemText(mainText.toText());
-    MarkupText.Fragment onlyFragment = ContainerUtil.getOnlyItem(mainText.fragments());
-    if (onlyFragment != null) {
-      switch (onlyFragment.kind()) {
-        case STRONG -> presentation.setItemTextBold(true);
-        case EMPHASIZED -> presentation.setItemTextItalic(true);
+    List<MarkupText.Fragment> fragments = mainText.fragments();
+    String tailText = "";
+    if (!fragments.isEmpty()) {
+      MarkupText.Fragment last = fragments.getLast();
+      if (last.kind() == MarkupText.Kind.GRAYED) {
+        tailText = last.text();
+        fragments = fragments.subList(0, fragments.size() - 1);
+      }
+      presentation.setItemText(StringUtil.join(fragments, MarkupText.Fragment::text, ""));
+      MarkupText.Fragment onlyFragment = ContainerUtil.getOnlyItem(fragments);
+      if (onlyFragment != null) {
+        switch (onlyFragment.kind()) {
+          case STRONG -> presentation.setItemTextBold(true);
+          case EMPHASIZED -> presentation.setItemTextItalic(true);
+        }
       }
     }
-    presentation.setTailText(" (MC)");
-    presentation.setTypeText(itemPresentation.detailText().toText());
+    presentation.setIcon(itemPresentation.mainIcon());
+    presentation.setTailText(tailText + " (MC)", true);
+    presentation.setTypeText(itemPresentation.detailText().toText(), itemPresentation.detailIcon());
   }
 
   @Override
@@ -148,11 +177,21 @@ public final class CompletionItemLookupElement extends LookupElement {
 
   /**
    * Throws UnsupportedOperationException. Should not be called directly. Instead, to execute the command, 
-   * use {@link #computeCommand(ActionContext, CompletionItem.InsertionContext)}.
+   * use {@link #computeCommand(ActionContext, ModCompletionItem.InsertionContext)}.
    */
   @Override
   public void handleInsert(InsertionContext context) {
     throw new UnsupportedOperationException("Should not be called: unwrap the element via item() method and process it as a ModCommand");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof CompletionItemLookupElement element && item.equals(element.item);
+  }
+
+  @Override
+  public int hashCode() {
+    return item.hashCode();
   }
 
   @Override

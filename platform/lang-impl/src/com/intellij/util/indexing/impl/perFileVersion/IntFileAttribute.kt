@@ -6,25 +6,29 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
+import java.io.IOException
 import java.nio.file.Path
 
 /**
  * This is a simple wrapper around [SpecializedFileAttributes], either fast or a regular one.
  * The main function of this wrapper is to make the attribute auto-reopenable, with help of [AutoRefreshingOnVfsCloseRef]:
- * which means that the storage will be automatically reset if VFS is rebuilt, and also automatically reopened, if [close]-ed
+ * which means that the storage will be automatically reset if VFS is rebuilt, and also automatically reopened, if
+ * used after [close]-ed
  *
  * @see AutoRefreshingOnVfsCloseRef
  */
 @Internal
-sealed interface IntFileAttribute : Closeable {
+sealed interface IntFileAttribute : Closeable, Unmappable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
       return true
     }
 
+    /** One should create a single instance per id -- an attempt to create >1 instance for the same id leads to an exception */
     @JvmStatic
     fun create(id: String, version: Int): IntFileAttribute {
       val fast = shouldUseFastAttributes()
@@ -49,9 +53,15 @@ sealed interface IntFileAttribute : Closeable {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
       return IntFileAttributeImpl(attribute, path)
     }
+
+    @JvmStatic
+    fun dummyAttribute() : IntFileAttribute = DummyIntAttribute
   }
 
+  @Throws(IOException::class)
   fun readInt(fileId: Int): Int
+
+  @Throws(IOException::class)
   fun writeInt(fileId: Int, value: Int)
 }
 
@@ -79,4 +89,18 @@ private class IntFileAttributeImpl(
   override fun close() {
     attributeAccessor.close()
   }
+
+  override fun closeAndUnsafelyUnmap() {
+    attributeAccessor.closeAndUnsafelyUnmap()
+  }
+}
+
+private object DummyIntAttribute : IntFileAttribute {
+  override fun readInt(fileId: Int): Int = 0
+
+  override fun writeInt(fileId: Int, value: Int) = Unit
+
+  override fun close() = Unit
+
+  override fun closeAndUnsafelyUnmap() = Unit
 }

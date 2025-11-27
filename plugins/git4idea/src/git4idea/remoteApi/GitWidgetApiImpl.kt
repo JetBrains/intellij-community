@@ -67,6 +67,11 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         LOG.debug("Git repository state changed: $repository. Sending new value")
         notifier.tryEmit(Unit)
       }
+
+      override fun repositoryCreated(repository: GitRepository, info: GitRepoInfo) {
+        LOG.debug("Git repository created: $repository. Sending new value")
+        notifier.tryEmit(Unit)
+      }
     })
     connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
       LOG.debug("Git incoming outgoing state changed. Sending new value")

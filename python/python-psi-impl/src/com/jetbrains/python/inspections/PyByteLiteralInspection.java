@@ -63,9 +63,12 @@ public final class PyByteLiteralInspection extends PyInspection {
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(file);
       try {
-        if (charsetString != null && !Charset.forName(charsetString).equals(StandardCharsets.US_ASCII))
+        if (charsetString != null && !Charset.forName(charsetString).equals(StandardCharsets.US_ASCII)) {
           default_bytes = false;
-      } catch (UnsupportedCharsetException | IllegalCharsetNameException ignored) {}
+        }
+      }
+      catch (UnsupportedCharsetException | IllegalCharsetNameException ignored) {
+      }
 
       boolean hasNonAscii = false;
 
@@ -73,7 +76,7 @@ public final class PyByteLiteralInspection extends PyInspection {
       char c;
       for (int i = 0; i < length; ++i) {
         c = value.charAt(i);
-        if (((int) c) > 255) {
+        if (((int)c) > 255) {
           hasNonAscii = true;
           break;
         }

@@ -21,7 +21,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
@@ -634,7 +634,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       // unary numeric promotion if applicable
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(operation)) {
+      else if (ElementType.SHIFT_OPS.contains(operation)) {
         lResult = handleUnaryNumericPromotion(lType, lResult);
         rResult = handleUnaryNumericPromotion(rType, rResult);
       }

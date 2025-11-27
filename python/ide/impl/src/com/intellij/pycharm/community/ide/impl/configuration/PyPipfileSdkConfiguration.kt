@@ -25,7 +25,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
@@ -66,7 +66,7 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     module: Module, checkExistence: CheckExistence,
   ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     val pipfile = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.name ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-    val pipEnvExecutable = getPipEnvExecutable().getOrLogException(LOGGER) ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipEnvExecutable = getPipEnvExecutable() ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val canManage = pipEnvExecutable.isExecutable()
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", pipfile)
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
@@ -100,7 +100,7 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   }
 
   private suspend fun askForEnvData(module: Module, source: Source, envExists: Boolean): PyAddNewPipEnvFromFilePanel.Data? {
-    val pipEnvExecutable = getPipEnvExecutable().getOrLogException(LOGGER)
+    val pipEnvExecutable = getPipEnvExecutable()
 
     if ((envExists || source == Source.INSPECTION) && pipEnvExecutable?.isExecutable() == true) {
       return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -71,7 +71,7 @@ public class FieldElement extends CompositeElement{
   public int getChildRole(@NotNull ASTNode child) {
     assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(i)) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (i == JavaTokenType.C_STYLE_COMMENT || i == JavaTokenType.END_OF_LINE_COMMENT) {

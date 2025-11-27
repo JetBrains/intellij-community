@@ -11,9 +11,7 @@ jps_test(
     "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
     "@community//plugins/kotlin/jvm-debugger/test:testData",
   ] + all_test_dep_targets,
-  tags = [
-    "block-network",
-  ]
+  sandbox = True,
 )
 
 ### skip generation section `test intellij.kotlin.jvm.debugger.test.parcelize`

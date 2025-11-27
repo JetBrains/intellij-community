@@ -1,38 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_CODE_BLOCK;
-import static com.intellij.psi.impl.source.BasicJavaElementType.CLASS_SET;
-
-public final class JavaTokenSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class JavaTokenSelectioner extends BasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    return BasicJavaAstTreeUtil.isJavaToken(node) && !BasicJavaAstTreeUtil.isKeyword(node) &&
-           !BasicJavaAstTreeUtil.is(node.getTreeParent(), BASIC_CODE_BLOCK) &&
-           !BasicJavaAstTreeUtil.is(node.getTreeParent(), CLASS_SET);
+    return e instanceof PsiJavaToken && !(e instanceof PsiKeyword) && !(e.getParent()instanceof PsiCodeBlock) && !(e.getParent() instanceof PsiClass);
   }
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    if (node == null) {
-      return null;
-    }
+    PsiJavaToken token = (PsiJavaToken)e;
 
-    if (!BasicJavaAstTreeUtil.is(node, JavaTokenType.SEMICOLON) &&
-        !BasicJavaAstTreeUtil.is(node, JavaTokenType.LPARENTH)) {
+    if (token.getTokenType() != JavaTokenType.SEMICOLON && token.getTokenType() != JavaTokenType.LPARENTH) {
       return super.select(e, editorText, cursorOffset, editor);
     }
     else {

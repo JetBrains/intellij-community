@@ -39,9 +39,9 @@ class KotlinUSimpleReferenceExpression(
             return resolvedDeclarationPart as PsiElement?
         }
 
-    override val identifier get() = sourcePsi.getReferencedName()
+    override val identifier: String get() = sourcePsi.getReferencedName()
 
-    override fun resolve() = resolvedDeclaration
+    override fun resolve(): PsiElement? = resolvedDeclaration
 
     override val resolvedName: String?
         get() = (resolvedDeclaration as? PsiNamedElement)?.name

@@ -1,5 +1,38 @@
 # Jewel Release Notes
 
+## v0.32 (2025-11-25)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2025.3, 2026.1*            | 1.10.0-alpha01                |
+
+This is a small release, not too much going on. But we still shipped a big improvement to Markdown rendering, which now supports some basic HTML too!
+
+### ⚠️ Important Changes
+
+* **This version is not available on IJP 252** since there has not been any 252 release since the Jewel 0.31 release.
+  * The upcoming IJP 2026.1 will include all changes from this version.
+* The CMP version is now [1.10.0-beta01](https://kotlinlang.org/docs/multiplatform/whats-new-compose-110.html) (new major version)
+* **JEWEL-1043** A few deprecated Markdown APIs have been hidden to promote new non-deprecated overloads ([#3267](https://github.com/JetBrains/intellij-community/pull/3267))
+  * The change is non-breaking, both in terms of binary and source compatibility
+* **IJPL-214896** The Compose Runtime dependency has been moved out of the `intellij.libraries.compose.foundation.desktop` module and into the `intellij.libraries.compose.runtime.desktop` module
+  * You will likely need to add that to your plugin's `plugin.xml` dependencies
+  * If you use Jewel in a plugin built through the IntelliJ Platform Gradle plugin, you'll also need to add a `bundledModule` dependency entry until the plugin includes it in the `composeUI` helper
+
+### New features
+
+* **JEWEL-1018** Added `SpeedSearchableComboBox` component that supports speed search ([#3250](https://github.com/JetBrains/intellij-community/pull/3250))
+  * It is available inside a `SpeedSearchArea` and has a similar syntax to a normal `ListComboBox`
+* **JEWEL-1043** Added initial support for basic HTML in the Markdown renderer ([#3267](https://github.com/JetBrains/intellij-community/pull/3267))
+  * Supported tags: `h1..6`, `b`/`strong`, `i`/`em`, `s`/`strike`/`del`, `p`, `br`, `code`, `pre`, `ol`/`ul`/`li`, `a`, `img`, `table`/`th`/`tr`/`td`
+  * Supported scroll syncing for code blocks and lists
+  * Attributes and custom CSS styling are out of scope of this feature
+  * Known issue: ordered and unordered list items use the top-level style regardless of their actual level (JEWEL-1056)
+  * Known issue: horizontal alignments are not supported yet (JEWEL-1074)
+
+### Bug fixes
+ * **JEWEL-1054** Fixed a race condition with selection management in the dropdown component if used in a non-canonical way
+
 ## v0.31 (2025-10-14)
 
 | Min supported IJP versions | Compose Multiplatform version |

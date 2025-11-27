@@ -9,27 +9,7 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.allSupertypes
-import org.jetbrains.kotlin.analysis.api.components.approximateToSuperPublicDenotableOrSelf
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.isAnyType
-import org.jetbrains.kotlin.analysis.api.components.isBooleanType
-import org.jetbrains.kotlin.analysis.api.components.isByteType
-import org.jetbrains.kotlin.analysis.api.components.isCharSequenceType
-import org.jetbrains.kotlin.analysis.api.components.isCharType
-import org.jetbrains.kotlin.analysis.api.components.isDoubleType
-import org.jetbrains.kotlin.analysis.api.components.isFloatType
-import org.jetbrains.kotlin.analysis.api.components.isFunctionType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isShortType
-import org.jetbrains.kotlin.analysis.api.components.isStringType
-import org.jetbrains.kotlin.analysis.api.components.isUByteType
-import org.jetbrains.kotlin.analysis.api.components.isUIntType
-import org.jetbrains.kotlin.analysis.api.components.isULongType
-import org.jetbrains.kotlin.analysis.api.components.isUShortType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
-import org.jetbrains.kotlin.analysis.api.components.type
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -129,7 +109,7 @@ class KotlinNameSuggester(
 
             val shortName = classId.shortClassName.asStringStripSpecialMarkers()
             if (StringUtil.isJavaIdentifier(shortName)) {
-                val shortNameChunks = NameUtilCore.nameToWords(shortName).asList()
+                val shortNameChunks = NameUtilCore.nameToWordList(shortName)
                 registerChunks(shortNameChunks, registerWholeName = false)
             }
 

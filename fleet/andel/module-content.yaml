@@ -1,0 +1,3 @@
+- name: dist.all/lib/fleet.andel.jar
+  modules:
+  - name: fleet.andel

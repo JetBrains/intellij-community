@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.navigation
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -18,7 +19,6 @@ import com.intellij.util.NotNullFunction
 import com.intellij.util.xml.DomUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.DevKitIcons
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
@@ -85,7 +85,7 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
       val module = ProjectRootManager.getInstance(element.project).getFileIndex().getModuleForFile(element.containingFile.virtualFile)
                    ?: return super.getPresentation(element)
       return TargetPresentation.builder(element.containingFile.name)
-        .icon(DevKitIcons.PluginV2)
+        .icon(DevkitCoreIcons.PluginV2)
         .containerText(getLoading(element))
         .locationText(module.name, AllIcons.Nodes.Module)
         .presentation()

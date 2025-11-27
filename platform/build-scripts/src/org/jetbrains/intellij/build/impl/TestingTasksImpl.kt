@@ -47,7 +47,6 @@ import org.jetbrains.jps.incremental.java.ModulePathSplitter
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.PrintStream
@@ -379,10 +378,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>) {
     val testDiscovery = "intellij-test-discovery"
-    val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-                  ?: throw RuntimeException("Can't find the $testDiscovery library, but test discovery capturing enabled.")
-
-    val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
+    val agentJar = context.findLibraryRoots(testDiscovery, moduleLibraryModuleName = null)
                      .firstOrNull {
                        val name = it.fileName.toString()
                        name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
@@ -635,7 +631,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       index = 0,
       elements = VmOptionsGenerator.generate(
         isEAP = true,
-        bundledRuntime = context.bundledRuntime,
         customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
         additionalVmOptions = customMemoryOptions ?: emptyList(),
         platformPrefix = options.platformPrefix,
@@ -1377,8 +1372,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
 private fun appendJUnitStarter(path: MutableList<String>, context: CompilationContext) {
   for (libName in listOf("JUnit5", "JUnit5Launcher", "JUnit5Vintage", "JUnit5Jupiter")) {
-    for (library in context.projectModel.project.libraryCollection.findLibrary(libName)!!.getFiles(JpsOrderRootType.COMPILED)) {
-      path.add(library.absolutePath)
+    for (library in context.findLibraryRoots(libName)) {
+      path.add(library.pathString)
     }
   }
 }

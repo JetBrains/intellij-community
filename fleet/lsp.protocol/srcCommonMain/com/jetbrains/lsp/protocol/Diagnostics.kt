@@ -10,6 +10,8 @@ import kotlinx.serialization.json.JsonElement
 
 /**
  * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects are only valid in the scope of a resource.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic">Diagnostic (LSP spec)</a>
  */
 @Serializable
 data class Diagnostic(
@@ -78,6 +80,9 @@ class DiagnosticSeveritySerializer : EnumAsIntSerializer<DiagnosticSeverity>(
     deserialize = { DiagnosticSeverity.entries[it - 1] },
 )
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity">DiagnosticSeverity (LSP spec)</a>
+ */
 @Serializable(DiagnosticSeveritySerializer::class)
 enum class DiagnosticSeverity(val value: Int) {
     Error(1),
@@ -96,6 +101,7 @@ class DiagnosticTagSerializer : EnumAsIntSerializer<DiagnosticTag>(
  * The diagnostic tags.
  *
  * @since 3.15.0
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticTag">DiagnosticTag (LSP spec)</a>
  */
 @Serializable(DiagnosticTagSerializer::class)
 enum class DiagnosticTag(val value: Int) {
@@ -119,6 +125,8 @@ enum class DiagnosticTag(val value: Int) {
  * Represents a related message and source code location for a diagnostic.
  * This should be used to point to code locations that cause or are related to
  * a diagnostics, e.g when duplicating a symbol in a scope.
+ *
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticRelatedInformation">DiagnosticRelatedInformation (LSP spec)</a>
  */
 @Serializable
 data class DiagnosticRelatedInformation(
@@ -137,6 +145,7 @@ data class DiagnosticRelatedInformation(
  * Structure to capture a description for an error code.
  *
  * @since 3.16.0
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeDescription">CodeDescription (LSP spec)</a>
  */
 @Serializable
 data class CodeDescription(
@@ -146,6 +155,9 @@ data class CodeDescription(
     val href: URI,
 )
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsClientCapabilities">PublishDiagnosticsClientCapabilities (LSP spec)</a>
+ */
 @Serializable
 data class PublishDiagnosticsClientCapabilities(
     /**
@@ -194,6 +206,9 @@ data class PublishDiagnosticsClientCapabilities(
     )
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams">PublishDiagnosticsParams (LSP spec)</a>
+ */
 @Serializable
 data class PublishDiagnosticsParams(
     /**
@@ -218,6 +233,7 @@ data class PublishDiagnosticsParams(
  * Client capabilities specific to diagnostic pull requests.
  *
  * @since 3.17.0
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticClientCapabilities">DiagnosticClientCapabilities (LSP spec)</a>
  */
 @Serializable
 data class DiagnosticClientCapabilities(
@@ -236,6 +252,9 @@ data class DiagnosticClientCapabilities(
     val relatedDocumentSupport: Boolean? = null,
 )
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticOptions">DiagnosticOptions (LSP spec)</a>
+ */
 @Serializable
 data class DiagnosticOptions(
     /**
@@ -264,6 +283,7 @@ data class DiagnosticOptions(
  * Parameters of the document diagnostic request.
  *
  * @since 3.17.0
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentDiagnosticParams">DocumentDiagnosticParams (LSP spec)</a>
  */
 @Serializable
 data class DocumentDiagnosticParams(
@@ -286,6 +306,9 @@ data class DocumentDiagnosticParams(
     override val partialResultToken: ProgressToken? = null,
 ) : WorkDoneProgressParams, PartialResultParams
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentDiagnosticReportKind">DocumentDiagnosticReportKind (LSP spec)</a>
+ */
 @Serializable
 enum class DocumentDiagnosticReportKind {
     @SerialName("full")
@@ -295,6 +318,9 @@ enum class DocumentDiagnosticReportKind {
     Unchanged
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentDiagnosticReport">DocumentDiagnosticReport (LSP spec)</a>
+ */
 @Serializable
 data class DocumentDiagnosticReport(
     val kind: DocumentDiagnosticReportKind,
@@ -312,6 +338,9 @@ data class DocumentDiagnosticReport(
     }
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticServerCancellationData">DiagnosticServerCancellationData (LSP spec)</a>
+ */
 @Serializable
 data class DiagnosticServerCancellationData(
     val retriggerRequest: Boolean,
@@ -342,6 +371,8 @@ object Diagnostics {
      * When a file changes it is the server’s responsibility to re-compute diagnostics and push them to the client. If the computed set is empty it has to push the empty array to clear former diagnostics.
      * Newly pushed diagnostics always replace previously pushed diagnostics.
      * There is no merging that happens on the client side.
+     *
+     * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics">TextDocument.publishDiagnostics (LSP spec)</a>
      */
     val PublishDiagnosticsNotificationType: NotificationType<PublishDiagnosticsParams> =
         NotificationType("textDocument/publishDiagnostics", PublishDiagnosticsParams.serializer())

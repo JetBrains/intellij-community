@@ -34,11 +34,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
+  fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
+  fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
   override fun align(align: Align): Cell<T>
 
@@ -48,7 +48,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
-  override fun customize(customGaps: Gaps): Cell<T>
+  fun customize(customGaps: Gaps): Cell<T>
 
   override fun customize(customGaps: UnscaledGaps): Cell<T>
 

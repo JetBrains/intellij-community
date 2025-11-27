@@ -83,7 +83,6 @@ import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FIL
 public final class ConfigImportHelper {
   public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
-  public static final String CONFIG_IMPORTED_FROM_PATH = "intellij.config.imported.from";
 
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
   private static final String UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY = "idea.config.import.update.incompatible.plugins.only"; // if true, only incompatible will be updated
@@ -123,8 +122,8 @@ public final class ConfigImportHelper {
 
     if (migrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
       var properties = sp.getProperties();
-      log.info("Enabling system properties after restart: " + properties);
-      for (var property : properties) System.setProperty(property, Boolean.TRUE.toString());
+      log.info("Setting system properties after restart: " + properties);
+      for (var property : properties) System.setProperty(property.getFirst(), property.getSecond());
       return;
     }
     else if (migrationOption instanceof CustomConfigMigrationOption.MigratePluginsFromCustomPlace migratePluginsOption) {
@@ -235,7 +234,7 @@ public final class ConfigImportHelper {
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORTED_FROM_PREVIOUS_VERSION;
         }
 
-        System.setProperty(CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
+        System.setProperty(InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, configImportOptions);
 
@@ -300,7 +299,7 @@ public final class ConfigImportHelper {
         if (importSettings == null || importSettings.shouldRestartAfterVmOptionsChange()) {
           log.info("The vmoptions file has changed, restarting...");
           try {
-            writeOptionsForRestart(newConfigDir);
+            InitialConfigImportState.writeOptionsForRestart(newConfigDir);
           }
           catch (IOException e) {
             log.error("cannot write config migration marker file to " + newConfigDir, e);
@@ -371,15 +370,6 @@ public final class ConfigImportHelper {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
   }
 
-  private static void writeOptionsForRestart(Path newConfigDir) throws IOException {
-    var properties = new ArrayList<String>();
-    properties.add(InitialConfigImportState.FIRST_SESSION_KEY);
-    if (InitialConfigImportState.isConfigImported()) {
-      properties.add(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
-    }
-    new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
-  }
-
   private static void restart(List<String> args) {
     if (Restarter.isSupported()) {
       try {
@@ -405,12 +395,22 @@ public final class ConfigImportHelper {
   }
 
   private static Path backupAndDeleteCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings) throws IOException {
+    return backupCurrentConfig(currentConfig, log, settings, true);
+  }
+
+  public static Path backupCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings) throws IOException {
+    return backupCurrentConfig(currentConfig, log, settings, false);
+  }
+
+  private static Path backupCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings, boolean deleteFiles) throws IOException {
     var tempDir = Files.createDirectories(currentConfig.getFileSystem().getPath(System.getProperty("java.io.tmpdir")));
     var tempBackupDir = Files.createTempDirectory(tempDir, currentConfig.getFileName() + "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     NioFiles.copyRecursively(currentConfig, tempBackupDir, file -> !shouldSkipFileDuringImport(file, settings));
 
-    deleteCurrentConfigDir(currentConfig, log);
+    if (deleteFiles) {
+      deleteCurrentConfigDir(currentConfig, log);
+    }
 
     var pluginDir = currentConfig.getFileSystem().getPath(PathManager.getPluginsDir().toString());
     if (Files.exists(pluginDir) && !pluginDir.startsWith(currentConfig)) {
@@ -418,7 +418,9 @@ public final class ConfigImportHelper {
       log.info("Backup plugins dir separately from " + pluginDir + " to " + pluginBackup);
       NioFiles.createDirectories(pluginBackup);
       NioFiles.copyRecursively(pluginDir, pluginBackup);
-      NioFiles.deleteRecursively(pluginDir);
+      if (deleteFiles) {
+        NioFiles.deleteRecursively(pluginDir);
+      }
     }
 
     return tempBackupDir;

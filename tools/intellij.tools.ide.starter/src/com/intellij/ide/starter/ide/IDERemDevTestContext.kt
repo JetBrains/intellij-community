@@ -49,6 +49,11 @@ class IDERemDevTestContext private constructor(
     return super.applyVMOptionsPatch(patchVMOptions)
   }
 
+  override fun wipeWorkspaceState(): IDETestContext = apply {
+    frontendIDEContext.wipeWorkspaceState()
+    super.wipeWorkspaceState()
+  }
+
   companion object {
 
     fun from(backendContext: IDETestContext, frontendCtx: IDETestContext): IDERemDevTestContext {

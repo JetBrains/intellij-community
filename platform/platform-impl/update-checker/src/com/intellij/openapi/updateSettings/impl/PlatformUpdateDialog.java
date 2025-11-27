@@ -215,11 +215,13 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
+    Collection<PluginDownloader> selectedPluginsToUpdate = new ArrayList<>();
     if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
-      var dialog = new PluginUpdateDialog(myProject, installedPlugins.values(), null, installedPlugins);
-      if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
+      var dialog = new PluginUpdateDialog(myProject, ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel()), null, installedPlugins);
+      if (!dialog.showAndGet()) {
         return;  // update cancelled
       }
+      selectedPluginsToUpdate.addAll(PluginUpdateDialog.getSelectedDownloaders(myUpdatesForPlugins, dialog));
     }
 
     //noinspection UsagesOfObsoleteApi
@@ -254,8 +256,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           return;
         }
 
-        if (!ContainerUtil.isEmpty(myUpdatesForPlugins)) {
-          UpdateInstaller.installPluginUpdates(myUpdatesForPlugins, indicator);
+        if (!ContainerUtil.isEmpty(selectedPluginsToUpdate)) {
+          UpdateInstaller.installPluginUpdates(selectedPluginsToUpdate, indicator);
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {

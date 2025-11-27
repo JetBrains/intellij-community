@@ -57,9 +57,9 @@ open class KotlinUMethod(
 
     override val psi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
-    override val javaPsi = psi
+    override val javaPsi: PsiMethod = psi
 
-    override fun getSourceElement() = sourcePsi ?: this
+    override fun getSourceElement(): NavigatablePsiElement = sourcePsi ?: this
 
     private val kotlinOrigin = getKotlinMemberOrigin(psi.originalElement) ?: sourcePsi
 
@@ -68,7 +68,7 @@ open class KotlinUMethod(
         return unwrapFakeFileForLightClass(psi.containingFile)
     }
 
-    override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin)
+    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(psi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {

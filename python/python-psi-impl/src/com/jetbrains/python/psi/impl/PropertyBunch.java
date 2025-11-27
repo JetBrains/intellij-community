@@ -85,6 +85,7 @@ public abstract class PropertyBunch<MType> {
 
   /**
    * Tries to form a bunch from data available at a possible property() call site.
+   *
    * @param source should be a PyCallExpression (if not, null is immediately returned).
    * @param target what to fill with data (return type contravariance prevents us from creating it inside).
    * @return true if target was successfully filled.
@@ -97,8 +98,8 @@ public abstract class PropertyBunch<MType> {
         PyExpression[] accessors = new PyExpression[3];
         String doc = null;
         int position = 0;
-        String[] keywords = new String[] { "fget", "fset", "fdel", "doc" };
-        for (PyExpression arg: arglist.getArguments()) {
+        String[] keywords = new String[]{"fget", "fset", "fdel", "doc"};
+        for (PyExpression arg : arglist.getArguments()) {
           int index = -1;
           if (arg instanceof PyKeywordArgument) {
             String keyword = ((PyKeywordArgument)arg).getKeyword();
@@ -116,7 +117,7 @@ public abstract class PropertyBunch<MType> {
           if (index >= 0) {
             arg = PyUtil.peelArgument(arg);
             if (index < 3) {
-              accessors [index] = arg;
+              accessors[index] = arg;
             }
             else if (index == 3 && arg instanceof PyStringLiteralExpression) {
               doc = ((PyStringLiteralExpression)arg).getStringValue();

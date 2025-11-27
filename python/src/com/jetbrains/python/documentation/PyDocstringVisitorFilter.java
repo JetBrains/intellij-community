@@ -4,6 +4,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
- *
+ * <p>
  * filter out some python inspections and annotations if we're in docstring substitution
  */
 public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
@@ -30,13 +31,17 @@ public final class PyDocstringVisitorFilter implements PythonVisitorFilter {
         visitorClass == PyByteLiteralInspection.class || visitorClass == PyNonAsciiCharInspection.class ||
         visitorClass == PyPackageRequirementsInspection.class || visitorClass == PyMandatoryEncodingInspection.class ||
         visitorClass == PyInterpreterInspection.class || visitorClass == PyDocstringTypesInspection.class ||
-        visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class || 
+        visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class ||
         visitorClass == PyStatementEffectInspection.class || visitorClass == PyPep8Inspection.class) {
       return false;
     }
     //annotators
-    if (visitorClass == PyDocStringHighlightingAnnotator.class || visitorClass == PyParameterListAnnotatorVisitor.class || visitorClass == PyReturnYieldAnnotatorVisitor.class || visitorClass == PyFunctionHighlightingAnnotator.class)
+    if (visitorClass == PyDocStringHighlightingAnnotator.class ||
+        visitorClass == PyParameterListAnnotatorVisitor.class ||
+        visitorClass == PyReturnYieldAnnotatorVisitor.class ||
+        visitorClass == PyFunctionHighlightingAnnotator.class) {
       return false;
+    }
     // doctest in separate file
     final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     if (visitorClass == PyUnresolvedReferencesInspection.class && !(topLevelFile instanceof PyFile)) {

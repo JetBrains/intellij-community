@@ -20,6 +20,8 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.proxy.asProxy
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.plaf.basic.BasicArrowButton
 
@@ -42,7 +44,7 @@ object FrameNotificationUtils {
     EDT.assertIsEdt()
     val messageType = MessageType.INFO
     if (session != null) {
-      val tab = session.sessionTab
+      val tab = session.sessionTab as? XDebugSessionTab
       if (tab != null) {
         val view = tab.framesView
         if (view != null) {

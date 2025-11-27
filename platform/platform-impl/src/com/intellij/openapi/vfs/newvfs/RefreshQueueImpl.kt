@@ -99,9 +99,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
    * With synchronous refresh, there is a limitation on parallelism of the refresh thread.
    * With coroutines, we rather need to limit the concurrency of parallel refreshes, hence we are using semaphores.
    */
-  private suspend fun <T> executeWithParallelizationGuard(session: RefreshSessionImpl, action: suspend () -> T): T {
-    return executeWithParallelizationGuard(session.modality, parallelizationCache, action)
-  }
+  private suspend fun <T> executeWithParallelizationGuard(session: RefreshSessionImpl, action: suspend () -> T): T =
+    executeWithParallelizationGuard(session.modality, parallelizationCache, action)
 
   /**
    * Executes session with legacy non-blocking read action and write action on EDT
@@ -272,12 +271,13 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         }
         .onProcessed { stopIndicator() }
         .onError(Consumer { t: Throwable ->
-          if (!myRefreshIndicator.isCanceled()) {
+          if (!myRefreshIndicator.isCanceled() && t !is CancellationException) {
             LOG.error(t)
           }
         })
     }
     else {
+      @Suppress("DEPRECATION")
       AppUIExecutor.onWriteThread(modality).later().submit(Runnable { fireEvents(events, session) })
     }
   }
@@ -307,9 +307,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
   }
 
-  override fun createSession(async: Boolean, recursive: Boolean, finishRunnable: Runnable?, state: ModalityState): RefreshSession {
-    return RefreshSessionImpl(async, recursive, false, finishRunnable, state)
-  }
+  override fun createSession(async: Boolean, recursive: Boolean, finishRunnable: Runnable?, state: ModalityState): RefreshSession =
+    RefreshSessionImpl(async, recursive, false, finishRunnable, state)
 
   override fun processEvents(async: Boolean, events: List<VFileEvent>) {
     RefreshSessionImpl(async, events).launch()
@@ -328,9 +327,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   companion object {
     private val LOG = Logger.getInstance(RefreshQueue::class.java)
 
-    private fun CoroutineScope.children(): List<Job> {
-      return coroutineContext.job.children.toList()
-    }
+    private fun CoroutineScope.children(): List<Job> = coroutineContext.job.children.toList()
 
     private fun fireEvents(events: Collection<VFileEvent>, session: RefreshSessionImpl) {
       var t = System.nanoTime()
@@ -395,7 +392,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         return semaphore.withPermit {
           action()
         }
-      } finally {
+      }
+      finally {
         do {
           currentValue = requireNotNull(map[key])
           val newValue = currentValue.copy(second = currentValue.second - 1)
@@ -412,7 +410,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     session.addAllFiles(files)
     if (isVfsRefreshInBackgroundWriteActionAllowed()) {
       session.executeInBackgroundWriteAction()
-    } else {
+    }
+    else {
       currentCoroutineContext().job.invokeOnCompletion {
         session.cancel()
       }
@@ -428,7 +427,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     session.addEvents(events)
     if (isVfsRefreshInBackgroundWriteActionAllowed()) {
       session.executeInBackgroundWriteAction()
-    } else {
+    }
+    else {
       currentCoroutineContext().job.invokeOnCompletion {
         session.cancel()
       }
@@ -441,7 +441,6 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   /**
    * @return true if VFS refresh is allowed to run in background write action
    */
-  private fun isVfsRefreshInBackgroundWriteActionAllowed(): Boolean {
-    return useBackgroundWriteAction && Registry.`is`("vfs.refresh.use.background.write.action", true)
-  }
+  private fun isVfsRefreshInBackgroundWriteActionAllowed(): Boolean =
+    useBackgroundWriteAction && Registry.`is`("vfs.refresh.use.background.write.action", true)
 }

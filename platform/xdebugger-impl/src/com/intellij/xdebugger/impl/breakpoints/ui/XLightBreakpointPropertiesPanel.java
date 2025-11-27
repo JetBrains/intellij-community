@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -23,9 +24,12 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,7 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt.asProxy;
 
 @ApiStatus.Internal
 public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Delegate {
@@ -132,7 +136,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   @Deprecated
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
-    this(project, XBreakpointManagerProxyKt.asProxy((XBreakpointManagerImpl)breakpointManager),
+    this(project, MonolithBreakpointManagerKt.asProxy((XBreakpointManagerImpl)breakpointManager),
          asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
   }
 

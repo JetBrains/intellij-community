@@ -40,8 +40,8 @@ import java.util.function.Function;
  * Especially take a look at {@link #psiUpdate} methods which are helpful in most of the cases.
  */
 public sealed interface ModCommand
-  permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModEditOptions, ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename,
+  permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage, ModEditOptions,
+          ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModRegisterTabOut, ModShowConflicts, ModStartRename,
           ModStartTemplate, ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
 
   /**

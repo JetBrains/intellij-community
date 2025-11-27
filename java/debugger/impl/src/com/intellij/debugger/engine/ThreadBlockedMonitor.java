@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequest;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -139,6 +141,12 @@ public class ThreadBlockedMonitor {
         //TODO: can we do fast check without suspending all
         vmProxy.suspend();
         try {
+          List<ThreadReferenceProxy> zombieThreads =
+            ContainerUtil.filter(myWatchedThreads, thread -> thread.getThreadReference().status() == ThreadReference.THREAD_STATUS_ZOMBIE);
+          for (ThreadReferenceProxy thread : zombieThreads) {
+            stopWatching(thread);
+          }
+
           for (ThreadReferenceProxy thread : myWatchedThreads) {
             try {
               ObjectReference waitedMonitor =

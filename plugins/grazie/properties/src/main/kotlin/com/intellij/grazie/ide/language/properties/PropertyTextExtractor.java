@@ -5,6 +5,7 @@ import com.intellij.grazie.text.TextContent.Exclusion;
 import com.intellij.grazie.text.TextContent.TextDomain;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.EscapeUtilsKt;
 import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.grazie.utils.PsiUtilsKt;
 import com.intellij.grazie.utils.Text;
@@ -49,6 +50,8 @@ final class PropertyTextExtractor extends TextExtractor {
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(apostrophes, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(continuationIndent, content), Exclusion::exclude));
         content = content.excludeRanges(ContainerUtil.map(Text.allOccurrences(trailingSlash, content), Exclusion::exclude));
+        content = EscapeUtilsKt.replaceBackslashEscapedWhitespace(content);
+        content = EscapeUtilsKt.replaceBackslashEscapedWhitespace(content, 'r');
         for (MnemonicsTokenizer tokenizer : MNEMONICS_EP_NAME.getExtensionList()) {
           if (tokenizer.hasMnemonics(content.toString())) {
             Pattern ignoredCharactersPattern = Pattern.compile(

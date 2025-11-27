@@ -19,7 +19,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipException
@@ -138,7 +138,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
       visitZip(zipPath = fullPath, zipRelPath = relativePath, file = ZipFile(FileChannel.open(file, READ)), errors = errors)
     }
     else if (fullPath.endsWith(".class")) {
-      checkIfSubPathIsForbidden(relativePath, errors)
+      checkIfSubPathIsForbidden(relativePath, relativePath, errors)
 
       val contentCheckRequired = versionRules.isNotEmpty() && !fullPath.endsWith("module-info.class") && !isMultiVersion(fullPath)
       if (contentCheckRequired) {
@@ -176,7 +176,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
         else if (name.endsWith(".class")) {
           val relativePath = join(zipRelPath, "!/", name)
 
-          checkIfSubPathIsForbidden(relativePath, errors)
+          checkIfSubPathIsForbidden(name, relativePath, errors)
 
           val contentCheckRequired = versionRules.isNotEmpty() && !name.endsWith("module-info.class") && !isMultiVersion(name)
           if (contentCheckRequired) {
@@ -187,7 +187,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
     }
   }
 
-  private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
+  private fun checkIfSubPathIsForbidden(pathToCheck: String, relPath: String, errors: MutableCollection<String>) {
     if (forbiddenSubPathExceptions.contains(relPath)) {
       Span.current().addEvent("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
       return
@@ -200,7 +200,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
     }
 
     for (f in forbiddenSubPaths) {
-      if (relPath.contains(f)) {
+      if (pathToCheck.contains(f)) {
         errors.add("$relPath: .class file has a forbidden sub-path: $f")
       }
     }

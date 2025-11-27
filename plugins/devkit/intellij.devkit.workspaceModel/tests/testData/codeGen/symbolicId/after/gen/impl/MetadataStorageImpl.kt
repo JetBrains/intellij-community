@@ -173,15 +173,15 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", metadataHash = -99546289)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleId", metadataHash = 1096965603)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks", metadataHash = 229222369)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many", metadataHash = 372382182)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many\$Ordered", metadataHash = -1632944095)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many\$Unordered", metadataHash = -585653981)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity", metadataHash = 1210600365)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleId", metadataHash = 2085950989)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks", metadataHash = 1655431341)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many", metadataHash = 1912855642)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many\$Ordered", metadataHash = 570756243)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Many\$Unordered", metadataHash = -1033515457)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Nothing", metadataHash = 1541593304)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SealedClassWithLinks\$Single", metadataHash = -800484835)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1044278955)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1931133873)
   }
 
 }

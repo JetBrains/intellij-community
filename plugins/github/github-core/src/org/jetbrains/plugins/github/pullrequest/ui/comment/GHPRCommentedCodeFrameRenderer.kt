@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.plugins.github.pullrequest.ui.yRangeForLogicalLineRange
 import java.awt.*
 import java.awt.geom.Path2D
 import java.awt.geom.Path2D.WIND_NON_ZERO
@@ -20,10 +21,9 @@ class CommentedCodeFrameRenderer(
 ) : CustomHighlighterRenderer, LineMarkerRenderer {
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) { // editor part
-    val (startVisLine, endVisLine) = getVisualLines(editor)
     var x = 0f
     var width = editor.contentComponent.width.toFloat()
-    val (y, height) = getYAxisValues(startVisLine, endVisLine, editor)
+    val (y, height) = editor.getYAxisValues()
     if (editorSide == Side.LEFT) {
       x += scrollbarPadding
       val path = createLeftOutlinePath(x, y, width, height)
@@ -37,10 +37,9 @@ class CommentedCodeFrameRenderer(
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) { // gutter part
-    val (startVisLine, endVisLine) = getVisualLines(editor)
-    val x = 1f
+    val x = OUTER_GUTTER_FRAME_PADDING
     val width = (editor as? EditorEx)?.gutterComponentEx?.width?.toFloat() ?: 0f
-    val (y, height) = getYAxisValues(startVisLine, endVisLine, editor)
+    val (y, height) = editor.getYAxisValues()
     val path = createLeftOutlinePath(x, y, width, height)
     drawOutlinePath(g, path)
   }
@@ -58,19 +57,12 @@ class CommentedCodeFrameRenderer(
     }
   }
 
-  private fun getVisualLines(editor: Editor): Pair<Int, Int> {
-    val doc = editor.document
-    val startVisLine = editor.offsetToVisualPosition(doc.getLineStartOffset(startLine)).line
-    val endVisLine = editor.offsetToVisualPosition(doc.getLineEndOffset(endLine.coerceAtMost(editor.document.lineCount - 1))).line
-    return Pair(startVisLine, endVisLine)
+  private fun Editor.getYAxisValues(): Pair<Float, Float> {
+    val yRange = yRangeForLogicalLineRange(startLine, endLine)
+    val startY = yRange.first.toFloat()
+    val height = yRange.last.toFloat() - startY
+    return startY to height
   }
-
-  private fun getYAxisValues(startVisLine: Int, endVisLine: Int, editor: Editor): Pair<Float, Float> {
-    val y = editor.visualLineToY(startVisLine).toFloat()
-    val height = editor.lineHeight.toFloat() * (endVisLine - startVisLine + 1) + getInlaysHeightInRange(editor, startLine..endLine)
-    return Pair(y, height)
-  }
-
   private fun createLeftOutlinePath(x: Float, y: Float, width: Float, height: Float): Path2D.Float {
     return Path2D.Float(WIND_NON_ZERO).apply {
       moveTo(width, y)
@@ -93,15 +85,8 @@ class CommentedCodeFrameRenderer(
     }
   }
 
-  private fun getInlaysHeightInRange(editor: Editor, range: IntRange): Int {
-    if (range.last == 0) return 0
-    val startOffset = editor.document.getLineStartOffset(range.first)
-    val endOffset = editor.document.getLineEndOffset(range.last - 1)
-    val inlays = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
-    return inlays.sumOf { it.bounds?.height ?: 0 }
-  }
-
   companion object {
+    private const val OUTER_GUTTER_FRAME_PADDING = 2f
     private val color: Color = CodeReviewColorUtil.Review.LineFrame.border
     private val stroke: Stroke = BasicStroke(JBUIScale.scale(1f))
     private val radius: Int get() = JBUIScale.scale(4)

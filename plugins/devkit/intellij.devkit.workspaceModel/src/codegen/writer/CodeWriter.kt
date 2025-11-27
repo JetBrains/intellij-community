@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter.addGeneratedObjModuleFile
@@ -17,13 +16,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
@@ -33,7 +33,6 @@ import com.intellij.workspaceModel.codegen.engine.*
 import kotlinx.coroutines.delay
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
-import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
@@ -163,49 +162,33 @@ object CodeWriter {
         importsByFile.forEach { (file, imports) ->
           addImports(file, imports)
         }
-
-        CodeStyle.runWithLocalSettings(project, CodeStyle.getSettings(project)) { localSettings ->
-          localSettings.setUpCodeStyle()
-          generatedFiles.forEachIndexed { i, file ->
-            indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
-            CodeStyleManager.getInstance(project).reformat(file)
-            file.apiFileNameForImplFile?.let { ktClasses[it] }?.containingKtFile?.let { apiFile -> copyHeaderComment(apiFile, file) }
-          }
-          topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
-            val addedElements = ArrayList<KtDeclaration>()
-            for ((place, declarations) in placeAndDeclarations) {
-              var nextPlace: PsiElement = place
-              val newElements = ArrayList<KtDeclaration>()
-              for (declaration in declarations) {
-                val added = file.addAfter(declaration, nextPlace) as KtDeclaration
-                newElements.add(added)
-                nextPlace = added
-              }
-              addGeneratedRegionStartComment(file, newElements.first())
-              addGeneratedRegionEndComment(file, newElements.last())
-              addedElements.addAll(newElements)
+        generatedFiles.forEachIndexed { i, file ->
+          indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
+          CodeStyleManager.getInstance(project).reformat(file)
+          file.apiFileNameForImplFile?.let { ktClasses[it] }?.containingKtFile?.let { apiFile -> copyHeaderComment(apiFile, file) }
+        }
+        topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
+          val addedElements = ArrayList<KtDeclaration>()
+          for ((place, declarations) in placeAndDeclarations) {
+            var nextPlace: PsiElement = place
+            val newElements = ArrayList<KtDeclaration>()
+            for (declaration in declarations) {
+              val added = file.addAfter(declaration, nextPlace) as KtDeclaration
+              newElements.add(added)
+              nextPlace = added
             }
+            addGeneratedRegionStartComment(file, newElements.first())
+            addGeneratedRegionEndComment(file, newElements.last())
+            addedElements.addAll(newElements)
           }
-
-          val filesWithGeneratedRegions = ktClasses.values.groupBy { it.containingFile }.toList()
-          filesWithGeneratedRegions.forEachIndexed { i, (file, classes) ->
-            indicator.fraction = 0.95 + 0.05 * i / filesWithGeneratedRegions.size
-            reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
-          }
-
         }
       }
     }
   }
 
-  private fun CodeStyleSettings.setUpCodeStyle() {
-    val kotlinCustomSettings = this.kotlinCustomSettings
-    kotlinCustomSettings.NAME_COUNT_TO_USE_STAR_IMPORT = Int.MAX_VALUE
-  }
-
   /**
    * Documentation for [com.intellij.openapi.project.IndexNotReadyException] says that it's enough to run completeJustSubmittedTasks only
-   * once. However, in practive this is not enough.
+   * once. However, in practice this is not enough.
    */
   private suspend fun waitSmartMode(project: Project) {
     for (i in 1..100) {
@@ -507,27 +490,6 @@ object CodeWriter {
     }
   }
 
-  private fun reformatCodeInGeneratedRegions(file: PsiFile, nodes: List<ASTNode>) {
-    val generatedRegions = nodes.flatMap { findGeneratedRegions(it) }
-    if (generatedRegions.isEmpty()) return
-    val regions = generatedRegions.map { TextRange.create(it.first.startOffset, it.second.startOffset + it.second.textLength) }
-    CodeStyleManager.getInstance(file.project).reformatText(file, joinAdjacentRegions(regions))
-  }
-
-  private fun joinAdjacentRegions(regions: List<TextRange>): List<TextRange> {
-    val result = ArrayList<TextRange>()
-    regions.sortedBy { it.startOffset }.forEach { next ->
-      val last = result.lastOrNull()
-      if (last != null && last.endOffset >= next.startOffset) {
-        result[result.lastIndex] = last.union(next)
-      }
-      else {
-        result.add(next)
-      }
-    }
-    return result
-  }
-
   private fun findGeneratedRegions(node: ASTNode): ArrayList<Pair<ASTNode, ASTNode>> {
     val generatedRegions = ArrayList<Pair<ASTNode, ASTNode>>()
     var regionStart: ASTNode? = null
@@ -581,10 +543,5 @@ object CodeWriter {
     const val ATTRIBUTE_NAME = "Codegen-Api-Version"
 
     const val UNKNOWN_VERSION = "unknown version"
-  }
-
-  // This function was added because CodeStyleManager throws an exception for big MetadataStorageImpl files
-  private fun Iterable<KtFile>.withoutBigFiles(): Iterable<KtFile> {
-    return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
 }

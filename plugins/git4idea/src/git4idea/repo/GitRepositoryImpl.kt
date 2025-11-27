@@ -176,8 +176,7 @@ class GitRepositoryImpl private constructor(
     return getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
       span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
-      val configFile = repositoryFiles.configFile
-      val config = GitConfig.read(configFile)
+      val config = GitConfig.read(project, repositoryFiles.rootDir.toNioPath())
       repositoryFiles.updateCustomPaths(config.parseCore())
 
       val remotes = config.parseRemotes()

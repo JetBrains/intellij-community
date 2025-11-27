@@ -14,7 +14,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroup
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings;
 import com.jetbrains.fus.reporting.MetadataStorage;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
@@ -31,15 +33,18 @@ import java.util.stream.Collectors;
 
 public final class ValidationTestRulesPersistedStorage implements IntellijValidationRulesStorage {
   private final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, EventGroupRules> customPathEventsValidators = new ConcurrentHashMap<>(); // populated from custom path setting in statistics log tool window
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull String myRecorderId;
   private final @NotNull AtomicBoolean myIsInitialized;
+  private final @NotNull AtomicBoolean hasCustomPathMetadata;
 
   ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
     myIsInitialized = new AtomicBoolean(false);
+    hasCustomPathMetadata = new AtomicBoolean(false);
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
@@ -47,7 +52,9 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
 
   @Override
   public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) {
-    return eventsValidators.get(groupId);
+    var result = eventsValidators.get(groupId);
+    if (result != null || !hasCustomPathMetadata.get()) return result;
+    return customPathEventsValidators.get(groupId);
   }
 
   @Override
@@ -66,15 +73,28 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     return !myIsInitialized.get();
   }
 
+  public boolean hasCustomPathMetadata() {
+    return hasCustomPathMetadata.get();
+  }
+
   private void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
+      customPathEventsValidators.clear();
       myIsInitialized.set(false);
+      EventsSchemePathSettings settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId);
+      hasCustomPathMetadata.set(settings != null && settings.isUseCustomPath());
       EventGroupRemoteDescriptors productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
       EventGroupRemoteDescriptors testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
       final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
+
+      if (hasCustomPathMetadata.get()) {
+        final Map<String, EventGroupRules> customMetadata = createValidators(productionGroups);
+        customPathEventsValidators.putAll(customMetadata);
+      }
+
       myIsInitialized.set(true);
     }
   }
@@ -104,6 +124,12 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     return createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
   }
 
+  private @NotNull Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups) {
+    GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
+    final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
+    return createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
+  }
+
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {
     EventLogTestMetadataPersistence.addTestGroup(myRecorderId, group);
     updateValidators();
@@ -112,6 +138,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   private void cleanup() {
     synchronized (myLock) {
       eventsValidators.clear();
+      customPathEventsValidators.clear();
       myTestMetadataPersistence.cleanup();
     }
   }

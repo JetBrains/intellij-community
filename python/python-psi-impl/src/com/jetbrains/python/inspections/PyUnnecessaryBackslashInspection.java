@@ -60,8 +60,9 @@ public final class PyUnnecessaryBackslashInspection extends PyInspection {
 
     @Override
     public void visitPyTupleExpression(@NotNull PyTupleExpression node) {
-      if (node.getParent() instanceof PyParenthesizedExpression)
+      if (node.getParent() instanceof PyParenthesizedExpression) {
         findProblem(node);
+      }
     }
 
     @Override
@@ -117,6 +118,5 @@ public final class PyUnnecessaryBackslashInspection extends PyInspection {
         }
       }
     }
-
   }
 }

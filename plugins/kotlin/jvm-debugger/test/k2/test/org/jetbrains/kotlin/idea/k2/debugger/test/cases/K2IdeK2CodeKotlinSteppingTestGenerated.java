@@ -1773,6 +1773,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoFunWithInlineParameter.kt");
         }
 
+        @TestMetadata("smartStepIntoGenericWithValueClassAsParameter.kt")
+        public void testSmartStepIntoGenericWithValueClassAsParameter() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoGenericWithValueClassAsParameter.kt");
+        }
+
         @TestMetadata("smartStepIntoInlineFun.kt")
         public void testSmartStepIntoInlineFun() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoInlineFun.kt");
@@ -1876,6 +1881,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
         @TestMetadata("smartStepIntoLocalFun.kt")
         public void testSmartStepIntoLocalFun() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoLocalFun.kt");
+        }
+
+        @TestMetadata("smartStepIntoMethodHandle.kt")
+        public void testSmartStepIntoMethodHandle() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoMethodHandle.kt");
         }
 
         @TestMetadata("smartStepIntoMethodReference.kt")

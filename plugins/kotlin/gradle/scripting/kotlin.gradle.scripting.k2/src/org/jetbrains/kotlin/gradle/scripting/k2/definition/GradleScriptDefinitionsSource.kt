@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.gradle.scripting.k2.definition
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.GradleScriptDefinitionEntity
-import org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel.deserialize
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
+import org.jetbrains.kotlin.idea.core.script.k2.deserialize
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 

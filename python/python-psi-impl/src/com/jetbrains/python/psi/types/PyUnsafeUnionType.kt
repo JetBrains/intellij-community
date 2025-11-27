@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.types
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
@@ -10,7 +9,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
-import java.util.Collections
+import java.util.*
 
 /**
  * The unsafe union type is different from the regular "safe" `PyUnionType` in that it's considered a subtype of another type if
@@ -139,7 +138,7 @@ class PyUnsafeUnionType private constructor(members: Collection<PyType?>) : PyTy
           }
         }
       }
-      return if (newMembers.size > 1) PyUnsafeUnionType(types) else newMembers.firstOrNull()
+      return if (newMembers.size > 1) PyUnsafeUnionType(newMembers) else newMembers.firstOrNull()
     }
   }
 }

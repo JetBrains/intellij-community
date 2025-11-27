@@ -35,7 +35,10 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
     TestCase.assertEquals("10", options[BUCKET_OPTION + "abc"])
     TestCase.assertEquals("test-machine-id", options[MACHINE_ID_OPTION + "abc"])
     TestCase.assertEquals("15", options[ID_REVISION_OPTION + "abc"])
-    TestCase.assertEquals("/path/to/log/file", options[LOGS_OPTION + "abc"])
+    TestCase.assertEquals(
+      "/path/to/log/file".replace("/", File.separator),
+      options[LOGS_OPTION + "abc"]
+    )
   }
 
   fun test_create_command_multiple_recorders() {
@@ -59,13 +62,19 @@ class EventLogExternalCommandTest : BasePlatformTestCase() {
     TestCase.assertEquals("10", options[BUCKET_OPTION + "abc"])
     TestCase.assertEquals("test-machine-id", options[MACHINE_ID_OPTION + "abc"])
     TestCase.assertEquals("15", options[ID_REVISION_OPTION + "abc"])
-    TestCase.assertEquals("/path/to/log/file", options[LOGS_OPTION + "abc"])
+    TestCase.assertEquals(
+      "/path/to/log/file".replace("/", File.separator),
+      options[LOGS_OPTION + "abc"]
+    )
 
     TestCase.assertEquals("another-device-id", options[DEVICE_OPTION + "def"])
     TestCase.assertEquals("65", options[BUCKET_OPTION + "def"])
     TestCase.assertEquals("another-machine-id", options[MACHINE_ID_OPTION + "def"])
     TestCase.assertEquals("98", options[ID_REVISION_OPTION + "def"])
-    TestCase.assertEquals("/another/path/to/log", options[LOGS_OPTION + "def"])
+    TestCase.assertEquals(
+      "/another/path/to/log".replace("/", File.separator),
+      options[LOGS_OPTION + "def"]
+    )
   }
 
   private fun doTestParse(vararg configs: TestEventLogSendConfig) {

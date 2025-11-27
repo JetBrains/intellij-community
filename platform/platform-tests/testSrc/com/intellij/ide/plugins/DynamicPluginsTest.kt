@@ -51,6 +51,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
@@ -537,7 +538,7 @@ class DynamicPluginsTest {
     val fooPath = pluginsDir.resolve("foo")
     plugin("foo") {
       content {
-        module("foo.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {
+        module("foo.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {
           isSeparateJar = true
           extensionPoint<FooExtension>(FooExtension.EP_FQN, dynamic = true)
           includePackageClassFiles<FooExtension>()

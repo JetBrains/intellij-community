@@ -47,10 +47,10 @@ public final class PyMetaClassCompletionContributor extends CompletionContributo
            });
     extend(CompletionType.BASIC,
            PlatformPatterns
-            .psiElement()
-            .withLanguage(PythonLanguage.getInstance())
-            .withParents(PyReferenceExpression.class, PyArgumentList.class, PyClass.class)
-            .and(hasLanguageLevel(level -> !level.isPython2())),
+             .psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .withParents(PyReferenceExpression.class, PyArgumentList.class, PyClass.class)
+             .and(hasLanguageLevel(level -> !level.isPython2())),
            new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,

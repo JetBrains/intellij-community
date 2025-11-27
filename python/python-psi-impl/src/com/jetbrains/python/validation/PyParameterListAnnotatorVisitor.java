@@ -50,6 +50,7 @@ public class PyParameterListAnnotatorVisitor extends PyElementVisitor {
         boolean hadSingleStar = false;
         boolean hadParamsAfterSingleStar = false;
         int inTuple = 0;
+
         @Override
         public void visitNamedParameter(PyNamedParameter parameter, boolean first, boolean last) {
           final var name = parameter.getName();

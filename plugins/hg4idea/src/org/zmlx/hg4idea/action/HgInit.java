@@ -107,7 +107,7 @@ public class HgInit extends DumbAwareAction {
   }
 
   public static boolean createRepository(@NotNull Project project, final @NotNull VirtualFile selectedRoot) {
-    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
+    HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.toNioPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
       VcsNotifier.getInstance(project)
         .notifySuccess(REPO_CREATED,

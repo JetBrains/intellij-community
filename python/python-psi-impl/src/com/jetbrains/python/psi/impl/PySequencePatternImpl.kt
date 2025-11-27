@@ -24,12 +24,12 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
         else -> listOf(context.getType(pattern))
       }
     }
-    
+
     val expectedType = when {
       sequenceCaptureType.isHeterogeneousTuple() -> PyTupleType.create(this, types)
       else -> wrapInSequenceType(PyUnionType.union(types))
     }
-    
+
     if (sequenceCaptureType == null) return expectedType
     return sequenceCaptureType.toList()
       .map { intersect(it, expectedType, context) }
@@ -53,9 +53,9 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
         .let { PyUnionType.union(it) }
         .let { wrapInListType(it) }
     }
-    
+
     val idx = elements.indexOf(sequenceMember)
-    
+
     return sequenceType.toList()
       .map { getElementTypeSkippingStar(it, idx, context) }
       .let { PyUnionType.union(it) }

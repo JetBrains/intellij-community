@@ -42,10 +42,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -67,6 +64,18 @@ internal class DocumentationUI(
   val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent
+  var useToolwindowBackground: Boolean = false
+    set(value) {
+      field = value
+
+      editorPane.isOpaque = !value
+      if (value) {
+        setBackground(JBUI.CurrentTheme.ToolWindow.background())
+      }
+      else {
+        setFromDocumentationBackground(editorPane.backgroundFlow.value)
+      }
+    }
 
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
@@ -78,12 +87,12 @@ internal class DocumentationUI(
   private val switcher: DefinitionSwitcher<DocumentationRequest>
   private var contentKind: ContentKind? = null
 
+  private val customStyleFlow: MutableStateFlow<CustomStyle?> = MutableStateFlow(null)
+
   init {
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
       imageResolver?.resolveImage(it)
-    }.apply {
-      isOpaque = false
     }
     Disposer.register(this, editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
@@ -109,11 +118,9 @@ internal class DocumentationUI(
     }
     scrollPane.setViewportView(editorPane, locationLabel)
     trackDocumentationBackgroundChange(this) {
-      // Force update of the background color for scroll pane
-      @Suppress("UseJBColor")
-      val color = Color(it.rgb)
-      editorPane.parent.background = color
-      switcherToolbarComponent.background = color
+      if (!useToolwindowBackground) {
+        setFromDocumentationBackground(it)
+      }
     }
 
     browser.ui = this
@@ -152,6 +159,18 @@ internal class DocumentationUI(
     }
   }
 
+  fun setBackground(color: Color) {
+    editorPane.parent.background = color
+    scrollPane.viewport.background = color
+    switcherToolbarComponent.background = color
+  }
+
+  private fun setFromDocumentationBackground(color: Color) {
+    // Force update of the background color for scroll pane
+    @Suppress("UseJBColor")
+    setBackground(Color(color.rgb))
+  }
+
   override fun dispose() {
     cs.cancel("DocumentationUI disposal")
     clearImages()
@@ -165,7 +184,7 @@ internal class DocumentationUI(
     }
   }
 
-  fun setBackground(color: Color): Disposable {
+  fun setTemporaryEditorBackground(color: Color): Disposable {
     val editorBG = editorPane.background
     editorPane.background = color
     return Disposable {
@@ -176,6 +195,25 @@ internal class DocumentationUI(
   fun trackDocumentationBackgroundChange(disposable: Disposable, onChange: (Color) -> Unit) {
     val job = cs.launch {
       editorPane.backgroundFlow.collectLatest {
+        withContext(Dispatchers.EDT) {
+          onChange(it)
+        }
+      }
+    }
+    Disposer.register(disposable) {
+      job.cancel()
+    }
+  }
+
+  /**
+   * Tracks changes to a custom style and invokes the provided callback when the style changes.
+   *
+   * @param disposable A disposable object to manage the lifecycle of style change tracking. The tracking will stop when this disposable is disposed.
+   * @param onChange A callback function that is invoked whenever the custom style changes. The function receives the updated `CustomStyle` or `null` if no style is available.
+   */
+  fun trackDocumentationCustomStyleChange(disposable: Disposable, onChange: (CustomStyle?) -> Unit) {
+    val job = cs.launch {
+      customStyleFlow.collectLatest {
         withContext(Dispatchers.EDT) {
           onChange(it)
         }
@@ -265,8 +303,11 @@ internal class DocumentationUI(
     }
   }
 
+
+  internal data class CustomStyle(val backgroundColor: Color?, val customEnabled: Boolean)
+
   private data class DecoratedData(@NlsSafe val html: String, val decoratedStyle: DecoratedStyle?)
-  private data class DecoratedStyle(val fontSize: Float, val backgroundColor: Color)
+  private data class DecoratedStyle(val fontSize: Float?, val backgroundColor: Color?, val customEnabled: Boolean)
   private data class PreviousDecoratedStyle(val fontSize: FontSize, val backgroundColor: Color)
 
   private fun extractAdditionalData(@NlsSafe html: String): DecoratedData? {
@@ -275,6 +316,10 @@ internal class DocumentationUI(
     val children = document.getElementsByTag(DocumentationHtmlUtil.codePreviewFloatingKey)
     if (children.size != 1) return null
     val element = children[0]
+    val plain = element.attribute("plain")?.value?.toBoolean()
+    if (plain == true) {
+      return DecoratedData(element.html(), DecoratedStyle(null, null, true))
+    }
     if (!isPopup) {
       return DecoratedData("<div style=\"min-width: 150px; max-width: 300px; padding: 0; margin: 0;\"> " +
                            element.children()[0].html() + "</div></div>", null)
@@ -282,7 +327,7 @@ internal class DocumentationUI(
     val backgroundColor = element.attribute("background-color")?.value ?: return null
     val fontSize = element.attribute("font-size")?.value?.toFloat() ?: return null
     if (element.children().size != 1) return null
-    return DecoratedData(element.children()[0].html(), DecoratedStyle(fontSize, Color.decode(backgroundColor)))
+    return DecoratedData(element.children()[0].html(), DecoratedStyle(fontSize, Color.decode(backgroundColor), true))
   }
 
   private fun fetchingMessage() {
@@ -342,21 +387,28 @@ internal class DocumentationUI(
   }
 
   private fun customizePane(decoratedStyle: DecoratedStyle?) {
-    if (decoratedStyle != null) {
+    if (decoratedStyle != null && decoratedStyle.backgroundColor != null) {
       updateSwitcherVisibility(true)
     }
     else {
       updateSwitcherVisibility()
     }
-    if (isPopup && (decoratedStyle != null && decoratedStyle.backgroundColor != editorPane.background ||
+    customStyleFlow.value = CustomStyle(decoratedStyle?.backgroundColor, decoratedStyle?.customEnabled == true)
+
+    if (isPopup && (decoratedStyle != null &&
+                    decoratedStyle.backgroundColor != editorPane.background ||
                     decoratedStyle == null && initialDecoratedData != null &&
                     initialDecoratedData?.backgroundColor != editorPane.background)) {
       if (initialDecoratedData == null) {
         initialDecoratedData = PreviousDecoratedStyle(fontSize.value, editorPane.background)
       }
-      if (decoratedStyle != null) {
+
+      if (decoratedStyle != null && decoratedStyle.backgroundColor != null) {
         editorPane.isCustomSettingsEnabled = true
-        editorPane.setFont(UIUtil.getFontWithFallback(editorPane.getFontName(), Font.PLAIN, JBUIScale.scale(decoratedStyle.fontSize).toInt()))
+        val decoratedFontSize = decoratedStyle.fontSize
+        if (decoratedFontSize != null) {
+          editorPane.setFont(UIUtil.getFontWithFallback(editorPane.getFontName(), Font.PLAIN, JBUIScale.scale(decoratedFontSize).toInt()))
+        }
         editorPane.background = decoratedStyle.backgroundColor
       }
       else {

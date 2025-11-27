@@ -14,9 +14,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,22 +30,22 @@ import static com.intellij.java.debugger.impl.shared.engine.JavaValueTextModific
 @ApiStatus.Internal
 public abstract class ViewTextActionBase extends XFetchValueActionBase {
   @Override
-  protected void handle(Project project, String value, XDebuggerTree tree) { }
+  protected void handle(Project project, String value) { }
 
   @Override
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XValueNodeImpl node = getStringNode(e);
-    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
+    return new ValueCollector(e.getProject()) {
       MyDialog dialog = null;
 
       @Override
-      public void handleInCollector(Project project, String value, XDebuggerTree tree) {
+      public void handleInCollector(Project project, String value) {
         // do not unquote here! Value here must be correct already
         //noinspection UnnecessaryLocalVariable
         String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
-          dialog.setTitle(ActionsBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
+          dialog.setTitle(XDebuggerImplBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
           dialog.show();
         }
         dialog.setText(text);
@@ -57,7 +57,7 @@ public abstract class ViewTextActionBase extends XFetchValueActionBase {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (getStringNode(e) != null) {
-      e.getPresentation().setText(ActionsBundle.messagePointer("action.Debugger.ViewEditText.text"));
+      e.getPresentation().setText(XDebuggerImplBundle.lazyMessage("action.Debugger.ViewEditText.text"));
     }
   }
 

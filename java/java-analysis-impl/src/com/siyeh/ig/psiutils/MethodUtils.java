@@ -37,7 +37,9 @@ import java.util.regex.Pattern;
 public final class MethodUtils {
 
   private static final Set<String> CAN_IGNORE_RETURN_VALUE_ANNOTATIONS = Set.of(
-    "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
+    "org.assertj.core.util.CanIgnoreReturnValue",
+    "org.assertj.core.annotation.CanIgnoreReturnValue",
+    "com.google.errorprone.annotations.CanIgnoreReturnValue");
 
   private MethodUtils() {}
 

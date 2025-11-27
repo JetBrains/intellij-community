@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
-import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
@@ -28,6 +27,11 @@ public class EcmaScriptRegexpParserDefinition extends RegExpParserDefinition {
                                                                     RegExpCapability.MAX_OCTAL_377);
 
   @Override
+  public @NotNull EnumSet<RegExpCapability> getCapabilities() {
+    return CAPABILITIES;
+  }
+
+  @Override
   public @NotNull Lexer createLexer(Project project) {
     return new RegExpLexer(CAPABILITIES) {
       @Override
@@ -43,11 +47,6 @@ public class EcmaScriptRegexpParserDefinition extends RegExpParserDefinition {
         return baseType;
       }
     };
-  }
-
-  @Override
-  public @NotNull PsiParser createParser(Project project) {
-    return new RegExpParser(CAPABILITIES);
   }
 
   @Override

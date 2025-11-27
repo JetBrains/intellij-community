@@ -9,8 +9,8 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.embedContentModule
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -101,11 +101,11 @@ internal suspend fun patchPluginXml(
         moduleElement = moduleElement,
         pluginDescriptorContainer = pluginDescriptorCache,
         xIncludeResolver = xIncludeResolver,
-        context = context,
         moduleName = moduleName,
         dependencyHelper = dependencyHelper,
         pluginLayout = pluginLayout,
-        frontendModuleFilter = frontendModuleFilter
+        frontendModuleFilter = frontendModuleFilter,
+        context = context
       )
     }
     pluginLayout.pluginXmlPatcher(JDOMUtil.write(element), context)

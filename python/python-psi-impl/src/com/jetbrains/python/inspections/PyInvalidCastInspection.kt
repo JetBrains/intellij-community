@@ -19,8 +19,10 @@ class PyInvalidCastInspection : PyInspection() {
     return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callees = callExpression.multiResolveCalleeFunction(resolveContext)
-        val isCastCall = callees.any { (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST ||
-                                      (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST_EXT }
+        val isCastCall = callees.any {
+          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST ||
+          (it as? PyFunction)?.qualifiedName == PyTypingTypeProvider.CAST_EXT
+        }
         if (!isCastCall) return
 
         val args = callExpression.getArguments()

@@ -6,6 +6,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.spawnProcess
@@ -15,7 +16,6 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import kotlinx.coroutines.CoroutineScope
-import java.nio.file.Path
 import kotlin.io.path.pathString
 
 internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchRequest: LaunchRequest): ProcessLauncher {
@@ -41,19 +41,22 @@ private class EelProcessCommands(
   private val binOnEel: BinOnEel,
   private val path: EelPath,
   private val args: List<String>,
-  override val env: Map<String, String>,
+  private val env: Map<String, String>,
   private val tty: TtySize?,
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
 
-  override val cwd: String?
-    get() = binOnEel.workDir?.toRealPath()?.pathString
+  override val info: ProcessCommandsInfo
+    get() = ProcessCommandsInfo(
+      env = env,
+      cwd = binOnEel.workDir?.toRealPath()?.pathString,
+      target = binOnEel.path.getEelDescriptor().machine.name,
+    )
 
   override val processFunctions: ProcessFunctions = ProcessFunctions(
     waitForExit = { eelProcess?.exitCode?.await() },
     killProcess = { eelProcess?.kill() }
   )
-
 
   override suspend fun start(): Result<Process, ExecErrorReason.CantStart> {
     var workDir = binOnEel.workDir

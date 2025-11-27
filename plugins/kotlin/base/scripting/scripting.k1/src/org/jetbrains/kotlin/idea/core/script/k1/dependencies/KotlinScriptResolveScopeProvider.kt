@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.k1.dependencies
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -26,7 +26,7 @@ import kotlin.script.experimental.api.isStandalone
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
     override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? =
-        getResolveScope(file, defaultContext(), project)
+        getResolveScope(file, anyContext(), project)
 
     override fun getResolveScope(file: VirtualFile, context: CodeInsightContext, project: Project): GlobalSearchScope? {
         if (!file.isKotlinFileType()) return null

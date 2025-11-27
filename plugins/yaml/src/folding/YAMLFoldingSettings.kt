@@ -7,11 +7,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.BeanConfigurable
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindIntText
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.yaml.YAMLBundle
 
@@ -24,7 +21,7 @@ class YAMLFoldingSettings : PersistentStateComponent<YAMLFoldingSettings?> {
   var abbreviationLengthLimit: Int = 20
 
 
-  override fun getState(): YAMLFoldingSettings? {
+  override fun getState(): YAMLFoldingSettings {
     return this
   }
 
@@ -40,22 +37,23 @@ class YAMLFoldingSettings : PersistentStateComponent<YAMLFoldingSettings?> {
   }
 }
 
-internal class YAMLFoldingOptionsProvider :
-  BeanConfigurable<YAMLFoldingSettings>(YAMLFoldingSettings.getInstance(), YAMLBundle.message("YAMLFoldingSettings.title")),
-  CodeFoldingOptionsProvider {
+internal class YAMLFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFoldingOptionsProvider {
 
   override fun Panel.createContent() {
+    val settings = YAMLFoldingSettings.getInstance()
+
     group(YAMLBundle.message("YAMLFoldingSettings.title")) {
       row {
-        val s = checkBox(YAMLBundle.message("YAMLFoldingSettings.use.abbreviation"))
-          .bindSelected(instance::useAbbreviation)
+        val useAbbreviation = checkBox(YAMLBundle.message("YAMLFoldingSettings.use.abbreviation"))
+          .bindSelected(settings::useAbbreviation)
+          .gap(RightGap.SMALL)
 
         intTextField(1..Int.MAX_VALUE)
-          .bindIntText(instance::abbreviationLengthLimit)
-          .enabledIf(s.selected)
+          .bindIntText(settings::abbreviationLengthLimit)
+          .enabledIf(useAbbreviation.selected)
+          .gap(RightGap.SMALL)
 
-        label(YAMLBundle.message("YAMLFoldingSettings.abbreviation.units.of.measurement", instance.abbreviationLengthLimit))
-
+        label(YAMLBundle.message("YAMLFoldingSettings.abbreviation.units.of.measurement", settings.abbreviationLengthLimit))
       }
     }
   }

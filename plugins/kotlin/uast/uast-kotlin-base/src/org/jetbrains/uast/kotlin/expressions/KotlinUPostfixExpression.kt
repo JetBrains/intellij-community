@@ -25,7 +25,7 @@ class KotlinUPostfixExpression(
             baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
         }
 
-    override val operator = when (sourcePsi.operationToken) {
+    override val operator: UastPostfixOperator = when (sourcePsi.operationToken) {
         KtTokens.PLUSPLUS -> UastPostfixOperator.INC
         KtTokens.MINUSMINUS -> UastPostfixOperator.DEC
         KtTokens.EXCLEXCL -> KotlinPostfixOperators.EXCLEXCL

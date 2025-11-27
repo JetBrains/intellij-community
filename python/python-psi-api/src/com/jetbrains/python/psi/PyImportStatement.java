@@ -6,5 +6,6 @@ import com.jetbrains.python.ast.PyAstImportStatement;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 
 
-public interface PyImportStatement extends PyAstImportStatement, PyImportStatementBase, StubBasedPsiElement<PyImportStatementStub>, PyImplicitImportNameDefiner {
+public interface PyImportStatement
+  extends PyAstImportStatement, PyImportStatementBase, StubBasedPsiElement<PyImportStatementStub>, PyImplicitImportNameDefiner {
 }

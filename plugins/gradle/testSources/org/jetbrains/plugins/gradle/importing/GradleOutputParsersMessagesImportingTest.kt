@@ -490,6 +490,8 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       val text = it.lineSequence()
         .dropWhile { s -> s == "Starting Gradle Daemon..."
                           || s.startsWith("Gradle Daemon started in")
+                          || s == ""
+                          || s.startsWith("CONFIGURE SUCCESSFUL")
                           || s.startsWith("Download ") }
         .joinToString(separator = "\n")
 

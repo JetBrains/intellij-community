@@ -226,14 +226,16 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
       if (javaSdks.isEmpty()) {
         JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
-        if (requiredVersion != null) {
-          Messages.showErrorDialog(DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found", requiredVersion),
-                                   DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
-        }
-        else {
-          Messages.showErrorDialog(DevKitBundle.message("sdk.no.idea.sdk.version.found"),
-                                   DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (requiredVersion != null) {
+            Messages.showErrorDialog(DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found", requiredVersion),
+                                     DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
+          }
+          else {
+            Messages.showErrorDialog(DevKitBundle.message("sdk.no.idea.sdk.version.found"),
+                                     DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
+          }
+        });
         return false;
       }
 
@@ -323,7 +325,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
       catch (IOException e) {
         LOG.warn(e);
-        Messages.showErrorDialog(e.toString(), DevKitBundle.message("sdk.title"));
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(e.toString(), DevKitBundle.message("sdk.title")));
         return false;
       }
     }

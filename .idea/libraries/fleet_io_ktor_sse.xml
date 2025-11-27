@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="fleet:io.ktor.sse" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-sse-jvm:3.1.3">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-sse-jvm:3.3.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.1.3/ktor-sse-jvm-3.1.3.jar">
-          <sha256sum>a2ae8a338bb1d446d16dcfea2189ef5a5be31a88123b3879562b7955667a5639</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.3.2/ktor-sse-jvm-3.3.2.jar">
+          <sha256sum>141283041d2d67377ca011b62eda6e14581050f77ecb1f32ade3cb2dfcfb19e0</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.1.3/ktor-sse-jvm-3.1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.3.2/ktor-sse-jvm-3.3.2.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.1.3/ktor-sse-jvm-3.1.3-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.3.2/ktor-sse-jvm-3.3.2-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.1.3/ktor-sse-jvm-3.1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3.3.2/ktor-sse-jvm-3.3.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

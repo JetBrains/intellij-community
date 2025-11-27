@@ -4,12 +4,14 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
@@ -181,7 +183,6 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    PyModuleNameCompletionContributor.ENABLED = false;
     doTest();
   }
 
@@ -566,35 +567,46 @@ public class Py3CompletionTest extends PyTestCase {
   public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValueWithUnpacking() {
     doTest();
   }
+
+  // PY-85706
+  public void testFStringLikeCompletionDoesNotAddTPrefixInsideUnresolvedFunctionCalls() {
+    doTest();
+  }
     
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
-    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+    doTestVariantTypeText("ordinaryPackage/sample.py", "logging", "");
   }
 
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging", "plainDirectory");
   }
 
   // PY-46056
   public void testFromImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
-    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+    doTestVariantTypeText("ordinaryPackage/sample.py", "logging", "");
   }
 
   // PY-46056
   public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging", "plainDirectory");
   }
 
-  private void doTestVariantTailText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String tailText) {
+  private void doTestVariantTypeText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String typeText) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile(entryFilePath);
     LookupElement[] variants = myFixture.completeBasic();
     assertNotNull(variants);
     LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
     assertNotNull(lookupElement);
-    assertEquals(tailText, TestLookupElementPresentation.renderElement(lookupElement).getTailText());
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(lookupElement);
+    //noinspection unchecked
+    LookupElementRenderer<LookupElement> expensiveRenderer = (LookupElementRenderer<LookupElement>)lookupElement.getExpensiveRenderer();
+    if (expensiveRenderer != null) {
+      expensiveRenderer.renderElement(lookupElement, presentation);
+    }
+    assertEquals(typeText, presentation.getTypeText());
   }
 
   // PY-46054
@@ -891,6 +903,54 @@ public class Py3CompletionTest extends PyTestCase {
         }
       });
     });
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromAttribute() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          unique_attribute = 1
+      
+          def __init__(self):
+              self.unique_attribute_instance = 2
+      """);
+    doTestByText("Class.uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.unique_attribute"""
+    );
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromMethod() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          def unique_method(self): ...
+      """);
+    doTestByText("Class.uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.unique_method()"""
+    );
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromInnerClass() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          class UniqueClass: ...
+      """);
+    doTestByText("Class.Uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.UniqueClass"""
+    );
   }
 
   private void doTestVariants(String @NotNull ... expected) {

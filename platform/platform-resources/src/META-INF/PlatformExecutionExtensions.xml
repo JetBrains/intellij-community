@@ -2,6 +2,10 @@
 <idea-plugin>
   <module value="com.intellij.modules.execution"/>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.execution.inlineResumeCreator" interface="com.intellij.execution.InlineResumeCreator" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.execution.RunManager"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
@@ -53,9 +57,6 @@
 
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
-
-    <projectService serviceInterface="com.intellij.execution.InlineResumeCreator"
-                    serviceImplementation="com.intellij.execution.DefaultInlineResumeCreator"/>
 
     <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
                     serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>

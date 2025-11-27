@@ -225,7 +225,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.back.reference"))
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
     }
-    else if (PsiTreeUtil.isAncestor(group, backref, true)) {
+    else if (PsiTreeUtil.isAncestor(group, backref, true)
+             && !backref.isRecursiveGroup()
+             && !(backref.getParent() instanceof RegExpConditional)) {
       myHolder.newAnnotation(HighlightSeverity.WARNING,
                              RegExpBundle.message("error.back.reference.is.nested.into.the.capturing.group.it.refers.to")).create();
     }

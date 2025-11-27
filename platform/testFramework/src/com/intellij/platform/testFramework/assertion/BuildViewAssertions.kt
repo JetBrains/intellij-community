@@ -84,19 +84,23 @@ object BuildViewAssertions {
   }
 
   private fun getTreeNode(tree: JTree, nodeText: String): TreeNode {
-    val node = runInEdtAndGet {
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
-
-      TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
-        it.userObject.toString() == nodeText
+    return waitUntilAssertSucceedsBlocking retry@{
+      val node = getTreeNodeOrNull(tree, nodeText)
+      Assertions.assertNotNull(node) {
+        "Cannot find the '$nodeText' node in tree:\n" +
+        getTreeStringPresentation(tree) + "\n"
       }
+      return@retry node!!
     }
-    Assertions.assertNotNull(node) {
-      "Cannot find the '$nodeText' node in tree:\n" +
-      getTreeStringPresentation(tree) + "\n"
+  }
+
+  private fun getTreeNodeOrNull(tree: JTree, nodeText: String): DefaultMutableTreeNode? = runInEdtAndGet {
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    PlatformTestUtil.waitWhileBusy(tree)
+
+    TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
+      it.userObject.toString() == nodeText
     }
-    return node!!
   }
 
   private fun getTreeSelectedNode(tree: JTree): TreeNode {

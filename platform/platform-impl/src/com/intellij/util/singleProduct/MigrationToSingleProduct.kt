@@ -11,10 +11,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
@@ -67,10 +64,16 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
     return
   }
 
+  if (System.getenv("TOOLBOX_VERSION") != null) return
   if (!(OS.CURRENT == OS.macOS && currentDirName.endsWith(".app"))) return
 
   val newDir = currentDir.resolveSibling(newDirName)
   if (Files.exists(newDir)) return
+
+  try {
+    InitialConfigImportState.writeOptionsForRestart(PathManager.getConfigDir())
+  }
+  catch (_: Exception) { }
 
   val commands = buildList {
     add(listOf("/bin/mv", "-n", currentDir.toString(), newDir.toString()))

@@ -2,41 +2,35 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_BLOCK_STATEMENT;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_IF_STATEMENT;
-
 public class MissingIfBranchesFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (!(BasicJavaAstTreeUtil.is(astNode, BASIC_IF_STATEMENT))) return;
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
+    if (!(psiElement instanceof PsiIfStatement ifStatement)) return;
 
     final Document doc = editor.getDocument();
-    final ASTNode elseElement = BasicJavaAstTreeUtil.getElseElement(astNode);
+    final PsiKeyword elseElement = ifStatement.getElseElement();
     if (elseElement != null) {
-      handleBranch(doc, astNode, elseElement, BasicJavaAstTreeUtil.getElseBranch(astNode));
+      handleBranch(doc, ifStatement, elseElement, ifStatement.getElseBranch());
     }
 
-    ASTNode rParenth = BasicJavaAstTreeUtil.getRParenth(astNode);
+    PsiJavaToken rParenth = ifStatement.getRParenth();
     assert rParenth != null;
-    handleBranch(doc, astNode, rParenth, BasicJavaAstTreeUtil.getThenBranch(astNode));
+    handleBranch(doc, ifStatement, rParenth, ifStatement.getThenBranch());
   }
 
   private static void handleBranch(@NotNull Document doc,
-                            @NotNull ASTNode ifStatement,
-                            @NotNull ASTNode beforeBranch,
-                            @Nullable ASTNode branch) {
-    if (BasicJavaAstTreeUtil.is(branch, BASIC_BLOCK_STATEMENT) ||
-        JavaKeywords.ELSE.equals(beforeBranch.getText()) && BasicJavaAstTreeUtil.is(branch, BASIC_IF_STATEMENT)) {
-      return;
-    }
+                                   @NotNull PsiIfStatement ifStatement,
+                                   @NotNull PsiElement beforeBranch,
+                                   @Nullable PsiStatement branch) {
+    if (branch instanceof PsiBlockStatement || beforeBranch.textMatches(JavaKeywords.ELSE) && branch instanceof PsiIfStatement) return;
     boolean transformingOneLiner = branch != null && (startLine(doc, beforeBranch) == startLine(doc, branch) ||
                                                       startCol(doc, ifStatement) < startCol(doc, branch));
 
@@ -49,12 +43,12 @@ public class MissingIfBranchesFixer implements Fixer {
     }
   }
 
-  private static int startLine(Document doc, @NotNull ASTNode astNode) {
-    return doc.getLineNumber(astNode.getTextRange().getStartOffset());
+  private static int startLine(Document doc, @NotNull PsiElement psiElement) {
+    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 
-  private static int startCol(Document doc, @NotNull ASTNode astNode) {
-    int offset = astNode.getTextRange().getStartOffset();
+  private static int startCol(Document doc, @NotNull PsiElement psiElement) {
+    int offset = psiElement.getTextRange().getStartOffset();
     return offset - doc.getLineStartOffset(doc.getLineNumber(offset));
   }
 }

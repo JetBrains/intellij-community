@@ -1,19 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.BaseJavaJspElementType;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_EMPTY_STATEMENT;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_FOR_STATEMENT;
 
 /**
  * {@link Fixer} that handles use-cases like below:
@@ -36,38 +33,37 @@ import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_FOR_STATEM
 public class ForStatementFixer implements Fixer {
 
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (!(BasicJavaAstTreeUtil.is(astNode, BASIC_FOR_STATEMENT))) {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
+    if (!(psiElement instanceof PsiForStatement forStatement)) {
       return;
     }
 
-    final ASTNode lParenth = BasicJavaAstTreeUtil.getLParenth(astNode);
-    final ASTNode rParenth = BasicJavaAstTreeUtil.getRParenth(astNode);
+    final PsiJavaToken lParenth = forStatement.getLParenth();
+    final PsiJavaToken rParenth = forStatement.getRParenth();
     if (lParenth == null || rParenth == null) {
-      final TextRange textRange = astNode.getTextRange();
+      final TextRange textRange = forStatement.getTextRange();
       editor.getDocument().replaceString(textRange.getStartOffset(), textRange.getEndOffset(), "for () {\n}");
       processor.registerUnresolvedError(textRange.getStartOffset() + "for (".length());
       return;
     }
 
-    final ASTNode initialization = BasicJavaAstTreeUtil.getForInitialization(astNode);
+    final PsiStatement initialization = forStatement.getInitialization();
     if (initialization == null) {
       processor.registerUnresolvedError(lParenth.getTextRange().getEndOffset());
       return;
     }
 
-    final ASTNode condition = BasicJavaAstTreeUtil.getForCondition(astNode);
+    final PsiExpression condition = forStatement.getCondition();
     if (condition == null) {
-      boolean endlessLoop = BasicJavaAstTreeUtil.is(initialization, BASIC_EMPTY_STATEMENT) &&
-                            BasicJavaAstTreeUtil.getForUpdate(astNode) == null;
+      boolean endlessLoop = initialization instanceof PsiEmptyStatement && forStatement.getUpdate() == null;
       if (!endlessLoop) {
-        registerErrorOffset(editor, processor, initialization, astNode);
+        registerErrorOffset(editor, processor, initialization, forStatement);
       }
       return;
     }
 
-    if (BasicJavaAstTreeUtil.getForUpdate(astNode) == null) {
-      registerErrorOffset(editor, processor, condition, astNode);
+    if (forStatement.getUpdate() == null) {
+      registerErrorOffset(editor, processor, condition, forStatement);
     }
   }
 
@@ -75,23 +71,26 @@ public class ForStatementFixer implements Fixer {
    * {@link JavaSmartEnterProcessor#registerUnresolvedError(int) registers target offset} taking care of the situation when
    * current code style implies white space after 'for' part's semicolon.
    *
-   * @param editor           target editor
-   * @param processor        target smart enter processor
-   * @param lastValidForPart last valid element of the target 'for' loop
-   * @param forStatement     PSI element for the target 'for' loop
+   * @param editor            target editor
+   * @param processor         target smart enter processor
+   * @param lastValidForPart  last valid element of the target 'for' loop
+   * @param forStatement      PSI element for the target 'for' loop
    */
-  private static void registerErrorOffset(@NotNull Editor editor, @NotNull AbstractBasicJavaSmartEnterProcessor processor,
-                                          @NotNull ASTNode lastValidForPart, @NotNull ASTNode forStatement) {
+  private static void registerErrorOffset(@NotNull Editor editor,
+                                          @NotNull JavaSmartEnterProcessor processor,
+                                          @NotNull PsiElement lastValidForPart, @NotNull PsiForStatement forStatement)
+  {
     final Project project = editor.getProject();
     int offset = lastValidForPart.getTextRange().getEndOffset();
     if (project != null && CodeStyle.getSettings(editor).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) {
       if (editor.getDocument().getCharsSequence().charAt(lastValidForPart.getTextRange().getEndOffset() - 1) != ';') {
         offset++;
       }
-      for (ASTNode element = lastValidForPart.getTreeNext();
-           element != null && element != BasicJavaAstTreeUtil.getRParenth(forStatement) && element.getTreeParent() == forStatement;
-           element = element.getTreeNext()) {
-        if (isWhiteSpaceIncludingJsp(element) && element.getTextLength() > 0) {
+      for (PsiElement element = lastValidForPart.getNextSibling();
+           element != null && element != forStatement.getRParenth() && element.getParent() == forStatement;
+           element = element.getNextSibling()) {
+        final ASTNode node = element.getNode();
+        if (node != null && JavaJspElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) && element.getTextLength() > 0) {
           offset++;
           break;
         }
@@ -99,9 +98,5 @@ public class ForStatementFixer implements Fixer {
     }
 
     processor.registerUnresolvedError(offset);
-  }
-
-  private static boolean isWhiteSpaceIncludingJsp(@NotNull ASTNode node) {
-    return BaseJavaJspElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType());
   }
 }

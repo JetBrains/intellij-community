@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
+public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
   private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList<String> myListeners;
   private Launcher myLauncher;

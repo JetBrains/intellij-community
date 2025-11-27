@@ -2,10 +2,9 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.definition
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService
+import org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptEntityProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import kotlin.script.experimental.api.ide
@@ -18,11 +17,8 @@ fun GradleScriptDefinition.withIdeKeys(project: Project): GradleScriptDefinition
             title = ".gradle.kts"
             templateName = "Kotlin Script Gradle"
         })
-        configurationResolverDelegate {
-            GradleKotlinScriptService.getInstance(project)
-        }
-        scriptWorkspaceModelManagerDelegate {
-            GradleKotlinScriptService.getInstance(project)
+        scriptEntityProvider {
+            GradleKotlinScriptEntityProvider.getInstance(project)
         }
     }
 }

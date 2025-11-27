@@ -25,9 +25,13 @@
     <myPlugin.filetype.myExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
     <myPlugin.filetype.myOwnExtPoint filetype="MyFiletypeID" implementationClass="MyFileTypeExtension"/>
 
+    <applicationService serviceInterface="MyServiceInterface" serviceImplementation="MyServiceImplementation2"/>
+
     <<warning descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myExtPoint</warning> language="" implementationClass="MyLanguageExtension"/>
     <<warning descr="Element should be registered in 'anotherModule' module where its class 'MyLanguageExtension' is defined">myPlugin.lang.myOwnExtPoint</warning> language="" implementationClass="MyLanguageExtension"/>
     <<warning descr="Element should be registered in 'anotherModule' module where its class 'DependencyModuleClass' is defined">myPlugin.myDependencyModuleClassEp</warning> implementation="DependencyModuleClass"/>
+
+    <<warning descr="Element should be registered in 'anotherModule' module where its class 'MyServiceImplementation' is defined">applicationService</warning> serviceInterface="MyServiceInterface" serviceImplementation="MyServiceImplementation"/>
   </extensions>
 
   <actions>

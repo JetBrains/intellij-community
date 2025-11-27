@@ -8,11 +8,11 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import java.nio.file.Path
 
 class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
@@ -24,7 +24,7 @@ class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     return mavenProjectsManager.projects.any {
-      VfsUtilCore.pathEqualsTo(it.directoryFile, externalProjectPath)
+      it.directoryPath == Path.of(externalProjectPath)
     }
   }
 

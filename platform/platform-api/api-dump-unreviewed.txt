@@ -3871,18 +3871,19 @@ a:com.intellij.openapi.ui.panel.ComponentPanel
 - a:setCommentText(java.lang.String):V
 c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - com.intellij.openapi.ui.panel.GridBagPanelBuilder
+- sf:Companion:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
 - sf:MAX_COMMENT_WIDTH:I
 - <init>(javax.swing.JComponent):V
 - addToPanel(javax.swing.JPanel,java.awt.GridBagConstraints,Z):V
 - anchorLabelOn(com.intellij.util.ui.UI$Anchor):com.intellij.openapi.ui.panel.ComponentPanelBuilder
-- s:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
+- sf:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - constrainsValid():Z
-- s:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- s:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
-- s:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
-- s:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
+- sf:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - createPanel():javax.swing.JPanel
-- s:getCommentFont(java.awt.Font):java.awt.Font
+- sf:getCommentFont(java.awt.Font):java.awt.Font
 - gridWidth():I
 - moveCommentRight():com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - moveLabelOnTop():com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -3896,6 +3897,13 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTooltip(java.lang.String):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTooltipLink(java.lang.String,java.lang.Runnable):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTopRightComponent(javax.swing.JComponent):com.intellij.openapi.ui.panel.ComponentPanelBuilder
+f:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
+- f:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
+- f:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
+- f:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- f:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
+- f:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
+- f:getCommentFont(java.awt.Font):java.awt.Font
 c:com.intellij.openapi.ui.panel.PanelGridBuilder
 - com.intellij.openapi.ui.panel.PanelBuilder
 - <init>():V
@@ -7458,8 +7466,6 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - hashCode():I
 f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
 f:com.intellij.ui.dsl.gridLayout.Gaps
-- sf:Companion:com.intellij.ui.dsl.gridLayout.Gaps$Companion
-- sf:EMPTY:com.intellij.ui.dsl.gridLayout.Gaps
 - <init>():V
 - <init>(I,I,I,I):V
 - b:<init>(I,I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -7475,10 +7481,6 @@ f:com.intellij.ui.dsl.gridLayout.Gaps
 - f:getRight():I
 - f:getTop():I
 - hashCode():I
-f:com.intellij.ui.dsl.gridLayout.Gaps$Companion
-f:com.intellij.ui.dsl.gridLayout.GapsKt
-- bsf:JBGaps(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
-- bs:JBGaps$default(I,I,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Gaps
 com.intellij.ui.dsl.gridLayout.Grid
 - a:getColumnsGaps():java.util.List
 - a:getResizableColumns():java.util.Set
@@ -9237,9 +9239,6 @@ f:com.intellij.util.net.IOExceptionDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(java.lang.String,java.lang.String):V
 - s:showErrorDialog(java.lang.String,java.lang.String):Z
-f:com.intellij.util.net.IdeProxyAuthenticator
-- java.net.Authenticator
-- <init>(com.intellij.util.net.ProxyAuthentication):V
 f:com.intellij.util.net.IdeProxySelector
 - java.net.ProxySelector
 - sf:Companion:com.intellij.util.net.IdeProxySelector$Companion

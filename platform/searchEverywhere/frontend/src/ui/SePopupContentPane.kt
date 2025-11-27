@@ -10,6 +10,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
+import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -20,20 +21,19 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionListener
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionState
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.ui.*
@@ -46,6 +46,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale.scale
@@ -74,16 +75,16 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupContentPane(
-  private val project: Project?, //private val vm: SePopupVm,
+  private val project: Project?,
   private val resizePopupHandler: (Dimension) -> Unit,
   private val searchStatePublisher: SeSearchStatePublisher,
   private val coroutineScope: CoroutineScope,
-  initialTabs: List<SePopupHeaderPane.Tab>,
+  initialTabs: List<SeDummyTabVm>,
   selectedTabId: String,
   initialSearchText: String?,
   initPopupExtendedSize: Dimension?,
   initialSelectionState: SeSelectionState?,
-) : JPanel(), Disposable, UiDataProvider {
+) : JPanel(), Disposable, UiDataProvider, QuickSearchComponent {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
   private val tabConfigurationState = MutableStateFlow(SePopupHeaderPane.Configuration.createInitial(initialTabs, selectedTabId))
@@ -119,6 +120,10 @@ class SePopupContentPane(
   var isCompactViewMode: Boolean = true
     private set
   var popupExtendedSize: Dimension? = initPopupExtendedSize
+
+  private val semanticWarning = MutableStateFlow(false)
+
+  private var quickDocPopup: JBPopup? = null
 
   init {
     layout = GridLayout()
@@ -191,12 +196,13 @@ class SePopupContentPane(
     DumbAwareAction.create { vm.getHistoryItem(false).let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, contentPane)
 
-    tabConfigurationState.value = SePopupHeaderPane.Configuration(
-      vm.tabVms.map { SePopupHeaderPane.Tab(it) },
-      vm.deferredTabVms.map { SePopupHeaderPane.Tab(it) },
-      vm.currentTabIndex,
-      vm.ShowInFindToolWindowAction()
-    )
+    launch {
+      vm.tabsModelFlow.map {
+        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIndexFlow)
+      }.collectLatest {
+        tabConfigurationState.value = it
+      }
+    }
 
     withContext(Dispatchers.UI) {
       textField.configure(vm.searchPattern.value) { newText ->
@@ -261,24 +267,26 @@ class SePopupContentPane(
               if (resultListModel.isEmpty) {
                 hintHelper.setSearchInProgress(false)
                 updateEmptyStatus()
+                hideQuickDocPopup()
               }
 
-              autoSelectIndex(searchContext.searchPattern, true)
+              semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
               updateViewMode()
+              autoSelectIndex(searchContext.searchPattern, true)
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
               hintHelper.setSearchInProgress(false)
               val wasFrozen = resultListModel.freezer.isEnabled
 
-              resultListModel.addFromThrottledEvent(searchId, event)
+              resultListModel.addFromThrottledEvent(searchContext, event)
 
               // Freeze back if it was frozen before
               if (wasFrozen) resultListModel.freezer.enable()
               updateFrozenCount()
 
-              autoSelectIndex(searchContext.searchPattern, false)
               updateViewMode()
+              autoSelectIndex(searchContext.searchPattern, false)
             }
           }
         }
@@ -288,12 +296,16 @@ class SePopupContentPane(
     launch {
       vm.currentTabFlow.collectLatest { tabVm ->
         val filterEditor = tabVm.filterEditor.getValue()
-        filterEditor?.let { filterEditor ->
-          withContext(Dispatchers.EDT) {
-            if (!isActive) return@withContext
+        withContext(Dispatchers.EDT) {
+          if (!isActive) return@withContext
 
+          hintHelper.removeRightExtensions()
+
+          if (filterEditor == null) {
+            headerPane.setFilterActions(emptyList(), vm.ShowInFindToolWindowAction())
+          }
+          else {
             headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction())
-            hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
             if (rightActions.isNotEmpty()) {
               hintHelper.setRightExtensions(rightActions)
@@ -343,11 +355,26 @@ class SePopupContentPane(
     }
 
     launch {
-      vm.searchFieldWarning.collect { warning ->
+      combine(vm.searchFieldHint, semanticWarning) { searchFieldHint, semanticWarning ->
+        searchFieldHint to semanticWarning
+      }.collect { (searchFieldHint, semanticWarning) ->
         withContext(Dispatchers.EDT) {
-          warning?.let { (text, tooltip) ->
-            hintHelper.setLoadingText(text, tooltip)
-          } ?: hintHelper.setHint(null)
+          if (searchFieldHint != null) {
+            val (text, tooltip, isWarning) = searchFieldHint
+            if (isWarning) {
+              hintHelper.setLoadingText(text, tooltip)
+            }
+            else {
+              hintHelper.setHint(text)
+            }
+          }
+          else if (semanticWarning) {
+            val noExactMatchesText = SearchEverywhereFrontendBundle.getMessage("search.everywhere.no.exact.matches")
+            hintHelper.setHint(noExactMatchesText)
+          }
+          else {
+            hintHelper.setHint(null)
+          }
         }
       }
     }
@@ -384,6 +411,14 @@ class SePopupContentPane(
               }
             }
           }
+        }
+      }
+    }
+
+    vm.coroutineScope.launch {
+      selectedItemDataFlow.collectLatest { itemData ->
+        withContext(Dispatchers.EDT) {
+          updateQuickDocPopup(itemData)
         }
       }
     }
@@ -488,10 +523,13 @@ class SePopupContentPane(
       }
     }
 
-    if (vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers) == true) {
+    val selectedItems = vmState.value?.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)
+    if (selectedItems?.any { it is SeSelectionResultClose } == true) {
       closePopup()
     }
     else {
+      (selectedItems?.filterIsInstance<SeSelectionResultText>()?.firstOrNull())?.let { textField.text = it.searchText + " " }
+
       resultList.repaint()
       refreshPresentations()
     }
@@ -502,7 +540,7 @@ class SePopupContentPane(
 
     val listSize = resultListModel.size
     val firstIndex = resultList.firstVisibleIndex.takeIf { it in 0..<listSize } ?: return
-    val lastIndex = resultList.lastVisibleIndex.takeIf { it in 0..<listSize && it >= firstIndex} ?: return
+    val lastIndex = resultList.lastVisibleIndex.takeIf { it in 0..<listSize && it >= firstIndex } ?: return
 
     val visibleRows = (firstIndex..lastIndex).mapNotNull {
       resultListModel.get(it) as? SeResultListItemRow
@@ -804,6 +842,9 @@ class SePopupContentPane(
   }
 
   private fun closePopup() {
+    coroutineScope.launch(Dispatchers.EDT) {
+      hideQuickDocPopup()
+    }
     vmState.value?.closePopup()
   }
 
@@ -1001,6 +1042,35 @@ class SePopupContentPane(
   @TestOnly
   fun getResultListModel(): SeResultListModel {
     return resultListModel
+  }
+
+  override fun registerHint(h: JBPopup) {
+    quickDocPopup?.takeIf { it.isVisible && it != h }?.cancel()
+    quickDocPopup = h
+  }
+
+  override fun unregisterHint() {
+    quickDocPopup = null
+  }
+
+  /**
+   * IJPL-188794 Quick doc popup and Quick def popup are not updated in remote development for several reasons:
+   * - Most elements cannot be fetched on the frontend
+   * - Showing the documentation popup triggers PopupUpdateProcessor.beforeShown on the backend,
+   *   which registers the hint based on the focused component. As a result,
+   *   SePopupContentPane.registerHint is never called
+   */
+  private fun updateQuickDocPopup(itemData: SeItemData?) {
+    val quickDocPopup = quickDocPopup ?: return
+    if (!quickDocPopup.isVisible()) return
+    val rawObject = itemData?.fetchItemIfExists()?.rawObject ?: hideQuickDocPopup()
+
+    val updateProcessor = quickDocPopup.getUserData(PopupUpdateProcessorBase::class.java)
+    updateProcessor?.updatePopup(rawObject)
+  }
+
+  private fun hideQuickDocPopup() {
+    quickDocPopup?.takeIf { it.isVisible }?.cancel()
   }
 
   override fun dispose() {}

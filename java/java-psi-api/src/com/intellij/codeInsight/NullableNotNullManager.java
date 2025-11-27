@@ -200,7 +200,7 @@ public abstract class NullableNotNullManager {
         for (PsiParameter parameter: superParameters) {
           NullabilityAnnotationInfo plain = findPlainAnnotation(parameter, false, annotations);
           // Plain not null annotation is not inherited
-          if (plain != null) return null;
+          if (plain != null && !plain.isContainer()) return null;
           NullabilityAnnotationInfo defaultInfo = findContainerAnnotation(parameter);
           if (defaultInfo != null) {
             return defaultInfo.getNullability() == Nullability.NOT_NULL ? defaultInfo.withInheritedFrom(parameter) : null;
@@ -259,6 +259,11 @@ public abstract class NullableNotNullManager {
         Nullability origNullability = holder.getNullability(annotation);
         return nullabilities.contains(origNullability) ? origNullability : null;
       }
+
+      @Override
+      public boolean isWantedNullability(@NotNull Nullability nullability) {
+        return nullabilities.contains(nullability);
+      }
     };
     NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, filtered);
     return result == null || !nullabilities.contains(result.getNullability()) ? null : result;
@@ -296,7 +301,7 @@ public abstract class NullableNotNullManager {
     }
     if (type == null || type instanceof PsiPrimitiveType) return null;
     NullabilityAnnotationInfo info = type.getNullability().toNullabilityAnnotationInfo();
-    return info != null && annotations.getNullability(info.getAnnotation().getQualifiedName()) != null ? info : null;
+    return info != null && annotations.isWantedNullability(info.getNullability()) ? info : null;
   }
 
   protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
@@ -479,6 +484,10 @@ public abstract class NullableNotNullManager {
      * @return nullability
      */
     @Nullable Nullability getNullability(String annotation);
+    
+    default boolean isWantedNullability(@NotNull Nullability nullability) {
+      return true;
+    }
 
     /**
      * @param map from annotation qualified name to nullability

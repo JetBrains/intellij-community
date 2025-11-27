@@ -103,6 +103,12 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
     )
   }
 
+  suspend fun isCommandsSupported(): Boolean {
+    return SeRemoteApi.getInstance().isCommandsSupported(
+      projectId, providerIds = providerIds, session = session, dataContextId = dataContextId, isAllTab = isAllTab
+    )
+  }
+
   companion object {
     private const val DEFAULT_CHUNK_SIZE: Int = 50
   }

@@ -5,8 +5,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
+import java.io.IOException
 import java.nio.file.Path
 
 /**
@@ -17,7 +19,7 @@ import java.nio.file.Path
  * @see AutoRefreshingOnVfsCloseRef
  */
 @ApiStatus.Internal
-sealed interface LongFileAttribute : Closeable {
+sealed interface LongFileAttribute : Closeable, Unmappable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
@@ -50,7 +52,9 @@ sealed interface LongFileAttribute : Closeable {
     }
   }
 
+  @Throws(IOException::class)
   fun readLong(fileId: Int): Long
+  @Throws(IOException::class)
   fun writeLong(fileId: Int, value: Long)
 }
 
@@ -75,5 +79,9 @@ private class LongFileAttributeImpl(private val attribute: FileAttribute,
 
   override fun close() {
     attributeAccessor.close()
+  }
+
+  override fun closeAndUnsafelyUnmap() {
+    attributeAccessor.closeAndUnsafelyUnmap()
   }
 }

@@ -12,7 +12,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginXmlConst
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -170,17 +170,14 @@ class PluginMainDescriptor(
 
 
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): @Nls String? {
-    // if the plugin is disabled, its classloader is null and the resource bundle cannot be found
-    if (!isMarkedForLoading) {
-      return defaultValue
-    }
-
+    val pluginClassLoader = pluginClassLoader
+                            ?: return defaultValue
     val baseName = resourceBundleBaseName
     if (baseName == null) {
       return defaultValue
     }
     return (try {
-      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(pluginClassLoader, baseName), key, defaultValue ?: "")
     }
     catch (_: MissingResourceException) {
       LOG.info("Cannot find plugin $pluginId resource-bundle: $baseName")
@@ -275,7 +272,7 @@ fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
 @VisibleForTesting
 @Internal
 fun reportMainDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
-  if (raw.moduleVisibility != ModuleVisibility.PRIVATE) {
+  if (raw.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
     reporter(PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR)
   }
 }

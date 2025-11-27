@@ -139,7 +139,7 @@ public final class FixDocCommentAction extends EditorAction {
     }
     final Runnable task;
     if (pair.second == null || pair.second.getTextRange().isEmpty()) {
-      task = () -> generateComment(pair.first, editor.asPsiNavigator(), docProvider, commenter, project);
+      task = () -> generateComment(pair.first, editor.asModNavigator(), docProvider, commenter, project);
     }
     else {
       final DocCommentFixer fixer = DocCommentFixer.EXTENSION.forLanguage(language);

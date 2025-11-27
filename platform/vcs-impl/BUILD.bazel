@@ -155,6 +155,7 @@ jvm_library(
     "//libraries/microba",
     "//platform/kernel/shared:kernel",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "@lib//:jgoodies-forms",
     "//platform/observable",
     "//platform/platform-impl/concurrency",

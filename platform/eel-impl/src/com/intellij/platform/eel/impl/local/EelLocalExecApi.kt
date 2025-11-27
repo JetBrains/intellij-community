@@ -15,10 +15,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesDeferred
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.eel.impl.bindProcessToScopeIfSet
+import com.intellij.platform.eel.impl.commandLineForDebug
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
-import com.intellij.platform.eel.provider.utils.bindToScope
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
@@ -26,6 +27,7 @@ import com.intellij.util.fastutil.skip
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
@@ -49,7 +51,7 @@ class EelLocalExecPosixApi(
       LocalEelPosixProcess.create(process, process::setWinSize)
     else
       LocalEelPosixProcess.create(process, null)
-    generatedBuilder.scope?.let { r.bindToScope(it) }
+    generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
 
@@ -57,6 +59,12 @@ class EelLocalExecPosixApi(
 
   private val loginNonInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
   private val loginInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
+
+  @TestOnly
+  fun clearCaches() {
+    loginNonInteractiveCache.set(null)
+    loginInteractiveCache.set(null)
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred {
@@ -66,23 +74,7 @@ class EelLocalExecPosixApi(
 
     val (cache, interactive) = when (opts.mode) {
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT -> {
-        val newOpts = object : EelExecApi.EnvironmentVariablesOptions by opts, EelExecPosixApi.PosixEnvironmentVariablesOptions {
-          override val mode: EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode =
-            EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE
-        }
-
-        val loginNonInteractive = environmentVariables(newOpts).deferred
-
-        val result = CompletableDeferred<Map<String, String>>()
-        loginNonInteractive.job.invokeOnCompletion { error ->
-          result.completeWith(when (error) {
-            null -> Result.success(loginNonInteractive.getCompleted())
-            is EelExecApi.EnvironmentVariablesException -> Result.success(EnvironmentUtil.getSystemEnv())
-            else -> Result.failure(error)
-          })
-        }
-
-        return EnvironmentVariablesDeferred(result)
+        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
       }
 
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
@@ -99,7 +91,7 @@ class EelLocalExecPosixApi(
     }
 
     val result = cache.updateAndGet { old ->
-      if (old != null && !opts.onlyActual && !old.isActive) {
+      if (old != null && !opts.onlyActual && old.isCompleted && old.getCompletionExceptionOrNull() == null) {
         old
       }
       else {
@@ -216,12 +208,12 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
-    val commandLineForDebug = (listOf(generatedBuilder.exe) + generatedBuilder.args).joinToString(" ")
+    val commandLineForDebug = generatedBuilder.commandLineForDebug
     val r = if (process is PtyProcess)
       LocalEelWindowsProcess.create(process, process::setWinSize, commandLineForDebug)
     else
       LocalEelWindowsProcess.create(process, null, commandLineForDebug)
-    generatedBuilder.scope?.let { r.bindToScope(it) }
+    generatedBuilder.bindProcessToScopeIfSet(r)
     return r
   }
 

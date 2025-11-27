@@ -52,6 +52,7 @@ public final class PyMethodMayBeStaticInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFunction(@NotNull PyFunction node) {
       if (isBuiltin(node)) return;
@@ -93,8 +94,9 @@ public final class PyMethodMayBeStaticInspection extends PyInspection {
             final PyExpression expression = expressions[0];
             if (expression instanceof PyCallExpression) {
               final PyExpression callee = ((PyCallExpression)expression).getCallee();
-              if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText()))
+              if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText())) {
                 mayBeStatic[0] = false;
+              }
             }
             else if (PyNames.NOT_IMPLEMENTED_ERROR.equals(expression.getText())) {
               mayBeStatic[0] = false;

@@ -93,7 +93,9 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
       if (remaining_module instanceof PyQualifiedExpression) {
         remaining_name = PyPsiUtils.toPath((PyQualifiedExpression)remaining_module);
       }
-      else remaining_name = ""; // unqualified name: "...module"
+      else {
+        remaining_name = ""; // unqualified name: "...module"
+      }
       separated_name = info.myModuleReference.getReferencedName();
       failure = false;
       if (separated_name == null) {
@@ -101,13 +103,17 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
         failure = true;
       }
     }
-    if (strict && failure) return null;
-    else return new String[] {getDots(info.myRelativeLevel)+remaining_name, separated_name};
+    if (strict && failure) {
+      return null;
+    }
+    else {
+      return new String[]{getDots(info.myRelativeLevel) + remaining_name, separated_name};
+    }
   }
 
   private static String getDots(int level) {
     String dots = "";
-    for (int i=0; i<level; i+=1) dots += "."; // this generally runs 1-2 times, so it's cheaper than allocating a StringBuilder
+    for (int i = 0; i < level; i += 1) dots += "."; // this generally runs 1-2 times, so it's cheaper than allocating a StringBuilder
     return dots;
   }
 
@@ -157,12 +163,15 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
 
   /**
    * Adds myModuleName as a qualifier to target.
+   *
    * @param target_node what to qualify
    */
   private static void qualifyTarget(ASTNode target_node, Project project, String qualifier) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     target_node.addChild(generator.createDot(), target_node.getFirstChildNode());
-    target_node.addChild(sure(generator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, qualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+    target_node.addChild(
+      sure(generator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, qualifier, new int[]{0, 0}).getNode()),
+      target_node.getFirstChildNode());
   }
 
   @Override
@@ -170,14 +179,17 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
     InfoHolder info = InfoHolder.collect(getElementFromEditor(editor, file));
     try {
       String qualifier; // we don't always qualify with module name
-      sure(info.myModuleReference); sure(info.myModuleName);
+      sure(info.myModuleReference);
+      sure(info.myModuleName);
       String[] relative_names = null; // [0] is remaining import path, [1] is imported module name
       if (info.myRelativeLevel > 0) {
         relative_names = getRelativeNames(true, info);
         if (relative_names == null) throw new IncorrectOperationException("failed to get relative names");
         qualifier = relative_names[1];
       }
-      else qualifier = info.myModuleName;
+      else {
+        qualifier = info.myModuleName;
+      }
       // find all unqualified references that lead to one of our import elements
       final PyImportElement[] ielts = info.myFromImportStatement.getImportElements();
       final PyStarImportElement star_ielt = info.myFromImportStatement.getStarImportElement();
@@ -211,7 +223,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
         sure(feeler instanceof PyQualifiedExpression); // if for some crazy reason module name refers to numbers, etc, no point to continue.
         top_qualifier = (PyQualifiedExpression)feeler;
         feeler = top_qualifier.getQualifier();
-      } while (feeler != null);
+      }
+      while (feeler != null);
       String top_name = top_qualifier.getName();
       Collection<PsiReference> possible_targets = references.keySet();
       if (!star_references.isEmpty()) {
@@ -262,7 +275,8 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
         new_import = sure(generator.createFromText(level, PyImportStatement.class, "import " + info.myModuleName));
       }
       else {
-        new_import = sure(generator.createFromText(level, PyFromImportStatement.class, "from " + relative_names[0] + " import " + relative_names[1]));
+        new_import =
+          sure(generator.createFromText(level, PyFromImportStatement.class, "from " + relative_names[0] + " import " + relative_names[1]));
       }
       ASTNode parent = sure(info.myFromImportStatement.getParent().getNode());
       ASTNode old_node = sure(info.myFromImportStatement.getNode());

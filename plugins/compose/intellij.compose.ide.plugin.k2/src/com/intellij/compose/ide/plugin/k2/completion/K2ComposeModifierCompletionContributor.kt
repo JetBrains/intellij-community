@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_CLASS_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_FQN
+import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_NAME
 import com.intellij.compose.ide.plugin.shared.completion.ComposeModifierCompletionContributor
 import com.intellij.compose.ide.plugin.shared.completion.consumerCompletionResultFromRemainingContributor
 import com.intellij.openapi.progress.ProgressManager
@@ -149,7 +150,7 @@ internal class K2ComposeModifierCompletionContributor : ComposeModifierCompletio
     name: Name
   ): Boolean {
     // The user types part of `Modifier` we still want to show _all_ our results for Modifier extensions
-    if ("Modifier".startsWith(prefixMatcher.prefix)) return true
+    if (COMPOSE_MODIFIER_NAME.asString().startsWith(prefixMatcher.prefix)) return true
     // If the user types the name of some extension function on Modifier, we want to show it
     return prefixMatcher.prefixMatches(name.asString())
   }

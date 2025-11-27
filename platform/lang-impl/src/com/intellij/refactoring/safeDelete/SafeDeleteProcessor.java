@@ -418,9 +418,12 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return myCachedCommandName;
   }
 
-  public static void addNonCodeUsages(PsiElement element,
-                                      SearchScope searchScope,
-                                      List<? super UsageInfo> usages,
+  /**
+   * @param usages must be thread-safe
+   */
+  public static void addNonCodeUsages(@NotNull PsiElement element,
+                                      @NotNull SearchScope searchScope,
+                                      @NotNull List<? super UsageInfo> usages,
                                       @Nullable Condition<? super PsiElement> insideElements,
                                       boolean searchNonJava,
                                       boolean searchInCommentsAndStrings) {

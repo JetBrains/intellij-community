@@ -169,6 +169,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       if (originalOptions.createModule && Files.isDirectory(file)) {
         val options = runUnderModalProgressIfIsEdt {
           createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
+            projectName = originalOptions.projectName,
             beforeOpen = {
               it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true
@@ -233,9 +234,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val isDirectory = Files.isDirectory(file)
       if (originalOptions.createModule && isDirectory) {
+        // todo: originalOptions should not be dropped
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
           options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
+            projectName = originalOptions.projectName,
             beforeOpen = {
               it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
               true

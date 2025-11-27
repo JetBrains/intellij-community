@@ -33,7 +33,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       override fun invokeLater(runnable: Runnable) {
         runnable.run()
       }
-    }, testRootDisposable)
+    }, myDisposable)
     initProjectsManager(false)
 
     withContext(Dispatchers.EDT) {
@@ -41,7 +41,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       myNavigator!!.initForTests()
       myNavigator!!.groupModules = true
 
-      myStructure = myNavigator!!.structureForTests
+      myStructure = myNavigator!!.structureForTests()
     }
   }
 

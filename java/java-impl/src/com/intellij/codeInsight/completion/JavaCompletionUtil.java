@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -483,7 +482,7 @@ public final class JavaCompletionUtil {
       LookupElement element = generateLookupElementDecorator(qualifierType, object, presentationDecorator ->
         LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
           @Override
-          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
             presentationDecorator.accept(presentation);
           }
@@ -664,11 +663,10 @@ public final class JavaCompletionUtil {
   public static int insertClassReference(PsiClass psiClass, PsiFile file, int startOffset, int endOffset) {
     Project project = file.getProject();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    documentManager.commitAllDocuments();
+    Document document = file.getFileDocument();
+    documentManager.commitDocument(document);
 
     PsiManager manager = file.getManager();
-
-    Document document = FileDocumentManager.getInstance().getDocument(file.getViewProvider().getVirtualFile());
 
     PsiReference reference = file.findReferenceAt(startOffset);
     if (reference != null && manager.areElementsEquivalent(psiClass, resolve(project, reference))) {
@@ -696,7 +694,7 @@ public final class JavaCompletionUtil {
     int newEndOffset = startOffset + name.length();
     RangeMarker toDelete = insertTemporary(newEndOffset, document, " ");
 
-    documentManager.commitAllDocuments();
+    documentManager.commitDocument(document);
 
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
@@ -792,13 +790,7 @@ public final class JavaCompletionUtil {
   public static void shortenReference(PsiFile file, int offset) throws IncorrectOperationException {
     Project project = file.getProject();
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    Document document = manager.getDocument(file);
-    if (document == null) {
-      PsiUtilCore.ensureValid(file);
-      LOG.error("No document for " + file);
-      return;
-    }
-
+    Document document = file.getFileDocument();
     manager.commitDocument(document);
     PsiReference ref = file.findReferenceAt(offset);
     if (ref != null) {
@@ -933,9 +925,13 @@ public final class JavaCompletionUtil {
   }
 
   static int findQualifiedNameStart(@NotNull InsertionContext context) {
-    int start = context.getTailOffset() - 1;
+    return findQualifiedNameStart(context.getTailOffset(), context.getDocument());
+  }
+
+  public static int findQualifiedNameStart(int end, Document document) {
+    int start = end - 1;
     while (start >= 0) {
-      char ch = context.getDocument().getCharsSequence().charAt(start);
+      char ch = document.getCharsSequence().charAt(start);
       if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
       start--;
     }

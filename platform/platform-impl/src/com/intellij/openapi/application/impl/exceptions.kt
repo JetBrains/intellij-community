@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -33,8 +34,13 @@ internal fun processUnhandledException(
         logExceptionSafely(message, exception, interactive = true)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
+        val application = ApplicationManager.getApplication()
+
         val showError = Registry.get("ide.exceptions.show.interactive").asBoolean()
-                        && !ApplicationManager.getApplication().isHeadlessEnvironment
+                        && !application.isHeadlessEnvironment
+                        // Sunsetting app might produce lots of errors due to races.
+                        // While all of them needs to be fixed, no need to bother user with them,
+                        && !application.isExitInProgress
         if (showError) {
           IdeErrorsDialog(MessagePool.getInstance(), null, false, defaultMessage, isModal = true, actionLeadToError = interactiveMode.action, hideClearButton = true).show()
         }
@@ -72,7 +78,7 @@ private fun interactiveMode(coroutineContext: CoroutineContext?): Mode {
     return Mode.Interactive(action = text)
   }
   // Exception thrown on EDT with modal dialog (or no project) has something to do with current user task
-  if ((SwingUtilities.isEventDispatchThread() && LaterInvocator.isInModalContext()) ||
+  if ((EDT.isCurrentThreadEdt() && LaterInvocator.isInModalContext()) ||
       ProjectManager.getInstanceIfCreated()?.openProjects?.isEmpty() == true) {
     return Mode.Interactive(action = null)
   }

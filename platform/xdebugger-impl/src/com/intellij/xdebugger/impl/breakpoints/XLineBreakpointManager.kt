@@ -33,6 +33,12 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -48,6 +54,8 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
+import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
+import com.intellij.xdebugger.impl.proxy.asProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -62,7 +70,7 @@ class XLineBreakpointManager(
   coroutineScope: CoroutineScope,
   isEnabled: Boolean,
   private val manager: XBreakpointManagerProxy,
-) {
+): XLineBreakpointManagerProxy {
   private val cs = coroutineScope.childScope("XLineBreakpointManager")
 
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointProxy>()
@@ -157,17 +165,17 @@ class XLineBreakpointManager(
     log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl" }
   }
 
-  fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
+  override fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
     val file = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
     return myBreakpoints[file.url]
   }
 
   fun getDocumentBreakpoints(document: Document): Collection<XLineBreakpointImpl<*>> {
-    return getDocumentBreakpointProxies(document).filterIsInstance<XLineBreakpointProxy.Monolith>().map { it.breakpoint }
+    return getDocumentBreakpointProxies(document).filterIsInstance<MonolithLineBreakpointProxy>().map { it.breakpoint }
   }
 
   @TestOnly
-  fun getAllBreakpoints(): Collection<XLineBreakpointProxy> {
+  override fun getAllBreakpoints(): Collection<XLineBreakpointProxy> {
     return myBreakpoints.values()
   }
 
@@ -237,7 +245,7 @@ class XLineBreakpointManager(
     }
   }
 
-  fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
+  override fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
     if (EDT.isCurrentThreadEdt()) {
       updateBreakpointNow(breakpoint)
     }
@@ -262,7 +270,7 @@ class XLineBreakpointManager(
     })
   }
 
-  fun queueBreakpointUpdateCallback(breakpoint: XLightLineBreakpointProxy, callback: Runnable) {
+  override fun queueBreakpointUpdateCallback(breakpoint: XLightLineBreakpointProxy, callback: Runnable) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         callback.run()

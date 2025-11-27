@@ -170,6 +170,10 @@ sys.ps1  # Available in interactive mode
 sys.ps2  # Available in interactive mode
 sys.tracebacklimit  # Must be set first
 
+# This is only present if Python was built with zlib-ng.
+(zlib\.ZLIBNG_VERSION)?
+(compression\.zlib\.ZLIBNG_VERSION)?
+
 
 # ==========================================================
 # Other allowlist entries that cannot or should not be fixed
@@ -233,7 +237,6 @@ asyncio.locks.Condition.release
 builtins.memoryview.__contains__  # C type that implements __getitem__
 builtins.reveal_locals  # Builtins that type checkers pretends exist
 builtins.reveal_type  # Builtins that type checkers pretends exist
-builtins.type.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
 
 # The following CodecInfo properties are added in __new__
 codecs.CodecInfo.decode

@@ -31,7 +31,6 @@ import javax.swing.SwingUtilities
 import kotlin.time.toKotlinDuration
 
 /** Position of the floating toolbar in cells top right corner. */
-@OptIn(FlowPreview::class) // For 'debounce'.
 internal class EditorCellActionsToolbarController(
   private val cell: EditorCell,
 ) : SelfManagedCellController {
@@ -47,6 +46,7 @@ internal class EditorCellActionsToolbarController(
 
   init {
     coroutineScope.launch {
+      @OptIn(FlowPreview::class) // For debounce.
       JupyterBoundsChangeHandler.get(editor).eventFlow.debounce(Duration.ofMillis(200).toKotlinDuration()).collect {
         val targetComponent = toolbar?.targetComponent ?: return@collect
         withContext(Dispatchers.EDT) {

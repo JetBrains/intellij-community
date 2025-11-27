@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -42,6 +42,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.project.stateStore
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ui.EDT
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -633,46 +634,14 @@ internal open class WorkspaceProjectImporter(
       var durationInWriteAction = 0L
       var durationOfWorkspaceUpdate = 0L
 
-      var updated = false
-      if (!WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE) {
-        while (!updated && attempts < 2) {
-          attempts++
-          val beforeBG = System.nanoTime()
-
-          val snapshot = (workspaceModel as WorkspaceModelInternal).getBuilderSnapshot()
-          val builder = snapshot.builder
-          prepareInBackground(builder)
-          durationInBackground += System.nanoTime() - beforeBG
-
-          edtWriteAction {
-            val beforeWA = System.nanoTime()
-            if (!snapshot.areEntitiesChanged()) {
-              updated = true
-            }
-            else {
-              updated = workspaceModel.replaceWorkspaceModel("Maven update project model", snapshot.getStorageReplacement())
-              durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
-            }
-            if (updated) afterApplyInWriteAction(workspaceModel.currentSnapshot)
-            durationInWriteAction += System.nanoTime() - beforeWA
-          }
-          if (updated) break
-          MavenLog.LOG.info("Retrying to fast-apply to Workspace Model...")
-        }
+      // IJPL-176997
+      val before = System.nanoTime()
+      (workspaceModel as WorkspaceModelImpl).updateWithRetry("Maven update project model") { builder ->
+        prepareInBackground(builder)
       }
-      WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
-
-      if (!updated) {
-        MavenLog.LOG.info("Failed to fast-apply to Workspace Model in $attempts attempts, fallback to slower apply in WriteAction")
-        attempts++
-        edtWriteAction {
-          val beforeWA = System.nanoTime()
-          workspaceModel.updateProjectModel("Maven update project model") { builder -> prepareInBackground(builder) }
-          durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
-          afterApplyInWriteAction(workspaceModel.currentSnapshot)
-          durationInWriteAction += System.nanoTime() - beforeWA
-        }
-      }
+      durationOfWorkspaceUpdate = System.nanoTime() - before
+      edtWriteAction { afterApplyInWriteAction(workspaceModel.currentSnapshot) }
+      durationInWriteAction += System.nanoTime() - before
 
       stats.recordCommitPhaseStats(durationInBackgroundNano = durationInBackground,
                                    durationInWriteActionNano = durationInWriteAction,

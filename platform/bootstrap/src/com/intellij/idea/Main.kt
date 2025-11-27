@@ -44,7 +44,7 @@ fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
+  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano, changeClassPath = null)
 }
 
 internal fun mainImpl(
@@ -71,7 +71,7 @@ internal fun mainImpl(
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
 
-        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
+        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
       }
 
       awaitCancellation()
@@ -168,8 +168,14 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred, appStarterDeferred,
-      mainScope, busyThread
+      scope = this,
+      args = args,
+      configImportNeededDeferred = configImportNeededDeferred,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      appStarterDeferred = appStarterDeferred,
+      mainScope = mainScope,
+      busyThread = busyThread,
     )
   }
 }
@@ -192,7 +198,7 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
+  val isSplitMode = args.firstOrNull() == WellKnownCommands.SPLIT_MODE
 
   // avoid an icon jumping in dock for the backend process
   if (OS.CURRENT == OS.macOS) {

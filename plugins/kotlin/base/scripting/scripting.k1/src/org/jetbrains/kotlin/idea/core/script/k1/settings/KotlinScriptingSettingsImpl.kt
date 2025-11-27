@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.util.addOptionTag
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
@@ -17,7 +20,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
       Storage(StoragePathMacros.WORKSPACE_FILE)
     ]
 )
-class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStateComponent<Element>, KotlinScriptingSettingsStorage {
+class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStateComponent<Element>, KotlinScriptingSettings {
     /**
      * true if notification about multiple script definition applicable for one script file is suppressed
      */
@@ -182,7 +185,8 @@ class KotlinScriptingSettingsImpl(private val project: Project) : PersistentStat
         getChildren("option").firstOrNull { it.getAttribute("name").value == name }?.getAttributeBooleanValue("value")
 
     companion object {
-        fun getInstance(project: Project): KotlinScriptingSettingsImpl = project.service<KotlinScriptingSettingsStorage>() as KotlinScriptingSettingsImpl
+        @JvmStatic
+        fun getInstance(project: Project): KotlinScriptingSettingsImpl = KotlinScriptingSettings.getInstance(project) as KotlinScriptingSettingsImpl
 
         private const val SCRIPT_DEFINITION_TAG = "scriptDefinition"
         private const val SUPPORT_WARNING_ATTR = "supportWarning"

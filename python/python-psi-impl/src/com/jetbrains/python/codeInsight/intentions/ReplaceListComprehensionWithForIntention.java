@@ -57,17 +57,18 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
     if (parent instanceof PyAssignmentStatement) {
       final PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
       if (leftExpr == null) return;
-      PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
-                                                                             leftExpr.getText() + " = []");
+      PyAssignmentStatement initAssignment =
+        elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
+                                        leftExpr.getText() + " = []");
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
-                                                  leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
+                                                  leftExpr.getText() + ".append(" + expression.getResultExpression().getText() + ")");
 
       parent.getParent().addBefore(initAssignment, parent);
       parent.replace(forStatement);
-
     }
     else if (parent instanceof PyPrintStatement) {
-      PyForStatement forStatement = createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() +")");
+      PyForStatement forStatement =
+        createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() + ")");
       parent.replace(forStatement);
     }
   }
@@ -98,6 +99,6 @@ public final class ReplaceListComprehensionWithForIntention extends PsiUpdateMod
     }
     stringBuilder.append(result);
     return elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
-                             stringBuilder.toString());
+                                           stringBuilder.toString());
   }
 }

@@ -1,4 +1,5 @@
 import ctypes
+from dataclasses import dataclass
 from typing import Final, Literal
 
 from .gpio_pin_data import ChannelInfo
@@ -70,3 +71,13 @@ def request_handle(line_offset: int, direction: Literal[0, 1], initial: Literal[
 def request_event(line_offset: int, edge: int, consumer: str) -> gpioevent_request: ...
 def get_value(line_handle: int) -> int: ...
 def set_value(line_handle: int, value: int) -> None: ...
+@dataclass
+class PadCtlRegister:
+    is_gpio: bool
+    is_input: bool
+    is_tristate: bool
+    def __init__(self, value: int) -> None: ...
+    @property
+    def is_bidi(self) -> bool: ...
+
+def check_pinmux(ch_info: ChannelInfo, direction: int) -> None: ...

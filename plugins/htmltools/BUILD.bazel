@@ -29,6 +29,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-ui",
+    "//xml/xml-analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.html.tools` end
@@ -68,6 +69,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/refactoring",
     "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.html.tools.tests` end

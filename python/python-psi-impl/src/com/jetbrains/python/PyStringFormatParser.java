@@ -289,8 +289,8 @@ public class PyStringFormatParser {
     myPos = 0;
     while (myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
-      while(next >= 0 && next < myLiteral.length()-1 && myLiteral.charAt(next+1) == '%') {
-        next = myLiteral.indexOf('%', next+2);
+      while (next >= 0 && next < myLiteral.length() - 1 && myLiteral.charAt(next + 1) == '%') {
+        next = myLiteral.indexOf('%', next + 2);
       }
       if (next < 0) break;
       if (next > myPos) {
@@ -474,7 +474,7 @@ public class PyStringFormatParser {
       chunk.setMappingKey(myLiteral.substring(myPos + 1, mappingEnd));
       myPos = mappingEnd + 1;
     }
-    else  {
+    else {
       chunk.setAutoPosition(mySubstitutionsCount);
       mySubstitutionsCount++;
     }

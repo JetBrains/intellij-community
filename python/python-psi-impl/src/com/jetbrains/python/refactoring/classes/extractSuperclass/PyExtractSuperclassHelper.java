@@ -58,9 +58,9 @@ public final class PyExtractSuperclassHelper {
 
   @ApiStatus.Internal
   public static void extractSuperclass(final PyClass clazz,
-                                @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
-                                final String superBaseName,
-                                final String targetFile) {
+                                       @NotNull Collection<PyMemberInfo<PyElement>> selectedMemberInfos,
+                                       final String superBaseName,
+                                       final String targetFile) {
     final Project project = clazz.getProject();
 
     //We will need to change it probably while param may be read-only
@@ -81,7 +81,8 @@ public final class PyExtractSuperclassHelper {
       if (objectMember != null) {
         selectedMemberInfos.remove(objectMember);
       }
-    } else {
+    }
+    else {
       // Always add object if < Py3
       if (objectMember == null) {
         final PyMemberInfo<PyElement> object = MembersManager.findMember(clazz, ALLOW_OBJECT);
@@ -96,7 +97,7 @@ public final class PyExtractSuperclassHelper {
 
     newClass = placeNewClass(project, newClass, clazz, targetFile);
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
-    if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
+    if (!newClass.getContainingFile().equals(clazz.getContainingFile())) {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
     }
     PyPsiRefactoringUtil.addSuperclasses(project, clazz, null, newClass);
@@ -119,8 +120,11 @@ public final class PyExtractSuperclassHelper {
     return file instanceof BackedVirtualFile &&
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
-  
-  private static PyClass placeNewClass(final @NotNull Project project, @NotNull PyClass newClass, final @NotNull PyClass clazz, final @NotNull String targetFile) {
+
+  private static PyClass placeNewClass(final @NotNull Project project,
+                                       @NotNull PyClass newClass,
+                                       final @NotNull PyClass clazz,
+                                       final @NotNull String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
@@ -166,11 +170,7 @@ public final class PyExtractSuperclassHelper {
   }
 
 
-
-
-
   public static String getRefactoringId() {
     return "refactoring.python.extract.superclass";
   }
-
 }

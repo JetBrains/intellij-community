@@ -7,7 +7,6 @@ import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.util.TextRangeId
 import com.intellij.ide.ui.icons.IconId
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
@@ -60,8 +59,7 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
 
-  suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto>
-  suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId)
+  suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent>
 
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 

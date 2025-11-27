@@ -159,7 +159,7 @@ public final class Disposer {
    *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
-    ourTree.register(dereferenceIfNeeded(parent), child);
+    ourTree.register(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
@@ -167,7 +167,7 @@ public final class Disposer {
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
-    return ourTree.tryRegister(dereferenceIfNeeded(parent), child);
+    return ourTree.tryRegister(dereferenceIfNeeded(parent), dereferenceIfNeeded(child));
   }
 
   /**
@@ -196,7 +196,7 @@ public final class Disposer {
   }
 
   public static void dispose(@NotNull Disposable disposable) {
-    dispose(dereferenceIfNeeded(disposable), true);
+    dispose(disposable, true);
   }
 
   /**

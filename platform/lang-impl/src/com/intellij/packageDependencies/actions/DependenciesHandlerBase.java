@@ -44,34 +44,18 @@ public abstract class DependenciesHandlerBase {
   public void analyze() {
     final DependencyAnalysisResult result = createAnalysisResult();
 
-    final Task task;
-    if (canStartInBackground()) {
-      task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
-        @Override
-        public void run(final @NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(false);
-          perform(result, indicator);
-        }
+    final Task task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
+      @Override
+      public void run(final @NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        perform(result, indicator);
+      }
 
-        @Override
-        public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(result);
-        }
-      };
-    } else {
-      task = new Task.Modal(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(false);
-          perform(result, indicator);
-        }
-
-        @Override
-        public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(result);
-        }
-      };
-    }
+      @Override
+      public void onSuccess() {
+        DependenciesHandlerBase.this.onSuccess(result);
+      }
+    }.toModalIfNeeded(!canStartInBackground());
     ProgressManager.getInstance().run(task);
   }
 

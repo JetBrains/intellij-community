@@ -16,12 +16,7 @@ import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.*
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization.Companion.findPluginInstallationCustomization
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -31,8 +26,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
@@ -394,7 +391,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     session.statesDiff.clear();
 
     session.pluginsToRemoveOnCancel.forEach {
-      PluginInstaller.uninstallDynamicPlugin(parentComponent, it, false)
+      PluginInstaller.uninstallDynamicPlugin(parentComponent, it.getMainDescriptor(), false)
     }
     session.pluginsToRemoveOnCancel.clear()
     if (removeSession) {
@@ -530,8 +527,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
     val session = findSession(sessionId) ?: return true
-    val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
-    val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(parentComponent, descriptorImpl, isUpdate)
+    val plugin = PluginManagerCore.findPlugin(pluginId)?.getMainDescriptor() ?: return false
+    val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(parentComponent, plugin, isUpdate)
     session.needRestart = session.needRestart || !uninstalledWithoutRestart
     return uninstalledWithoutRestart
   }
@@ -662,6 +659,11 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun isRestartRequired(sessionId: String): Boolean {
     return findSession(sessionId)?.needRestart == true || InstalledPluginsState.getInstance().installedPlugins.isNotEmpty()
+  }
+
+  override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    UpdateSettings.getInstance().isPluginsAutoUpdateEnabled = enabled
+    service<PluginAutoUpdateService>().onSettingsChanged()
   }
 
   override fun isPluginRequiresUltimateButItIsDisabled(sessionId: String, pluginId: PluginId): Boolean {

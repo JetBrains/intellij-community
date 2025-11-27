@@ -3,14 +3,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2023/cloudconfig-2023.jar
   reason: <- intellij.settingsSync
-- name: lib/jetbrains.intellij.deps.eclipse.jgit.jar
-  library: jetbrains.intellij.deps.eclipse.jgit
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
-  - name: $MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1/JavaEWAH-1.jar
-  reason: <- intellij.settingsSync.core
 - name: lib/settingsSync.jar
   modules:
   - name: intellij.settingsSync
-  - name: intellij.settingsSync.core
-    reason: <- intellij.settingsSync

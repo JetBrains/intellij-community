@@ -149,7 +149,8 @@ public final class PySkeletonUtil {
   private static @NotNull String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
     return PythonRuntimeService.getInstance().mapToRemote(localRoot, sdk);
   }
-    /**
+
+  /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    */
 

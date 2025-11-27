@@ -252,7 +252,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         viewProvider.beforeContentsSynchronized();
 
         Document document = viewProvider.getDocument();
-        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
+        PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(file.getProject());
         PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
         if (transaction == null) {

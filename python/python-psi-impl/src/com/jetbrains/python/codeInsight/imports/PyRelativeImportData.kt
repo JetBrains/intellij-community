@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 /**
  * @author Aleksei Kniazev
  */
-class PyRelativeImportData private constructor(val relativeLocation: String, val relativeLevel: Int)  {
+class PyRelativeImportData private constructor(val relativeLocation: String, val relativeLevel: Int) {
 
   val locationWithDots: String
     get() = ".".repeat(relativeLevel) + relativeLocation

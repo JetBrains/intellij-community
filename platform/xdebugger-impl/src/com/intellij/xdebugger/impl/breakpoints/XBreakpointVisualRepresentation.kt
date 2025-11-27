@@ -23,6 +23,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLightLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerManager
@@ -30,6 +34,7 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -250,7 +255,7 @@ class XBreakpointVisualRepresentation(
             myBreakpoint.setFileUrl(file!!.url)
             myBreakpoint.setLine(line)
             val session = debuggerManager.currentSession
-            if (session != null && myBreakpoint is XLineBreakpointProxy.Monolith) {
+            if (session != null && myBreakpoint is MonolithLineBreakpointProxy) {
               // TODO IJPL-185322 support active breakpoint update on DnD
               session.checkActiveNonLineBreakpointOnRemoval(myBreakpoint.breakpoint)
             }

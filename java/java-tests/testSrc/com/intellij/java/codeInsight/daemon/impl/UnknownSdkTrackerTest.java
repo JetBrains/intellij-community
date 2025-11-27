@@ -179,6 +179,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
   private class SdkTestCases {
     final Sdk broken = ProjectJdkTable.getInstance().createSdk("broken-sdk-123", JavaSdk.getInstance());
+    final Sdk jdkNotInJdkTable = ProjectJdkTable.getInstance().createSdk("not-in-jdk-table-123", JavaSdk.getInstance());
     final Sdk valid = IdeaTestUtil.getMockJdk18();
 
     private SdkTestCases() {
@@ -207,6 +208,23 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
         final List<String> panel = detectMissingSdks();
         assertThat(panel).hasSize(1).first().asString().startsWith("SdkFixInfo:InvalidSdkFixInfo { name: " + broken.getName());
+      }
+    };
+  }
+
+  public void testMissingModuleSdk() {
+    new SdkTestCases() {
+      {
+        WriteAction.run(() -> {
+          ModifiableRootModel m = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+          m.setSdk(jdkNotInJdkTable);
+          m.commit();
+
+          ProjectRootManager.getInstance(getProject()).setProjectSdk(valid);
+        });
+
+        final List<String> panel = detectMissingSdks();
+        assertThat(panel).hasSize(1).first().asString().startsWith("SdkFixInfo:SdkFixInfo {MissingSdkInfo(mySdkName=" + jdkNotInJdkTable.getName());
       }
     };
   }

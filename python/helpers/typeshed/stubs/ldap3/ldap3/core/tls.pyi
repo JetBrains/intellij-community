@@ -1,20 +1,20 @@
-from typing import Any
+from _typeshed import Incomplete
 
 use_ssl_context: bool
 
 class Tls:
-    ssl_options: Any
-    validate: Any
-    ca_certs_file: Any
-    ca_certs_path: Any
-    ca_certs_data: Any
-    private_key_password: Any
-    version: Any
-    private_key_file: Any
-    certificate_file: Any
-    valid_names: Any
-    ciphers: Any
-    sni: Any
+    ssl_options: Incomplete
+    validate: Incomplete
+    ca_certs_file: Incomplete
+    ca_certs_path: Incomplete
+    ca_certs_data: Incomplete
+    private_key_password: Incomplete
+    version: Incomplete
+    private_key_file: Incomplete
+    certificate_file: Incomplete
+    valid_names: Incomplete
+    ciphers: Incomplete
+    sni: Incomplete
     def __init__(
         self,
         local_private_key_file=None,

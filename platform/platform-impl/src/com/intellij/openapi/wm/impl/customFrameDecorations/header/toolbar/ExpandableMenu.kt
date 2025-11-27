@@ -136,10 +136,10 @@ internal class ExpandableMenu(
 
     val subElements = menu.popupMenu.subElements
     if (subElements.isEmpty()) {
-      MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
+      MenuSelectionManager.defaultManager().selectedPath = arrayOf<MenuElement>(ideMenu, menu)
     }
     else {
-      MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu, subElements[0])
+      MenuSelectionManager.defaultManager().selectedPath = arrayOf<MenuElement>(ideMenu, menu, menu.popupMenu, subElements[0])
     }
   }
 

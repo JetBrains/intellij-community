@@ -30,7 +30,7 @@ class KotlinDocUQualifiedReferenceExpression(
             createKDocNameSimpleNameReference(parentKDocName = sourcePsi, givenParent = this) ?: UastEmptyExpression(this)
         }
 
-    override val accessType = UastQualifiedExpressionAccessType.SIMPLE
+    override val accessType: UastQualifiedExpressionAccessType = UastQualifiedExpressionAccessType.SIMPLE
 
     override fun resolve(): PsiElement? = sourcePsi.reference?.resolve()
 

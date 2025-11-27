@@ -5,19 +5,12 @@ package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.openapi.util.NlsContexts.*
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.ActionLink
-import com.intellij.util.ui.UIUtil
+import com.intellij.openapi.util.NlsContexts.Button
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.JPanel
-import kotlin.jvm.internal.CallableReference
-import kotlin.reflect.KMutableProperty0
 
 @DslMarker
 @ApiStatus.ScheduledForRemoval
@@ -28,42 +21,6 @@ annotation class CellMarker
 @Deprecated("Use Kotlin UI DSL Version 2 and MutableProperty")
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
-@PublishedApi
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
-  if (prop is CallableReference) {
-    val name = prop.name
-    val receiver = (prop as CallableReference).boundReceiver
-    if (receiver != null) {
-      val baseName = name.removePrefix("is")
-      val nameCapitalized = StringUtil.capitalize(baseName)
-      val getterName = if (name.startsWith("is")) name else "get$nameCapitalized"
-      val setterName = "set$nameCapitalized"
-      val receiverClass = receiver::class.java
-
-      try {
-        val getter = receiverClass.getMethod(getterName)
-        val setter = receiverClass.getMethod(setterName, propType)
-        return PropertyBinding({ getter.invoke(receiver) as T }, { setter.invoke(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-
-      try {
-        val field = receiverClass.getDeclaredField(name)
-        field.isAccessible = true
-        return PropertyBinding({ field.get(receiver) as T }, { field.set(receiver, it) })
-      }
-      catch (e: Exception) {
-        // ignore
-      }
-    }
-  }
-  return PropertyBinding(prop.getter, prop.setter)
-}
-
 class ValidationInfoBuilder(val component: JComponent) {
   fun error(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component)
   fun warning(@DialogMessage message: String): ValidationInfo = ValidationInfo(message, component).asWarning().withOKEnabled()
@@ -73,14 +30,9 @@ class ValidationInfoBuilder(val component: JComponent) {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 interface CellBuilder<out T : JComponent> {
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
   @get:ApiStatus.ScheduledForRemoval
   val component: T
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL 2", level = DeprecationLevel.HIDDEN)
-  fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
-              forComponent: Boolean = false): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
@@ -124,16 +76,6 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun link(text: @LinkLabel String,
-           style: UIUtil.ComponentStyle? = null,
-           action: () -> Unit): CellBuilder<JComponent> {
-    val result = ActionLink(text) { action() }
-    style?.let { UIUtil.applyStyle(it, result) }
-    return component(result)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun button(text: @Button String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
@@ -144,20 +86,10 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  internal fun internalPlaceholder(): CellBuilder<JComponent>{
-    return component(JPanel().apply {
-      minimumSize = Dimension(0, 0)
-      preferredSize = Dimension(0, 0)
-      maximumSize = Dimension(0, 0)
-    })
-  }
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 class InnerCell(val cell: Cell) : Cell() {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")

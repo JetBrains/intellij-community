@@ -116,6 +116,18 @@ public class YAMLTypingTest extends BasePlatformTestCase {
     doTest("\n");
   }
 
+  public void testRemoveHyphenOnEnterInTheLastItemWithoutIndent() {
+    doTest("\n");
+  }
+
+  public void testRemoveHyphenOnEnterInTheLastItemWithDeepIndent() {
+    doTest("\n");
+  }
+
+  public void testRemoveHyphenOnEnterInTheLastItemInDeepObject() {
+    doTest("\n");
+  }
+
   public void testDoNotInsertHyphen() {
     doTest("\n");
   }

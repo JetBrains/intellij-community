@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
 import kotlinx.coroutines.flow.filter
@@ -61,6 +63,10 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -140,6 +146,10 @@ public fun <T : Any> ListComboBox(
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -211,6 +221,10 @@ public fun <T : Any> ListComboBox(
  * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -291,6 +305,10 @@ public fun ListComboBox(
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -361,6 +379,10 @@ public fun ListComboBox(
  * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
  * displayed in the editable text field.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -405,7 +427,7 @@ public fun EditableListComboBox(
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
     val density = LocalDensity.current
-    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
 
     val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
     var hoveredItemIndex by remember { mutableIntStateOf(-1) }
@@ -442,10 +464,11 @@ public fun EditableListComboBox(
 
     EditableComboBox(
         textFieldState = textFieldState,
-        modifier = modifier.onSizeChanged { with(density) { comboBoxWidth = it.width.toDp() } },
+        modifier =
+            modifier.onSizeChanged { comboBoxSize = with(density) { DpSize(it.width.toDp(), it.height.toDp()) } },
         popupModifier = popupModifier,
         maxPopupHeight = popupMaxHeight,
-        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxWidth },
+        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxSize.width },
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -500,6 +523,7 @@ public fun EditableListComboBox(
                 previewSelectedItemIndex = hoveredItemIndex,
                 listState = listState,
                 contentPadding = contentPadding,
+                comboBoxSize = comboBoxSize,
                 onHoveredItemChange = {
                     if (it >= 0 && hoveredItemIndex != it) {
                         @Suppress("AssignedValueIsNeverRead")
@@ -522,6 +546,10 @@ public fun EditableListComboBox(
  * Provides a text field with a dropdown list of suggestions. Users can either select from the list or type their own
  * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
  * displayed in the editable text field.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -658,7 +686,8 @@ internal fun <T : Any> ListComboBoxImpl(
     }
 
     val density = LocalDensity.current
-    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
+    var currentComboBoxSize by remember { mutableStateOf(DpSize.Zero) }
 
     val currentSelectedIndex by rememberUpdatedState(selectedIndex)
     var hoveredItemIndex by remember { mutableIntStateOf(selectedIndex) }
@@ -747,8 +776,9 @@ internal fun <T : Any> ListComboBoxImpl(
     }
 
     fun handlePopupKeyDown(event: androidx.compose.ui.input.key.KeyEvent): Boolean =
-        if (!popupManager.isPopupVisible.value) false
-        else
+        if (!popupManager.isPopupVisible.value) {
+            false
+        } else {
             when (event.key) {
                 Key.MoveHome,
                 Key.Home -> selectHome()
@@ -769,11 +799,19 @@ internal fun <T : Any> ListComboBoxImpl(
                 }
                 else -> false
             }
+        }
+
+    // This logic ensures that the popup size does not change based on the combo box size if the popup is visible
+    LaunchedEffect(currentComboBoxSize, popupManager.isPopupVisible.value) {
+        if (!popupManager.isPopupVisible.value) {
+            comboBoxSize = currentComboBoxSize
+        }
+    }
 
     ComboBoxImpl(
         modifier =
             modifier
-                .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } }
+                .onSizeChanged { currentComboBoxSize = with(density) { DpSize(it.width.toDp(), it.height.toDp()) } }
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     return@onPreviewKeyEvent handlePopupKeyDown(it)
@@ -781,7 +819,7 @@ internal fun <T : Any> ListComboBoxImpl(
         popupModifier = popupModifier,
         enabled = enabled,
         maxPopupHeight = popupMaxHeight,
-        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxWidth },
+        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxSize.width },
         onArrowDownPress = down@{
                 if (popupManager.isPopupVisible.value) return@down
                 navigateDown()
@@ -805,6 +843,7 @@ internal fun <T : Any> ListComboBoxImpl(
                 currentlySelectedIndex = selectedIndex,
                 listState = listState,
                 contentPadding = contentPadding,
+                comboBoxSize = comboBoxSize,
                 onHoveredItemChange = {
                     if (it >= 0 && hoveredItemIndex != it) {
                         hoveredItemIndex = it
@@ -825,6 +864,7 @@ private fun <T : Any> PopupContent(
     previewSelectedItemIndex: Int,
     listState: SelectableLazyListState,
     contentPadding: PaddingValues,
+    comboBoxSize: DpSize,
     onHoveredItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
     itemKeys: (Int, T) -> Any,
@@ -832,7 +872,18 @@ private fun <T : Any> PopupContent(
 ) {
     VerticallyScrollableContainer(scrollState = listState.lazyListState as ScrollableState) {
         SelectableLazyColumn(
-            modifier = Modifier.fillMaxWidth().padding(contentPadding).testTag("Jewel.ComboBox.List"),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .testTag("Jewel.ComboBox.List")
+                    .thenIf(items.isNotEmpty()) { padding(contentPadding) }
+                    .thenIf(items.isEmpty()) {
+                        heightIn(
+                            min =
+                                comboBoxSize.height +
+                                    contentPadding.calculateTopPadding() +
+                                    contentPadding.calculateBottomPadding()
+                        )
+                    },
             selectionMode = SelectionMode.Single,
             state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->

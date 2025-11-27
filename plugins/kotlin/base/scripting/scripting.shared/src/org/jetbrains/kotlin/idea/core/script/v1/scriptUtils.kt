@@ -5,11 +5,14 @@ package org.jetbrains.kotlin.idea.core.script.v1
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtFile
@@ -66,5 +69,13 @@ fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile
         return ktFile
     } else {
         return runReadAction { PsiManager.getInstance(this).findFile(virtualFile) as? KtFile }
+    }
+}
+
+suspend fun Project.awaitExternalSystemInitialization() {
+    suspendCancellableCoroutine { continuation ->
+        ExternalProjectsManagerImpl.getInstance(this).runWhenInitialized {
+            continuation.resumeWith(Result.success(Unit))
+        }
     }
 }

@@ -35,17 +35,17 @@ internal abstract class GlobalStatisticsFields(
 }
 
 internal class ContributorsGlobalStatisticsFields : GlobalStatisticsFields(
-  globalEventCountFieldName = "globalSelections",
-  globalEventCountToMaxFieldName = "globalSelectionsToMax",
-  usersRatioFieldName = "usersRatio",
-  eventPerUserRatioFieldName = "selectionsPerUserRatio"
+  globalEventCountFieldName = "global_selections",
+  globalEventCountToMaxFieldName = "global_selections_to_max",
+  usersRatioFieldName = "users_ratio",
+  eventPerUserRatioFieldName = "selections_per_user_ratio"
 )
 
 internal class ActionsGlobalStatisticsFields(version: Int? = null) : GlobalStatisticsFields(
-  globalEventCountFieldName = "globalUsage${versionSuffix(version)}",
-  globalEventCountToMaxFieldName = "globalUsageToMax${versionSuffix(version)}",
-  usersRatioFieldName = "usersRatio${versionSuffix(version)}",
-  eventPerUserRatioFieldName = "usagesPerUserRatio${versionSuffix(version)}"
+  globalEventCountFieldName = "global_usage${versionSuffix(version)}",
+  globalEventCountToMaxFieldName = "global_usage_to_max${versionSuffix(version)}",
+  usersRatioFieldName = "users_ratio${versionSuffix(version)}",
+  eventPerUserRatioFieldName = "usages_per_user_ratio${versionSuffix(version)}"
 )
 
 internal abstract class GlobalStatisticsContextFields(
@@ -66,15 +66,15 @@ internal abstract class GlobalStatisticsContextFields(
 }
 
 internal class ActionsGlobalStatisticsContextFields(version: Int? = null) : GlobalStatisticsContextFields(
-  globalMaxEventCountFieldName = "globalMaxUsage${versionSuffix(version)}",
-  globalMinEventCountFieldName = "globalMinUsage${versionSuffix(version)}"
+  globalMaxEventCountFieldName = "global_max_usage${versionSuffix(version)}",
+  globalMinEventCountFieldName = "global_min_usage${versionSuffix(version)}"
 )
 
 internal class ContributorsGlobalStatisticsContextFields : GlobalStatisticsContextFields(
-  globalMaxEventCountFieldName = "globalMaxSelection",
-  globalMinEventCountFieldName = "globalMinSelection"
+  globalMaxEventCountFieldName = "global_max_selection",
+  globalMinEventCountFieldName = "global_min_selection"
 )
 
 private fun versionSuffix(version: Int?): String {
-  return version?.let { "V$it" } ?: ""
+  return version?.let { "_v$it" } ?: ""
 }

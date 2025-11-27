@@ -2,6 +2,7 @@
 package com.intellij.cce.highlighter
 
 import com.intellij.cce.core.Session
+import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
@@ -32,7 +33,7 @@ class HighlightersClickListener(private val editor: Editor, private val project:
           val item = if (index == session.value.lookups.last().selectedPosition)
             LookupElementBuilder.create(completion.presentationText).bold()
           else LookupElementBuilder.create(completion.presentationText)
-          lookup.addItem(item, PrefixMatcher.ALWAYS_TRUE)
+          lookup.addItem(item, PlainPrefixMatcher.ALWAYS_TRUE)
         }
         lookup.showLookup()
       }

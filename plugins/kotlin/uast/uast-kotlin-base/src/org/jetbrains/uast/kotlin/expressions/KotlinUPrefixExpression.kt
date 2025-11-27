@@ -31,7 +31,7 @@ class KotlinUPrefixExpression(
     override fun resolveOperator(): PsiMethod? =
         baseResolveProviderService.resolveCall(sourcePsi)
 
-    override val operator = when (sourcePsi.operationToken) {
+    override val operator: UastPrefixOperator = when (sourcePsi.operationToken) {
         KtTokens.EXCL -> UastPrefixOperator.LOGICAL_NOT
         KtTokens.PLUS -> UastPrefixOperator.UNARY_PLUS
         KtTokens.MINUS -> UastPrefixOperator.UNARY_MINUS

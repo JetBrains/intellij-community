@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandida
 import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -161,6 +162,7 @@ private fun createWeighingContext(
     return when (positionContext) {
         is KotlinNameReferencePositionContext -> {
             val nameExpression = positionContext.nameExpression
+            val nameExpressionParent = nameExpression.parent
             val expectedType = when {
                 // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
                 // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
@@ -169,8 +171,16 @@ private fun createWeighingContext(
                 // TODO: calculate actual types for callable references correctly and use information about expected type
                 positionContext is KotlinCallableReferencePositionContext -> null
                 nameExpression.expectedType != null -> nameExpression.expectedType
-                nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
-                nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
+                nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                // TODO: This can be removed after KT-82534 has been fixed
+                nameExpressionParent is KtPropertyAccessor -> {
+                    if (nameExpressionParent.isGetter) {
+                        nameExpressionParent.property.returnType
+                    } else {
+                        null
+                    }
+                }
                 else -> null
             }
             if (parameters.completionType == CompletionType.SMART

@@ -18,7 +18,7 @@ class KotlinUBinaryExpression(
     UMultiResolvable {
 
     companion object {
-        val BITWISE_OPERATORS = mapOf(
+        val BITWISE_OPERATORS: Map<String, UastBinaryOperator.BitwiseOperator> = mapOf(
             "or" to UastBinaryOperator.BITWISE_OR,
             "and" to UastBinaryOperator.BITWISE_AND,
             "xor" to UastBinaryOperator.BITWISE_XOR,

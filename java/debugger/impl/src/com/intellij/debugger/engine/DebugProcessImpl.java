@@ -57,6 +57,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.platform.debugger.impl.shared.CoroutineUtilsKt;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -78,7 +79,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -163,7 +163,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, disposable);
 
-  final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
+  @ApiStatus.Internal
+  public final SteppingProgressTracker mySteppingProgressTracker = new SteppingProgressTracker(this);
 
   protected final @NotNull RunToCursorManager myRunToCursorManager;
 
@@ -202,7 +203,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       public void paused(@NotNull SuspendContext suspendContext) {
         boolean isSuspendAll = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
         if (isSuspendAll && DebuggerUtils.isNewThreadSuspendStateTracking()) {
+          mergeSuspendThreadContextToSuspendAllContext();
           resumeThreadsUnderEvaluationAndExplicitlyResumedAfterPause((SuspendContextImpl)suspendContext);
+          // It deletes suspend-thread stepping in another thread and suspend-all breakpoint is reached
+          getRequestsManager().deleteAllStepRequests();
         }
 
         myThreadBlockedMonitor.stopWatching(!isSuspendAll ? suspendContext.getThread() : null);
@@ -215,7 +219,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerStatistics.logProcessStatistics(process);
       }
     });
-    mySteppingProgressTracker.installListeners();
   }
 
   private DebuggerManagerThreadImpl createManagerThread() {
@@ -1203,6 +1206,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myWaitFor.waitFor(timeout);
   }
 
+  private void mergeSuspendThreadContextToSuspendAllContext() {
+    boolean wasResumedSuspendThreadPausedContexts = false;
+    for (SuspendContextImpl anotherPausedContext : getSuspendManager().getPausedContexts()) {
+      if (anotherPausedContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+        getSuspendManager().resume(anotherPausedContext);
+        wasResumedSuspendThreadPausedContexts = true;
+      }
+    }
+    if (wasResumedSuspendThreadPausedContexts) {
+      XDebuggerManagerImpl.getNotificationGroup()
+        .createNotification(JavaDebuggerBundle.message("message.switched.to.suspend.all.context"), MessageType.WARNING)
+        .notify(getProject());
+    }
+    //mySteppingProgressTracker.cancelAllSteppings();
+  }
 
   private void resumeThreadsUnderEvaluationAndExplicitlyResumedAfterPause(@NotNull SuspendContextImpl suspendAllContext) {
     for (SuspendContextImpl suspendContext : mySuspendManager.getEventContexts()) {
@@ -2111,9 +2129,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
-      beforeSteppingAction(context);
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
+      // It is important to notify about the stepping after the thread filtering is set
+      beforeSteppingAction(context);
       int breakpointSuspendPolicy = context.getSuspendPolicy();
       // In the case of the isAlwaysSuspendThreadBeforeSwitch mode, the switch will be performed for all breakpoints by engine
       if (!DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
@@ -2986,6 +3005,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.enable(thread.getThreadReference());
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isSteppingInProgress() {
+    return mySteppingProgressTracker.isSteppingInProgress();
   }
 
   void stopWatchingMethodReturn() {

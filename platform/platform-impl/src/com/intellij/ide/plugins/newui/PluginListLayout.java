@@ -62,6 +62,7 @@ public final class PluginListLayout extends AbstractLayoutManager implements Pag
 
     for (UIPluginGroup group : groups) {
       Component component = group.panel;
+      if(component == null) continue;
       int height = component.getPreferredSize().height;
       component.setBounds(0, y, width, height);
       y += height;

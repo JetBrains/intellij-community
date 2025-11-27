@@ -49,14 +49,7 @@ final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends
 
   @Override
   Point getPosition() {
-    //  at com.intellij.util.concurrency.ThreadingAssertions.createThreadAccessException(ThreadingAssertions.java:212)
-    //	at com.intellij.util.concurrency.ThreadingAssertions.softAssertReadAccess(ThreadingAssertions.java:151)
-    //	at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1009)
-    //	at com.intellij.openapi.editor.impl.FoldingModelImpl.assertReadAccess(FoldingModelImpl.java:215)
-    //	at com.intellij.openapi.editor.impl.FoldingModelImpl.isOffsetCollapsed(FoldingModelImpl.java:192)
-    //	at com.intellij.openapi.editor.impl.AfterLineEndInlayImpl.getVisualPosition(AfterLineEndInlayImpl.java:66)
-    //	at com.intellij.openapi.editor.impl.AfterLineEndInlayImpl.getPosition(AfterLineEndInlayImpl.java:51)
-    VisualPosition pos = ReadAction.compute(() -> getVisualPosition());
+    VisualPosition pos = EditorThreading.compute(() -> getVisualPosition());
     return myEditor.visualPositionToXY(pos);
   }
 

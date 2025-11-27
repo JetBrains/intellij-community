@@ -18,7 +18,6 @@ package com.jetbrains.python;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -673,7 +672,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18254
   public void testFunctionTypeComment() {
-    doTest("(x: int, args: tuple[float, ...], kwargs: dict[str, str]) -> list[bool]",
+    doTest("(x: int, *args: float, **kwargs: str) -> list[bool]",
            """
              from typing import List
 
@@ -4610,7 +4609,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-70484
   public void testUnboundParamSpecFromUnresolvedArgumentReplacedWithArgsKwargs() {
-    doTest("(args: Any, kwargs: Any) -> str",
+    doTest("(*args: Any, **kwargs: Any) -> str",
            """
              from typing import Callable, Any, ParamSpec
                           

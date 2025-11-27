@@ -1,14 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
@@ -34,9 +32,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.minutes
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
@@ -45,28 +41,26 @@ private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("$PY_PROJECT_
 private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message")
 private val VERSION_2 = "2.0.0".toVersion()
 
+
+private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
+  "poetry",
+  getAdditionalSearchPaths = {
+    // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
+    listOf(userInfo.home.asNioPath().resolve(Path.of(".poetry", ".bin")))
+  },
+  getToolPathFromSettings = {
+    poetryPath
+  })
+
 @Internal
-suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> {
-  val eel = withContext(Dispatchers.IO) { projectPath?.getEelDescriptor()?.toEelApi() }
-  val executable = getPoetryExecutable(eel ?: localEel).getOr { return it }
-  return runExecutableWithProgress(executable, projectPath, 10.minutes, args = args)
-}
+suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> = POETRY_TOOL.runTool(projectPath, *args)
 
-
-/**
- * Detects the poetry executable in `$PATH`.
- */
-internal suspend fun detectPoetryExecutable(eel: EelApi = localEel): PyResult<Path> =
-  // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
-  detectTool("poetry", eel, listOf(eel.userInfo.home.asNioPath().resolve(Path.of(".poetry", ".bin"))))
 
 /**
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
-suspend fun getPoetryExecutable(eel: EelApi = localEel): PyResult<Path> = withContext(Dispatchers.IO) {
-  PropertiesComponent.getInstance().poetryPath?.let { Path.of(it) }?.takeIf { it.exists() && it.getEelDescriptor() == eel.descriptor }
-}?.let { PyResult.success(it) } ?: detectPoetryExecutable(eel)
+suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? = POETRY_TOOL.getToolExecutable(eel)
 
 /**
  * Runs poetry command for the specified Poetry SDK.

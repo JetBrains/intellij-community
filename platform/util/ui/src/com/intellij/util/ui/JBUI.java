@@ -1771,6 +1771,15 @@ public final class JBUI {
       public static final @NotNull Color LIST_SETTINGS_BACKGROUND =
         JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
+      @ApiStatus.Internal
+      public static @NotNull Color getListSettingsBackground() {
+        // For custom UI themes we need to keep the old behavior
+        if (StartupUiUtil.isUnderDarcula() && UIManager.get("SearchEverywhere.List.settingsBackground") == null) {
+          return ColorUtil.brighter(UIUtil.getListBackground(), 1);
+        }
+        return LIST_SETTINGS_BACKGROUND;
+      }
+
       public static @NotNull Color listTitleLabelForeground() {
         return JBColor.namedColor("SearchEverywhere.List.separatorForeground", UIUtil.getLabelDisabledForeground());
       }

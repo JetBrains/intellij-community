@@ -26,6 +26,7 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun getStatuses(projectId: ProjectId): Flow<ServiceStatusDto>
   suspend fun getCustomizations(projectId: ProjectId): Flow<ServiceCustomizationDto>
   suspend fun getConfigurationTypes(projectId: ProjectId): Flow<Set<String>>
+  suspend fun getNavigateToServiceEvents(projectId: ProjectId) : Flow<NavigateToServiceEvent>
   suspend fun updateConfigurationFolderName(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>, newGroupName: String?)
   suspend fun getLuxedContentEvents(projectId: ProjectId): Flow<RunDashboardLuxedContentEvent>
   suspend fun startLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId): ComponentDirectTransferId?

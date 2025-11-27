@@ -29,7 +29,6 @@ interface NotebookCellLines {
     NO(false, false),
     TOP(true, false),
     BOTTOM(false, true),
-    TOP_AND_BOTTOM(true, true)
   }
 
   data class Interval(
@@ -103,7 +102,6 @@ interface NotebookCellLines {
     }
 
     fun getContentText(file: VirtualFile): String {
-
       val document = FileDocumentManager.getInstance().getDocument(file)!!
       return getContentText(document).toString()
     }

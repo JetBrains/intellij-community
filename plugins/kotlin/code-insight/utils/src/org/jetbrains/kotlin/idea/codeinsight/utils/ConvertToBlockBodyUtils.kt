@@ -45,12 +45,14 @@ object ConvertToBlockBodyUtils {
         if (!isConvertibleByPsi(declaration)) return null
 
         val body = declaration.bodyExpression ?: return null
-        val returnType = declaration.returnType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
+
+        val bodyType = ((body as? KtReturnExpression)?.returnedExpression ?: body).expressionType ?: return null
+        val returnType =
+            (if (declaration.hasDeclaredReturnType()) declaration.returnType else bodyType)
+                .approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
         if (!isErrorReturnTypeAllowed && returnType is KaErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }
-
-        val bodyType = body.expressionType ?: return null
 
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnType.isUnitType,
@@ -158,7 +160,7 @@ object ConvertToBlockBodyUtils {
         val factory = KtPsiFactory(body.project)
         if (context.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
 
-        val needReturn = returnsValue && (!context.bodyTypeIsUnit && !context.bodyTypeIsNothing)
+        val needReturn = returnsValue && (!context.bodyTypeIsUnit && !context.bodyTypeIsNothing) && body !is KtReturnExpression
         val newBody = if (needReturn) {
             val annotatedExpr = body as? KtAnnotatedExpression
             val returnedExpr = annotatedExpr?.baseExpression ?: body

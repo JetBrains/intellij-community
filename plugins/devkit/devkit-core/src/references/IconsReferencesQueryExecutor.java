@@ -267,7 +267,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
       private static final IconPathLookupElementRenderer INSTANCE = new IconPathLookupElementRenderer();
 
       @Override
-      public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
         final PsiField field = ObjectUtils.tryCast(element.getPsiElement(), PsiField.class);
         assert field != null;
 

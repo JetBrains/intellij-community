@@ -79,9 +79,9 @@ public final class PySyntheticCallHelper {
 
 
   static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
-                                                                           @NotNull List<PyType> argumentTypes,
-                                                                           @Nullable PyType receiverType,
-                                                                           @NotNull TypeEvalContext context) {
+                                                                   @NotNull List<PyType> argumentTypes,
+                                                                   @Nullable PyType receiverType,
+                                                                   @NotNull TypeEvalContext context) {
     return matchOverloadsByArgumentTypes(resolveFunctionsByName(functionName, receiverType, context),
                                          argumentTypes, receiverType, context);
   }

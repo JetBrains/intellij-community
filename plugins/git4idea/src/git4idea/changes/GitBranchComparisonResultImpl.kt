@@ -69,6 +69,9 @@ internal class GitBranchComparisonResultImpl(
             patch.afterVersionId = commitSha
             _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
           }
+          else {
+            LOG.debug("Non-text file ${patch.filePath} patch encountered in a commit $commitSha diff")
+          }
         }
       }
 
@@ -85,16 +88,23 @@ internal class GitBranchComparisonResultImpl(
       _changes.add(change)
 
       if (patch is TextFilePatch) {
-        val filePath = patch.filePath
-        val fileHistory = fileHistoriesBySummaryFilePath[filePath]
-        if (fileHistory == null) {
-          LOG.warn("Unable to find file history for cumulative patch for $filePath")
-          continue
+        val beforePath = patch.beforeName
+        val afterPath = patch.afterName
+
+        val filePath = (afterPath ?: beforePath)!!
+        val fileHistory = fileHistoriesBySummaryFilePath[filePath] ?: run {
+          LOG.warn("Unable to connect the cumulative patch for $filePath to the commit history")
+          startNewHistory(commitsHashes, mergeBaseSha, beforePath).apply {
+            append(headSha, afterPath)
+          }
         }
         patch.beforeVersionId = baseSha
         patch.afterVersionId = headSha
 
         _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, fileHistory)
+      }
+      else {
+        LOG.debug("Non-text file ${patch.filePath} patch encountered in a cumulative diff")
       }
     }
   }

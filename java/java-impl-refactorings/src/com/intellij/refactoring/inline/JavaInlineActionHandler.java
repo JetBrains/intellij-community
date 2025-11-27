@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.util.JspFileTypeUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.refactoring.InlineActionHandler;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 
 
 public abstract class JavaInlineActionHandler extends InlineActionHandler {
@@ -15,7 +15,6 @@ public abstract class JavaInlineActionHandler extends InlineActionHandler {
 
   protected static boolean isJavaLanguage(Language l) {
     return l instanceof JavaLanguage ||
-           l.equals(StdFileTypes.JSPX.getLanguage()) ||
-           l.equals(StdFileTypes.JSP.getLanguage());
+           JspFileTypeUtil.isJspOrJspX(l);
   }
 }

@@ -374,6 +374,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   void removeFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo) {
+    assert fileLevelHighlightInfo.isFileLevelAnnotation();
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {

@@ -1,4 +1,5 @@
 // "Change type of 'Foo.x' to 'String?'" "true"
+// K2_ACTION: "Specify 'String?' type for 'Foo.x'" "true"
 class Foo {
     var x: String? = null
 

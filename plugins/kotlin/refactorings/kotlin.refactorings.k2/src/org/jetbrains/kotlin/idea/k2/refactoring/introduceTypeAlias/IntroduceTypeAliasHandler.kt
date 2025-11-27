@@ -76,18 +76,18 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
     ) {
         val elementToExtract = elements.singleOrNull()
 
-        val errorMessage = when (elementToExtract) {
-            is KtSimpleNameExpression -> {
-                if (!(isTypeConstructorReference(elementToExtract) || isDoubleColonReceiver(elementToExtract))) KotlinBundle.message("error.text.type.reference.is.expected"
-                ) else null
-            }
-            !is KtTypeElement -> KotlinBundle.message("error.text.no.type.to.refactor")
-            else -> null
+        val errorMessage = when {
+          elementToExtract is KtSimpleNameExpression -> {
+              if (!(isTypeConstructorReference(elementToExtract) || isDoubleColonReceiver(elementToExtract))) KotlinBundle.message("error.text.type.reference.is.expected"
+              ) else null
+          }
+          elementToExtract !is KtTypeElement && elementToExtract !is KtTypeReference -> KotlinBundle.message("error.text.no.type.to.refactor")
+          else -> null
         }
         if (errorMessage != null) return showErrorHint(project, editor, errorMessage, REFACTORING_NAME)
 
-        val introduceData = when (elementToExtract) {
-            is KtTypeElement -> IntroduceTypeAliasData(elementToExtract, targetSibling)
+        val introduceData = when  {
+            elementToExtract is KtTypeElement || elementToExtract is KtTypeReference -> IntroduceTypeAliasData(elementToExtract, targetSibling)
             else -> IntroduceTypeAliasData(
                 elementToExtract!!.getStrictParentOfType<KtTypeElement>() ?: elementToExtract as KtElement,
                 targetSibling,

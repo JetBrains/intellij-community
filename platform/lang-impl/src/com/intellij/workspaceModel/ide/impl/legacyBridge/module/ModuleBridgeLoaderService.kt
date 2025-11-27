@@ -31,8 +31,10 @@ import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
@@ -50,7 +52,8 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
   )
 }
 
-private class ModuleBridgeLoaderService : InitProjectActivity {
+@ApiStatus.Internal
+class ModuleBridgeLoaderService : InitProjectActivity {
   override suspend fun run(project: Project) {
     coroutineScope {
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
@@ -65,6 +68,7 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
       val start = Milliseconds.now()
 
       if (workspaceModel.loadedFromCache) {
+        val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
         span("modules loading with cache") {
           if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
             LOG.warn("Loaded from cache, but no serialized modules found. " +
@@ -78,11 +82,17 @@ private class ModuleBridgeLoaderService : InitProjectActivity {
             targetUnloadedEntitiesBuilder = null,
             loadedFromCache = workspaceModel.loadedFromCache,
             workspaceModel = workspaceModel,
+            globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
           )
         }
         val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
         backgroundWriteAction {
-          globalWorkspaceModel.applyStateToProject(project)
+          try {
+            globalWorkspaceModel.applyStateToProject(project)
+          }
+          finally {
+            globalWsmAppliedToProjectWsm.complete(project)
+          }
         }
       }
       else {
@@ -137,6 +147,7 @@ private suspend fun loadModules(
   targetBuilder: MutableEntityStorage?,
   targetUnloadedEntitiesBuilder: MutableEntityStorage?,
   loadedFromCache: Boolean,
+  globalWsmAppliedToProjectWsm: CompletableDeferred<Project>? = null,
 ) {
   span("modules instantiation") {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
@@ -153,7 +164,8 @@ private suspend fun loadModules(
     moduleManager.loadModules(loadedEntities = entities,
                               unloadedEntities = unloadedEntities,
                               targetBuilder = targetBuilder,
-                              initializeFacets = loadedFromCache)
+                              initializeFacets = loadedFromCache,
+                              globalWsmAppliedToProjectWsm)
   }
 
   span("libraries instantiation") {

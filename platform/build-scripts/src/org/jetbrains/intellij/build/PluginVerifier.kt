@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.block
 import java.nio.file.Path
 import kotlin.io.path.appendText
 import kotlin.io.path.exists
@@ -54,11 +55,11 @@ class PluginVerifier internal constructor(
     reportDir: Path,
     plugin: VerifierPluginInfo,
     ide: VerifierIdeInfo,
-    errFile: Path?,
-    outFile: Path?,
+    errFile: Path? = null,
+    outFile: Path? = null,
     runtimeDir: Path? = null,
     mute: List<String> = emptyList(),
-  ): Boolean {
+  ): Boolean = block("Checking compatibility of $plugin with $ide") {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
     runProcess(
@@ -81,8 +82,8 @@ class PluginVerifier internal constructor(
       ),
       workingDir = reportDir,
       additionalEnvVariables = emptyMap(),
-      inheritOut = false,
-      inheritErrToOut = false,
+      inheritOut = outFile == null,
+      inheritErrToOut = errFile == null,
       stdErrConsumer = {
         errFile?.appendText("$it\n")
         println("Plugin verifier error: $it")
@@ -92,7 +93,7 @@ class PluginVerifier internal constructor(
       }
     )
 
-    return reportVerifierIssues(
+    reportVerifierIssues(
       plugin,
       reportDir,
       ide

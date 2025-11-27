@@ -1,6 +1,6 @@
 import re
 import subprocess
-from _typeshed import Incomplete, StrPath
+from _typeshed import StrPath
 from builtins import range as _range
 from collections import OrderedDict
 from collections.abc import Callable, Generator, Iterable, Iterator
@@ -66,7 +66,7 @@ class CronTab:
     crons: list[CronItem] | None
     filen: str | None
     cron_command: str
-    env: OrderedVariableList[Incomplete, Incomplete] | None
+    env: OrderedVariableList[str, str] | None
     root: bool
     intab: str | None
     tabfile: str | None
@@ -132,7 +132,7 @@ class CronItem:
     comment: str
     command: str | None
     last_run: datetime | None
-    env: OrderedVariableList[Incomplete, Incomplete]
+    env: OrderedVariableList[str, str]
     pre_comment: bool
     marker: str | None
     stdin: str | None
@@ -141,7 +141,7 @@ class CronItem:
     def __hash__(self) -> int: ...
     def __eq__(self, other: object) -> bool: ...
     @classmethod
-    def from_line(cls, line: str, user: str | None = ..., cron: Incomplete | None = ...) -> Self: ...
+    def from_line(cls, line: str, user: str | None = ..., cron: CronTab | None = ...) -> Self: ...
     def delete(self) -> None: ...
     def set_command(self, cmd: str, parse_stdin: bool = ...) -> None: ...
     def set_comment(self, cmt: str, pre_comment: bool = ...) -> None: ...

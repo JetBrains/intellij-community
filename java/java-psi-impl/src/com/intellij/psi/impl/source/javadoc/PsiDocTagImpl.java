@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -68,7 +67,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     if (i == DOC_TAG_NAME) {
       return ChildRole.DOC_TAG_NAME;
     }
-    else if (i == JavaDocElementType.DOC_COMMENT || i == DOC_INLINE_TAG) {
+    else if (DOC_COMMENT_TOKENS.contains(i) || i == DOC_INLINE_TAG) {
       return ChildRole.DOC_CONTENT;
     }
     else if (i == DOC_COMMENT_LEADING_ASTERISKS) {

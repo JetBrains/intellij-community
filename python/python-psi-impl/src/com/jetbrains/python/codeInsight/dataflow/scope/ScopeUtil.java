@@ -35,26 +35,26 @@ public final class ScopeUtil {
   private ScopeUtil() {
   }
 
-  public static @Nullable PsiElement getParameterScope(final PsiElement element){
-    if (element instanceof PyNamedParameter){
+  public static @Nullable PsiElement getParameterScope(final PsiElement element) {
+    if (element instanceof PyNamedParameter) {
       final PyFunction function = getParentOfType(element, PyFunction.class, false);
-      if (function != null){
+      if (function != null) {
         return function;
       }
     }
 
     final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
-    if (exceptPart != null){
+    if (exceptPart != null) {
       return exceptPart;
     }
 
     final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
-    if (forStatement != null){
+    if (forStatement != null) {
       return forStatement;
     }
 
     final PyListCompExpression listCompExpression = PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element);
-    if (listCompExpression != null){
+    if (listCompExpression != null) {
       return listCompExpression;
     }
     return null;

@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.rpc.EndpointKind
 
 class ServerRequestDispatcher(private val connectionListener: ConnectionListener?) : RequestDispatcher {
@@ -22,7 +22,7 @@ class ServerRequestDispatcher(private val connectionListener: ConnectionListener
   }
 
   private val bannedEndpoints = MutableStateFlow<Set<UID>>(emptySet())
-  private val connections = ConcurrentHashMap<UID, SendChannel<TransportMessage>>()
+  private val connections = MultiplatformConcurrentHashMap<UID, SendChannel<TransportMessage>>()
 
   fun ban(route: UID) {
     bannedEndpoints.update { it + route }

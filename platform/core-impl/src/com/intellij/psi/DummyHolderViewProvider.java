@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -22,7 +22,13 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   private final long myModificationStamp;
 
   public DummyHolderViewProvider(@NotNull PsiManager manager) {
-    super(manager, new LightVirtualFile("DummyHolder", UnknownFileType.INSTANCE, ""), false);
+    super(manager,
+          LightVirtualFile.builder()
+            .name("DummyHolder")
+            .fileType(UnknownFileType.INSTANCE)
+            .creationTrace("DummyHolderViewProvider")
+            .build(),
+          false);
     myModificationStamp = LocalTimeCounter.currentTime();
   }
 
@@ -47,7 +53,7 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   }
 
   @Override
-  public PsiFile getCachedPsi(@NotNull Language target) {
+  public @Nullable PsiFile getCachedPsi(@NotNull Language target) {
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
     return target == getBaseLanguage() ? myHolder : null;
   }

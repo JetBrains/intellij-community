@@ -208,10 +208,12 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
       try {
         val regionalUrl = RegionUrlMapper.tryMapUrlBlocking(URL_PROVIDER)
         val request = PlatformHttpClient.request(URI(regionalUrl))
-        val response = PlatformHttpClient.checkResponse(PlatformHttpClient.client().send(request, HttpResponse.BodyHandlers.ofByteArray()))
-        val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
-        LOG.info("Using SettingSync server URL: ${configUrl}")
-        configUrl
+        PlatformHttpClient.client().use { client ->
+          val response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
+          val configUrl = JDOMUtil.load(response.body()).getAttributeValue("baseUrl")
+          LOG.info("Using SettingSync server URL: ${configUrl}")
+          configUrl
+        }
       }
       catch (e: Exception) {
         LOG.warn("Failed to obtain a SettingSync server URL", e)

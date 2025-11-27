@@ -3,6 +3,8 @@ package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
+import com.intellij.execution.target.local.toLocalPtyOptions
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,22 +13,25 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.icons.EMPTY_ICON
-import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.net.NetUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -37,11 +42,12 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+import kotlin.io.path.Path
 import kotlin.io.path.isSameFileAs
 
-private fun EelPlatform.toTargetPlatform(): TargetPlatform = when (this) {
-  is EelPlatform.Posix -> TargetPlatform(Platform.UNIX)
-  is EelPlatform.Windows -> TargetPlatform(Platform.WINDOWS)
+private fun EelOsFamily.toTargetPlatform(): TargetPlatform = when (this) {
+  EelOsFamily.Posix -> TargetPlatform(Platform.UNIX)
+  EelOsFamily.Windows -> TargetPlatform(Platform.WINDOWS)
 }
 
 private fun LocalHostPort(port: Int) = HostPort("localhost", port)
@@ -76,30 +82,68 @@ class EelTargetType : TargetEnvironmentType<EelTargetEnvironmentRequest.Configur
   }
 
   override fun createSerializer(config: EelTargetEnvironmentRequest.Configuration): PersistentStateComponent<*> {
-    throw UnsupportedOperationException()
+    return config
   }
 
   override fun createDefaultConfig(): EelTargetEnvironmentRequest.Configuration {
-    throw UnsupportedOperationException()
+    return EelTargetEnvironmentRequest.Configuration()
   }
 
   override fun duplicateConfig(config: EelTargetEnvironmentRequest.Configuration): EelTargetEnvironmentRequest.Configuration {
-    return EelTargetEnvironmentRequest.Configuration(config.eel)
+    return EelTargetEnvironmentRequest.Configuration.create(config.descriptor).also {
+      it.projectRootOnTarget = config.projectRootOnTarget
+    }
   }
 }
 
 @ApiStatus.Internal
-class EelTargetEnvironmentRequest(override val configuration: Configuration) : BaseTargetEnvironmentRequest(), VolumeCopyingRequest {
-  class Configuration(val eel: EelApi) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess {
+class EelTargetEnvironmentRequest(
+  override val configuration: Configuration,
+) : BaseTargetEnvironmentRequest(), VolumeCopyingRequest {
+  class Configuration private constructor(
+    eelDescriptor: EelDescriptor?,
+  ) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess, PersistentStateComponent<Configuration.PersistentState> {
+    internal constructor() : this(null)
+
+    constructor(eelApi: EelApi) : this(eelApi.descriptor)
+
+    private var myDescriptor = eelDescriptor
+
+    val descriptor: EelDescriptor get() = myDescriptor ?: error("EEL descriptor is not set")
+
+    companion object {
+      @JvmStatic
+      fun create(eelDescriptor: EelDescriptor): Configuration = Configuration(
+        eelDescriptor = eelDescriptor
+      )
+    }
+
     override var projectRootOnTarget: String = ""
     override val asTargetConfig: TargetEnvironmentConfiguration = this
 
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == eel.descriptor }?.toString()
+      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == descriptor }?.toString()
+    }
+
+    override fun getState(): PersistentState {
+      return PersistentState().also {
+        it.projectRootOnTarget = projectRootOnTarget
+        it.eelRootPath = (descriptor as? EelPathBoundDescriptor)?.rootPath.toString()
+      }
+    }
+
+    override fun loadState(state: PersistentState) {
+      projectRootOnTarget = state.projectRootOnTarget ?: ""
+      myDescriptor = state.eelRootPath?.let(::Path)?.getEelDescriptor() ?: descriptor
+    }
+
+    class PersistentState : BaseState() {
+      var projectRootOnTarget: String? by string()
+      var eelRootPath: String? by string()
     }
   }
 
-  override val targetPlatform: TargetPlatform = configuration.eel.platform.toTargetPlatform()
+  override val targetPlatform: TargetPlatform = configuration.descriptor.osFamily.toTargetPlatform()
 
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
     val env = EelTargetEnvironment(this)
@@ -117,9 +161,9 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
   private val myTargetPortBindings: MutableMap<TargetPortBinding, ResolvedPortBinding> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = ConcurrentHashMap()
 
-  private val eel = request.configuration.eel
+  private val eel = request.configuration.descriptor.toEelApiBlocking()
 
-  private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.eel}") }
+  private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.descriptor}") }
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -143,9 +187,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       val localPort = targetPortBinding.local ?: NetUtils.findAvailableSocketPort()
       val targetAddress = EelTunnelsApi.HostAddress.Builder(targetPortBinding.target.toUShort()).build()
 
-      forwardingScope.launch {
-        forwardLocalPort(eel.tunnels, localPort, targetAddress)
-      }
+      forwardingScope.forwardLocalPort(eel.tunnels, localPort, targetAddress)
 
       myTargetPortBindings[targetPortBinding] = ResolvedPortBinding(
         localEndpoint = HostPort(NetUtils.getLocalHostString(), localPort),
@@ -158,26 +200,29 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).eelIt()
       }
 
-      val socket = Socket()
+      @OptIn(DelicateCoroutinesApi::class, IntellijInternalApi::class)
+      forwardingScope.launch(blockingDispatcher) {
+        try {
+          for (connection in acceptor.incomingConnections) {
+            launch {
+              Socket().use { socket ->
+                socket.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), localPortBinding.local))
 
-      socket.connect(InetSocketAddress(InetAddress.getLoopbackAddress(),localPortBinding.local))
+                coroutineScope {
+                  launch {
+                    copy(socket.consumeAsEelChannel(), connection.sendChannel)
+                  }
 
-      forwardingScope.launch {
-        launch {
-          val connection = acceptor.incomingConnections.receive()
-
-          launch {
-            copy(socket.consumeAsEelChannel(), connection.sendChannel)  // TODO: Process error
-          }
-          launch {
-            copy(connection.receiveChannel, socket.asEelChannel()) // TODO: PRocess error
+                  launch {
+                    copy(connection.receiveChannel, socket.asEelChannel())
+                  }
+                }
+              }
+            }
           }
         }
-
-        @Suppress("OPT_IN_USAGE")
-        awaitCancellationAndInvoke {
+        finally {
           acceptor.close()
-          socket.close()
         }
       }
 
@@ -271,26 +316,67 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
+    return createProcess(commandLine, EnvironmentVariablesOptionsBuilder().build())
+  }
+
+  @Throws(ExecutionException::class)
+  fun createProcess(
+    commandLine: TargetedCommandLine,
+    parentEnvVarsOptions: EelExecApi.EnvironmentVariablesOptions,
+  ): Process {
     val command = commandLine.collectCommandsSynchronously()
     val builder = eel.exec.spawnProcess(command.first())
 
     builder.args(command.drop(1))
-    builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
+    builder.interactionOptions(commandLine.interactionOptions())
 
     return runBlockingCancellable {
+      builder.env(buildEnvs(commandLine.environmentVariables, parentEnvVarsOptions))
       try {
         builder.eelIt().convertToJavaProcess()
-      }catch (e: ExecuteProcessException) {
+      }
+      catch (e: ExecuteProcessException) {
         throw ExecutionException(e)
       }
     }
   }
 
+  @Throws(ExecutionException::class)
+  private suspend fun buildEnvs(
+    additionalEnvs: Map<String, String>,
+    parentEnvVarsOptions: EelExecApi.EnvironmentVariablesOptions,
+  ): Map<String, String> {
+    val parentEnvs = try {
+      eel.exec.environmentVariables(parentEnvVarsOptions).await()
+    }
+    catch (e: EnvironmentVariablesException) {
+      throw ExecutionException(e)
+    }
+    val envs: MutableMap<String, String> = when (eel.descriptor.osFamily) {
+      EelOsFamily.Windows -> CollectionFactory.createCaseInsensitiveStringMap()
+      EelOsFamily.Posix -> HashMap()
+    }
+    envs.putAll(parentEnvs)
+    envs.putAll(additionalEnvs)
+    return envs
+  }
+
+  private fun TargetedCommandLine.interactionOptions(): EelExecApi.InteractionOptions? = when {
+    ptyOptions != null -> {
+      val echo = !ptyOptions.toLocalPtyOptions().consoleMode
+      EelExecApi.Pty(ptyOptions.initialColumns, ptyOptions.initialRows, echo)
+    }
+    isRedirectErrorStream -> EelExecApi.RedirectStdErr(EelExecApi.RedirectTo.STDOUT)
+    else -> null
+  }
+
   override val targetPlatform: TargetPlatform = request.targetPlatform
 
   override fun shutdown() {
-    forwardingScope.cancel()
+    runBlockingMaybeCancellable {
+      forwardingScope.coroutineContext.job.cancelAndJoin()
+    }
   }
 }
 

@@ -44,10 +44,7 @@ internal data class ModuleDeps(
   @JvmField val exports: List<BazelLabel>,
   @JvmField val associates: List<BazelLabel>,
   @JvmField val plugins: List<String>,
-) {
-  val depsModuleSet = deps.mapNotNull { it.module }.toSet()
-  val runtimeDepsModuleSet = runtimeDeps.mapNotNull { it.module }.toSet()
-}
+)
 
 internal fun generateDeps(
   m2Repo: Path,
@@ -127,7 +124,8 @@ internal fun generateDeps(
         files.any { it.name.endsWith("-$kotlinCompilerCliVersion.jar") } && files.all { it.startsWith(m2OrgJetBrainsKotlin) }
       } ?: false
       val targetNameSuffix = if (isProvided) PROVIDED_SUFFIX else ""
-      val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
+      val parentLibraryReference = element.libraryReference.parentReference
+      val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
       when {
         // Library from .m2 or from any other place with a snapshot version, or repository kotlin dev libraries treated as snapshot
         isSnapshotVersion || isKotlinDevVersionAsSnapshotOutsideOfTree -> {
@@ -149,7 +147,7 @@ internal fun generateDeps(
             targetName = targetName,
             container = libraryContainer,
             jpsName = jpsLibrary.name,
-            isModuleLibrary = false,
+            moduleLibraryModuleName = null,
           )
           context.addLocalLibrary(
             lib = LocalLibrary(
@@ -198,7 +196,7 @@ internal fun generateDeps(
             targetName = targetName,
             container = libraryContainer,
             jpsName = jpsLibrary.name,
-            isModuleLibrary = isModuleLibrary,
+            moduleLibraryModuleName = moduleLibraryModuleName,
           )
 
           val bazelFileDir = getLocalLibBazelFileDir(files, communityRoot = context.communityRoot)
@@ -279,7 +277,7 @@ internal fun generateDeps(
               jars = repositoryJpsLibrary.getPaths(JpsOrderRootType.COMPILED).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               sourceJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.SOURCES).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
               javadocJars = repositoryJpsLibrary.getPaths(JpsOrderRootType.DOCUMENTATION).map { getFileMavenFileDescription(m2Repo, repositoryJpsLibrary, it) },
-              target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, isModuleLibrary = isModuleLibrary),
+              target = LibraryTarget(targetName = targetName, container = libraryContainer, jpsName = jpsLibrary.name, moduleLibraryModuleName = moduleLibraryModuleName),
             ),
             isProvided = isProvided,
           ).target.container
@@ -333,7 +331,7 @@ internal fun generateDeps(
       .filter { it.value.size > 1 }
       .map { it.key.label }
       .sorted()
-    error("Duplicate $listMoniker ${duplicates} for module '${module.module.name}',\ncheck ${module.imlFile}")
+    error("Duplicate $listMoniker $duplicates for module '${module.module.name}',\ncheck ${module.imlFile}")
   }
 
   val plugins = TreeSet<String>()
@@ -345,6 +343,11 @@ internal fun generateDeps(
     else if (it.name.startsWith("rpc-compiler-plugin-") && it.name.endsWith(".jar")) {
       if (module.module.name == "fleet.rpc") {  // other modules use exported_compiler_plugins
         plugins.add("@lib//:rpc-plugin")
+      }
+    }
+    else if (it.name.startsWith("noria-compiler-plugin-") && it.name.endsWith(".jar")) {
+      if (module.module.name == "fleet.noria.cells") {
+        plugins.add("@lib//:noria-plugin")
       }
     }
   }

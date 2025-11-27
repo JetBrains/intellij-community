@@ -59,6 +59,9 @@
     <editorFactoryListener
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewController$InstallerListener"/>
 
+    <customPasteProvider id="CommentFileLinkPasteProvider"
+                         implementation="org.jetbrains.plugins.gitlab.ui.comment.CommitFilePasteProvider"/>
+
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
                  defaultValue="true"/>
@@ -68,6 +71,9 @@
                  key="gitlab.viewed.state.stale.timeout"/>
     <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache"
                  key="gitlab.merge.requests.cached.from.list"/>
+
+    <registryKey defaultValue="true" description="Enable file uploading action for review notes"
+                 key="gitlab.merge.requests.file.upload.enabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">

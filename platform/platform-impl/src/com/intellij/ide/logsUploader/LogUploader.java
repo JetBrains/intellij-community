@@ -32,9 +32,7 @@ public final class LogUploader {
   }
 
   public static @NotNull String uploadFile(@NotNull Path file, @NotNull String fileName) throws IOException {
-    try {
-      var client = PlatformHttpClient.client();
-
+    try (var client = PlatformHttpClient.client()) {
       var requestObj = JSON.std.asString(Map.of(
         "filename", fileName,
         "method", "put",

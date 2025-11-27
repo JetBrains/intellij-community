@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -12,7 +13,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.*;
 
@@ -38,7 +38,7 @@ final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends Dev
 
   @Override
   public @NotNull Icon getIcon() {
-    return DevKitIcons.Gutter.Plugin;
+    return DevkitCoreIcons.Gutter.Plugin;
   }
 
   @Override

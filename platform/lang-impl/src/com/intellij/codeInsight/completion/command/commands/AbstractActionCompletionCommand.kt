@@ -238,8 +238,12 @@ open class ActionCompletionCommand(
   }
 
   override fun getPreview(): IntentionPreviewInfo {
-    if (previewText == null) return IntentionPreviewInfo.EMPTY
-    return IntentionPreviewInfo.Html(previewText)
+    var contentHtml = previewText
+    if (contentHtml == null) return IntentionPreviewInfo.EMPTY
+    if (!contentHtml.endsWith(".")) {
+      contentHtml = "$contentHtml."
+    }
+    return IntentionPreviewInfo.Html(contentHtml)
   }
 }
 

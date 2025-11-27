@@ -26,8 +26,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -54,8 +53,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
-    result), SimpleEntityBuilder {
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -173,8 +171,7 @@ internal class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return SimpleEntity(info, descriptor, entitySource) {
-    }
+    return SimpleEntity(info, descriptor, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

@@ -9,7 +9,6 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class YamlSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in yaml file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))

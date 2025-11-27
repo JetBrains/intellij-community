@@ -10,6 +10,4 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Actual
 @ApiStatus.Internal
-fun currentJavaVersionPlatformSpecificJs(): JavaVersion {
-  return JavaVersion.compose(21, 0, 0, 0, false)
-}
+fun currentJavaVersionPlatformSpecificJs() = DefaultJavaVersion

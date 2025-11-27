@@ -133,7 +133,6 @@ android/intellij.android.device.tests
 android/intellij.android.projectStructureTests
 android/intellij.android.testutils
 android/jps-model
-android/kotlin-integration
 android/layout-inspector
 android/layout-inspector/gradle
 android/layout-ui
@@ -183,7 +182,6 @@ android/project-system-integration-tests
 android/render-resources
 android/rendering
 android/room
-android/safemode
 android/screenshot-testing
 android/screenshot-testing/gradle
 android/sdk-updates
@@ -486,10 +484,12 @@ platform/bootstrap
 platform/bootstrap/coroutine
 platform/bootstrap/dev
 platform/build-scripts
+platform/build-scripts/api
 platform/build-scripts/codeOptimizer
 platform/build-scripts/dev-server
 platform/build-scripts/downloader
 platform/build-scripts/icons
+platform/build-scripts/product-dsl
 platform/build-scripts/testFramework
 platform/build-scripts/tests
 platform/build-scripts/usages
@@ -887,6 +887,7 @@ plugins/devkit/intellij.devkit.debugger
 plugins/devkit/intellij.devkit.gradle
 plugins/devkit/intellij.devkit.i18n
 plugins/devkit/intellij.devkit.intelliLang
+plugins/devkit/intellij.devkit.mcp
 plugins/devkit/intellij.devkit.modules
 plugins/devkit/intellij.devkit.scaffolding
 plugins/devkit/intellij.devkit.smartupdate
@@ -1490,9 +1491,13 @@ tools/apiDump
 tools/apiDump/testData
 tools/devLauncher
 tools/devLauncher/tests
+tools/intellij.lambda.sampleTests
+tools/intellij.lambda.sampleTestsWithFixtures
+tools/intellij.lambda.sampleTestsWithFixtures/plugin
+tools/intellij.lambda.sampleTestsWithPlugin
+tools/intellij.lambda.sampleTestsWithPlugin/plugin
 tools/intellij.lambda.testFramework
-tools/intellij.lambda.testFramework/lambdaTestPlugin
-tools/intellij.lambda.tests
+tools/intellij.lambda.testFramework/plugin
 tools/intellij.tools.ide.metrics.benchmark
 tools/intellij.tools.ide.metrics.collector
 tools/intellij.tools.ide.metrics.collector.starter

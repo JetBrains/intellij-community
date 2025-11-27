@@ -65,7 +65,14 @@ object CoroutinesIds {
             val ID: ClassId = ClassId(PACKAGE, Name.identifier("Flow"))
         }
 
+        val count: CallableId = CallableId(PACKAGE, Name.identifier("count"))
+        val filter: CallableId = CallableId(PACKAGE, Name.identifier("filter"))
+        val filterNotNull: CallableId = CallableId(PACKAGE, Name.identifier("filterNotNull"))
+        val first: CallableId = CallableId(PACKAGE, Name.identifier("first"))
+        val firstOrNull: CallableId = CallableId(PACKAGE, Name.identifier("firstOrNull"))
         val flowOn: CallableId = CallableId(PACKAGE, Name.identifier("flowOn"))
+        val map: CallableId = CallableId(PACKAGE, Name.identifier("map"))
+        val mapNotNull: CallableId = CallableId(PACKAGE, Name.identifier("mapNotNull"))
     }
     
     object CoroutineDispatcher {

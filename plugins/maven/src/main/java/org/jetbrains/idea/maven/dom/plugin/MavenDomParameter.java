@@ -35,5 +35,17 @@ public interface MavenDomParameter extends MavenDomElement {
   @NotNull
   GenericDomValue<String> getDescription();
 
+  /**
+   * since maven-plugin-tools  4.0
+   */
+  @NotNull
+  GenericDomValue<String> getDefaultValue();
+
+  /**
+   * since maven-plugin-tools  4.0
+   */
+  @NotNull
+  GenericDomValue<String> getExpression();
+
   GenericDomValue<Boolean> getRequired();
 }

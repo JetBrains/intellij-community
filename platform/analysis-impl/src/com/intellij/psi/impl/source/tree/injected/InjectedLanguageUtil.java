@@ -336,7 +336,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                                         @NotNull ProgressIndicator indicator,
                                         @NotNull ASTNode oldRoot,
                                         @NotNull ASTNode newRoot,
-                                        @NotNull PsiDocumentManagerBase documentManager) {
+                                        @NotNull PsiDocumentManager documentManager) {
     Language language = injectedPsiFile.getLanguage();
     InjectedFileViewProvider provider = (InjectedFileViewProvider)injectedPsiFile.getViewProvider();
     VirtualFile oldInjectedVFile = provider.getVirtualFile();

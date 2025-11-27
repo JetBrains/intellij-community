@@ -131,9 +131,9 @@ fun PyCallExpression.multipleResolveCallee(resolveContext: PyResolveContext): Li
   return PyUtil.getParameterizedCachedValue(
     this,
     resolveContext) {
-      getExplicitResolveResults(it) +
-      getImplicitResolveResults(it) +
-      getRemoteResolveResults(it)
+    getExplicitResolveResults(it) +
+    getImplicitResolveResults(it) +
+    getRemoteResolveResults(it)
   }
 }
 
@@ -613,9 +613,9 @@ private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: P
       if (secondClass.isSubclass(firstClass, context)) {
         val nextAfterFirstInMro =
           secondClass.getAncestorClasses(context)
-          .dropWhile { it !== firstClass }
-          .drop(1)
-          .firstOrNull()
+            .dropWhile { it !== firstClass }
+            .drop(1)
+            .firstOrNull()
 
         if (nextAfterFirstInMro != null) {
           return PyClassTypeImpl(nextAfterFirstInMro, false)
@@ -913,7 +913,7 @@ private fun PyClassType.resolveMetaclassDunderCall(
       ?.asSequence()
       ?.map { it.element }
       ?.toSet()
-      ?: emptySet()
+    ?: emptySet()
 
   return results.filter { it.element !in typeDunderCall }
 }
@@ -926,15 +926,17 @@ private fun PyClassLikeType.getDunderCallType(resolveContext: PyResolveContext):
   return findMember(PyNames.CALL, resolveContext)
 }
 
+private fun PyCallableParameter.isLegacyPositionalOnly(): Boolean = !isSelf && isPrivate(name.orEmpty())
+
 fun analyzeArguments(
   arguments: List<PyExpression>,
   parameters: List<PyCallableParameter>,
   context: TypeEvalContext,
 ): ArgumentMappingResults {
   val hasSlashParameter = parameters.any { it.parameter is PySlashParameter }
-  var positionalOnlyMode = hasSlashParameter
-  var seenStarArgs = false
-  var seenSingleStar = false
+  val oldStylePositionalOnly = parameters.dropWhile { it.isSelf }.firstOrNull()?.isLegacyPositionalOnly() ?: false
+  var positionalOnlyMode = hasSlashParameter || oldStylePositionalOnly
+  var keywordOnlyMode = false
   var mappedVariadicArgumentsToParameters = false
   val mappedParameters = LinkedHashMap<PyExpression?, PyCallableParameter?>()
   val unmappedParameters = mutableListOf<PyCallableParameter?>()
@@ -957,6 +959,9 @@ fun analyzeArguments(
 
     if (psi is PyNamedParameter || psi == null) {
       val parameterName = parameter.name
+      if (!parameter.isSelf && !hasSlashParameter && !parameter.isLegacyPositionalOnly()) {
+        positionalOnlyMode = false
+      }
       if (parameter.isPositionalContainer()) {
         for (argument in allPositionalArguments) {
           if (argument != null) {
@@ -971,7 +976,7 @@ fun analyzeArguments(
         }
         allPositionalArguments.clear()
         variadicPositionalArguments.clear()
-        seenStarArgs = true
+        keywordOnlyMode = true
       }
       else if (parameter.isKeywordContainer()) {
         for (argument in keywordArguments) {
@@ -983,19 +988,30 @@ fun analyzeArguments(
         keywordArguments.clear()
         variadicKeywordArguments.clear()
       }
-      else if (seenSingleStar) {
-        val keywordArgument: PyExpression? = keywordArguments.removeKeywordArgument(parameterName)
+      else if (keywordOnlyMode) {
+        val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
         if (keywordArgument != null) {
           mappedParameters.put(keywordArgument, parameter)
         }
-        else if (variadicKeywordArguments.isEmpty()) {
-          if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
-        }
-        else {
+        else if (!variadicKeywordArguments.isEmpty()) {
           parametersMappedToVariadicKeywordArguments.add(parameter)
           mappedVariadicArgumentsToParameters = true
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
+        }
+      }
+      else if (positionalOnlyMode) {
+        val positionalArgument = allPositionalArguments.next()
+        if (positionalArgument != null) {
+          mappedParameters.put(positionalArgument, parameter)
+        }
+        else if (!variadicPositionalArguments.isEmpty()) {
+          parametersMappedToVariadicPositionalArguments.add(parameter)
+          mappedVariadicArgumentsToParameters = true
+        }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
       }
       else if (parameter.isParamSpecOrConcatenate(context)) {
@@ -1007,49 +1023,30 @@ fun analyzeArguments(
         variadicPositionalArguments.clear()
         variadicKeywordArguments.clear()
       }
+      else if (!allPositionalArguments.isEmpty()) {
+        val positionalArgument = allPositionalArguments.next()
+        assert(positionalArgument != null)
+        mappedParameters.put(positionalArgument, parameter)
+        if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
+          parametersMappedToVariadicPositionalArguments.add(parameter)
+        }
+      }
       else {
-        if (positionalOnlyMode) {
-          val positionalArgument = allPositionalArguments.next()
-          if (positionalArgument != null) {
-            mappedParameters.put(positionalArgument, parameter)
-          }
-          else if (!variadicPositionalArguments.isEmpty()) {
+        val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
+        if (keywordArgument != null) {
+          mappedParameters.put(keywordArgument, parameter)
+        }
+        else if (!variadicPositionalArguments.isEmpty() || !variadicKeywordArguments.isEmpty()) {
+          if (!variadicPositionalArguments.isEmpty()) {
             parametersMappedToVariadicPositionalArguments.add(parameter)
-            mappedVariadicArgumentsToParameters = true
           }
-          else if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
+          if (!variadicKeywordArguments.isEmpty()) {
+            parametersMappedToVariadicKeywordArguments.add(parameter)
           }
+          mappedVariadicArgumentsToParameters = true
         }
-        else if (allPositionalArguments.isEmpty()) {
-          val keywordArgument = keywordArguments.removeKeywordArgument(parameterName)
-          if (keywordArgument != null && !(!hasSlashParameter && !seenStarArgs && parameterName != null && isPrivate(parameterName))) {
-            mappedParameters.put(keywordArgument, parameter)
-          }
-          else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
-          else {
-            if (!variadicPositionalArguments.isEmpty()) {
-              parametersMappedToVariadicPositionalArguments.add(parameter)
-            }
-            if (!variadicKeywordArguments.isEmpty()) {
-              parametersMappedToVariadicKeywordArguments.add(parameter)
-            }
-            mappedVariadicArgumentsToParameters = true
-          }
-        }
-        else {
-          val positionalArgument = allPositionalArguments.next()
-          if (positionalArgument != null) {
-            mappedParameters.put(positionalArgument, parameter)
-            if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
-              parametersMappedToVariadicPositionalArguments.add(parameter)
-            }
-          }
-          else if (!parameter.hasDefaultValue()) {
-            unmappedParameters.add(parameter)
-          }
+        else if (!parameter.hasDefaultValue()) {
+          unmappedParameters.add(parameter)
         }
       }
     }
@@ -1075,7 +1072,7 @@ fun analyzeArguments(
       positionalOnlyMode = false
     }
     else if (psi is PySingleStarParameter) {
-      seenSingleStar = true
+      keywordOnlyMode = true
     }
     else if (!parameter.hasDefaultValue()) {
       unmappedParameters.add(parameter)

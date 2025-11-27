@@ -57,6 +57,7 @@ public final class PyNonAsciiCharInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitComment(@NotNull PsiComment node) {
       checkString(node, node.getText());

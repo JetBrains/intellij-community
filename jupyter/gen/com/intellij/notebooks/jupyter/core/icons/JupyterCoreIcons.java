@@ -19,6 +19,7 @@ public final class JupyterCoreIcons {
   /** 16x16 */ public static final @NotNull Icon AddJupyterConnection = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/addJupyterConnection.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/addJupyterConnection.svg", 1973780321, 2);
   /** 16x16 */ public static final @NotNull Icon ClearOutputs = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/clearOutputs.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/clearOutputs.svg", 2092497102, 2);
   /** 16x16 */ public static final @NotNull Icon CodeCell = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/codeCell.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/codeCell.svg", 1312298672, 0);
+  /** 16x16 */ public static final @NotNull Icon Colab = load("icons/org.jetbrains.plugins.notebooks.jupyter/colab.svg", 64206699, 0);
   /** 16x16 */ public static final @NotNull Icon ConsoleJupyter = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/consoleJupyter.svg", -790402162, 2);
   /** 16x16 */ public static final @NotNull Icon DuplicateCellBelow = load("icons/org.jetbrains.plugins.notebooks.jupyter/duplicateCellBelow.svg", 709097184, 2);
   /** 16x16 */ public static final @NotNull Icon ImportDataCell = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/importDataCell.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/importDataCell.svg", 1271458516, 0);
@@ -36,6 +37,7 @@ public final class JupyterCoreIcons {
   /** 16x16 */ public static final @NotNull Icon MergeCellAbove = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/mergeCellAbove.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/mergeCellAbove.svg", 27241797, 2);
   /** 16x16 */ public static final @NotNull Icon MergeCellBelow = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/mergeCellBelow.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/mergeCellBelow.svg", 1778850568, 2);
   /** 16x16 */ public static final @NotNull Icon MergeCells = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/mergeCells.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/mergeCells.svg", -1267179727, 2);
+  /** 16x16 */ public static final @NotNull Icon RestartAndRunAll = load("icons/org.jetbrains.plugins.notebooks.jupyter/restartAndRunAll.svg", -912352942, 2);
   /** 16x16 */ public static final @NotNull Icon RestartKernel = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/restartKernel.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/restartKernel.svg", 1421273499, 2);
   /** 16x16 */ public static final @NotNull Icon ResultIncorrect = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/resultIncorrect.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/resultIncorrect.svg", 1020334393, 2);
   /** 16x16 */ public static final @NotNull Icon RunAbove = load("icons/org.jetbrains.plugins.notebooks.jupyter/runAbove.svg", -1047070785, 2);

@@ -38,6 +38,7 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
         else ApplicationBundle.message("checkbox.show.code.folding.outline")
         showGutterOutline = checkBox(text)
           .bindSelected(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown)
+          .gap(RightGap.SMALL)
         if (ExperimentalUI.isNewUI()) {
           comboBox(
             listOf(false, true),
@@ -59,7 +60,7 @@ internal class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingO
 
       row {
         label(ApplicationBundle.message("label.fold.by.default"))
-      }.topGap(TopGap.SMALL)
+      }.topGap(TopGap.MEDIUM)
 
       indent {
         for (configurable in sortedConfigurables) {

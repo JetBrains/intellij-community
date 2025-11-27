@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 ROOT: int
 AND: int
@@ -17,10 +17,10 @@ SEARCH_MATCH_OR_CLOSE: int
 SEARCH_MATCH_OR_CONTROL: int
 
 class FilterNode:
-    tag: Any
-    parent: Any
-    assertion: Any
-    elements: Any
+    tag: Incomplete
+    parent: Incomplete
+    assertion: Incomplete
+    elements: Incomplete
     def __init__(self, tag=None, assertion=None) -> None: ...
     def __str__(self, pos: int = 0) -> str: ...
     def __repr__(self, pos: int = 0) -> str: ...

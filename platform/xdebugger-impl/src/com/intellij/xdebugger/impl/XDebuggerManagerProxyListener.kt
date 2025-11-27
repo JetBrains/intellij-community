@@ -9,7 +9,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.asProxy
+import com.intellij.xdebugger.impl.proxy.asProxy
 import org.jetbrains.annotations.ApiStatus
 
 /**

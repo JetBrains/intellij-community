@@ -16,6 +16,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -69,26 +70,38 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
   }
 
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
-    return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
+    return new ValueCollector(e.getProject());
   }
 
   public class ValueCollector {
     private final List<String> values = new SmartList<>();
     private final Int2IntMap indents = new Int2IntOpenHashMap();
-    private final XDebuggerTree myTree;
+    private final Project myProject;
     private volatile boolean processed;
 
-    public ValueCollector(XDebuggerTree tree) {
-      myTree = tree;
+    /**
+     * @deprecated Use {@link #ValueCollector(Project)} instead
+     */
+    @Deprecated
+    public ValueCollector(@NotNull XDebuggerTree tree) {
+      this(tree.getProject());
+    }
+
+    public ValueCollector(Project project) {
       indents.defaultReturnValue(-1);
+      myProject = project;
     }
 
     public void add(@NotNull String value) {
       values.add(value);
     }
 
-    public XDebuggerTree getTree() {
-      return myTree;
+    /**
+     * @deprecated Do not use. Override {@link XFetchValueActionBase#createCollector(AnActionEvent)} to access required state instead.
+     */
+    @Deprecated
+    public @Nullable XDebuggerTree getTree() {
+      return null;
     }
 
     public void add(@NotNull String value, int indent) {
@@ -97,8 +110,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     }
 
     public void finish() {
-      Project project = myTree.getProject();
-      if (processed && !values.contains(null) && !project.isDisposed()) {
+      if (processed && !values.contains(null) && !myProject.isDisposed()) {
         int minIndent = Integer.MAX_VALUE;
         for (int indent : indents.values()) {
           minIndent = Math.min(minIndent, indent);
@@ -114,12 +126,21 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
           }
           sb.append(values.get(i));
         }
-        handleInCollector(project, sb.toString(), myTree);
+        handleInCollector(myProject, sb.toString(), null);
       }
     }
 
-    public void handleInCollector(final Project project, final String value, XDebuggerTree tree) {
-      handle(project, value, tree);
+    /**
+     * @deprecated Use {@link #handleInCollector(Project, String)} instead
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
+    public void handleInCollector(final Project project, final String value, XDebuggerTree ignoredTree) {
+      handleInCollector(project, value);
+    }
+
+    public void handleInCollector(final Project project, final String value) {
+      handle(project, value, null);
     }
 
     public int acquire() {
@@ -136,7 +157,17 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     }
   }
 
-  protected abstract void handle(final Project project, final String value, XDebuggerTree tree);
+  /**
+   * @deprecated Use {@link #handle(Project, String)} instead
+   */
+  @Deprecated
+  protected void handle(final Project project, final String value, XDebuggerTree ignoredTree) {
+    handle(project, value);
+  }
+
+  protected void handle(final Project project, final String value) {
+    throw new AbstractMethodError();
+  }
 
   private static final class CopyValueEvaluationCallback extends HeadlessValueEvaluationCallback {
     private final int myValueIndex;

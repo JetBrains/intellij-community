@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
+import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.services.ServiceEventListener
+import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerImpl
@@ -17,8 +19,12 @@ import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvi
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
 import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.FrontendRunConfigurationNode
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter
+import com.intellij.platform.execution.serviceView.ServiceViewManagerImpl
+import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +44,23 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
   private val statusFilter = RunDashboardStatusFilter()
   private val configurationTypes = MutableStateFlow(emptySet<String>())
+  private var isInitialized = MutableStateFlow(false)
+
+  override fun isInitialized(): Boolean {
+    return isInitialized.value
+  }
+
+  fun tryStartInitialization() {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return
+    if (!isInitialized.compareAndSet(expect = false, update = true)) return
+
+    try {
+      scheduleFetchInitialState(project)
+    }
+    finally {
+      isInitialized.value = true
+    }
+  }
 
   internal suspend fun subscribeToBackendSettingsUpdates() {
     RunDashboardServiceRpc.getInstance().getSettings(project.projectId()).collect { updatesFromBackend ->
@@ -101,6 +124,18 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
     RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
       syncTypes(updateFromBackend)
+    }
+  }
+
+  internal suspend fun subscribeToNavigateToServiceEvents() {
+    RunDashboardServiceRpc.getInstance().getNavigateToServiceEvents(project.projectId()).collect { updateFromBackend ->
+      val serviceDto = frontendDtos.value.find { it.uuid == updateFromBackend.serviceId } ?: return@collect
+      val configurationNode = FrontendRunConfigurationNode(project, FrontendRunDashboardService(serviceDto))
+      withContext(Dispatchers.EDT) {
+        (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl?)
+          ?.trackingSelect(configurationNode, RunDashboardServiceViewContributor::class.java,
+                           serviceDto.isActivateToolWindowBeforeRun, updateFromBackend.focus)
+      }
     }
   }
 
@@ -207,6 +242,11 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return emptySet()
   }
 
+  override fun navigateToServiceOnRun(descriptorId: RunContentDescriptorId, focus: Boolean) {
+    LOG.debug("navigateToServiceOnRun() invoked on frontend; ignored")
+    return
+  }
+
   override fun updateServiceRunContentDescriptor(contentWithNewDescriptor: Content, oldDescriptor: RunContentDescriptor) {
     val descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(contentWithNewDescriptor) ?: return
     val contentId = descriptor.id as? RunContentDescriptorIdImpl ?: return
@@ -310,6 +350,37 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
         RunDashboardServiceViewContributorHelper.scheduleDetachRunContentDescriptorId(project, contentId)
         break
       }
+    }
+  }
+
+  private fun scheduleFetchInitialState(project: Project) {
+    val synchronizationScope = RunDashboardCoroutineScopeProvider.getInstance(project).cs.childScope("RunDashboardServiceSynchronizer")
+    synchronizationScope.launch {
+      subscribeToBackendSettingsUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendServicesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendStatusesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendCustomizationsUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendConfigurationTypesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendAvailableConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendExcludedConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToNavigateToServiceEvents()
+    }
+    synchronizationScope.launch {
+      FrontendRunDashboardLuxHolder.getInstance(project).subscribeToRunToolwindowUpdates()
     }
   }
 

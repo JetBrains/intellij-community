@@ -10,10 +10,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
+import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class ChangesViewWorkflowManagerImpl(
   private val project: Project,
 ) : ChangesViewWorkflowManager(), Disposable {
+  override val allowExcludeFromCommit = MutableStateFlow(false)
 
   private var _commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
@@ -43,9 +45,7 @@ internal class ChangesViewWorkflowManagerImpl(
         val changesView = (ChangesViewManager.getInstance(project) as ChangesViewManager).initChangesView()
         val workflow = ChangesViewCommitWorkflow(project)
         val commitPanel = ChangesViewCommitPanel(project, changesView)
-        _commitWorkflowHandler = ChangesViewCommitWorkflowHandler(workflow, commitPanel)
-
-        project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
+        setCommitWorkflowHandler(ChangesViewCommitWorkflowHandler(workflow, commitPanel))
 
         activity.end()
       }
@@ -56,11 +56,25 @@ internal class ChangesViewWorkflowManagerImpl(
     else {
       if (currentHandler != null) {
         Disposer.dispose(currentHandler)
-        _commitWorkflowHandler = null
-
-        project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
+        setCommitWorkflowHandler(null)
       }
     }
+  }
+
+  private fun setCommitWorkflowHandler(handler: ChangesViewCommitWorkflowHandler?) {
+    _commitWorkflowHandler = handler
+    if (handler != null) {
+      handler.addActivityListener(object : ChangesViewCommitWorkflowHandler.ActivityListener {
+        override fun activityStateChanged() {
+          allowExcludeFromCommit.value = handler.isActive
+        }
+      })
+      allowExcludeFromCommit.value = handler.isActive
+    }
+    else {
+      allowExcludeFromCommit.value = false
+    }
+    project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
   }
 
   override fun dispose() {

@@ -52,6 +52,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/vcs-api/shared",
     "@lib//:assert_j",
     "//libraries/mockito",

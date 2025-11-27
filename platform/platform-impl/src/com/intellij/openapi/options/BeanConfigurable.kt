@@ -9,6 +9,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Setter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
 import java.util.function.Supplier
@@ -17,10 +19,13 @@ import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 abstract class BeanConfigurable<T : Any> protected constructor(protected val instance: T) : UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+
   var title: @NlsContexts.BorderTitle String? = null
     protected set
 
-  private val myFields: MutableList<CheckboxField> = ArrayList<CheckboxField>()
+  @ApiStatus.Internal
+  protected var groupTopGap: TopGap? = null
+  private val myFields = mutableListOf<CheckboxField>()
 
   protected constructor(beanInstance: T, title: @NlsContexts.BorderTitle String?) : this(beanInstance) {
     this.title = title
@@ -146,6 +151,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
   }
 
   @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval
   protected fun checkBox(fieldName: @NonNls String, title: @NlsContexts.Checkbox String?) {
     myFields.add(CheckboxField(fieldName, title))
   }
@@ -185,12 +191,25 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
     }
   }
 
+  /**
+   * Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes
+   * for full UI customization instead. When converting [BeanConfigurable] to [UiDslUnnamedConfigurable], remember to implement
+   * [ConfigurableWithOptionDescriptors] (if applicable).
+   */
+  @Deprecated("Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes for full UI customization instead",
+              level = DeprecationLevel.WARNING)
+  @ApiStatus.ScheduledForRemoval
   override fun createComponent(): JComponent {
     return ConfigurableBuilderHelper.createBeanPanel(this, components)
   }
 
-  override fun Panel.createContent() {
-    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, this@BeanConfigurable.components)
+  /**
+   * Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes
+   * for full UI customization instead. When converting [BeanConfigurable] to [UiDslUnnamedConfigurable], remember to implement
+   * [ConfigurableWithOptionDescriptors] (if applicable).
+   */
+  final override fun Panel.createContent() {
+    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, components, groupTopGap)
   }
 
   override fun isModified(): Boolean {
@@ -213,6 +232,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
     }
   }
 
-  private val components: List<JComponent>
+  protected val components: List<JComponent>
+    @ApiStatus.Internal
     get() = myFields.map { it.component }
 }

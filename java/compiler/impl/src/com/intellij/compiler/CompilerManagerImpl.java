@@ -10,7 +10,6 @@ import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.EDT;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,12 +50,10 @@ import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 import javax.tools.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -332,7 +330,7 @@ public class CompilerManagerImpl extends CompilerManager {
   public boolean isUpToDate(@NotNull CompileScope scope) {
     // if called from background process on pooled thread (non-EDT), run synchronously, in the calling thread
     // if called from EDT, explicitly pass null indicator to force starting new background thread with progress
-    final ProgressIndicator progress = EventQueue.isDispatchThread()? null : ProgressIndicatorProvider.getInstance().getProgressIndicator();
+    ProgressIndicator progress = EDT.isCurrentThreadEdt() ? null : ProgressIndicatorProvider.getInstance().getProgressIndicator();
     return progress != null? isUpToDate(scope, progress) : new CompileDriver(myProject).isUpToDate(scope, null);
   }
 

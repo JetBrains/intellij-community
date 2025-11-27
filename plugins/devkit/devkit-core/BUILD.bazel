@@ -7,7 +7,8 @@ create_kotlinc_options(
   opt_in = [
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+  ],
+  x_context_parameters = True
 )
 
 resourcegroup(
@@ -34,6 +35,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-core",
+    "//xml/xml-analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -96,6 +98,7 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/xerces",
     "//platform/usageView-impl",
+    "//platform/util/concurrency",
   ]
 )
 ### auto-generated section `build intellij.devkit.core` end

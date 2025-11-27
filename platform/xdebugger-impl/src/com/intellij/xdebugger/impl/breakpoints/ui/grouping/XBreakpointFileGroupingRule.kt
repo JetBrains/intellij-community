@@ -2,10 +2,10 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.icons.AllIcons
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import javax.swing.Icon
 
 internal class XBreakpointFileGroupingRule<B : Any>

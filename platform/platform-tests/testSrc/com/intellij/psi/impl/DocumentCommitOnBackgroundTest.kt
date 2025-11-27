@@ -3,7 +3,6 @@ package com.intellij.psi.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.impl.TransferredWriteActionService
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
@@ -28,6 +27,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.util.application
+import com.intellij.util.concurrency.TransferredWriteActionService
 import com.intellij.util.ui.EDT
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DynamicTest

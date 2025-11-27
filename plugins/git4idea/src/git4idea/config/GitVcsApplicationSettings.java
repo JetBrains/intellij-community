@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import git4idea.cherrypick.EmptyCherryPickResolutionStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public boolean SPLIT_DIFF_PREVIEW_IN_STASHES_ENABLED = true;
 
     public boolean SHOW_DROP_COMMIT_DIALOG = true;
+
+    public EmptyCherryPickResolutionStrategy EMPTY_CHERRY_PICK_RESOLUTION_STRATEGY = EmptyCherryPickResolutionStrategy.SKIP;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -89,13 +92,13 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     return myState.COMBINED_STASHES_AND_SHELVES_ENABLED;
   }
 
-  public void setCombinedStashesAndShelvesTabEnabled(boolean isEnabled) {
-    myState.COMBINED_STASHES_AND_SHELVES_ENABLED = isEnabled;
-  }
+  public void setCombinedStashesAndShelvesTabEnabled(boolean isEnabled) { myState.COMBINED_STASHES_AND_SHELVES_ENABLED = isEnabled; }
 
-  public boolean isCompareWithLocalInStashesEnabled() {
-    return myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED;
-  }
+  public boolean isCompareWithLocalInStashesEnabled() { return myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED; }
+
+  public EmptyCherryPickResolutionStrategy getEmptyCherryPickResolutionStrategy(){ return myState.EMPTY_CHERRY_PICK_RESOLUTION_STRATEGY; }
+
+  public void setEmptyCherryPickResolutionStrategy(EmptyCherryPickResolutionStrategy strategy){ myState.EMPTY_CHERRY_PICK_RESOLUTION_STRATEGY = strategy; }
 
   public void setCompareWithLocalInStashesEnabled(boolean isEnabled) {
     myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED = isEnabled;

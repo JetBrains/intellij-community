@@ -241,6 +241,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList,
       return (PsiTreeUtil.getParentOfType(input, PyKeywordArgument.class) == null) && !(input instanceof PyKeywordArgument);
     }
   }
+
   @Override
   public @Nullable PyExpression getValueExpressionForParam(final @NotNull FunctionParameter parameter) {
     final String parameterName = parameter.getName();

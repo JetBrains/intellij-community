@@ -38,6 +38,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(FindUsagesCommand.PREFIX, FindUsagesCommand::new),
       Map.entry(FindUsagesInBackgroundCommand.PREFIX, FindUsagesInBackgroundCommand::new),
       Map.entry(FindUsagesInToolWindowCommand.PREFIX, FindUsagesInToolWindowCommand::new),
+      Map.entry(FindUsagesInToolWindowWaitCommand.PREFIX, FindUsagesInToolWindowWaitCommand::new),
       Map.entry(IdeEditorKeyCommand.PREFIX, IdeEditorKeyCommand::new),
       Map.entry(ShowAltEnter.PREFIX, ShowAltEnter::new),
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
@@ -137,7 +138,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenProblemViewPanelCommand.PREFIX, OpenProblemViewPanelCommand::new),
       Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new),
       Map.entry(DetectProjectLeaksCommand.PREFIX, DetectProjectLeaksCommand::new),
-      Map.entry(WaitForReOpenedFileCommand.PREFIX, WaitForReOpenedFileCommand::new)
+      Map.entry(WaitForReOpenedFileCommand.PREFIX, WaitForReOpenedFileCommand::new),
+      Map.entry(WaitForCodeVisionCommand.PREFIX, WaitForCodeVisionCommand::new)
     );
   }
 }

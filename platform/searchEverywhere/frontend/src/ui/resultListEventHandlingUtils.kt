@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
@@ -37,14 +38,14 @@ interface SeResultList {
 }
 
 @ApiStatus.Internal
-fun SeResultList.handleEvent(event: SeResultEvent, onAdd: ((SeItemData) -> Unit)? = null, onRemove: (() -> Unit)? = null) {
+fun SeResultList.handleEvent(searchContext: SeSearchContext, event: SeResultEvent, onAdd: ((SeItemData) -> Unit)? = null, onRemove: (() -> Unit)? = null) {
   when (event) {
     is SeResultAddedEvent -> {
       if (pendingReplacementElementUuids.remove(event.itemData.uuid)) {
         SeLog.log(SeLog.DEFAULT) { "SeResultAddedEvent: uuid ${event.itemData.uuid} was skipped because it was supposed to be replaced by an element which came earlier" }
       }
       else {
-        val index = indexToAdd(event.itemData)
+        val index = indexToAdd(event.itemData, searchContext.searchPattern)
         addRow(index, SeResultListItemRow(event.itemData))
         onAdd?.invoke(event.itemData)
 
@@ -69,7 +70,7 @@ fun SeResultList.handleEvent(event: SeResultEvent, onAdd: ((SeItemData) -> Unit)
       }.sortedDescending()
 
       if (indexes.isEmpty()) {
-        val index = indexToAdd(event.newItemData)
+        val index = indexToAdd(event.newItemData, searchContext.searchPattern)
         addRow(index, SeResultListItemRow(event.newItemData))
         onAdd?.invoke(event.newItemData)
       }
@@ -85,12 +86,34 @@ fun SeResultList.handleEvent(event: SeResultEvent, onAdd: ((SeItemData) -> Unit)
         }
       }
     }
-    is SeResultEndEvent -> {}// Do nothing
+    is SeResultEndEvent -> {} // Do nothing
   }
 }
 
-private fun SeResultList.indexToAdd(newItem: SeItemData): Int {
+private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String): Int {
+  if (newItem.isCommand) {
+    val firstNotCommandIndex = firstIndexOrNull(true, true) { item -> !item.isCommand } ?: size
+
+    val comparator = compareBy<SeItemData>(
+      { !it.presentation.text.lowercase().startsWith(searchPattern) },
+      { it.presentation.text.lowercase() }
+    )
+    for (i in 0..<firstNotCommandIndex) {
+      val row = getRow(i)
+      if (row is SeResultListItemRow) {
+        val item = row.item
+        if (comparator.compare(newItem, item) < 0) {
+          return i
+        }
+      }
+    }
+
+    return firstNotCommandIndex
+  }
+
   return firstIndexOrNull(false) { item ->
+    if (item.isCommand) return@firstIndexOrNull false
+
     val newItemProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0
     val itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0
 
@@ -103,7 +126,7 @@ private fun SeResultList.indexToAdd(newItem: SeItemData): Int {
   } ?: lastIndexToInsertItem
 }
 
-private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, predicate: (SeItemData) -> Boolean): Int? {
+private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {
   val startIndex = if (fullSearch) 0 else frozenCount
 
   return (startIndex until size).firstOrNull { index ->
@@ -111,7 +134,7 @@ private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, predicate: (SeIte
       is SeResultListItemRow -> {
         predicate(row.item)
       }
-      SeResultListMoreRow -> false
+      SeResultListMoreRow -> acceptMoreRow
     }
   }
 }

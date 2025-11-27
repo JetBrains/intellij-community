@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -30,7 +31,7 @@ class KotlinUObjectLiteralExpression(
                 ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
         }
 
-    override fun getExpressionType() =
+    override fun getExpressionType(): PsiType =
         sourcePsi.objectDeclaration.toPsiType()
 
     private val superClassConstructorCall: KtSuperTypeCallEntry?
@@ -63,7 +64,7 @@ class KotlinUObjectLiteralExpression(
             }
         }
 
-    override fun resolve() =
+    override fun resolve(): PsiMethod? =
         superClassConstructorCall?.let { baseResolveProviderService.resolveCall(it) }
 
     override fun getArgumentForParameter(i: Int): UExpression? =

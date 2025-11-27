@@ -13,11 +13,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.xdebugger.XDebugProcess
-import com.intellij.xdebugger.XDebugProcessStarter
-import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -39,8 +35,10 @@ open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 }
 
 @ApiStatus.Internal
-inline fun startSession(environment: ExecutionEnvironment, crossinline starter: (session: XDebugSession) -> XDebugProcess): XDebugSession {
-  return XDebuggerManager.getInstance(environment.project).startSession(environment, xDebugProcessStarter(starter))
+inline fun startSession(environment: ExecutionEnvironment, crossinline starter: (session: XDebugSession) -> XDebugProcess): XSessionStartedResult {
+  return XDebuggerManager.getInstance(environment.project).newSessionBuilder(xDebugProcessStarter(starter))
+    .environment(environment)
+    .startSession()
 }
 
 @ApiStatus.Internal
@@ -55,8 +53,7 @@ private fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state:
   return configuration.computeDebugAddressAsync(state).thenAsync{ socketAddress ->
     val starter = { executionResult: ExecutionResult? ->
       LOG.info("Debug session started address=$socketAddress, configuration=$configuration")
-      val session = startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }
-      (session as XDebugSessionImpl).getMockRunContentDescriptor()
+      startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
     }
     if (state is DebuggableRunProfileState) {
       state.execute(socketAddress.port).then(starter)

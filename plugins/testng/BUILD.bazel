@@ -79,6 +79,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
+    "//xml/xml-analysis-api:analysis",
     "//java/debugger/impl",
     "//java/debugger/impl:impl_test_lib",
     "//platform/indexing-api:indexing",

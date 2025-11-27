@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
@@ -6,6 +6,8 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.product.PluginModuleGroup
 import com.intellij.platform.runtime.product.ProductMode
@@ -136,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context, zipFilePool)) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
           loadPluginDescriptorFromRuntimeModule(
             pluginModuleGroup = moduleGroup,
@@ -159,6 +161,51 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
     return scope.async { DiscoveredPluginsList(bundled.awaitAll().filterNotNull(), PluginsSourceContext.Bundled) }
+  }
+
+  /**
+   * Returns true if [pluginModuleGroup] is a plugin with `use-idea-classloader` which should be loaded by platform.
+   * Content modules of these plugins always should be loaded.
+   */
+  private fun isPluginWithUseIdeaClassLoader(
+    pluginModuleGroup: PluginModuleGroup,
+    loadingContext: PluginDescriptorLoadingContext,
+    zipFilePool: ZipEntryResolverPool,
+  ): Boolean {
+    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull() ?: return false
+    val input = readMainModulePluginXml(mainResourceRoot, zipFilePool, pluginModuleGroup) ?: return false
+    // TODO: do we need to support xIncludes in this case?
+    @Suppress("TestOnlyProblems")
+    val rawDescriptor = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, xIncludeLoader = null).let {
+      it.consume(input, mainResourceRoot.toString())
+      it.build()
+    }
+    return rawDescriptor.isUseIdeaClassLoader
+  }
+
+  private fun readMainModulePluginXml(
+    mainResourceRoot: Path,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+  ): ByteArray? {
+    if (Files.isDirectory(mainResourceRoot)) {
+      val dataLoader = LocalFsDataLoader(mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    // mainResourceRoot is a JAR file
+    var resolver: ZipEntryResolverPool.EntryResolver? = null
+    try {
+      resolver = zipFilePool.load(mainResourceRoot)
+      val dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    catch (e: Throwable) {
+      logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load ${PluginManagerCore.PLUGIN_XML_PATH} from '${pluginModuleGroup.mainModule.moduleId.stringId}' module: $e", e)
+      return null
+    }
+    finally {
+      resolver?.close()
+    }
   }
 
   private fun loadCustomPluginDescriptors(

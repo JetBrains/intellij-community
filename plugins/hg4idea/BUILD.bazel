@@ -81,6 +81,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/core-impl",
   ]
 )

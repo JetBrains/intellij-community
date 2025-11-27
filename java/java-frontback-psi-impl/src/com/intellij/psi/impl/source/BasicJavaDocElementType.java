@@ -2,37 +2,17 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.java.syntax.element.JavaDocSyntaxElementType;
-import com.intellij.java.syntax.lexer.JavaDocLexer;
-import com.intellij.java.syntax.lexer.JavaLexer;
-import com.intellij.java.syntax.lexer.JavaTypeEscapeLexer;
-import com.intellij.java.syntax.parser.JavaDocParser;
-import com.intellij.java.syntax.parser.JavaParser;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.BasicJavaParserUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * @see JavaDocSyntaxElementType
  * @deprecated Use the new Java syntax library instead.
- *             See {@link com.intellij.java.syntax.parser.JavaParser}
- *             This class is planned to be removed.
- *             Use {@link com.intellij.psi.JavaDocTokenType} directly.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ * This class is planned to be removed.
+ * Use {@link com.intellij.psi.JavaDocTokenType} directly.
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
@@ -64,126 +44,4 @@ public interface BasicJavaDocElementType {
   ParentAwareTokenSet BASIC_ALL_JAVADOC_ELEMENTS = ParentAwareTokenSet.create(
     BASIC_DOC_TAG, BASIC_DOC_INLINE_TAG, BASIC_DOC_METHOD_OR_FIELD_REF, BASIC_DOC_PARAMETER_REF, BASIC_DOC_TAG_VALUE_ELEMENT,
     BASIC_DOC_REFERENCE_HOLDER, BASIC_DOC_TYPE_HOLDER, BASIC_DOC_COMMENT);
-
-
-  /**
-   * @deprecated Use {@link com.intellij.psi.impl.source.tree.JavaDocElementType.JavaDocCompositeElementType}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType, ParentProviderElementType {
-    private final Supplier<? extends ASTNode> myConstructor;
-    private final Set<IElementType> myParentElementTypes;
-
-    protected JavaDocCompositeElementType(@NonNls @NotNull String debugName,
-                                          @NotNull Supplier<? extends ASTNode> nodeClass,
-                                          @NotNull IElementType parentElementType) {
-      super(debugName);
-      myConstructor = nodeClass;
-      myParentElementTypes = Collections.singleton(parentElementType);
-    }
-
-    @Override
-    public @NotNull ASTNode createCompositeNode() {
-      return myConstructor.get();
-    }
-
-    @Override
-    public @NotNull Set<IElementType> getParents() {
-      return myParentElementTypes;
-    }
-  }
-
-  class JavaDocLazyElementType extends ILazyParseableElementType implements ParentProviderElementType {
-    private final Set<IElementType> myParentElementTypes;
-
-    private JavaDocLazyElementType(final @NonNls String debugName, @NotNull IElementType parentElementType) {
-      super(debugName, JavaLanguage.INSTANCE);
-      myParentElementTypes = Collections.singleton(parentElementType);
-    }
-
-    @Override
-    public ASTNode createNode(CharSequence text) {
-      return new LazyParseablePsiElement(this, text);
-    }
-
-    @Override
-    public @NotNull Set<IElementType> getParents() {
-      return myParentElementTypes;
-    }
-  }
-
-  final class DocReferenceHolderElementType extends JavaDocLazyElementType {
-    public DocReferenceHolderElementType() {
-      super("DOC_REFERENCE_HOLDER", BASIC_DOC_REFERENCE_HOLDER);
-    }
-
-    @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragment(
-        chameleon,
-        (builder, languageLevel) -> {
-          new JavaDocParser(builder, languageLevel).parseJavadocReference(new JavaParser(languageLevel));
-        },
-        false,
-        LanguageLevel.JDK_1_3);
-    }
-  }
-
-  final class DocTypeHolderElementType extends JavaDocLazyElementType {
-    public DocTypeHolderElementType() {
-      super("DOC_TYPE_HOLDER", BASIC_DOC_TYPE_HOLDER);
-    }
-
-    @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragment(
-        chameleon,
-        (builder, languageLevel) -> {
-          new JavaDocParser(builder, languageLevel).parseJavadocType(new JavaParser(languageLevel));
-        },
-        false,
-        LanguageLevel.JDK_1_3,
-        level -> new JavaTypeEscapeLexer(new JavaLexer(level))
-      );
-    }
-  }
-
-  abstract class DocCommentElementType extends IReparseableElementType implements ParentProviderElementType {
-    private final BasicJavaParserUtil.ParserWrapper myParser;
-
-    private static final Set<IElementType> myParentElementTypes = Collections.singleton(BASIC_DOC_COMMENT);
-
-    public DocCommentElementType() {
-      super("DOC_COMMENT", JavaLanguage.INSTANCE);
-      myParser = (builder, languageLevel) -> new JavaDocParser(builder, languageLevel).parseDocCommentText();
-    }
-
-    @Override
-    public @Nullable ASTNode parseContents(final @NotNull ASTNode chameleon) {
-      return BasicJavaParserUtil.parseFragmentWithHighestLanguageLevel(chameleon, myParser, JavaDocLexer::new);
-    }
-
-    @Override
-    public boolean isReparseable(@NotNull ASTNode currentNode,
-                                 @NotNull CharSequence newText,
-                                 @NotNull Language fileLanguage,
-                                 @NotNull Project project) {
-      if (!StringUtil.startsWith(newText, "/**") || !StringUtil.endsWith(newText, "*/")) return false;
-
-      LanguageLevel level = LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
-      JavaLexer lexer = new JavaLexer(level);
-      lexer.start(newText);
-      if (lexer.getTokenType() == JavaDocSyntaxElementType.DOC_COMMENT) {
-        lexer.advance();
-        return lexer.getTokenType() == null;
-      }
-      return false;
-    }
-
-    @Override
-    public @NotNull Set<IElementType> getParents() {
-      return myParentElementTypes;
-    }
-  }
 }

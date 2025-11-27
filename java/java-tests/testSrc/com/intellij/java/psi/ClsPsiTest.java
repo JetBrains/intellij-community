@@ -28,10 +28,7 @@ import org.jetbrains.java.decompiler.IdeaDecompilerSettings;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -298,19 +295,22 @@ public class ClsPsiTest extends LightIdeaTestCase {
       }
     }, () -> {
       PsiClass aClass = getFile("Modifiers").getClasses()[0];
-      PsiMethod constructor = aClass.getMethods()[0];
+      PsiMethod[] methods = aClass.getMethods();
+      PsiMethod constructor = Arrays.stream(methods)
+        .filter(t -> t.isConstructor())
+        .findFirst().get();
       ClsModifierListImpl modifierList = (ClsModifierListImpl)constructor.getModifierList();
       ClsReferenceListImpl throwsList = (ClsReferenceListImpl)constructor.getThrowsList();
 
       // We are actually most interested in the side effect of calls to getText() (we want to ensure no warnings are being logged)
 
-      assertNull(modifierList.getMirror());
+      assertNotNull(modifierList.getMirror());
       assertEquals("public", modifierList.getText());
-      assertNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
+      assertNotNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
 
-      assertNull(throwsList.getMirror());
+      assertNotNull(throwsList.getMirror());
       assertEquals("", throwsList.getText());
-      assertNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
+      assertNotNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
     });
 
     assertEmpty(warnings);

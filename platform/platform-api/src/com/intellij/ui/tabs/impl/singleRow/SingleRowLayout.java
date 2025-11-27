@@ -6,6 +6,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBInsets;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +150,12 @@ public abstract class SingleRowLayout extends TabLayout {
     data.insets = tabs.getLayoutInsets();
     if (tabs.isHorizontalTabs()) {
       data.insets.left += tabs.getFirstTabOffset();
+    }
+
+    IslandsPainterProvider provider = IslandsPainterProvider.getInstance();
+    var additionalInsets = provider == null ? null : provider.getSingleRowTabInsets(tabs.getTabsPosition());
+    if (additionalInsets != null) {
+      data.insets = JBInsets.addInsets(data.insets, additionalInsets);
     }
 
     JBTabsImpl.Toolbar selectedForeToolbar = tabs.infoToForeToolbar.get(selected);

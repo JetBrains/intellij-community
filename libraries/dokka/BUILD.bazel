@@ -1,3 +1,9 @@
 ### auto-generated section `build intellij.libraries.dokka` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "dokka",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
 ### auto-generated section `build intellij.libraries.dokka` end

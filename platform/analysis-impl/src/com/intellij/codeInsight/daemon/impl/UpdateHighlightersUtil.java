@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -39,9 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -451,15 +450,12 @@ public final class UpdateHighlightersUtil {
     }
   }
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
-  static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession highlightingSession) {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("disposeWithFileLevelIgnoreErrors: " + info);
-    }
+  static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession session) {
     if (info.isFileLevelAnnotation()) {
-      ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
+      ((HighlightingSessionImpl)session).removeFileLevelHighlight(info);
     }
+    RangeHighlighter highlighter = info.getHighlighter();
     try {
-      RangeHighlighter highlighter = info.getHighlighter();
       if (highlighter != null) {
         highlighter.dispose();
       }
@@ -471,6 +467,23 @@ public final class UpdateHighlightersUtil {
       // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
       // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
       LOG.warn(e);
+    }
+    if (LOG.isTraceEnabled()) {
+      MarkupModel model = highlighter == null ? null : DocumentMarkupModel.forDocument(highlighter.getDocument(), session.getProject(), false);
+      List<RangeHighlighterEx> dups = new ArrayList<>();
+      if (model != null) {
+        ((MarkupModelEx)model).processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
+        dups.removeIf(h-> {
+          HighlightInfo hi;
+          return !h.getTextRange().equals(highlighter.getTextRange()) ||
+                 h.getTextAttributesKey() != highlighter.getTextAttributesKey() ||
+                 (hi=HighlightInfo.fromRangeHighlighter(h)) == null ||
+                 !Objects.equals(hi.getDescription(), info.getDescription()) ||
+                 !Objects.equals(hi.getToolId(), info.getToolId())
+            ;
+        });
+      }
+      LOG.trace("disposeWithFileLevelIgnoreErrors: " + info +(highlighter == null ? " (highlighter is null)":"")+(dups.isEmpty() ? "" : "; same range highlighters remain: "+dups));
     }
   }
 }

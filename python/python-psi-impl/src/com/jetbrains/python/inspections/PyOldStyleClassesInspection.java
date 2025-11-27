@@ -38,7 +38,7 @@ import java.util.List;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
 public final class PyOldStyleClassesInspection extends PyInspection {
@@ -54,6 +54,7 @@ public final class PyOldStyleClassesInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
@@ -65,16 +66,18 @@ public final class PyOldStyleClassesInspection extends PyInspection {
       if (!node.isNewStyleClass(myTypeEvalContext)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if (PyNames.SLOTS.equals(attr.getName())) {
-            registerProblem(attr, PyPsiBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
-              LocalQuickFix.EMPTY_ARRAY));
+            registerProblem(attr, PyPsiBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                            quickFixes.toArray(
+                              LocalQuickFix.EMPTY_ARRAY));
           }
         }
         for (PyFunction attr : node.getMethods()) {
           if (PyNames.GETATTRIBUTE.equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
-            registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.oldstyle.class.getattribute"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
-              LocalQuickFix.EMPTY_ARRAY));
+            registerProblem(nameNode.getPsi(), PyPsiBundle.message("INSP.oldstyle.class.getattribute"),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
+                LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }

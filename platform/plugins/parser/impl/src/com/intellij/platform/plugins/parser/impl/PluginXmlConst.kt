@@ -118,6 +118,7 @@ object PluginXmlConst {
   const val SERVICE_EP_OVERRIDES_ATTR: String = "overrides"
   const val SERVICE_EP_PRELOAD_ATTR: String = "preload"
   const val SERVICE_EP_PRELOAD_TRUE_VALUE: String = "true"
+  const val SERVICE_EP_PRELOAD_FALSE_VALUE: String = "false"
   const val SERVICE_EP_PRELOAD_AWAIT_VALUE: String = "await"
   const val SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE: String = "notHeadless"
   const val SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE: String = "notLightEdit"

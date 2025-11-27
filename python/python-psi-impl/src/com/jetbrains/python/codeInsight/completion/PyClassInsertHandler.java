@@ -31,11 +31,11 @@ public final class PyClassInsertHandler implements InsertHandler<LookupElement> 
       PyClass pyClass = PyUtil.as(item.getPsiElement(), PyClass.class);
       PyFunction init = pyClass != null ? pyClass.findInitOrNew(true, null) : null;
       if (init != null && PyFunctionInsertHandler.hasParams(context, init)) {
-        editor.getCaretModel().moveToOffset(offset+1);
+        editor.getCaretModel().moveToOffset(offset + 1);
         AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), init);
       }
       else {
-        editor.getCaretModel().moveToOffset(offset+2);
+        editor.getCaretModel().moveToOffset(offset + 2);
       }
     }
   }

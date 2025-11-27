@@ -1,0 +1,46 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl
+
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.editorId
+import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.project.projectId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+internal fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
+  performDebuggerActionAsync(e.project, e.dataContext, action)
+}
+
+internal fun performDebuggerActionAsync(
+  project: Project?,
+  dataContext: DataContext,
+  action: suspend () -> Unit,
+) {
+  val coroutineScope = project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
+                       ?: service<FrontendDebuggerActionCoroutineScope>().cs
+
+  coroutineScope.launch {
+    action()
+    val editor = dataContext.getData(CommonDataKeys.EDITOR)
+    if (project != null && editor != null) {
+      withContext(Dispatchers.EDT) {
+        XDebuggerManagerApi.Companion.getInstance().reshowInlays(project.projectId(), editor.editorId())
+      }
+    }
+  }
+}
+
+@Service(Service.Level.APP)
+private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
+
+@Service(Service.Level.PROJECT)
+private class FrontendDebuggerActionProjectCoroutineScope(val cs: CoroutineScope)

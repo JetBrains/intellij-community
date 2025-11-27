@@ -1,20 +1,21 @@
 import org.jspecify.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.Map;
 import java.util.Collection;
 
 class B<T> {
   B<@NotNull String> simpleNullableToNotNull(B<@Nullable String> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String></p>">arg</warning>;
   }
 
   B<@Nullable String> simpleNotNullToNullable(B<@NotNull String> arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: B<<b>@NotNull</b> String></p>">arg</warning>;
   }
 
   B<B<@NotNull String>> nested(B<B<@Nullable String>> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<B<<b>@Nullable</b> String>></p>">arg</warning>;
   }
 
   B<? extends @Nullable Object> extendsWildcardNullable(B<@NotNull Object> arg) {
@@ -22,7 +23,7 @@ class B<T> {
   }
 
   B<? extends @NotNull Object> extendsWildcardNotNull(B<@Nullable String> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String></p>">arg</warning>;
   }
 
   B<? super @NotNull String> SupperWildcard(B<@Nullable Object> arg) {
@@ -30,7 +31,7 @@ class B<T> {
   }
 
   B<? extends @NotNull Object> extendsWildcardBothNotNull(B<? extends @Nullable Object> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<? extends <b>@Nullable</b> Object></p>">arg</warning>;
   }
 
   B<? extends @Nullable Object> extendsWildcardBothNullable(B<? extends @NotNull Object> arg) {
@@ -42,35 +43,35 @@ class B<T> {
   }
 
   B<? extends B<@NotNull Object>> nestedWithWildcard(B<B<@Nullable Object>> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<B<<b>@Nullable</b> Object>></p>">arg</warning>;
   }
 
   Map<List<String>, List<@Nullable String>> checkIsPerformedIfSecondTypeArgumentIsTheSame(Map<List<String>, List<@NotNull String>> arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: Map<List<String>, List<<b>@NotNull</b> String>></p>">arg</warning>;
   }
 
   B<@NotNull String>[] array(B<@Nullable String>[] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String>[]</p>">arg</warning>;
   }
 
   Object[] @NotNull [] nullabilityInNestedArray(Object[] @Nullable [] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: Object[] <b>@Nullable</b> []</p>">arg</warning>;
   }
 
   B<@NotNull String>[][] multiDimensionalArray(B<@Nullable String>[][] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String>[][]</p>">arg</warning>;
   }
 
   static class C<T, V> {
     C<Object, @NotNull String> secondArgument(C<Object, @Nullable String> arg) {
-      return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">arg</warning>;
+      return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: C<Object, <b>@Nullable</b> String></p>">arg</warning>;
     }
   }
 
   interface I {}
 
   List<@Nullable String> intersectionSimple(Object arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(List<@NotNull String> & I) arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(List<@NotNull String> & I) arg</warning>;
   }
 
   Collection<@Nullable String> intersectionTreatsFirstMatchingUnknown(Object arg) {
@@ -78,11 +79,11 @@ class B<T> {
   }
 
   Collection<@Nullable String> intersectionTreatsFirstMatchingMismatch(Object arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(Collection<@NotNull String> & List<@NotNull String> & I) arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(Collection<@NotNull String> & List<@NotNull String> & I) arg</warning>;
   }
 
   List<List<@Nullable String>> nestedIntersection(Object arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(List<List<@NotNull String>> & I) arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected">(List<List<@NotNull String>> & I) arg</warning>;
   }
 
   static class NoStackOverflow {
@@ -94,6 +95,13 @@ class B<T> {
 
     public Parent rawType(Child p) {
       return p;
+    }
+  }
+
+  @NullMarked
+  static class ReturnWithNullMarked {
+    static List<@Nullable String> f(List<String> arg) {
+      return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: List<<b>@NullMarked</b> String></p>">arg</warning>;
     }
   }
 }

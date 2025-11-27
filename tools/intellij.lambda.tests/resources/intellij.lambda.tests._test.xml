@@ -1,5 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.lambda.testFramework" />
-  </dependencies>
-</idea-plugin>

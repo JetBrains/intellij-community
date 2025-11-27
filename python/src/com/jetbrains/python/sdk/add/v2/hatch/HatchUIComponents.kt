@@ -212,7 +212,7 @@ internal data class HatchFormFields<P : PathHolder>(
 
     with(validatedPathField) {
       initialize(scope)
-      pathValidator.backProperty.afterChange { executable ->
+      model.hatchViewModel.hatchExecutable.afterChange { executable ->
         if (executable != model.hatchViewModel.hatchExecutable.get()) {
           model.hatchViewModel.hatchExecutable.set(executable)
         }
@@ -249,7 +249,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedSystemPython,
       )
     }
   }.visibleIf(model.hatchViewModel.hatchExecutable.transform { it?.validationResult?.successOrNull != null })

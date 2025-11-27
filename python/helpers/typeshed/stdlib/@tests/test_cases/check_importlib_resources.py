@@ -29,4 +29,4 @@ if sys.version_info >= (3, 13):
         importlib.resources.read_binary("pkg", pth)
         importlib.resources.path("pkg", pth)
         importlib.resources.is_resource("pkg", pth)
-        importlib.resources.contents("pkg", pth)
+        importlib.resources.contents("pkg", pth)  # pyright: ignore[reportDeprecated]

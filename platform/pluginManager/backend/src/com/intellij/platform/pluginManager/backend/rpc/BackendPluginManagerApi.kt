@@ -105,6 +105,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     CustomPluginRepositoryService.getInstance().clearCache()
   }
 
+  override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    DefaultUiPluginManagerController.setPluginsAutoUpdateEnabled(enabled)
+  }
+
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {
     return DefaultUiPluginManagerController.loadDescriptorById(pluginId)?.let { PluginDto.fromModel(it) }
   }

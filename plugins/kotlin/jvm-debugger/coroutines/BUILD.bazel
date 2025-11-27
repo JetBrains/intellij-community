@@ -47,6 +47,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/core",
     "//platform/lang-impl",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/core-ui",

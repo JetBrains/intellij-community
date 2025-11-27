@@ -1,0 +1,19 @@
+- name: dist.all/lib/intellij.platform.projectModel.impl.jar
+  modules:
+  - name: intellij.platform.backend.workspace
+  - name: intellij.platform.concurrency
+  - name: intellij.platform.core.impl
+  - name: intellij.platform.diagnostic.telemetry
+  - name: intellij.platform.diagnostic.telemetry.exporters
+  - name: intellij.platform.diagnostic.telemetry.impl
+  - name: intellij.platform.eel.provider
+  - name: intellij.platform.plugins.parser.impl
+  - name: intellij.platform.projectModel
+  - name: intellij.platform.projectModel.impl
+  - name: intellij.platform.syntax
+  - name: intellij.platform.util.coroutines
+  - name: intellij.platform.util.diff
+  - name: intellij.platform.util.ex
+  - name: intellij.platform.util.http
+  - name: intellij.platform.workspace.jps
+  - name: intellij.platform.workspace.storage

@@ -35,16 +35,34 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.atomic.AtomicReference
 
-class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceFileIndexEx, Disposable.Default {
+class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
     val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
   }
 
-  private val indexDataReference = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
-  private val throttledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
+  private val project: Project
+  private val indexDataReference: AtomicReference<WorkspaceFileIndexData> = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
+  private val throttledLogger: ThrottledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
+
+  constructor(project: Project, coroutineScope: CoroutineScope) {
+    this.project = project
+    project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
+          indexData.clearPackageDirectoryCache()
+          if (events.any(DirectoryIndexImpl::isIgnoredFileCreated)) {
+            indexData.resetFileCache()
+          }
+        }
+      }
+    })
+    LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
+    EP_NAME.addChangeListener(coroutineScope) { indexData = EmptyWorkspaceFileIndexData.RESET }
+  }
 
   @NonInjectable
-  constructor(project: Project, indexData: WorkspaceFileIndexData, coroutineScope: CoroutineScope) : this(project, coroutineScope) {
+  constructor(project: Project, indexData: WorkspaceFileIndexData) {
+    this.project = project
     indexDataReference.set(indexData)
   }
 
@@ -63,21 +81,6 @@ class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: Corou
         newValue.dispose()
       }
     }
-
-  init {
-    project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
-          indexData.clearPackageDirectoryCache()
-          if (events.any(DirectoryIndexImpl::isIgnoredFileCreated)) {
-            indexData.resetFileCache()
-          }
-        }
-      }
-    })
-    LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
-    EP_NAME.addChangeListener(coroutineScope) { indexData = EmptyWorkspaceFileIndexData.RESET }
-  }
 
   override fun isInWorkspace(file: VirtualFile): Boolean {
     return findFileSet(file = file,

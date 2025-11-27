@@ -122,7 +122,7 @@ internal class SearchEverywhereJavaPsiElementFeatureProvider : SearchEverywhereE
   }
 
   internal object Fields {
-    val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("packageDistance")
-    val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = EventFields.Double("packageDistanceNorm")
+    val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("package_distance")
+    val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = EventFields.Double("package_distance_norm")
   }
 }

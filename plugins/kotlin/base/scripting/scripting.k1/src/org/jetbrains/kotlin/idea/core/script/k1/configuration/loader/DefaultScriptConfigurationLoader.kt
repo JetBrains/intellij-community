@@ -6,10 +6,10 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.cache.ScriptConfigurationSnapshot
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -42,7 +42,7 @@ open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfig
 
         val result = getConfigurationThroughScriptingApi(ktFile, virtualFile, scriptDefinition)
 
-        if (KotlinScriptingSettingsImpl.getInstance(project).autoReloadConfigurations(scriptDefinition)) {
+        if (KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(scriptDefinition)) {
             context.saveNewConfiguration(virtualFile, result)
         } else {
             context.suggestNewConfiguration(virtualFile, result)

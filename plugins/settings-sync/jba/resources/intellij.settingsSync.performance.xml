@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.settingsSync.jba.performanceTesting">
-  <dependencies>
-    <plugin id="com.jetbrains.performancePlugin"/>
-  </dependencies>
-  <extensions defaultExtensionNs="com.jetbrains">
-    <performancePlugin.commandProvider implementation="com.intellij.settingsSync.jba.performanceTesting.SettingsSyncCommandProvider"/>
-  </extensions>
-</idea-plugin>

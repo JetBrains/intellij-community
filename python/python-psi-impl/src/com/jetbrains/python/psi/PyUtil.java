@@ -65,7 +65,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 
 /**
  * Assorted utility methods for Python code insight.
- *
+ * <p>
  * These methods don't depend on the Python runtime.
  *
  * @see PyPsiUtils for utilities used in Python PSI API
@@ -73,7 +73,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
  */
 public final class PyUtil {
 
-  private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
+  private static final boolean VERBOSE_MODE = System.getenv("_PYCHARM_VERBOSE_MODE") != null;
 
   private PyUtil() {
   }
@@ -421,7 +421,8 @@ public final class PyUtil {
   // Note that returned list may contain null items, e.g. for unresolved import elements, originally wrapped
   //  in `com.jetbrains.python.psi.resolve.ImportedResolveResult`
   //  TODO: it would be a good idea to revise `filterTopPriority` to return the import definer when the element is null
-  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element,
+                                                                            @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner referenceOwner) {
       return multiResolveTopPriority(referenceOwner.getReference(resolveContext));
     }
@@ -555,7 +556,9 @@ public final class PyUtil {
    * @param <T>     value type
    * @param <P>     key type
    */
-  public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull Function<P, @NotNull T> f) {
+  public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element,
+                                                              @Nullable P param,
+                                                              @NotNull Function<P, @NotNull T> f) {
     final T result = getNullableParameterizedCachedValue(element, param, f);
     assert result != null;
     return result;
@@ -565,8 +568,8 @@ public final class PyUtil {
    * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)} but allows nulls.
    */
   public static @Nullable <T, P> T getNullableParameterizedCachedValue(@NotNull PsiElement element,
-                                                             @Nullable P param,
-                                                             @NotNull Function<P, @Nullable T> f) {
+                                                                       @Nullable P param,
+                                                                       @NotNull Function<P, @Nullable T> f) {
     final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
     final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
@@ -592,22 +595,13 @@ public final class PyUtil {
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, final @NotNull Consumer<? super ProgressIndicator> function) {
-    if (modal) {
-      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
+    Task.Backgroundable task = new Task.Backgroundable(project, title, canBeCancelled) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        function.consume(indicator);
+      }
+    };
+    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
   /**
@@ -648,7 +642,8 @@ public final class PyUtil {
     PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, consumer);
   }
 
-  public static @Nullable <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
+  public static @Nullable <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor,
+                                                                    @NotNull Function<? super Document, ? extends T> func) {
     return PyUtilCore.updateDocumentUnblockedAndCommitted(anchor, func);
   }
 
@@ -921,11 +916,13 @@ public final class PyUtil {
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *
-   * @param name name of the parameter
+   * @param name           name of the parameter
    * @param settingsAnchor file to check code style settings and surround equals sign with spaces if necessary
    * @return lookup element
    */
-  public static @NotNull LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor, boolean addEquals) {
+  public static @NotNull LookupElement createNamedParameterLookup(@NotNull String name,
+                                                                  @NotNull PsiFile settingsAnchor,
+                                                                  boolean addEquals) {
     final String suffix;
     if (addEquals) {
       if (PythonCodeStyleService.getInstance().isSpaceAroundEqInKeywordArgument(settingsAnchor)) {
@@ -934,7 +931,8 @@ public final class PyUtil {
       else {
         suffix = "=";
       }
-    } else {
+    }
+    else {
       suffix = "";
     }
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(
@@ -1257,7 +1255,9 @@ public final class PyUtil {
     return false;
   }
 
-  public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+  public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile,
+                                                      int caretOffset,
+                                                      @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     return PyUtilCore.findPrevAtOffset(psiFile, caretOffset, toSkip);
   }
 
@@ -1273,7 +1273,9 @@ public final class PyUtil {
     return element;
   }
 
-  public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+  public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile,
+                                                      int caretOffset,
+                                                      @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
     return PyUtilCore.findNextAtOffset(psiFile, caretOffset, toSkip);
   }
 
@@ -1709,7 +1711,7 @@ public final class PyUtil {
   }
 
   public static final class IterHelper {  // TODO: rename sanely
-    private IterHelper() {}
+    private IterHelper() { }
 
     public static @Nullable PsiNamedElement findName(Iterable<? extends PsiNamedElement> it, String name) {
       PsiNamedElement ret = null;

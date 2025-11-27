@@ -7,6 +7,7 @@ import com.intellij.grazie.text.TextContent.ExclusionKind;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
+import com.intellij.grazie.utils.Text;
 import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
@@ -30,11 +31,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 
 public class XmlTextExtractor extends TextExtractor {
+  private static final Pattern ESCAPE_EXCLUSIONS = Pattern.compile("\\\\[nt]");
   private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
+
   private final Set<Class<? extends Language>> myEnabledDialects;
 
   protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {
@@ -43,6 +47,10 @@ public class XmlTextExtractor extends TextExtractor {
 
   protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
     return __ -> TagKind.Unknown;
+  }
+
+  protected boolean shouldMaskEscapeSymbols() {
+    return false;
   }
 
   @Override
@@ -64,10 +72,7 @@ public class XmlTextExtractor extends TextExtractor {
     }
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
-      TextContent content = builder.build(element, LITERALS);
-      if (content != null) {
-        return List.of(content);
-      }
+      return ContainerUtil.createMaybeSingletonList(builder.build(element, LITERALS));
     }
 
     return List.of();
@@ -110,9 +115,17 @@ public class XmlTextExtractor extends TextExtractor {
           inlineTags.add(tag);
           markupIndices.add(group.size());
         }
-        if (each instanceof OuterLanguageElement || each instanceof XmlEntityRef) {
+        if (each instanceof OuterLanguageElement) {
           flushGroup(true);
           unknownBefore = true;
+        }
+        if (each instanceof XmlEntityRef) {
+          if (HtmlUtilsKt.isShyEntity(each.getText())) {
+            unknownIndices.add(group.size());
+          } else {
+            flushGroup(true);
+            unknownBefore = true;
+          }
         }
 
         if (isText(each)) {
@@ -161,6 +174,7 @@ public class XmlTextExtractor extends TextExtractor {
           TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
           component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
           component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
+          component = maskEscapeSymbols(component);
           components.add(component);
           i++;
         }
@@ -196,6 +210,11 @@ public class XmlTextExtractor extends TextExtractor {
     return visitor.result;
   }
 
+  private TextContent maskEscapeSymbols(TextContent component) {
+    if (!shouldMaskEscapeSymbols()) return component;
+    return component.excludeRanges(ContainerUtil.map(Text.allOccurrences(ESCAPE_EXCLUSIONS, component), Exclusion::markUnknown));
+  }
+
   private static boolean isText(PsiElement leaf) {
     PsiElement parent = leaf.getParent();
     if (!(parent instanceof XmlText) && !isCdata(parent) && !(parent instanceof XmlDocument)) {
@@ -224,7 +243,7 @@ public class XmlTextExtractor extends TextExtractor {
   }
 
   private static boolean isInlineNonTextTag(String name) {
-    return "code".equals(name);
+    return "code".equals(name) || "wbr".equals(name);
   }
 
   private static boolean isAuthorTag(String name) {
@@ -234,6 +253,11 @@ public class XmlTextExtractor extends TextExtractor {
   public static class Xml extends XmlTextExtractor {
     public Xml() {
       super(XMLLanguage.class, XHTMLLanguage.class, DTDLanguage.class);
+    }
+
+    @Override
+    protected boolean shouldMaskEscapeSymbols() {
+      return true;
     }
   }
 
@@ -257,6 +281,7 @@ public class XmlTextExtractor extends TextExtractor {
 
       HtmlCodeStyleSettings settings = CodeStyle.getCustomSettings(context.getContainingFile(), HtmlCodeStyleSettings.class);
       Set<String> inlineTags = ContainerUtil.newHashSet(settings.HTML_INLINE_ELEMENTS.split(","));
+      inlineTags.add("wbr");
       return tag -> {
         String name = tag.getName();
         if (HtmlUtilsKt.commonBlockElements.contains(name) || isBlockNonTextTag(name)) return TagKind.Block;

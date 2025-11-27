@@ -108,7 +108,7 @@ public final class PyExtractMethodUtil {
 
     final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, fragment.getOutputVariables(), variableData);
 
-    CommandProcessor.getInstance().executeCommand(project, () ->  {
+    CommandProcessor.getInstance().executeCommand(project, () -> {
       final RefactoringEventData beforeData = new RefactoringEventData();
       beforeData.addElements(new PsiElement[]{statement1, statement2});
       project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
@@ -181,7 +181,8 @@ public final class PyExtractMethodUtil {
 
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       if (processDuplicates) {
-        pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
+        pointers.addAll(
+          ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
       }
 
       processDuplicatesAndAddImports(project, editor, processDuplicates, pointers, methodSettings, insertedMethod,
@@ -378,7 +379,8 @@ public final class PyExtractMethodUtil {
         PsiFile file = expression.getContainingFile();
         SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
         if (processDuplicates) {
-          pointers.addAll(ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
+          pointers.addAll(
+            ContainerUtil.map(duplicates, p -> pointerManager.createSmartPsiFileRangePointer(file, p.getStartElement().getTextRange())));
         }
         if (callElement != null) {
           insertedCallElement = WriteAction.compute(() -> PyReplaceExpressionUtil.replaceExpression(expression, callElement));
@@ -716,7 +718,8 @@ public final class PyExtractMethodUtil {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
-        if (!MessageDialogBuilder.okCancel(RefactoringBundle.message("warning.title"), error + ". " + RefactoringBundle.message("do.you.wish.to.continue")).
+        if (!MessageDialogBuilder.okCancel(RefactoringBundle.message("warning.title"),
+                                           error + ". " + RefactoringBundle.message("do.you.wish.to.continue")).
           icon(UIUtil.getWarningIcon()).ask(project)) {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
@@ -830,5 +833,4 @@ public final class PyExtractMethodUtil {
     boolean selected = PropertiesComponent.getInstance(project).getBoolean(ADD_TYPE_ANNOTATIONS_VALUE_KEY, ADD_TYPE_ANNOTATIONS_DEFAULT);
     return selected;
   }
-
 }

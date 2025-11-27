@@ -1,6 +1,6 @@
 a:com.intellij.codeHighlighting.TextEditorHighlightingPass
 - com.intellij.codeHighlighting.HighlightingPass
-- *p:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- *:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
 *f:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.DeclarativeInsertHandler
 - sf:INSTANCE:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler

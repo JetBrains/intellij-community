@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -12,11 +14,14 @@ import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.size
+import kotlin.test.assertTrue
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.junit.Rule
 import org.junit.Test
@@ -138,6 +143,96 @@ class ComboBoxTest {
         composeRule.waitForIdle()
 
         popupMenu.assertHeightIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun `popup resize based on the label content`() {
+        val labelText = mutableStateOf("My Text")
+        composeRule.setContent {
+            IntUiTheme {
+                ComboBox(
+                    labelText = labelText.value,
+                    modifier = Modifier.testTag("ComboBox"),
+                    popupContent = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            popupItems.forEach { Text(it, modifier = Modifier.padding(horizontal = 16.dp)) }
+                        }
+                    },
+                )
+            }
+        }
+
+        val initialSize = composeRule.onNodeWithTag("ComboBox").getBoundsInRoot().size
+
+        labelText.value = "This is another text to perform resize"
+        composeRule.waitForIdle()
+
+        val secondSize = composeRule.onNodeWithTag("ComboBox").getBoundsInRoot().size
+
+        assertTrue(initialSize.width < secondSize.width, "The width of the combobox should have been resized")
+
+        labelText.value = "small"
+        composeRule.waitForIdle()
+
+        val thirdSize = composeRule.onNodeWithTag("ComboBox").getBoundsInRoot().size
+
+        assertTrue(secondSize.width > thirdSize.width, "The width of the combobox should have been resized")
+    }
+
+    @Test
+    fun `popup should not change width if defined via modifier`() {
+        val labelText = mutableStateOf("My Text")
+        composeRule.setContent {
+            IntUiTheme {
+                ComboBox(
+                    labelText = labelText.value,
+                    modifier = Modifier.testTag("ComboBox").width(300.dp),
+                    popupContent = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            popupItems.forEach { Text(it, modifier = Modifier.padding(horizontal = 16.dp)) }
+                        }
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(300.dp)
+
+        labelText.value = "This is another text to perform resize"
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(300.dp)
+
+        labelText.value = "small"
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(300.dp)
+    }
+
+    @Test
+    fun `popup should respect min and max width if defined`() {
+        val labelText = mutableStateOf("My Text")
+        composeRule.setContent {
+            IntUiTheme {
+                ComboBox(
+                    labelText = labelText.value,
+                    modifier = Modifier.testTag("ComboBox").widthIn(100.dp, 250.dp),
+                    popupContent = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            popupItems.forEach { Text(it, modifier = Modifier.padding(horizontal = 16.dp)) }
+                        }
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(100.dp)
+
+        labelText.value = "This is another text to perform resize"
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(250.dp)
+
+        labelText.value = "small"
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("ComboBox").assertWidthIsEqualTo(100.dp)
     }
 
     private val popupItems =

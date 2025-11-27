@@ -1,6 +1,9 @@
 aws_xray_sdk.core.models.subsegment.subsegment_decorator
 aws_xray_sdk.core.sampling.connector.ServiceConnector.fetch_sampling_rules
 
+# Inconsistency because `context_missing` param can be passed in *args or **kwargs:
+aws_xray_sdk.core.async_context.AsyncContext.__init__
+
 # We can not import 3rd-party libraries in teststubs runtime,
 # but we can use Protocol to replace this types:
 aws_xray_sdk.ext.aiobotocore

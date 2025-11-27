@@ -39,6 +39,15 @@ public interface FileManager {
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 
+  /**
+   * @return list of cached PSI files. Note that the list can be shorter than {@link #findCachedViewProviders(VirtualFile)} because
+   * not all view providers have cached PSI files.
+   */
+  @ApiStatus.Experimental
+  @RequiresReadLock
+  @NotNull @Unmodifiable
+  List<@NotNull PsiFile> getCachedPsiFiles(@NotNull VirtualFile vFile);
+
   @ApiStatus.Experimental
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
@@ -47,7 +56,7 @@ public interface FileManager {
   void cleanupForNextTest();
 
   // todo IJPL-339 mark deprecated?
-  FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
+  @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
 
   @ApiStatus.Experimental
   FileViewProvider findViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);

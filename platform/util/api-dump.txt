@@ -60,6 +60,9 @@ com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 com.intellij.openapi.diagnostic.Logger$Factory
 - a:getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
+f:com.intellij.openapi.diagnostic.LoggerKt
+- sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0):V
+- bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 com.intellij.openapi.diagnostic.UntraceableException
 com.intellij.openapi.util.BooleanGetter
 - java.util.function.BooleanSupplier
@@ -222,6 +225,9 @@ f:com.intellij.openapi.util.io.OSAgnosticPathUtil
 - s:isUncPath(java.lang.String):Z
 - s:startsWith(java.lang.String,java.lang.String):Z
 - s:startsWithWindowsDrive(java.lang.String):Z
+c:com.intellij.openapi.util.registry.RegistryValue
+- sf:Companion:com.intellij.openapi.util.registry.RegistryValue$Companion
+f:com.intellij.openapi.util.registry.RegistryValue$Companion
 com.intellij.openapi.util.registry.RegistryValueListener
 - afterValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
 - beforeValueChanged(com.intellij.openapi.util.registry.RegistryValue):V
@@ -405,6 +411,10 @@ com.intellij.util.containers.Predicate
 - java.util.function.Predicate
 - a:apply(java.lang.Object):Z
 - test(java.lang.Object):Z
+f:com.intellij.util.containers.SmartHashSet
+- java.util.AbstractSet
+- <init>(I):V
+- <init>(I,F):V
 com.intellij.util.containers.hash.EqualityPolicy
 - sf:CANONICAL:com.intellij.util.containers.hash.EqualityPolicy
 - sf:IDENTITY:com.intellij.util.containers.hash.EqualityPolicy

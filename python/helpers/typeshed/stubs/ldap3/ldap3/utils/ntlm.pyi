@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
-oem_encoding: Any
+oem_encoding: Incomplete
 NTLM_SIGNATURE: bytes
 NTLM_MESSAGE_TYPE_NTLM_NEGOTIATE: int
 NTLM_MESSAGE_TYPE_NTLM_CHALLENGE: int
@@ -27,7 +27,7 @@ FLAG_NEGOTIATE_SIGN: int
 FLAG_REQUEST_TARGET: int
 FLAG_NEGOTIATE_OEM: int
 FLAG_NEGOTIATE_UNICODE: int
-FLAG_TYPES: Any
+FLAG_TYPES: Incomplete
 AV_END_OF_LIST: int
 AV_NETBIOS_COMPUTER_NAME: int
 AV_NETBIOS_DOMAIN_NAME: int
@@ -39,60 +39,60 @@ AV_TIMESTAMP: int
 AV_SINGLE_HOST_DATA: int
 AV_TARGET_NAME: int
 AV_CHANNEL_BINDINGS: int
-AV_TYPES: Any
+AV_TYPES: Incomplete
 AV_FLAG_CONSTRAINED: int
 AV_FLAG_INTEGRITY: int
 AV_FLAG_TARGET_SPN_UNTRUSTED: int
-AV_FLAG_TYPES: Any
+AV_FLAG_TYPES: Incomplete
 
 def pack_windows_version(debug: bool = False): ...
 def unpack_windows_version(version_message): ...
 
 class NtlmClient:
     client_config_flags: int
-    exported_session_key: Any
-    negotiated_flags: Any
-    user_name: Any
-    user_domain: Any
-    no_lm_response_ntlm_v1: Any
+    exported_session_key: Incomplete
+    negotiated_flags: Incomplete
+    user_name: Incomplete
+    user_domain: Incomplete
+    no_lm_response_ntlm_v1: Incomplete
     client_blocked: bool
-    client_block_exceptions: Any
-    client_require_128_bit_encryption: Any
-    max_life_time: Any
-    client_signing_key: Any
-    client_sealing_key: Any
-    sequence_number: Any
-    server_sealing_key: Any
-    server_signing_key: Any
+    client_block_exceptions: Incomplete
+    client_require_128_bit_encryption: Incomplete
+    max_life_time: Incomplete
+    client_signing_key: Incomplete
+    client_sealing_key: Incomplete
+    sequence_number: Incomplete
+    server_sealing_key: Incomplete
+    server_signing_key: Incomplete
     integrity: bool
     replay_detect: bool
     sequence_detect: bool
     confidentiality: bool
     datagram: bool
     identity: bool
-    client_supplied_target_name: Any
-    client_channel_binding_unhashed: Any
-    unverified_target_name: Any
-    server_challenge: Any
-    server_target_name: Any
-    server_target_info: Any
-    server_version: Any
-    server_av_netbios_computer_name: Any
-    server_av_netbios_domain_name: Any
-    server_av_dns_computer_name: Any
-    server_av_dns_domain_name: Any
-    server_av_dns_forest_name: Any
-    server_av_target_name: Any
-    server_av_flags: Any
-    server_av_timestamp: Any
-    server_av_single_host_data: Any
-    server_av_channel_bindings: Any
-    server_av_flag_constrained: Any
-    server_av_flag_integrity: Any
-    server_av_flag_target_spn_untrusted: Any
-    current_encoding: Any
-    client_challenge: Any
-    server_target_info_raw: Any
+    client_supplied_target_name: Incomplete
+    client_channel_binding_unhashed: Incomplete
+    unverified_target_name: Incomplete
+    server_challenge: Incomplete
+    server_target_name: Incomplete
+    server_target_info: Incomplete
+    server_version: Incomplete
+    server_av_netbios_computer_name: Incomplete
+    server_av_netbios_domain_name: Incomplete
+    server_av_dns_computer_name: Incomplete
+    server_av_dns_domain_name: Incomplete
+    server_av_dns_forest_name: Incomplete
+    server_av_target_name: Incomplete
+    server_av_flags: Incomplete
+    server_av_timestamp: Incomplete
+    server_av_single_host_data: Incomplete
+    server_av_channel_bindings: Incomplete
+    server_av_flag_constrained: Incomplete
+    server_av_flag_integrity: Incomplete
+    server_av_flag_target_spn_untrusted: Incomplete
+    current_encoding: Incomplete
+    client_challenge: Incomplete
+    server_target_info_raw: Incomplete
     def __init__(self, domain, user_name, password) -> None: ...
     def get_client_flag(self, flag): ...
     def get_negotiated_flag(self, flag): ...

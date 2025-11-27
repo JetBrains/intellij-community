@@ -44,6 +44,9 @@ interface GHPRReviewDataProvider {
 
   fun canComment(): Boolean
 
+  /**
+   * Only for cases when the comment is created on the diff of an individual commit and there's an active review.
+   */
   suspend fun addComment(reviewId: String,
                          body: String,
                          commitSha: String,

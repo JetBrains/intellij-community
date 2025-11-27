@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,20 +10,11 @@ import org.jetbrains.annotations.TestOnly;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
 @ApiStatus.Internal
 public final class AppMode {
-  public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
-  public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
-  public static final String CWM_HOST_COMMAND = "cwmHost";
-  /** @see com.jetbrains.rdserver.unattendedHost.HostWithClientSplitModeStarter */
-  public static final String SPLIT_MODE_COMMAND = "splitMode";
-  public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
-  public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
-  public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
   public static final String HELP_OPTION = "--help";
   public static final String VERSION_OPTION = "--version";
@@ -44,6 +36,14 @@ public final class AppMode {
     return dontReopenProjects;
   }
 
+  /**
+   * Disable some speculative service initializations to speed up Light Edit startup
+   * <p>
+   * This DOES NOT guarantee that the IDE will be run in Light Edit mode.
+   *
+   * @see com.intellij.ide.lightEdit.LightEditService#isLightEditProject(Project)
+   */
+  @ApiStatus.Obsolete
   public static boolean isLightEdit() {
     return isLightEdit;
   }
@@ -85,47 +85,33 @@ public final class AppMode {
   }
 
   public static void setFlags(@NotNull List<String> args) {
-    isHeadless = isHeadless(args);
-    isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
+    WellKnownCommand knownCommand = WellKnownCommands.getCommandFor(args);
+
+    isHeadless = Boolean.getBoolean(AWT_HEADLESS) ||
+                 knownCommand != null && knownCommand.isHeadless();
+    isCommandLine = isHeadless ||
+                    knownCommand != null && knownCommand.isCommandLine();
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    if (!args.isEmpty()) {
-      isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
-                        CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
-                        REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
-                        REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
-                        SPLIT_MODE_COMMAND.equals(args.get(0));
-    }
+    isRemoteDevHost = knownCommand != null && knownCommand.isRemoteDevHost();
 
     isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) ||
-                  (!isCommandLine && !isRemoteDevHost && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
+                  (knownCommand == null && !isHeadless && mayHappenToBeAFile(args));
 
     for (String arg : args) {
-      if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
+      if (ApplicationStartArguments.DISABLE_NON_BUNDLED_PLUGINS.isSet(args)) {
         disableNonBundledPlugins = true;
       }
-      else if (DONT_REOPEN_PROJECTS.equalsIgnoreCase(arg)) {
+      else if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
         dontReopenProjects = true;
       }
     }
   }
 
-  /**
-   * Checks whether a known command is present in the args which shouldn't be run in 'light edit' mode. 
-   * This is a temporary workaround for IJPL-161632.
-   */
-  private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
-    return !args.isEmpty() && "thinClient".equals(args.get(0));
-  }
-
-  private static boolean isGuiCommand(String arg) {
-    return "diff".equals(arg) || "merge".equals(arg);
-  }
-
-  private static boolean isFileAfterOptions(@NotNull List<String> args) {
+  private static boolean mayHappenToBeAFile(@NotNull List<String> args) {
     for (String arg : args) {
       // If not an option
       if (!arg.startsWith("-")) {
@@ -149,26 +135,6 @@ public final class AppMode {
     isHeadless = headless;
     isCommandLine = true;
     isLightEdit = false;
-  }
-
-  private static boolean isHeadless(List<String> args) {
-    if (Boolean.getBoolean(AWT_HEADLESS)) {
-      return true;
-    }
-
-    if (args.isEmpty()) {
-      return false;
-    }
-
-    String firstArg = args.get(0);
-
-    List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
-      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installFrontendPlugins", "installPlugins", "dumpActions",
-      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "openUrlOnClient", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
-      "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
-      "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway", "cherryPickAnalyzer", "listBundledPlugins");
-    return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   public static @Nullable String getDevIdeaProjectDir() {

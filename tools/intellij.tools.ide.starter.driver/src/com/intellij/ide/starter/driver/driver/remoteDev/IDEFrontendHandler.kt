@@ -1,8 +1,11 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
+import com.intellij.driver.client.Driver
+import com.intellij.driver.client.Remote
 import com.intellij.ide.starter.coroutine.perClassSupervisorScope
+import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
-import com.intellij.ide.starter.ide.IDERemDevTestContext
+import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.runner.IDECommandLine
@@ -16,9 +19,9 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
-internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTestContext, private val remoteDevDriverOptions: RemoteDevDriverOptions) {
-  private val frontendContext = ideRemDevTestContext.frontendIDEContext
+internal class IDEFrontendHandler(private val frontendContext: IDETestContext, private val driverOptions: DriverOptions, private val debugPort: Int) {
 
   private fun VMOptions.addDisplayIfNecessary() {
     if (SystemInfo.isLinux && System.getenv("DISPLAY") == null) {
@@ -27,17 +30,16 @@ internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTes
     }
   }
 
-  fun runInBackground(launchName: String, joinLink: String, runTimeout: Duration = remoteDevDriverOptions.runTimeout): Pair<Deferred<IDEStartResult>, IDEHandle> {
+  fun runInBackground(launchName: String, joinLink: String, runTimeout: Duration): Pair<Deferred<IDEStartResult>, IDEHandle> {
     frontendContext.ide.vmOptions.let {
       //setup xDisplay
       it.addDisplayIfNecessary()
 
       //add driver related vmOptions
-      remoteDevDriverOptions.frontendOptions.systemProperties.forEach(it::addSystemProperty)
-      remoteDevDriverOptions.remoteDevVmOptions.forEach(it::addSystemProperty)
+      driverOptions.systemProperties.forEach(it::addSystemProperty)
 
       if (it.isUnderDebug()) {
-        it.debug(remoteDevDriverOptions.debugPort, suspend = false)
+        it.debug(debugPort, suspend = false)
       }
       else {
         it.dropDebug()
@@ -71,7 +73,7 @@ internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTes
             withScreenRecording()
           })
           .also {
-            logOutput("Remote IDE Frontend run ${ideRemDevTestContext.testName} completed")
+            logOutput("Remote IDE Frontend run ${frontendContext.testName} completed")
           }
       }
       catch (e: Exception) {
@@ -81,6 +83,6 @@ internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTes
       }
     }
 
-    return Pair(result, runBlocking { process.await() })
+    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() }})
   }
 }

@@ -14,12 +14,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
@@ -33,12 +34,12 @@ import kotlin.concurrent.withLock
 import kotlin.script.experimental.api.SourceCode
 
 /**
- * [ScriptDefinitionsManager] is a project service responsible for loading/caching and searching [org.jetbrains.kotlin.scripting.definitions.ScriptDefinition]s.
+ * [ScriptDefinitionsManager] is a project service responsible for loading/caching and searching [ScriptDefinition]s.
  *
  * Definitions are organized in a sequential list. To locate a definition that matches a script, we need to identify
- * the first one where the [org.jetbrains.kotlin.scripting.definitions.ScriptDefinition.isScript] function returns `true`.
+ * the first one where the [ScriptDefinition.isScript] function returns `true`.
  *
- * The order of definitions is defined by [org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource]s they are discovered and loaded by. Since every source
+ * The order of definitions is defined by [ScriptDefinitionsSource]s they are discovered and loaded by. Since every source
  * provides its own definitions list, the resulting one is partitioned. Partitions in their turn are sorted.
  * E.g. if definition sources are ordered as (A, B, C), their definitions might look as ((A-def-1, A-def-2), (B-def), (C-def)).
  *
@@ -271,7 +272,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return fromNewEp.dropLast(1) + fromNewEp.last()
     }
 
-    protected open fun getKotlinScriptingSettings(): KotlinScriptingSettingsImpl = KotlinScriptingSettingsImpl.Companion.getInstance(project)
+    protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
 
     protected open fun applyDefinitionsUpdate() {
         associateFileExtensionsIfNeeded()

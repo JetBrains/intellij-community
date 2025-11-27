@@ -16,6 +16,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
@@ -302,5 +303,69 @@ class CurrentThreadCoroutineScopeTest {
         }
       }
     }
+  }
+
+  @OptIn(InternalCoroutinesApi::class)
+  @Test
+  fun `overwritten checkpoint inside blockingContextScope is not propagated`(): Unit = timeoutRunBlocking {
+    val flag = AtomicBoolean(false)
+    val job = blockingContextScope {
+      installThreadContext(currentThreadContext() + E1(), true) {
+        withCurrentThreadCoroutineScopeBlocking {
+          application.invokeLater {
+            currentThreadCoroutineScope().launch {
+              // If the checkpoint used is the one of withCurrentThreadCoroutineScopeBlocking,
+              // it may already have completed and the assertion below will never run.
+              flag.set(true)
+              assertNull(coroutineContext[E1])
+            }
+          }
+        }.second
+      }
+    }
+    assertTrue(flag.get()) { "The coroutine launched in currentThreadCoroutineScope() should have started" }
+    // must manually propagate exceptions from the checkpoint's supervisor
+    job.getCancellationException().cause?.let { throw it }
+  }
+
+  @Test
+  fun `checkpoint is propagated to structured children`() = timeoutRunBlocking {
+    val flag = AtomicBoolean(false)
+    val (_, job) = withCurrentThreadCoroutineScope {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      application.invokeAndWait {
+        currentThreadCoroutineScope().launch {
+          flag.set(true)
+        }
+      }
+    }
+    job.join()
+    assertTrue(flag.get())
+  }
+
+  @OptIn(InternalCoroutinesApi::class)
+  @Test
+  fun `withCurrentThreadCoroutineScopeBlocking does not leak blockingContextScope to coroutines`(): Unit = timeoutRunBlocking {
+    val blockingContextScopeEnded = Semaphore(1)
+    val executeOnPooledThreadEnded = Semaphore(1)
+    val job = blockingContextScope {
+      withCurrentThreadCoroutineScopeBlocking {
+        currentThreadCoroutineScope().launch {
+          assertErrorLogged<IllegalStateException> {
+            currentThreadCoroutineScope()
+          }
+          application.executeOnPooledThread {
+            assertNull(Cancellation.currentJob())
+            blockingContextScopeEnded.timeoutWaitUp()
+            // happens strictly outside `blockingContextScope`
+            executeOnPooledThreadEnded.up()
+          }
+        }
+      }.second
+    }
+    // must manually propagate exceptions from the checkpoint's supervisor
+    job.getCancellationException().cause?.let { throw it }
+    blockingContextScopeEnded.up()
+    executeOnPooledThreadEnded.timeoutWaitUp()
   }
 }

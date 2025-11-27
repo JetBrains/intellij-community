@@ -157,8 +157,6 @@
             key="kotlin.compiler.configurable"
             parentId="project.propCompiler"/>
 
-    <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
-
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>

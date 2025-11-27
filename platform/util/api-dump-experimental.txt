@@ -47,6 +47,10 @@ f:com.intellij.openapi.util.io.NioFiles
 - *s:deleteQuietly(java.nio.file.Path):V
 - *s:deleteQuietly(java.nio.file.Path,java.util.function.Consumer):V
 c:com.intellij.openapi.util.registry.RegistryValue
+- *f:asBooleanFlow():kotlinx.coroutines.flow.Flow
+- *f:asDoubleFlow():kotlinx.coroutines.flow.Flow
+- *f:asIntegerFlow():kotlinx.coroutines.flow.Flow
+- *f:asStringFlow():kotlinx.coroutines.flow.Flow
 - *f:getSource():com.intellij.openapi.util.registry.RegistryValueSource
 - *f:setSelectedOption(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V
 - *:setValue(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V

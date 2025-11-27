@@ -10,9 +10,6 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinScriptEditorListener : FileEditorManagerListener {
     override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        val ktFile = file.findPsiFile(source.project) as? KtFile ?: return
-        if (ktFile.name.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION)) {
-            KotlinScriptResolutionService.getInstance(source.project).launchProcessing(ktFile)
-        }
+        KotlinScriptResolutionService.getInstance(source.project).launchProcessing(file)
     }
 }

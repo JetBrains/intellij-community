@@ -54,6 +54,7 @@ sealed class IdeaPluginDescriptorImpl(
   @Transient
   var jarFiles: List<Path>? = null
 
+  /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
   var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
 
@@ -406,6 +407,10 @@ tailrec fun IdeaPluginDescriptorImpl.getMainDescriptor(): PluginMainDescriptor {
 @Deprecated("only PluginMainDescriptor has contentModules")
 val IdeaPluginDescriptorImpl.contentModules: List<ContentModuleDescriptor>
   get() = if (this is PluginMainDescriptor) contentModules else emptyList()
+
+@get:Internal
+val IdeaPluginDescriptorImpl.isLoaded: Boolean
+  get() = pluginClassLoader != null
 
 internal fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
   if (dependencies.isEmpty()) {

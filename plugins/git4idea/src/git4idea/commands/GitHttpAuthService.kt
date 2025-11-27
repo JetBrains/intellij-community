@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import git4idea.http.GitAskPassApp
 import git4idea.http.GitAskPassAppHandler
 import kotlinx.coroutines.CoroutineScope
-import java.io.File
+import java.nio.file.Path
 import java.util.*
 
 /**
@@ -29,11 +29,13 @@ abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProc
   /**
    * Creates new [GitHttpAuthenticator] that will be requested to handle username and password requests from Git.
    */
-  abstract fun createAuthenticator(project: Project,
-                                   urls: Collection<String>,
-                                   workingDirectory: File,
-                                   authenticationGate: AuthenticationGate,
-                                   authenticationMode: AuthenticationMode): GitHttpAuthenticator
+  abstract fun createAuthenticator(
+    project: Project,
+    urls: Collection<String>,
+    workingDirectory: Path,
+    authenticationGate: AuthenticationGate,
+    authenticationMode: AuthenticationMode,
+  ): GitHttpAuthenticator
 
   override fun handleRequest(handler: GitAskPassAppHandler, requestBody: String): String? {
     return handler.handleInput(requestBody)

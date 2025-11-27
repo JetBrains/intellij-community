@@ -6,7 +6,7 @@
   <actions>
     <action id="SeNewSearchToggleAction"
             class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
-            text="Toggle Search Everywhere Implementation"
+            text="Use Split Search Everywhere"
             internal="true"/>
   </actions>
 

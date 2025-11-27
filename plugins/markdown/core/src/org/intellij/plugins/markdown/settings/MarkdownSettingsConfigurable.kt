@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
@@ -107,7 +108,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       row {
         checkBox(MarkdownBundle.message("markdown.settings.group.documents.in.project.tree"))
           .bindSelected(settings::isFileGroupingEnabled)
-          .onApply { ProjectView.getInstance(project).refresh() }
+          .onApply { ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS) }
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {

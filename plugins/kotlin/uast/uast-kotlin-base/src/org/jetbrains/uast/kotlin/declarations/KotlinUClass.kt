@@ -18,15 +18,15 @@ class KotlinUClass(
 ) : AbstractKotlinUClass(givenParent), PsiClass by psi {
     private val uastAnchorPart = UastLazyPart<UIdentifier?>()
 
-    override val ktClass = psi.kotlinOrigin
+    override val ktClass: KtClassOrObject? = psi.kotlinOrigin
 
     override val javaPsi: KtLightClass = psi
 
     override val sourcePsi: KtClassOrObject? = ktClass
 
-    override val psi = unwrap<UClass, PsiClass>(psi)
+    override val psi: PsiClass = unwrap<UClass, PsiClass>(psi)
 
-    override fun getSourceElement() = sourcePsi ?: this
+    override fun getSourceElement(): PsiElement = sourcePsi ?: this
 
     override fun getOriginalElement(): PsiElement? = super.getOriginalElement()
 

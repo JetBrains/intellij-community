@@ -122,9 +122,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
-  fun expandAll(timeout: Duration = 5.seconds) {
+  fun expandAll(timeout: Duration = 5.seconds): JTreeUiComponent {
     waitForNodesLoaded()
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
+    return this
   }
 
   fun expandPath(vararg path: String, fullMatch: Boolean = true) {
@@ -203,6 +204,11 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
       return false
     }
     return findExpandedPath(*path, fullMatch = false) != null
+  }
+
+  fun pathsCount(vararg path: String): Int {
+    expandPath(*path, fullMatch = false)
+    return findExpandedPaths(*path, fullMatch = false).size
   }
 
   fun collectIconsAtRow(row: Int): List<Icon> = fixture.collectIconsAtRow(row)

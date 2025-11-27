@@ -7,10 +7,30 @@ import com.jetbrains.python.psi.impl.StubAwareComputation;
 import com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubImpl;
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
+@ApiStatus.Internal
 public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
+
+  static @Nullable PyTypingNewType getNewTypeForResolvedElement(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyTargetExpression targetExpression) {
+      return getNewTypeForTarget(targetExpression, context);
+    }
+    if (element instanceof PyCallExpression callExpression && context.maySwitchToAST(element)) {
+      PyTypingNewTypeStub stub = PyTypingNewTypeStubImpl.Companion.create(callExpression);
+      if (stub != null) {
+        final PyClassType type = getClassType(stub, context, callExpression);
+        if (type != null) {
+          return new PyTypingNewType(type, stub.getName(), getDeclaration(callExpression));
+        }
+      }
+    }
+    return null;
+  }
 
   @Override
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
@@ -18,17 +38,30 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
                                            @NotNull TypeEvalContext context) {
     PyClass aClass = PyUtil.turnConstructorIntoClass(function);
     PyQualifiedNameOwner qualifiedNameOwner = aClass != null ? aClass : function;
-    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())
-           ? PyTypeUtil.notNullToRef(getNewTypeFromAST((PyCallExpression)callSite, context))
-           : null;
+    if (callSite instanceof PyCallExpression callExpression &&
+        PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())) {
+      if (context.maySwitchToAST(callSite)) {
+        final PyTypingNewTypeStub stub = PyTypingNewTypeStubImpl.Companion.create(callExpression);
+        if (stub != null) {
+          final PyClassType type = getClassType(stub, context, callSite);
+          if (type != null) {
+            PyTypingNewType newType = new PyTypingNewType(type, stub.getName(), getDeclaration(callExpression));
+            return Ref.create(getNewTypeFactory(newType));
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      return PyTypeUtil.notNullToRef(getNewTypeForTarget((PyTargetExpression)referenceTarget, context));
+    if (referenceTarget instanceof PyTargetExpression targetExpression) {
+      PyTypingNewType newType = getNewTypeForTarget(targetExpression, context);
+      if (newType != null) {
+        return Ref.create(getNewTypeFactory(newType));
+      }
     }
-
     return null;
   }
 
@@ -48,19 +81,6 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
   }
 
-  private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
-                                                              @Nullable PyTypingNewTypeStub stub,
-                                                              @NotNull TypeEvalContext context) {
-    if (stub == null) return null;
-    final PyClassType type = getClassType(stub, context, call);
-    return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call)) : null;
-  }
-
-  private static @Nullable PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
-    if (!context.maySwitchToAST(call)) return null;
-    return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
-  }
-
   private static @Nullable PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
                                                     @NotNull TypeEvalContext context,
                                                     @NotNull PsiElement anchor) {
@@ -70,6 +90,10 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
       return PyUtil.as(result.toClass(), PyClassType.class);
     }
     return null;
+  }
+
+  private static @NotNull PyCallableType getNewTypeFactory(@NotNull PyTypingNewType newType) {
+    return new PyCallableTypeImpl(List.of(PyCallableParameterImpl.nonPsi(newType.getClassType().toInstance())), newType.toInstance());
   }
 
   @Override

@@ -79,6 +79,12 @@ import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID;
 
+/**
+ * See cancellation logic in {@link CompletionPhase.BgCalculation#restartOnWriteAction)}
+ *
+ * @see CompletionService#getCurrentCompletion
+ * @see CompletionServiceImpl#getCurrentCompletionProgressIndicator()
+ */
 @ApiStatus.Internal
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final int TEST_COMPLETION_TIMEOUT = 100 * 1000;

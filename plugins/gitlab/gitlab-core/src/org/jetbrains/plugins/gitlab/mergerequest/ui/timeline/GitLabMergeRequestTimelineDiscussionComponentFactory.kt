@@ -12,7 +12,6 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.codereview.user.CodeReviewUser
-import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabEditableComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -120,7 +120,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val textPanel = createDiscussionTextPane(project, cs, vm, imageLoader)
 
     val editVmFlow = mainNoteVm.flatMapLatest { it.actionsVm?.editVm ?: flowOf(null) }
-    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
+    val textContentPanel = GitLabEditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
       GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
                                            ACTION_PLACE)
     }.let {
@@ -174,7 +174,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val textPanel = GitLabNoteComponentFactory.createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl,
                                                                imageLoader)
 
-    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
+    val textContentPanel = GitLabEditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
       GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
                                            ACTION_PLACE)
     }.let {

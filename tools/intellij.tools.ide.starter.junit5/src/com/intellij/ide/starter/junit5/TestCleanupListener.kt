@@ -53,7 +53,8 @@ open class TestCleanupListener : TestExecutionListener {
         }
 
         if (joinResult == null) {
-          logError("Some child coroutines of ${scope.coroutineContext[CoroutineName]?.name} didn't complete in $timeout cancellation timeout. Proceeding anyway.")
+          logError("Some child coroutines of ${scope.coroutineContext[CoroutineName]?.name} didn't complete in $timeout cancellation timeout. Proceeding anyway. " +
+                   "Children: ${scope.coroutineContext.job.children.joinToString(",")}")
         }
       }
     }

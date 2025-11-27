@@ -20,12 +20,16 @@ import java.util.*;
 
 
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
-  private static final ImmutableSet<String> PYTHON_2_ATTRIBUTES = ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults", "_field_types");
-  private static final ImmutableSet<String> PYTHON_3_ATTRIBUTES = ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults");
+  private static final ImmutableSet<String> PYTHON_2_ATTRIBUTES =
+    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults", "_field_types");
+  private static final ImmutableSet<String> PYTHON_3_ATTRIBUTES =
+    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults");
+
   public static @NotNull Set<String> getSpecialAttributes(LanguageLevel level) {
     if (level.isPy3K()) {
       return PYTHON_3_ATTRIBUTES;
-    } else {
+    }
+    else {
       return PYTHON_2_ATTRIBUTES;
     }
   }
@@ -66,7 +70,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
 
     for (String field : myFields.keySet()) {
-      result.add(LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
+      result.add(
+        LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
     }
 
     if (completionPrefix == null) {
@@ -203,7 +208,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return toInstance();
   }
 
-  private static @NotNull PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
+  private static @NotNull PyCallableParameter fieldToCallableParameter(@NotNull String name,
+                                                                       @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
     return PyCallableParameterImpl.nonPsi(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
   }
 

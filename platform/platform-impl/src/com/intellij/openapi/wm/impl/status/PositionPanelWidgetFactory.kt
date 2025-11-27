@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.openapi.wm.*
@@ -12,9 +12,5 @@ private class PositionPanelWidgetFactory : StatusBarWidgetFactory, WidgetPresent
 
   override fun createPresentation(context: WidgetPresentationDataContext, scope: CoroutineScope): WidgetPresentation {
     return PositionPanel(dataContext = context, scope = scope)
-  }
-
-  override fun canBeEnabledOn(statusBar: StatusBar): Boolean {
-    return super.canBeEnabledOn(statusBar)
   }
 }

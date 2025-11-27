@@ -1,0 +1,6 @@
+# =======
+# <= 3.14
+# =======
+
+# Added in Python 3.14.1 (parameter `scripting`)
+html.parser.HTMLParser.__init__

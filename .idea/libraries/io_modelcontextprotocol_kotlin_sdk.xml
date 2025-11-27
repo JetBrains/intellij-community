@@ -1,18 +1,45 @@
 <component name="libraryTable">
   <library name="io.modelcontextprotocol.kotlin.sdk" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.6.1">
+    <properties maven-id="io.modelcontextprotocol:kotlin-sdk-jvm:0.7.7">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.1/kotlin-sdk-jvm-0.6.1.jar">
-          <sha256sum>b1d152f70209b9fd42165afc7b98beeae87cabe688f8e82429928958dc61c411</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.7.7/kotlin-sdk-jvm-0.7.7.jar">
+          <sha256sum>095e5d11868ae359bd640c922c2d1ed7a20ba519496599ee697e81c468761339</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.7.7/kotlin-sdk-core-jvm-0.7.7.jar">
+          <sha256sum>33d9417ab21ac60413d64f2b1d0075df42c6212ac1016a4817d67f8ee41c7c43</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.7.7/kotlin-sdk-client-jvm-0.7.7.jar">
+          <sha256sum>9e46aa3b51db4f8f6df635ba52318a8a28dec3c9ab226912267e8aaf7acdfbc7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.7.7/kotlin-sdk-server-jvm-0.7.7.jar">
+          <sha256sum>d4fcb967ca13cae00c6f76b41a974fb76d864e1806d6721d2dfc666480f66f22</sha256sum>
         </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="io.ktor:ktor-server-websockets" />
+        <dependency maven-id="io.github.oshai:kotlin-logging-jvm" />
+        <dependency maven-id="io.ktor:ktor-client-core" />
+        <dependency maven-id="io.ktor:ktor-server-core" />
+        <dependency maven-id="io.ktor:ktor-server-sse" />
+      </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.1/kotlin-sdk-jvm-0.6.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.7.7/kotlin-sdk-jvm-0.7.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.7.7/kotlin-sdk-core-jvm-0.7.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.7.7/kotlin-sdk-client-jvm-0.7.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.7.7/kotlin-sdk-server-jvm-0.7.7.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.1/kotlin-sdk-jvm-0.6.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0.7.7/kotlin-sdk-jvm-0.7.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0.7.7/kotlin-sdk-core-jvm-0.7.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0.7.7/kotlin-sdk-client-jvm-0.7.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0.7.7/kotlin-sdk-server-jvm-0.7.7-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

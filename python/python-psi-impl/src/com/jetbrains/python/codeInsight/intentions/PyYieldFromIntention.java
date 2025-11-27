@@ -51,20 +51,20 @@ public final class PyYieldFromIntention extends PsiUpdateModCommandAction<PyForS
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PyForStatement element, @NotNull ModPsiUpdater updater) {
-      final PyExpression source = element.getForPart().getSource();
-      if (source != null) {
-        final PyElementGenerator generator = PyElementGenerator.getInstance(context.project());
-        final String text = "yield from foo";
-        final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class, text);
-        final PyExpression expr = exprStmt.getExpression();
-        if (expr instanceof PyYieldExpression) {
-          final PyExpression yieldValue = ((PyYieldExpression)expr).getExpression();
-          if (yieldValue != null) {
-            yieldValue.replace(source);
-            element.replace(exprStmt);
-          }
+    final PyExpression source = element.getForPart().getSource();
+    if (source != null) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(context.project());
+      final String text = "yield from foo";
+      final PyExpressionStatement exprStmt = generator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class, text);
+      final PyExpression expr = exprStmt.getExpression();
+      if (expr instanceof PyYieldExpression) {
+        final PyExpression yieldValue = ((PyYieldExpression)expr).getExpression();
+        if (yieldValue != null) {
+          yieldValue.replace(source);
+          element.replace(exprStmt);
         }
       }
+    }
   }
 
   private static @Nullable PyTargetExpression findSingleForLoopTarget(@NotNull PyForStatement forLoop) {

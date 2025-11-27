@@ -109,7 +109,7 @@ public final class TypeNullability {
   public @NotNull TypeNullability meet(@NotNull TypeNullability other) {
     if (this.nullability() == other.nullability()) {
       if (this.source().equals(other.source())) return this;
-      return new TypeNullability(Nullability.NOT_NULL, NullabilitySource.multiSource(Arrays.asList(this.source(), other.source())));
+      return new TypeNullability(this.nullability(), NullabilitySource.multiSource(Arrays.asList(this.source(), other.source())));
     }
     if (this.nullability() == Nullability.NOT_NULL) {
       return this;
@@ -127,9 +127,13 @@ public final class TypeNullability {
     }
     NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
     if (manager != null) {
+      NullabilityAnnotationInfo effective = manager.findOwnNullabilityInfo(parameter);
+      if (effective != null) {
+        return effective.toTypeNullability().inherited();
+      }
       NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
       if (typeUseNullability != null) {
-        return typeUseNullability.toTypeNullability();
+        return typeUseNullability.toTypeNullability().inherited();
       }
     }
     return UNKNOWN;

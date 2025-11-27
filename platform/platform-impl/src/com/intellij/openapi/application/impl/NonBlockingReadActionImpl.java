@@ -23,16 +23,17 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
@@ -53,6 +54,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -74,7 +76,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final Consumer<? super T> myUiThreadAction;
   private final ContextConstraint @NotNull [] myConstraints;
   private final BooleanSupplier @NotNull [] myCancellationConditions;
-  private final Set<? extends Disposable> myDisposables;
+  private final @Unmodifiable Disposable[] myDisposables;
   private final @Nullable @Unmodifiable ListWithFixedHashCode myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   /** Original computation passed in */
@@ -131,8 +133,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static final ContextConstraint[] EMPTY_CONSTRAINTS = new ContextConstraint[0];
   private static final BooleanSupplier[] EMPTY_CONDITIONS = new BooleanSupplier[0];
+  private static final Disposable[] EMPTY_DISPOSABLE_ARRAY = new Disposable[0];
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
-    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, Collections.emptySet(), null, null);
+    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, EMPTY_DISPOSABLE_ARRAY, null, null);
   }
 
   private NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation,
@@ -140,7 +143,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     @Nullable Consumer<? super T> uiThreadAction,
                                     ContextConstraint @NotNull [] constraints,
                                     BooleanSupplier @NotNull [] cancellationConditions,
-                                    @NotNull Set<? extends Disposable> disposables,
+                                    @NotNull Disposable @NotNull [] disposables,
                                     @Unmodifiable @Nullable ListWithFixedHashCode coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
     myOriginalComputation = computation;
@@ -195,10 +198,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @Override
   public @NotNull NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
-    Set<Disposable> disposables = new HashSet<>(myDisposables);
-    disposables.add(parentDisposable);
+    Disposable[] newDisposables = ArrayUtil.indexOf(myDisposables, parentDisposable) == -1 ? ArrayUtil.append(myDisposables, parentDisposable) : myDisposables;
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
-                                           disposables,
+                                           newDisposables,
                                            myCoalesceEquality, myProgressIndicator);
   }
 
@@ -306,7 +308,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    private final List<Disposable> myExpirationDisposables = new ArrayList<>();
+    private final @NotNull AtomicReferenceArray<@Nullable Disposable> myExpirationDisposables;
+    private static final @NotNull AtomicReferenceArray<@Nullable Disposable> EMPTY_ARRAY = new AtomicReferenceArray<>(0);
 
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
@@ -328,27 +331,28 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (shouldTrackInTests()) {
         ourTasksForTestMode.add(this);
       }
-      if (!builder.myDisposables.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
+      Disposable[] disposables = this.builder.myDisposables;
+      if (disposables.length == 0) {
+        myExpirationDisposables = EMPTY_ARRAY;
+      }
+      else {
+        myExpirationDisposables = new AtomicReferenceArray<>(disposables.length);
+        expireWithDisposables(disposables);
       }
     }
 
-    private void expireWithDisposables(@NotNull Set<? extends Disposable> disposables) {
-      for (Disposable parent : disposables) {
+    private void expireWithDisposables(Disposable @NotNull [] disposables) {
+      for (int i = 0; i < disposables.length; i++) {
+        Disposable parent = disposables[i];
         if (parent instanceof Project ? ((Project)parent).isDisposed() : Disposer.isDisposed(parent)) {
           cancel();
           break;
         }
-        Disposable child = new CheckedDisposable() {
-          private volatile boolean disposed;
-          @Override
-          public boolean isDisposed() {
-            return disposed;
-          }
-
+        // need separate child instance for each parent, to be able to register in Disposer for them all
+        //noinspection Anonymous2MethodRef,Convert2Lambda
+        Disposable child = new Disposable() {
           @Override
           public void dispose() {
-            disposed = true;
             // NB: We call here `super.cancel()` directly instead of `cancel()`
             // The reason is that `Job` is needed to cover the scheduling of `myUiThreadAction`,
             // so its lifetime is bigger than the lifetime of computation in NBRA, hence `Job` should not be cancelled in `dispose`.
@@ -356,13 +360,26 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         };
         //noinspection TestOnlyProblems
-        Disposable parentDisposable =
-          parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
-        if (!Disposer.tryRegister(parentDisposable, child)) {
+        Disposable parentDisposable;
+        try {
+          parentDisposable = parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
+        }
+        catch (Exception e) {
+          // getEarlyDisposable is encumbered with a lot of checks - ignore them all
           cancel();
           break;
         }
-        myExpirationDisposables.add(child);
+        try {
+          if (!Disposer.tryRegister(parentDisposable, child)) {
+            cancel();
+            break;
+          }
+        }
+        catch (IncorrectOperationException e) {
+          cancel();
+          throw e;
+        }
+        myExpirationDisposables.set(i, child);
       }
     }
 
@@ -413,6 +430,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (cleanedHandle.compareAndSet(this, false, true)) {
         cleanup();
       }
+      disposeExpirationDisposables();
     }
 
     private void cleanup() {
@@ -426,14 +444,20 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (builder.myCoalesceEquality != null) {
         release();
       }
-      for (Disposable disposable : myExpirationDisposables) {
-        Disposer.dispose(disposable);
-      }
       if (hasUnboundedExecutor()) {
         ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
       if (shouldTrackInTests()) {
         ourTasksForTestMode.remove(this);
+      }
+    }
+
+    private void disposeExpirationDisposables() {
+      for (int i = 0; i < myExpirationDisposables.length(); i++) {
+        Disposable disposable = myExpirationDisposables.getAndSet(i, null);
+        if (disposable != null) {
+          Disposer.dispose(disposable);
+        }
       }
     }
 
@@ -827,6 +851,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    * and a test might never switch to the smart mode at all.
    */
   @TestOnly
+  @RequiresEdt
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -839,6 +864,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @TestOnly
+  @RequiresEdt
   private static void waitForTask(@NotNull Submission<?> task) {
     ThreadingAssertions.assertEventDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
@@ -848,7 +874,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     int iteration = 0;
-    while (!task.isDone() && iteration++ < 60_000) {
+    while (!task.isDone() && iteration++ < 5*60_000) {
       UIUtil.dispatchAllInvocationEvents();
       try {
         task.blockingGet(1, TimeUnit.MILLISECONDS);

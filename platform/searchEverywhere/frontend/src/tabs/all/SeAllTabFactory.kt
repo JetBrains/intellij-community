@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeAllTabFactory : SeEssentialTabFactory {
   override val id: String get() = SeAllTab.ID
   override val name: String get() = SeAllTab.NAME
+  override val priority: Int get() = SeAllTab.PRIORITY
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     project ?: return null

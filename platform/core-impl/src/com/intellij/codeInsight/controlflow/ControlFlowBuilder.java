@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,13 +49,7 @@ public class ControlFlowBuilder {
   }
 
   public @Nullable Instruction findInstructionByElement(final PsiElement element) {
-    for (int i = instructions.size() - 1; i >= 0; i--) {
-      final Instruction instruction = instructions.get(i);
-      if (element.equals(instruction.getElement())) {
-        return instruction;
-      }
-    }
-    return null;
+    return ContainerUtil.findLast(instructions, instruction -> element.equals(instruction.getElement()));
   }
 
   /**

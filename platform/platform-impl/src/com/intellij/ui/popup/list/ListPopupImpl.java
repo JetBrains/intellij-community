@@ -651,6 +651,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   public void onModelChanged() {
+    if (isDisposed()) return;
+
     boolean updateEmptyModel = myListModel.getSize() == 0;
     myListModel.syncModel();
     if (updateEmptyModel) {

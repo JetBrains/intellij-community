@@ -39,7 +39,7 @@ private fun GitStageTracker.RootState.getTrackedChanges(project: Project): List<
   getChanged().mapNotNull { createChange(project, root, it, ContentVersion.HEAD, ContentVersion.LOCAL) }
 
 class GitStageCommitPanel(project: Project, private val settings: GitStageUiSettings) : NonModalCommitPanel(project) {
-  private val progressPanel = GitStageCommitProgressPanel(project)
+  private val progressPanel = GitStageCommitProgressPanel(project, this)
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   @Volatile
@@ -136,7 +136,7 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
   }
 }
 
-class GitStageCommitProgressPanel(project: Project) : CommitProgressPanel(project) {
+class GitStageCommitProgressPanel(project: Project, parentDisposable: Disposable) : CommitProgressPanel(project, parentDisposable) {
   var isEmptyRoots by stateFlag()
   var isUnmerged by stateFlag()
   var isCommitAll by stateFlag()

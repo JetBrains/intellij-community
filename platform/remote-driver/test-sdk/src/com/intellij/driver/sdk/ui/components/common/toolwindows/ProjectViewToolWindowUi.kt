@@ -14,9 +14,12 @@ fun IdeaFrameUI.projectView(
 class ProjectViewToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   val projectViewTree = tree(xQuery { byType("com.intellij.ide.projectView.impl.ProjectViewTree") })
 
+  val expandAllIcon = x("//div[@myicon='expandAll.svg']")
   fun expandAll() = x("//div[@myicon='expandAll.svg']").click()
 
+  val collapseAllIcon = x("//div[@myicon='collapseAll.svg']")
   fun collapseAll() = x("//div[@myicon='collapseAll.svg']").click()
 
+  val selectOpenedFileIcon = x("//div[@myicon='locate.svg']")
   fun selectOpenedFile() = x("//div[@myicon='locate.svg']").click()
 }

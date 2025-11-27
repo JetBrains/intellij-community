@@ -1,7 +1,6 @@
-from _typeshed import Incomplete
-
 from hvac.api.system_backend.system_backend_mixin import SystemBackendMixin
+from requests.models import _JSON
 
 class Wrapping(SystemBackendMixin):
     def unwrap(self, token=None): ...
-    def wrap(self, payload: dict[Incomplete, Incomplete] | None = None, ttl: int = 60): ...
+    def wrap(self, payload: _JSON | None = None, ttl: int = 60): ...

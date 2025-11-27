@@ -22,6 +22,7 @@
     There is a <STYLE_SUGGESTION descr="POSSIBILTY_POSSIBLE">possibility</STYLE_SUGGESTION> of such thing so that this is possible.
   </description-single-sentence
   >
+  <p>Hello\nworld \travel</p>
 
   <someTag withId="<TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO>"/>
   <!-- <<TYPO descr="Typo: In word 'acucar'">acucar</TYPO>>Comment 1, <TYPO descr="Typo: In word 'ueberweisen'">ueberweisen</TYPO></<TYPO descr="Typo: In word 'acucar'">acucar</TYPO>> -->

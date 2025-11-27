@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,8 +92,8 @@ public final class VarargParameterInspection extends BaseInspection {
     private static @NotNull @Unmodifiable List<PsiElement> getReferences(@NotNull PsiMethod method) {
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())
-          .filter(ref -> ref instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)ref).isReferenceTo(method) ||
-                         ref instanceof PsiEnumConstant && method.isEquivalentTo(((PsiEnumConstant)ref).resolveMethod()) ||
+          .filter(ref -> ref instanceof PsiJavaCodeReferenceElement element && element.isReferenceTo(method) ||
+                         ref instanceof PsiEnumConstant constant && method.isEquivalentTo(constant.resolveMethod()) ||
                          ref instanceof PsiDocMethodOrFieldRef && ref.getReference() instanceof PsiReference docRef && docRef.isReferenceTo(method))
           .toList();
       }
@@ -133,7 +133,7 @@ public final class VarargParameterInspection extends BaseInspection {
     }
 
     public static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
-      if(!(reference instanceof PsiDocMethodOrFieldRef ref)) return;
+      if (!(reference instanceof PsiDocMethodOrFieldRef ref)) return;
       String[] signature = ref.getSignature();
       if (signature == null || signature.length -1 != indexOfFirstVarargArgument) return;
       PsiElement name = ref.getNameElement();
@@ -154,7 +154,7 @@ public final class VarargParameterInspection extends BaseInspection {
       PsiElement inlineDocTag = ContainerUtil.find(comment.getChildren(), c -> c instanceof PsiInlineDocTag);
       if (inlineDocTag == null) return;
       PsiElement newElement = ContainerUtil.find(inlineDocTag.getChildren(), c -> c instanceof PsiDocMethodOrFieldRef);
-      if(newElement == null) return;
+      if (newElement == null) return;
       reference.replace(newElement);
     }
 
@@ -166,8 +166,7 @@ public final class VarargParameterInspection extends BaseInspection {
                              : null;
       if (call == null) return;
       JavaResolveResult result = call.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo &&
-          ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+      if (result instanceof MethodCandidateInfo info && info.getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
         return;
       }
       final PsiExpressionList argumentList = call.getArgumentList();
@@ -212,13 +211,13 @@ public final class VarargParameterInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 0) {
-        return;
-      }
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (lastParameter.isVarArgs()) {
-        registerMethodError(method);
+      if (method.isVarArgs()) {
+        if (isVisibleHighlight(method)) {
+          registerMethodError(method);
+        }
+        else {
+          registerErrorAtRange(method.getFirstChild(), method.getParameterList());
+        }
       }
     }
   }

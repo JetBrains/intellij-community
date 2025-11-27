@@ -8,19 +8,28 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.ast.PyAstFromImportStatement
+import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction
@@ -30,12 +39,15 @@ import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
 import com.jetbrains.python.inspections.quickfix.*
+import com.jetbrains.python.module.PySourceRootDetectionService
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
+import com.jetbrains.python.psi.resolve.fromModule
+import com.jetbrains.python.psi.resolve.resolveInRoot
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.isReadOnly
@@ -104,6 +116,61 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
     override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix {
       return InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct())
+    }
+
+    override fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
+      if (!Registry.`is`("python.source.root.suggest.quickfix")) {
+        return null
+      }
+      val importStatementBase = PsiTreeUtil.getParentOfType(node, PyAstImportStatementBase::class.java, true)
+                                ?: return null
+
+      val project = node.getProject()
+      val scope = GlobalSearchScope.projectScope(project)
+      val module = ModuleUtilCore.findModuleForPsiElement(node) ?: return null
+
+      val importObjectsFQNs = importStatementBase.getFullyQualifiedObjectNames()
+
+      val firstImportObject = importObjectsFQNs.firstOrNull() ?: return null
+      val qname = QualifiedName.fromDottedString(firstImportObject)
+      val folderNameToSearchFor = qname.getFirstComponent() ?: return null
+
+      val filesByName = FilenameIndex.getVirtualFilesByName(folderNameToSearchFor, scope)
+
+      val context = fromModule(module)
+        .copyWithoutStubs()
+        .copyWithoutRoots()
+        .run {
+          // resolve members only for 'from .. import ..'
+          if (importStatementBase is PyAstFromImportStatement) {
+            copyWithMembers()
+          } else {
+            this
+          }
+        }
+
+      for (file in filesByName) {
+        val containingDirectory = file.getParent() ?: continue
+
+        if (isAlreadySourceRoot(containingDirectory, module)) {
+          continue
+        }
+        
+        val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
+        if (!resolveResult.isEmpty()) {
+          if (Registry.`is`("python.source.root.suggest.quickfix.auto.apply")) {
+            project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
+          }
+          return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory)
+        }
+      }
+      return null
+    }
+
+    private fun isAlreadySourceRoot(virtualFile: VirtualFile, module: Module): Boolean {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
+      return entry.getSourceFolders().any { it.file == virtualFile }
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {

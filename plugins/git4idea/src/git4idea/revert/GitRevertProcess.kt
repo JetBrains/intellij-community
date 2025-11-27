@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.revert
 
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitActivity
-import git4idea.GitApplyChangesProcess
+import git4idea.applyChanges.GitApplyChangesProcess
 import git4idea.actions.GitAbortOperationAction
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
@@ -51,14 +37,16 @@ internal class GitRevertProcess(
   override fun generateDefaultMessage(repository: GitRepository, commit: VcsCommitMetadata): @NonNls String =
     "Revert \"${commit.subject}\"\n\nThis reverts commit ${commit.id.toShortString()}"
 
-  override fun applyChanges(repository: GitRepository, commit: VcsCommitMetadata, listeners: List<GitLineHandlerListener>): GitCommandResult {
-    return git.revert(repository, commit.id.asString(), AUTO_COMMIT, *listeners.toTypedArray<GitLineHandlerListener>())
+  override fun findStoppedCommitInSequence(repository: GitRepository, commits: List<VcsCommitMetadata>): VcsCommitMetadata = commits.first()
+
+  override fun applyChanges(repository: GitRepository, commits: Collection<VcsCommitMetadata>, listeners: List<GitLineHandlerListener>): GitCommandResult {
+    return git.revert(repository, commits.first().id.asString(), AUTO_COMMIT, *listeners.toTypedArray<GitLineHandlerListener>())
   }
 
   override fun isEmptyCommit(result: GitCommandResult): Boolean {
     val stdout = result.outputAsJoinedString
     return stdout.contains("nothing to commit") ||
-           stdout.contains("nothing added to commit but untracked files present");
+           stdout.contains("nothing added to commit but untracked files present")
   }
 
   companion object {

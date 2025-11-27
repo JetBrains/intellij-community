@@ -631,8 +631,8 @@ abstract class ComponentManagerImpl(
 
     val adapter = getComponentOrServiceAdapter(key, lookupService)
     if (adapter == null) {
-      checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        checkCanceledIfNotInClassInit()
         throwAlreadyDisposedError(key.name, this)
       }
       return null
@@ -1105,7 +1105,7 @@ abstract class ComponentManagerImpl(
   ) {
   }
 
-  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+  protected suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     serviceContainer.getInstanceHolder(keyClassName = serviceInterface)
       ?.takeIf(InstanceHolder::isStatic)
       ?.getInstanceInCallerContext(keyClass = null)

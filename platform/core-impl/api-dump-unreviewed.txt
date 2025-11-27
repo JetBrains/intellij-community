@@ -1890,23 +1890,20 @@ f:com.intellij.psi.impl.PsiCachedValueImpl$SoftTracked
 - com.intellij.psi.util.CachedValue
 - <init>(com.intellij.psi.PsiManager,com.intellij.psi.util.CachedValueProvider):V
 a:com.intellij.psi.impl.PsiDocumentManagerBase
-- com.intellij.psi.PsiDocumentManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.event.DocumentListener
+- com.intellij.psi.PsiDocumentManager
 - p:<init>(com.intellij.openapi.project.Project):V
-- associatePsi(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
 - beforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent):V
 - p:beforeDocumentChangeOnUnlockedDocument(com.intellij.psi.FileViewProvider):V
 - bulkUpdateFinished(com.intellij.openapi.editor.Document):V
 - bulkUpdateStarting(com.intellij.openapi.editor.Document):V
-- cancelAndRunWhenAllCommitted(java.lang.Object,java.lang.Runnable):Z
 - s:checkConsistency(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):Z
 - commitAllDocuments():V
 - commitAllDocumentsUnderProgress():Z
 - commitAndRunReadAction(com.intellij.openapi.util.Computable):java.lang.Object
 - commitAndRunReadAction(java.lang.Runnable):V
 - commitDocument(com.intellij.openapi.editor.Document):V
-- disableBackgroundCommit(com.intellij.openapi.Disposable):V
 - dispose():V
 - doPostponedOperationsAndUnblockDocument(com.intellij.openapi.editor.Document):V
 - documentChanged(com.intellij.openapi.editor.event.DocumentEvent):V
@@ -1915,8 +1912,6 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - getCachedDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
 - f:getCachedPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
 - getDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
-- getEventsSinceCommit(com.intellij.openapi.editor.Document):java.util.List
-- getLastCommittedDocument(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.ex.DocumentEx
 - getLastCommittedDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
 - getLastCommittedStamp(com.intellij.openapi.editor.Document):J
 - getLastCommittedText(com.intellij.openapi.editor.Document):java.lang.CharSequence
@@ -1928,14 +1923,12 @@ a:com.intellij.psi.impl.PsiDocumentManagerBase
 - hasUncommitedDocuments():Z
 - isCommitInProgress():Z
 - isCommitted(com.intellij.openapi.editor.Document):Z
-- isDefaultProject():Z
 - isDocumentBlockedByPsi(com.intellij.openapi.editor.Document):Z
 - isUncommited(com.intellij.openapi.editor.Document):Z
 - performForCommittedDocument(com.intellij.openapi.editor.Document,java.lang.Runnable):V
 - performLaterWhenAllCommitted(com.intellij.openapi.application.ModalityState,java.lang.Runnable):V
 - performLaterWhenAllCommitted(java.lang.Runnable):V
 - performWhenAllCommitted(java.lang.Runnable):Z
-- reparseFileFromText(com.intellij.psi.impl.source.PsiFileImpl):V
 - reparseFiles(java.util.Collection,Z):V
 - someDocumentDebugInfo(com.intellij.openapi.editor.Document):java.lang.String
 a:com.intellij.psi.impl.PsiElementBase
@@ -2450,8 +2443,8 @@ a:com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider
 - a:getAnchor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:restoreElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
-- com.intellij.psi.SmartPointerManager
 - com.intellij.openapi.Disposable
+- com.intellij.psi.SmartPointerManager
 - <init>(com.intellij.openapi.project.Project):V
 - createSmartPsiElementPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 - createSmartPsiElementPointer(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.psi.SmartPsiElementPointer

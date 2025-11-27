@@ -147,6 +147,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
                 is KtLambdaExpression,
                 is KtCallExpression,
                 is KtConstantExpression,
+                is KtDotQualifiedExpression,
                 is KtStringTemplateExpression -> false
             else -> true
         }

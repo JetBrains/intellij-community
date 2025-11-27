@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from contextlib import AbstractContextManager
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from psutil._common import (
     FREEBSD as FREEBSD,
@@ -16,16 +16,13 @@ from psutil._common import (
     usage_percent as usage_percent,
 )
 
-__extra__all__: Any
-PROC_STATUSES: Any
-TCP_STATUSES: Any
-PAGESIZE: Any
-AF_LINK: Any
-HAS_PER_CPU_TIMES: Any
-HAS_PROC_NUM_THREADS: Any
-HAS_PROC_OPEN_FILES: Any
-HAS_PROC_NUM_FDS: Any
-kinfo_proc_map: Any
+__extra__all__: Incomplete
+PROC_STATUSES: Incomplete
+TCP_STATUSES: Incomplete
+PAGESIZE: Incomplete
+AF_LINK: Incomplete
+HAS_PROC_NUM_THREADS: Incomplete
+kinfo_proc_map: Incomplete
 
 class svmem(NamedTuple):
     total: int
@@ -48,44 +45,44 @@ class scputimes(NamedTuple):
     irq: float
 
 class pmem(NamedTuple):
-    rss: Any
-    vms: Any
-    text: Any
-    data: Any
-    stack: Any
+    rss: Incomplete
+    vms: Incomplete
+    text: Incomplete
+    data: Incomplete
+    stack: Incomplete
 
 pfullmem = pmem
 
 class pcputimes(NamedTuple):
-    user: Any
-    system: Any
-    children_user: Any
-    children_system: Any
+    user: Incomplete
+    system: Incomplete
+    children_user: Incomplete
+    children_system: Incomplete
 
 class pmmap_grouped(NamedTuple):
-    path: Any
-    rss: Any
-    private: Any
-    ref_count: Any
-    shadow_count: Any
+    path: Incomplete
+    rss: Incomplete
+    private: Incomplete
+    ref_count: Incomplete
+    shadow_count: Incomplete
 
 class pmmap_ext(NamedTuple):
-    addr: Any
-    perms: Any
-    path: Any
-    rss: Any
-    private: Any
-    ref_count: Any
-    shadow_count: Any
+    addr: Incomplete
+    perms: Incomplete
+    path: Incomplete
+    rss: Incomplete
+    private: Incomplete
+    ref_count: Incomplete
+    shadow_count: Incomplete
 
 class sdiskio(NamedTuple):
-    read_count: Any
-    write_count: Any
-    read_bytes: Any
-    write_bytes: Any
-    read_time: Any
-    write_time: Any
-    busy_time: Any
+    read_count: Incomplete
+    write_count: Incomplete
+    read_bytes: Incomplete
+    write_bytes: Incomplete
+    read_time: Incomplete
+    write_time: Incomplete
+    busy_time: Incomplete
 
 def virtual_memory() -> svmem: ...
 def swap_memory(): ...
@@ -96,10 +93,10 @@ def cpu_count_cores() -> int | None: ...
 def cpu_stats(): ...
 def disk_partitions(all: bool = ...): ...
 
-disk_usage: Any
-disk_io_counters: Any
-net_io_counters: Any
-net_if_addrs: Any
+disk_usage: Incomplete
+disk_io_counters: Incomplete
+net_io_counters: Incomplete
+net_if_addrs: Incomplete
 
 def net_if_stats(): ...
 def net_connections(kind): ...
@@ -108,6 +105,10 @@ def sensors_temperatures(): ...
 def cpu_freq(): ...
 def boot_time(): ...
 def users(): ...
+
+INIT_BOOT_TIME: float
+
+def adjust_proc_create_time(ctime: float) -> float: ...
 def pids(): ...
 def pid_exists(pid): ...
 def is_zombie(pid): ...
@@ -115,7 +116,7 @@ def wrap_exceptions(fun): ...
 def wrap_exceptions_procfs(inst) -> AbstractContextManager[None]: ...
 
 class Process:
-    pid: Any
+    pid: Incomplete
     def __init__(self, pid) -> None: ...
     def oneshot(self): ...
     def oneshot_enter(self) -> None: ...
@@ -131,8 +132,8 @@ class Process:
     def cpu_times(self): ...
     def cpu_num(self): ...
     def memory_info(self): ...
-    memory_full_info: Any
-    def create_time(self): ...
+    memory_full_info: Incomplete
+    def create_time(self, monotonic: bool = False) -> float: ...
     def num_threads(self): ...
     def num_ctx_switches(self): ...
     def threads(self): ...
@@ -145,20 +146,20 @@ class Process:
     def cwd(self): ...
 
     class nt_mmap_grouped(NamedTuple):
-        path: Any
-        rss: Any
-        private: Any
-        ref_count: Any
-        shadow_count: Any
+        path: Incomplete
+        rss: Incomplete
+        private: Incomplete
+        ref_count: Incomplete
+        shadow_count: Incomplete
 
     class nt_mmap_ext(NamedTuple):
-        addr: Any
-        perms: Any
-        path: Any
-        rss: Any
-        private: Any
-        ref_count: Any
-        shadow_count: Any
+        addr: Incomplete
+        perms: Incomplete
+        path: Incomplete
+        rss: Incomplete
+        private: Incomplete
+        ref_count: Incomplete
+        shadow_count: Incomplete
 
     def open_files(self): ...
     def num_fds(self): ...

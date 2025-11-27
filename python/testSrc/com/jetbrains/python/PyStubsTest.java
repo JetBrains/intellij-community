@@ -1032,7 +1032,8 @@ public class PyStubsTest extends PyTestCase {
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     final PyType typeDef = context.getType(type);
 
-    assertTrue(typeDef instanceof PyTypingNewType);
+    PyCallableType callableType = assertInstanceOf(typeDef, PyCallableType.class);
+    assertInstanceOf(callableType.getReturnType(context), PyTypingNewType.class);
     assertNotParsed(file);
   }
 

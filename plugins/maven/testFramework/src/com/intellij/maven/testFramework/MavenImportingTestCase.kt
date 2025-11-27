@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
@@ -14,7 +15,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -35,13 +36,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.testFramework.CodeStyleSettingsTracker
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -50,6 +49,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
@@ -74,12 +74,28 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
+  protected lateinit var myDisposable: Disposable
+
+  // plugin resolution is slow and many tests do not need it
+  protected open fun skipPluginResolution(): Boolean {
+    return true
+  }
 
   @Throws(Exception::class)
   override fun setUp() {
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
     super.setUp()
+    myDisposable = Disposer.newDisposable(testRootDisposable)
+    if (skipPluginResolution()) {
+      val pluginResolver = object: MavenPluginResolver {
+        override suspend fun resolvePlugins(mavenProjects: Collection<MavenProject>, forceUpdateSnapshots: Boolean, mavenEmbedderWrappers: MavenEmbedderWrappers, process: RawProgressReporter, eventHandler: MavenEventHandler): PluginResolutionResult {
+          MavenLog.LOG.warn("Plugin resolution skipped to speed up the test. It can be enabled using skipPluginResolution()=false")
+          return PluginResolutionResult(emptySet())
+        }
+      }
+      project.replaceService(MavenPluginResolver::class.java, pluginResolver, myDisposable)
+    }
     myCodeStyleSettingsTracker = CodeStyleSettingsTracker { currentCodeStyleSettings }
     val settingsFile = MavenUtil.resolveGlobalSettingsFile(BundledMaven3)
     if (settingsFile != null) {
@@ -93,6 +109,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     runAll(
+      ThrowableRunnable<Throwable> {
+        if (::myDisposable.isInitialized) {
+          Disposer.dispose(myDisposable)
+        }
+      },
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
@@ -108,7 +129,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker!!.checkForSettingsDamage()
         }
-      }
+      },
     )
   }
 
@@ -306,7 +327,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun getModule(name: String): Module {
-    val m = ReadAction.compute<Module?, RuntimeException> { ModuleManager.getInstance(project).findModuleByName(name) }
+    val m = ModuleManager.getInstance(project).findModuleByName(name)
     assertNotNull("Module $name not found", m)
     return m as Module
   }
@@ -358,11 +379,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
-
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    awaitConfiguration()
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {
@@ -398,6 +419,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
+    runBlockingMaybeCancellable { awaitConfiguration() }
   }
 
   protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
@@ -435,16 +457,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
-  protected fun assertHasPendingProjectForReload() {
+  protected suspend fun assertHasPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
+    awaitConfiguration()
     assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
-  protected fun assertNoPendingProjectForReload() {
+  protected suspend fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
+    awaitConfiguration()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
@@ -474,12 +496,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse("Call awaitConfiguration() from background thread", isEdt)
     Observation.awaitConfiguration(project) { message ->
       logConfigurationMessage(message)
-    }
-  }
-
-  protected fun blockTillCinfigurationReady() {
-    runBlockingCancellable {
-      awaitConfiguration()
     }
   }
 

@@ -14,7 +14,7 @@ public interface DocumentCommitProcessor {
   void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile);
 
   void commitAsynchronously(@NotNull Project project,
-                            @NotNull PsiDocumentManagerBase documentManager,
+                            @NotNull PsiDocumentManagerEx documentManager,
                             @NotNull Document document,
                             @NonNls @NotNull Object reason,
                             @NotNull ModalityState modality);

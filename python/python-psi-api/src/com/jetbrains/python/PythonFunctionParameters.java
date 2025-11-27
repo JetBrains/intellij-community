@@ -17,7 +17,7 @@ public enum PythonFunctionParameters implements FunctionParameter {
   /**
    * environment.setdevault(key, failobj) # failobj
    */
-  ENV_SET_DEFAULT_FAILOBJ("failobj",1);
+  ENV_SET_DEFAULT_FAILOBJ("failobj", 1);
 
 
   private final @Nullable String myName;

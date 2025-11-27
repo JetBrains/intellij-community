@@ -38,12 +38,14 @@ import org.jetbrains.annotations.PropertyKey
 /**
  * @author Aleksei.Kniazev
  */
-class PyInlineFunctionProcessor(project: Project,
-                                private val myEditor: Editor,
-                                private val myFunction: PyFunction,
-                                private val myReference: PsiReference?,
-                                private val myInlineThisOnly: Boolean,
-                                removeDeclaration: Boolean) : BaseRefactoringProcessor(project) {
+class PyInlineFunctionProcessor(
+  project: Project,
+  private val myEditor: Editor,
+  private val myFunction: PyFunction,
+  private val myReference: PsiReference?,
+  private val myInlineThisOnly: Boolean,
+  removeDeclaration: Boolean,
+) : BaseRefactoringProcessor(project) {
 
   private val myFunctionClass = myFunction.containingClass
   private val myGenerator = PyElementGenerator.getInstance(myProject)
@@ -67,7 +69,7 @@ class PyInlineFunctionProcessor(project: Project,
       }
       else {
         val callExpression = element.parent as PyCallExpression
-        if (callExpression.arguments.any { it is PyStarArgument}) {
+        if (callExpression.arguments.any { it is PyStarArgument }) {
           if (!handleUsageError(element, "refactoring.inline.function.uses.unpacking", conflicts)) return false
           return@filter false
         }
@@ -156,8 +158,10 @@ class PyInlineFunctionProcessor(project: Project,
       val generatedNames = mutableSetOf<String>()
 
 
-      val callSite = PsiTreeUtil.getParentOfType(reference, PyCallExpression::class.java) ?: error("Unable to find call expression for ${reference.name}")
-      val containingStatement = PsiTreeUtil.getParentOfType(callSite, PyStatement::class.java) ?: error("Unable to find statement for ${reference.name}")
+      val callSite = PsiTreeUtil.getParentOfType(reference, PyCallExpression::class.java)
+                     ?: error("Unable to find call expression for ${reference.name}")
+      val containingStatement = PsiTreeUtil.getParentOfType(callSite, PyStatement::class.java)
+                                ?: error("Unable to find statement for ${reference.name}")
       val scopeAnchor = if (containingStatement is PyFunction) containingStatement else reference
 
       val functionCopy = myFunction.copy() as PyFunction
@@ -215,7 +219,7 @@ class PyInlineFunctionProcessor(project: Project,
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           if (!node.isQualified) {
             val parentLambda = PsiTreeUtil.getParentOfType(node, PyLambdaExpression::class.java)
-            if (parentLambda == null  || parentLambda.parameterList.parameters.none { it.name == node.name }) {
+            if (parentLambda == null || parentLambda.parameterList.parameters.none { it.name == node.name }) {
               when (val name = node.name) {
                 in mappedArguments -> argumentReplacements[node] = mappedArguments[name]!!
                 in nameClashes -> nameClashRefs.putValue(name!!, node)
@@ -244,11 +248,11 @@ class PyInlineFunctionProcessor(project: Project,
       nameClashRefs.entrySet().forEach { (name, elements) ->
         val generated = generateUniqueAssignment(languageLevel, name, generatedNames, scopeAnchor)
         elements.forEach {
-            when (it) {
-              is PyTargetExpression -> it.replace(generated.targets[0])
-              is PyReferenceExpression -> it.replace(generated.assignedValue!!)
-            }
+          when (it) {
+            is PyTargetExpression -> it.replace(generated.targets[0])
+            is PyReferenceExpression -> it.replace(generated.assignedValue!!)
           }
+        }
       }
 
       importAsRefs.entrySet().forEach { (name, elements) ->
@@ -286,7 +290,7 @@ class PyInlineFunctionProcessor(project: Project,
           }
         }
       }
-      else if (returnStatements.isNotEmpty())  {
+      else if (returnStatements.isNotEmpty()) {
         val newReturn = generateUniqueAssignment(languageLevel, "result", generatedNames, scopeAnchor)
         returnStatements.forEach {
           val copy = newReturn.copy() as PyAssignmentStatement
@@ -377,8 +381,10 @@ class PyInlineFunctionProcessor(project: Project,
     }
   }
 
-  private fun prepareArguments(callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
-                               reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean): Map<String, PyExpression> {
+  private fun prepareArguments(
+    callSite: PyCallExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>, scopeAnchor: PsiElement,
+    reference: PyReferenceExpression, languageLevel: LanguageLevel, context: PyResolveContext, selfUsed: Boolean,
+  ): Map<String, PyExpression> {
     val mapping = callSite.mapArguments(context).firstOrNull() ?: error("Can't map arguments for ${reference.name}")
     val mappedParams = mapping.mappedParameters
     val firstImplicit = mapping.implicitParameters.firstOrNull()
@@ -409,16 +415,20 @@ class PyInlineFunctionProcessor(project: Project,
     return self + passedArguments + defaultValues
   }
 
-  private fun tryExtractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
-                                    scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
+  private fun tryExtractDeclaration(
+    paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
+    scopeAnchor: PsiElement, languageLevel: LanguageLevel,
+  ): Pair<String, PyExpression> {
     if (arg !is PyReferenceExpression && arg !is PyLiteralExpression) {
       return extractDeclaration(paramName, arg, declarations, generatedNames, scopeAnchor, languageLevel)
     }
     return paramName to arg
   }
 
-  private fun extractDeclaration(paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
-                                 scopeAnchor: PsiElement, languageLevel: LanguageLevel): Pair<String, PyExpression> {
+  private fun extractDeclaration(
+    paramName: String, arg: PyExpression, declarations: MutableList<PyAssignmentStatement>, generatedNames: MutableSet<String>,
+    scopeAnchor: PsiElement, languageLevel: LanguageLevel,
+  ): Pair<String, PyExpression> {
     val statement = generateUniqueAssignment(languageLevel, paramName, generatedNames, scopeAnchor)
     statement.assignedValue!!.replace(arg)
     declarations.add(statement)

@@ -165,6 +165,13 @@ abstract class ProductProperties {
   var scrambleMainJar: Boolean = false
 
   /**
+   * List of content modules from the core plugin which should be scrambled using [ProprietaryBuildTools.scrambleTool].
+   * Modules are mentioned here should be put to separate JARs (i.e., they aren't registered as 'embedded' and don't have the 'package' attribute).
+   * If some modules are listed here, it's required [scrambleMainJar] to be set to `true`.
+   */
+  var contentModulesToScramble: List<String> = emptyList()
+
+  /**
    * Path to an alternative scramble script which will should be used for a product.
    */
   var alternativeScrambleStubPath: Path? = null
@@ -282,7 +289,7 @@ abstract class ProductProperties {
    * @return an instance of the class containing properties specific for Windows distribution,
    * or `null` if the product doesn't have Windows distribution.
    */
-  abstract fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer?
+  abstract fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer?
 
   /**
    * @return an instance of the class containing properties specific for Linux distribution,
@@ -294,7 +301,7 @@ abstract class ProductProperties {
    * @return an instance of the class containing properties specific for macOS distribution,
    * or `null` if the product doesn't have macOS distribution.
    */
-  abstract fun createMacCustomizer(projectHome: String): MacDistributionCustomizer?
+  abstract fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer?
 
   /**
    * If `true`, a .zip archive containing sources of modules included in the product will be produced.
@@ -330,7 +337,7 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
+  open suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
@@ -408,7 +415,7 @@ abstract class ProductProperties {
    * Copies additional localization resources to the plugin-generated localization resources directory.
    */
   @ApiStatus.Internal
-  open suspend fun copyAdditionalLocalizationResourcesToPlugin(context: BuildContext, lang: String, targetDir: Path) {}
+  open suspend fun copyAdditionalLocalizationResourcesToPlugin(lang: String, targetDir: Path, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.

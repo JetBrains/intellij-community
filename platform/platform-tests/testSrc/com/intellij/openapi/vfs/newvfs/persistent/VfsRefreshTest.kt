@@ -21,6 +21,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.util.FileContentUtilCore
 import com.intellij.util.application
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
@@ -243,5 +244,33 @@ class VfsRefreshTest {
       virtualFile.refresh(false, false)
     }
     // if this test terminates, there was no hanging
+  }
+
+  @Test
+  fun `listeners in programmatic reparse run on EDT`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val file = createTempFile()
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+    val counter = AtomicInteger(0)
+
+    writeAction {
+      virtualFile.writeText("42")
+    }
+
+    application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun before(events: List<VFileEvent>) {
+        assertThat(EDT.isCurrentThreadEdt()).isTrue
+        counter.incrementAndGet()
+      }
+
+      override fun after(events: List<VFileEvent>) {
+        assertThat(EDT.isCurrentThreadEdt()).isTrue
+        counter.incrementAndGet()
+      }
+    })
+
+    backgroundWriteAction {
+      FileContentUtilCore.reparseFiles(virtualFile)
+    }
+    assertThat(counter.get()).isEqualTo(2)
   }
 }

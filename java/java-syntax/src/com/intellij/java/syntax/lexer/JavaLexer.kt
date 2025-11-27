@@ -151,7 +151,7 @@ class JavaLexer(level: LanguageLevel) : Lexer {
           val l2 = mySymbolLength
           if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '/') {
             // Java 23 Markdown comments
-            myTokenType = JavaDocSyntaxElementType.DOC_COMMENT
+            myTokenType = JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT
             myTokenEndOffset = getClosingMarkdownComment(myBufferIndex + l1 + l2)
           }
           else {

@@ -5,7 +5,7 @@ c:com.intellij.usages.impl.GroupNode
 - com.intellij.pom.Navigatable
 - java.lang.Comparable
 - javax.swing.tree.DefaultMutableTreeNode
-- canNavigate():Z
+- p:canDataNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.impl.GroupNode):I
 - getGroup():com.intellij.usages.UsageGroup
@@ -52,7 +52,7 @@ c:com.intellij.usages.impl.UsageNode
 - java.lang.Comparable
 - javax.swing.tree.DefaultMutableTreeNode
 - <init>(com.intellij.usages.Usage):V
-- canNavigate():Z
+- p:canDataNavigate():Z
 - canNavigateToSource():Z
 - compareTo(com.intellij.usages.impl.UsageNode):I
 - p:getNodeText():java.lang.String

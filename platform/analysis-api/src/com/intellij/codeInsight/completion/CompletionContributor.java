@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionWithAny;
-import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -235,9 +234,9 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     List<CompletionContributor> contributors = INSTANCE.forKey(language);
-    if (Registry.is("ide.completion.modcommand", false)) {
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) {
       contributors =
-        ContainerUtil.concat(ContainerUtil.map(CompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
+        ContainerUtil.concat(ContainerUtil.map(ModCompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
     }
     return contributors;
   }

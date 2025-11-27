@@ -3,7 +3,17 @@ package com.intellij.grazie.utils
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Replaces backslash-escaped characters in the current [TextContent] object with their corresponding characters
+ * and marks problematic ranges or characters that cannot be resolved properly as [TextContent.ExclusionKind.unknown].
+ *
+ * This includes handling sequences like `\n` and `\t` by translating them into their whitespace character equivalents.
+ * It also tracks offsets to identify and exclude invalid or unresolvable ranges in the text.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
 fun TextContent.replaceBackslashEscapes(): TextContent {
   val text = this.replaceBackslashEscapedWhitespace()
   val offsets = IntArray(text.length + 1)
@@ -16,14 +26,30 @@ fun TextContent.replaceBackslashEscapes(): TextContent {
   return text.excludeRanges(exclusions)
 }
 
+/**
+ * Same as [replaceBackslashEscapedWhitespace], but escapes only `\n` and `\t`.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
 fun TextContent.replaceBackslashEscapedWhitespace(): TextContent {
   return this.replaceBackslashEscapedWhitespace('n').replaceBackslashEscapedWhitespace('t')
 }
 
+/**
+ * Same as [replaceBackslashEscapedWhitespace], but escapes only vertical tab (`\v`).
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
 fun TextContent.replaceEscapedVerticalTab(): TextContent {
   return this.replaceBackslashEscapedWhitespace('v')
 }
 
+/**
+ * Replaces occurrences of backslash-escaped whitespace-like characters in the current [TextContent] object
+ * with their respective normalized whitespace representations.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
 fun TextContent.replaceBackslashEscapedWhitespace(separator: Char): TextContent {
   val excluded = getBackslashExcludeRanges(this, separator)
   if (excluded.isEmpty()) return this

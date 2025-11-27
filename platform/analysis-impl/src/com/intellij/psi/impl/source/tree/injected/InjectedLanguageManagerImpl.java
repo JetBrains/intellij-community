@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -422,7 +423,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   public @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     Place shreds = ((DocumentWindowImpl)document).getShreds();
     Project project = shreds.getHostPointer().getProject();
-    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
+    DocumentEx delegate = ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
     Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, place);
   }

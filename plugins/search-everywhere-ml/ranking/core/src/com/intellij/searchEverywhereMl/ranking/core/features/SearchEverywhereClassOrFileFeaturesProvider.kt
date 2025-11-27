@@ -62,39 +62,39 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
   RecentFilesSEContributor::class.java
 ) {
   object Fields {
-    val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
+    val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("is_accessible_from_module")
 
-    val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
+    val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("is_same_module")
 
-    val DIRECTORY_DEPTH_DATA_KEY = EventFields.Int("directoryDepth")
-    val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = EventFields.Boolean("isSameFileTypeAsOpenedFile")
+    val DIRECTORY_DEPTH_DATA_KEY = EventFields.Int("directory_depth")
+    val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = EventFields.Boolean("is_same_file_type_as_opened_file")
 
-    val IS_IN_SOURCE_DATA_KEY = EventFields.Boolean("isInSource")
-    val IS_IN_TEST_SOURCES_DATA_KEY = EventFields.Boolean("isInTestSources")
-    val IS_IN_LIBRARY_DATA_KEY = EventFields.Boolean("isFromLibrary")
-    val IS_EXCLUDED_DATA_KEY = EventFields.Boolean("isInExcluded")
+    val IS_IN_SOURCE_DATA_KEY = EventFields.Boolean("is_in_source")
+    val IS_IN_TEST_SOURCES_DATA_KEY = EventFields.Boolean("is_in_test_sources")
+    val IS_IN_LIBRARY_DATA_KEY = EventFields.Boolean("is_in_library")
+    val IS_EXCLUDED_DATA_KEY = EventFields.Boolean("is_in_excluded")
 
-    val FILETYPE_USAGE_RATIO_DATA_KEY = EventFields.Double("fileTypeUsageRatio")
-    val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = EventFields.Double("fileTypeUsageRatioToMax")
-    val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = EventFields.Double("fileTypeUsageRatioToMin")
-    val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = EventFields.Long("timeSinceLastFileTypeUsage")
-    val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMinute")
-    val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastHour")
-    val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastDay")
-    val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("fileTypeUsedInLastMonth")
+    val FILETYPE_USAGE_RATIO_DATA_KEY = EventFields.Double("file_type_usage_ratio")
+    val FILETYPE_USAGE_RATIO_TO_MAX_DATA_KEY = EventFields.Double("file_type_usage_ratio_to_max")
+    val FILETYPE_USAGE_RATIO_TO_MIN_DATA_KEY = EventFields.Double("file_type_usage_ratio_to_min")
+    val TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY = EventFields.Long("time_since_last_file_type_usage")
+    val FILETYPE_USED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("file_type_used_in_last_minute")
+    val FILETYPE_USED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("file_type_used_in_last_hour")
+    val FILETYPE_USED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("file_type_used_in_last_day")
+    val FILETYPE_USED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("file_type_used_in_last_month")
 
-    val RECENT_INDEX_DATA_KEY = EventFields.Int("recentFilesIndex")
-    val PREDICTION_SCORE_DATA_KEY = EventFields.Double("predictionScore")
+    val RECENT_INDEX_DATA_KEY = EventFields.Int("recent_files_index")
+    val PREDICTION_SCORE_DATA_KEY = EventFields.Double("prediction_score")
 
-    val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
+    val IS_OPENED_DATA_KEY = EventFields.Boolean("is_opened")
 
-    val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = EventFields.Long("timeSinceLastModification")
-    val WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("wasModifiedInLastMinute")
-    val WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("wasModifiedInLastHour")
-    val WAS_MODIFIED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("wasModifiedInLastDay")
-    val WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("wasModifiedInLastMonth")
+    val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = EventFields.Long("time_since_last_modification")
+    val WAS_MODIFIED_IN_LAST_MINUTE_DATA_KEY = EventFields.Boolean("was_modified_in_last_minute")
+    val WAS_MODIFIED_IN_LAST_HOUR_DATA_KEY = EventFields.Boolean("was_modified_in_last_hour")
+    val WAS_MODIFIED_IN_LAST_DAY_DATA_KEY = EventFields.Boolean("was_modified_in_last_day")
+    val WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY = EventFields.Boolean("was_modified_in_last_month")
 
-    val ALL_INITIAL_LETTERS_MATCH_DATA_KEY = EventFields.Boolean("allInitialLettersMatch")
+    val ALL_INITIAL_LETTERS_MATCH_DATA_KEY = EventFields.Boolean("all_initial_letters_match")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

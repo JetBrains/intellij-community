@@ -34,7 +34,7 @@ public class GrAnnotationAttributeCompletionProvider extends CompletionProvider<
     if (parent instanceof GrAnnotationNameValuePair && position == ((GrAnnotationNameValuePair)parent).getNameIdentifierGroovy()) {
       GrAnnotation annotation = PsiImplUtil.getAnnotation((GrAnnotationNameValuePair)parent);
       if (annotation != null) {
-        new AnnotationAttributeCompletionResultProcessor(annotation).process(result, PrefixMatcher.ALWAYS_TRUE);
+        new AnnotationAttributeCompletionResultProcessor(annotation).process(result, PlainPrefixMatcher.ALWAYS_TRUE);
       }
     }
   }

@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
+import java.util.*
 
 /**
  * Retrieves all declarations that might need their references to be updated.
@@ -159,7 +160,7 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     newPkgName: FqName,
     moveTarget: K2MoveTargetDescriptor? = null
 ): List<UsageInfo> {
-    val usages = mutableListOf<UsageInfo>()
+    val usages = Collections.synchronizedList(mutableListOf<UsageInfo>())
     fun addNonCodeUsages(oldFqn: String, newFqn: String) {
         TextOccurrencesUtil.findNonCodeUsages(
             this,

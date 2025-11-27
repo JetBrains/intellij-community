@@ -32,10 +32,10 @@ public final class CharsetUtil {
     return false;
   }
 
-  public static Charset extractCharsetFromFileContent(@Nullable Project project,
-                                                      @Nullable VirtualFile virtualFile,
-                                                      @Nullable FileType fileType,
-                                                      @NotNull CharSequence text) {
+  public static @Nullable Charset extractCharsetFromFileContent(@Nullable Project project,
+                                                                @Nullable VirtualFile virtualFile,
+                                                                @Nullable FileType fileType,
+                                                                @NotNull CharSequence text) {
     if (fileType instanceof LanguageFileType &&
         // otherwise the default implementations will always convert CharSequence to String unnecessarily, producing garbage
         ourSupportsCharsetDetection.computeIfAbsent(fileType.getClass().getName(),

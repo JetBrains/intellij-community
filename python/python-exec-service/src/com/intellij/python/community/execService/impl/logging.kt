@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.readLineAsync
-import com.intellij.util.io.toByteArray
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.Exe
 import kotlinx.coroutines.CoroutineScope
@@ -21,22 +20,21 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.BufferedReader
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
-import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-internal object LoggingLimits {
+@ApiStatus.Internal
+object LoggingLimits {
   /**
    * The maximum buffer size of a LoggingProcess
    */
-  const val MAX_OUTPUT_SIZE = 10_000_000
+  const val MAX_OUTPUT_SIZE = 100_000
   const val MAX_LINES = 1024
 }
 
@@ -49,6 +47,7 @@ data class LoggedProcess(
   val exe: LoggedProcessExe,
   val args: List<String>,
   val env: Map<String, String>,
+  val target: String,
   val lines: SharedFlow<LoggedProcessLine>,
   val exitInfo: MutableStateFlow<LoggedProcessExitInfo?>,
 ) {
@@ -111,6 +110,7 @@ class LoggingProcess(
   exe: Exe,
   args: List<String>,
   env: Map<String, String>,
+  target: String,
 ) : Process() {
   val loggedProcess: LoggedProcess
 
@@ -139,6 +139,7 @@ class LoggingProcess(
         ),
         args,
         env,
+        target,
         linesFlow,
         exitInfoFlow,
       )

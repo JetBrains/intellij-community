@@ -520,15 +520,6 @@ public class ProjectSdksModel implements SdkModel {
     return createSdkInternal(type, newSdkName, home);
   }
 
-  private static @NotNull EelDescriptor getEelDescriptorFromHomePath(@NotNull String homePath) {
-    try {
-      return getEelDescriptor(Path.of(homePath));
-    }
-    catch (InvalidPathException ignored) {
-      return LocalEelDescriptor.INSTANCE;
-    }
-  }
-
   private static @NotNull Sdk createSdkInternal(@NotNull SdkType type,
                                                 @NotNull String newSdkName,
                                                 @NotNull String home) {

@@ -22,7 +22,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace chained comparisons with more simple version
  * For instance, a < b and b < c  --> a < b < c
  */
@@ -97,7 +97,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     rightExpression.delete();
   }
 
-  private static @NotNull PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
+  private static @NotNull PyExpression makePsiConsistentBinaryExpression(@NotNull Project project,
+                                                                         @NotNull PyBinaryExpression binaryExpression) {
     final ArrayList<PyExpression> elements = new ArrayList<>();
     final ArrayList<String> operators = new ArrayList<>();
     collectExpressionsDfs(elements, operators, binaryExpression);
@@ -155,7 +156,8 @@ public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
     return op;
   }
 
-  private static @NotNull PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
+  private static @NotNull PyExpression invertExpression(@NotNull PyBinaryExpression expression,
+                                                        @NotNull PyElementGenerator elementGenerator) {
     if (isComparisonExpression(expression)) {
       final PyExpression left = expression.getLeftExpression();
       final PyExpression right = expression.getRightExpression();

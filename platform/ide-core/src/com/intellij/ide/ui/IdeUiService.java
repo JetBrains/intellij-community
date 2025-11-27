@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -10,18 +10,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
 import java.net.Proxy;
@@ -31,28 +28,29 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Experimental
+/**
+ * The class is for resolving dependency conflicts within the IDE and should not be used from plugins.
+ * Instead, look how methods are implemented in {@link IdeUiServiceImpl} and use the corresponding code.
+ */
+@ApiStatus.Internal
 public class IdeUiService {
-
-  public void revealFile(Path file) {
+  public static IdeUiService getInstance() {
+    return ApplicationManager.getApplication().getService(IdeUiService.class);
   }
+
+  public void revealFile(Path file) { }
 
   public UnlockOption askForUnlock(@NotNull Project project, List<? extends VirtualFile> files) {
     return null;
   }
 
   public boolean isFileRecentlyChanged(Project project, VirtualFile file) {
-
     return false;
   }
 
-  public void logIdeScriptUsageEvent(Class<?> clazz) {
+  public void logIdeScriptUsageEvent(Class<?> clazz) { }
 
-  }
-
-  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) {
-
-  }
+  public void systemNotify(@NlsContexts.SystemNotificationTitle String title, @NlsContexts.SystemNotificationText String text) { }
 
   public @NotNull DataContext createUiDataContext(@Nullable Component component) {
     return DataContext.EMPTY_CONTEXT;
@@ -66,43 +64,22 @@ public class IdeUiService {
     return DataContext.EMPTY_CONTEXT;
   }
 
-  public void initUpdateSession(@NotNull AnActionEvent event) {
-  }
-
   public Component getComponentFromRecentMouseEvent() {
     return null;
   }
 
-  public void browse(URL url) {
+  public void browse(URL url) { }
 
-  }
+  public void browse(String url) { }
 
-  public void browse(String url) {
-
-  }
-
-  public void performAction(@NotNull AnAction action, @NotNull AnActionEvent event) {
-  }
-
-  public boolean notifyByBalloon(Project project,
-                                 String toolWindowId,
-                                 MessageType messageType,
-                                 @Nls String fullMessage,
-                                 Icon icon,
-                                 HyperlinkListener listener) {
-    return false;
-  }
+  public void performAction(@NotNull AnAction action, @NotNull AnActionEvent event) { }
 
   public URLConnection openHttpConnection(String url) throws IOException {
     return null;
   }
 
   public SSLSocketFactory getSslSocketFactory() {
-    return null;
-  }
-
-  public boolean isUseSafeWrite() {
-    return false;
+    return getSslContext().getSocketFactory();
   }
 
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
@@ -133,29 +110,28 @@ public class IdeUiService {
     return new ArrayList<>();
   }
 
-  public void prepareURL(String url) throws IOException {
+  public void prepareURL(String url) throws IOException { }
 
-  }
+  public void showRefactoringMessageDialog(
+    @NlsContexts.DialogTitle String title,
+    @NlsContexts.DialogMessage String message,
+    String helpTopic,
+    String iconId,
+    boolean showCancelButton,
+    Project project
+  ) { }
 
-  public void showRefactoringMessageDialog(String title,
-                                           String message,
-                                           String helpTopic,
-                                           String iconId,
-                                           boolean showCancelButton,
-                                           Project project) {
-
-  }
-
-  public void showErrorHint(Editor editor, String message) {
-
-  }
-
-
-  public static IdeUiService getInstance() {
-    return ApplicationManager.getApplication().getService(IdeUiService.class);
-  }
+  public void showErrorHint(Editor editor, @NlsContexts.HintText String message) { }
 
   public boolean showErrorDialog(String title, String message) {
+    return false;
+  }
+
+  public @NlsContexts.DialogMessage @Nullable String getMacOsNetworkSolutionMessage(@NotNull Throwable error, boolean full) {
+    return null;
+  }
+
+  public boolean showProxyAuthNotification() {
     return false;
   }
 }

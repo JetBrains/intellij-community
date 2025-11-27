@@ -21,7 +21,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +43,9 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebugSessionSelectionService;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,7 +82,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
-    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
+    XDebugSessionProxy proxy = MonolithSessionProxyKt.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
     @Nullable String defaultFramesViewKey = XDebugSessionTabCustomizerKt.getDefaultFramesViewKey(session.getDebugProcess());
@@ -124,6 +126,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return tab;
   }
 
+  @Override
   public @NotNull RunnerLayoutUi getUi() {
     return myUi;
   }
@@ -271,7 +274,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, this::computeWatches,
                                                       restartActions);
-    if (!(session instanceof XDebugSessionProxy.Monolith)) {
+    if (!(session instanceof MonolithSessionProxy)) {
       // Session Proxy is not fully initialized in the Monolith,
       // For the Monolith we incorporate the legacy happy execution path in ExecutionManagerImpl to assign run content descriptor id.
       myRunContentDescriptor.setId(session.getRunContentDescriptorId());
@@ -461,7 +464,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(myUi.getOptions().getLayoutActions());
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
-    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(ActionsBundle.messagePointer("group.XDebugger.settings.text"));
+    DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(XDebuggerImplBundle.lazyMessage("group.XDebugger.settings.text"));
     settings.getTemplatePresentation().setIcon(myUi.getOptions().getSettingsActions().getTemplatePresentation().getIcon());
     settings.addAll(commonSettings);
     leftToolbar.add(settings);
@@ -531,11 +534,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    */
   @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
-    showWatchesView(XDebugSessionProxyKeeperKt.asProxy(session));
+    showWatchesView(MonolithSessionProxyKt.asProxy(session));
   }
 
   public static void showWatchesView(@NotNull XDebugSessionProxy session) {
-    XDebugSessionTab tab = session.getSessionTab();
+    XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
     if (tab == null) return;
     tab.showView(tab.getWatchesContentId());
   }
@@ -546,13 +549,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Deprecated
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
     if (session == null) return;
-    showFramesView(XDebugSessionProxyKeeperKt.asProxy(session));
+    showFramesView(MonolithSessionProxyKt.asProxy(session));
   }
 
   @ApiStatus.Internal
   public static void showFramesView(@Nullable XDebugSessionProxy session) {
     if (session == null) return;
-    XDebugSessionTab tab = session.getSessionTab();
+    XDebugSessionTab tab = (XDebugSessionTab)session.getSessionTab();
     if (tab == null) return;
     tab.showView(tab.getFramesContentId());
   }

@@ -260,6 +260,7 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
+    private @Nullable ModRegisterTabOut myTabOutCommand;
     private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
@@ -519,13 +520,7 @@ final class PsiUpdateImpl {
     @Override
     public void moveCaretTo(int offset) {
       myPositionUpdated = true;
-      PsiLanguageInjectionHost host = tracker().getHostCopy();
-      if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
-        PsiFile file = findInjectedFile(instance, host);
-        offset = instance.mapUnescapedOffsetToInjected(file, offset);
-        offset = instance.injectedToHost(file, offset);
-      }
+      offset = mapOffset(offset);
       myCaretOffset = myCaretVirtualEnd = offset;
       if (!mySelection.containsOffset(offset)) {
         mySelection = TextRange.create(offset, offset);
@@ -561,6 +556,12 @@ final class PsiUpdateImpl {
       TextRange identifierRange = nameIdentifier != null ? getRange(nameIdentifier) : null;
       identifierRange = identifierRange == null ? null : mapRange(identifierRange);
       myRenameSymbol = new ModStartRename(navigationFile(), new ModStartRename.RenameSymbolRange(range, identifierRange), suggestedNames);
+    }
+
+    @Override
+    public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+      range = mapRange(range);
+      myTabOutCommand = new ModRegisterTabOut(navigationFile(), range.getStartOffset(), range.getEndOffset(), mapOffset(tabOutOffset));
     }
 
     @Override
@@ -635,6 +636,17 @@ final class PsiUpdateImpl {
       return range;
     }
 
+    private int mapOffset(int offset) {
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
+      if (host != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
+        PsiFile file = findInjectedFile(instance, host);
+        offset = instance.mapUnescapedOffsetToInjected(file, offset);
+        offset = instance.injectedToHost(file, offset);
+      }
+      return offset;
+    }
+
     private @NotNull PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
       Language language = tracker().myCopyFile.getLanguage();
       var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -665,8 +677,13 @@ final class PsiUpdateImpl {
       myTrackedDeclarations.replaceAll(range -> range.withNewRange(updateRange(event, range.newRange())));
       if (myRenameSymbol != null) {
         ModStartRename.RenameSymbolRange renameSymbolRange = myRenameSymbol.symbolRange();
-
         myRenameSymbol = myRenameSymbol.withRange(updateRange(event, renameSymbolRange));
+      }
+      if (myTabOutCommand != null) {
+        int left = updateOffset(event, myTabOutCommand.rangeStart(), true);
+        int right = updateOffset(event, myTabOutCommand.rangeEnd(), false);
+        int target = updateOffset(event, myTabOutCommand.target(), false);
+        myTabOutCommand = new ModRegisterTabOut(myTabOutCommand.file(), left, right, target);
       }
     }
 
@@ -724,6 +741,7 @@ final class PsiUpdateImpl {
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
         .andThen(myTrackedDeclarations.stream().<ModCommand>map(c -> c).reduce(nop(), ModCommand::andThen))
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
+        .andThen(myTabOutCommand == null ? nop() : myTabOutCommand)
         .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 

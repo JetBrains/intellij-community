@@ -22,7 +22,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeperKt;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
@@ -41,8 +41,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.function.Supplier;
-
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
 
 public class XDebuggerEvaluationDialog extends DialogWrapper {
   public static final DataKey<XDebuggerEvaluationDialog> KEY = DataKey.create("DEBUGGER_EVALUATION_DIALOG");
@@ -68,7 +66,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
                                    @NotNull XExpression text,
                                    @Nullable XSourcePosition sourcePosition,
                                    boolean isCodeFragmentEvaluationSupported) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session),
+    this(MonolithSessionProxyKt.asProxy(session),
          editorsProvider, text, sourcePosition, isCodeFragmentEvaluationSupported);
   }
 
@@ -240,7 +238,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     if (myMode == EvaluationMode.EXPRESSION) {
       XExpression expression = getInputEditor().getExpression();
       if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-        XDebugSessionTab tab = mySession.getSessionTab();
+        XDebugSessionTab tab = (XDebugSessionTab)mySession.getSessionTab();
         if (tab != null) {
           tab.getWatchesView().addWatchExpression(expression, -1, true);
           getInputEditor().requestFocusInEditor();

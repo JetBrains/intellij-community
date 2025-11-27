@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/plugins/parser/impl",
     "//platform/syntax/syntax-api:syntax",
+    "//platform/eel",
   ],
   exports = ["@lib//:kotlin-stdlib"]
 )

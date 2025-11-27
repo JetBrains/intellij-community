@@ -75,10 +75,6 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaCatchBlockMover" id="catchBlock"
                           order="before statement"/>
 
-    <registryKey key="java.formatter.chained.calls.pre212.compatibility"
-                 defaultValue="false"
-                 description="Format chained calls as in versions prior to 2021.2"/>
-
     <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.DiamondInsertHandler"/>
     <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.RefStartInsertHandler"/>
     <completion.frontendFriendlyInsertHandler handler="com.intellij.codeInsight.completion.method.FrontendFriendlyParenthesesInsertHandler"/>
@@ -90,6 +86,14 @@
                  description="Enable checks that the import layout is compatible"
                  restartRequired="true"/>
 
+    <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer"
+                             implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiClass"
+                             implementationClass="com.intellij.codeInsight.hint.ClassDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiLambdaExpression"
+                             implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiMethod"
+                             implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
 
   </extensions>
 </idea-plugin>

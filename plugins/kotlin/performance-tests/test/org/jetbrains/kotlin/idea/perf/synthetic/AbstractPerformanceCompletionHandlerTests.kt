@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHand
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.INVOCATION_COUNT_PREFIX
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.LOOKUP_STRING_PREFIX
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.TAIL_TEXT_PREFIX
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.USE_EXPENSIVE_RENDERER
 import org.jetbrains.kotlin.idea.completion.test.handlers.CompletionHandlerTestBase
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -75,7 +74,6 @@ abstract class AbstractPerformanceCompletionHandlerTests(
                     val lookupString = InTextDirectivesUtils.findStringWithPrefixes(fileText, LOOKUP_STRING_PREFIX)
                     val itemText = InTextDirectivesUtils.findStringWithPrefixes(fileText, ELEMENT_TEXT_PREFIX)
                     val tailText = InTextDirectivesUtils.findStringWithPrefixes(fileText, TAIL_TEXT_PREFIX)
-                    val useExpensiveRenderer = InTextDirectivesUtils.isDirectiveDefined(fileText, USE_EXPENSIVE_RENDERER)
                     val completionChars = completionChars(fileText)
 
                     val completionType = ExpectedCompletionUtils.getCompletionType(fileText) ?: defaultCompletionType
@@ -101,7 +99,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
 
                     doPerfTestWithTextLoaded(
                         testPath, completionType, invocationCount, lookupString,
-                        itemText, tailText, completionChars, useExpensiveRenderer
+                        itemText, tailText, completionChars
                     )
                 }
             } finally {
@@ -118,7 +116,6 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         itemText: String?,
         tailText: String?,
         completionChars: String,
-        useExpensiveRenderer: Boolean,
     ) {
         performanceTest<Unit, Unit> {
             name(name())
@@ -127,7 +124,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
                 setUpFixture(testPath)
             }
             test {
-                perfTestCore(completionType, time, lookupString, itemText, tailText, completionChars, useExpensiveRenderer)
+                perfTestCore(completionType, time, lookupString, itemText, tailText, completionChars)
             }
             tearDown {
                 runWriteAction {
@@ -154,7 +151,6 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         itemText: String?,
         tailText: String?,
         completionChars: String,
-        useExpensiveRenderer: Boolean,
     ) {
         completionChars.let {
             for (idx in 0 until it.length - 1) {
@@ -165,7 +161,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         fixture.complete(completionType, time)
 
         if (lookupString != null || itemText != null || tailText != null) {
-            val item = getExistentLookupElement(project, lookupString, itemText, tailText, useExpensiveRenderer)
+            val item = getExistentLookupElement(project, lookupString, itemText, tailText)
             if (item != null) {
                 selectItem(item, completionChars.last())
             }

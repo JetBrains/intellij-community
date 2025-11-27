@@ -128,6 +128,10 @@ final class CommandBuilder {
     assertOutsideCommand(null);
   }
 
+  @Nullable DocumentReference getOriginalDocument() {
+    return originalDocument;
+  }
+
   private void assertInsideCommand() {
     assertInsideCommand(null);
   }
@@ -179,7 +183,9 @@ final class CommandBuilder {
 
   private @Nullable DocumentReference originalDocument() {
     if (undoProject != null && undoProject == cmdEvent.project()) {
-      // note: originatorReference depends on FocusedComponent :sad_trombone_for_rd:, see IJPL-192250
+      if (editorProvider instanceof ForeignEditorProvider foreignEditorProvider) {
+        return foreignEditorProvider.originator();
+      }
       return UndoDocumentUtil.getDocReference(undoProject, editorProvider);
     }
     return null;

@@ -32,9 +32,9 @@ class KotlinUEnumConstant(
 
     override fun getOriginalElement(): PsiElement? = super<AbstractKotlinUVariable>.getOriginalElement()
 
-    override val javaPsi = unwrap<UEnumConstant, PsiEnumConstant>(psi)
+    override val javaPsi: PsiEnumConstant = unwrap<UEnumConstant, PsiEnumConstant>(psi)
 
-    override val psi = javaPsi
+    override val psi: PsiEnumConstant = javaPsi
 
     override fun getContainingFile(): PsiFile {
         return super.getContainingFile()
@@ -82,7 +82,7 @@ class KotlinUEnumConstant(
     override val returnType: PsiType?
         get() = uastParent?.getAsJavaPsiElement(PsiClass::class.java)?.let { PsiTypesUtil.getClassType(it) }
 
-    override fun resolve() = psi.resolveMethod()
+    override fun resolve(): PsiMethod? = psi.resolveMethod()
 
     override val methodName: String?
         get() = null

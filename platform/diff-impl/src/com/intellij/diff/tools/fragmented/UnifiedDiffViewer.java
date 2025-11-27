@@ -1621,7 +1621,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     protected void warnMockImplementation(@NotNull String methodName) {
       if (ourReportedMockMethods.add(methodName)) {
-        String message = "Method + '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
+        String message = "Method '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
         if (ApplicationManager.getApplication().isInternal() ||
             ApplicationManager.getApplication().isUnitTestMode()) {
           LOG.error(message);

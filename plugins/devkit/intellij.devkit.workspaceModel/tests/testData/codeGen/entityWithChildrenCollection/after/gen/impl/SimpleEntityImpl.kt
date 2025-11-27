@@ -30,13 +30,9 @@ import com.intellij.workspaceModel.test.api.SimpleEntityBuilder
 internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : SimpleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildrenCollectionFieldEntity::class.java,
-                                                                          SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY,
-                                                                          false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ChildrenCollectionFieldEntity::class.java, SimpleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    private val connections = listOf<ConnectionId>(
-      PARENT_CONNECTION_ID,
-    )
+    private val connections = listOf<ConnectionId>(PARENT_CONNECTION_ID)
 
   }
 
@@ -70,8 +66,7 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
   }
 
 
-  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(
-    result), SimpleEntityBuilder {
+  internal class Builder(result: SimpleEntityData?) : ModifiableWorkspaceEntityBase<SimpleEntity, SimpleEntityData>(result), SimpleEntityBuilder {
     internal constructor() : this(SimpleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -169,10 +164,8 @@ internal class SimpleEntityImpl(private val dataSource: SimpleEntityData) : Simp
       get() {
         val _diff = diff
         return if (_diff != null) {
-          @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
-                                                                           this) as? ChildrenCollectionFieldEntityBuilder)
-          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ChildrenCollectionFieldEntityBuilder)
+          @OptIn(EntityStorageInstrumentationApi::class) 
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? ChildrenCollectionFieldEntityBuilder) ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ChildrenCollectionFieldEntityBuilder)
         }
         else {
           this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)]!! as ChildrenCollectionFieldEntityBuilder

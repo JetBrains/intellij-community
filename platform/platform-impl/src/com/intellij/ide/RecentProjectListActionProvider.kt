@@ -43,6 +43,8 @@ open class RecentProjectListActionProvider {
   @Internal
   fun collectProjects(): List<RecentProjectTreeItem> = collectProjects(projectToFilterOut = null)
 
+  open fun recentProjectsInDocSupported() = true
+
   private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) {

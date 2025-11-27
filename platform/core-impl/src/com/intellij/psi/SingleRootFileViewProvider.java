@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
@@ -65,8 +66,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(manager.getProject());
-    if (documentManager instanceof PsiDocumentManagerBase) {
-      ((PsiDocumentManagerBase)documentManager).assertFileIsFromCorrectProject(virtualFile);
+    if (documentManager instanceof PsiDocumentManagerEx) {
+      ((PsiDocumentManagerEx)documentManager).assertFileIsFromCorrectProject(virtualFile);
     }
   }
 
@@ -128,7 +129,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public final PsiFile getCachedPsi(@NotNull Language target) {
+  public final @Nullable PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
     PsiFile obj = myPsiFile;
     return obj == PsiUtilCore.NULL_PSI_FILE ? null : obj;

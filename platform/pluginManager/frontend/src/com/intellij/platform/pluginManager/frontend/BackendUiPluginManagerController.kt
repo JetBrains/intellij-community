@@ -128,6 +128,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().isRestartRequired(sessionId)
   }
 
+  override suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean) {
+    PluginManagerApi.getInstance().setPluginsAutoUpdateEnabled(enabled)
+  }
+
   override suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
     return PluginManagerApi.getInstance().findInstalledPlugins(plugins)
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -70,7 +71,7 @@ class PerformanceSuite {
             }
 
             ProjectManagerEx.getInstanceEx().openProjects.forEach { project ->
-                val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+                val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
 
                 runInEdtAndWait {
                     psiDocumentManagerBase.clearUncommittedDocuments()

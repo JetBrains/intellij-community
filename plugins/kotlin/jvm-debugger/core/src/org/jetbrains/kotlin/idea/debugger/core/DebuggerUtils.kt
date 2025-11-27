@@ -198,13 +198,10 @@ object DebuggerUtils {
         return extension in KOTLIN_FILE_EXTENSIONS
     }
 
-    fun String.trimIfMangledInBytecode(isMangledInBytecode: Boolean): String =
-        if (isMangledInBytecode)
-            getMethodNameWithoutMangling()
-        else
-            this
-
-    private fun String.getMethodNameWithoutMangling() =
+    /**
+     * Remove mangling suffix (e.g., functions with value class parameters have it).
+     */
+    fun String.trimMethodNameMangling(): String =
         substringBefore('-')
 
     fun String.isGeneratedIrBackendLambdaMethodName() =

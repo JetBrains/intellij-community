@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class CppLexerTest : TextMateLexerTestCase() {
   @Test

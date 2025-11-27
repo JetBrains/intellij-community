@@ -253,6 +253,7 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
            || isVirtualThreadUnblocker(stackTrace)
+           || isJfrPeriodicTasks(stackTrace)
            || isIjentMediatorThread(stackTrace)
            || windowsCompletionPortLeakForDocker(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
@@ -431,6 +432,20 @@ public final class ThreadLeakTracker {
     return stackTrace[0].getClassName().equals("java.lang.VirtualThread") && stackTrace[0].getMethodName().equals("takeVirtualThreadListToUnblock")
       && stackTrace[1].getClassName().equals("java.lang.VirtualThread") && stackTrace[1].getMethodName().equals("unblockVirtualThreads");
   }
+
+  /**
+   * JFR threads just sleep ignoring InterruptedException.
+   */
+  private static boolean isJfrPeriodicTasks(StackTraceElement[] stackTrace) {
+    // at java.base/java.lang.Object.wait0(Native Method)
+    // at java.base/java.lang.Object.wait(Object.java:366)
+    // at jdk.jfr/jdk.jfr.internal.PlatformRecorder.takeNap(PlatformRecorder.java:559)
+    // at jdk.jfr/jdk.jfr.internal.PlatformRecorder.periodicTask(PlatformRecorder.java:527)
+    // at jdk.jfr/jdk.jfr.internal.PlatformRecorder.lambda$startDiskMonitor$1(PlatformRecorder.java:446)
+    // at java.base/java.lang.Thread.run(Thread.java:1583)
+    return stackTrace.length >= 3 && stackTrace[2].getClassName().equals("jdk.jfr.internal.PlatformRecorder") && stackTrace[2].getMethodName().equals("takeNap");
+  }
+
 
   /**
    * We permit leaking IJent threads if IJent is intended to be shared for the whole application

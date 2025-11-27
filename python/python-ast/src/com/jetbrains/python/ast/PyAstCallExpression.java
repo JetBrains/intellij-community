@@ -50,7 +50,7 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
   }
 
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Arrays.asList(getArguments());
   }
 

@@ -367,7 +367,7 @@ public abstract class GitImplBase implements Git {
 
     GitCommandOutputLogger(@NotNull Project project, @NotNull GitLineHandler handler) {
       myHandler = handler;
-      myWorkingDir = myHandler.getWorkingDirectory().toPath();
+      myWorkingDir = myHandler.getWorkingDirectory();
       myOutputPrinter = GitCommandOutputPrinter.getInstance(project);
     }
 
@@ -481,16 +481,19 @@ public abstract class GitImplBase implements Git {
     "runnerw:"
   };
 
-  static @NotNull String stringifyWorkingDir(@Nullable String basePath, @NotNull File workingDir) {
+  static @NotNull String stringifyWorkingDir(@Nullable String basePath, @Nullable Path workingDir) {
     if (basePath != null) {
-      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(workingDir.getPath()), '/');
-      if (".".equals(relPath)) {
-        return workingDir.getName();
+      Path path = Path.of(basePath);
+      if (workingDir != null) {
+        path = path.resolve(workingDir);
       }
-      else if (relPath != null) {
-        return FileUtil.toSystemDependentName(relPath);
-      }
+      return path.toString();
     }
-    return workingDir.getPath();
+    else if (workingDir != null) {
+      return workingDir.toString();
+    }
+    else {
+      return "";
+    }
   }
 }

@@ -29,6 +29,15 @@ public record StickyLineInfo(int textOffset, int endOffset, @Nullable String deb
     );
   }
 
+  public StickyLineInfo {
+    if (textOffset >= endOffset) {
+      // IJPL-217619
+      throw new IllegalArgumentException(String.format(
+        "sticky line endOffset %s should be less than startOffset %s", textOffset, endOffset
+      ));
+    }
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) return true;
@@ -44,8 +53,7 @@ public record StickyLineInfo(int textOffset, int endOffset, @Nullable String deb
   private static @Nullable String debugTextPsiElement(@NotNull PsiElement element) {
     if (Registry.is("editor.show.sticky.lines.debug")) {
       return element.toString();
-    }
-    else {
+    } else {
       return null;
     }
   }

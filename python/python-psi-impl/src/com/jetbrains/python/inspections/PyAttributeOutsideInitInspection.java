@@ -44,7 +44,7 @@ import java.util.Set;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Inspection to detect situations, where instance attribute is defined outside __init__ function.
  */
 public final class PyAttributeOutsideInitInspection extends PyInspection {
@@ -77,12 +77,12 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
       }
 
       final Map<String, Property> localProperties = containingClass.getProperties();
-      final MultiMap<String, PyTargetExpression > declaredAttributes = new MultiMap<>();
+      final MultiMap<String, PyTargetExpression> declaredAttributes = new MultiMap<>();
       final Set<String> inheritedProperties = new HashSet<>();
 
       StreamEx.of(containingClass.getClassAttributes())
-              .filter(attribute -> !localProperties.containsKey(attribute.getName()))
-              .forEach(attribute -> declaredAttributes.putValue(attribute.getName(), attribute));
+        .filter(attribute -> !localProperties.containsKey(attribute.getName()))
+        .forEach(attribute -> declaredAttributes.putValue(attribute.getName(), attribute));
 
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false, myTypeEvalContext);
       if (initMethod != null) {
@@ -144,8 +144,8 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
                                              @NotNull Collection<Property> properties,
                                              @NotNull MultiMap<String, PyTargetExpression> attributesInInit) {
     return StreamEx.of(properties)
-                   .filter(it -> isSetBy(attribute, it))
-                   .anyMatch(it -> attributesInInit.containsKey(it.getName()));
+      .filter(it -> isSetBy(attribute, it))
+      .anyMatch(it -> attributesInInit.containsKey(it.getName()));
   }
 
   private static boolean isApplicable(@NotNull PyClass containingClass, @NotNull TypeEvalContext context) {
@@ -174,8 +174,8 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
     return propertyTargetExpressions != null &&
            attribute.getName() != null &&
            StreamEx.of(propertyTargetExpressions)
-                   .map(targetExpression -> targetExpression.getName())
-                   .nonNull()
-                   .anyMatch(name -> name.equals(attribute.getName()));
+             .map(targetExpression -> targetExpression.getName())
+             .nonNull()
+             .anyMatch(name -> name.equals(attribute.getName()));
   }
 }

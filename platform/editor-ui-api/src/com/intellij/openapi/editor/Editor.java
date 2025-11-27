@@ -459,7 +459,7 @@ public interface Editor extends UserDataHolder {
    *
    * @return new {@code ModPsiNavigator} adapter.
    */
-  default @NotNull ModNavigator asPsiNavigator() {
+  default @NotNull ModNavigator asModNavigator() {
     return new ModNavigator() {
       @Override
       public @NotNull Document getDocument() {

@@ -25,7 +25,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.rpc.toRpc
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -155,6 +154,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged }
       }
 
+      override fun settingsChangedFromFrontend() {
+        // Ignore changes from the frontend side, they're already handled in FrontendXDebuggerSession
+      }
+
       override fun breakpointsMuted(muted: Boolean) {
         rawEvents.trySend { XDebuggerSessionEvent.BreakpointsMuted(muted) }
       }
@@ -240,11 +243,6 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val managerImpl = XDebuggerManagerImpl.getInstance(session.project) as XDebuggerManagerImpl
     managerImpl.removeSessionNoNotify(session)
   }
-
-  override suspend fun showLibraryFrames(show: Boolean) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = show
-  }
-
   override suspend fun getBreakpoints(projectId: ProjectId): XBreakpointsSetDto {
     val project = projectId.findProject()
     val breakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager
@@ -301,3 +299,4 @@ internal fun XDebuggerEditorsProvider.toRpc(cs: CoroutineScope): XDebuggerEditor
   val id = storeGlobally(cs)
   return XDebuggerEditorsProviderDto(id, fileType.name, this)
 }
+

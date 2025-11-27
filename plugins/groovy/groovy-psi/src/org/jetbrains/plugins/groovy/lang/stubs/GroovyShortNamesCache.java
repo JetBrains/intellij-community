@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
 
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
     return Objects
-      .requireNonNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
+      .requireNonNull(ContainerUtil.findInstance(EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
   }
 
   private @Nullable TopLevelFQNames getTopLevelNames() {
@@ -83,7 +82,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   private @Nullable TopLevelFQNames getScriptTopLevelNames() {
-    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    TopLevelFQNames names = getTopLevelNames();
     if (names == null) return null;
 
     TopLevelFQNames topLevelFQNames = myTopLevelScriptFQNames;
@@ -131,7 +130,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   public @NotNull List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
-    TopLevelFQNames names = ReadAction.compute(() -> getTopLevelNames());
+    TopLevelFQNames names = getTopLevelNames();
     if (names != null) {
       String topLevelName = toTopLevelName(name);
       if (!names.names.contains(topLevelName)) {
@@ -142,12 +141,10 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
       return Collections.emptyList();
     }
     GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
-    return ReadAction.compute(() -> {
-      List<PsiClass> result = new ArrayList<>();
-      result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
-      result.addAll(getScriptClassesByFQName(name, scope, inSource));
-      return result;
-    });
+    List<PsiClass> result = new ArrayList<>();
+    result.addAll(StubIndex.getElements(GrFullClassNameStringIndex.KEY, name, myProject, actualScope, PsiClass.class));
+    result.addAll(getScriptClassesByFQName(name, scope, inSource));
+    return result;
   }
 
   @Override
@@ -249,7 +246,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
     for (GroovyFile file : StubIndex.getElements(GrScriptClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope), filter,
                                                  GroovyFile.class)) {
       PsiClass aClass = file.getScriptClass();
-      if (aClass != null && !processor.process(aClass)) return true;
+      if (aClass != null && !processor.process(aClass)) return false;
     }
     return true;
   }

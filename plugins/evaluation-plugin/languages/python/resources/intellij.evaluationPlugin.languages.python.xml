@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.cce.python">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.python"/>
   </dependencies>

@@ -118,6 +118,7 @@ jvm_library(
     "@lib//:hamcrest",
     "//libraries/hdr-histogram",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/lang-impl/testEntities:testEntities_test_lib",
     "@lib//:junit5Suites",
     "//platform/backend/workspace",
@@ -175,6 +176,7 @@ jvm_library(
     "//platform/locking.impl",
     "//platform/testFramework/junit5/highlighting",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
   ],
   runtime_deps = [
     "//xml/dom-impl",

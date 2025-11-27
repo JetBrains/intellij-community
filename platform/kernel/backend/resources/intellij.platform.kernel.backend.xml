@@ -1,6 +1,6 @@
 <idea-plugin visibility="public" package="com.intellij.platform.kernel.backend">
   <dependencies>
-    <!--<module name="intellij.platform.kernel"/>-->
+    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.rpc.backend"/>
   </dependencies>

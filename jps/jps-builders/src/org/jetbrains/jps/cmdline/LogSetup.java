@@ -3,6 +3,7 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Filter;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 import static com.intellij.openapi.diagnostic.InMemoryHandler.FAILED_BUILD_LOG_FILE_NAME_PREFIX;
@@ -49,9 +51,11 @@ public final class LogSetup {
 
         List<String> classesToFilter = acceptConfig(configFile);
         if (!classesToFilter.isEmpty()) {
-          filter = JulLogger.createFilter(classesToFilter);
+          filter = record -> record.getLevel().intValue() > Level.FINE.intValue() ||
+                             !ContainerUtil.exists(classesToFilter, record.getLoggerName()::startsWith);
         }
-      } else {
+      }
+      else {
         JulLogger.clearHandlers();
         try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
           LogManager.getLogManager().readConfiguration(in);

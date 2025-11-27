@@ -40,7 +40,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   protected int myDepth = 0;
   protected final @NotNull TypeEvalContext myTypeEvalContext;
   protected final EnumSet<Feature> myRenderingFeatures;
-  
+
   public enum Feature {
     /**
      * Render fully qualified names of all classes and type forms, e.g. {@code typing.Callable[[mod.MyClass], typing.Any]}.
@@ -115,8 +115,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   public static final class TypeHint extends PyTypeRenderer {
-    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN); 
-    
+    private static final EnumSet<Feature> SUPPORTED_FEATURES = EnumSet.of(Feature.USE_FQN);
+
     public TypeHint(@NotNull TypeEvalContext typeEvalContext, @NotNull EnumSet<Feature> features) {
       super(typeEvalContext, validateFeatures(features));
     }
@@ -462,6 +462,15 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     }
     else if (param.isKeywordOnlySeparator()) {
       result.append(escaped(PyAstSingleStarParameter.TEXT));
+    }
+    else if (param.isPositionalContainer() || param.isKeywordContainer()) {
+      PyType type = param.getArgumentType(myTypeEvalContext);
+      if (param.getName() != null) {
+        result.append(escaped(param.isPositionalContainer() ? "*" : "**"));
+        result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
+        result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+      }
+      result.append(render(type));
     }
     else {
       PyType type = param.getType(myTypeEvalContext);

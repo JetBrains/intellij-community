@@ -131,8 +131,8 @@ public final class RootVisitorHost {
     Set<VirtualFile> allRoots = new LinkedHashSet<>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
-    Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry) entry).getModule() : null;
-    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry) entry).getJdk() : null;
+    Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry)entry).getModule() : null;
+    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdk() : null;
     for (VirtualFile root : allRoots) {
       if (!visitor.visitRoot(root, module, sdk, false)) {
         return false;

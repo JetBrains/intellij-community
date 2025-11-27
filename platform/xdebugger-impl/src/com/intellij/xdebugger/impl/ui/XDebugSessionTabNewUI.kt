@@ -8,7 +8,6 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.customization.*
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,6 +20,7 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -109,7 +109,7 @@ open class XDebugSessionTabNewUI(
     more.addSeparator()
 
     val gear = DefaultActionGroup().apply {
-      templatePresentation.text = ActionsBundle.message("group.XDebugger.settings.text")
+      templatePresentation.text = XDebuggerImplBundle.message("group.XDebugger.settings.text")
       templatePresentation.icon = AllIcons.General.Settings
       isPopup = true
       addAll(*myUi.options.settingsActionsList)

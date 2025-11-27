@@ -54,7 +54,8 @@ object JavaSyntaxDefinition : LanguageSyntaxDefinition {
   override val comments: SyntaxElementTypeSet = syntaxElementTypeSetOf(
     JavaSyntaxTokenType.END_OF_LINE_COMMENT,
     JavaSyntaxTokenType.C_STYLE_COMMENT,
-    JavaDocSyntaxElementType.DOC_COMMENT
+    JavaDocSyntaxElementType.DOC_COMMENT,
+    JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT,
   )
 
   override val whitespaces: SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)

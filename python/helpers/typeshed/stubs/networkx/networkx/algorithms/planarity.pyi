@@ -1,8 +1,9 @@
-from _typeshed import Incomplete
-from collections.abc import Generator, Mapping, MutableSet, Reversible
+from _typeshed import Incomplete, Unused
+from collections.abc import Generator, Iterable, Mapping, MutableSet, Reversible
+from typing import NoReturn
 
 from networkx.classes.digraph import DiGraph
-from networkx.classes.graph import Graph, _Node
+from networkx.classes.graph import Graph, _EdgePlus, _Node
 from networkx.utils.backends import _dispatchable
 
 __all__ = ["check_planarity", "is_planar", "PlanarEmbedding"]
@@ -87,6 +88,9 @@ class LRPlanarity:
     def sign(self, e): ...
     def sign_recursive(self, e): ...
 
+# NOTE: Graph subclasses relationships are so complex
+# we're only overriding methods that differ in signature from the base classes
+# to use inheritance to our advantage and reduce complexity
 class PlanarEmbedding(DiGraph[_Node]):
     def get_data(self) -> dict[_Node, list[_Node]]: ...
     def set_data(self, data: Mapping[_Node, Reversible[_Node]]) -> None: ...
@@ -101,4 +105,9 @@ class PlanarEmbedding(DiGraph[_Node]):
     def traverse_face(
         self, v: _Node, w: _Node, mark_half_edges: MutableSet[tuple[_Node, _Node]] | None = None
     ) -> list[_Node]: ...
-    def to_undirected(self, reciprocal: bool = False, as_view: bool = False) -> Graph[_Node]: ...  # type: ignore[override]
+    # Overriden in __init__ to always raise
+    def add_edge(self, u_of_edge: _Node, v_of_edge: _Node, **attr: Unused) -> NoReturn: ...
+    def add_edges_from(self, ebunch_to_add: Iterable[_EdgePlus[_Node]], **attr: Unused) -> NoReturn: ...
+    def add_weighted_edges_from(
+        self, ebunch_to_add: Iterable[tuple[_Node, _Node, float]], weight: str = "weight", **attr: Unused
+    ) -> NoReturn: ...

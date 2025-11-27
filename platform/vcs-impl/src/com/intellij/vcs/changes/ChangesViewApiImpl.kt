@@ -1,23 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.platform.vcs.impl.shared.rpc.InclusionDto
 import com.intellij.vcs.changes.viewModel.getRpcChangesView
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flowOf
 
 internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent> =
@@ -47,6 +54,23 @@ internal class ChangesViewApiImpl : ChangesViewApi {
     LOG.trace { "Refresh performed ($refreshCounter)" }
     project.getRpcChangesView().refreshPerformed(refreshCounter)
   }
+
+  override suspend fun canExcludeFromCommit(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
+    project.serviceAsync<ChangesViewWorkflowManager>().allowExcludeFromCommit
+  } ?: flowOf(false)
+
+  override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->
+    LOG.trace { "Showing resolve conflicts dialog for ${changeIds.size} changes" }
+    val cache = ChangeListChangeIdCache.getInstance(project)
+    val changes = changeIds.mapNotNull { cache.getChange(it) }
+    withContext(Dispatchers.EDT) {
+      AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(changes).toList())
+    }
+  }
+
+  override suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
+    ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindowEnabled
+  } ?: flowOf(false)
 
   private suspend fun handleNewInclusionModel(newModel: InclusionModel, channel: SendChannel<BackendChangesViewEvent>): Nothing {
     coroutineScope {

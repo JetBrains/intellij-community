@@ -178,14 +178,8 @@ public class CompilerPaths {
       CompilerModuleExtension compilerModuleExtension = !module.isDisposed() ? CompilerModuleExtension.getInstance(module) : null;
       if (compilerModuleExtension == null) continue;
 
-      String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
-      if (outputPathUrl != null) {
-        outputPaths.add(VirtualFileManager.extractPath(outputPathUrl).replace('/', File.separatorChar));
-      }
-
-      String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
-      if (outputPathForTestsUrl != null) {
-        outputPaths.add(VirtualFileManager.extractPath(outputPathForTestsUrl).replace('/', File.separatorChar));
+      for (String outputRootUrl : compilerModuleExtension.getOutputRootUrls(true)) {
+        outputPaths.add(VirtualFileManager.extractPath(outputRootUrl).replace('/', File.separatorChar));
       }
 
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

@@ -32,7 +32,6 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -47,10 +46,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.asDisposable
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.*
@@ -67,10 +63,15 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
-import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
+import com.intellij.xdebugger.impl.proxy.FileColorsComputer
+import com.intellij.xdebugger.impl.proxy.XDebugSessionProxyKeeper
+import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionPausedInfo
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabAbstractInfo
 import com.intellij.xdebugger.impl.rpc.XDebuggerSessionTabInfo
@@ -202,7 +203,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     val currentConfigurationName = computeConfigurationName()
     if (oldSessionData == null || oldSessionData.configurationName != currentConfigurationName) {
-      oldSessionData = XDebugSessionData(myProject, currentConfigurationName)
+      oldSessionData = XDebugSessionData(currentConfigurationName)
     }
     this.sessionData = oldSessionData
     this.sessionDataId = sessionData.storeGlobally(tabCoroutineScope, this)
@@ -216,6 +217,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo>
     get() = myTabInitDataFlow.filterNotNull()
 
+  @Deprecated("Deprecated in Java")
   override fun getRunContentDescriptor(): RunContentDescriptor {
     if (SplitDebuggerMode.showSplitWarnings()) {
       LOG.error("[Split debugger] RunContentDescriptor should not be used in split mode from XDebugSession")
@@ -306,6 +308,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   override fun rebuildViews() {
     myDispatcher.getMulticaster().settingsChanged()
+  }
+
+  fun frontendUpdate() {
+    myDispatcher.getMulticaster().settingsChangedFromFrontend()
   }
 
   override fun getRunProfile(): RunProfile? {
@@ -469,6 +475,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   /**
    * TODO When we move to RD-first approach, @RequiresEdt requirements in [XDebuggerManager] can be removed
    */
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
@@ -502,27 +509,33 @@ class XDebugSessionImpl @JvmOverloads constructor(
           }
 
           val component get() = myUi.component
+          val ui get() = myUi
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
-        addAdditionalConsolesToManager(runTab.consoleManger, localTabScope.asDisposable())
+        val disposable = localTabScope.asDisposable()
+        addAdditionalConsolesToManager(runTab.consoleManger, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
+          init {
+            runnerLayoutUi = runTab.ui
+          }
+
           override fun isHiddenContent(): Boolean = true
         }
-        Disposer.register(mockDescriptor, runTab)
+        Disposer.register(disposable, runTab)
+        Disposer.register(disposable, mockDescriptor)
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
-        debuggerManager.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.ATOMIC) {
+        debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
           try {
             tabClosedChannel.receiveCatching()
           }
           finally {
             tabClosedChannel.close()
             tabCoroutineScope.cancel()
-            Disposer.dispose(mockDescriptor)
           }
         }
         myMockRunContentDescriptor = mockDescriptor

@@ -377,7 +377,7 @@ public interface EditorEx extends Editor {
   }
 
   @Override
-  default @NotNull ModNavigator asPsiNavigator() {
+  default @NotNull ModNavigator asModNavigator() {
     return new ModNavigator() {
       @Override
       public @NotNull Document getDocument() {

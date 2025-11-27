@@ -12,6 +12,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.*;
 
@@ -314,5 +315,21 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   public void setObsolete() {
     myObsolete = true;
+  }
+
+  @ApiStatus.Internal
+  public abstract static class Root<ValueContainer extends XValueContainer> extends XValueContainerNode<ValueContainer> {
+
+    @Nullable private final XDebuggerTreeState myStateToRecover;
+
+    protected Root(XDebuggerTree tree, XDebuggerTreeNode parent, boolean leaf, @NotNull ValueContainer valueContainer,
+                   @Nullable XDebuggerTreeState treeStateToRecover) {
+      super(tree, parent, leaf, valueContainer);
+      myStateToRecover = treeStateToRecover;
+    }
+
+    public @Nullable XDebuggerTreeState getStateToRecover() {
+      return myStateToRecover;
+    }
   }
 }

@@ -141,7 +141,9 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   private class StashInfoChangesBrowserNode(private val stash: StashObject) : ChangesBrowserNode<StashObject>(stash) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      renderer.append(stash.data.subject)
+      renderer.appendTextWithIssueLinks(stash.data.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      renderer.append(FontUtil.spaceAndThinSpace())
+      renderer.append(DateFormatUtil.formatDateTime(stash.data.authorTime), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       renderer.toolTipText = VcsBundle.message("saved.patch.created.on.date.at.time.tooltip",
                                                stash.data.stash,
                                                DateFormatUtil.formatDate(stash.data.authorTime),

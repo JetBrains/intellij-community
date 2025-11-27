@@ -7,7 +7,7 @@ import com.intellij.util.Processor
 import javax.swing.JLabel
 import javax.swing.ListCellRenderer
 
-class MockSearchEverywhereContributor(val name: String? = null,
+data class MockSearchEverywhereContributor(val name: String? = null,
                                       private val closeOnItemSelection: Boolean = true,
                                       private val elementSupplier: (pattern: String,
                                                                     progressIndicator: ProgressIndicator,

@@ -62,8 +62,8 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   }
 
   private void selectTab(@NotNull TabDescriptor tab) {
-    setDisplayName(myId.getDisplayName(tab));
     setComponent(tab.getComponent());
+    setDisplayName(myId.getDisplayName(tab));
   }
 
   @Override

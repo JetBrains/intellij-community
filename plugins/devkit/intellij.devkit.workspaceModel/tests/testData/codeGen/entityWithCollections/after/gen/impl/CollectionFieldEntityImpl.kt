@@ -24,14 +24,12 @@ import com.intellij.workspaceModel.test.api.CollectionFieldEntityBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class CollectionFieldEntityImpl(private val dataSource: CollectionFieldEntityData) : CollectionFieldEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -64,8 +62,7 @@ internal class CollectionFieldEntityImpl(private val dataSource: CollectionField
   }
 
 
-  internal class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(
-    result), CollectionFieldEntityBuilder {
+  internal class Builder(result: CollectionFieldEntityData?) : ModifiableWorkspaceEntityBase<CollectionFieldEntity, CollectionFieldEntityData>(result), CollectionFieldEntityBuilder {
     internal constructor() : this(CollectionFieldEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -243,8 +240,7 @@ internal class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEn
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return CollectionFieldEntity(versions, names, manifestAttributes, entitySource) {
-    }
+    return CollectionFieldEntity(versions, names, manifestAttributes, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

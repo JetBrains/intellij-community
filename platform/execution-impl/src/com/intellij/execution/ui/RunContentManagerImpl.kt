@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
+import com.intellij.execution.rpc.emitLiveIconUpdate
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -27,18 +28,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
-import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
@@ -319,14 +317,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         private var startNotifiedJob: Job? = null
 
         override fun startNotified(event: ProcessEvent) {
+          emitLiveIconUpdate(project, toolWindowId, alive = true)
+
           startNotifiedJob = descriptor.coroutineScope.launch {
             withContext(Dispatchers.EDT) {
               content.icon = getLiveIndicator(descriptor.icon)
-              var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
-              if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
-                toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
-              }
-              toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
             }
           }
 
@@ -416,6 +411,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         focus = true
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
+      RunDashboardUiManager.getInstance(project).navigateToServiceOnRun(descriptor.id, focus)  // Reveal running service in dashboard in split mode
     }, project.disposed)
   }
 
@@ -629,8 +625,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
-    val base = toolWindowIdToBaseIcon.get(toolWindow.id)
-    toolWindow.setIcon(if (alive) getLiveIndicator(base) else base ?: EmptyIcon.ICON_13)
+    emitLiveIconUpdate(project, toolWindow.id, alive)
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {

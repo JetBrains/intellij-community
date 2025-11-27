@@ -2,21 +2,15 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.hint.DeclarationRangeUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
 public class JavaBraceMatcher implements PairedBraceMatcher {
   private final BracePair[] pairs = new BracePair[] {
@@ -28,8 +22,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       new BracePair(JavaDocTokenType.DOC_LBRACKET, JavaDocTokenType.DOC_RBRACKET, false),
       new BracePair(JavaDocTokenType.DOC_LPAREN, JavaDocTokenType.DOC_RPAREN, false)
   };
-  public JavaBraceMatcher() {
-  }
+
 
   @Override
   public BracePair @NotNull [] getPairs() {
@@ -37,13 +30,13 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
   }
 
   @Override
-  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType contextType) {
+  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     if (contextType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(contextType);
     return true;
   }
 
   private static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
-    return BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
+    return ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)
            || tokenType == JavaTokenType.SEMICOLON
            || tokenType == JavaTokenType.COMMA
            || tokenType == JavaTokenType.RPARENTH
@@ -58,31 +51,21 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
     PsiElement element = file.findElementAt(openingBraceOffset);
     if (element == null || element instanceof PsiFile) return openingBraceOffset;
     PsiElement parent = element.getParent();
-    if(parent==null) return openingBraceOffset;
-    ASTNode parentNode = parent.getNode();
-    if (BasicJavaAstTreeUtil.is(parentNode, BASIC_CODE_BLOCK)) {
-      parentNode = parentNode.getTreeParent();
-      if (BasicJavaAstTreeUtil.is(parentNode, BASIC_METHOD) ||
-          BasicJavaAstTreeUtil.is(parentNode, BASIC_CLASS_INITIALIZER)) {
-        TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(parentNode.getPsi());
-        if (range == null) {
-          return parentNode.getTextRange().getStartOffset();
-        }
+    if (parent instanceof PsiCodeBlock) {
+      parent = parent.getParent();
+      if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
+        TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
         return range.getStartOffset();
       }
-      else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_JAVA_STATEMENT_BIT_SET)) {
-        if (BasicJavaAstTreeUtil.is(parentNode, BASIC_BLOCK_STATEMENT) &&
-            BasicJavaAstTreeUtil.is(parentNode.getTreeParent(), BASIC_JAVA_STATEMENT_BIT_SET)) {
-          parentNode = parentNode.getTreeParent();
+      else if (parent instanceof PsiStatement) {
+        if (parent instanceof PsiBlockStatement && parent.getParent() instanceof PsiStatement) {
+          parent = parent.getParent();
         }
-        return parentNode.getTextRange().getStartOffset();
+        return parent.getTextRange().getStartOffset();
       }
     }
-    else if (BasicJavaAstTreeUtil.is(parentNode, BASIC_CLASS_KEYWORD_BIT_SET)) {
-      TextRange range = DeclarationRangeUtil.getPossibleDeclarationAtRange(parent);
-      if (range == null) {
-        return parentNode.getTextRange().getStartOffset();
-      }
+    else if (parent instanceof PsiClass) {
+      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
       return range.getStartOffset();
     }
     return openingBraceOffset;

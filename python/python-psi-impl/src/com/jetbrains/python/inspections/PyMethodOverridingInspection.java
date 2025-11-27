@@ -47,9 +47,10 @@ public final class PyMethodOverridingInspection extends PyInspection {
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final PyClass baseClass = baseMethod.getContainingClass();
             final String msg = PyPsiBundle.message("INSP.signature.mismatch",
-                                                cls.getName() + "." + function.getName() + "()",
-                                                baseClass != null ? baseClass.getName() : "");
-            registerProblem(function.getParameterList(), msg, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
+                                                   cls.getName() + "." + function.getName() + "()",
+                                                   baseClass != null ? baseClass.getName() : "");
+            registerProblem(function.getParameterList(), msg,
+                            PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
           }
         }
       }

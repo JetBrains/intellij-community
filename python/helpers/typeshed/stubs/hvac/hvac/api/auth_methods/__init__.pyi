@@ -1,5 +1,3 @@
-from _typeshed import Incomplete
-
 from hvac.api.auth_methods.approle import AppRole as AppRole
 from hvac.api.auth_methods.aws import Aws as Aws
 from hvac.api.auth_methods.azure import Azure as Azure
@@ -15,6 +13,7 @@ from hvac.api.auth_methods.okta import Okta as Okta
 from hvac.api.auth_methods.radius import Radius as Radius
 from hvac.api.auth_methods.token import Token as Token
 from hvac.api.auth_methods.userpass import Userpass as Userpass
+from hvac.api.vault_api_base import VaultApiBase
 from hvac.api.vault_api_category import VaultApiCategory
 
 __all__ = (
@@ -37,5 +36,5 @@ __all__ = (
 )
 
 class AuthMethods(VaultApiCategory):
-    implemented_classes: Incomplete
-    unimplemented_classes: Incomplete
+    implemented_classes: list[type[VaultApiBase]]
+    unimplemented_classes: list[str]

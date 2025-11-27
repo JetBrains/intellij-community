@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.inspections;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -41,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
-
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {

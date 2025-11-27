@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use {@link UndoUtil} instead")
+@Deprecated("Use {@link UndoUtil} instead", level = DeprecationLevel.HIDDEN)
 interface UndoConstants {
 
   companion object {
@@ -27,11 +27,11 @@ interface UndoConstants {
     @JvmField
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link UndoUtil#forceUndoIn(VirtualFile, Runnable)} instead")
-    val FORCE_RECORD_UNDO: Key<Boolean> = Key.create<Boolean>("FORCE_RECORD_UNDO")
+    val FORCE_RECORD_UNDO: Key<Boolean> = UndoUtil.FORCE_RECORD_UNDO
 
     @JvmField
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link UndoUtil#disableUndoIn(Document, Runnable)} instead")
-    val DONT_RECORD_UNDO: Key<Boolean> = Key.create<Boolean>("DONT_RECORD_UNDO")
+    val DONT_RECORD_UNDO: Key<Boolean> = UndoUtil.DONT_RECORD_UNDO
   }
 }

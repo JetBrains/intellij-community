@@ -14,6 +14,12 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
+resourcegroup(
+  name = "impl_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "impl",
   module_name = "intellij.python.processOutput.impl",
@@ -50,6 +56,7 @@ jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":impl_test_resources"],
   kotlinc_opts = ":custom_impl",
   associates = [":impl"],
   deps = [
@@ -90,6 +97,8 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//python/python-process-output:processOutput",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "@lib//:kotlinx-coroutines-debug",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

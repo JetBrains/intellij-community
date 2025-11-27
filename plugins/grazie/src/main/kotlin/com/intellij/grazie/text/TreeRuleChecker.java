@@ -38,7 +38,9 @@ import com.intellij.grazie.utils.Text;
 import com.intellij.grazie.utils.TextStyleDomain;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
@@ -495,9 +497,23 @@ public final class TreeRuleChecker {
         // later these rules should be disabled by default in the corresponding writing style profiles
         return null;
       }
-      return match.asciiContextFixes(fullText);
+      try {
+        return match.asciiContextFixes(fullText);
+      } catch (StringIndexOutOfBoundsException e) {
+        throw new RuntimeExceptionWithAttachments(e, toAttachment(content, fullText));
+      }
     }
     return match.problemFixes();
+  }
+
+  private static Attachment toAttachment(TextContent content, String fullText) {
+    PsiFile file = content.getContainingFile();
+    return AttachmentFactory.createContext(
+      "File type: " + file.getViewProvider().getVirtualFile().getFileType() + "\n" +
+      "File language: " + file.getLanguage() + "\n" +
+      "File name: " + file.getName() + "\n" +
+      "Content: " + fullText
+    );
   }
 
   private static boolean isAsciiContext(TextContent text) {

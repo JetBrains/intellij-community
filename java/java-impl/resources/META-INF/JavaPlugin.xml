@@ -326,7 +326,25 @@
     <applicationService serviceInterface="com.intellij.refactoring.util.RefactoringConflictsUtil"
                         serviceImplementation="com.intellij.refactoring.util.RefactoringConflictsUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+
     <registryKey key="jps.build.use.workspace.model" description="Use workspace model inside JPS build process. The implementation isn't finished yet, refer to https://youtrack.jetbrains.com/issue/IJPL-409 for details." defaultValue="false"/>
+    <registryKey key="compiler.process.jdk" defaultValue="" description="Path to a JDK home. Force the build process to be run using the JDK specified. It is assumed that the jdk is at least of version 11."/>
+    <registryKey key="compiler.process.preload" defaultValue="true" description="After the build finishes, the IDE will preload and leave waiting in memory the build process for the next compilation. This will save time for process start and project model loading (may be noticeable for big projects)."/>
+    <registryKey key="compiler.process.debug.port" defaultValue="" description="Specifies the build port at which the build process will wait for debugger connections\n\
+   if 'Debug Build Process' (available via Find Action) is enabled.\n\
+  -1 means that a random available port will be chosen."/>
+    <registryKey key="compiler.automake.trigger.delay" defaultValue="300" description="Delay in milliseconds before triggering auto-make in response to file system events"/>
+    <registryKey key="compiler.automake.postpone.when.idle.less.than" defaultValue="3000" description="If at the moment the auto-build is about to start and the IDE is idle for less than specified milliseconds, the automatic build will be postponed in order not to interfere with the user's activity."/>
+    <registryKey key="compiler.automake.build.while.idle.timeout" defaultValue="60000" description="Application inactivity period, after which automatic builds may be triggered, if necessary, for all currently opened projects. Set to negative value to disable the feature."/>
+    <registryKey key="compiler.automake.allow.parallel" defaultValue="true" description="The option allows forcing automatically started builds to run in single-threaded mode even if 'Compile independent modules in parallel' is on\n\
+  This might help to save CPU resources for the foreground processes."/>
+    <registryKey key="compiler.document.save.enabled" defaultValue="false" description="Specify whether project save in response to document changes is enabled"/>
+    <registryKey key="compiler.document.save.trigger.delay" defaultValue="1500" description="Delay in milliseconds before triggering save in response to document changes"/>
+    <registryKey key="compiler.build.data.unused.threshold" defaultValue="30" description="If a project is not opened for the specified number of days, its build data will be cleared to save disk space"/>
+    <registryKey key="compiler.build.report.statistics" defaultValue="false" description="Turn on to display builder execution times as 'Information' messages in the compiler tool window."/>
+    <registryKey key="compiler.natural.int.multimap.impl" defaultValue="false" description="Experimental implementation for class-to-class dependency multimap in JPS caches.\nIf turned off after being turned on, project rebuild is required."/>
+    <registryKey key="compiler.process.use.portable.caches" defaultValue="false" description="Warning: for Intellij project only! \nTurn on to download compilation caches to reduce build time."/>
+
     <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
                         serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
@@ -1200,14 +1218,6 @@
     <liveTemplateContext contextId="COMPLETION" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.JavaUsageTargetProvider"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer"
-                             implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiClass"
-                             implementationClass="com.intellij.codeInsight.hint.ClassDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiLambdaExpression"
-                             implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiMethod"
-                             implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
@@ -1250,6 +1260,7 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.VarargsSelectioner"/>
 
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.KeywordCompletionItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.InstanceOfClassItemProvider"/>
     
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
     <completion.skip implementation="com.intellij.codeInsight.completion.DeprecatedSkipper" id="skipDeprecated"/>
@@ -1476,6 +1487,7 @@
     <codeInsight.completion.intention.offset.provider language="JAVA"
                                                       implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandOffsetProvider"/>
     <!--<codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />-->
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateCommandCompletion" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaInlineVariableCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToDeclarationCommandCompletionProvider" />
@@ -1512,6 +1524,7 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSurroundWithCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSafeDeleteCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaParameterInfoCompletionCommand" order="last"/>
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
@@ -2030,6 +2043,7 @@
                      implementationClass="com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection"/>
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NullableProblems" bundle="messages.JavaBundle"
                      key="inspection.nullable.problems.display.name"
+                     hasStaticDescription="true"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection"/>

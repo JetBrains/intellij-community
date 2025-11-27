@@ -18,8 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 interface XValueApi : RemoteApi<Unit> {
   suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation>
 
-  fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>
-  fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent>
+  fun computeChildren(id: XContainerId): Flow<XValueComputeChildrenEvent>
+  fun computeExpandedChildren(frameId: XStackFrameId, root: XDebuggerTreeExpandedNode): Flow<PreloadChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)
 
@@ -39,17 +39,21 @@ interface XValueApi : RemoteApi<Unit> {
   }
 }
 
+@ApiStatus.Internal
+@Serializable
+sealed interface XContainerId : Id
+
 /**
  * @see com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
  */
 @ApiStatus.Internal
 @Serializable
-data class XValueId(override val uid: UID) : Id
+data class XValueId(override val uid: UID) : XContainerId
 
 /** @see com.intellij.xdebugger.impl.rpc.models.BackendXValueGroupModel */
 @ApiStatus.Internal
 @Serializable
-data class XValueGroupId(override val uid: UID) : Id
+data class XValueGroupId(override val uid: UID) : XContainerId
 
 @ApiStatus.Internal
 @Serializable
@@ -57,3 +61,20 @@ data class XInlineDebuggerDataDto(
   val canCompute: ThreeState,
   val sourcePositionsFlow: RpcFlow<XSourcePositionDto>,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerTreeExpandedNode(
+  val name: String,
+  val children: List<XDebuggerTreeExpandedNode>,
+)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface PreloadChildrenEvent {
+  @Serializable
+  data class ToBePreloaded(val id: XContainerId) : PreloadChildrenEvent
+
+  @Serializable
+  data class ExpandedChildrenEvent(val id: XContainerId, val event: XValueComputeChildrenEvent) : PreloadChildrenEvent
+}

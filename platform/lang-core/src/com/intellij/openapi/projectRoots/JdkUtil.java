@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.jar.Attributes;
+
+import static com.intellij.openapi.projectRoots.JavaNameKt.getJavaFileName;
 
 public final class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
@@ -77,7 +80,11 @@ public final class JdkUtil {
     return suggested.toString();
   }
 
-  @ApiStatus.Obsolete
+  /**
+   * @deprecated use {@link #checkForJdk(Path)}
+   */
+  @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean checkForJdk(@NotNull String homePath) {
     try {
       return checkForJdk(Path.of(homePath));
@@ -93,25 +100,18 @@ public final class JdkUtil {
    * @param homePath path to a directory with JDK.
    * @return if the JDK can be run on this machine and contains all the necessary components for an execution.
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean checkForJdk(@NotNull Path homePath) {
-    return (Files.exists(homePath.resolve("bin/javac")) || Files.exists(homePath.resolve("bin/javac.exe"))) &&
-           (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
-            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
-            Files.isDirectory(homePath.resolve("classes")) ||           // custom build
-            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
-            Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
+    return (checkForJdkOrJre(homePath, CheckFor.JDK) &&
+            (
+              isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
+              Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
+              Files.isDirectory(homePath.resolve("classes")) ||           // custom build
+              Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
+              Files.exists(homePath.resolve("../Classes/classes.jar"))  // Apple JDK
+            ));
   }
 
-  @Deprecated
-  public static boolean checkForJdk(@NotNull Path homePath, boolean isWindows) {
-    return (!isWindows && Files.exists(homePath.resolve("bin/javac")) ||
-            (isWindows && Files.exists(homePath.resolve("bin/javac.exe")))) &&
-           (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
-            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
-            Files.isDirectory(homePath.resolve("classes")) ||           // custom build
-            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
-            Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
-  }
 
   /**
    * Check compatibility between a Project and a JDK.
@@ -137,12 +137,21 @@ public final class JdkUtil {
     return EelProviderUtil.getEelDescriptor(jdkHomePath).getMachine().equals(EelProviderUtil.getEelDescriptor(project).getMachine());
   }
 
+  /**
+   * @deprecated use {@link #checkForJre(Path)}
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  @Deprecated
   public static boolean checkForJre(@NotNull String homePath) {
     return checkForJre(Path.of(homePath));
   }
 
+  /**
+   * Ensures this <code>JAVA_HOME</code> has jre
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
   public static boolean checkForJre(@NotNull Path homePath) {
-    return Files.exists(homePath.resolve("bin/java")) || Files.exists(homePath.resolve("bin/java.exe"));
+    return checkForJdkOrJre(homePath, CheckFor.JRE);
   }
 
   public static boolean isModularRuntime(@NotNull String homePath) {
@@ -170,7 +179,7 @@ public final class JdkUtil {
 
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
-    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request );
+    TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request);
     LocalTargetEnvironment environment;
     try {
       environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
@@ -200,6 +209,10 @@ public final class JdkUtil {
     return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
+  private static boolean checkForJdkOrJre(@NotNull Path homePath, @NotNull CheckFor checkFor) {
+    return Files.exists(homePath.resolve("bin").resolve(getJavaFileName(homePath, checkFor)));
+  }
   //<editor-fold desc="Deprecated stuff.">
 
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {

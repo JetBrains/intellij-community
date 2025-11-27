@@ -59,3 +59,7 @@ common:ci --announce_rc
 
 # TeamCity-specific options
 common:teamcity --show_progress_rate_limit=30
+
+# A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
+common --action_env=ANDROID_HOME=
+common --action_env=ANDROID_SDK_HOME=

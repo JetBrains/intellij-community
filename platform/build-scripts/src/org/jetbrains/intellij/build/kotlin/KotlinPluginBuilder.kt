@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 
 abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getProperty("kotlin.plugin.kind")?.let(KotlinPluginKind::valueOf) ?: KotlinPluginKind.IJ) {
@@ -213,7 +212,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.bundled-compiler-plugins-support",
       "kotlin.jsr223",
       "intellij.kotlin.internal",
-      "intellij.kotlin.base.serialization",
+      "intellij.kotlin.base.serialization"
     )
 
     private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -387,8 +386,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
-    val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    val jars = context.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -402,8 +400,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
     val distLibName = "kotlinc.$libName"
-    val library = context.project.libraryCollection.findLibrary(distLibName)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
+    val jars = context.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }

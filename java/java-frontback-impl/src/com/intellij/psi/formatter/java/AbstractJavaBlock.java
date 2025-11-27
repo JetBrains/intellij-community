@@ -6,7 +6,6 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -222,7 +221,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings, formattingMode);
     }
-    if (elementType == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(elementType)) {
       return new DocCommentBlock(child, wrap, alignment, actualIndent, settings, javaSettings, formattingMode);
     }
     if (isTextBlock(childPsi)) {
@@ -381,6 +380,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaElementType.SWITCH_STATEMENT) return Indent.getNoneIndent();
     if (parentType == JavaElementType.METHOD) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_COMMENT) return Indent.getNoneIndent();
+    if (parentType == JavaDocElementType.DOC_MARKDOWN_COMMENT) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPORT_LIST) return Indent.getNoneIndent();
@@ -834,10 +834,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (nodes.isEmpty()) {
       return new LeafBlock(node, blockWrap, alignment, indent);
     }
-    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
-      return
-        new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
-    }
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings,
                                             myFormattingMode, JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(node)).build(nodes);
   }
@@ -1272,7 +1268,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (myUseChildAttributes) {
       return new ChildAttributes(myChildIndent, myChildAlignment);
     }
-    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT})) {
+    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaDocElementType.DOC_MARKDOWN_COMMENT})) {
       return new ChildAttributes(Indent.getNoneIndent(), myChildAlignment);
     }
     return super.getChildAttributes(newChildIndex);

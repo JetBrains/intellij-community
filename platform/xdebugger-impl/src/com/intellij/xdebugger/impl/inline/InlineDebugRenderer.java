@@ -93,7 +93,7 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     int x = event.getMouseEvent().getX();
     boolean isRemoveIconClick = myCustomNode && x >= myRemoveXCoordinate;
     if (isRemoveIconClick) {
-      XDebugSessionTab tab = mySession.getSessionTab();
+      XDebugSessionTab tab = (XDebugSessionTab)mySession.getSessionTab();
       if (tab != null) {
         tab.getWatchesView().removeWatches(Collections.singletonList(myValueNode));
       }

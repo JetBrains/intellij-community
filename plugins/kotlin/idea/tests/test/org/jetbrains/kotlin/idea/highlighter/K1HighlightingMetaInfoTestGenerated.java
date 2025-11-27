@@ -635,6 +635,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
+        @TestMetadata("NamedDestructuring.kt")
+        public void testNamedDestructuring() throws Exception {
+            runTest("testData/highlighterMetaInfo/NamedDestructuring.kt");
+        }
+
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
             runTest("testData/highlighterMetaInfo/NonNullAssertion.kt");

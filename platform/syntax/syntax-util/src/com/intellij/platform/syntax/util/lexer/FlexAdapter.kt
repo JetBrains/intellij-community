@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.util.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.lexer.LexerPosition
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -61,6 +62,31 @@ open class FlexAdapter(
     myState = flex.yystate()
     myTokenType = flex.advance()
     myTokenEnd = flex.getTokenEnd()
+  }
+
+  override fun getCurrentPosition(): LexerPosition {
+    locateToken()
+    return FlexAdapterPosition(myTokenType, myTokenStart, myTokenEnd, myState, flex.yystate())
+  }
+
+  override fun restore(position: LexerPosition) {
+    position as FlexAdapterPosition
+
+    flex.reset(myText, position.tokenEnd, getBufferEnd(), position.flexState)
+    myTokenStart = position.offset
+    myTokenEnd = position.tokenEnd
+    myTokenType = position.currentToken
+    myState = position.state
+  }
+
+  private class FlexAdapterPosition(
+    val currentToken: SyntaxElementType?,
+    val tokenOffset: Int,
+    val tokenEnd: Int,
+    override val state: Int,
+    val flexState: Int,
+  ) : LexerPosition {
+    override val offset: Int get() = tokenOffset
   }
 
   override fun toString(): String = "FlexAdapter for $flex"

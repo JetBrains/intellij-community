@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
   @Override
-  public PyReferenceExpression handleContentChange(final @NotNull PyReferenceExpression element, final @NotNull TextRange range, final String newContent)
+  public PyReferenceExpression handleContentChange(final @NotNull PyReferenceExpression element,
+                                                   final @NotNull TextRange range,
+                                                   final String newContent)
     throws IncorrectOperationException {
     return null;
   }

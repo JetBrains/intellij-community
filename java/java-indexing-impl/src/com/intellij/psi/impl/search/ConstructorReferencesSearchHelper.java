@@ -56,7 +56,7 @@ class ConstructorReferencesSearchHelper {
     });
 
     if (isEnum[0]) {
-      if (!processEnumReferences(processor, constructor, project, containingClass)) return false;
+      if (!processEnumReferences(processor, constructor, project, containingClass, searchScope)) return false;
     }
 
     // search usages like "new XXX(..)"
@@ -114,10 +114,11 @@ class ConstructorReferencesSearchHelper {
   private static boolean processEnumReferences(@NotNull Processor<? super PsiReference> processor,
                                                @NotNull PsiMethod constructor,
                                                @NotNull Project project,
-                                               @NotNull PsiClass aClass) {
+                                               @NotNull PsiClass aClass, 
+                                               @NotNull SearchScope searchScope) {
     return DumbService.getInstance(project).runReadActionInSmartMode(() -> {
       for (PsiField field : aClass.getFields()) {
-        if (field instanceof PsiEnumConstant) {
+        if (field instanceof PsiEnumConstant && PsiSearchScopeUtil.isInScope(searchScope, field)) {
           PsiReference reference = field.getReference();
           if (reference != null && reference.isReferenceTo(constructor) && !processor.process(reference)) {
             return false;

@@ -18,7 +18,6 @@ import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
@@ -28,7 +27,6 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.*
-import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Font
@@ -116,13 +114,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
       is SeOptionActionItemPresentation -> {
         if (!presentation.isBooleanOption && switcherState == null) {
-          val descriptorBg = if (isUnderDarcula) {
-            ColorUtil.brighter(UIUtil.getListBackground(), 1)
-          }
-          else {
-            JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND
-          }
-          background = descriptorBg
+          background = JBUI.CurrentTheme.BigPopup.getListSettingsBackground()
         }
 
         if (showIcon) {

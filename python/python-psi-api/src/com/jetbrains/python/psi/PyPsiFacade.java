@@ -20,7 +20,8 @@ public abstract class PyPsiFacade {
     return project.getService(PyPsiFacade.class);
   }
 
-  public abstract @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context);
+  public abstract @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name,
+                                                                 @NotNull PyQualifiedNameResolveContext context);
 
   public abstract @NotNull PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold);
 

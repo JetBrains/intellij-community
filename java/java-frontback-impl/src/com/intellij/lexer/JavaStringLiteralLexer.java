@@ -3,9 +3,10 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.impl.source.tree.ElementType.STRING_TEMPLATE_FRAGMENTS;
 
 class JavaStringLiteralLexer extends StringLiteralLexer {
 
@@ -25,7 +26,7 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
     IElementType tokenType = super.getTokenType();
     if (tokenType == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN && myBuffer.length() > myStart + 1) {
       char c = myBuffer.charAt(myStart + 1);
-      if (c == '{' && BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS.contains(myOriginalLiteralToken)) {
+      if (c == '{' && STRING_TEMPLATE_FRAGMENTS.contains(myOriginalLiteralToken)) {
         // don't highlight \{ in template fragment as bad escape
         return myOriginalLiteralToken;
       }

@@ -294,7 +294,6 @@
         <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
-      <reference ref="XDebugger.Code.Toolbar"/>
     </group>
 
     <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
@@ -302,7 +301,7 @@
     <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
 
     <group id="InlineCompletion" popup="true">
-      <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction">
+      <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.action.CallInlineCompletionAction">
         <keyboard-shortcut first-keystroke="shift alt BACK_SLASH" keymap="$default"/>
       </action>
       <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
@@ -942,9 +941,6 @@
       <reference ref="EvaluateExpression"/>
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
-      <reference ref="Debugger.AddToWatch"/>
-      <reference ref="Debugger.AddInlineWatch"/>
-      <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
       <group id="EditorPopupMenuDebugHotSwap">
         <separator/>

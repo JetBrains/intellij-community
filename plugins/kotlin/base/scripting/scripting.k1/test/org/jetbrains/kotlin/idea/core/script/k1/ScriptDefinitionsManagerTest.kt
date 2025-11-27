@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.core.script.k1
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -302,7 +303,7 @@ private class ScriptDefinitionsManagerUnderTest(project: Project) : ScriptDefini
 
     override fun getSources(): List<ScriptDefinitionsSource> = definitionSources
 
-    override fun getKotlinScriptingSettings(): KotlinScriptingSettingsImpl = settings
+    override fun getKotlinScriptingSettings(): KotlinScriptingSettings = settings
 
     override fun applyDefinitionsUpdate() {}
 

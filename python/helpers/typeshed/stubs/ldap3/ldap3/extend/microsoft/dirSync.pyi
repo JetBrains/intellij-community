@@ -1,17 +1,17 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class DirSync:
-    connection: Any
-    base: Any
-    filter: Any
-    attributes: Any
-    cookie: Any
-    object_security: Any
-    ancestors_first: Any
-    public_data_only: Any
-    incremental_values: Any
-    max_length: Any
-    hex_guid: Any
+    connection: Incomplete
+    base: Incomplete
+    filter: Incomplete
+    attributes: Incomplete
+    cookie: Incomplete
+    object_security: Incomplete
+    ancestors_first: Incomplete
+    public_data_only: Incomplete
+    incremental_values: Incomplete
+    max_length: Incomplete
+    hex_guid: Incomplete
     more_results: bool
     def __init__(
         self,

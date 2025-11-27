@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.components.expectedType
 import org.jetbrains.kotlin.analysis.api.components.expressionType
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.typeCreator
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -52,9 +53,10 @@ object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
+        if ((refExpr.parent as? KtCallExpression)?.typeArguments?.isNotEmpty() == true) return null
 
         val qualifiedElement = refExpr.getQualifiedElement()
-        if (qualifiedElement == refExpr || qualifiedElement is KtCallExpression) {
+        if (qualifiedElement == refExpr || qualifiedElement is KtCallExpression || (qualifiedElement as? KtDotQualifiedExpression)?.selectorExpression is KtCallExpression) {
             //unqualified reference
             val varExpected = refExpr.getAssignmentByLHS() != null
             val containers = CreateParameterUtil.chooseContainers(refExpr, varExpected)
@@ -149,6 +151,7 @@ object K2CreateParameterFromUsageBuilder {
             return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container.name, "", "$valVar${propertyName.quoteIfNeeded()}: $typeText")
         }
 
+        @OptIn(KaExperimentalApi::class)
         context(_: KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
@@ -181,11 +184,15 @@ object K2CreateParameterFromUsageBuilder {
             val parent = expression.parent
             if (parent is KtCallExpression) {
                 val expectedParameters = computeExpectedParams(parent)
-                return buildClassType(StandardClassIds.FunctionN(expectedParameters.size)) {
-                    for (parameter in expectedParameters) {
-                        argument(parameter.expectedTypes.firstOrNull()?.toKtTypeWithNullability(parent) ?: builtinTypes.nullableAny)
+                return typeCreator.functionType {
+                    val grandParent = parent.parent
+                    if (grandParent is KtDotQualifiedExpression) {
+                       receiverType = grandParent.receiverExpression.expressionType ?: builtinTypes.nullableAny
                     }
-                    argument(parent.expectedType ?: builtinTypes.unit)
+                    for (parameter in expectedParameters) {
+                        valueParameter(null, parameter.expectedTypes.firstOrNull()?.toKtTypeWithNullability(parent) ?: builtinTypes.nullableAny)
+                    }
+                    returnType = parent.expectedType ?: builtinTypes.unit
                 }
             }
 

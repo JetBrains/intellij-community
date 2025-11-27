@@ -15,8 +15,9 @@ fun extractDeprecationMessageFromDecorator(element: PyAstDecoratable): String? {
   }
   val decoratorCall = deprecatedDecorator.callee as? PyReferenceExpression ?: return null
   if (decoratorCall.asQualifiedName()?.toString() !in deprecationDecorators) {
-    if (!PyResolveUtil.resolveLocally(decoratorCall).mapNotNull { it.parent as? PyFromImportStatement }.
-      flatMap { it.fullyQualifiedObjectNames }.any { it in deprecationDecorators }) {
+    if (!PyResolveUtil.resolveLocally(
+        decoratorCall).mapNotNull { it.parent as? PyFromImportStatement }.flatMap { it.fullyQualifiedObjectNames }.any { it in deprecationDecorators }
+    ) {
       return null
     }
   }

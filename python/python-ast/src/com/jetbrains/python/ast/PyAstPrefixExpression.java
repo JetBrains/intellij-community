@@ -25,7 +25,7 @@ public interface PyAstPrefixExpression extends PyAstQualifiedExpression, PyAstRe
   }
 
   @Override
-  default @NotNull List<PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
+  default @NotNull List<@NotNull PyAstExpression> getArguments(@Nullable PyAstCallable resolvedCallee) {
     return Collections.emptyList();
   }
 

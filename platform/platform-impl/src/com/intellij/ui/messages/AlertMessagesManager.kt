@@ -469,7 +469,7 @@ internal class AlertDialog(
     component.contentType = "text/html"
     component.isEditable = false
     component.isOpaque = false
-    component.border = null
+    component.border = JBUI.Borders.empty()
 
     val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")

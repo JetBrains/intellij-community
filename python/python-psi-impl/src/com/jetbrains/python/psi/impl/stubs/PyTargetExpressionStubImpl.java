@@ -38,7 +38,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   private final String myTypeComment;
   private final String myAnnotation;
   private final boolean myHasAssignedValue;
-  
+
   private final @Nullable String myDocString;
   private final CustomTargetExpressionStub myCustomStub;
 

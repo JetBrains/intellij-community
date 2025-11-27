@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameter
 
-class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAware {
+class PyMultipleArgumentsCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inArgumentList(), MyCompletionProvider)
   }
@@ -45,8 +45,9 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAwa
         val argumentIndex = callableType.implicitOffset + argumentExplicitIndex
         if (callableParameters == null ||
             argumentIndex >= callableParameters.size ||
-            callableParameters.any { it.isKeywordContainer || it.isPositionalContainer }) {
-              return@forEach
+            callableParameters.any { it.isKeywordContainer || it.isPositionalContainer }
+        ) {
+          return@forEach
         }
 
         val unfilledParameters = ContainerUtil.subList(callableParameters, argumentIndex)
@@ -110,7 +111,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAwa
       ControlFlowCache.getScope(scope).namedElements
         .asSequence()
         .filter { element ->
-          PsiTreeUtil.getParentOfType(element, PyListCompExpression::class.java) ?.let { listComp ->
+          PsiTreeUtil.getParentOfType(element, PyListCompExpression::class.java)?.let { listComp ->
             PsiTreeUtil.isAncestor(listComp.resultExpression, position, false)
           } ?: PyPsiUtils.isBefore(element, position)
         }
@@ -119,7 +120,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAwa
   }
 }
 
-class PyMultipleArgumentsInsertHandler(private val call: PyCallExpression): ParenthesesInsertHandler<LookupElement>() {
+class PyMultipleArgumentsInsertHandler(private val call: PyCallExpression) : ParenthesesInsertHandler<LookupElement>() {
   override fun placeCaretInsideParentheses(context: InsertionContext?, item: LookupElement?): Boolean = false
 
   override fun handleInsert(context: InsertionContext, item: LookupElement) {

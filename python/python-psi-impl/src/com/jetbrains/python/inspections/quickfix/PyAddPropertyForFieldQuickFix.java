@@ -37,10 +37,11 @@ public class PyAddPropertyForFieldQuickFix extends PsiUpdateModCommandQuickFix {
           final String name = target.getName();
           if (name == null) return;
           String propertyName = StringUtil.trimStart(name, "_");
-          final Map<String,Property> properties = containingClass.getProperties();
+          final Map<String, Property> properties = containingClass.getProperties();
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           if (!properties.containsKey(propertyName)) {
-            final PyFunction property = generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
+            final PyFunction property =
+              generator.createProperty(LanguageLevel.forElement(containingClass), propertyName, name, AccessDirection.READ);
             PyPsiRefactoringUtil.addElementToStatementList(property, containingClass.getStatementList(), false);
           }
           final PyExpression qualifier = ((PyReferenceExpression)element).getQualifier();

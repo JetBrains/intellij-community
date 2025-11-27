@@ -6,7 +6,7 @@ import com.intellij.xdebugger.impl.XSteppingSuspendContext
 
 internal class JavaSteppingSuspendContext(
   private val debugProcessImpl: DebugProcessImpl,
-  private val javaExecutionStack: JavaExecutionStack
+  private val javaExecutionStack: JavaExecutionStack?
 ) : XSteppingSuspendContext() {
 
   override fun getActiveExecutionStack(): XExecutionStack? {

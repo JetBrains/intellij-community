@@ -550,7 +550,7 @@ fun Row.writingStyleComboBox() = comboBox(
   CollectionComboBoxModel(getOtherDomainStyles()),
   SimpleListCellRenderer.create { label, value, _ ->
     label.text = GrazieBundle.messageOrNull("grazie.settings.style.profile.display.${value.id}")
-                 ?: NameUtil.splitNameIntoWords(value.id).joinToString(" ")
+                 ?: NameUtil.splitNameIntoWordList(value.id).joinToString(" ")
   }
 )
 

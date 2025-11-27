@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
 import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.idea.AppMode
@@ -25,6 +26,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -80,9 +82,30 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     if (parameters.editor.caretModel.caretCount != 1) return
     val templateState = TemplateManagerImpl.getTemplateState(parameters.editor)
     if (templateState != null && !templateState.isFinished) return
-    resultSet.runRemainingContributors(parameters) {
-      resultSet.passResult(it)
+    val postfixResults = mutableListOf<CompletionResult>()
+    resultSet.runRemainingContributors(parameters) { r: CompletionResult ->
+      if (r.lookupElement.`as`(PostfixTemplateLookupElement::class.java) != null) {
+        postfixResults.add(r)
+      }
+      else {
+        resultSet.passResult(r)
+      }
     }
+    try {
+      addCommandCompletions(parameters, resultSet, postfixResults)
+    }
+    finally {
+      for (value in postfixResults) {
+        resultSet.passResult(value)
+      }
+    }
+  }
+
+  private fun addCommandCompletions(
+    parameters: CompletionParameters,
+    resultSet: CompletionResultSet,
+    postfixResults: MutableList<CompletionResult>,
+    ) {
     enableFastShown(parameters)
     val project = parameters.editor.project ?: return
     var editor = parameters.editor
@@ -123,6 +146,12 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     }
 
     val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isReadOnly, offset, parameters.editor) ?: return
+    if (commandCompletionType !is InvocationCommandType.FullSuffix) {
+      for (completionResult in postfixResults) {
+        resultSet.passResult(completionResult)
+      }
+      postfixResults.clear()
+    }
     val adjustedParameters = try {
       adjustParameters(commandCompletionFactory, commandCompletionType, editor, originalFile, offset, isReadOnly, isInjected) ?: return
     }
@@ -151,9 +180,9 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     withPrefixMatcher.restartCompletionOnPrefixChange(
       StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
         override fun accepts(t: String, context: ProcessingContext?): Boolean {
-          return !isReadOnly && commandCompletionType.suffix + t ==
-                 commandCompletionFactory.suffix() + commandCompletionFactory.filterSuffix().toString() ||
-                 isReadOnly && commandCompletionType.suffix + t == commandCompletionFactory.filterSuffix().toString()
+          return (!isReadOnly && commandCompletionType.suffix + t ==
+                  commandCompletionFactory.suffix() + (commandCompletionFactory.filterSuffix()?.toString() ?: "")) ||
+                 (isReadOnly && (commandCompletionType.suffix + t == (commandCompletionFactory.filterSuffix()?.toString() ?: "")))
         }
       }))
 
@@ -169,6 +198,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
                               isInjected = isInjected,
                               commandCompletionType = commandCompletionType) { commands ->
       commands.forEach { command ->
+        ProgressManager.checkCanceled()
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
         val lookupElements = createLookupElements(command, commandCompletionFactory, prefix, customPrefixMatcher)
@@ -340,11 +370,14 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
-    val commandProviders = commandCompletionFactory.commandProviders(project, (adjustedParameters.injectedFile
-                                                                               ?: adjustedParameters.copyFile).language)
-    val afterHighlightingCommandProviders = commandProviders.filter { it is AfterHighlightingCommandProvider }.toSet()
-    for (provider in commandProviders.filter { it !is AfterHighlightingCommandProvider }) {
-      if(commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
+    val language = (adjustedParameters.injectedFile ?: adjustedParameters.copyFile).language
+    val allCommandProviders = commandCompletionFactory.commandProviders(project, language)
+
+    val (afterHighlightingCommandProviderList, commandProviders) = allCommandProviders.partition { it is AfterHighlightingCommandProvider }
+    val afterHighlightingCommandProviders = afterHighlightingCommandProviderList.toSet()
+
+    for (provider in commandProviders) {
+      if (commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
       try {
         if (provider is DirectIntentionCommandProvider) {
           provider.setAfterHighlightingProviders(afterHighlightingCommandProviders)
@@ -363,12 +396,16 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
           }
         val commands = provider.getCommands(context)
         processor.process(commands)
+
+        ProgressManager.checkCanceled()
       }
       catch (e: Exception) {
         if (e is ControlFlowException) {
           throw e
         }
         if (e !is CommandCompletionUnsupportedOperationException) {
+          //it was rethrown before
+          @Suppress("IncorrectCancellationExceptionHandling")
           LOG.error(e)
         }
       }
@@ -603,7 +640,7 @@ internal fun findCommandCompletionType(
   return null
 }
 
-private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : CamelHumpMatcher(myCurrentPrefix, false, true) {
+private class LimitedToleranceMatcher(prefix: String) : CamelHumpMatcher(prefix, false, true) {
 
   fun basePrefixMatches(element: LookupElement): Boolean {
     return super.prefixMatches(element)
@@ -648,7 +685,7 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
   }
 
   override fun cloneWithPrefix(prefix: String): PrefixMatcher {
-    if (prefix == myCurrentPrefix) {
+    if (prefix == this.prefix) {
       return this
     }
     return LimitedToleranceMatcher(prefix)

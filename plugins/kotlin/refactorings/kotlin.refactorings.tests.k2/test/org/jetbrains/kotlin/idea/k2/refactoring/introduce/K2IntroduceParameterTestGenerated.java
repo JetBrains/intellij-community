@@ -567,6 +567,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/usedContextParameter.kt");
             }
 
+            @TestMetadata("usedReceiver.kt")
+            public void testUsedReceiver() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/introduceParameter/usedReceiver.kt");
+            }
+
             @TestMetadata("valueAtCallSite.kt")
             public void testValueAtCallSite() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/introduceParameter/valueAtCallSite.kt");

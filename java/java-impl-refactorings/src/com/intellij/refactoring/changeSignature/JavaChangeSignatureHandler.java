@@ -67,7 +67,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final @Nullable DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
@@ -82,7 +82,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
   }
 
-  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, final @Nullable Editor editor) {
+  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
@@ -93,10 +93,10 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
-    final PsiClass containingClass = method.getContainingClass();
+    final PsiClass aClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
-    final boolean allowDelegation = containingClass != null &&
-                                    (!containingClass.isInterface() || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, containingClass)) &&
+    final boolean allowDelegation = aClass != null &&
+                                    (!aClass.isInterface() || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)) &&
                                     !JavaPsiRecordUtil.isCanonicalConstructor(method);
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
@@ -146,12 +146,13 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
         }
         inplaceChangeSignature.cancel();
       }
-      final DialogWrapper dialog = new JavaChangeSignatureDialog(project, methodDescriptor, allowDelegation, refExpr == null ? method : refExpr);
+      final DialogWrapper dialog = 
+        new JavaChangeSignatureDialog(project, methodDescriptor, allowDelegation, refExpr == null ? method : refExpr);
       dialog.show();
     }
   }
 
-  private static void invoke(final PsiClass aClass, Editor editor) {
+  private static void invoke(PsiClass aClass, Editor editor) {
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
     if (typeParameterList == null) {
@@ -163,11 +164,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
     ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass, true);
-    //if (!ApplicationManager.getApplication().isUnitTestMode()){
     dialog.show();
-    //}else {
-    //  dialog.showAndGetOk()
-    //}
   }
 
   @Override
@@ -190,8 +187,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
 
     final PsiElement elementParent = element.getParent();
-    if (elementParent instanceof PsiMethod && ((PsiMethod)elementParent).getNameIdentifier()==element) {
-      final PsiClass containingClass = ((PsiMethod)elementParent).getContainingClass();
+    if (elementParent instanceof PsiMethod m && m.getNameIdentifier() == element) {
+      final PsiClass containingClass = m.getContainingClass();
       if (containingClass != null && containingClass.isAnnotationType()) {
         return null;
       }
@@ -210,10 +207,10 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
     if (expression != null) {
       final PsiExpression qualifierExpression;
-      if (expression instanceof PsiMethodCallExpression) {
-        qualifierExpression = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
-      } else if (expression instanceof PsiNewExpression) {
-        qualifierExpression = ((PsiNewExpression)expression).getQualifier();
+      if (expression instanceof PsiMethodCallExpression exp) {
+        qualifierExpression = exp.getMethodExpression().getQualifierExpression();
+      } else if (expression instanceof PsiNewExpression exp) {
+        qualifierExpression = exp.getQualifier();
       } else {
         qualifierExpression = null;
       }
@@ -221,8 +218,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
         final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(qualifierExpression, PsiExpressionList.class);
         if (expressionList != null) {
           final PsiElement parent = expressionList.getParent();
-          if (parent instanceof PsiCallExpression) {
-            return ((PsiCallExpression)parent).resolveMethod();
+          if (parent instanceof PsiCallExpression exp) {
+            return exp.resolveMethod();
           }
         }
       }

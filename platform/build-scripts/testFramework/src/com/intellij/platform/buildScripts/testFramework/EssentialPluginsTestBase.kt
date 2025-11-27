@@ -18,11 +18,11 @@ fun runEssentialPluginsTest(
   buildTools: ProprietaryBuildTools,
 ): Unit = runBlocking(Dispatchers.Default) {
   val buildContext = BuildContextImpl.createContext(
-    homePath,
-    productProperties,
+    projectHome = homePath,
+    productProperties = productProperties,
     setupTracer = false,
-    buildTools,
-    createBuildOptionsForTest(productProperties, homePath)
+    proprietaryBuildTools = buildTools,
+    options = createBuildOptionsForTest(productProperties, homePath),
   )
   val essentialPlugins = readXmlAsModel(buildContext.appInfoXml.toByteArray()).children.filter { it.name == "essential-plugin" }.mapNotNull { it.content }
   val softly = SoftAssertions()
@@ -54,7 +54,7 @@ private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginD
     skipImplementationDetails = true,  // it's not possible to disable implementation detail plugins
     skipBundled = false,
     honorCompatiblePluginsToIgnore = false,
-    context
+    context = context,
   )
   return pluginMap.values.associate { it.id to PluginDescription(it.id, it.requiredDependencies) }
 }

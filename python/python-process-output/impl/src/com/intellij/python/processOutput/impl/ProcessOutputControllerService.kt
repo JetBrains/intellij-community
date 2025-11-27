@@ -23,10 +23,15 @@ import com.intellij.python.processOutput.impl.ui.toggle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
+import kotlin.collections.minus
+import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,8 +51,13 @@ import org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 
+@ApiStatus.Internal
+object CoroutineNames {
+    const val EXIT_INFO_COLLECTOR: String = "ProcessOutput.ExitInfoCollector"
+}
+
 internal object ProcessOutputControllerServiceLimits {
-    const val MAX_PROCESSES = 256
+    const val MAX_PROCESSES = 512
 }
 
 internal interface ProcessOutputController {
@@ -121,7 +131,7 @@ class ProcessOutputControllerService(
     private val project: Project,
     private val coroutineScope: CoroutineScope,
 ) : ProcessOutputController {
-    private val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
+    internal val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
         var processList = listOf<LoggedProcess>()
         ApplicationManager.getApplication().service<ExecLoggerService>()
             .processes
@@ -214,10 +224,17 @@ class ProcessOutputControllerService(
         processTreeFilters.toggle(filter)
 
         when (filter) {
-            TreeFilter.ShowBackgroundProcesses ->
+            TreeFilter.ShowBackgroundProcesses -> {
                 ProcessOutputUsageCollector.treeFilterBackgroundProcessesToggled(
-                    processTreeFilters.contains(TreeFilter.ShowBackgroundProcesses),
+                    processTreeFilters.contains(
+                        TreeFilter.ShowBackgroundProcesses,
+                    ),
                 )
+
+                coroutineScope.launch(Dispatchers.EDT) {
+                    processTreeUiState.selectableLazyListState.lazyListState.scrollToItem(0)
+                }
+            }
             TreeFilter.ShowTime ->
                 ProcessOutputUsageCollector.treeFilterTimeToggled(
                     processTreeFilters.contains(TreeFilter.ShowTime),
@@ -358,33 +375,43 @@ class ProcessOutputControllerService(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun collectProcessTree() {
         val backgroundErrorProcesses = MutableStateFlow<Set<Int>>(setOf())
+        val backgroundObservingCoroutines = mutableListOf<Job>()
 
         coroutineScope.launch {
             loggedProcesses
+                .debounce(100.milliseconds)
                 .collect { list ->
+                    for (coroutine in backgroundObservingCoroutines) {
+                        coroutine.cancelAndJoin()
+                    }
+                    backgroundObservingCoroutines.clear()
+
                     backgroundErrorProcesses.value = setOf()
+
                     list
                         .filter { it.traceContext == NON_INTERACTIVE_ROOT_TRACE_CONTEXT }
                         .forEach { process ->
-                            launch {
-                                process.exitInfo.collect {
-                                    val exitValue = it?.exitValue
-                                    if (exitValue != null && exitValue != 0) {
-                                        backgroundErrorProcesses.value += process.id
-                                    } else {
-                                        backgroundErrorProcesses.value -= process.id
+                            backgroundObservingCoroutines +=
+                                launch(CoroutineName(CoroutineNames.EXIT_INFO_COLLECTOR)) {
+                                    process.exitInfo.collect {
+                                        val exitValue = it?.exitValue
+                                        if (exitValue != null && exitValue != 0) {
+                                            backgroundErrorProcesses.value += process.id
+                                        } else {
+                                            backgroundErrorProcesses.value -= process.id
+                                        }
                                     }
                                 }
-                            }
                         }
                 }
         }
 
         combine(
             backgroundErrorProcesses,
-            loggedProcesses,
+            loggedProcesses.debounce(100.milliseconds),
             snapshotFlow { processTreeUiState.searchState.text },
             snapshotFlow { processTreeUiState.filters.toSet() },
         )
@@ -427,10 +454,8 @@ class ProcessOutputControllerService(
                                     .firstOrNull { node ->
                                         node.traceContext == currentContext
                                     }
-                                    ?: run {
-                                        Node(traceContext = currentContext).also {
-                                            currentRoot += it
-                                        }
+                                    ?: Node(traceContext = currentContext).also {
+                                        currentRoot += it
                                     }
 
                             currentRoot = node.children
@@ -453,9 +478,15 @@ class ProcessOutputControllerService(
                 }
             }
 
-            processTree.value = buildTree {
+            val newTree = buildTree {
                 buildNodeTree(root)
             }
+
+            if (newTree.isEmpty()) {
+                selectProcess(null)
+            }
+
+            processTree.value = newTree
         }.launchIn(coroutineScope)
     }
 

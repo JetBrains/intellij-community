@@ -1,8 +1,8 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

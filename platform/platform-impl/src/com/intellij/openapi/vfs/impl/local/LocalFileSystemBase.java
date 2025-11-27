@@ -400,6 +400,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
       throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
     }
+
+    // Eel is handled above.
+    //noinspection UseOptimizedEelFunctions
     return Files.readAllBytes(nioFile);
   }
 

@@ -70,5 +70,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

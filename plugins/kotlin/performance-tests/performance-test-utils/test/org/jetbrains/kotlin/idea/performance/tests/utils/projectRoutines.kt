@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil
@@ -43,7 +44,7 @@ fun commitAllDocuments() {
     }
 
     ProjectManagerEx.getInstanceEx().openProjects.forEach { project ->
-        val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+        val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
 
         runInEdtAndWait {
             psiDocumentManagerBase.clearUncommittedDocuments()
@@ -53,7 +54,7 @@ fun commitAllDocuments() {
 }
 
 fun commitDocument(project: Project, document: Document) {
-    val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    val psiDocumentManagerBase = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
     runInEdtAndWait {
         psiDocumentManagerBase.commitDocument(document)
     }

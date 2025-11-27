@@ -99,6 +99,7 @@ public final class ImmediatePainter {
     final Document document = editor.getDocument();
 
     return document instanceof DocumentImpl &&
+           !editor.getSettings().isAnimatedCaret() &&
            editor.getHighlighter() instanceof LexerEditorHighlighter &&
            !(editor.getComponent().getParent() instanceof EditorTextField) &&
            editor.myView.getTopOverhang() <= 0 && editor.myView.getBottomOverhang() <= 0 &&

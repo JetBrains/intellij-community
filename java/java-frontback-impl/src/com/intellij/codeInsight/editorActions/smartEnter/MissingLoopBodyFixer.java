@@ -15,78 +15,70 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
 public class MissingLoopBodyFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    ASTNode loopStatement = getLoopParent(astNode);
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
+    PsiLoopStatement loopStatement = getLoopParent(psiElement);
     if (loopStatement == null) return;
 
     final Document doc = editor.getDocument();
-    ASTNode body;
-    if (BasicJavaAstTreeUtil.is(loopStatement, BASIC_FOR_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getForBody(loopStatement);
+
+    PsiStatement body = loopStatement.getBody();
+    if (body instanceof PsiBlockStatement) return;
+    if (body != null && startLine(doc, body) == startLine(doc, loopStatement)) return;
+
+    PsiElement eltToInsertAfter;
+    if (loopStatement instanceof PsiWhileStatement psiWhileStatement) {
+      eltToInsertAfter = psiWhileStatement.getRParenth();
     }
-    else if (BasicJavaAstTreeUtil.is(loopStatement, BASIC_FOREACH_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getForeachBody(loopStatement);
+    else if (loopStatement instanceof PsiForStatement psiForStatement) {
+      eltToInsertAfter = psiForStatement.getRParenth();
     }
-    else if (BasicJavaAstTreeUtil.is(loopStatement, BASIC_WHILE_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getWhileBody(loopStatement);
+    else if (loopStatement instanceof PsiForeachStatement psiForeachStatement) {
+      eltToInsertAfter = psiForeachStatement.getRParenth();
     }
     else {
       return;
     }
-
-    if (BasicJavaAstTreeUtil.is(body, BASIC_BLOCK_STATEMENT)) return;
-    if (body != null && startLine(doc, body) == startLine(doc, loopStatement)) return;
-
-    fixLoopBody(editor, processor, loopStatement, doc, body);
+    fixLoopBody(editor, processor, loopStatement, doc, body, eltToInsertAfter);
   }
 
-  private static ASTNode getLoopParent(@NotNull ASTNode element) {
-    ASTNode statement = BasicJavaAstTreeUtil.getParentOfType(element, ParentAwareTokenSet.create(BASIC_FOREACH_STATEMENT,
-                                                                                                 BASIC_FOR_STATEMENT,
-                                                                                                 BASIC_WHILE_STATEMENT));
+  private static @Nullable PsiLoopStatement getLoopParent(@NotNull PsiElement element) {
+    PsiLoopStatement statement = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
     if (statement == null) return null;
-    if (BasicJavaAstTreeUtil.is(statement, BASIC_FOREACH_STATEMENT)) {
-      return isForEachApplicable(statement, element) ? statement : null;
+    if (statement instanceof PsiForeachStatement) {
+      return isForEachApplicable((PsiForeachStatement)statement, element) ? statement : null;
     }
-    if (BasicJavaAstTreeUtil.is(statement, BASIC_FOR_STATEMENT)) {
-      return isForApplicable(statement, element) ? statement : null;
+    if (statement instanceof PsiForStatement) {
+      return isForApplicable((PsiForStatement)statement, element) ? statement : null;
     }
-    if (BasicJavaAstTreeUtil.is(statement, BASIC_WHILE_STATEMENT)) {
+    if (statement instanceof PsiWhileStatement) {
       return statement;
     }
     return null;
   }
 
-  private static boolean isForApplicable(ASTNode statement, ASTNode astNode) {
-    ASTNode init = BasicJavaAstTreeUtil.getForInitialization(statement);
-    ASTNode update = BasicJavaAstTreeUtil.getForUpdate(statement);
-    ASTNode check = BasicJavaAstTreeUtil.getForCondition(statement);
+  private static boolean isForApplicable(PsiForStatement statement, PsiElement psiElement) {
+    PsiStatement init = statement.getInitialization();
+    PsiStatement update = statement.getUpdate();
+    PsiExpression check = statement.getCondition();
 
-    return isValidChild(init, astNode) || isValidChild(update, astNode) || isValidChild(check, astNode);
+    return isValidChild(init, psiElement) || isValidChild(update, psiElement) || isValidChild(check, psiElement);
   }
 
-  private static boolean isValidChild(ASTNode ancestorNode, ASTNode node) {
-    PsiElement ancestor = BasicJavaAstTreeUtil.toPsi(ancestorNode);
-    PsiElement element = BasicJavaAstTreeUtil.toPsi(node);
-    if (ancestor != null && element != null) {
-      if (PsiTreeUtil.isAncestor(ancestor, element, false)) {
+  private static boolean isValidChild(PsiElement ancestor, PsiElement psiElement) {
+    if (ancestor != null) {
+      if (PsiTreeUtil.isAncestor(ancestor, psiElement, false)) {
         if (PsiTreeUtil.hasErrorElements(ancestor)) return false;
         return true;
       }
@@ -95,41 +87,32 @@ public class MissingLoopBodyFixer implements Fixer {
     return false;
   }
 
-  private static boolean isForEachApplicable(ASTNode statement, ASTNode astNode) {
-    ASTNode iterated = BasicJavaAstTreeUtil.getForEachIteratedValue(statement);
-    ASTNode parameter = BasicJavaAstTreeUtil.getForEachIterationParameter(statement);
-    PsiElement iteratedElement = BasicJavaAstTreeUtil.toPsi(iterated);
-    PsiElement parameterElement = BasicJavaAstTreeUtil.toPsi(parameter);
-    PsiElement element = BasicJavaAstTreeUtil.toPsi(astNode);
-    return element != null &&
-           (PsiTreeUtil.isAncestor(iteratedElement, element, false) ||
-            PsiTreeUtil.isAncestor(parameterElement, element, false));
+  private static boolean isForEachApplicable(PsiForeachStatement statement, PsiElement psiElement) {
+    PsiExpression iterated = statement.getIteratedValue();
+    PsiParameter parameter = statement.getIterationParameter();
+
+    return PsiTreeUtil.isAncestor(iterated, psiElement, false) || PsiTreeUtil.isAncestor(parameter, psiElement, false);
   }
 
-  private static int startLine(Document doc, ASTNode astNode) {
-    return doc.getLineNumber(astNode.getTextRange().getStartOffset());
+  private static int startLine(Document doc, PsiElement psiElement) {
+    return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 
   private static void fixLoopBody(@NotNull Editor editor,
-                                  @NotNull AbstractBasicJavaSmartEnterProcessor processor,
-                                  @NotNull ASTNode loop,
+                                  @NotNull JavaSmartEnterProcessor processor,
+                                  @NotNull PsiLoopStatement loop,
                                   @NotNull Document doc,
-                                  @Nullable ASTNode body) {
-    ASTNode eltToInsertAfter = BasicJavaAstTreeUtil.getRParenth(loop);
-    PsiElement loopElement = BasicJavaAstTreeUtil.toPsi(loop);
-    if (body != null && eltToInsertAfter != null) {
-      PsiElement bodyElement = BasicJavaAstTreeUtil.toPsi(body);
-      if (loopElement != null && bodyElement != null && bodyIsIndented(loopElement, bodyElement)) {
-        int endOffset = body.getTextRange().getEndOffset();
-        doc.insertString(endOffset, "\n");
-        processor.insertCloseBrace(editor, endOffset + 1);
-        int offset = eltToInsertAfter.getTextRange().getEndOffset();
-        doc.insertString(offset, "{");
-        editor.getCaretModel().moveToOffset(endOffset + "{".length());
-        processor.setSkipEnter(true);
-        processor.reformat(loopElement);
-        return;
-      }
+                                  @Nullable PsiStatement body,
+                                  @Nullable PsiElement eltToInsertAfter) {
+    if (body != null && eltToInsertAfter != null && bodyIsIndented(loop, body)) {
+      int endOffset = body.getTextRange().getEndOffset();
+      doc.insertString(endOffset, "\n}");
+      int offset = eltToInsertAfter.getTextRange().getEndOffset();
+      doc.insertString(offset, "{");
+      editor.getCaretModel().moveToOffset(endOffset + "{".length());
+      processor.setSkipEnter(true);
+      processor.reformat(loop);
+      return;
     }
     boolean needToClose = false;
     if (eltToInsertAfter == null) {
@@ -138,15 +121,16 @@ public class MissingLoopBodyFixer implements Fixer {
     }
     int offset = eltToInsertAfter.getTextRange().getEndOffset();
     if (needToClose) {
-      if (BasicJavaAstTreeUtil.getLParenth(loop) == null) {
+      if (getLParenth(loop) == null) {
         doc.insertString(offset, "()");
         offset += 2;
-      } else {
+      }
+      else {
         doc.insertString(offset, ")");
         offset++;
       }
     }
-    processor.insertBraces(editor, offset);
+    doc.insertString(offset, "{}");
     editor.getCaretModel().moveToOffset(offset);
   }
 
@@ -162,5 +146,20 @@ public class MissingLoopBodyFixer implements Fixer {
     int beforeLoopLineBreak = beforeLoopText.lastIndexOf('\n');
     if (beforeLoopLineBreak == -1) return false;
     return beforeBodyText.length() - beforeBodyLineBreak > beforeLoopText.length() - beforeLoopLineBreak;
+  }
+
+  private static PsiElement getLParenth(@Nullable PsiElement loopStatement) {
+    if (loopStatement instanceof PsiWhileStatement psiWhileStatement) {
+      return psiWhileStatement.getLParenth();
+    }
+    else if (loopStatement instanceof PsiForStatement psiForStatement) {
+      return psiForStatement.getLParenth();
+    }
+    else if (loopStatement instanceof PsiForeachStatement psiForeachStatement) {
+      return psiForeachStatement.getLParenth();
+    }
+    else {
+      return null;
+    }
   }
 }

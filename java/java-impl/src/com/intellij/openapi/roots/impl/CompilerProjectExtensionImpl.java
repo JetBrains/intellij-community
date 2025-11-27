@@ -57,7 +57,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
 
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
     VirtualFileUrlManager vfum = workspaceModel.getVirtualFileUrlManager();
-    workspaceModel.updateProjectModel("setCompilerOutputWSM", mutableStorage -> {
+    workspaceModel.updateProjectModel("setCompilerOutputWSM: " + fileUrl, mutableStorage -> {
       JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(project, mutableStorage, entity -> {
         VirtualFileUrl vfu = fileUrl != null ? vfum.getOrCreateFromUrl(fileUrl) : null;
         entity.setCompilerOutput(vfu);

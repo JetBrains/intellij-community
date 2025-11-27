@@ -910,6 +910,7 @@ com.intellij.ui.SimpleListCellRenderer$Customizer
 - a:customize(com.intellij.ui.components.JBLabel,java.lang.Object,I):V
 c:com.intellij.ui.components.AnActionLink
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,com.intellij.openapi.actionSystem.Presentation):V
+f:com.intellij.ui.components.BulkListModelKt
 com.intellij.ui.components.Interpolable
 - a:getTargetValue():I
 - a:getValue():I
@@ -1162,6 +1163,7 @@ com.intellij.ui.tabs.JBEditorTabsBase
 - com.intellij.ui.tabs.JBTabs
 com.intellij.ui.tabs.JBTabPainter
 - sf:Companion:com.intellij.ui.tabs.JBTabPainter$Companion
+- fillBackground(java.awt.Component,java.awt.Graphics2D,java.awt.Rectangle):V
 - a:fillBackground(java.awt.Graphics2D,java.awt.Rectangle):V
 - a:getBackgroundColor():java.awt.Color
 - getCustomBackground(java.awt.Color,Z,Z,Z):java.awt.Color
@@ -1222,6 +1224,7 @@ com.intellij.ui.tabs.JBTabsEx
 - a:sortTabs(java.util.Comparator):V
 - a:updateTabActions(Z):V
 com.intellij.ui.tabs.JBTabsPresentation
+- a:getShowBorder():Z
 - a:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - a:isHideTabs():Z
 - a:setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
@@ -1232,6 +1235,7 @@ com.intellij.ui.tabs.JBTabsPresentation
 - a:setInnerInsets(java.awt.Insets):com.intellij.ui.tabs.JBTabsPresentation
 - a:setPaintBlocked(Z,Z):V
 - a:setPaintFocus(Z):com.intellij.ui.tabs.JBTabsPresentation
+- a:setShowBorder(Z):V
 - a:setSideComponentBefore(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentOnTabs(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentVertical(Z):com.intellij.ui.tabs.JBTabsPresentation

@@ -29,8 +29,7 @@ internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -69,8 +68,7 @@ internal class EntityWithUrlsImpl(private val dataSource: EntityWithUrlsData) : 
   }
 
 
-  internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(
-    result), EntityWithUrlsBuilder {
+  internal class Builder(result: EntityWithUrlsData?) : ModifiableWorkspaceEntityBase<EntityWithUrls, EntityWithUrlsData>(result), EntityWithUrlsBuilder {
     internal constructor() : this(EntityWithUrlsData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

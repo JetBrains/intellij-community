@@ -21,14 +21,12 @@ import java.util.Date
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownPropertyTypeEntityData) : UnknownPropertyTypeEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -49,8 +47,7 @@ internal class UnknownPropertyTypeEntityImpl(private val dataSource: UnknownProp
   }
 
 
-  internal class Builder(result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(
-    result), UnknownPropertyTypeEntityBuilder {
+  internal class Builder(result: UnknownPropertyTypeEntityData?) : ModifiableWorkspaceEntityBase<UnknownPropertyTypeEntity, UnknownPropertyTypeEntityData>(result), UnknownPropertyTypeEntityBuilder {
     internal constructor() : this(UnknownPropertyTypeEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -154,8 +151,7 @@ internal class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownProper
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return UnknownPropertyTypeEntity(date, entitySource) {
-    }
+    return UnknownPropertyTypeEntity(date, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

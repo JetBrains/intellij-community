@@ -43,6 +43,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
@@ -63,8 +64,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
 
 @ApiStatus.Internal
 public final class XFramesView extends XDebugView {
@@ -88,7 +87,7 @@ public final class XFramesView extends XDebugView {
   private boolean myRefresh;
 
   public XFramesView(@NotNull XDebugSession session) {
-    this(XDebugSessionProxyKeeperKt.asProxy(session));
+    this(MonolithSessionProxyKt.asProxy(session));
   }
 
   public XFramesView(@NotNull XDebugSessionProxy sessionProxy) {
@@ -226,7 +225,7 @@ public final class XFramesView extends XDebugView {
           return;
         }
         myBuilder = new ThreadsBuilder();
-        session.computeExecutionStacks(() -> myBuilder);
+        session.computeExecutionStacks(myBuilder);
       }
     });
 
@@ -401,11 +400,6 @@ public final class XFramesView extends XDebugView {
     if (builder != null) {
       consumer.accept(builder);
     }
-  }
-
-  @Override
-  protected void sessionStopped() {
-    myFramesList.sessionStopped();
   }
 
   @Override

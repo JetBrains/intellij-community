@@ -60,6 +60,13 @@ class SeResultsCountBalancer(private val logLabel: String,
   }
 
   suspend fun add(newItem: SeItemData): SeItemData {
+    if (newItem.isCommand) {
+      SeLog.logSuspendable(SeLog.BALANCING) {
+        "($logLabel) Command item ${newItem.presentation.text} with provider ${newItem.providerId} is returned without balancing"
+      }
+      return newItem
+    }
+
     allProvidersCounts[newItem.providerId]?.fetchAndIncrement()
 
     highPriorityPermits[newItem.providerId]?.acquire()

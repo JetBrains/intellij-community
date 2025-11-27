@@ -24,6 +24,8 @@
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.processOutput"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -34,6 +36,8 @@
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
     <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
+    <!-- Only modules with `baseDir` support Python SDKs -->
+    <registryKey defaultValue="true" description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir" key="python.show.modules.with.base.dir" restartRequired="true"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -251,7 +255,7 @@
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle"
                      key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
+                     implementationClass="com.jetbrains.python.inspections.interpreter.PyInterpreterInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
                      bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
@@ -616,6 +620,12 @@
                        key="python.sdk.installation.notification.group"/>
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
 
+    <!-- Source root detection -->
+    <registryKey key="python.source.root.suggest.quickfix" defaultValue="true" description="Suggests to mark a detected source root via quick-fix for the red import"/>
+    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true" description="Automatically applies suggested source root quick-fix"/>
+    <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="python.source.root.detection.confirm.notification.group"/>
+
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
@@ -690,6 +700,9 @@
 
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
+
+    <!-- ux survey -->
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PyCharmUxSurvey"/>
 
     <!-- Debugger Show value tooltip -->
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
@@ -1141,6 +1154,7 @@
               icon="com.intellij.icons.AllIcons.Actions.Install"/>
       <separator/>
 
+      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
       <add-to-group group-id="RunContextGroup"/>
     </group>
@@ -1151,6 +1165,10 @@
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
     <dictionary.runtimeDictionaryProvider
       implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <iconProvider implementation="com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtIconProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.console">

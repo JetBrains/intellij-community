@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -10,6 +11,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
@@ -22,11 +24,15 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
 import kotlinx.coroutines.CoroutineScope
 
-internal class CondaNewEnvironmentCreator<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>) : PythonNewEnvironmentCreator<P>(model) {
+internal class CondaNewEnvironmentCreator<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>) : PythonNewEnvironmentCreator<P>(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
   private lateinit var condaExecutable: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.condaViewModel.condaExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> saveLocalPythonCondaPath(path) }
+  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {

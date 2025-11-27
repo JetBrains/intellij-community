@@ -1,4 +1,4 @@
-<idea-plugin package="com.jetbrains.performanceScripts">
+<idea-plugin>
   <id>com.jetbrains.performanceScripts</id>
   <name>Performance Scripts UI</name>
   <vendor>JetBrains</vendor>

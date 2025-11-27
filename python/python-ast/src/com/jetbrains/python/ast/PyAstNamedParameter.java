@@ -18,6 +18,7 @@ package com.jetbrains.python.ast;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.PyNamesKt;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
@@ -134,6 +135,48 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
       }
     }
     return varargSeen;
+  }
+
+  default boolean isPositionalOnly() {
+    if (isSelf() ||
+        isKeywordContainer() ||
+        isPositionalContainer() ||
+        this instanceof PyAstSingleStarParameter ||
+        this instanceof PyAstSlashParameter) {
+      return false;
+    }
+    final PyAstParameterList parameters = getStubOrPsiParentOfType(PyAstParameterList.class);
+    if (parameters == null) {
+      return false;
+    }
+    boolean thisSeen = false;
+    boolean allBeforeThisPrivate = true;
+    for (PyAstParameter param : parameters.getParameters()) {
+      if (param.isSelf()) {
+        continue;
+      }
+      if (param instanceof PyAstSingleStarParameter ||
+          (param instanceof PyAstNamedParameter np && (np.isPositionalContainer() || np.isKeywordContainer()))) {
+        // None of the positional-only parameter kinds can follow these
+        if (!thisSeen) {
+          return false;
+        }
+        // No need to continue, as `/` can't follow them either
+        break;
+      }
+      // New-style positional-only syntax, decide purely by the position
+      if (param instanceof PyAstSlashParameter) {
+        return thisSeen;
+      }
+      if (param == this) {
+        thisSeen = true;
+      }
+      else if (!thisSeen) {
+        allBeforeThisPrivate &= param.getName() != null && PyNamesKt.isPrivate(param.getName());
+      }
+    }
+    // Legacy-style positional only
+    return thisSeen && allBeforeThisPrivate && getName() != null && PyNamesKt.isPrivate(getName());
   }
 
   @Override

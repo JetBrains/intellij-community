@@ -10,6 +10,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.ijent.currentCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,6 +23,7 @@ suspend fun WSLDistribution.createIjentSession(
 ): IjentSession<IjentPosixApi> {
   return WslIjentDeployingStrategy(
     scope = parentScope,
+    currentDispatcher = currentCoroutineDispatcher(),
     ijentLabel = ijentLabel,
     distribution = this,
     project = project,

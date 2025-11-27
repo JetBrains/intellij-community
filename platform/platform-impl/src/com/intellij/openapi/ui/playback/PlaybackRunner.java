@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.ui.EDT;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
@@ -26,8 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -260,7 +261,7 @@ public class PlaybackRunner {
         if (command.canGoFurther()) {
           int delay = getDelay(command);
           if (delay > 0) {
-            if (SwingUtilities.isEventDispatchThread()) {
+            if (EDT.isCurrentThreadEdt()) {
               EdtScheduler.getInstance().schedule(delay, Context.current().wrap(() -> {
                 if (!onStop.isDisposed()) {
                   executeFrom(commandIndex + 1, context.getBaseDir());
@@ -443,7 +444,7 @@ public class PlaybackRunner {
       public final void message(final PlaybackContext context,
                                 final String text,
                                 final Type type) {
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (EDT.isCurrentThreadEdt()) {
           messageEdt(context, text, type);
         }
         else {

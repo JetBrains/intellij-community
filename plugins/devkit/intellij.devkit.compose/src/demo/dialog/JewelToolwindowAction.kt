@@ -2,6 +2,7 @@
 package com.intellij.devkit.compose.demo.dialog
 
 import com.intellij.devkit.compose.DevkitComposeBundle
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,7 +10,6 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.idea.devkit.DevKitIcons
 
 private const val TOOLWINDOW_ID = "JewelDemo"
 
@@ -41,7 +41,7 @@ internal class JewelToolwindowAction : DumbAwareAction() {
         id = TOOLWINDOW_ID,
         anchor = ToolWindowAnchor.BOTTOM,
         component = null,
-        icon = DevKitIcons.ComposeToolWindow,
+        icon = DevkitCoreIcons.ComposeToolWindow,
         contentFactory = com.intellij.devkit.compose.demo.JewelDemoToolWindowFactory(),
         stripeTitle = DevkitComposeBundle.messagePointer("jewel.toolwindow.title"),
       )

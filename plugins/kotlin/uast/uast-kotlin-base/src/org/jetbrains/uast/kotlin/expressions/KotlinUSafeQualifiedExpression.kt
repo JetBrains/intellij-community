@@ -36,7 +36,7 @@ class KotlinUSafeQualifiedExpression(
             )
         }
 
-    override val accessType = KotlinQualifiedExpressionAccessTypes.SAFE
+    override val accessType: UastQualifiedExpressionAccessType = KotlinQualifiedExpressionAccessTypes.SAFE
 
     override val resolvedName: String?
         get() = (resolve() as? PsiNamedElement)?.name

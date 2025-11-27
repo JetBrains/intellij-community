@@ -24,9 +24,7 @@ data class CallableMemberInfo(
     val isLocal: Boolean,
     var ordinal: Int,
     val isEqualsNullCall: Boolean,
-) {
-    val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInParameters
-}
+)
 
 internal fun KaSession.CallableMemberInfo(
     symbol: KaFunctionSymbol,

@@ -31,6 +31,9 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
@@ -56,7 +59,7 @@ class ChangesViewContentManager private constructor(private val project: Project
 
   private fun Content.resolveToolWindowId(): String {
     val isInCommitToolWindow = IS_IN_COMMIT_TOOLWINDOW_KEY.get(this) == true
-    if (isInCommitToolWindow && isCommitToolWindowShown) return COMMIT_TOOLWINDOW_ID
+    if (isInCommitToolWindow && isCommitToolWindowEnabled.value) return COMMIT_TOOLWINDOW_ID
     return TOOLWINDOW_ID
   }
 
@@ -66,7 +69,8 @@ class ChangesViewContentManager private constructor(private val project: Project
     return toolWindow?.contentManager
   }
 
-  private var isCommitToolWindowShown: Boolean = shouldUseCommitToolWindow()
+  private val _isCommitToolWindowEnabled: MutableStateFlow<Boolean> = MutableStateFlow(shouldUseCommitToolWindow())
+  val isCommitToolWindowEnabled: StateFlow<Boolean> = _isCommitToolWindowEnabled.asStateFlow()
 
   init {
     ApplicationManager.getApplication().messageBus.connect(coroutineScope)
@@ -86,7 +90,7 @@ class ChangesViewContentManager private constructor(private val project: Project
   }
 
   private fun updateToolWindowMappings() {
-    isCommitToolWindowShown = shouldUseCommitToolWindow()
+    _isCommitToolWindowEnabled.value = shouldUseCommitToolWindow()
     remapContents()
 
     project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
@@ -267,7 +271,7 @@ class ChangesViewContentManager private constructor(private val project: Project
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic
-    fun isCommitToolWindowShown(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindowShown == true
+    fun isCommitToolWindowShown(project: Project): Boolean = getInstanceImpl(project)?.isCommitToolWindowEnabled?.value == true
 
     @JvmStatic
     fun getToolWindowIdFor(project: Project, tabName: String): String {

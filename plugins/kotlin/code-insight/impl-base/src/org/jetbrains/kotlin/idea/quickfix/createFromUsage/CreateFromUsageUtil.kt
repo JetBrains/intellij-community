@@ -39,7 +39,7 @@ object CreateFromUsageUtil {
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
                 val primaryConstructor = (container as? KtClass)?.createPrimaryConstructorIfAbsent()
-                primaryConstructor?.replaced(declaration) ?: declaration
+                (primaryConstructor?.replaced<KtPrimaryConstructor>(declaration) ?: declaration) as D
             }
 
             declaration is KtProperty && container !is KtBlockExpression -> {

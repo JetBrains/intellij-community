@@ -21,8 +21,8 @@ val pluginVersion = run {
 val KOTLIN_VERSION = "2.2.21-RC2"
 
 // the compiler plugin will be built with these Kotlin LV/APIV
-val KOTLIN_LANGUAGE_VERSION = "2.1"
-val KOTLIN_API_VERSION = "2.1"
+val KOTLIN_LANGUAGE_VERSION = "2.2"
+val KOTLIN_API_VERSION = "2.2"
 
 group = "com.jetbrains.fleet"
 version = pluginVersion

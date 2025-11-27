@@ -2,25 +2,30 @@
 package com.intellij.psi.formatter.java
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil
-import com.intellij.psi.impl.source.tree.ChildRole
+import com.intellij.psi.PsiConditionalExpression
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.source.SourceTreeToPsiMap
 import com.intellij.psi.impl.source.tree.CompositeElement
-import com.intellij.psi.impl.source.tree.JavaElementType
-import com.intellij.psi.tree.ParentAwareTokenSet
+import com.intellij.psi.util.PsiTreeUtil
 
 internal object JavaFormatterConditionalExpressionUtil {
-  private val STOP_TOKENS = ParentAwareTokenSet.create(JavaElementType.METHOD, JavaElementType.LOCAL_VARIABLE, JavaElementType.METHOD)
 
   /**
    * Checks if the given AST node is inside a conditional expression then or else branch.
    */
   @JvmStatic
-  fun isInsideConditionalExpression(node : ASTNode) : Boolean {
-    val child = BasicJavaAstTreeUtil.getAncestorWithParentOfType(node, JavaElementType.CONDITIONAL_EXPRESSION, STOP_TOKENS)
+  fun isInsideConditionalExpression(node: ASTNode): Boolean {
+    val psi = SourceTreeToPsiMap.treeElementToPsi(node)
+    val child = PsiTreeUtil.findFirstParent(psi) {
+      it.parent is PsiConditionalExpression ||
+      it.parent is PsiMethod ||
+      it.parent is PsiLocalVariable
+    }
     if (child == null) return false
-    val parent = child.treeParent
+    val parent = child.parent
+    if (parent !is PsiConditionalExpression) return false
     if (parent !is CompositeElement) return false
-    val childRole = parent.getChildRole(child)
-    return childRole != ChildRole.CONDITION
+    return parent.condition != child
   }
 }

@@ -271,6 +271,10 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    LibraryLicense("Compose Runtime Retained", libraryName = "androidx.compose.runtime.retain.desktop", url = "https://source.android.com/")
+      .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
+
     LibraryLicense("Compose Runtime Saveable Desktop", libraryName = "androidx.compose.runtime.saveable.desktop", url = "https://source.android.com/")
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -370,10 +374,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("gauge-java", libraryName = "com.thoughtworks.gauge:gauge-java", url = "https://github.com/getgauge/gauge-java/")
       .apache("https://github.com/getgauge/gauge-java/raw/master/LICENSE.txt"),
-
-    LibraryLicense("Gherkin", libraryName = "gherkin", url = "https://github.com/cucumber/gherkin/tree/main")
-      .mit("https://github.com/cucumber/gherkin/blob/main/LICENSE")
-      .suppliedByOrganizations("Cucumber Ltd"),
 
     LibraryLicense("Gherkin keywords", version = "2.12.2", attachedTo = "intellij.gherkin", url = "https://github.com/cucumber/gherkin/tree/main")
       .mit("https://github.com/cucumber/gherkin/blob/main/LICENSE")
@@ -792,10 +792,11 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("kotlin-codepoints", libraryName = "de.cketti.unicode.kotlin.codepoints.jvm", url = "https://github.com/cketti/kotlin-codepoints")
-      .mit("https://github.com/cketti/kotlin-codepoints/blob/main/LICENSE"),
-
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
+      .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense("kotlin-metadata-jvm", libraryName = "kotlin-metadata-jvm", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 

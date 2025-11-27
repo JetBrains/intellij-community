@@ -21,7 +21,6 @@ import com.intellij.ide.starter.runner.startIdeWithoutProject
 import com.intellij.ide.starter.telemetry.TestTelemetryService
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
-import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.XmlBuilder
 import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.openapi.diagnostic.LogLevel
@@ -35,8 +34,6 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.ui.NewUiValue
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
-import com.intellij.util.system.OS
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.direct
 import org.kodein.di.factory
@@ -186,7 +183,7 @@ open class IDETestContext(
       withXmx(4 * 1024)
     }
 
-  fun allowSkippingFullScanning(allow: Boolean = true): IDETestContext =
+  fun allowSkippingFullScanning(allow: Boolean): IDETestContext =
     applyVMOptionsPatch {
       addSystemProperty(ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION, allow)
     }
@@ -278,7 +275,7 @@ open class IDETestContext(
     path.deleteRecursivelyQuietly()
   }
 
-  fun wipeWorkspaceState(): IDETestContext = apply {
+  open fun wipeWorkspaceState(): IDETestContext = apply {
     val path = paths.configDir.resolve("workspace")
     logOutput("Cleaning workspace dir in config dir for $this at $path")
     path.deleteRecursivelyQuietly()
@@ -766,22 +763,24 @@ open class IDETestContext(
   }
 
   fun applyAppCdsIfNecessary(currentRepetition: Int): IDETestContext {
-    if (currentRepetition % 2 == 0) {
-      // classes.jsa in jbr is not suitable for reuse, regenerate it, remove when it will be fixed
-      val jbrDistroPath = if (OS.CURRENT == OS.macOS) ide.installationPath / "jbr" / "Contents" / "Home" else ide.installationPath / "jbr"
-      if (jbrDistroPath.exists()) {
-        JvmUtils.execJavaCmd(jbrDistroPath, listOf("-Xshare:dump"))
-      }
-      else {
-        @Suppress("RAW_RUN_BLOCKING")
-        JvmUtils.execJavaCmd(runBlocking(Dispatchers.Default) { ide.resolveAndDownloadTheSameJDK() }, listOf("-Xshare:dump"))
-      }
-      applyVMOptionsPatch {
-        removeSystemClassLoader()
-        addSharedArchiveFile(paths.systemDir / "ide.jsa")
-      }
-    }
-    return this
+    // FIXME: IJPL-218141 enable app-cds back once it works with async profiler
+    return this;
+    //if (currentRepetition % 2 == 0) {
+    //  // classes.jsa in jbr is not suitable for reuse, regenerate it, remove when it will be fixed
+    //  val jbrDistroPath = if (OS.CURRENT == OS.macOS) ide.installationPath / "jbr" / "Contents" / "Home" else ide.installationPath / "jbr"
+    //  if (jbrDistroPath.exists()) {
+    //    JvmUtils.execJavaCmd(jbrDistroPath, listOf("-Xshare:dump"))
+    //  }
+    //  else {
+    //    @Suppress("RAW_RUN_BLOCKING")
+    //    JvmUtils.execJavaCmd(runBlocking(Dispatchers.Default) { ide.resolveAndDownloadTheSameJDK() }, listOf("-Xshare:dump"))
+    //  }
+    //  applyVMOptionsPatch {
+    //    removeSystemClassLoader()
+    //    addSharedArchiveFile(paths.systemDir / "ide.jsa")
+    //  }
+    //}
+    //return this
   }
 
   fun disableStickyLines(): IDETestContext {

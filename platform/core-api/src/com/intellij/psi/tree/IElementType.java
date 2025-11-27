@@ -282,7 +282,7 @@ public class IElementType {
 
       Map<Language, List<IElementType>> byLang = Stream.of(registrySnapshot)
         .filter(Objects::nonNull)
-        .collect(Collectors.groupingBy(ie -> ie.myLanguage));
+        .collect(Collectors.groupingBy(ie -> ie.getLanguage()));
 
       Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
 

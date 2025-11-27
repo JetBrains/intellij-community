@@ -124,16 +124,26 @@ object DynamicPlugins {
     return reason == null
   }
 
+  @Deprecated("use overload with Collection<PluginMainDescriptor> parameter")
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
+    val unexpectedDescriptor = descriptors.find { it !is PluginMainDescriptor }
+    if (unexpectedDescriptor != null) {
+      LOG.warn("Unexpected descriptor type: $unexpectedDescriptor", Throwable())
+      return false
+    }
+    @Suppress("UNCHECKED_CAST")
+    return loadPlugins(descriptors.toList() as List<PluginMainDescriptor>, project)
+  }
+
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
-    if (descriptors.isEmpty()) {
+  fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?): Boolean {
+    if (plugins.isEmpty()) {
       return true
     }
     return runProcess {
-      @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
-      val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = true)
+      val descriptors = getDescriptorsToUpdateWithoutRestart(plugins, load = true)
       if (descriptors.isEmpty()) {
         return@runProcess false
       }
@@ -154,22 +164,37 @@ object DynamicPlugins {
     }
   }
 
-  /**
-   * @return true if the requested enabled state was applied without restart, false if restart is required
-   */
+  /** Left for compatibility, drop later */
+  @Deprecated("use overload with Collection<PluginMainDescriptor> parameter")
   fun unloadPlugins(
-    descriptors: Collection<IdeaPluginDescriptorImpl>,
+    plugins: Collection<IdeaPluginDescriptorImpl>,
     project: Project? = null,
     parentComponent: JComponent? = null,
     options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
   ): Boolean {
-    if (descriptors.isEmpty()) {
+    val unexpectedDescriptor = plugins.find { it !is PluginMainDescriptor }
+    if (unexpectedDescriptor != null) {
+      LOG.warn("Unexpected descriptor type: $unexpectedDescriptor")
+      return false
+    }
+    @Suppress("UNCHECKED_CAST")
+    return unloadPlugins(plugins.toList() as List<PluginMainDescriptor>, project, parentComponent, options)
+  }
+
+  /**
+   * @return true if the requested enabled state was applied without restart, false if restart is required
+   */
+  fun unloadPlugins(
+    plugins: List<PluginMainDescriptor>,
+    project: Project? = null,
+    parentComponent: JComponent? = null,
+    options: UnloadPluginOptions = UnloadPluginOptions(disable = true),
+  ): Boolean {
+    if (plugins.isEmpty()) {
       return true
     }
     return runProcess {
-      descriptors.forEach { check(it is PluginMainDescriptor) { it } }
-      @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
-      val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = false)
+      val descriptors = getDescriptorsToUpdateWithoutRestart(plugins, load = false)
       if (descriptors.isEmpty()) {
         return@runProcess false
       }
@@ -412,6 +437,15 @@ object DynamicPlugins {
         return dependency.pluginId
       }
     }
+    for (dependencyId in descriptor.moduleDependencies.plugins) {
+      if (!pluginSet.isPluginEnabled(dependencyId) &&
+          context.none {
+            it.pluginId == dependencyId || dependencyId in it.pluginAliases || dependencyId in it.contentModules.flatMap { it.pluginAliases }
+          }) {
+        return dependencyId
+      }
+    }
+    // TODO check modules
     return null
   }
 
@@ -469,9 +503,21 @@ object DynamicPlugins {
     return null
   }
 
+  @Deprecated("use overload with PluginMainDescriptor parameter")
   fun unloadPluginWithProgress(project: Project? = null,
                                parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
+                               options: UnloadPluginOptions): Boolean {
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return unloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
+  }
+
+  fun unloadPluginWithProgress(project: Project? = null,
+                               parentComponent: JComponent?,
+                               pluginDescriptor: PluginMainDescriptor,
                                options: UnloadPluginOptions): Boolean {
     return runProcess {
       doUnloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
@@ -480,7 +526,7 @@ object DynamicPlugins {
 
   private fun doUnloadPluginWithProgress(project: Project? = null,
                                          parentComponent: JComponent?,
-                                         pluginDescriptor: IdeaPluginDescriptorImpl,
+                                         pluginDescriptor: PluginMainDescriptor,
                                          options: UnloadPluginOptions): Boolean {
     var result = false
     val modalOwner = project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess()
@@ -550,17 +596,27 @@ object DynamicPlugins {
     }
   }
 
+  @Deprecated("use overload with PluginMainDescriptor parameter")
   @JvmOverloads
   fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
+                   options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return unloadPlugin(pluginDescriptor, options)
+  }
+
+  @JvmOverloads
+  fun unloadPlugin(pluginDescriptor: PluginMainDescriptor,
                    options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
     return runProcess {
       doUnloadPluginWithProgress(project = null, parentComponent = null, pluginDescriptor, options)
     }
   }
 
-  private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
+  private fun unloadPluginWithoutProgress(pluginDescriptor: PluginMainDescriptor,
                                           options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    pluginDescriptor as PluginMainDescriptor
     LOG.debug { "Start unloading plugin $pluginDescriptor dynamically" }
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
@@ -918,8 +974,21 @@ object DynamicPlugins {
     }
   }
 
+  /**
+   * Left for compatibility with older Junie versions, drop later
+   */
+  @Deprecated("use overload with PluginMainDescriptor parameter")
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return loadPlugin(pluginDescriptor, project)
+  }
+
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
     if (!allowLoadUnloadWithoutRestart(pluginDescriptor)) {
       return false
     }
@@ -958,7 +1027,7 @@ object DynamicPlugins {
   }
 
   @RequiresEdt
-  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+  private fun doLoadPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
     val isVetoed = VETOER_EP_NAME.findFirstSafe {
       it.vetoPluginLoad(pluginDescriptor)
     } != null
@@ -970,8 +1039,7 @@ object DynamicPlugins {
     return loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
-  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
-    pluginDescriptor as PluginMainDescriptor
+  private fun loadPluginWithoutProgress(pluginDescriptor: PluginMainDescriptor, checkImplementationDetailDependencies: Boolean = true): Boolean {
     LOG.debug { "start loading plugin $pluginDescriptor dynamically" }
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
@@ -1310,11 +1378,8 @@ private fun processPluginDependenciesOnPlugin(
   for (dependency in mainDescriptor.dependencies) {
     if (dependency.isOptional) {
       val subDescriptor = dependency.subDescriptor ?: continue
-      if (loadStateFilter != LoadStateFilter.ANY) {
-        val isModuleLoaded = subDescriptor.pluginClassLoader != null
-        if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
-          continue
-        }
+      if (loadStateFilter != LoadStateFilter.ANY && subDescriptor.isLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
+        continue
       }
       if (dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, subDescriptor)) {
         return false

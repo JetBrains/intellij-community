@@ -60,7 +60,7 @@ class CreationCoroutineStackFrame(
 
 open class CoroutineStackFrame(
     frame: StackFrameProxyImpl,
-    private val position: XSourcePosition?,
+    position: XSourcePosition?,
     private val spilledVariables: List<JavaValue> = emptyList(),
     private val includeFrameVariables: Boolean = true,
     location: Location? = frame.safeLocation(),
@@ -73,6 +73,8 @@ open class CoroutineStackFrame(
     }
 ) {
 
+    private val position: XSourcePosition? = position?.let { CoroutinePositionWrapper(it) }
+
     init {
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)
     }
@@ -84,13 +86,16 @@ open class CoroutineStackFrame(
             return false
         }
 
-        val frame = other as? JavaStackFrame ?: return false
+        val frame = other as? CoroutineStackFrame ?: return false
 
         return descriptor.frameProxy == frame.descriptor.frameProxy
+                && position == frame.sourcePosition
     }
 
     override fun hashCode(): Int {
-        return descriptor.frameProxy.hashCode()
+        var result = descriptor.frameProxy.hashCode()
+        result = 31 * result + (position?.hashCode() ?: 0)
+        return result
     }
 
     override fun buildVariablesThreadAction(debuggerContext: DebuggerContextImpl, children: XValueChildrenList, node: XCompositeNode) {
@@ -149,4 +154,32 @@ open class CoroutineStackFrame(
 
     override fun getSourcePosition() =
         position ?: super.getSourcePosition()
+
+    // XSourcePosition doesn't have value-based equals/hashCode by default
+    private class CoroutinePositionWrapper(private val position: XSourcePosition) : XSourcePosition by position {
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as CoroutinePositionWrapper
+
+            if (position.line != other.position.line) return false
+            if (position.offset != other.position.offset) return false
+            if (position.file != other.position.file) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = position.line
+            result = 31 * result + position.offset
+            result = 31 * result + position.file.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "PositionWrapper(file=${position.file}, line=${position.line}, offset=${position.offset})"
+        }
+    }
 }

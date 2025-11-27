@@ -25,7 +25,7 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
 
   public PyExpressionCodeFragmentImpl(Project project, @NonNls String name, CharSequence text, boolean isPhysical) {
     super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
-            new LightVirtualFile(name, getFileTypeByFileName(name), text), isPhysical)
+      new LightVirtualFile(name, getFileTypeByFileName(name), text), isPhysical)
     );
     myPhysical = isPhysical;
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
@@ -34,7 +34,8 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
   private static FileType getFileTypeByFileName(String name) {
     if (name.endsWith(".py")) {
       return PythonFileType.INSTANCE;
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("unexpected file type");
     }
   }
@@ -45,7 +46,8 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
-    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
+    SingleRootFileViewProvider cloneViewProvider =
+      (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
     cloneViewProvider.forceCachedPsi(clone);
     clone.myViewProvider = cloneViewProvider;
     return clone;
@@ -58,7 +60,7 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
 
   @Override
   public @NotNull FileViewProvider getViewProvider() {
-    if(myViewProvider != null) return myViewProvider;
+    if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
@@ -70,5 +72,4 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
   public void setContext(PsiElement context) {
     myContext = context;
   }
-
 }

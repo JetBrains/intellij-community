@@ -276,7 +276,7 @@ sealed interface EelTunnelsApi {
   @ApiStatus.Internal
   suspend fun getAcceptorForRemotePort(@GeneratedBuilder args: GetAcceptorForRemotePort): ConnectionAcceptor
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface GetAcceptorForRemotePort : HostAddress {
     // TODO Make it look and feel like all other builders.
     val configureServerSocket: ConfigurableSocket.() -> Unit get() = {}
@@ -285,7 +285,7 @@ sealed interface EelTunnelsApi {
   /**
    * This is a representation of a remote server bound to [boundAddress].
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface ConnectionAcceptor {
     /**
      * A channel of incoming connections to the remote server.
@@ -382,7 +382,8 @@ suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToR
   return try {
     val connectionResult = eelIt()
     closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
-  } catch (e: EelConnectionError) {
+  }
+  catch (e: EelConnectionError) {
     errorHandler(e)
   }
 }
@@ -442,7 +443,8 @@ suspend fun <T> EelTunnelsApiHelpers.GetAcceptorForRemotePort.withAcceptorForRem
   return try {
     val connectionResult = eelIt()
     closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
-  } catch (e: EelConnectionError) {
+  }
+  catch (e: EelConnectionError) {
     errorHandler(e)
   }
 }

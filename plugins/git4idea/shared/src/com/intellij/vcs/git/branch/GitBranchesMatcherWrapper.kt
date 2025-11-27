@@ -11,7 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class GitBranchesMatcherWrapper(private val delegate: MinusculeMatcher) : MinusculeMatcher() {
-  override fun getPattern(): String = delegate.pattern
+  override val pattern: String
+    get() = delegate.pattern
 
   override fun matchingFragments(name: String): FList<TextRange>? = delegate.matchingFragments(name)
 

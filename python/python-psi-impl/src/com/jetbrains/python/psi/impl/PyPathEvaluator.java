@@ -40,7 +40,7 @@ public class PyPathEvaluator extends PyEvaluator {
     }
     VirtualFile vFile = expr.getContainingFile().getVirtualFile();
     Object result = new PyPathEvaluator(vFile == null ? null : vFile.getPath()).evaluate(expr);
-    return result instanceof String ? (String) result : null;
+    return result instanceof String ? (String)result : null;
   }
 
   @Override
@@ -57,7 +57,7 @@ public class PyPathEvaluator extends PyEvaluator {
     }
     if (expression.isCalleeText(PyNames.DIRNAME) && args.length == 1) {
       Object argValue = evaluate(args[0]);
-      return argValue instanceof String ? Paths.get((String) argValue).getParent().toFile().getPath() : null;
+      return argValue instanceof String ? Paths.get((String)argValue).getParent().toFile().getPath() : null;
     }
     else if (expression.isCalleeText(PyNames.JOIN) && args.length >= 1) {
       return evaluatePathInJoin(args, args.length);

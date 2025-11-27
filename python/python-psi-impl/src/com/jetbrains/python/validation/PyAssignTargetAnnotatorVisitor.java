@@ -112,7 +112,8 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
 
   @Override
   public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
-    final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
+    final PyComprehensionElement comprehensionElement =
+      PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
       getHolder().newAnnotation(HighlightSeverity.ERROR,
                                 message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
@@ -250,12 +251,14 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
 
     @Override
     public void visitPyDictCompExpression(@NotNull PyDictCompExpression node) {
-      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
+      getHolder().markError(node,
+                            message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.dict.comprh" : "ANN.cant.assign.to.dict.comprh"));
     }
 
     @Override
     public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
-      getHolder().markError(node, message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
+      getHolder().markError(node,
+                            message(myOp == Operation.AugAssign ? "ANN.cant.aug.assign.to.set.comprh" : "ANN.cant.assign.to.set.comprh"));
     }
 
     @Override
@@ -287,7 +290,9 @@ public class PyAssignTargetAnnotatorVisitor extends PyElementVisitor {
     }
 
     private void checkLiteral(@NotNull PsiElement node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, message(myOp == Operation.Delete ? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR,
+                                message(myOp == Operation.Delete ? "ANN.cant.delete.literal" : "ANN.cant.assign.to.literal")).range(node)
+        .create();
     }
 
     @Override

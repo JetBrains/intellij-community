@@ -93,7 +93,9 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
    * @param project   project where the search is performed
    * @param scope     search scope, limiting applicable virtual files
    */
-  public static @NotNull List<PyFile> findByShortName(@NotNull String shortName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public static @NotNull List<PyFile> findByShortName(@NotNull String shortName,
+                                                      @NotNull Project project,
+                                                      @NotNull GlobalSearchScope scope) {
     final List<PyFile> results = new ArrayList<>();
     final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, shortName, scope);
     for (VirtualFile virtualFile : files) {
@@ -118,7 +120,9 @@ public final class PyModuleNameIndex extends ScalarIndexExtension<String> {
    * @param scope   search scope, limiting applicable virtual files
    * @see QualifiedNameFinder#findImportableQNames(PsiElement, VirtualFile)
    */
-  public static @NotNull List<PyFile> findByQualifiedName(@NotNull QualifiedName qName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public static @NotNull List<PyFile> findByQualifiedName(@NotNull QualifiedName qName,
+                                                          @NotNull Project project,
+                                                          @NotNull GlobalSearchScope scope) {
     String shortName = qName.getLastComponent();
     if (shortName == null) return Collections.emptyList();
     return ContainerUtil.filter(findByShortName(shortName, project, scope), file -> {

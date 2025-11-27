@@ -337,7 +337,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return;
     }
     if (document != null &&
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
+        ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
       return;
     }
 
@@ -357,10 +357,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
         String message =
           "Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength;
 
-        if (ApplicationManager.getApplication().isUnitTestMode()
-            && !ApplicationManagerEx.isInStressTest() &&
-            CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())
-        ) {
+        if (CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())) {
           message += "; context: " + CodeInsightContextUtil.getCodeInsightContext(this);
 
           FileManager fileManager = PsiManagerEx.getInstanceEx(getManager().getProject()).getFileManager();
@@ -393,7 +390,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
            + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
-  public abstract PsiFile getCachedPsi(@NotNull Language target);
+  public abstract @Nullable PsiFile getCachedPsi(@NotNull Language target);
 
   public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 

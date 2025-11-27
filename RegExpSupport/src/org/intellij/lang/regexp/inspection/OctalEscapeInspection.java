@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -38,8 +38,9 @@ public class OctalEscapeInspection extends LocalInspectionTool {
       if (ch.getType() != RegExpChar.Type.OCT) {
         return;
       }
+      String replacement = RegExpReplacementUtil.escapeForContext(buildReplacementText(ch), ch.getContainingFile());
       myHolder.registerProblem(ch, RegExpBundle.message("inspection.warning.octal.escape.code.ref.code.in.regexp"),
-                               new ReplaceWithHexEscapeFix(buildReplacementText(ch)));
+                               new ReplaceWithHexEscapeFix(replacement));
     }
   }
 

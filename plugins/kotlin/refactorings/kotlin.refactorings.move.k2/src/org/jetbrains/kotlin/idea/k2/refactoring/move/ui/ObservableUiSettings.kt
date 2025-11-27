@@ -27,24 +27,9 @@ interface ObservableUiSettings : K2MoveModelObservableSettings, K2SourceModelObs
 @ApiStatus.Internal
 interface K2MoveModelObservableSettings {
     /**
-     * State of the 'Search references' setting.
-     */
-    val searchReferencesSettingObservable: ObservableProperty<Boolean>
-
-    /**
-     * State of the 'Search for text occurrences' setting.
-     */
-    val searchForTextSettingObservable: ObservableProperty<Boolean>
-
-    /**
-     * State of the 'Search in comments and strings' setting.
-     */
-    val searchInCommentsSettingObservable: ObservableProperty<Boolean>
-
-    /**
      * State of the 'Move expect/actual counterparts' setting.
      */
-    val mppDeclarationsSettingObservable: ObservableProperty<Boolean>
+    val mppDeclarationsSetting: ObservableProperty<Boolean>
 }
 
 /**
@@ -55,7 +40,7 @@ interface K2SourceModelObservableSettings {
     /**
      * Shows whether among the selected elements about to be moved there are 'expect' or 'actual' declarations.
      */
-    val mppDeclarationsSelectedObservable: ObservableProperty<Boolean>
+    val mppDeclarationsSelected: ObservableProperty<Boolean>
 }
 
 /**
@@ -82,17 +67,11 @@ internal class ObservableUiSettingsImpl : ObservableUiSettings {
     private lateinit var k2TargetModelSettings: K2TargetModelObservableSettings
     private lateinit var k2SourceModelSettings: K2SourceModelObservableSettings
 
-    override val searchReferencesSettingObservable: ObservableProperty<Boolean>
-        get() = k2MoveModelSettings.searchReferencesSettingObservable
-    override val searchForTextSettingObservable: ObservableProperty<Boolean>
-        get() = k2MoveModelSettings.searchForTextSettingObservable
-    override val searchInCommentsSettingObservable: ObservableProperty<Boolean>
-        get() = k2MoveModelSettings.searchInCommentsSettingObservable
-    override val mppDeclarationsSettingObservable: ObservableProperty<Boolean>
-        get() = k2MoveModelSettings.mppDeclarationsSettingObservable
+    override val mppDeclarationsSetting: ObservableProperty<Boolean>
+        get() = k2MoveModelSettings.mppDeclarationsSetting
 
-    override val mppDeclarationsSelectedObservable: ObservableProperty<Boolean>
-        get() = k2SourceModelSettings.mppDeclarationsSelectedObservable
+    override val mppDeclarationsSelected: ObservableProperty<Boolean>
+        get() = k2SourceModelSettings.mppDeclarationsSelected
 
     override val sourceSetSuffix: ObservableProperty<String?>
         get() = k2TargetModelSettings.sourceSetSuffix

@@ -6,7 +6,6 @@ package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatArgs
-import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,13 +15,13 @@ import org.jetbrains.annotations.ApiStatus
 class StatArgsBuilder(
   private var path: EelPath,
 ) {
-  private var symlinkPolicy: SymlinkPolicy = SymlinkPolicy.DO_NOT_RESOLVE
+  private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
   fun path(arg: EelPath): StatArgsBuilder = apply {
     this.path = arg
   }
 
-  fun symlinkPolicy(arg: SymlinkPolicy): StatArgsBuilder = apply {
+  fun symlinkPolicy(arg: EelFileSystemApi.SymlinkPolicy): StatArgsBuilder = apply {
     this.symlinkPolicy = arg
   }
 
@@ -31,20 +30,20 @@ class StatArgsBuilder(
    * This option makes the operation a bit more efficient if it is not interested in symlinks.
    */
   fun doNotResolve(): StatArgsBuilder =
-    symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
+    symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
 
   /**
    * Resolves a symlink and returns the information about the target of the symlink,
    * But does not perform anything on the target of the symlink itself.
    */
   fun justResolve(): StatArgsBuilder =
-    symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
+    symlinkPolicy(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE)
 
   /**
    * Resolves a symlink, follows it, and performs the required operation on target.
    */
   fun resolveAndFollow(): StatArgsBuilder =
-    symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
+    symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
   fun build(): StatArgs =
     StatArgsImpl(
@@ -56,5 +55,5 @@ class StatArgsBuilder(
 @GeneratedBuilder.Result
 internal class StatArgsImpl(
   override val path: EelPath,
-  override val symlinkPolicy: SymlinkPolicy,
+  override val symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
 ) : StatArgs

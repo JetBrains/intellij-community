@@ -78,7 +78,7 @@ def remove_dev_suffix(version: str) -> str:
     """
     if version.endswith("-dev"):
         return version[: -len("-dev")]
-    return version
+    return ".".join(version.split(".")[:2])
 
 
 parser = argparse.ArgumentParser(

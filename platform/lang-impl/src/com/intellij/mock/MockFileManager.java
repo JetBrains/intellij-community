@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.util.containers.CollectionFactory;
@@ -72,6 +75,11 @@ public final class MockFileManager implements FileManager {
     return provider.getPsi(provider.getBaseLanguage());
   }
 
+  @Override
+  public @NotNull @Unmodifiable List<PsiFile> getCachedPsiFiles(@NotNull VirtualFile vFile) {
+    return ContainerUtil.createMaybeSingletonList(getCachedPsiFile(vFile));
+  }
+
   @ApiStatus.Internal
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
@@ -84,7 +92,7 @@ public final class MockFileManager implements FileManager {
   }
 
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 

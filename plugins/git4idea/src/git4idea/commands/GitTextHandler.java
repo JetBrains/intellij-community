@@ -19,7 +19,7 @@ import git4idea.config.GitExecutable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,7 +41,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected boolean myWithMediator = false;
   private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
-  protected GitTextHandler(@Nullable Project project, @NotNull File directory, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull Path directory, @NotNull GitCommand command) {
     super(project, directory, command, Collections.emptyList());
   }
 
@@ -57,7 +57,7 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   public GitTextHandler(@Nullable Project project,
-                        @NotNull File directory,
+                        @NotNull Path directory,
                         @NotNull GitExecutable executable,
                         @NotNull GitCommand command,
                         @NotNull List<String> configParameters) {

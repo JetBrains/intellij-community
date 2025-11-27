@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 /**
  * Concurrent strong key:K -> soft value:V map
@@ -17,8 +15,8 @@ import java.util.function.BiConsumer;
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 
-  ConcurrentSoftValueHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
-    super(evictionListener);
+  ConcurrentSoftValueHashMap(@Nullable CollectionFactory.EvictionListener<K, V, ? super K> valueEvictionListener) {
+    super(valueEvictionListener);
   }
 
   private static final class MySoftReference<K, V> extends SoftReference<V> implements ValueReference<K, V> {

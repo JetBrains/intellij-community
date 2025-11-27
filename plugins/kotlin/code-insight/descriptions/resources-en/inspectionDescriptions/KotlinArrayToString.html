@@ -1,0 +1,54 @@
+<html>
+<body>
+<p>Calling <code>toString()</code> on an array returns the address of the object in memory,
+    not a string representation of the array's contents. This is almost never what you want.</p>
+<p>To get a string representation of an array correctly, use:</p>
+<ul>
+  <li><code>contentToString()</code> for linear arrays</li>
+  <li><code>contentDeepToString()</code> for multidimensional arrays</li>
+</ul>
+<p><b>Example (explicit toString):</b></p>
+<pre><code>
+  fun main() {
+      val a = arrayOf(1, 2, 3)
+      val s = a.toString() // incorrect
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun main() {
+      val a = arrayOf(1, 2, 3)
+      val s = a.contentToString() // correct
+  }
+</code></pre>
+<p><b>Example (implicit toString in string template):</b></p>
+<pre><code>
+  fun main() {
+      val a = arrayOf(1, 2, 3)
+      println("Array: $a") // incorrect - prints address
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun main() {
+      val a = arrayOf(1, 2, 3)
+      println("Array: ${a.contentToString()}") // correct - prints [1, 2, 3]
+  }
+</code></pre>
+<p><b>Example (multidimensional array):</b></p>
+<pre><code>
+  fun main() {
+      val a2d = arrayOf(arrayOf(1, 2), arrayOf(3, 4))
+      val s = a2d.toString() // incorrect
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun main() {
+      val a2d = arrayOf(arrayOf(1, 2), arrayOf(3, 4))
+      val s = a2d.contentDeepToString() // correct - prints [[1, 2], [3, 4]]
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

@@ -33,7 +33,8 @@ internal class CellImpl<T : JComponent>(
   private val dialogPanelConfig: DialogPanelConfig,
   component: T,
   private val parent: RowImpl,
-  val viewComponent: JComponent = component) : CellBaseImpl<Cell<T>>(), Cell<T> {
+  val viewComponent: JComponent = component,
+) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
   override var component: T = component
     private set
@@ -159,7 +160,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun comment(@NlsContexts.DetailedDescription comment: String?, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<T> {
-    this.comment = if (comment == null) null else createComment(comment, maxLineLength, action).apply {
+    this.comment = if (comment == null) null
+    else createComment(comment, maxLineLength, action).apply {
       registerCreationStacktrace(this)
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -172,7 +174,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun commentRight(comment: String?, action: HyperlinkEventAction): Cell<T> {
-    this.commentRight = if (comment == null) null else createComment(comment, MAX_LINE_LENGTH_NO_WRAP, action).apply {
+    this.commentRight = if (comment == null) null
+    else createComment(comment, MAX_LINE_LENGTH_NO_WRAP, action).apply {
       registerCreationStacktrace(this)
       document.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -361,21 +364,23 @@ internal class CellImpl<T : JComponent>(
   }
 
   private fun doEnabled(isEnabled: Boolean) {
-    if (viewComponent is JScrollPane) {
-      if (viewComponent === component) {
-        // ScrollPane was added via [Row.cell] method
-        viewComponent.viewport?.view?.isEnabled = isEnabled
+    when (viewComponent) {
+      is JScrollPane -> {
+        if (viewComponent === component) {
+          // ScrollPane was added via [Row.cell] method
+          viewComponent.viewport?.view?.isEnabled = isEnabled
+        }
+        else {
+          component.isEnabled = isEnabled
+        }
       }
-      else {
-        component.isEnabled = isEnabled
-      }
-    }
-    else {
-      viewComponent.isEnabled = isEnabled
+
+      is JLabel -> patchedEnableJLabel(viewComponent, isEnabled)
+      else -> viewComponent.isEnabled = isEnabled
     }
     comment?.let { it.isEnabled = isEnabled }
     commentRight?.let { it.isEnabled = isEnabled }
-    label?.let { it.isEnabled = isEnabled }
+    label?.let { patchedEnableJLabel(it, isEnabled) }
   }
 
   private fun updateAccessibleContextDescription() {
@@ -409,6 +414,24 @@ internal class CellImpl<T : JComponent>(
   companion object {
     internal fun Cell<*>.installValidationRequestor(property: ObservableProperty<*>) {
       CellValidationImpl.installDefaultValidationRequestor(component.interactiveComponent, property)
+    }
+  }
+}
+
+/**
+ * Changing JLabel.isEnabled can lead to icon change and therefore requires revalidation
+ */
+private fun patchedEnableJLabel(label: JLabel, enabled: Boolean) {
+  if (label.isEnabled == enabled) return
+
+  val initialIcon = if (label.isEnabled) label.icon else label.getDisabledIcon()
+  label.isEnabled = enabled
+
+  val newIcon = if (label.isEnabled) label.icon else label.getDisabledIcon()
+  if (initialIcon !== newIcon) {
+    label.parent?.apply {
+      revalidate()
+      repaint()
     }
   }
 }

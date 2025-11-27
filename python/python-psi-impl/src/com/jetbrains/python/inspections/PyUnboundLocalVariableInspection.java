@@ -36,12 +36,15 @@ import java.util.Set;
 
 public final class PyUnboundLocalVariableInspection extends PyInspection {
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, final @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
     Set<ScopeOwner> LARGE_FUNCTIONS = new HashSet<>();
+
     Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
@@ -67,7 +70,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
         return;
       }
-      if (PyDataFlowKt.isUnreachableForInspection(node, myTypeEvalContext)) {
+      if (PyDataFlowKt.isUnreachableByControlFlow(node, myTypeEvalContext)) {
         return;
       }
       final String name = node.getReferencedName();

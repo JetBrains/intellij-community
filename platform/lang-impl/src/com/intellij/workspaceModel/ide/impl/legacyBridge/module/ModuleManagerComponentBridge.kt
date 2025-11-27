@@ -41,6 +41,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListenerBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -169,8 +170,9 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     return moduleEntity
   }
 
-  final override fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
+  final override fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, globalWsmAppliedToProjectWsm: CompletableDeferred<Project>?) {
     coroutineScope.launch(CoroutineName("init facets")) {
+      globalWsmAppliedToProjectWsm?.await() // PythonFacetConfiguration expects to find an SDK by its name in ProjectJdkTable (which looks it up in project WSM)
       ModuleBridgeImpl.initFacets(modules = modules, project = project)
     }
   }

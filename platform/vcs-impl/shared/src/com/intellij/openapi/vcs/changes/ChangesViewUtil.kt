@@ -14,7 +14,7 @@ import com.intellij.platform.vcs.impl.shared.commit.PartialCommitChangeNodeDecor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
-private typealias DecoratorProvider = (ChangeNodeDecorator) -> ChangeNodeDecorator
+private typealias DecoratorProvider = (ChangeNodeDecorator?) -> ChangeNodeDecorator
 
 @ApiStatus.Internal
 object ChangesViewUtil {

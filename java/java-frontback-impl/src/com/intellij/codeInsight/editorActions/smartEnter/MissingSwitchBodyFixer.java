@@ -2,29 +2,31 @@
 
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_SWITCH_EXPRESSION;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_SWITCH_STATEMENT;
-
 public class MissingSwitchBodyFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode)
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
     throws IncorrectOperationException {
-    if (!(BasicJavaAstTreeUtil.is(astNode, BASIC_SWITCH_EXPRESSION, BASIC_SWITCH_STATEMENT))) return;
+    if (!(psiElement instanceof PsiSwitchBlock switchStatement)) return;
 
-    final ASTNode body = BasicJavaAstTreeUtil.getCodeBlock(astNode);
+    final Document doc = editor.getDocument();
+
+    final PsiCodeBlock body = switchStatement.getBody();
     if (body != null) return;
 
-    final ASTNode rParenth = BasicJavaAstTreeUtil.getRParenth(astNode);
+    final PsiJavaToken rParenth = switchStatement.getRParenth();
     assert rParenth != null;
 
     int offset = rParenth.getTextRange().getEndOffset();
-    processor.insertBracesWithNewLine(editor, offset);
+    doc.insertString(offset, "{\n}");
     editor.getCaretModel().moveToOffset(offset);
   }
 }

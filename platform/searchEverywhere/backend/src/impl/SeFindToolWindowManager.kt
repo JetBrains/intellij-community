@@ -19,25 +19,17 @@ import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetItem
 import com.intellij.platform.searchEverywhere.backend.providers.text.SeTextSearchItem
+import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
-import com.intellij.usages.Usage
-import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.UsageLimitUtil
-import com.intellij.usages.UsageTarget
-import com.intellij.usages.UsageViewManager
-import com.intellij.usages.UsageViewPresentation
+import com.intellij.usages.*
 import com.intellij.usages.impl.UsageViewManagerImpl
 import com.intellij.util.containers.toArray
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -71,6 +63,7 @@ class SeFindToolWindowManager(private val project: Project) {
             indicator.checkCanceled()
 
             val element = when (item) {
+              is SeAdaptedItem -> item.rawObject
               is SeTargetItem -> item.legacyItem.item
               is SeTextSearchItem -> item.item
               else -> null

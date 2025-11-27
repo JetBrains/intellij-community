@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -31,6 +31,7 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.awt.BorderLayout
 import java.awt.Window
 import java.awt.event.KeyEvent
@@ -46,10 +47,8 @@ internal class DockWindow(
   isDialog: Boolean,
   val supportReopen: Boolean,
   coroutineScope: CoroutineScope,
-) : FrameWrapper(project = dockManager.project,
-                 dimensionKey = dimensionKey ?: "dock-window-$id",
-                 isDialog = isDialog,
-                 coroutineScope = coroutineScope) {
+) : FrameWrapper(project = dockManager.project, dimensionKey = dimensionKey
+                                                               ?: "dock-window-$id", isDialog = isDialog, coroutineScope = coroutineScope) {
   var northPanelAvailable: Boolean = false
     private set
   private val northPanel = VerticalBox()
@@ -68,9 +67,18 @@ internal class DockWindow(
       if (mainStatusBar != null) {
         val frame = getFrame()
         if (frame is IdeFrame) {
-          statusBar = mainStatusBar.createChild(coroutineScope = coroutineScope.childScope(), frame = frame, editorProvider = {
-            (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
-          })
+          val dockContainer = container
+          val currentFileEditorFlow = if (dockContainer is DockableEditorTabbedContainer) {
+            dockContainer.splitters.currentFileEditorFlow
+          }
+          else {
+            MutableStateFlow(null)
+          }
+          statusBar = mainStatusBar.createChild(
+            coroutineScope = coroutineScope.childScope("DockWindow $id"),
+            frame = frame,
+            currentFileEditorFlow = currentFileEditorFlow,
+          )
         }
       }
     }
@@ -117,8 +125,12 @@ internal class DockWindow(
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
     }
     val containerComponent = container.containerComponent
-    toolWindowPane = ToolWindowPane.create(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
-                                           buttonManager = buttonManager)
+    toolWindowPane = ToolWindowPane.create(
+      frame = frame,
+      coroutineScope = coroutineScope!!.childScope("DockWindow.toolWindowPane $id"),
+      paneId = paneId,
+      buttonManager = buttonManager,
+    )
     val toolWindowManagerImpl = ToolWindowManager.getInstance(dockManager.project) as ToolWindowManagerImpl
     toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
 
@@ -129,10 +141,8 @@ internal class DockWindow(
 
     // Close the container if it's empty, and we've just removed the last tool window
     dockManager.project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerListener.ToolWindowManagerEventType) {
-        // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
-        if (eventType == ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow
-            || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
+      override fun stateChanged(toolWindowManager: ToolWindowManager, eventType: ToolWindowManagerListener.ToolWindowManagerEventType) { // Various events can mean a tool window has been removed from the frame's stripes. The comments are not exhaustive
+        if (eventType == ToolWindowManagerListener.ToolWindowManagerEventType.HideToolWindow || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetSideToolAndAnchor   // The last tool window dragged to another stripe on another frame
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.SetToolWindowType      // Last tool window made floating
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.ToolWindowUnavailable  // Last tool window programmatically set unavailable
             || eventType == ToolWindowManagerListener.ToolWindowManagerEventType.UnregisterToolWindow) {
@@ -154,7 +164,7 @@ internal class DockWindow(
     val oldContainer = this.container
     this.container = container
     if (container is Activatable && getFrame().isVisible) {
-      (container as Activatable).showNotify()
+      container.showNotify()
     }
     return oldContainer
   }

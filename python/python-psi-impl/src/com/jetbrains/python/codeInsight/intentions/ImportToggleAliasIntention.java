@@ -50,8 +50,12 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
       if (state.myImportElement != null) {
         PyTargetExpression target = state.myImportElement.getAsNameElement();
         PyPsiUtils.assertValid(target);
-        if (target != null) state.myAlias = target.getName();
-        else state.myAlias = null;
+        if (target != null) {
+          state.myAlias = target.getName();
+        }
+        else {
+          state.myAlias = null;
+        }
         state.myFromImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyFromImportStatement.class);
         state.myImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyImportStatement.class);
       }
@@ -86,7 +90,7 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
           add_name = PyPsiBundle.message("INTN.add.import.alias.to.name", refex.getText());
         }
       }
-      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.import.alias", myAlias);
+      return myAlias == null ? add_name : PyPsiBundle.message("INTN.remove.import.alias", myAlias);
     }
   }
 
@@ -135,18 +139,20 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
       else {
         // ask for and add alias
         String alias = PythonUiService.getInstance().showInputDialog(project,
-                                                                     PyPsiBundle.message("INTN.add.import.alias.dialog.message", imported_name),
-                                                                     PyPsiBundle.message("INTN.add.import.alias.title"), "", new InputValidator() {
-            @Override
-            public boolean checkInput(String inputString) {
-              return PyNames.isIdentifier(inputString);
-            }
+                                                                     PyPsiBundle.message("INTN.add.import.alias.dialog.message",
+                                                                                         imported_name),
+                                                                     PyPsiBundle.message("INTN.add.import.alias.title"), "",
+                                                                     new InputValidator() {
+                                                                       @Override
+                                                                       public boolean checkInput(String inputString) {
+                                                                         return PyNames.isIdentifier(inputString);
+                                                                       }
 
-            @Override
-            public boolean canClose(String inputString) {
-              return PyNames.isIdentifier(inputString);
-            }
-        });
+                                                                       @Override
+                                                                       public boolean canClose(String inputString) {
+                                                                         return PyNames.isIdentifier(inputString);
+                                                                       }
+                                                                     });
         if (alias == null) {
           return;
         }
@@ -196,7 +202,8 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
           }
         });
         // no references here is OK by us.
-        if (PythonUiService.getInstance().showConflicts(project, findDefinitions(target_name, references, Collections.emptySet()), target_name, null)) {
+        if (PythonUiService.getInstance()
+          .showConflicts(project, findDefinitions(target_name, references, Collections.emptySet()), target_name, null)) {
           return; // got conflicts
         }
 
@@ -217,7 +224,8 @@ public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
           // add alias
           WriteAction.run(() -> {
             ASTNode my_ielt_node = sure(state.myImportElement.getNode());
-            PyImportElement fountain = generator.createFromText(languageLevel, PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
+            PyImportElement fountain =
+              generator.createFromText(languageLevel, PyImportElement.class, "import foo as " + target_name, new int[]{0, 2});
             ASTNode graft_node = sure(fountain.getNode()); // at import elt
             graft_node = sure(graft_node.getFirstChildNode()); // at ref
             graft_node = sure(graft_node.getTreeNext()); // space

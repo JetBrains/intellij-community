@@ -49,6 +49,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/indices",
   ],
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )
@@ -64,6 +65,12 @@ jps_test(
 ### auto-generated section `test intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
+jvm_library(
+  name = "eel-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
 jvm_library(
   name = "eel-tests_test_lib",
   module_name = "intellij.platform.eel.tests",

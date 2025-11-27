@@ -49,7 +49,7 @@ open class RemoveModifierFixBase(
         context: ActionContext,
         element: KtModifierListOwner,
         updater: ModPsiUpdater,
-    ): Unit = invokeImpl(element, modifier)
+    ): Unit = removeModifier(element, modifier)
 
     companion object {
         val removeRedundantModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFactory(isRedundant = true)
@@ -60,7 +60,7 @@ open class RemoveModifierFixBase(
         val removeInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.INNER_KEYWORD)
         val removePrivateModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.PRIVATE_KEYWORD)
 
-        fun invokeImpl(
+        fun removeModifier(
             element: KtModifierListOwner,
             modifier: KtModifierKeywordToken,
         ) {

@@ -57,9 +57,9 @@ inline fun fileLogger(): Logger {
   return currentClassLogger()
 }
 
-inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> @NonNls String) {
+inline fun Logger.debug(t: Throwable? = null, lazyMessage: () -> @NonNls String) {
   if (isDebugEnabled) {
-    debug(lazyMessage(), e)
+    debug(lazyMessage(), t)
   }
 }
 

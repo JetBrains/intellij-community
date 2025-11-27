@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect situations, where argument passed to function
  * is equal to default parameter value
  * for instance,
@@ -102,14 +102,15 @@ public final class PyArgumentEqualDefaultInspection extends PyInspection {
         }
       }
       boolean canDelete = true;
-      for (int i = arguments.length-1; i != -1; --i) {
+      for (int i = arguments.length - 1; i != -1; --i) {
         if (problemElements.contains(arguments[i])) {
-          if (canDelete)
+          if (canDelete) {
             registerProblem(arguments[i], PyPsiBundle.message("INSP.argument.equals.to.default"),
                             new RemoveArgumentEqualDefaultQuickFix(problemElements));
-          else
+          }
+          else {
             registerProblem(arguments[i], PyPsiBundle.message("INSP.argument.equals.to.default"));
-
+          }
         }
         else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
       }
@@ -144,12 +145,14 @@ public final class PyArgumentEqualDefaultInspection extends PyInspection {
           isBothInstanceOf(key, defaultValue, PyBinaryExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyNoneLiteralExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyBoolLiteralExpression.class)) {
-        if (key.getText().equals(defaultValue.getText()))
+        if (key.getText().equals(defaultValue.getText())) {
           return true;
+        }
       }
       else if (key instanceof PyStringLiteralExpression && defaultValue instanceof PyStringLiteralExpression) {
-        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue()))
+        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue())) {
           return true;
+        }
       }
       else if (key instanceof PyReferenceExpression && PyUtil.isPy2ReservedWord((PyReferenceExpression)key) &&
                key.getText().equals(defaultValue.getText())) {

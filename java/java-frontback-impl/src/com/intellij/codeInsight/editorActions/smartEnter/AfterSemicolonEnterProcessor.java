@@ -1,44 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
-public class AfterSemicolonEnterProcessor implements ASTNodeEnterProcessor {
+public class AfterSemicolonEnterProcessor implements EnterProcessor {
 
   @Override
-  public boolean doEnter(@NotNull Editor editor, @NotNull ASTNode astNode, boolean isModified) {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
-    if (psiElement == null) {
-      return false;
-    }
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_EXPRESSION_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_DECLARATION_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_DO_WHILE_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_RETURN_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_THROW_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_BREAK_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_CONTINUE_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_YIELD_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, BASIC_ASSERT_STATEMENT) ||
-        BasicJavaAstTreeUtil.is(astNode, Set.of(BASIC_FIELD, BASIC_ENUM_CONSTANT)) ||
-        isImportStatementBase(psiElement) ||
-        isMethodWithoutBody(psiElement)) {
+  public boolean doEnter(@NotNull Editor editor, @NotNull PsiElement psiElement, boolean isModified) {
+    if (psiElement instanceof PsiExpressionStatement ||
+        psiElement instanceof PsiDeclarationStatement ||
+        psiElement instanceof PsiDoWhileStatement ||
+        psiElement instanceof PsiReturnStatement ||
+        psiElement instanceof PsiThrowStatement ||
+        psiElement instanceof PsiBreakStatement ||
+        psiElement instanceof PsiContinueStatement ||
+        psiElement instanceof PsiYieldStatement ||
+        psiElement instanceof PsiAssertStatement ||
+        psiElement instanceof PsiField ||
+        psiElement instanceof PsiImportStatementBase ||
+        psiElement instanceof PsiMethod && !MissingMethodBodyFixer.shouldHaveBody((PsiMethod)psiElement)) {
       int errorOffset = getErrorElementOffset(psiElement);
-      int elementEndOffset = astNode.getTextRange().getEndOffset();
-      if (BasicJavaAstTreeUtil.is(astNode, BASIC_ENUM_CONSTANT)) {
+      int elementEndOffset = psiElement.getTextRange().getEndOffset();
+      if (psiElement instanceof PsiEnumConstant) {
         final CharSequence text = editor.getDocument().getCharsSequence();
         final int commaOffset = CharArrayUtil.shiftForwardUntil(text, elementEndOffset, ",");
         if (commaOffset < text.length()) {
@@ -57,39 +43,6 @@ public class AfterSemicolonEnterProcessor implements ASTNodeEnterProcessor {
       return isModified;
     }
     return false;
-  }
-
-  static boolean shouldHaveBody(@Nullable ASTNode element) {
-    if (element == null) {
-      return false;
-    }
-    ASTNode containingClass = BasicJavaAstTreeUtil.getParentOfType(element, CLASS_SET);
-    if (containingClass == null) return false;
-    if (BasicJavaAstTreeUtil.hasModifierProperty(element, JavaTokenType.ABSTRACT_KEYWORD) ||
-        BasicJavaAstTreeUtil.hasModifierProperty(element, JavaTokenType.NATIVE_KEYWORD)) {
-      return false;
-    }
-    if (BasicJavaAstTreeUtil.hasModifierProperty(element, JavaTokenType.PRIVATE_KEYWORD)) return true;
-    if (BasicJavaAstTreeUtil.isInterfaceEnumClassOrRecord(containingClass, JavaTokenType.INTERFACE_KEYWORD) &&
-        !BasicJavaAstTreeUtil.hasModifierProperty(element, JavaTokenType.DEFAULT_KEYWORD) &&
-        !BasicJavaAstTreeUtil.hasModifierProperty(element, JavaTokenType.STATIC_KEYWORD)) {
-      return false;
-    }
-    return true;
-  }
-
-  private static boolean isMethodWithoutBody(@Nullable PsiElement psiElement){
-    ASTNode node = BasicJavaAstTreeUtil.toNode(psiElement);
-    return BasicJavaAstTreeUtil.is(node, BASIC_METHOD) &&
-           !shouldHaveBody(node);
-  }
-
-  private static boolean isImportStatementBase(@Nullable PsiElement psiElement){
-    ASTNode node = BasicJavaAstTreeUtil.toNode(psiElement);
-    return
-      BasicJavaAstTreeUtil.is(node, BASIC_IMPORT_STATEMENT) ||
-      BasicJavaAstTreeUtil.is(node, BASIC_IMPORT_STATIC_STATEMENT) ||
-      BasicJavaAstTreeUtil.is(node, BASIC_IMPORT_MODULE_STATEMENT);
   }
 
   private static int getErrorElementOffset(PsiElement elt) {

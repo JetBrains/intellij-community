@@ -65,6 +65,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/project/shared:project",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/kernel/shared:kernel",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",

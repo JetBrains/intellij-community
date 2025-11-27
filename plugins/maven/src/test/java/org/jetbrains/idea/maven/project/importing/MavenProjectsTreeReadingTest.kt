@@ -24,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.junit.Test
 import java.util.*
 import java.util.Set
@@ -542,6 +541,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <subChildName>subChild</subChildName>
                        </properties>
@@ -551,6 +551,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           <groupId>test</groupId>
                                           <artifactId>child</artifactId>
                                           <version>1</version>
+                                          <packaging>pom</packaging>
                                           <parent>
                                             <groupId>test</groupId>
                                             <artifactId>parent</artifactId>
@@ -609,6 +610,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     val mavenProject = tree.findProject(projectPom)!!
     resolve(project, mavenProject, mavenGeneralSettings)
     assertEquals(log().add("resolved", "project"), listener.log)
+    updateAllProjects()
     assertFalse(mavenProject.problems.isEmpty())
   }
 
@@ -949,6 +951,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <subChildName>subChild</subChildName>
                        </properties>
@@ -958,6 +961,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           <groupId>test</groupId>
                                           <artifactId>child</artifactId>
                                           <version>1</version>
+                                          <packaging>pom</packaging>
                                           <parent>
                                             <groupId>test</groupId>
                                             <artifactId>parent</artifactId>
@@ -1666,7 +1670,8 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     resolve(project, parentProject!!, mavenGeneralSettings)
     val f = dir.resolve("tree.dat")
     tree.save(f)
-    val read = MavenProjectsTree.read(project, f)
+    val read = MavenProjectsTree(project)
+    read.read(f)
     val roots = read!!.rootProjects
     assertEquals(1, roots.size)
     val rootProject = roots[0]

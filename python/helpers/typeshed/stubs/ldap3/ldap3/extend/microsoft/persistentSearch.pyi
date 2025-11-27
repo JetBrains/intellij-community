@@ -1,12 +1,12 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class ADPersistentSearch:
-    connection: Any
-    message_id: Any
-    base: Any
-    scope: Any
-    attributes: Any
-    controls: Any
+    connection: Incomplete
+    message_id: Incomplete
+    base: Incomplete
+    scope: Incomplete
+    attributes: Incomplete
+    controls: Incomplete
     filter: str
     def __init__(self, connection, search_base, search_scope, attributes, streaming, callback) -> None: ...
     def start(self) -> None: ...

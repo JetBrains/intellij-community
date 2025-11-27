@@ -1,6 +1,4 @@
-from _typeshed import Incomplete
-
-EOF: Incomplete
+EOF: None
 E: dict[str, str]
 namespaces: dict[str, str]
 scopingElements: frozenset[tuple[str, str]]

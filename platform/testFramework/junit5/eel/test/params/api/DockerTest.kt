@@ -19,4 +19,4 @@ const val DEFAULT_EEL_TEST_DOCKER_IMAGE: String = "debian"
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @TestApplicationWithEel
 @Repeatable
-annotation class DockerTest(val image: String = DEFAULT_EEL_TEST_DOCKER_IMAGE, val mandatory: Boolean = true)
+annotation class DockerTest(val image: String = DEFAULT_EEL_TEST_DOCKER_IMAGE, val mandatory: Boolean = true, val setupCommands: Array<String> = [])

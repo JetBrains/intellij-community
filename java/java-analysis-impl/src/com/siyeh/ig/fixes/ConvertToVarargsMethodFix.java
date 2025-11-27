@@ -5,6 +5,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -24,19 +25,45 @@ public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    if (!(element instanceof PsiMethod method)) {
+    if (!(element.getParent() instanceof PsiMethod method)) {
       return;
     }
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
-    for (final PsiReference reference : ReferencesSearch.search(method, method.getUseScope(), false).asIterable()) {
+    final Collection<PsiDocMethodOrFieldRef> javadocRefs = new ArrayList<>();
+    for (PsiReference reference : ReferencesSearch.search(method).findAll()) {
       final PsiElement referenceElement = reference.getElement();
       if (referenceElement instanceof PsiReferenceExpression ref) {
         methodCalls.add(updater.getWritable(ref));
+      }
+      else if (referenceElement instanceof PsiDocMethodOrFieldRef ref) {
+        javadocRefs.add(updater.getWritable(ref));
       }
     }
     method = updater.getWritable(method);
     makeMethodVarargs(method);
     makeMethodCallsVarargs(methodCalls);
+    makeJavadocRefsVarargs(javadocRefs);
+  }
+
+  private static void makeJavadocRefsVarargs(Collection<PsiDocMethodOrFieldRef> refs) {
+    for (PsiDocMethodOrFieldRef ref : refs) {
+      final String[] signature = ref.getSignature();
+      if (signature == null) return;
+      final PsiElement name = ref.getNameElement();
+      if (name == null) return;
+      String last = signature[signature.length - 1];
+      if (!last.endsWith("[]")) return;
+      last = last.substring(0, last.length() - 2) + "...";
+
+      final StringBuilder text = new StringBuilder();
+      text.append("/** {@link #").append(name.getText()).append("(");
+      for (int i = 0; i < signature.length - 1; i++) {
+        text.append(signature[i]).append(",");
+      }
+      text.append(last).append(")} */");
+      PsiComment comment = JavaPsiFacade.getElementFactory(ref.getProject()).createCommentFromText(text.toString(), ref);
+      ref.replace(comment.getChildren()[2].getChildren()[3]);
+    }
   }
 
   private static void makeMethodVarargs(PsiMethod method) {
@@ -65,7 +92,7 @@ public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
   }
 
   private static void makeMethodCallsVarargs(Collection<PsiReferenceExpression> referenceExpressions) {
-    for (final PsiReferenceExpression referenceExpression : referenceExpressions) {
+    for (PsiReferenceExpression referenceExpression : referenceExpressions) {
       final PsiElement parent = referenceExpression.getParent();
       if (!(parent instanceof PsiMethodCallExpression methodCallExpression)) {
         continue;
@@ -83,8 +110,7 @@ public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
       if (arrayInitializerExpression == null) {
         continue;
       }
-      final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
-      for (final PsiExpression initializer : initializers) {
+      for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
         argumentList.add(initializer);
       }
       lastArgument.delete();

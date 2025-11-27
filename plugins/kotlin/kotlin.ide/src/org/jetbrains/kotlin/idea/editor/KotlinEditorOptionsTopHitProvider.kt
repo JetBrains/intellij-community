@@ -11,8 +11,5 @@ import kotlin.sequences.toList
 class KotlinEditorOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
     override fun getId(): String = ID
 
-    override fun getOptions(): Collection<OptionDescription> =
-        kotlinEditorOptionsDescriptors
-            .map { c -> if (c is ConfigurableWrapper) c.configurable else c }
-            .filterIsInstance<OptionDescription>().toList()
+    override fun getOptions(): Collection<OptionDescription> = kotlinEditorOptionsDescriptors
 }

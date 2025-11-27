@@ -1,4 +1,5 @@
-from typing import Any, TypeVar
+from _typeshed import Incomplete
+from typing import TypeVar
 
 from pygments.formatter import Formatter
 
@@ -6,7 +7,7 @@ _T = TypeVar("_T", str, bytes)
 
 class BBCodeFormatter(Formatter[_T]):
     name: str
-    aliases: Any
-    filenames: Any
-    styles: Any
+    aliases: Incomplete
+    filenames: Incomplete
+    styles: Incomplete
     def format_unencoded(self, tokensource, outfile) -> None: ...

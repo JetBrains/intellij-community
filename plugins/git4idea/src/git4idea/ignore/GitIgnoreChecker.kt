@@ -4,7 +4,6 @@ package git4idea.ignore
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtil.virtualToIoFile
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -25,7 +24,7 @@ internal class GitIgnoreChecker : VcsIgnoreChecker {
   private fun isIgnored(vcsRoot: VirtualFile, checkForIgnore: String, isPattern: Boolean): IgnoredCheckResult {
     // check-ignore was introduced in 1.8.2,
     // executing the command for older Gits will fail with exit code 1, which we'll treat as "not ignored" for simplicity
-    val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(vcsRoot), GitCommand.CHECK_IGNORE)
+    val handler = GitLineHandler(null, vcsRoot.toNioPath(), GitCommand.CHECK_IGNORE)
     handler.addParameters("--verbose")
     handler.endOptions()
     handler.addParameters(checkForIgnore)

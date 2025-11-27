@@ -63,7 +63,8 @@ public class PyAddSpecifierToFormatQuickFix extends PsiUpdateModCommandQuickFix 
 
       int shift = 1;
       for (int i = 0; i < chunks.size(); i++) {
-        final PyStringFormatParser.PercentSubstitutionChunk chunk = PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+        final PyStringFormatParser.PercentSubstitutionChunk chunk =
+          PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
         if (chunk != null) {
           if (elements.length <= i) return;
           final PyType type = context.getType(elements[i]);

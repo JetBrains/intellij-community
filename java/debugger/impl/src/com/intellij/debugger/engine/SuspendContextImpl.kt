@@ -60,7 +60,10 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   internal var myIsVotedForResume: Boolean = true
 
   @JvmField
-  protected var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
+  internal var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
+
+  @JvmField
+  internal var threadFilterWasPassed = true
 
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
@@ -268,7 +271,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   @MagicConstant(flagsFromClass = EventRequest::class)
   override fun getSuspendPolicy(): Int = mySuspendPolicy
 
-  val suspendPolicyFromRequestors: String?
+  val suspendPolicyFromRequestors: String
     get() {
       if (mySuspendPolicy == EventRequest.SUSPEND_ALL) return DebuggerSettings.SUSPEND_ALL
       val eventSet = myEventSet

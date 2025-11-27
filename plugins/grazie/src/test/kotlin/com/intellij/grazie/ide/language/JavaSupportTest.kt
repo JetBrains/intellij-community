@@ -19,7 +19,6 @@ import java.util.function.Consumer
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
@@ -217,6 +216,14 @@ class JavaSupportTest : GrazieTestBase() {
       psiManager.dropPsiCaches()
       GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
     }.start()
+  }
+
+  fun `test todo in dumb mode`() {
+    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, testRootDisposable)
+    runInDumbModeSynchronously(project) {
+      myFixture.configureByText("a.java", "// TODO It is an friend of human")
+      myFixture.checkHighlighting()
+    }
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {

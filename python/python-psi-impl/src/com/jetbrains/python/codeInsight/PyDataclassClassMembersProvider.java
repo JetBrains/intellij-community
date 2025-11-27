@@ -57,5 +57,4 @@ public final class PyDataclassClassMembersProvider extends PyClassMembersProvide
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
-
 }

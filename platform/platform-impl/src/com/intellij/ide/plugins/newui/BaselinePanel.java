@@ -128,8 +128,7 @@ public final class BaselinePanel extends NonOpaquePanel {
 
         int lastX = parent.getWidth();
 
-        for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
-          Component component = myButtonComponents.get(i);
+        for (Component component : myButtonComponents.reversed()) {
           if (!component.isVisible()) {
             continue;
           }

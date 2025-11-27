@@ -33,6 +33,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.EnumSet
 import java.util.TreeMap
+import kotlin.io.path.name
 
 /**
  * Set of native files that shouldn't be signed.
@@ -161,11 +162,16 @@ private suspend fun unpackNativeLibraries(
   context: BuildContext,
   toRelativePath: (String, String) -> String,
 ) {
-  val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
 
+  // Assumes that 'sourceFile' is in maven-like format: $name-$version$packaging (e.g. '.jar')
+  // For now this is true for both Bazel and JPS-based builds
   val libName = getLibNameBySourceFile(sourceFile)
+  val sourceFileName = sourceFile.name
+  check(sourceFileName.startsWith("$libName-")) { "Unexpected source file name (should start with '$libName-'): $sourceFileName" }
+  val libVersion = sourceFileName.removePrefix("$libName-").substringBeforeLast('.')
+
   // we need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine
   val allPlatformsRequired = libName == "async-profiler"

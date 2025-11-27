@@ -49,6 +49,8 @@ internal object DebuggerPreferenceKeys {
 
     val JVM_DEFAULT_MODE by debuggerPreferenceKey("")
 
+    val USE_XSESSION_PAUSE_LISTENER by debuggerPreferenceKey(false)
+
     val values: List<DebuggerPreferenceKey<*>> by lazy {
         DebuggerPreferenceKeys::class.declaredMemberProperties
             .filter { (it.returnType.javaType as? ParameterizedType)?.rawType == DebuggerPreferenceKey::class.java }

@@ -11,7 +11,7 @@ import git4idea.test.makeCommit
 import git4idea.test.registerRepo
 import kotlin.io.path.name
 
-class GitShallowRepoTest: GitSingleRepoTest() {
+class GitShallowRepoTest : GitSingleRepoTest() {
   fun `test shallow repo detection`() {
     val copyRepo = setupShallowCLone()
 
@@ -55,7 +55,7 @@ class GitShallowRepoTest: GitSingleRepoTest() {
   private fun createClone(shallowCloneOptions: GitShallowCloneOptions? = null): GitRepository {
     val copy = projectNioRoot.resolve("copy")
     val cloneResult = Git.getInstance().clone(project,
-                                              copy.parent.toFile(),
+                                              copy.parent,
                                               "file://${repo.root.path}", copy.name, shallowCloneOptions)
     assertTrue(cloneResult.success())
 

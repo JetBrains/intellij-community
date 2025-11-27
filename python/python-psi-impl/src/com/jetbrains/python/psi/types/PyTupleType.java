@@ -39,7 +39,10 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
     this(tupleClass, elementTypes, homogeneous, false);
   }
 
-  protected PyTupleType(@NotNull PyClass tupleClass, @NotNull List<? extends PyType> elementTypes, boolean homogeneous, boolean isDefinition) {
+  protected PyTupleType(@NotNull PyClass tupleClass,
+                        @NotNull List<? extends PyType> elementTypes,
+                        boolean homogeneous,
+                        boolean isDefinition) {
     super(tupleClass, isDefinition);
     myUnpackedTupleType = new PyUnpackedTupleTypeImpl(elementTypes, homogeneous);
   }
@@ -106,13 +109,14 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   public @Nullable PyType getIteratedItemType() {
     List<PyType> types = myUnpackedTupleType.getElementTypes();
     List<PyType> unpackedTypes = ContainerUtil.map(types, type -> {
-        if (type instanceof PyUnpackedTupleType unpackedTupleType) {
-          assert unpackedTupleType.isUnbound();
-          return unpackedTupleType.getElementTypes().get(0);
-        } else {
-          return type;
-        }
-      });
+      if (type instanceof PyUnpackedTupleType unpackedTupleType) {
+        assert unpackedTupleType.isUnbound();
+        return unpackedTupleType.getElementTypes().get(0);
+      }
+      else {
+        return type;
+      }
+    });
     return PyUnionType.unionOrNever(unpackedTypes);
   }
 

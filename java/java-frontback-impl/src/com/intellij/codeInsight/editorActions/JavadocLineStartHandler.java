@@ -5,11 +5,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,23 +46,22 @@ public class JavadocLineStartHandler extends EditorActionHandler.ForEachCaret {
         if (file != null && isJavaFile(file)) {
           psiDocumentManager.commitDocument(document);
           PsiElement startElement = file.findElementAt(nonWsStartOffset);
-          if (startElement == null || startElement.getNode() == null) {
-            return;
-          }
-          IElementType type = startElement.getNode().getElementType();
-          if (type == JavaDocTokenType.DOC_COMMENT_START || type == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
-            int targetOffset = CharArrayUtil.shiftForward(text, startElement.getTextRange().getEndOffset(), WHITESPACE);
-            if (caret.getOffset() == targetOffset) targetOffset = lineStartOffset;
-            int selectionStartOffset = caret.getLeadSelectionOffset();
-            caret.moveToOffset(targetOffset);
-            if (myWithSelection) {
-              caret.setSelection(selectionStartOffset, caret.getVisualPosition(), caret.getOffset());
+          if (startElement instanceof PsiDocToken) {
+            IElementType type = ((PsiDocToken)startElement).getTokenType();
+            if (type == JavaDocTokenType.DOC_COMMENT_START || type == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+              int targetOffset = CharArrayUtil.shiftForward(text, startElement.getTextRange().getEndOffset(), WHITESPACE);
+              if (caret.getOffset() == targetOffset) targetOffset = lineStartOffset;
+              int selectionStartOffset = caret.getLeadSelectionOffset();
+              caret.moveToOffset(targetOffset);
+              if (myWithSelection) {
+                caret.setSelection(selectionStartOffset, caret.getVisualPosition(), caret.getOffset());
+              }
+              else {
+                caret.removeSelection();
+              }
+              EditorModificationUtil.scrollToCaret(editor);
+              return;
             }
-            else {
-              caret.removeSelection();
-            }
-            EditorModificationUtilEx.scrollToCaret(editor);
-            return;
           }
         }
       }
@@ -69,7 +69,7 @@ public class JavadocLineStartHandler extends EditorActionHandler.ForEachCaret {
     myOriginalHandler.execute(editor, caret, dataContext);
   }
 
-  private static boolean isJavaFile(@Nullable PsiFile file){
+  private static boolean isJavaFile(@Nullable PsiFile file) {
     return file instanceof AbstractBasicJavaFile;
   }
 }

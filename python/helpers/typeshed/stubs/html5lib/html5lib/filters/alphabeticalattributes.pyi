@@ -1,4 +1,5 @@
+from _typeshed import Incomplete
+
 from . import base
 
-class Filter(base.Filter):
-    def __iter__(self): ...
+class Filter(base.Filter[dict[str, Incomplete]]): ...

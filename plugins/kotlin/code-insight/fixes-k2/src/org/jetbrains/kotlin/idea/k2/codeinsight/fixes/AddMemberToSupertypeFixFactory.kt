@@ -220,7 +220,7 @@ private fun addMember(
   val modifierToken = insertedMemberElement.modalityModifier()?.node?.elementType as? KtModifierKeywordToken
                       ?: return
   if (insertedMemberElement.predictImplicitModality() == modifierToken) {
-    RemoveModifierFixBase.invokeImpl(insertedMemberElement, modifierToken)
+    RemoveModifierFixBase.removeModifier(insertedMemberElement, modifierToken)
   }
 }
 

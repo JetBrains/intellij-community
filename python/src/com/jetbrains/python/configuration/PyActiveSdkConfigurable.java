@@ -282,7 +282,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
     else {
-      sdk = ModuleRootManager.getInstance(myModule).getSdk();
+      sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(myModule);
     }
 
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {

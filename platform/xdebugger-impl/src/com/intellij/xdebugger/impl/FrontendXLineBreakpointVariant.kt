@@ -9,10 +9,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.channels.use
@@ -32,18 +31,6 @@ interface FrontendXLineBreakpointVariant {
   val highlightRange: TextRange?
   val priority: Int
   val useAsInlineVariant: Boolean
-}
-
-@ApiStatus.Internal
-data class XLineBreakpointInstallationInfo(
-  val types: List<XLineBreakpointTypeProxy>,
-  val position: XSourcePosition,
-  val isTemporary: Boolean,
-  val isLogging: Boolean,
-  val logExpression: String?,
-  private val canRemove: Boolean,
-) {
-  fun canRemoveBreakpoint(): Boolean = canRemove && !isTemporary
 }
 
 @ApiStatus.Internal

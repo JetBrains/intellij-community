@@ -17,11 +17,11 @@ package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.ConstantExpressionUtil;
@@ -93,11 +93,11 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
     for (int i = 0, length = operands.length; i < length; i++) {
       final PsiExpression operand = operands[i];
       if (isZero(operand)) {
-        if (tokenType.equals(AND) || JavaBinaryOperations.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
+        if (tokenType.equals(AND) || ElementType.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
           return getText(expression, operands[0], operands[length - 1], PsiTypes.longType().equals(expression.getType()) ? "0L" : "0", ct);
         }
         else if (tokenType.equals(OR) || tokenType.equals(XOR) ||
-                 JavaBinaryOperations.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
+                 ElementType.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
           return getText(expression, i == length - 1 ? expression.getTokenBeforeOperand(operand) : operand, ct);
         }
       }
@@ -261,7 +261,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
       if (sign.equals(AND) || sign.equals(OR) || sign.equals(XOR)) {
         isPointless = booleanExpressionIsPointless(operands);
       }
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(sign)) {
+      else if (ElementType.SHIFT_OPS.contains(sign)) {
         isPointless = shiftExpressionIsPointless(operands);
       }
       else {

@@ -18,7 +18,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.MAX_TEXT_LENGTH_IN_PSI_ELEMENT
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
@@ -73,17 +73,10 @@ object GrazieTextLevelSpellCheckingExtension {
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
-    //Bad optimization of internal code
-    //Rewrite it before remove this
-    //See https://youtrack.jetbrains.com/issue/PY-85199/PyCharm-freezes-on-opening-large-Jupyter-notebooks
-    if (element.textLength > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) {
-      return SpellCheckingResult.Checked
-    }
-
+    if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return SpellCheckingResult.Checked
 
     val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
     if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
-
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     filteredTexts.asSequence()

@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import org.jetbrains.annotations.ApiStatus
 

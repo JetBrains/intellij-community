@@ -5,52 +5,73 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereState
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
-import com.intellij.searchEverywhereMl.ranking.core.features.*
+import com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider
+import com.intellij.searchEverywhereMl.isTabWithMlRanking
+import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContributorFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereRankingModel
+import com.intellij.util.applyIf
 
 internal class SearchEverywhereMlSearchState(
-  val sessionStartTime: Long, val searchStartTime: Long,
-  val searchIndex: Int, val searchStartReason: SearchRestartReason,
-  val tab: SearchEverywhereTab, val experimentGroup: Int, val orderByMl: Boolean,
-  val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
+  override val project: Project?,
+  override val index: Int,
+  override val tab: SearchEverywhereTab,
+  override val searchScope: ScopeDescriptor?,
+  override val isSearchEverywhere: Boolean,
+  override val sessionStartTime: Long,
+  override val searchRestartReason: SearchRestartReason,
+  override val keysTyped: Int,
+  override val backspacesTyped: Int,
+  override val query: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
   private val mixedListInfo: SearchEverywhereMixedListInfo,
-  project: Project?,
-  searchScope: ScopeDescriptor?,
-  isSearchEverywhere: Boolean,
-) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(project, tab, searchQuery,
-                                                                                           searchScope, isSearchEverywhere)
-  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
+) : SearchEverywhereState {
+  override val stateStartTime: Long = System.currentTimeMillis()
+
+  override val experimentGroup: Int = SearchEverywhereMlExperiment.experimentGroup
+
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider.getFeatures(this)
+
+  val orderByMl: Boolean
+    get() {
+      if (!tab.isTabWithMlRanking()) {
+        return false
+      }
+
+      if (tab == SearchEverywhereTab.All && query.isEmpty()) {
+        return false
+      }
+
+      return tab.isMlRankingEnabled
+    }
 
   private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tab as SearchEverywhereTab.TabWithMlRanking) }
-  fun getElementFeatures(elementId: Int?,
-                         element: Any,
+
+  fun getElementFeatures(element: Any,
                          contributor: SearchEverywhereContributor<*>,
+                         contributorFeatures: List<EventPair<*>>,
                          priority: Int,
                          context: SearchEverywhereMLContextInfo,
-                         correction: SearchEverywhereSpellCheckResult): SearchEverywhereMLItemInfo {
-    val contributorId = contributor.searchProviderId
-    val contributorFeatures = getContributorFeatures(contributor)
-
-    val elementFeatures = SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributorId).flatMap { provider ->
-      provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache, correction)
-    }
-
-    val features = buildList {
-      addAll(elementFeatures)
-
-      if (tab == SearchEverywhereTab.All) {
-        val mlScore = getElementMLScoreForAllTab(contributorId, context.features, elementFeatures, contributorFeatures)
-        putIfValueNotNull(ML_SCORE_KEY, mlScore)
+                         correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
+    return SearchEverywhereElementFeaturesProvider.getFeatureProvidersForContributor(contributor.searchProviderId)
+      .flatMap { featuresProvider ->
+        featuresProvider.getElementFeatures(element, sessionStartTime, query, priority, providersCache, correction)
       }
-    }
-
-    return SearchEverywhereMLItemInfo(elementId, contributorId, features, contributorFeatures)
+      .applyIf(tab == SearchEverywhereTab.All) {
+        val mlScore = getElementMLScoreForAllTab(contributor.searchProviderId, context.features, this, contributorFeatures)
+        if (mlScore == null) {
+          return@applyIf this
+        } else {
+          return@applyIf this + listOf(ML_SCORE_KEY.with(mlScore))
+        }
+      }
   }
 
   /**
@@ -100,17 +121,13 @@ internal class SearchEverywhereMlSearchState(
   }
 
   fun getMLWeight(context: SearchEverywhereMLContextInfo,
-                  itemInfo: SearchEverywhereMLItemInfo): Double {
-    val features = getAllFeatures(context.features, itemInfo.features, itemInfo.contributorFeatures)
+                  elementFeatures: List<EventPair<*>>,
+                  contributorFeatures: List<EventPair<*>>): Double {
+    val features = getAllFeatures(context.features, elementFeatures, contributorFeatures)
     return model.predict(features)
   }
 
   fun getContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
-    return contributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
+    return SearchEverywhereContributorFeaturesProvider.getFeatures(contributor, mixedListInfo, sessionStartTime)
   }
 }
-
-internal data class SearchEverywhereMLItemInfo(val id: Int?,
-                                               val contributorId: String,
-                                               val features: List<EventPair<*>>,
-                                               val contributorFeatures: List<EventPair<*>>)

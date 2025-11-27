@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceNotEqOperatorQuickFix extends PsiUpdateModCommandQuickFix  {
+public class ReplaceNotEqOperatorQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
   public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.noteq.operator");

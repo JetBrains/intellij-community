@@ -23,12 +23,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.intellij.plugins.xsltDebugger.rt.engine.Watchable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -67,7 +67,7 @@ final class EDTGuard implements InvocationHandler {
 
   @Override
   public @Nullable Object invoke(Object proxy, @NotNull Method method, Object[] args) throws Throwable {
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       return invokeAsync(method, args);
     }
 

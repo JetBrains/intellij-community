@@ -10,6 +10,8 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.text.*
 import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.lang.Language
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import org.jetbrains.annotations.NonNls
@@ -24,7 +27,7 @@ import java.util.*
 
 class GrazieInspection : LocalInspectionTool(), DumbAware {
 
-  class Grammar: LocalInspectionTool(), DumbAware {
+  class Grammar : LocalInspectionTool(), DumbAware {
     override fun getShortName(): @NonNls String = GRAMMAR_INSPECTION
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -32,7 +35,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     }
   }
 
-  class Style: LocalInspectionTool(), DumbAware {
+  class Style : LocalInspectionTool(), DumbAware {
     override fun getShortName(): @NonNls String = STYLE_INSPECTION
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -104,7 +107,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
   companion object {
     private val inspections: List<LocalInspectionTool> = listOf(Grammar(), Style())
 
-    internal const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT: Int = 50_000
+    private const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT: Int = 50_000
     private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
     const val GRAMMAR_INSPECTION: String = "GrazieInspection"
     const val STYLE_INSPECTION: String = "GrazieStyle"
@@ -127,12 +130,13 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       val file = texts[0].containingFile
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
 
-      val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
-        val contents = findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
-        TextContentRelatedData(file, contents)
-      }.contents
-      val checkedDomains = checkedDomains()
-      return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
+      return CachedValuesManager.getCachedValue(file) {
+        val checkedDomains = checkedDomains()
+        val contents = findAllTextContents(file.viewProvider, TextContent.TextDomain.ALL)
+        logger<GrazieInspection>().debug("Evaluating text length of: ${TextContentRelatedData(file, contents)}")
+        val length = contents.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length }
+        CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>(), file)
+      }
     }
 
     @JvmStatic
@@ -143,14 +147,15 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
     @JvmStatic
     fun checkedDomains(): Set<TextContent.TextDomain> {
+      val config = GrazieConfig.get()
       val result = EnumSet.of(TextContent.TextDomain.PLAIN_TEXT)
-      if (GrazieConfig.get().checkingContext.isCheckInStringLiteralsEnabled) {
+      if (config.checkingContext.isCheckInStringLiteralsEnabled) {
         result.add(TextContent.TextDomain.LITERALS)
       }
-      if (GrazieConfig.get().checkingContext.isCheckInCommentsEnabled) {
+      if (config.checkingContext.isCheckInCommentsEnabled) {
         result.add(TextContent.TextDomain.COMMENTS)
       }
-      if (GrazieConfig.get().checkingContext.isCheckInDocumentationEnabled) {
+      if (config.checkingContext.isCheckInDocumentationEnabled) {
         result.add(TextContent.TextDomain.DOCUMENTATION)
       }
       return result
@@ -188,9 +193,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         return "[fileType = ${psiFile.viewProvider.virtualFile.fileType}, " +
                "fileLanguage = ${psiFile.language}, " +
                "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
-               "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()},"
-        "isPhysical = ${psiFile.isPhysical}, " +
-        "contentLengths = ${contents.map { it.length }}]"
+               "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()}," +
+               "isPhysical = ${psiFile.isPhysical}, " +
+               "contentLengths = ${contents.map { it.length }}]"
       }
     }
   }

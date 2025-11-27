@@ -218,6 +218,7 @@ internal class MavenWrapperSupport {
     fun getWrapperDistributionUrl(baseDir: Path?): String? {
       try {
         val wrapperProperties = getWrapperProperties(baseDir) ?: return null
+        if (!wrapperProperties.exists()) return null
 
         val properties = Properties()
 

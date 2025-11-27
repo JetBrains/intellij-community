@@ -248,7 +248,6 @@
     <fileDocumentSynchronizationVetoer implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
     <fileDocumentManagerListener implementation="com.intellij.vcs.commit.SaveCommittingDocumentsVetoer"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.vcs.VcsApplicationSettings"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
                         serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
@@ -348,6 +347,7 @@
     <advancedSetting id="vcs.non.modal.commit.toggle.ui" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.non.modal.commit.close.in.windowed.mode" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs" default="true"/>
     <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.allow.force.push.without.confirmation" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
 
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
 

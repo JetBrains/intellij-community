@@ -19,31 +19,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.CollectionFieldEntity",
-                                  entityDataFqName = "com.intellij.workspaceModel.test.api.impl.CollectionFieldEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "versions",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeIntNotNullable),
-                                                                            primitive = primitiveTypeSetNotNullable), withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "names",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable),
-                                                                            primitive = primitiveTypeListNotNullable), withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "manifestAttributes",
-                            valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable,
-                                                                                              primitiveTypeStringNotNullable),
-                                                                            primitive = primitiveTypeMapNotNullable), withDefault = false)),
-                                  extProperties = listOf(), isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.CollectionFieldEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.CollectionFieldEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "versions", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeIntNotNullable), primitive = primitiveTypeSetNotNullable), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "names", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable), primitive = primitiveTypeListNotNullable), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "manifestAttributes", valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(primitiveTypeStringNotNullable, primitiveTypeStringNotNullable), primitive = primitiveTypeMapNotNullable), withDefault = false)), extProperties = listOf(), isAbstract = false)
 
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.CollectionFieldEntity", metadataHash = 1555273165)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.CollectionFieldEntity", metadataHash = 390740049)
   }
 
 }

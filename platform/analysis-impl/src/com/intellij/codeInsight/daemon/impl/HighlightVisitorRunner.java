@@ -9,6 +9,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -98,14 +99,14 @@ class HighlightVisitorRunner {
                       @NotNull Supplier<? extends HighlightInfoHolder> infoHolderProducer,
                       @NotNull ResultSink resultSink) {
     List<VisitorInfo> visitorInfos = ContainerUtil.map(visitors, v -> new VisitorInfo(v, new HashSet<>(), infoHolderProducer.get()));
-    if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: visitors: " + Arrays.toString(visitors)+"; psiFile="+psiFile);
+    ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
+      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitors: " + Arrays.toString(visitors)+"; psiFile="+psiFile+"; progress="+progress);
     }
-    boolean res =
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, ProgressIndicatorProvider.getGlobalProgressIndicator(), visitorInfo -> {
+    boolean res = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, progress, visitorInfo -> {
         HighlightVisitor visitor = visitorInfo.visitor();
-        if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-          GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile+"; "+Thread.currentThread());
+        if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
+          GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile+"; "+Thread.currentThread()+"; progress="+progress);
         }
         try {
           int[] sizeAfterRunVisitor = new int[1];
@@ -117,8 +118,8 @@ class HighlightVisitorRunner {
             sizeAfterRunVisitor[0] = holder.size();
           });
           reportOutOfRunVisitorInfos(sizeAfterRunVisitor[0], ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT, holder, visitor, resultSink);
-          if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-            GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: visitor finished " + visitor + "(" + visitor.getClass() + ")" +
+          if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
+            GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitor finished " + visitor + "(" + visitor.getClass() + ") progress=" + progress+
                                               (result ? "" : " returned false") + "; holder: "+holder.size()+" results"+"; "+Thread.currentThread());
           }
           return result;
@@ -127,20 +128,20 @@ class HighlightVisitorRunner {
           throw e;
         }
         catch (Exception e) {
-          if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-            GeneralHighlightingPass.LOG.debug("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread());
+          if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
+            GeneralHighlightingPass.LOG.trace("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread()+"; progress="+progress);
           }
           throw e;
         }
       });
-    if (GeneralHighlightingPass.LOG.isDebugEnabled()) {
-      GeneralHighlightingPass.LOG.debug("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread());
+    if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
+      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread()+"; progress="+progress);
     }
     return res;
   }
 
-  private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement();
-  private static final PsiElement ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement();
+  private static final PsiElement ANALYZE_BEFORE_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement("ANALYZE_BEFORE_RUN_VISITOR");
+  private static final PsiElement ANALYZE_AFTER_RUN_VISITOR_FAKE_PSI_ELEMENT = HighlightInfoUpdaterImpl.createFakePsiElement("ANALYZE_AFTER_RUN_VISITOR");
   /**
    * report infos created outside the {@link #runVisitor} call (either before or after, inside the {@link HighlightVisitor#analyze} method), starting from the {@param fromIndex}
    */

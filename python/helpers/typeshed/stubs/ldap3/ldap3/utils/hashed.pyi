@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
-algorithms_table: Any
-salted_table: Any
+algorithms_table: Incomplete
+salted_table: Incomplete
 
 def hashed(algorithm, value, salt=None, raw: bool = False, encoding: str = "utf-8"): ...

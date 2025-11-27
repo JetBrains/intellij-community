@@ -387,7 +387,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     protected fun doIntroduceTypeAliasTest(unused: String) {
-        doTest { file ->
+        doTestIfNotDisabledByFileDirective { file ->
             file as KtFile
 
             val explicitPreviousSibling = file.findElementByCommentPrefix("// SIBLING:")

@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.ui.content.ContentManager
@@ -622,6 +623,10 @@ class ProjectLevelVcsManagerImpl(
 
   internal class ActivateVcsesStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
+      if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+        return
+      }
+
       getInstanceImpl(project).mappingsHolder.activateActiveVcses()
     }
 

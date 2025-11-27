@@ -498,9 +498,16 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         }
       });
     }
+
+    RelativePoint locationToShow = myTracker.recalculateLocation(this);
+    if (locationToShow == null) {
+      hideImmediately();
+      return;
+    }
+
     layeredPane.addComponentListener(myComponentListener);
 
-    myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(layeredPane), myCalloutShift);
+    myTargetPoint = myPosition.getShiftedPoint(locationToShow.getPoint(layeredPane), myCalloutShift);
     if (isDisposed) return; //tracker may dispose the balloon
 
     int positionChangeFix = 0;
@@ -537,7 +544,12 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
 
     if (myPosition != position) {
-      myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(layeredPane),
+      locationToShow = myTracker.recalculateLocation(this);
+      if (locationToShow == null) {
+        hideImmediately();
+        return;
+      }
+      myTargetPoint = myPosition.getShiftedPoint(locationToShow.getPoint(layeredPane),
                                                  myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
       position = myPosition;
     }
@@ -556,7 +568,12 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (PopupLocationTracker.canRectangleBeUsed(layeredPane, r, this)) {
           myPosition = eachPosition;
           positionChangeFix = myPosition.getChangeShift(position, myPositionChangeXShift, myPositionChangeYShift);
-          myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(layeredPane),
+          locationToShow = myTracker.recalculateLocation(this);
+          if (locationToShow == null) {
+            hideImmediately();
+            return;
+          }
+          myTargetPoint = myPosition.getShiftedPoint(locationToShow.getPoint(layeredPane),
                                                      myCalloutShift > 0 ? myCalloutShift + positionChangeFix : positionChangeFix);
           myPosition.updateBounds(this);
           break;

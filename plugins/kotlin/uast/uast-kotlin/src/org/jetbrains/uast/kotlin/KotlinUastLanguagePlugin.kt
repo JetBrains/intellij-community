@@ -26,7 +26,7 @@ import org.jetbrains.uast.util.ClassSetsWrapper
 
 @InternalIgnoreDependencyViolation
 class KotlinUastLanguagePlugin : UastLanguagePlugin {
-    override val priority = 10
+    override val priority: Int = 10
 
     override val language: Language
         get() = KotlinLanguage.INSTANCE

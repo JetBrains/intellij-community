@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.MessageConstants;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -343,7 +344,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     CoverageDataAnnotationsManager.getInstance(myProject).update();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
-      ProjectView.getInstance(myProject).refresh();
+      ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.PLUGIN_COVERAGE);
     });
   }
 

@@ -1,15 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.internal.impl
 
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl.Companion.concurrentLimit
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl.Companion.createByPythonBinary
 import com.intellij.python.community.services.shared.PythonInfoComparator
 import com.intellij.python.community.services.shared.PythonWithPythonInfo
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
+import com.jetbrains.python.PathShortener
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
@@ -21,8 +19,6 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import kotlin.io.path.pathString
-import kotlin.io.path.relativeTo
 
 @Internal
 class VanillaPythonWithPythonInfoImpl internal constructor(
@@ -73,14 +69,7 @@ class VanillaPythonWithPythonInfoImpl internal constructor(
   }
 
   override suspend fun getReadableName(): @Nls String {
-    val eelApi = pythonBinary.getEelDescriptor().toEelApi()
-    val home = eelApi.userInfo.home.asNioPath()
-    val separator = when (eelApi.platform) {
-      is EelPlatform.Windows -> "\\"
-      is EelPlatform.Posix -> "/"
-    }
-    val pythonString = (if (pythonBinary.startsWith(home)) "~$separator" + pythonBinary.relativeTo(home).pathString
-    else pythonBinary.pathString)
+    val pythonString = PathShortener.shorten(pythonBinary)
     return "$pythonString ($pythonInfo)"
   }
 

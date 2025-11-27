@@ -37,7 +37,15 @@ public final class ProblemDescriptorUtil {
   static final int APPEND_LINE_NUMBER = 0x00000001;
   public static final int TRIM_AT_TREE_END = 0x00000004;
 
+  /**
+   * @see CommonProblemDescriptor#getDescriptionTemplate
+   * @deprecated See IDEA-382389 for discussion and reasons for removal.
+   */
+  @Deprecated(forRemoval = true)
   public static final @NonNls String LOC_REFERENCE = "#loc";
+  /**
+   * @see CommonProblemDescriptor#getDescriptionTemplate
+   */
   public static final @NonNls String REF_REFERENCE = "#ref";
 
   @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_TREE_END})

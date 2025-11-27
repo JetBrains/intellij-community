@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -21,7 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
-import com.intellij.modcompletion.CompletionItem;
+import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -70,7 +71,6 @@ import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
-import org.slf4j.LoggerFactory;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -90,7 +90,6 @@ import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
-  private static final org.slf4j.Logger log = LoggerFactory.getLogger(LookupImpl.class);
 
   private final LookupOffsets myOffsets;
   private final Editor editor;
@@ -658,9 +657,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                  int start, 
                                  @NotNull PsiFile psiFile,
                                  CompletionItemLookupElement wrapper) {
-    CompletionItem.InsertionContext insertionContext = new CompletionItem.InsertionContext(
+    ModCompletionItem.InsertionContext insertionContext = new ModCompletionItem.InsertionContext(
       completionChar == REPLACE_SELECT_CHAR ?
-      CompletionItem.InsertionMode.OVERWRITE : CompletionItem.InsertionMode.INSERT,
+      ModCompletionItem.InsertionMode.OVERWRITE : ModCompletionItem.InsertionMode.INSERT,
       completionChar);
     ActionContext actionContext = ActionContext.from(editor, psiFile);
     ActionContext finalActionContext = actionContext
@@ -820,6 +819,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public boolean vetoesHiding() {
+    if (isLookupDisposed()) return false;
     // the second condition means that the Lookup belongs to another connected client
     return myGuardedChanges > 0 ||
            mySession != ClientSessionsUtil.getCurrentSessionOrNull(mySession.getProject()) ||
@@ -1169,7 +1169,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         listener.currentItemChanged(event);
       }
     }
-    if (currentItem instanceof CompletionItemLookupElement wrapper) {
+    if (currentItem instanceof CompletionItemLookupElement wrapper && !PowerSaveMode.isEnabled()) {
       PsiFile file = getPsiFile();
       if (file != null) {
         ActionContext actionContext = ActionContext.from(editor, file);
@@ -1179,7 +1179,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           .withSelection(TextRange.create(start, actionContext.offset()));
         // Cache current item result
         ReadAction.nonBlocking(
-          () -> wrapper.computeCommand(finalActionContext, CompletionItem.DEFAULT_INSERTION_CONTEXT))
+          () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
           .expireWith(this)
           .submit(AppExecutorUtil.getAppExecutorService());
       }
@@ -1549,7 +1549,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     public void setSelectionInterval(int index0, int index1) {
       // If either endpoint is a separator, do not select
       if (isSeparator(index0)) {
-        int next = findNextSelectable(index0, 1);
+        int next = findNextSelectable(index0);
         if (next != -1) {
           super.setSelectionInterval(next, next);
         }
@@ -1568,13 +1568,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    private int findNextSelectable(int start, int direction) {
+    private int findNextSelectable(int start) {
       ListModel<?> model = list.getModel();
       int size = model.getSize();
-      int i = start + direction;
-      while (i >= 0 && i < size) {
+      for (int i = start + 1; i >= 0 && i < size; i++) {
         if (!isSeparator(i)) return i;
-        i += direction;
       }
       return -1;
     }

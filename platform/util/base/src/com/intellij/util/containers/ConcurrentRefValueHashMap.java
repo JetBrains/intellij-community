@@ -12,7 +12,6 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent strong key:K -> (soft/weak) value:V map
@@ -23,11 +22,11 @@ import java.util.function.BiConsumer;
 public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V>, ReferenceQueueable {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
-  private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super K> myEvictionListener;
+  private final @Nullable CollectionFactory.EvictionListener<K, V, ? super K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  ConcurrentRefValueHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
-    myEvictionListener = evictionListener;
+  ConcurrentRefValueHashMap(@Nullable CollectionFactory.EvictionListener<K, V, ? super K> valueEvictionListener) {
+    myEvictionListener = valueEvictionListener;
   }
 
   interface ValueReference<K, V> {
@@ -50,7 +49,7 @@ public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K
       if (ref == null) break;
       K key = ref.getKey();
       if (myMap.remove(key, ref) && myEvictionListener != null) {
-        myEvictionListener.accept(this, key);
+        myEvictionListener.evicted(this, ref.getKey().hashCode(), key);
       }
       processed = true;
     }

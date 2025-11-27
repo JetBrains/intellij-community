@@ -17,6 +17,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 import javax.swing.Icon
@@ -49,7 +50,7 @@ class XDebugSessionTab3(
   override fun getFramesContentId(): String = debuggerContentId
 
   private fun getWatchesViewImpl(sessionProxy: XDebugSessionProxy, watchesIsVariables: Boolean): XWatchesViewImpl {
-    if (sessionProxy is XDebugSessionProxy.Monolith) {
+    if (sessionProxy is MonolithSessionProxy) {
       val session = sessionProxy.sessionImpl
       if (session.debugProcess.useSplitterView()) { // TODO terekhin migrate Immediate window to using new debugger API
         return XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)

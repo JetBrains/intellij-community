@@ -8,8 +8,6 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
 
-  override val enableGrazieChecker: Boolean = true
-
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/json/Example.json")

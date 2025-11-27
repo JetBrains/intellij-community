@@ -14,7 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.multiplatform.shims.multiplatformIO
 
 private object TcpProxy {
@@ -37,7 +37,7 @@ private fun ServerSocket.port(): Int? {
   }
 }
 
-private val selectorManagers = ConcurrentHashMap<Job, ActorSelectorManager>()
+private val selectorManagers = MultiplatformConcurrentHashMap<Job, ActorSelectorManager>()
 
 @OptIn(InternalCoroutinesApi::class) // unfortunately necessary to unblock selector manager on cancellation
 private fun getSelectorManager(parentJob: Job): ActorSelectorManager =

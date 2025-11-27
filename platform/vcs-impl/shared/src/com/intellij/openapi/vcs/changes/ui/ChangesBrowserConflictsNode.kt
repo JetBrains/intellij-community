@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+import com.intellij.openapi.vcs.changes.ConflictsResolutionService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import org.jetbrains.annotations.ApiStatus
@@ -22,7 +23,7 @@ class ChangesBrowserConflictsNode(val project: Project)
   }
 
   private fun showResolveConflictsDialog() {
-    ChangesTreeCompatibilityProvider.getInstance().showResolveConflictsDialog(project, allChangesUnder)
+    project.service<ConflictsResolutionService>().showConflictResolutionDialog(allChangesUnder)
   }
 
   override fun getTextPresentation(): String {

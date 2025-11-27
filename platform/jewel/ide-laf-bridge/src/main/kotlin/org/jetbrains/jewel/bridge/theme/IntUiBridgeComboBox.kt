@@ -8,6 +8,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveInsetsAsPaddingValues
+import org.jetbrains.jewel.bridge.retrieveIntAsDp
 import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toNonNegativeDpSize
 import org.jetbrains.jewel.ui.component.styling.ComboBoxColors
@@ -57,7 +58,11 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
                         "ComboBox.padding",
                         PaddingValues(horizontal = 6.dp, vertical = 3.dp),
                     ),
-                popupContentPadding = PaddingValues(vertical = 6.dp),
+                popupContentPadding =
+                    PaddingValues(
+                        top = retrieveIntAsDp("Popup.Body.topInsetNoHeader", 8.dp),
+                        bottom = retrieveIntAsDp("Popup.Body.bottomInsetNoAd", 8.dp),
+                    ),
                 borderWidth = borderWidth,
                 maxPopupHeight = Dp.Unspecified,
             ),

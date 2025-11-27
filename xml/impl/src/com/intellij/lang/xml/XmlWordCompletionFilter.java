@@ -11,9 +11,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
-public class XmlWordCompletionFilter extends DefaultWordCompletionFilter {
-  private static final TokenSet ENABLED_TOKENS = TokenSet.create(XmlElementType.XML_CDATA,
-                                                                 XmlTokenType.XML_DATA_CHARACTERS);
+final class XmlWordCompletionFilter extends DefaultWordCompletionFilter {
+  private static final TokenSet ENABLED_TOKENS = TokenSet.create(XmlElementType.XML_CDATA, XmlTokenType.XML_DATA_CHARACTERS);
   @Override
   public boolean isWordCompletionEnabledIn(final IElementType element) {
     return super.isWordCompletionEnabledIn(element) || ENABLED_TOKENS.contains(element);

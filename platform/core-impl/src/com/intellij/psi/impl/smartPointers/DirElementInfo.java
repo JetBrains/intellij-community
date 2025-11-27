@@ -22,12 +22,12 @@ class DirElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
-  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+  PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     return null;
   }
 
@@ -38,7 +38,7 @@ class DirElementInfo extends SmartPointerElementInfo {
 
   @Override
   boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
-                                   @NotNull SmartPointerManagerImpl manager) {
+                                   @NotNull SmartPointerManagerEx manager) {
     return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
@@ -49,13 +49,13 @@ class DirElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getRange(@NotNull SmartPointerManagerEx manager) {
     return null;
   }
 
   @Nullable
   @Override
-  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getPsiRange(@NotNull SmartPointerManagerEx manager) {
     return null;
   }
 

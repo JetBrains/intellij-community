@@ -25,6 +25,12 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
       val isCrossIdeSync = crossIdeSync.toBoolean()
       val enableSyncOptions: EnableSettingSyncOptions = EnableSettingSyncOptions.valueOf(action)
 
+      // Ensure JBA provider is available by setting up the local settings
+      SettingsSyncLocalSettings.getInstance().providerCode = "jba"
+      SettingsSyncLocalSettings.getInstance().userId = "test-user"
+      // Force create a JBA communicator if needed
+      ensureJBAProvider()
+
       val settingsSyncEnabler = SettingsSyncEnabler()
       val serverRespondedOnCheck = CompletableDeferred<Boolean>()
 
@@ -63,8 +69,11 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
           serverRespondedOnCheck.complete(true)
         }
       })
+      // Add timeout to prevent infinite hanging
       settingsSyncEnabler.checkServerStateAsync()
-      serverRespondedOnCheck.await()
+      withTimeout(TimeUnit.SECONDS.toMillis(30)) {
+        serverRespondedOnCheck.await()
+      }
 
       var startTime = System.currentTimeMillis()
       while (!SettingsSyncMain.getInstance().controls.bridge.isInitialized) {
@@ -88,6 +97,15 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
           throw Exception("Cross-IDE sync marker file was not updated in 5 seconds. File exists=$fileExists, expected=$isCrossIdeSync")
         }
       }
+    }
+  }
+
+  private fun ensureJBAProvider() {
+    // If no provider is available, this will ensure we can at least try to create one
+    // The JbaCommunicatorProvider should handle mock server configuration internally
+    if (RemoteCommunicatorHolder.getRemoteCommunicator() == null) {
+      // This will trigger provider creation
+      RemoteCommunicatorHolder.invalidateCommunicator()
     }
   }
 }

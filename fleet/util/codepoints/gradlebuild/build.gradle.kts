@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
+  alias(jps.plugins.expects)
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -38,6 +39,9 @@ kotlin {
   wasmJs {
     browser {}
   }
+  iosArm64 {}
+  iosSimulatorArm64 {}
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
@@ -52,14 +56,25 @@ kotlin {
   sourceSets.wasmJsMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsMain")) }
   sourceSets.wasmJsTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcWasmJsTest")) }
   sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesWasmJsTest")) }
+  sourceSets.iosMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosMain")) }
+  sourceSets.iosMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosMain")) }
+  sourceSets.iosTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcIosTest")) }
+  sourceSets.iosTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesIosTest")) }
   sourceSets.commonMain.dependencies {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.de.cketti.unicode.kotlin.codepoints.jvm1960123061.get().let { "${it.group}:kotlin-codepoints:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(project(":fleet.util.core"))
+    compileOnly(project(":fleet.util.multiplatform"))
+  }
+  sourceSets.iosMain.dependencies {
+    api(project(":fleet.util.multiplatform"))
+  }
+  sourceSets.jvmMain.dependencies {
+    compileOnly(project(":fleet.util.multiplatform"))
+  }
+  sourceSets.wasmJsMain.dependencies {
+    api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

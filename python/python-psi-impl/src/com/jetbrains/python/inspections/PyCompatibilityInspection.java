@@ -59,7 +59,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect code incompatibility with python versions
  */
 public final class PyCompatibilityInspection extends PyInspection {
@@ -74,7 +74,8 @@ public final class PyCompatibilityInspection extends PyInspection {
 
   public static final int LATEST_INSPECTION_VERSION = 3;
 
-  public static final @NotNull List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
+  public static final @NotNull List<LanguageLevel> DEFAULT_PYTHON_VERSIONS =
+    ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
 
   public static final @NotNull List<LanguageLevel> SUPPORTED_LEVELS = StreamEx
     .of(LanguageLevel.values())
@@ -86,7 +87,7 @@ public final class PyCompatibilityInspection extends PyInspection {
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
-  public PyCompatibilityInspection () {
+  public PyCompatibilityInspection() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourVersions.addAll(SUPPORTED_IN_SETTINGS);
     }
@@ -94,7 +95,7 @@ public final class PyCompatibilityInspection extends PyInspection {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
     }
   }
-  
+
   public static @Nullable PyCompatibilityInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyCompatibilityInspection.class.getSimpleName();
@@ -242,9 +243,10 @@ public final class PyCompatibilityInspection extends PyInspection {
         }
         final String moduleName = qName.toString();
 
-        registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", moduleName),
-                                       importElement);
+        registerForAllMatchingVersions(
+          level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
+          PyPsiBundle.message("INSP.compatibility.feature.have.module", moduleName),
+          importElement);
       }
     }
 
@@ -271,9 +273,10 @@ public final class PyCompatibilityInspection extends PyInspection {
       if (name != null && source != null) {
         final String moduleName = name.toString();
 
-        registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", name),
-                                       source);
+        registerForAllMatchingVersions(
+          level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
+          PyPsiBundle.message("INSP.compatibility.feature.have.module", name),
+          source);
       }
     }
 
@@ -408,7 +411,7 @@ public final class PyCompatibilityInspection extends PyInspection {
 
     private boolean importedFromCompatibilityLibs(@NotNull PyExpression callee) {
       if (callee instanceof PyQualifiedExpression) {
-        QualifiedName qualifiedName = ((PyQualifiedExpression) callee).asQualifiedName();
+        QualifiedName qualifiedName = ((PyQualifiedExpression)callee).asQualifiedName();
         return qualifiedName != null && myFromCompatibilityLibs.contains(qualifiedName.getFirstComponent());
       }
       return myFromCompatibilityLibs.contains(callee.getName());

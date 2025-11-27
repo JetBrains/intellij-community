@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings
 import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings.ScriptDefinitionSetting
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -43,7 +43,7 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
         definitionsSourcesPoint = getOrRegisterExtensionPoint(SCRIPT_DEFINITIONS_SOURCES.name, ScriptDefinitionsSource::class.java)
         settings = ScriptDefinitionPersistentSettings(project)
 
-        project.registerServiceInstance(KotlinScriptingSettingsStorage::class.java, settings)
+        project.registerServiceInstance(KotlinScriptingSettings::class.java, settings)
     }
 
     private fun ExtensionPoint<ScriptDefinitionsSource>.addDefinitionWithSource(vararg definitions: ScriptDefinition) {

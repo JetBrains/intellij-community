@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +22,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -539,50 +541,75 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }
   }
 
-  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() throws Exception {
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futures = new ArrayList<>();
+        for (Disposable parent : parents) {
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {
+          }).expireWith(parent).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {
+              }).expireWith(parent).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+        }
+        parents.forEach(Disposer::dispose);
 
-    for (int i = 0; i < 50; i++) {
-      List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<?>> futures = new ArrayList<>();
-      for (Disposable parent : parents) {
-        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
-        futures.add(executor.submit(() -> {
-          try {
-            ReadAction.nonBlocking(() -> {}).expireWith(parent).executeSynchronously();
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-        }));
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
       }
-      parents.forEach(Disposer::dispose);
+    }
+  }
 
-      futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+  public void testSubmitDoesNotFailWhenParentsAreDisposedConcurrently() throws Exception {
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 5000; i++) {
+        List<Future<?>> futures = new ArrayList<>();
+        for (int j = 0; j < 100; j++) {
+          CheckedDisposable parent = Disposer.newCheckedDisposable();
+          CheckedDisposable parent2 = Disposer.newCheckedDisposable();
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+          futures.add(executor.submit(() -> Disposer.dispose(parent)));
+          futures.add(executor.submit(() -> Disposer.dispose(parent2)));
+        }
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
+      }
     }
   }
 
   public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futuresList = new ArrayList<>();
+        for (Disposable disposable : disposables) {
+          futuresList.add(executor.submit(() -> {
+            try {
+              Boolean value = ReadAction.nonBlocking(() -> {
+                return Boolean.TRUE;
+              }).expireWith(disposable).executeSynchronously();
+              assertNotNull(value);
+            }
+            catch (ProcessCanceledException e) {
+              //valid outcome
+            }
+          }));
+        }
+        disposables.forEach(Disposer::dispose);
 
-    for (int i = 0; i < 50; i++) {
-      List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<?>> futuresList = new ArrayList<>();
-      for (Disposable disposable : disposables) {
-        futuresList.add(executor.submit(() -> {
-          try {
-            Boolean value = ReadAction.nonBlocking(() -> {
-              return Boolean.TRUE;
-            }).expireWith(disposable).executeSynchronously();
-            assertNotNull(value);
-          }
-          catch (ProcessCanceledException e) {
-            //valid outcome
-          }
-        }));
+        futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
       }
-      disposables.forEach(Disposer::dispose);
-
-      futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
 
@@ -608,5 +635,27 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     f2.get();
     f1.get();
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), MyHorribleEquality.class);
+  }
+
+  public void testNonBlockingReadActionDoesNotRunSynchronousReadActionOnCreationToAvoidDeadlock() {
+    AtomicReference<CancellablePromise<Integer>> promise = new AtomicReference<>();
+    AtomicReference<Future<?>> future = new AtomicReference<>();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      future.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        promise.set(ReadAction.nonBlocking(() -> 1)
+                      .expireWith(getTestRootDisposable())
+                      .submit(AppExecutorUtil.getAppExecutorService()));
+      }));
+      // must be able to schedule NBRA even when EDT is blocked
+      try {
+        future.get().get();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+    while (!promise.get().isDone()) {
+      UIUtil.dispatchAllInvocationEvents(); // NBRA invokeLaters when sensed there's pending write action
+    }
   }
 }

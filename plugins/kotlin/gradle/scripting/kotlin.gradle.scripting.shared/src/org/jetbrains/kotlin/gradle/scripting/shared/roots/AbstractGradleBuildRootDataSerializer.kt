@@ -3,16 +3,19 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.roots
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.gist.storage.GistStorage
 import com.intellij.util.io.DataExternalizer
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.idea.core.script.v1.readString
 import org.jetbrains.kotlin.idea.core.script.v1.writeString
 import java.io.DataInput
 import java.io.DataOutput
 
-private const val BINARY_FORMAT_VERSION = 1
+private const val BINARY_FORMAT_VERSION = 2
 private const val NO_TRACK_GIST_STAMP = 0
 
 abstract class AbstractGradleBuildRootDataSerializer {
@@ -20,9 +23,9 @@ abstract class AbstractGradleBuildRootDataSerializer {
     protected val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
 
     private val buildRootDataGist =
-        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, externalizer)
+        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, getExternalizer())
 
-    protected abstract val externalizer: DataExternalizer<GradleBuildRootData>
+    protected abstract fun getExternalizer(): DataExternalizer<GradleBuildRootData>
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
         currentBuildRoot.set(buildRoot)
@@ -40,6 +43,28 @@ abstract class AbstractGradleBuildRootDataSerializer {
     }
 
     companion object {
+        @IntellijInternalApi
+        fun readKotlinDslScriptModels(input: DataInput, buildRoot: String): GradleBuildRootData {
+            val strings = StringsPool.reader(input)
+
+            val importTs = input.readLong()
+            val projectRoots = strings.readStrings()
+            val gradleHome = strings.readString()
+            val javaHome = strings.readNullableString()
+            val models = input.readList {
+                KotlinDslScriptModel(
+                    strings.readString(),
+                    GradleKotlinScriptConfigurationInputs(input.readString(), input.readLong(), buildRoot),
+                    strings.readStrings(),
+                    strings.readStrings(),
+                    strings.readStrings(),
+                    listOf()
+                )
+            }
+
+            return GradleBuildRootData(importTs, projectRoots, gradleHome, javaHome, models)
+        }
+
         @JvmStatic
         fun getInstance(): AbstractGradleBuildRootDataSerializer = service()
     }

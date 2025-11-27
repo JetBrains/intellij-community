@@ -33,10 +33,12 @@ class PyDataclassInspection : PyInspection() {
     }
   }
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder,PyInspectionVisitor.getContext(session))
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor = Visitor(
+    holder, PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
@@ -359,7 +361,8 @@ class PyDataclassInspection : PyInspection() {
           "__repr__" -> reprMethod = it
           "__str__" -> strMethod = it
           "__eq__",
-          in ORDER_OPERATORS -> cmpMethods.add(it)
+          in ORDER_OPERATORS,
+            -> cmpMethods.add(it)
           "__setattr__", "__delattr__" -> mutatingMethods.add(it)
           PyNames.HASH -> hashMethod = it
         }
@@ -474,9 +477,11 @@ class PyDataclassInspection : PyInspection() {
         sameAttrInitializers
           .asSequence()
           .drop(1)
-          .forEach { registerProblem(it.nameIdentifier,
-                                     PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", first.name),
-                                     ProblemHighlightType.GENERIC_ERROR) }
+          .forEach {
+            registerProblem(it.nameIdentifier,
+                            PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", first.name),
+                            ProblemHighlightType.GENERIC_ERROR)
+          }
       }
     }
 
@@ -596,10 +601,12 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    private fun processPostInitDefinition(cls: PyClass,
-                                          postInit: PyFunction,
-                                          dataclassParameters: PyDataclassParameters,
-                                          localInitVars: List<PyType?>) {
+    private fun processPostInitDefinition(
+      cls: PyClass,
+      postInit: PyFunction,
+      dataclassParameters: PyDataclassParameters,
+      localInitVars: List<PyType?>,
+    ) {
       if (!dataclassParameters.init) {
         registerProblem(postInit.nameIdentifier,
                         PyPsiBundle.message("INSP.dataclasses.post.init.would.not.be.called.until.init.parameter.set.to.true"),

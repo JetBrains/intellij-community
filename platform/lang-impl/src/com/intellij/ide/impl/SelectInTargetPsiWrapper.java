@@ -21,7 +21,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   @ApiStatus.Internal
   protected static final Logger LOG = Logger.getInstance(SelectInTargetPsiWrapper.class);
   
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected SelectInTargetPsiWrapper(final @NotNull Project project) {
     myProject = project;
@@ -114,6 +114,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
           return new ComputedContext(file, selector, null);
         }
       })
+      .withDocumentsCommitted(myProject)
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), computed -> {
         var file = computed.file;

@@ -55,7 +55,7 @@ internal class ImportContextWithFixedReceiverType(
     override val isExplicitReceiver: Boolean = true
 
     context(_: KaSession)
-    override fun receiverTypes(): List<KaType> = withValidityAssertion {
+    override fun receiverTypes(): List<KaType> = this.withValidityAssertion {
         listOf(explicitReceiverType)
     }
 }

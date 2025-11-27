@@ -10,7 +10,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.*
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
+import com.intellij.xdebugger.impl.proxy.getEditorsProvider
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers

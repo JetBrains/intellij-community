@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.ManifestUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
@@ -20,15 +21,10 @@ import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
-import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
-import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.search.searches.JavaModuleSearch;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -75,7 +70,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     int count = result.size();
     if (count == 0) return PsiClass.EMPTY_ARRAY;
-    if (count == 1) return new PsiClass[] {result.get(0).getFirst()};
+    if (count == 1) return new PsiClass[] {result.getFirst().getFirst()};
 
     ContainerUtil.quickSort(result, (o1, o2) -> scope.compare(o2.getSecond(), o1.getSecond()));
 
@@ -159,51 +154,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   @Override
   public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
-
-    Project project = myManager.getProject();
-    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().getModules(moduleName, project, excludingScope));
-
-    Set<VirtualFile> shadowedRoots = new HashSet<>();
-    for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      VirtualFile root = manifest.getParent().getParent();
-      shadowedRoots.add(root);
-      results.add(LightJavaModule.create(myManager, root, moduleName));
-    }
-
-    for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
-      if (shadowedRoots.contains(root)) { //already found by MANIFEST attribute
-        continue;
-      }
-      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
-      if (manifest != null && LightJavaModule.claimedModuleName(manifest) != null) {
-        continue;
-      }
-      results.add(LightJavaModule.create(myManager, root, moduleName));
-    }
-
-    if (results.isEmpty()) {
-      CachedValuesManager valuesManager = CachedValuesManager.getManager(project);
-      ProjectRootModificationTracker rootModificationTracker = ProjectRootModificationTracker.getInstance(project);
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
-        if (sourceRoots.length > 0) {
-          String virtualAutoModuleName = ManifestUtil.lightManifestAttributeValue(module, PsiJavaModule.AUTO_MODULE_NAME);
-          if (moduleName.equals(virtualAutoModuleName)) {
-            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
-            break;
-          }
-
-          String defaultModuleName = valuesManager.getCachedValue(module, () ->
-            CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()), rootModificationTracker)
-          );
-          if (moduleName.equals(defaultModuleName)) {
-            results.add(LightJavaModule.create(myManager, sourceRoots[0], moduleName));
-            break;
-          }
-        }
-      }
-    }
-    
+    Collection<PsiJavaModule> results = JavaModuleSearch.search(moduleName, myManager.getProject(), excludingScope).findAll();
     return upgradeModules(sortModules(results, scope), moduleName, scope);
   }
 

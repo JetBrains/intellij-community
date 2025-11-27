@@ -72,7 +72,7 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
                           outputDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/build"),
 ).associateBy { it.moduleName }
 
-@Suppress("ReplaceGetOrSet", "SSBasedInspection")
+@Suppress("ReplaceGetOrSet")
 internal class BazelBuildFileGenerator(
   val ultimateRoot: Path?,
   val communityRoot: Path,
@@ -158,7 +158,7 @@ internal class BazelBuildFileGenerator(
   val localLibraries: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
 
   private val providedLibraries: ProvidedLibraries = ProvidedLibraries()
-  class ProvidedLibraries() {
+  class ProvidedLibraries {
     private val providedLibraries: MultiMap<Library, LibraryContainer> = MultiMap()
     fun getProvidedContexts(library: Library): Collection<LibraryContainer> = providedLibraries[library]
     fun markAsProvided(library: Library, container: LibraryContainer) { providedLibraries.putValue(library, container) }
@@ -530,93 +530,55 @@ internal class BazelBuildFileGenerator(
       testResourceTargets.addAll(result.resourceTargets)
     }
 
-    // if someone depends on such a test module from another production module
-    val isUsedAsTestDependency = !moduleDescriptor.testSources.isEmpty() && isReferencedAsTestDep(moduleList, moduleDescriptor)
-
     // reuse production generated provided libraries in test
     var generatedProvidedLibs = emptyList<BazelLabel>()
 
-    if (sources.isNotEmpty()) {
-      load("@rules_jvm//:jvm.bzl", "jvm_library")
+    load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-      target("jvm_library") {
-        option("name", moduleDescriptor.targetName)
-        productionCompileTargets.add(moduleDescriptor.targetAsLabel)
-        productionCompileJars.add(moduleDescriptor.targetAsLabel)
+    target("jvm_library") {
+      option("name", moduleDescriptor.targetName)
+      productionCompileTargets.add(moduleDescriptor.targetAsLabel)
+      productionCompileJars.add(moduleDescriptor.targetAsLabel)
 
+      if (sources.isNotEmpty()) {
         option("module_name", module.name)
-        visibility(arrayOf("//visibility:public"))
-        option("srcs", sourcesToGlob(sources, moduleDescriptor))
-        if (resourceTargets.isNotEmpty()) {
-          option("resources", resourceTargets.map { ":${it.label}" })
-        }
-        if (javacOptionsLabel != null) {
-          option("javac_opts", javacOptionsLabel)
-        }
-        if (kotlincOptionsLabel != null) {
-          option("kotlinc_opts", kotlincOptionsLabel)
-        }
-
-        @Suppress("CascadeIf")
-        if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.multiplatformSupport") {
-          option("exported_compiler_plugins", listOf("@lib//:expects-plugin"))
-        }
-        //else if (module.name == "fleet.rhizomedb") {
-          // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
-          //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
-        //}
-        else if (module.name == "fleet.rpc") {
-          option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
-        }
-        else if (module.name == "fleet.noria.cells") {
-          option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
-        }
-
-        var deps = moduleList.deps.get(moduleDescriptor)
-        if (deps != null && deps.provided.isNotEmpty()) {
-          val extraDeps = generateProvidedLibs(deps.provided)
-          deps = deps.copy(deps = deps.deps + extraDeps)
-          generatedProvidedLibs = extraDeps
-        }
-
-        renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
-      }
-    }
-    else {
-      load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-      val target = Target("jvm_library").apply {
-        option("name", moduleDescriptor.targetName)
-        visibility(arrayOf("//visibility:public"))
-        option("srcs", sourcesToGlob(sources, moduleDescriptor))
-        if (resourceTargets.isNotEmpty()) {
-          option("resources", resourceTargets.map { ":${it.label}" })
-        }
-
-        val deps = moduleList.deps.get(moduleDescriptor)
-        renderDeps(
-          deps = deps?.copy(plugins = emptyList()), // do not apply plugins to an empty library regardless of dependencies
-          target = this,
-          resourceDependencies = emptyList(),
-          forTests = false
-        )
       }
 
-      val addPhonyTarget =
-        // meaning there are some attributes besides name and visibility
-        target.optionCount() != 3 ||
-        isUsedAsTestDependency ||
-        module.name == "kotlin.base.frontend-agnostic" ||
-        module.name == "intellij.platform.monolith" ||
-        module.name == "intellij.platform.backend" ||
-        module.name == "intellij.platform.compose.compilerPlugin"
-
-      if (addPhonyTarget) {
-        addTarget(target)
-
-        productionCompileTargets.add(moduleDescriptor.targetAsLabel)
-        productionCompileJars.add(moduleDescriptor.targetAsLabel)
+      visibility(arrayOf("//visibility:public"))
+      option("srcs", sourcesToGlob(sources, moduleDescriptor))
+      if (resourceTargets.isNotEmpty()) {
+        option("resources", resourceTargets.map { ":${it.label}" })
       }
+      if (javacOptionsLabel != null && sources.isNotEmpty()) {
+        option("javac_opts", javacOptionsLabel)
+      }
+      if (kotlincOptionsLabel != null && sources.isNotEmpty()) {
+        option("kotlinc_opts", kotlincOptionsLabel)
+      }
+
+      @Suppress("CascadeIf")
+      if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.multiplatformSupport") {
+        option("exported_compiler_plugins", listOf("@lib//:expects-plugin"))
+      }
+      //else if (module.name == "fleet.rhizomedb") {
+        // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
+        //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
+      //}
+      else if (module.name == "fleet.rpc") {
+        option("exported_compiler_plugins", listOf("@lib//:rpc-plugin"))
+      }
+      else if (module.name == "fleet.noria.cells") {
+        option("exported_compiler_plugins", listOf("@lib//:noria-plugin"))
+      }
+
+      var deps = moduleList.deps.get(moduleDescriptor)
+      if (deps != null && deps.provided.isNotEmpty()) {
+        val extraDeps = generateProvidedLibs(deps.provided)
+        deps = deps.copy(deps = deps.deps + extraDeps)
+        generatedProvidedLibs = extraDeps
+      }
+
+      renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
     }
 
     val moduleHasTestSources = moduleDescriptor.testSources.isNotEmpty()
@@ -916,32 +878,6 @@ private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelB
       ResourceDescriptor(baseDirectory = prefix, files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"), relativeOutputPath = relativeOutputPath)
     }
     .toList()
-}
-
-private fun isReferencedAsTestDep(
-  moduleList: ModuleList,
-  referencedModule: ModuleDescriptor,
-): Boolean {
-  for ((_, deps) in moduleList.testDeps) {
-    if (isUsed(deps, referencedModule)) {
-      return true
-    }
-  }
-  for ((m, deps) in moduleList.deps) {
-    // kotlin.all-tests uses scope RUNTIME to depend on the test module
-    if (m.sources.isEmpty() && isUsed(deps, referencedModule)) {
-      return true
-    }
-  }
-  return false
-}
-
-private fun isUsed(
-  deps: ModuleDeps,
-  referencedModule: ModuleDescriptor,
-): Boolean {
-  return deps.depsModuleSet.contains(referencedModule) ||
-         deps.runtimeDepsModuleSet.contains(referencedModule)
 }
 
 private fun checkAndGetRelativePath(parentDir: Path, childDir: Path): Path {

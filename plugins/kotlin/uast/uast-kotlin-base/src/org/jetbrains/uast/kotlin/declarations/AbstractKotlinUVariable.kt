@@ -126,7 +126,7 @@ abstract class AbstractKotlinUVariable(
             return KotlinUIdentifier({ nameIdentifier }, identifierSourcePsi, this)
         }
 
-    override fun equals(other: Any?) = other is AbstractKotlinUVariable && psi == other.psi
+    override fun equals(other: Any?): Boolean = other is AbstractKotlinUVariable && psi == other.psi
 
     class WrappedUAnnotation(
         psiAnnotation: PsiAnnotation,
@@ -162,7 +162,7 @@ abstract class AbstractKotlinUVariable(
             private val expressionPart = UastLazyPart<UExpression>()
 
             override val name: String? = pair.name
-            override val psi = pair
+            override val psi: PsiNameValuePair = pair
             override val javaPsi: PsiElement = psi
             override val sourcePsi: PsiElement? = null
             override val uAnnotations: List<UAnnotation> = emptyList()

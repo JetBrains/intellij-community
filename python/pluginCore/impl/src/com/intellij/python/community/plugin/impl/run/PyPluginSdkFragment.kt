@@ -155,7 +155,7 @@ class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : SettingsEdito
   private fun getSelectedSdk(): Sdk? {
     if (currentMode == SDK_OF_MODULE) {
       ((modulesCombo?.selectedItem) as? Module)?.let {
-        return ModuleRootManager.getInstance(it).sdk
+        return PythonSdkUtil.findPythonSdk(it)
       }
     }
     else if (currentMode == SDK_FROM_LIST) {

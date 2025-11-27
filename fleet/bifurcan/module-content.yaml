@@ -1,0 +1,3 @@
+- name: dist.all/lib/fleet.bifurcan.jar
+  modules:
+  - name: fleet.bifurcan

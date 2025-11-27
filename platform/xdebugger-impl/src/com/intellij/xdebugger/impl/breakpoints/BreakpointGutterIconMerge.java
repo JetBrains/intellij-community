@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.editor.GutterMarkPreprocessor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

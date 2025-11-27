@@ -42,7 +42,7 @@ final class SlowerTypeConversions {
         });
       }
       if (!reference.isQualified()) {
-        BasicExpressionCompletionContributor.processDataflowExpressionTypes(smartParams, null, PrefixMatcher.ALWAYS_TRUE,
+        BasicExpressionCompletionContributor.processDataflowExpressionTypes(smartParams, null, PlainPrefixMatcher.ALWAYS_TRUE,
                                                                             baseItem -> addSecondCompletionVariants(position, reference, baseItem, smartParams, lookupElement -> {
                                                                               if (!processedChains.contains(chainInfo(lookupElement))) {
                                                                                 result.consume(JavaSmartCompletionContributor.decorate(lookupElement, expectedInfos));

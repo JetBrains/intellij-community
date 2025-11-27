@@ -5,9 +5,7 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.GeneratedBuilder
-import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions
-import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,17 +15,17 @@ import org.jetbrains.annotations.ApiStatus
 class ChangeAttributesOptionsBuilder(
   private var path: EelPath,
 ) {
-  private var accessTime: TimeSinceEpoch? = null
+  private var accessTime: EelFileSystemApi.TimeSinceEpoch? = null
 
-  private var modificationTime: TimeSinceEpoch? = null
+  private var modificationTime: EelFileSystemApi.TimeSinceEpoch? = null
 
-  private var permissions: Permissions? = null
+  private var permissions: EelFileInfo.Permissions? = null
 
-  fun accessTime(arg: TimeSinceEpoch?): ChangeAttributesOptionsBuilder = apply {
+  fun accessTime(arg: EelFileSystemApi.TimeSinceEpoch?): ChangeAttributesOptionsBuilder = apply {
     this.accessTime = arg
   }
 
-  fun modificationTime(arg: TimeSinceEpoch?): ChangeAttributesOptionsBuilder = apply {
+  fun modificationTime(arg: EelFileSystemApi.TimeSinceEpoch?): ChangeAttributesOptionsBuilder = apply {
     this.modificationTime = arg
   }
 
@@ -35,7 +33,7 @@ class ChangeAttributesOptionsBuilder(
     this.path = arg
   }
 
-  fun permissions(arg: Permissions?): ChangeAttributesOptionsBuilder = apply {
+  fun permissions(arg: EelFileInfo.Permissions?): ChangeAttributesOptionsBuilder = apply {
     this.permissions = arg
   }
 
@@ -50,8 +48,8 @@ class ChangeAttributesOptionsBuilder(
 
 @GeneratedBuilder.Result
 internal class ChangeAttributesOptionsImpl(
-  override val accessTime: TimeSinceEpoch?,
-  override val modificationTime: TimeSinceEpoch?,
+  override val accessTime: EelFileSystemApi.TimeSinceEpoch?,
+  override val modificationTime: EelFileSystemApi.TimeSinceEpoch?,
   override val path: EelPath,
-  override val permissions: Permissions?,
+  override val permissions: EelFileInfo.Permissions?,
 ) : ChangeAttributesOptions

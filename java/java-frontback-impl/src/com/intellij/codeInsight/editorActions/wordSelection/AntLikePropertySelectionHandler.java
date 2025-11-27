@@ -9,15 +9,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_BIT_SET;
 
 public final class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
@@ -49,9 +46,6 @@ public final class AntLikePropertySelectionHandler extends ExtendWordSelectionHa
       return false;
     }
 
-    if (BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toNode(e), BASIC_JAVA_COMMENT_BIT_SET) == null) {
-      return true;
-    }
     return PsiTreeUtil.getParentOfType(e, PsiComment.class) == null;
   }
 }

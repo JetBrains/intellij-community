@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
@@ -367,16 +366,16 @@ public final class LombokUtils {
   //    obvious what the user wants. That is the case for a `@Jacksonized @Accessors(fluent=true)`.
   static final String[] COPY_TO_GETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JsonFormat",
-      "com.fasterxml.jackson.annotation.JsonIgnore",
-      "com.fasterxml.jackson.annotation.JsonIgnoreProperties",
-      "com.fasterxml.jackson.annotation.JsonProperty",
-      "com.fasterxml.jackson.annotation.JsonSubTypes",
-      "com.fasterxml.jackson.annotation.JsonTypeInfo",
-      "com.fasterxml.jackson.annotation.JsonUnwrapped",
-      "com.fasterxml.jackson.annotation.JsonView",
-      "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper",
-      "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty",
-      "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText",
+    "com.fasterxml.jackson.annotation.JsonIgnore",
+    "com.fasterxml.jackson.annotation.JsonIgnoreProperties",
+    "com.fasterxml.jackson.annotation.JsonProperty",
+    "com.fasterxml.jackson.annotation.JsonSubTypes",
+    "com.fasterxml.jackson.annotation.JsonTypeInfo",
+    "com.fasterxml.jackson.annotation.JsonUnwrapped",
+    "com.fasterxml.jackson.annotation.JsonView",
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper",
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty",
+    "com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText",
   };
   static final String[] COPY_TO_SETTER_ANNOTATIONS = {
     "com.fasterxml.jackson.annotation.JacksonInject",
@@ -447,7 +446,9 @@ public final class LombokUtils {
     return getWitherName(psiVariable, psiVariable.getName(), accessorsInfo);
   }
 
-  public static String getWitherName(@NotNull PsiVariable psiVariable, @Nullable String variableName, @NotNull AccessorsInfo accessorsInfo) {
+  public static String getWitherName(@NotNull PsiVariable psiVariable,
+                                     @Nullable String variableName,
+                                     @NotNull AccessorsInfo accessorsInfo) {
     return toWitherName(accessorsInfo.withFluent(false), variableName, PsiTypes.booleanType().equals(psiVariable.getType()));
   }
 
@@ -524,7 +525,7 @@ public final class LombokUtils {
 
   /**
    * Generates a withBy name from a given field name.
-   *
+   * <p>
    * Strategy: The same as the {@code toWithName} strategy, but then append {@code "By"} at the end.
    *
    * @param accessors Accessors configuration.
@@ -612,8 +613,8 @@ public final class LombokUtils {
 
   /**
    * Returns all names of methods that would represent the withBy for a field with the provided name.
-   *
-   * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
+   * <p>
+   * For example, if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [withRunningBy, withIsRunningBy]}
    *
    * @param accessors Accessors configuration.
@@ -631,31 +632,57 @@ public final class LombokUtils {
                                                        boolean isBoolean,
                                                        String booleanPrefix,
                                                        String normalPrefix) {
-    Collection<String> result = new HashSet<>();
 
     fieldName = accessorsInfo.removePrefix(fieldName);
     if (fieldName == null) return Collections.emptyList();
 
-    if (accessorsInfo.isFluent()) {
-      result.add(StringUtil.decapitalize(fieldName));
-      return result;
-    }
-
+    Collection<String> result = new HashSet<>();
     final CapitalizationStrategy capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
-    if (isBoolean) {
-      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
-      result.add(buildName(booleanPrefix, fieldName, capitalizationStrategy));
 
-      if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
-        final String baseName = fieldName.substring(2);
-        result.add(buildName(normalPrefix, baseName, capitalizationStrategy));
-        result.add(buildName(booleanPrefix, baseName, capitalizationStrategy));
+    if (isBoolean) {
+      final Collection<String> baseNames = toBaseNames(fieldName, accessorsInfo.isFluent());
+      if (accessorsInfo.isFluent()) {
+        result.addAll(baseNames);
+      }
+      else {
+        for (String baseName : baseNames) {
+          result.add(buildName(normalPrefix, baseName, capitalizationStrategy));
+          if (!normalPrefix.equals(booleanPrefix)) {
+            result.add(buildName(booleanPrefix, baseName, capitalizationStrategy));
+          }
+        }
       }
     }
     else {
-      result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
-    }
+      if (accessorsInfo.isFluent()) {
+        result.add(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
+      }
+      else {
+        result.add(buildName(normalPrefix, fieldName, capitalizationStrategy));
+    }}
+
     return result;
+  }
+
+  private static Collection<String> toBaseNames(String fieldName, boolean fluent) {
+    List<String> baseNames = new ArrayList<>();
+    baseNames.add(fieldName);
+
+    // isPrefix = field is called something like 'isRunning', so 'running' could also be the fieldname.
+    if (fieldName.startsWith("is") && fieldName.length() > 2 && !Character.isLowerCase(fieldName.charAt(2))) {
+      baseNames.add(adaptByFluent(fluent, fieldName.substring(2)));
+    }
+
+    return baseNames;
+  }
+
+  private static String adaptByFluent(boolean fluent, String baseName) {
+    if (fluent) {
+      return Character.toLowerCase(baseName.charAt(0)) + baseName.substring(1);
+    }
+    else {
+      return baseName;
+    }
   }
 
   public static String buildAccessorName(String prefix, String suffix, CapitalizationStrategy capitalizationStrategy) {

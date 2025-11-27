@@ -25,10 +25,10 @@ internal object CommandHistoryUtil {
 }
 
 private class CommandHistoryPrefixMatcher(prefix: String) : PrefixMatcher(prefix) {
-  private val patternWords: Array<String> = NameUtil.nameToWords(prefix)
+  private val patternWords: List<String> = NameUtil.nameToWordList(prefix)
 
   override fun prefixMatches(name: String): Boolean {
-    val nameWords = NameUtil.nameToWords(name)
+    val nameWords = NameUtil.nameToWordList(name)
     var patternIndex = 0
     var wordIndex = 0
     // Go through each pattern word and try to find the matching word in the current name.
@@ -46,7 +46,7 @@ private class CommandHistoryPrefixMatcher(prefix: String) : PrefixMatcher(prefix
     return patternIndex == patternWords.size
   }
 
-  private inline fun <T> Array<out T>.indexOfFirstFrom(fromIndex: Int, predicate: (T) -> Boolean): Int {
+  private inline fun <T> List<T>.indexOfFirstFrom(fromIndex: Int, predicate: (T) -> Boolean): Int {
     var index = fromIndex
     while (index in indices) {
       if (predicate(this[index])) {

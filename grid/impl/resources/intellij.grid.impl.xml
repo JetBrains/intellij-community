@@ -31,6 +31,10 @@
                  description="Factor for cache size for rendered table cells"/>
     <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
                  description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
+    <uiDataRule implementation="com.intellij.database.run.ui.TableResultPanelUIDataRule"
+                id="TableResultPanelDataRule" order="before BasicUiDataRule"/>
+    <uiDataRule implementation="com.intellij.database.run.ui.InnerEditorsTableResultPanelUIDataRule"
+                id="InnerEditorsTableResultPanelUIDataRule" order="before TableResultPanelDataRule"/>
     <applicationService serviceInterface="com.intellij.database.extensions.ExtensionsService" serviceImplementation="com.intellij.database.extensions.ExtensionsServiceImpl"/>
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.AggregateValueEditorTab"/>
     <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.EditorValueEditorTab"/>

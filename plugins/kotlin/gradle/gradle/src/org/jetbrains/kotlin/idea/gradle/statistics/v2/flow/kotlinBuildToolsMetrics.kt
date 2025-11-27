@@ -34,6 +34,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     KOTLIN_OFFICIAL_CODESTYLE(KotlinBuildToolBooleanOverrideFusMetric("KOTLIN_OFFICIAL_CODESTYLE")),
     KOTLIN_PROGRESSIVE_MODE(KotlinBuildToolBooleanOverrideFusMetric("KOTLIN_PROGRESSIVE_MODE")),
     KOTLIN_KTS_USED(KotlinBuildToolBooleanFusMetric("KOTLIN_KTS_USED")),
+    KOTLIN_BTA_USED(KotlinBuildToolBooleanFusMetric("KOTLIN_BTA_USED")),
     KOTLIN_INCREMENTAL_NATIVE_ENABLED(KotlinBuildToolBooleanFusMetric("KOTLIN_INCREMENTAL_NATIVE_ENABLED")),
     KMP_TOP_LEVEL_DEPENDENCIES_BLOCK(KotlinBuildToolBooleanFusMetric("KMP_TOP_LEVEL_DEPENDENCIES_BLOCK")),
 
@@ -206,6 +207,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     LIBRARY_GWT_VERSION(IgnoreDefaultVersionStringFusMetric("LIBRARY_GWT_VERSION")),
     LIBRARY_HIBERNATE_VERSION(IgnoreDefaultVersionStringFusMetric("LIBRARY_HIBERNATE_VERSION")),
 
+    KOTLIN_GRADLE_PLUGIN_VERSION(VersionStringFusMetric("KOTLIN_GRADLE_PLUGIN_VERSION")),
     KOTLIN_COMPILER_VERSION(VersionStringFusMetric("KOTLIN_COMPILER_VERSION")),
     KOTLIN_STDLIB_VERSION( VersionStringFusMetric("KOTLIN_STDLIB_VERSION")),
     KOTLIN_REFLECT_VERSION(VersionStringFusMetric("KOTLIN_REFLECT_VERSION")),
@@ -226,6 +228,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     USE_OLD_BACKEND(ConcatenatedAllowedListValuesStringFusMetric("USE_OLD_BACKEND", listOf("true", "false"))),
     USE_FIR(ConcatenatedAllowedListValuesStringFusMetric("USE_FIR", listOf("true", "false"))),
 
+    KOTLIN_COMPILER_EXECUTION_POLICY(ConcatenatedAllowedListValuesStringFusMetric("KOTLIN_COMPILER_EXECUTION_POLICY", listOf("in-process", "daemon", "out-of-process"))),
     JS_PROPERTY_LAZY_INITIALIZATION(ConcatenatedAllowedListValuesStringFusMetric("JS_PROPERTY_LAZY_INITIALIZATION", listOf("true", "false")));
 
 }

@@ -50,8 +50,7 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
   }
 
   private val LambdaRdSerializedLambda = structdef {
-    field("clazzName", string)
-    field("methodName", string)
+    field("stepName", string)
     field("serializedDataBase64", string)
     field("classPath", immutableList(string))
   }

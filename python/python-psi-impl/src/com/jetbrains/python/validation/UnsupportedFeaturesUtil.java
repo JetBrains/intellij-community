@@ -143,7 +143,7 @@ public final class UnsupportedFeaturesUtil {
         MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
       }
-     }
+    }
 
     @Override
     public void endElement(String namespaceURI,
@@ -159,7 +159,7 @@ public final class UnsupportedFeaturesUtil {
 
     @Override
     public void characters(char[] ch, int start, int length)
-                                          throws SAXException {
+      throws SAXException {
       myContent.write(ch, start, length);
     }
   }
@@ -179,15 +179,15 @@ public final class UnsupportedFeaturesUtil {
         myClassName = attr.getValue("name");
         if (!CLASS_METHODS.containsKey(myClassName)) {
           CLASS_METHODS.put(myClassName, new HashMap<>());
-
         }
       }
       if (localName.equals("python")) {
         myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
         if (myClassName != null) {
           final Map<LanguageLevel, Set<String>> map = CLASS_METHODS.get(myClassName);
-          if (map != null)
+          if (map != null) {
             map.put(myCurrentLevel, new HashSet<>());
+          }
         }
       }
     }
@@ -200,8 +200,9 @@ public final class UnsupportedFeaturesUtil {
         Map<LanguageLevel, Set<String>> levelSetMap = CLASS_METHODS.get(myClassName);
         if (levelSetMap != null) {
           final Set<String> set = levelSetMap.get(myCurrentLevel);
-          if (set != null)
+          if (set != null) {
             set.add(myContent.toString());
+          }
         }
       }
     }

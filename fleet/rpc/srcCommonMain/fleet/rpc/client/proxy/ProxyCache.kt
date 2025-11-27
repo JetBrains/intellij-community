@@ -5,7 +5,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.core.InstanceId
 import fleet.util.UID
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 
 interface ProxyCache<K : Any> {
   fun <T : Any> proxy(remoteApiDescriptor: RemoteApiDescriptor<*>, key: K, proxy: () -> T): T
@@ -16,7 +16,7 @@ fun <K : Any> proxyCache(): ProxyCache<K> {
   data class ProxyCacheValue(val proxy: Any,
                              val remoteApiDescriptor: RemoteApiDescriptor<*>)
 
-  val cache = ConcurrentHashMap<K, ProxyCacheValue>()
+  val cache = MultiplatformConcurrentHashMap<K, ProxyCacheValue>()
   return object : ProxyCache<K> {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> proxy(remoteApiDescriptor: RemoteApiDescriptor<*>, key: K, proxy: () -> T): T =

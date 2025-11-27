@@ -1,7 +1,7 @@
 package com.siyeh.igfixes.jdk.vararg_parameter;
 
 public class JavadocReference {
-  void convertIn<caret>dexes(String str, int... indexes) {
+  void convertIndexes(String str, int... indexes<caret>) {
     System.out.println(indexes.length);
   }
 

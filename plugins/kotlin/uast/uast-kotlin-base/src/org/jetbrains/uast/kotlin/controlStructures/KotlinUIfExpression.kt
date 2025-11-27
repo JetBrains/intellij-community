@@ -31,7 +31,7 @@ class KotlinUIfExpression(
             baseResolveProviderService.baseKotlinConverter.convertOrNull(sourcePsi.`else`, this)
         }
 
-    override val isTernary = false
+    override val isTernary: Boolean = false
 
     override val ifIdentifier: UIdentifier
         get() = UIdentifier(null, this)

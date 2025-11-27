@@ -85,6 +85,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
     }
 
+    @TestMetadata("functionTypeWithTypeParameters.kt")
+    public void testFunctionTypeWithTypeParameters() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeWithTypeParameters.kt");
+    }
+
     @TestMetadata("functionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionalType.kt");
@@ -135,6 +140,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/protectedInFile.kt");
     }
 
+    @TestMetadata("singleTypeParameters.kt")
+    public void testSingleTypeParameters() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/singleTypeParameters.kt");
+    }
+
     @TestMetadata("skipQualifiers.kt")
     public void testSkipQualifiers() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/skipQualifiers.kt");
@@ -145,6 +155,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suggestedName.kt");
     }
 
+    @TestMetadata("suspendFunctionType.kt")
+    public void testSuspendFunctionType() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suspendFunctionType.kt");
+    }
+
     @TestMetadata("topLevelTypeAlias.kt")
     public void testTopLevelTypeAlias() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");
@@ -153,6 +168,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
     @TestMetadata("typeConstructor.kt")
     public void testTypeConstructor() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/typeConstructor.kt");
+    }
+
+    @TestMetadata("typeParameters.kt")
+    public void testTypeParameters() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/typeParameters.kt");
     }
 
     @TestMetadata("typesExtractedWithFunctionalType.kt")

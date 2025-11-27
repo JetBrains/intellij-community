@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -18,28 +18,27 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.net.JdkProxyProvider;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
+import com.intellij.util.system.OS;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
@@ -92,11 +91,6 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void initUpdateSession(@NotNull AnActionEvent event) {
-    Utils.initUpdateSession(event);
-  }
-
-  @Override
   public Component getComponentFromRecentMouseEvent() {
     return SwingHelper.getComponentFromRecentMouseEvent();
   }
@@ -117,49 +111,17 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public boolean notifyByBalloon(Project project,
-                                 String toolWindowId,
-                                 MessageType messageType,
-                                 @Nls String fullMessage,
-                                 Icon icon,
-                                 HyperlinkListener listener) {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (toolWindowManager.canShowNotification(toolWindowId)) {
-      //noinspection SSBasedInspection
-      toolWindowManager.notifyByBalloon(toolWindowId, messageType, fullMessage, icon, listener);
-      return true;
-    }
-    else {
-      return false;
-    }
-  }
-
-  @Override
   public URLConnection openHttpConnection(String url) throws IOException {
     return HttpConfigurable.getInstance().openConnection(url);
   }
 
   @Override
-  public SSLSocketFactory getSslSocketFactory() {
-    return CertificateManager.getInstance().getSslContext().getSocketFactory();
-  }
-
-  @Override
-  public boolean isUseSafeWrite() {
-    return GeneralSettings.getInstance().isUseSafeWrite();
-  }
-
-  @Override
-  public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor,
-                                   Project project, VirtualFile toSelect) {
+  public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
     return FileChooser.chooseFiles(descriptor, project, toSelect);
   }
 
   @Override
-  public VirtualFile chooseFile(FileChooserDescriptor descriptor,
-                                JComponent component,
-                                Project project,
-                                VirtualFile dir) {
+  public VirtualFile chooseFile(FileChooserDescriptor descriptor, JComponent component, Project project, VirtualFile dir) {
     return FileChooser.chooseFile(descriptor, component, project, dir);
   }
 
@@ -194,23 +156,41 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
-    return IOExceptionDialog.showErrorDialog(title, message);
-  }
-
-  @Override
-  public void showRefactoringMessageDialog(String title,
-                                           String message,
-                                           String helpTopic,
-                                           String iconId,
-                                           boolean showCancelButton,
-                                           Project project) {
+  public void showRefactoringMessageDialog(
+    @NlsContexts.DialogTitle String title,
+    @NlsContexts.DialogMessage String message,
+    String helpTopic,
+    String iconId,
+    boolean showCancelButton,
+    Project project
+  ) {
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpTopic, iconId, showCancelButton, project);
     dialog.show();
   }
 
   @Override
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NlsContexts.HintText String message) {
     HintManager.getInstance().showErrorHint(editor, message);
+  }
+
+  @Override
+  public boolean showErrorDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DetailedDescription String message) {
+    return IOExceptionDialog.showErrorDialog(title, message);
+  }
+
+  @Override
+  public @Nullable String getMacOsNetworkSolutionMessage(@NotNull Throwable error, boolean full) {
+    if (
+      OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(15, 0) &&
+      (error instanceof NoRouteToHostException || error.getCause() instanceof NoRouteToHostException)
+    ) {
+      return IdeCoreBundle.message(full ? "mac15.local.network.issue.full.message" : "mac15.local.network.issue.message");
+    }
+    else return null;
+  }
+
+  @Override
+  public boolean showProxyAuthNotification() {
+    return JdkProxyProvider.showProxyAuthNotification();
   }
 }

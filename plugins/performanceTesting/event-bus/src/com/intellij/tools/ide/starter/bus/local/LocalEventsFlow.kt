@@ -97,7 +97,7 @@ class LocalEventsFlow : EventsFlow {
       val result = CompletableDeferred<Unit>()
       LOG.debug("Post event $eventClassName for $subscriber.")
       // Launching a new coroutine for each subscriber
-      scope.launch(Dispatchers.IO) {
+      scope.launch(Dispatchers.IO + CoroutineName("Processing $eventClassName for $subscriber")) {
         LOG.debug("Start execution $eventClassName for $subscriber")
         // Enforces a timeout for the entire subscriber execution
         withTimeout(subscriber.timeout) {
@@ -105,7 +105,7 @@ class LocalEventsFlow : EventsFlow {
           // it will be interrupted when the coroutine is cancelled (e.g. by timeout)
           runInterruptible {
             try {
-              runBlocking {
+              runBlocking(CoroutineName("Processing $eventClassName for $subscriber")) {
                 subscriber.callback(event)
               }
               result.complete(Unit)
@@ -121,7 +121,7 @@ class LocalEventsFlow : EventsFlow {
       return@map result
     }
 
-    runBlocking {
+    runBlocking(CoroutineName("Awaiting for subscribers $subscribersForEvent")) {
       // awaitAll shouldn't be used as it would stop after the first exception from any coroutine
       tasks.forEach {
         try {

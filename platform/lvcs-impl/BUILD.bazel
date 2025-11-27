@@ -70,6 +70,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -81,6 +82,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "@lib//:jetbrains-annotations",
     "//platform/projectModel-impl",
   ]

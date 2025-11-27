@@ -26,7 +26,7 @@ open class KotlinConstructorUMethod(
     private val uastBodyPart = UastLazyPart<UExpression?>()
     private val uastAnchorPart = UastLazyPart<UIdentifier?>()
 
-    override val javaPsi = psi
+    override val javaPsi: PsiMethod = psi
 
     internal val isPrimary: Boolean
         get() = sourcePsi is KtPrimaryConstructor || sourcePsi is KtClassOrObject

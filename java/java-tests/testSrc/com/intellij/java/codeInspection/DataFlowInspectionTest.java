@@ -764,4 +764,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testClosureInConstructor() { doTest(); }
   
   public void testHugeMethodFlow() { doTest(); }
+  public void testPrivateFieldPureMethod() { doTest(); }
 }

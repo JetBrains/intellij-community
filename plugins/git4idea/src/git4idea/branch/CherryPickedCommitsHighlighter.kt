@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -43,7 +42,7 @@ internal class CherryPickedCommitsHighlighter(
 ) : VcsLogHighlighter, Disposable {
   private var progressIndicator: ProgressIndicator? = null
   private var comparedBranch: String? = null
-  private var repositoriesWithCurrentBranches: Map<GitRepository, String>? = null
+  private var repositoriesWithTargetBranches: Map<GitRepository, String>? = null
   private var nonPickedCommits: IntOpenHashSet? = null
 
   init {
@@ -76,13 +75,13 @@ internal class CherryPickedCommitsHighlighter(
       stopTask()
 
       // highlight again
-      val repositories = getRepositories(dataPack.logProviders, comparedBranch!!)
-      if (repositories == repositoriesWithCurrentBranches) {
-        // but not if current branch changed
+      val repositories = getRepositoriesWithTargetBranches(dataPack, comparedBranch!!)
+      if (repositories == repositoriesWithTargetBranches) {
+        // but not if the target branch changed
         startTask(dataPack)
       }
       else {
-        LOG.debug("Repositories with current branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithCurrentBranches")
+        LOG.debug("Repositories with target branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithTargetBranches")
         unhighlight()
       }
     }
@@ -96,14 +95,14 @@ internal class CherryPickedCommitsHighlighter(
       return
     }
 
-    val repositories = getRepositories(ui.dataPack.logProviders, branchToCompare)
+    val repositories = getRepositoriesWithTargetBranches(ui.dataPack, branchToCompare)
     if (repositories.isEmpty()) {
       LOG.debug("Could not find suitable repositories for selected branch $comparedBranch")
       return
     }
 
     comparedBranch = branchToCompare
-    repositoriesWithCurrentBranches = repositories
+    repositoriesWithTargetBranches = repositories
     startTask(dataPack)
   }
 
@@ -121,8 +120,8 @@ internal class CherryPickedCommitsHighlighter(
   }
 
   private fun startTask(dataPack: VcsLogDataPack) {
-    LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
-    val task = MyTask(repositoriesWithCurrentBranches!!, dataPack, comparedBranch!!)
+    LOG.debug("Highlighting requested for $repositoriesWithTargetBranches")
+    val task = MyTask(repositoriesWithTargetBranches!!, dataPack, comparedBranch!!)
     progressIndicator = BackgroundableProcessIndicator(task)
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator!!)
   }
@@ -137,14 +136,18 @@ internal class CherryPickedCommitsHighlighter(
   private fun unhighlight() {
     nonPickedCommits = null
     comparedBranch = null
-    repositoriesWithCurrentBranches = null
+    repositoriesWithTargetBranches = null
   }
 
-  private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
-                              branchToCompare: String): Map<GitRepository, String> {
+  private fun getRepositoriesWithTargetBranches(dataPack: VcsLogDataPack,
+                                                branchToCompare: String): Map<GitRepository, String> {
+    val providers = dataPack.logProviders
+    val isCompareBranchesUi = ui is GitCompareBranchesUi.MyVcsLogUi
+    val targetBranchFromRangeFilter = if (isCompareBranchesUi) getTargetBranchFromRangeFilter(dataPack.filters) else null
+
     return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
       repository.branches.findBranchByName(branchToCompare) != null
-    }.associateWith { it.currentBranch?.name ?: GitUtil.HEAD }
+    }.associateWith { targetBranchFromRangeFilter ?: it.currentBranch?.name ?: GitUtil.HEAD }
   }
 
   private fun notifyUnhighlight(branch: String?) {
@@ -164,14 +167,14 @@ internal class CherryPickedCommitsHighlighter(
     stopTaskAndUnhighlight()
   }
 
-  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, String>,
+  private inner class MyTask(private val repositoriesWithTargetBranches: Map<GitRepository, String>,
                              vcsLogDataPack: VcsLogDataPack,
                              private val comparedBranch: String) :
     Task.Backgroundable(project, GitBundle.message("git.log.cherry.picked.highlighter.process")) {
 
     private val comparator =
       DeepComparator(project, vcsLogData, (vcsLogDataPack as? VisiblePack)?.dataPack as? DataPack,
-                     repositoriesWithCurrentBranches, comparedBranch)
+                     repositoriesWithTargetBranches, comparedBranch)
 
     override fun run(indicator: ProgressIndicator) {
       comparator.compare()
@@ -194,7 +197,7 @@ internal class CherryPickedCommitsHighlighter(
     }
 
     override fun toString(): String {
-      return "Task for '$comparedBranch' in $repositoriesWithCurrentBranches" //NON-NLS
+      return "Task for '$comparedBranch' in $repositoriesWithTargetBranches" //NON-NLS
     }
   }
 
@@ -233,6 +236,12 @@ internal class CherryPickedCommitsHighlighter(
 
       val rangeFilter = filters.get(VcsLogFilterCollection.RANGE_FILTER) ?: return null
       return rangeFilter.ranges.singleOrNull()?.inclusiveRef
+    }
+
+    @JvmStatic
+    private fun getTargetBranchFromRangeFilter(filters: VcsLogFilterCollection): String? {
+      val rangeFilter = filters.get(VcsLogFilterCollection.RANGE_FILTER) ?: return null
+      return rangeFilter.ranges.singleOrNull()?.exclusiveRef
     }
   }
 }

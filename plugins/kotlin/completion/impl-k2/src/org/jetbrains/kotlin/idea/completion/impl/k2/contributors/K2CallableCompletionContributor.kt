@@ -8,6 +8,7 @@ import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.sequenceOfNotNull
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.*
@@ -27,15 +28,10 @@ import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
-import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
-import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
+import org.jetbrains.kotlin.idea.completion.impl.k2.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.isAfterRangeOperator
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -519,6 +515,13 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         context: K2CompletionSectionContext<P>,
         candidate: KaCallableSymbol,
     ): ApplicableExtension? {
+        val explicitReceiver = context.positionContext.explicitReceiver
+        if (explicitReceiver is KtConstantExpression && explicitReceiver.iElementType == KtNodeTypes.NULL) {
+            // Technically, we can call extension functions on `null` but the use case for this is basically non-existent.
+            // It is much more likely the user wants to complete something else (commands, postfix), so we hide the extension results.
+            return null
+        }
+
         val applicabilityResult = context.extensionChecker?.computeApplicability(candidate) as? KaExtensionApplicabilityResult.Applicable
             ?: return null
 

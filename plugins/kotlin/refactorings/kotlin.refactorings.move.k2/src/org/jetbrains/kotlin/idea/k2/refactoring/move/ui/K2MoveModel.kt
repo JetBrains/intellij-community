@@ -75,7 +75,7 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
     }
 
     open fun buildPanel(panel: Panel): Unit = with(panel) {
-        val mppDeclarationSelectedObservable = observableUiSettings.mppDeclarationsSelectedObservable.transform { isSelected ->
+        val mppDeclarationSelectedObservable = observableUiSettings.mppDeclarationsSelected.transform { isSelected ->
             isSelected && inSourceRoot
         }
 
@@ -95,17 +95,8 @@ sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings)
         }
     }
 
-    override val mppDeclarationsSettingObservable: ObservableProperty<Boolean>
+    override val mppDeclarationsSetting: ObservableProperty<Boolean>
         get() = mppDeclarations.observableProperty
-
-    override val searchForTextSettingObservable: ObservableProperty<Boolean>
-        get() = searchForText.observableProperty
-
-    override val searchInCommentsSettingObservable: ObservableProperty<Boolean>
-        get() = searchInComments.observableProperty
-
-    override val searchReferencesSettingObservable: ObservableProperty<Boolean>
-        get() = searchReferences.observableProperty
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
         SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {

@@ -168,6 +168,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.vcs.github` end

@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -92,6 +93,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
       return value
     }
+
+  private val isBreadcrumbsAbove: Boolean
+    get() {
+      val settings = EditorSettingsExternalizable.getInstance()
+      return settings.isBreadcrumbsShown && settings.isBreadcrumbsAbove
+    }
+
+  private val searchReplaceEmptyTopSpace: Int
+    get() = if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP && !isBreadcrumbsAbove) 0 else 6
 
   private fun isDefaultTheme(): Boolean {
     val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
@@ -263,6 +273,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
       uiDefaults["StatusBar.borderColor"] = Gray.TRANSPARENT
 
       val background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+
+      if (getMainBackgroundColor() == background) {
+        val hsb = Color.RGBtoHSB(background.red, background.green, background.blue, null)
+        uiDefaults["MainWindow.background"] = Color.getHSBColor(hsb[0], hsb[1], (hsb[2] + .03f).coerceAtMost(1f))
+      }
 
       uiDefaults["ToolWindow.background"] = background
       uiDefaults["ToolWindow.Header.background"] = background
@@ -611,10 +626,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
-        val isTop = UISettings.getInstance().editorTabPlacement == SwingConstants.TOP
-
         val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, if (isTop) JBInsets.create(0, 7) else JBInsets(6, 7, 2, 7))
+        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace, 7, 0, 7))
 
         g as Graphics2D
 
@@ -648,15 +661,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       @Suppress("UseDPIAwareInsets")
       val supplier = Supplier {
-        if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP) {
-          Insets(2, 10, 2, 10)
-        }
-        else {
-          Insets(8, 10, 4, 10)
-        }
+        Insets(5 + searchReplaceEmptyTopSpace, 10, 5, 10)
       }
       @Suppress("UNCHECKED_CAST")
-      parent.border = JBUI.Borders.empty(JBInsets.create(supplier as Supplier<Insets?>, supplier.get()))
+      parent.border = JBUI.Borders.empty(JBInsets.create(supplier, supplier.get()))
     }
     else {
       component.border = originalBorder
@@ -667,7 +675,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean {
-    if (isManyIslandEnabled) {
+    if (isManyIslandEnabled && !isBreadcrumbsAbove) {
       return UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) == null
     }
     return true
@@ -806,9 +814,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
     }
 
-    override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+    override fun paintTab(g: Graphics2D, position: JBTabsPosition, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      super.paintTab(g, rect, tabColor, active, hovered, selected)
+      super.paintTab(g, position, rect, tabColor, active, hovered, selected)
     }
   }
 
@@ -816,9 +824,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override val debuggerTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(true, true, isManyIslandEnabled)
 
-  override fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
+  override fun paintTab(g: Graphics, position: JBTabsPosition, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
     if (isManyIslandEnabled) {
-      toolWindowTabPainter.paintTab(g as Graphics2D, rect, null, true, hovered, selected)
+      toolWindowTabPainter.paintTab(g as Graphics2D, position, rect, null, true, hovered, selected)
       return true
     }
     return true
@@ -833,6 +841,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return JBUI.scale(4)
     }
     return 0
+  }
+
+  override fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? {
+    val compactMode = UISettings.getInstance().compactMode
+
+    return if (isManyIslandEnabled && tabsPosition.isSide && compactMode) JBUI.insetsTop(3) else null
   }
 
   private fun getMainBackgroundColor(): Color {

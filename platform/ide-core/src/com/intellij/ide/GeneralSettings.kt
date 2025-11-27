@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -144,6 +145,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): GeneralSettings = ApplicationManager.getApplication().service<GeneralSettings>()
 
     fun defaultConfirmNewProject(): Int = OPEN_PROJECT_ASK

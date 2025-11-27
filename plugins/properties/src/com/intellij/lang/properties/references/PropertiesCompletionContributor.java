@@ -77,7 +77,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
 
   public static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<>() {
     @Override
-    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
       IProperty property = (IProperty)element.getObject();
       presentation.setIcon(PlatformIcons.PROPERTY_ICON);
       String key = StringUtil.notNullize(property.getUnescapedKey());

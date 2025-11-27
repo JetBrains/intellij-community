@@ -44,6 +44,7 @@ public final class PyExceptionInheritInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();

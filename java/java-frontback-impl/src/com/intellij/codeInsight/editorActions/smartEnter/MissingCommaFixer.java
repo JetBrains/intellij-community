@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -13,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MissingCommaFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
     if (!(psiElement instanceof PsiErrorElement) ||
         !((PsiErrorElement)psiElement).getErrorDescription().equals(JavaPsiBundle.message("expected.comma.or.rparen"))) {
       return;

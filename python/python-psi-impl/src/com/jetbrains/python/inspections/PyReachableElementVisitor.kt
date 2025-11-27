@@ -6,8 +6,8 @@ import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyReachableElementVisitor(
-  private val delegate: PyElementVisitor, 
-  private val context: TypeEvalContext
+  private val delegate: PyElementVisitor,
+  private val context: TypeEvalContext,
 ) : PyElementVisitor() {
   override fun visitPyElement(node: PyElement) {
     if (!node.isUnreachableForInspection(context)) {

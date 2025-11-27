@@ -13,7 +13,7 @@ public class SmartHashSetTest {
     Set<Integer> set = new SmartHashSet<>();
     set.add(30);
     Iterator<Integer> iterator = set.iterator();
-    assertEquals((int)iterator.next(), 30);
+    assertEquals(30, (int)iterator.next());
     assertFalse(iterator.hasNext());
     assertFalse(set.isEmpty());
     iterator.remove();

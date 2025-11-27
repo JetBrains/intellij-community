@@ -15,6 +15,7 @@ interface SeTab : Disposable {
   val name: @Nls String
   val id: String
   val isIndexingDependent: Boolean get() = false
+  val priority: Int
 
   /**
    * Retrieves a flow of search result events based on the provided parameters.
@@ -49,4 +50,6 @@ interface SeTab : Disposable {
   suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo?
 
   suspend fun isExtendedInfoEnabled(): Boolean
+
+  suspend fun isCommandsSupported(): Boolean
 }

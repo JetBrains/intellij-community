@@ -37,8 +37,8 @@ public class GridHelperImpl implements GridHelper {
   public static final int DEFAULT_PAGE_SIZE_BIG = 100;
   private final String myPageSizeKey;
   private final String myLimitPageSizeKey;
-  private final int myDefaultPageSize;
-  private final boolean myDefaultLimitPageSize;
+  private int myDefaultPageSize;
+  private boolean myDefaultLimitPageSize;
 
   public GridHelperImpl() {
     this(true);
@@ -136,6 +136,15 @@ public class GridHelperImpl implements GridHelper {
     PropertiesComponent.getInstance().setValue(myPageSizeKey, value, myDefaultPageSize);
   }
 
+  /**
+   * Sets the default page size only for this helper instance without overriding a global setting.
+   * However, a value from global setting (set by {@link #setDefaultPageSize}) will be used if it exists,
+   * overriding the value set by this method.
+   */
+  public void setOwnDefaultPageSize(int value) {
+    myDefaultPageSize = value;
+  }
+
   @Override
   public boolean isLimitDefaultPageSize() {
     return PropertiesComponent.getInstance().getBoolean(myLimitPageSizeKey, myDefaultLimitPageSize);
@@ -145,6 +154,15 @@ public class GridHelperImpl implements GridHelper {
   @Override
   public void setLimitDefaultPageSize(boolean value) {
     PropertiesComponent.getInstance().setValue(myLimitPageSizeKey, value, myDefaultLimitPageSize);
+  }
+
+  /**
+   * Sets the option of limiting of the default page size only for this helper instance without overriding a global setting.
+   * However, a value from global setting (set by {@link #setLimitDefaultPageSize}) will be used if it exists,
+   * overriding the value set by this method.
+   */
+  public void setOwnLimitDefaultPageSize(boolean value) {
+    myDefaultLimitPageSize = value;
   }
 
   @Override

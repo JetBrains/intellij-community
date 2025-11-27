@@ -8,7 +8,6 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
-import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -45,13 +44,13 @@ object EelFileSystemPosixApiHelpers {
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,
   ) : OwnedBuilder<EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
-    private var symlinkPolicy: SymlinkPolicy = SymlinkPolicy.DO_NOT_RESOLVE
+    private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): ListDirectoryWithAttrs = apply {
       this.path = arg
     }
 
-    fun symlinkPolicy(arg: SymlinkPolicy): ListDirectoryWithAttrs = apply {
+    fun symlinkPolicy(arg: EelFileSystemApi.SymlinkPolicy): ListDirectoryWithAttrs = apply {
       this.symlinkPolicy = arg
     }
 
@@ -60,20 +59,20 @@ object EelFileSystemPosixApiHelpers {
      * This option makes the operation a bit more efficient if it is not interested in symlinks.
      */
     fun doNotResolve(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
 
     /**
      * Resolves a symlink and returns the information about the target of the symlink,
      * But does not perform anything on the target of the symlink itself.
      */
     fun justResolve(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE)
 
     /**
      * Resolves a symlink, follows it, and performs the required operation on target.
      */
     fun resolveAndFollow(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
     /**
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemPosixApi.listDirectoryWithAttrs]
@@ -98,13 +97,13 @@ object EelFileSystemPosixApiHelpers {
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,
   ) : OwnedBuilder<EelResult<EelPosixFileInfo, StatError>> {
-    private var symlinkPolicy: SymlinkPolicy = SymlinkPolicy.DO_NOT_RESOLVE
+    private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): Stat = apply {
       this.path = arg
     }
 
-    fun symlinkPolicy(arg: SymlinkPolicy): Stat = apply {
+    fun symlinkPolicy(arg: EelFileSystemApi.SymlinkPolicy): Stat = apply {
       this.symlinkPolicy = arg
     }
 
@@ -113,20 +112,20 @@ object EelFileSystemPosixApiHelpers {
      * This option makes the operation a bit more efficient if it is not interested in symlinks.
      */
     fun doNotResolve(): Stat =
-      symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
 
     /**
      * Resolves a symlink and returns the information about the target of the symlink,
      * But does not perform anything on the target of the symlink itself.
      */
     fun justResolve(): Stat =
-      symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE)
 
     /**
      * Resolves a symlink, follows it, and performs the required operation on target.
      */
     fun resolveAndFollow(): Stat =
-      symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
     /**
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemPosixApi.stat]

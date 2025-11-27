@@ -149,6 +149,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
       val presentation = presentation(item)
       val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTipText, presentation.icon, presentation.enabled)
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
+      button.isEnabled = isEnabled
 
       builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }

@@ -63,7 +63,8 @@ public final class DocStringUtil {
     return parseDocString(DocStringParser.guessDocStringFormat(stringLiteral.getStringValue(), stringLiteral), stringLiteral);
   }
 
-  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull PyStringLiteralExpression stringLiteral) {
+  public static @NotNull StructuredDocString parseDocString(@NotNull DocStringFormat format,
+                                                            @NotNull PyStringLiteralExpression stringLiteral) {
     return parseDocString(format, stringLiteral.getStringNodes().get(0));
   }
 

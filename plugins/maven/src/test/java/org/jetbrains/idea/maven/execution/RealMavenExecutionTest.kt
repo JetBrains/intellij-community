@@ -6,10 +6,8 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.SuccessResult
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.io.copyRecursively
@@ -30,30 +28,14 @@ import kotlin.io.path.listDirectoryEntries
 
 class RealMavenExecutionTest : MavenExecutionTest() {
   private val myEvents: MutableList<BuildEvent> = CopyOnWriteArrayList()
-  private lateinit var myDisposable: Disposable
 
   override fun setUp() {
     super.setUp()
-    myDisposable = Disposer.newDisposable(testRootDisposable)
     project.service<ExternalSystemRunConfigurationViewManager>().addListener(object : BuildProgressListener {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }, myDisposable)
-  }
-
-  override fun tearDown() {
-    try {
-      if (::myDisposable.isInitialized) {
-        Disposer.dispose(myDisposable)
-      }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   @Test

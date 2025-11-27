@@ -125,6 +125,10 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
   public void testLinkWithModule() { doTestClass(); }
   public void testLinkToModule() { doTestClass(); }
+  public void testLinkNested() { 
+    configureByFile();
+    verifyJavaDoc(getTestClass().getAllInnerClasses()[0].getMethods()[0]);
+  }
   public void testLinkWithLineBreak() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
@@ -199,11 +203,17 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[1];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
+  public void testMarkdownInheritDocSingleLine() {
+    configureByFile();
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[1];
+    verifyJavaDoc(outerClass.getMethods()[0]);
+  }
   public void testMarkdownInlineWithTags(){
     configureByFile();
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
+  public void testMarkdownParagraphSeparation() { doTestClass(); }
   public void testMarkdownJepExample(){ doTestMethod(); }
   public void testHtmlCodeInMarkdown() { doTestMethod(); }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
@@ -216,6 +226,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testAllTags() { doTestAtCaret(); }
   public void testAllTagsMarkdown() { doTestAtCaret(); }
   public void testFragmentReference()  { doTestClass(); }
+  public void testPackageInfoMarkdown() { doTestPackageInfo(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

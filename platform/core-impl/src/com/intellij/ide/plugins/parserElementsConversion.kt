@@ -9,13 +9,10 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.platform.plugins.parser.impl.elements.OS.*
-import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
+import com.intellij.platform.plugins.parser.impl.elements.OSValue.*
+import com.intellij.platform.plugins.parser.impl.elements.PreloadModeValue.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ModuleLoadingRuleElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility as ModuleVisibilityElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },
@@ -24,14 +21,14 @@ fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor
   extensionPoints = extensionPoints.map { it.convert() },
 )
 
-fun ClientKindElement.convert(): ClientKind = when (this) {
-  ClientKindElement.LOCAL -> ClientKind.LOCAL
-  ClientKindElement.FRONTEND -> ClientKind.FRONTEND
-  ClientKindElement.CONTROLLER -> ClientKind.CONTROLLER
-  ClientKindElement.GUEST -> ClientKind.GUEST
-  ClientKindElement.OWNER -> ClientKind.OWNER
-  ClientKindElement.REMOTE -> ClientKind.REMOTE
-  ClientKindElement.ALL -> ClientKind.ALL
+fun ClientKindValue.convert(): ClientKind = when (this) {
+  ClientKindValue.LOCAL -> ClientKind.LOCAL
+  ClientKindValue.FRONTEND -> ClientKind.FRONTEND
+  ClientKindValue.CONTROLLER -> ClientKind.CONTROLLER
+  ClientKindValue.GUEST -> ClientKind.GUEST
+  ClientKindValue.OWNER -> ClientKind.OWNER
+  ClientKindValue.REMOTE -> ClientKind.REMOTE
+  ClientKindValue.ALL -> ClientKind.ALL
 }
 
 fun ComponentElement.convert(): ComponentConfig = ComponentConfig(
@@ -61,7 +58,7 @@ fun ListenerElement.convert(): ListenerDescriptor = ListenerDescriptor(
   activeInHeadlessMode,
 )
 
-fun OS.convert(): ExtensionDescriptor.Os = when (this) {
+fun OSValue.convert(): ExtensionDescriptor.Os = when (this) {
   MAC -> ExtensionDescriptor.Os.mac
   LINUX -> ExtensionDescriptor.Os.linux
   WINDOWS -> ExtensionDescriptor.Os.windows
@@ -81,7 +78,7 @@ fun ServiceElement.convert(): ServiceDescriptor = ServiceDescriptor(
   os?.convert()
 )
 
-fun PreloadMode.convert(): ServiceDescriptor.PreloadMode = when (this) {
+fun PreloadModeValue.convert(): ServiceDescriptor.PreloadMode = when (this) {
   TRUE -> ServiceDescriptor.PreloadMode.TRUE
   FALSE -> ServiceDescriptor.PreloadMode.FALSE
   AWAIT -> ServiceDescriptor.PreloadMode.AWAIT
@@ -89,16 +86,24 @@ fun PreloadMode.convert(): ServiceDescriptor.PreloadMode = when (this) {
   NOT_LIGHT_EDIT -> ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
 }
 
-fun ModuleLoadingRuleElement.convert(): ModuleLoadingRule = when (this) {
-  ModuleLoadingRuleElement.REQUIRED -> ModuleLoadingRule.REQUIRED
-  ModuleLoadingRuleElement.EMBEDDED -> ModuleLoadingRule.EMBEDDED
-  ModuleLoadingRuleElement.OPTIONAL -> ModuleLoadingRule.OPTIONAL
-  ModuleLoadingRuleElement.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
+fun ModuleLoadingRuleValue.convert(): ModuleLoadingRule = when (this) {
+  ModuleLoadingRuleValue.REQUIRED -> ModuleLoadingRule.REQUIRED
+  ModuleLoadingRuleValue.EMBEDDED -> ModuleLoadingRule.EMBEDDED
+  ModuleLoadingRuleValue.OPTIONAL -> ModuleLoadingRule.OPTIONAL
+  ModuleLoadingRuleValue.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
   else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
 }
 
-fun ModuleVisibilityElement.convert(): ModuleVisibility = when (this) {
-  ModuleVisibilityElement.PRIVATE -> ModuleVisibility.PRIVATE
-  ModuleVisibilityElement.INTERNAL -> ModuleVisibility.INTERNAL
-  ModuleVisibilityElement.PUBLIC -> ModuleVisibility.PUBLIC
+fun ModuleLoadingRule.asParserElement(): ModuleLoadingRuleValue = when (this) {
+  ModuleLoadingRule.REQUIRED -> ModuleLoadingRuleValue.REQUIRED
+  ModuleLoadingRule.EMBEDDED -> ModuleLoadingRuleValue.EMBEDDED
+  ModuleLoadingRule.OPTIONAL -> ModuleLoadingRuleValue.OPTIONAL
+  ModuleLoadingRule.ON_DEMAND -> ModuleLoadingRuleValue.ON_DEMAND
+  else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
+}
+
+fun ModuleVisibilityValue.convert(): ModuleVisibility = when (this) {
+  ModuleVisibilityValue.PRIVATE -> ModuleVisibility.PRIVATE
+  ModuleVisibilityValue.INTERNAL -> ModuleVisibility.INTERNAL
+  ModuleVisibilityValue.PUBLIC -> ModuleVisibility.PUBLIC
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -101,8 +102,7 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
     }
   }
 
-  private boolean isDeprecated(){
-    final Value element = getElement();
-    return element instanceof PsiDocCommentOwner owner && owner.isDeprecated();
+  private boolean isDeprecated() {
+    return PsiImplUtil.isDeprecated(getElement());
  }
 }

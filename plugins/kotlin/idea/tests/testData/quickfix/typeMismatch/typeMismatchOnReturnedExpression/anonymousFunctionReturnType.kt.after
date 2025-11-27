@@ -1,4 +1,4 @@
-// "Change return type of enclosing function to 'SomeType'" "true"
+// "Specify 'SomeType' return type for enclosing function" "true"
 package test
 
 class SomeType

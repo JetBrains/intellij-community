@@ -24,5 +24,5 @@ def star_parameter_wrong_type(*args: int) -> float:
 foo0: NamedParam = named_parameter
 foo1: NamedParam = <warning descr="Expected type 'NamedParam', got '(arg: int) -> float' instead">named_parameter_wrong_type</warning>
 foo2: StarParam = star_parameter
-foo3: StarParam = <warning descr="Expected type 'StarParam', got '(args: tuple[int, ...]) -> float' instead">star_parameter_wrong_type</warning>
+foo3: StarParam = <warning descr="Expected type 'StarParam', got '(*args: int) -> float' instead">star_parameter_wrong_type</warning>
 foo4: StarParam = <warning descr="Expected type 'StarParam', got '(arg: float) -> float' instead">named_parameter</warning>

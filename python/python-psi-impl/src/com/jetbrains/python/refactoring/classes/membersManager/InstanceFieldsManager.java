@@ -59,7 +59,7 @@ class InstanceFieldsManager extends FieldsManager {
    * @return newly created fields
    */
   private static @NotNull List<PyAssignmentStatement> copyInstanceFields(final @NotNull Collection<PyAssignmentStatement> members,
-                                                                final @NotNull PyClass to) {
+                                                                         final @NotNull PyClass to) {
     //We need __init__ method, and if there is no any -- we need to create it
     PyFunction toInitMethod = PyUtil.getInitMethod(to);
     if (toInitMethod == null) {

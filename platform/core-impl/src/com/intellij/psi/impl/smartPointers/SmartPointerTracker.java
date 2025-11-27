@@ -141,7 +141,7 @@ public final class SmartPointerTracker {
     mySorted = false;
   }
 
-  synchronized void fastenBelts(@NotNull SmartPointerManagerImpl manager) {
+  synchronized void fastenBelts(@NotNull SmartPointerManagerEx manager) {
     processQueue();
     processAlivePointers(pointer -> {
       pointer.getElementInfo().fastenBelt(manager);

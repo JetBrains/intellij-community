@@ -37,7 +37,8 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   override fun canInlineElement(element: PsiElement?): Boolean {
     if (element is PyFunction) {
-      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile else element.containingFile
+      val containingFile = if (element.containingFile is PyiFile) PyiUtil.getOriginalElement(element)?.containingFile
+      else element.containingFile
       return containingFile is PyFile
     }
     return false
@@ -47,8 +48,10 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     invoke(project, editor, element)
   }
 
-  fun invoke(project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
-             inlineThisOnly: Boolean = false) {
+  fun invoke(
+    project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
+    inlineThisOnly: Boolean = false,
+  ) {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
@@ -84,11 +87,12 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   }
 
   private fun isSpecialMethod(function: PyFunction): Boolean {
-    return function.containingClass != null && function.name != null && 
+    return function.containingClass != null && function.name != null &&
            PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).contains(function.name)
   }
 
-  private fun hasNestedFunction(function: PyFunction): Boolean = SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
+  private fun hasNestedFunction(function: PyFunction): Boolean =
+    SyntaxTraverser.psiTraverser(function.statementList).traverse().any { it is PyFunction }
 
   private fun hasNonExhaustiveIfs(function: PyFunction): Boolean {
     val returns = mutableListOf<PyReturnStatement>()
@@ -125,7 +129,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   private fun checkLastStatement(statementList: PyStatementList, cache: MutableSet<PyIfStatement>): Boolean {
     val statements = statementList.statements
     if (statements.isEmpty()) return true
-    when(val last = statements.last()) {
+    when (val last = statements.last()) {
       is PyIfStatement -> if (checkInterruptsControlFlow(last, cache)) return true
       !is PyReturnStatement -> return true
     }

@@ -42,17 +42,17 @@ class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeatur
 ) {
   object Fields {
     @JvmStatic
-    val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
+    val IS_INVALID_DATA_KEY = EventFields.Boolean("is_invalid")
 
     val LANGUAGE_DATA_KEY = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
-    val LANGUAGE_USE_COUNT_DATA_KEY = EventFields.Int("langUseCount")
-    val LANGUAGE_IS_MOST_USED_DATA_KEY = EventFields.Boolean("langIsMostUsed")
-    val LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY = EventFields.Boolean("langIsInTop3MostUsed")
-    val LANGUAGE_USED_IN_LAST_DAY = EventFields.Boolean("langUsedInLastDay")
-    val LANGUAGE_USED_IN_LAST_WEEK = EventFields.Boolean("langUsedInLastWeek")
-    val LANGUAGE_USED_IN_LAST_MONTH = EventFields.Boolean("langUsedInLastMonth")
-    val LANGUAGE_NEVER_USED_DATA_KEY = EventFields.Boolean("langNeverUsed")
-    val LANGUAGE_IS_SAME_AS_OPENED_FILE = EventFields.Boolean("langSameAsOpenedFile")
+    val LANGUAGE_USE_COUNT_DATA_KEY = EventFields.Int("lang_use_count")
+    val LANGUAGE_IS_MOST_USED_DATA_KEY = EventFields.Boolean("lang_is_most_used")
+    val LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY = EventFields.Boolean("lang_is_in_top_3_most_used")
+    val LANGUAGE_USED_IN_LAST_DAY = EventFields.Boolean("lang_used_in_last_day")
+    val LANGUAGE_USED_IN_LAST_WEEK = EventFields.Boolean("lang_used_in_last_week")
+    val LANGUAGE_USED_IN_LAST_MONTH = EventFields.Boolean("lang_used_in_last_month")
+    val LANGUAGE_NEVER_USED_DATA_KEY = EventFields.Boolean("lang_never_used")
+    val LANGUAGE_IS_SAME_AS_OPENED_FILE = EventFields.Boolean("lang_same_as_opened_file")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(

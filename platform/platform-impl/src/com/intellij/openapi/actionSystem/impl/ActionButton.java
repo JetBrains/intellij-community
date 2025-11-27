@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -219,8 +220,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     AnActionEvent event = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, e);
     if (!isEnabled()) return;
     ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
-    AnActionResult result = actionManager.performWithActionCallbacks(
-      myAction, event, () -> actionPerformed(event));
+    AnActionResult result = WriteIntentReadAction.<AnActionResult>compute(
+      () -> actionManager.performWithActionCallbacks(myAction, event, () -> actionPerformed(event)));
     if (result.isPerformed()) {
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());

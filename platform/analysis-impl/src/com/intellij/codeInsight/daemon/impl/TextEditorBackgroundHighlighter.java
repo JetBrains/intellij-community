@@ -23,6 +23,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -60,7 +61,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
       return List.of();
     }
 
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
     if (!documentManager.isCommitted(document)) {
       LOG.error(document + documentManager.someDocumentDebugInfo(document));
@@ -134,7 +135,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   public static @Nullable PsiFile getCachedFileToHighlight(@NotNull Project project,
                                                            @NotNull VirtualFile virtualFile,
                                                            @NotNull CodeInsightContext context) {
-    PsiDocumentManagerBase psiDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiDocumentManagerEx psiDocumentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile, context);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = (PsiFile)compiled.getCachedMirror();

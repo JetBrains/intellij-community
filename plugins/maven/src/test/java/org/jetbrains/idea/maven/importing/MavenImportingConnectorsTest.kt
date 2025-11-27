@@ -23,6 +23,7 @@ import java.nio.file.Files.createDirectories
 import java.nio.file.Path.of
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   private lateinit var myAnotherProjectRoot: VirtualFile
 

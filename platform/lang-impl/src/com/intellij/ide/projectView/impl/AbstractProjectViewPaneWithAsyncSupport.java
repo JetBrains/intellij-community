@@ -28,7 +28,6 @@ import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -44,8 +43,10 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
+import java.util.List;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane
   implements AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect {
@@ -192,7 +193,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     afterUpdate = cb.createSetDoneRunnable();
     if (myAsyncSupport != null) {
       myProject.getMessageBus().syncPublisher(ProjectViewListener.TOPIC).paneUpdateScheduled(this);
-      myAsyncSupport.updateAll(afterUpdate);
+      var cause = updateFromRootCause != null
+                  ? updateFromRootCause
+                  : guessProjectViewUpdateCauseByCaller(AbstractProjectViewPaneWithAsyncSupport.class);
+      myAsyncSupport.updateAll(afterUpdate, List.of(cause));
     }
     else {
       return ActionCallback.REJECTED;

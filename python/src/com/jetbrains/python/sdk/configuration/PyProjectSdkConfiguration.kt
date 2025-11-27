@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -55,6 +54,7 @@ object PyProjectSdkConfiguration {
     } ?: return@withContext false
 
     setReadyToUseSdk(module.project, module, sdk)
+    thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
     true
   }
 

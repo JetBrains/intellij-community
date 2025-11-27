@@ -78,6 +78,8 @@ interface UiPluginManagerController {
   suspend fun getPluginsRequiresUltimateMap(pluginIds: List<PluginId>): Map<PluginId, Boolean>
   suspend fun isRestartRequired(sessionId: String): Boolean
 
+  suspend fun setPluginsAutoUpdateEnabled(enabled: Boolean)
+
   companion object {
     val EP_NAME: ExtensionPointName<UiPluginManagerController> = ExtensionPointName<UiPluginManagerController>("com.intellij.uiPluginManagerController")
   }

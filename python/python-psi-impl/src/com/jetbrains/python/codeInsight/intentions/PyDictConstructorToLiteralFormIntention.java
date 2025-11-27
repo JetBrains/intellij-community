@@ -66,13 +66,14 @@ public final class PyDictConstructorToLiteralFormIntention extends PsiUpdateModC
         stringBuilder.append(((PyKeywordArgument)argument).getKeyword());
         stringBuilder.append("' : ");
         stringBuilder.append(((PyKeywordArgument)argument).getValueExpression().getText());
-        if (i != size-1)
+        if (i != size - 1) {
           stringBuilder.append(",");
+        }
       }
-
     }
-    PyDictLiteralExpression dict = (PyDictLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
-                                                                                            "{" + stringBuilder + "}").getExpression();
+    PyDictLiteralExpression dict =
+      (PyDictLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
+                                                               "{" + stringBuilder + "}").getExpression();
     expression.replace(dict);
   }
 }

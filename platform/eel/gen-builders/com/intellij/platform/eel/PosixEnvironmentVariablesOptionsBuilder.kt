@@ -5,7 +5,6 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions
-import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
 import com.intellij.platform.eel.channels.EelDelicateApi
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,21 +12,25 @@ import org.jetbrains.annotations.ApiStatus
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
 class PosixEnvironmentVariablesOptionsBuilder {
-  private var mode: Mode = Mode.DEFAULT
+  private var mode: PosixEnvironmentVariablesOptions.Mode = PosixEnvironmentVariablesOptions.Mode.DEFAULT
 
   private var onlyActual: Boolean = false
 
-  fun mode(arg: Mode): PosixEnvironmentVariablesOptionsBuilder = apply {
+  fun mode(arg: PosixEnvironmentVariablesOptions.Mode): PosixEnvironmentVariablesOptionsBuilder = apply {
     this.mode = arg
   }
 
   /**
-   * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+   * * On remote Eel it works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+   * * On local Windows and Linux it always works like [MINIMAL]
+   *   because historically the IDE haven't called the shell for environment variables in most cases.
+   * * On local macOS it works like [LOGIN_NON_INTERACTIVE] + [MINIMAL], but it returns values cached at start
+   *   with no effect from the [onlyActual] option. This is the historical behaviour too.
    *
    * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
    */
   fun default(): PosixEnvironmentVariablesOptionsBuilder =
-    mode(Mode.DEFAULT)
+    mode(PosixEnvironmentVariablesOptions.Mode.DEFAULT)
 
   /**
    *  **Use with caution, avoid when possible.**
@@ -51,7 +54,7 @@ class PosixEnvironmentVariablesOptionsBuilder {
    */
   @EelDelicateApi
   fun loginInteractive(): PosixEnvironmentVariablesOptionsBuilder =
-    mode(Mode.LOGIN_INTERACTIVE)
+    mode(PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
 
   /**
    * This mode executes a shell process supposed to load various profile scripts:
@@ -64,7 +67,7 @@ class PosixEnvironmentVariablesOptionsBuilder {
    * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
    */
   fun loginNonInteractive(): PosixEnvironmentVariablesOptionsBuilder =
-    mode(Mode.LOGIN_NON_INTERACTIVE)
+    mode(PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE)
 
   /**
    * The fastest way to get environment variables. It doesn't call shell scripts written by users.
@@ -74,7 +77,7 @@ class PosixEnvironmentVariablesOptionsBuilder {
    * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
    */
   fun minimal(): PosixEnvironmentVariablesOptionsBuilder =
-    mode(Mode.MINIMAL)
+    mode(PosixEnvironmentVariablesOptions.Mode.MINIMAL)
 
   /**
    * The implementation MAY cache the environment variables by default because they rarely change in real life.
@@ -97,6 +100,6 @@ class PosixEnvironmentVariablesOptionsBuilder {
 
 @GeneratedBuilder.Result
 internal class PosixEnvironmentVariablesOptionsImpl(
-  override val mode: Mode,
+  override val mode: PosixEnvironmentVariablesOptions.Mode,
   override val onlyActual: Boolean,
 ) : PosixEnvironmentVariablesOptions

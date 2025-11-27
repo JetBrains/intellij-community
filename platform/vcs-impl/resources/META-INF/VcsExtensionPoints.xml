@@ -242,6 +242,7 @@
     </extensionPoint>
 
     <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
+    <extensionPoint name="vcs.changeListClassifierProvider" interface="com.intellij.vcs.commit.ChangeListClassifierProvider" dynamic="true"/>
 
     <extensionPoint name="vcs.shelveSilentlyTitleProvider"
                     interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider"

@@ -86,21 +86,24 @@ class IDEScreenRecorder(private val runContext: IDERunContext) {
     }
   }
 
-  var javaScreenRecorder: ScreenRecorder? = null
-  var ffmpegProcessJob: Job? = null
-
-  init {
-    //on Linux, we run xvfb and test process is headless, so we need external tool to record screen
+  val javaScreenRecorder: ScreenRecorder? by lazy {
     if (OS.CURRENT != OS.Linux) {
-      javaScreenRecorder = runCatching { getScreenRecorder((runContext.logsDir / "screenRecording").toFile()) }.getOrLogException { logOutput("Can't create screen recorder: ${it.stackTraceToString()}") }
+      runCatching { getScreenRecorder((runContext.logsDir / "screenRecording").toFile()) }.getOrLogException { logOutput("Can't create screen recorder: ${it.stackTraceToString()}") }
     }
+    else null
   }
+  var ffmpegProcessJob: Job? = null
 
   fun start() {
     if (StartupUiUtil.isWayland) {
       logOutput("Screen recording is disabled because on Wayland it triggers system dialog about granting permissions each time, and it can't be disabled.")
       return
     }
+    if (runContext.calculateVmOptions().hasHeadlessMode()) {
+      logOutput("Screen recording is disabled because IDE is started in headless mode.")
+      return
+    }
+
     logOutput("Screen recorder: starting")
     synchronized(this) {
       if (javaScreenRecorder != null) {
@@ -168,6 +171,7 @@ class IDEScreenRecorder(private val runContext: IDERunContext) {
         expectedExitCode = 0,
         stdoutRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
         stderrRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
+        timeout = ideRunContext.runTimeout,
       ).startCancellable()
     }
     catch (e: CancellationException) {

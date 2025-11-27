@@ -206,6 +206,12 @@ public class JavaInheritorsGetter {
   public static void processInheritors(final CompletionParameters parameters,
                                        Collection<? extends PsiClassType> expectedClassTypes,
                                        final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
+    processInheritors((BaseCompletionParameters)parameters, expectedClassTypes, matcher, consumer);
+  }
+  
+  public static void processInheritors(final BaseCompletionParameters parameters,
+                                       Collection<? extends PsiClassType> expectedClassTypes,
+                                       final PrefixMatcher matcher, final Consumer<? super PsiType> consumer) {
     final PsiElement context = parameters.getPosition();
     GlobalSearchScope scope = context.getResolveScope();
     expectedClassTypes = ContainerUtil.mapNotNull(expectedClassTypes, type ->

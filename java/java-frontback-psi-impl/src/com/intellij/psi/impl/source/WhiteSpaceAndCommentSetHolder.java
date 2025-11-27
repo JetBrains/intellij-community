@@ -8,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,11 +18,19 @@ import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COM
 import static com.intellij.psi.tree.ParentAwareTokenSet.create;
 import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 
+
+/**
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ * You can temporarily use @{@link com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder}
+ *
+ */
+@ApiStatus.ScheduledForRemoval
 @Deprecated
 public class WhiteSpaceAndCommentSetHolder {
   public static final WhiteSpaceAndCommentSetHolder INSTANCE = new WhiteSpaceAndCommentSetHolder();
   private static final ParentAwareTokenSet PRECEDING_COMMENT_SET =
-    orSet(create(BasicJavaElementType.BASIC_MODULE, BasicJavaElementType.BASIC_IMPLICIT_CLASS), 
+    orSet(create(BasicJavaElementType.BASIC_MODULE, BasicJavaElementType.BASIC_IMPLICIT_CLASS),
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET);
 
   private static final ParentAwareTokenSet TRAILING_COMMENT_SET =
@@ -31,10 +40,14 @@ public class WhiteSpaceAndCommentSetHolder {
   private WhiteSpaceAndCommentSetHolder() {
   }
 
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, true);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, true);
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, false);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, false);
+  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(false, true);
+  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(true, true);
+  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(false, false);
+  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(true, false);
   private final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsBinder();
 
   public WhitespacesAndCommentsBinder getPrecedingCommentBinder(@NotNull LanguageLevel myLanguageLevel) {
@@ -81,20 +94,20 @@ public class WhiteSpaceAndCommentSetHolder {
       if (mySupportMarkdown) {
         //collect everything
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == BASIC_DOC_COMMENT) return idx;
         }
       }
       else {
         // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
         // If there is no non-markdown, take the first markdown
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT) && !isDocMarkdownComment(idx, getter)) {
+          if (tokens.get(idx) == BASIC_DOC_COMMENT && !isDocMarkdownComment(idx, getter)) {
             return idx;
           }
         }
 
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == BASIC_DOC_COMMENT) return idx;
         }
       }
 

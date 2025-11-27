@@ -47,7 +47,10 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return emptyList()
         }
 
-        val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
+        val suspendContext =
+            SuspendManagerUtil.findContextByThread(debugProcess.suspendManager, frame.threadProxy())
+                ?: SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
+                ?: return null
 
         val isSuspendFrame = extractContinuation(frame) != null
 

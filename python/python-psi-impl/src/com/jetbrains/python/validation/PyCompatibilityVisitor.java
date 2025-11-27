@@ -49,7 +49,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
 
   private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
-  private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
+  private static final @NotNull Set<String> PYTHON314_PREFIXES =
+    Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
 
   protected final @NotNull List<LanguageLevel> myVersionsToProcess;
 
@@ -79,10 +80,11 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
 
       if (element != null && ",".equals(element.getText())) {
-        registerForAllMatchingVersions(level -> level.isPy3K() && level.isOlderThan(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
-                                       PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
-                                       node,
-                                       new ReplaceExceptPartQuickFix());
+        registerForAllMatchingVersions(
+          level -> level.isPy3K() && level.isOlderThan(LanguageLevel.PYTHON314) && registerForLanguageLevel(level),
+          PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
+          node,
+          new ReplaceExceptPartQuickFix());
       }
     }
     PsiElement star = PyPsiUtils.getFirstChildOfType(node, PyTokenTypes.MULT);
@@ -141,7 +143,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
           registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
                                                   level.isOlderThan(LanguageLevel.PYTHON38) &&
                                                   registerForLanguageLevel(level),
-                                         PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.return.statements"),
+                                         PyPsiBundle.message(
+                                           "INSP.compatibility.feature.support.unpacking.without.parentheses.in.return.statements"),
                                          node);
         }
 
@@ -149,7 +152,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
           registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON35) &&
                                                   level.isOlderThan(LanguageLevel.PYTHON38) &&
                                                   registerForLanguageLevel(level),
-                                         PyPsiBundle.message("INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
+                                         PyPsiBundle.message(
+                                           "INSP.compatibility.feature.support.unpacking.without.parentheses.in.yield.statements"),
                                          node);
         }
 
@@ -545,7 +549,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                                 LocalQuickFix @NotNull ... fixes) {
     final List<LanguageLevel> levels = ContainerUtil.filter(myVersionsToProcess, levelPredicate::test);
     if (!levels.isEmpty()) {
-      @NlsSafe String versions = StringUtil.join(levels,", ");
+      @NlsSafe String versions = StringUtil.join(levels, ", ");
       @InspectionMessage String message = PyPsiBundle.message("INSP.compatibility.inspection.unsupported.feature.prefix",
                                                               levels.size(), versions, suffix);
       registerProblem(node, range, message, asError, fixes);
@@ -555,7 +559,7 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
   protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
                                                 @NotNull @Nls String suffix,
                                                 @NotNull PsiElement node,
-                                                LocalQuickFix @NotNull... fixes) {
+                                                LocalQuickFix @NotNull ... fixes) {
     registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), true, fixes);
   }
 
@@ -612,7 +616,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
       }
       else {
         if (seenKeywordArgument) {
-          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.keyword.argument"), new PyRemoveArgumentQuickFix());
+          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.keyword.argument"),
+                          new PyRemoveArgumentQuickFix());
         }
         else if (seenPositionalContainer) {
           registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -621,7 +626,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
                                          new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
-          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.kwargs"), new PyRemoveArgumentQuickFix());
+          registerProblem(argument, PyPsiBundle.message("INSP.compatibility.positional.argument.after.kwargs"),
+                          new PyRemoveArgumentQuickFix());
         }
       }
     }
@@ -784,7 +790,8 @@ public abstract class PyCompatibilityVisitor extends PyElementVisitor {
     super.visitPyDecorator(decorator);
     if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.arbitrary.expressions.as.decorator"), decorator);
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.arbitrary.expressions.as.decorator"),
+                                     decorator);
     }
   }
 

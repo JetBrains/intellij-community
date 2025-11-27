@@ -25,7 +25,7 @@ class KotlinStringUSimpleReferenceExpression(
     private val resolved: PsiElement?
         get() = resolvedPart.getOrBuild { referenceAnchor?.references?.singleOrNull()?.resolve() }
 
-    override fun resolve() = resolved
+    override fun resolve(): PsiElement? = resolved
 
     override val resolvedName: String
         get() = (resolved as? PsiNamedElement)?.name ?: identifier

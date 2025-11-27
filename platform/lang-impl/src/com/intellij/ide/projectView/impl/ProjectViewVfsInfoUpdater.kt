@@ -10,6 +10,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
@@ -34,7 +35,7 @@ internal class ProjectViewVfsInfoUpdater(val project: Project, val scope: Corout
           continue
         }
         withContext(Dispatchers.EDT) {
-          ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+          ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.DEBUG_VFS_INFO)
         }
       }
     }

@@ -53,6 +53,7 @@
       <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
     </action>
+    <group id="Git.Log.Branches.Toolbar.Actions"/>
     <action id="Git.Log.Branches.Navigate.Log.To.Selected.Branch"
             icon="AllIcons.General.Locate"
             use-shortcut-of="SelectIn"
@@ -98,6 +99,14 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
     </group>
+
+    <!-- Branches cleanup action -->
+    <action id="Git.Cleanup.Branches"
+            class="git4idea.ui.branch.cleanup.CleanupBranchesAction"
+            icon="AllIcons.Actions.ClearCash"
+            internal="true">
+      <add-to-group group-id="Git.Log.Branches.Toolbar.Actions"/>
+    </action>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>
@@ -160,6 +169,7 @@
       <reference ref="Vcs.QuickListPopupAction"/>
       <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
+      <action id="Git.CherryPick.Continue" class="git4idea.actions.GitCherryPickContinueAction"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
 
       <add-to-group group-id="VcsGroups" relative-to-action="Vcs.MainMenu" anchor="after"/>
@@ -188,6 +198,7 @@
       <separator/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
     </group>
 
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
@@ -198,6 +209,7 @@
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Skip"/>
@@ -497,6 +509,7 @@
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.CherryPick.Abort"/>
       <reference ref="Git.Revert.Abort"/>
     </group>
@@ -528,6 +541,7 @@
                      groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.push.force.with.lease" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.update.incoming.outgoing.info" default="true" groupKey="advanced.settings.git"/>
+    <advancedSetting id="git.update.info.auto.open.enabled" default="true" bundle="messages.GitBundle" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.commit.do.not.run.commit.hooks" default="false"  groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
@@ -638,6 +652,10 @@
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
     <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
+    <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
+                 description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
+    <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="false"
+                 description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

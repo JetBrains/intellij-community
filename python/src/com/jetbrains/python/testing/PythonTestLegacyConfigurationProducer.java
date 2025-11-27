@@ -3,11 +3,8 @@ package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -17,8 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
-import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.RunnableScriptFilter;
@@ -108,6 +104,7 @@ public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPy
 
     if (RunnableScriptFilter.isIfNameMain(location)) return false;
     final Module module = location.getModule();
+    if (module == null) return false;
     if (!isPythonModule(module)) return false;
 
     if (element instanceof PsiDirectory) {
@@ -231,20 +228,8 @@ public abstract class PythonTestLegacyConfigurationProducer<T extends AbstractPy
     return true;
   }
 
-  protected static boolean isPythonModule(Module module) {
-    if (module == null) {
-      return false;
-    }
-    if (ModuleType.get(module) instanceof PythonModuleTypeBase) {
-      return true;
-    }
-    final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet facet : allFacets) {
-      if (facet.getConfiguration() instanceof PythonFacetSettings) {
-        return true;
-      }
-    }
-    return false;
+  protected static boolean isPythonModule(@NotNull Module module) {
+    return PyModuleService.getInstance().isPythonModule(module);
   }
 
   protected List<PyStatement> getTestCaseClassesFromFile(final @NotNull PyFile pyFile) {

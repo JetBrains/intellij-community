@@ -289,10 +289,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   private fun toJbProductInfo(confDir: Path): JbProductInfo? {
-    val ideName: String = IDEData.IDE_MAP.keys.filter { confDir.name.startsWith(it) }.maxByOrNull { it.length } ?: run {
+    val ideData = IDEData.getForConfigDir(confDir) ?: run {
       logger.info("$confDir is not prefixed with with any known IDE name. Skipping it")
       return null
     }
+    val ideName: String = ideData.folderName
     val ideVersion = confDir.name.substring(ideName.length)
     if (ideVersion.isEmpty()) {
       logger.info("$confDir doesn't contain any version info. Skipping it")
@@ -498,6 +499,16 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (shouldRestart) {
         withContext(Dispatchers.EDT) {
           logger.info("Calling restart...")
+          runCatching {
+            val properties = listOf(
+              InitialConfigImportState.FIRST_SESSION_KEY to true.toString(),
+              InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY to true.toString(),
+              InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH to productInfo.configDir.toString(),
+            )
+            CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile()
+          }.onFailure {
+            logger.warn("Could not write config migration options", it)
+          }
           ApplicationManagerEx.getApplicationEx().restart(true)
         }
       }

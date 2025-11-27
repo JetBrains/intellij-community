@@ -60,7 +60,8 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
     val uniqueGuard = HashSet<String>()
     for (item in includedModules) {
       // libraries are packed into product module
-      if (item.isProductModule()) {
+      // there are no strong valid reasons to check `item.includeDependencies` here, just to preserve current behavior and reduce scope of changes; it will be addressed later
+      if (item.isProductModule() && !item.includeDependencies) {
         continue
       }
 

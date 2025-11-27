@@ -32,7 +32,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
     ))
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+  override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
     zipSourcesOfModules(
       modules = listOf("intellij.python.community", "intellij.python.psi"),
       targetFile = Path.of("$targetDir/lib/src/pycharm-openapi-src.zip"),

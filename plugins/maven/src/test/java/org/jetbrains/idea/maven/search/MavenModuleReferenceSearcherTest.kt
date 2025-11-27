@@ -20,6 +20,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
         renameDialog.performRename(newName)
       }
     }
+    awaitConfiguration()
   }
 
   @Test
@@ -84,6 +85,8 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
     val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
+
+    //awaitConfiguration()
 
     val tag = findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())

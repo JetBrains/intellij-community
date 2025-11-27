@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,6 @@ import javax.swing.tree.TreeModel;
 import java.awt.*;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
-import static java.awt.EventQueue.isDispatchThread;
 
 public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   public static final @NonNls String ID = "ProjectPane";
@@ -90,7 +90,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
    * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
    */
   private boolean hasSeveralTopLevelModuleNodes() {
-    if (!isDispatchThread()) return true; // do not check nodes during building
+    if (!EDT.isCurrentThreadEdt()) return true; // do not check nodes during building
     // TODO: have to rewrite this logic without using walking in a tree
     TreeModel treeModel = myTree.getModel();
     Object root = treeModel.getRoot();

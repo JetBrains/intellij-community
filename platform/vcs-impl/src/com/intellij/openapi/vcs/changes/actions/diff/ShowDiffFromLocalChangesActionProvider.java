@@ -197,7 +197,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void setAllowExcludeFromCommit(@NotNull Project project, @NotNull DiffRequestChain chain) {
-    boolean allowExcludeFromCommit = ChangesViewManager.getInstanceEx(project).isAllowExcludeFromCommit();
+    boolean allowExcludeFromCommit = ChangesViewWorkflowManager.getInstance(project).getAllowExcludeFromCommit().getValue();
     chain.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, allowExcludeFromCommit);
   }
 }

@@ -70,6 +70,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerTest.class);
   @Rule
   public TempDirectory tempDir = new TempDirectory();
+
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private Collection<VirtualFilePointer> pointersBefore;
@@ -268,6 +269,20 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
+  }
+
+  @Test//IJPL-187702
+  public void pointerForFileSystemRoot_isEquivalentToPointerToUrlRoot() {
+    File rootDir = new File("/");
+    VirtualFilePointer rootPointerByFile = createPointerByFile(rootDir, null);
+    assertTrue(rootPointerByFile.isValid());
+    
+    VirtualFilePointer rootPointerByUrl = myVirtualFilePointerManager.create("file:///", disposable, null);
+    assertTrue(rootPointerByUrl.isValid());
+
+    assertEquals("Root('/') access via File and via URL('file:///') should give same results",
+                 rootPointerByFile,
+                 rootPointerByUrl);
   }
 
   @Test
@@ -1016,8 +1031,34 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   @Test
   public void testFileUrlNormalization() {
     assertEquals("file://", myVirtualFilePointerManager.create("file://", disposable, null).getUrl());
-    assertEquals("file://", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
-    assertEquals("file://", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+
+    assertEquals("file:///", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
+    assertEquals("file:///", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a/", disposable, null).getUrl());
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a//", disposable, null).getUrl());
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a///", disposable, null).getUrl());
+  }
+
+  @Test
+  public void testCleanupPath() {
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("/"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("//"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("///"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("////"));
+
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("/a/"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("//a//"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("///a///"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("////a////"));
+
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("/a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("//a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("///a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("////a.jar!/"));
+
+    //TODO RC: should we compact '//' after '!' also?
+    //    i.e. assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("////a.jar!//"));
   }
 
   @Test

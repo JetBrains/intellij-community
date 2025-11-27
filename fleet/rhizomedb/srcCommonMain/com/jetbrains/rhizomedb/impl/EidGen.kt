@@ -5,7 +5,7 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.MAX_PART
 import com.jetbrains.rhizomedb.Part
 import com.jetbrains.rhizomedb.withPart
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.incrementAndFetch
 
@@ -14,7 +14,7 @@ sealed interface EidGen {
     private val eidGens: Array<AtomicInt> = Array(MAX_PART + 1) { AtomicInt(0) }.also {
       it[0].store(17)
     }
-    private val eidMemo: ConcurrentHashMap<String, EID> = ConcurrentHashMap()
+    private val eidMemo: MultiplatformConcurrentHashMap<String, EID> = MultiplatformConcurrentHashMap()
 
     override fun freshEID(part: Part): EID =
       withPart(eidGens[part].incrementAndFetch(), part)

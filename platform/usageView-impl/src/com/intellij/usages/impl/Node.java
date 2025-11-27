@@ -27,6 +27,7 @@ public abstract class Node extends DefaultMutableTreeNode {
   static final byte EXCLUDED_MASK = 1 << 3;
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
+  private static final byte CACHED_CAN_NAVIGATE = 1 << 6;
 
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK,
@@ -35,6 +36,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     EXCLUDED_MASK,
     UPDATED_MASK,
     FORCE_UPDATE_REQUESTED_MASK,
+    CACHED_CAN_NAVIGATE,
   })
   private @interface FlagConstant {
   }
@@ -61,6 +63,8 @@ public abstract class Node extends DefaultMutableTreeNode {
 
   protected abstract boolean isDataExcluded();
 
+  protected abstract boolean canDataNavigate();
+
   @ApiStatus.Internal
   public @Nullable UsageNodePresentation getCachedPresentation() {
     return null;
@@ -72,6 +76,10 @@ public abstract class Node extends DefaultMutableTreeNode {
 
   final boolean isValid() {
     return !isFlagSet(CACHED_INVALID_MASK);
+  }
+
+  public final boolean canNavigate() {
+    return isFlagSet(CACHED_CAN_NAVIGATE);
   }
 
   final boolean isReadOnly() {
@@ -98,24 +106,29 @@ public abstract class Node extends DefaultMutableTreeNode {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
+    boolean canNavigate = isDataValid && canDataNavigate();
     String text = getNodeText();
     updateCachedPresentation();
-    doUpdate(isDataValid, isReadOnly, text, edtFireTreeNodesChangedQueue);
+    doUpdate(isDataValid, isReadOnly, canNavigate, text, edtFireTreeNodesChangedQueue);
   }
 
   private synchronized void doUpdate(boolean isDataValid,
                                      boolean isReadOnly,
+                                     boolean canNavigate,
                                      @NotNull String text,
                                      @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     boolean cachedValid = isValid();
     boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
+    boolean cachedCanNavigate = canNavigate();
 
     if (isDataValid != cachedValid ||
         isReadOnly != cachedReadOnly ||
         myCachedTextHash != text.hashCode() ||
+        canNavigate != cachedCanNavigate ||
         isFlagSet(FORCE_UPDATE_REQUESTED_MASK)) {
       setFlag(CACHED_INVALID_MASK, !isDataValid);
       setFlag(CACHED_READ_ONLY_MASK, isReadOnly);
+      setFlag(CACHED_CAN_NAVIGATE, canNavigate);
       setFlag(FORCE_UPDATE_REQUESTED_MASK, false);
 
       myCachedTextHash = text.hashCode();

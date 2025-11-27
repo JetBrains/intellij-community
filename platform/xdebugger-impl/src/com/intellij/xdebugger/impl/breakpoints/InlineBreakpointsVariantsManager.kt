@@ -26,16 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.asDeferred
 
 @ApiStatus.Internal
-data class InlineVariantWithMatchingBreakpointProxy(
-  val variant: XLineBreakpointInlineVariantProxy?,
-  val lightBreakpoint: InlineLightBreakpoint?,
-) {
-  init {
-    require(lightBreakpoint != null || variant != null) { "Both breakpoint and variant are null" }
-  }
-}
-
-@ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpoint(
   val variant: XLineBreakpointType<*>.XLineBreakpointVariant?,
   val breakpoint: XLineBreakpointImpl<*>?,
@@ -61,7 +51,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
       .groupBy { it.line }
     return readAction {
       variants.mapValues { (line, variants) ->
-        val lineBreakpoints = lineToBreakpoints[line] ?: return@mapValues emptyList()
+        val lineBreakpoints = lineToBreakpoints[line] ?: emptyList()
         matchVariantsWithBreakpoints(variants, lineBreakpoints)
       }
     }

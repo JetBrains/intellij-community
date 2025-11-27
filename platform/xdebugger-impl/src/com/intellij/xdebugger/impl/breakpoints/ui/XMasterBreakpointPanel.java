@@ -2,19 +2,17 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.popup.util.DetailView;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

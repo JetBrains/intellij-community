@@ -20,7 +20,7 @@ class RemoteDevBackgroundRun(
   private val backendRun: BackgroundRun,
   frontendProcess: IDEHandle,
   frontendDriver: Driver,
-  private val frontendStartResult: Deferred<IDEStartResult>,
+  frontendStartResult: Deferred<IDEStartResult>,
 ) : BackgroundRun(startResult = frontendStartResult,
                   driverWithoutAwaitedConnection = frontendDriver,
                   process = frontendProcess) {
@@ -37,7 +37,9 @@ class RemoteDevBackgroundRun(
     @Suppress("SSBasedInspection")
     return runBlocking {
       backendRun.startResult.await()
-        .also { it.frontendStartResult = frontendStartResult.await() }
+        .also {
+          it.frontendStartResult = startResult.await()
+        }
     }
   }
 

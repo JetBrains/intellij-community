@@ -16,9 +16,9 @@ open class KotlinUParameter(
     private val isLightConstructorParamLazy = UastLazyPart<Boolean?>()
     private val isKtConstructorParamLazy = UastLazyPart<Boolean?>()
 
-    final override val javaPsi = unwrap<UParameter, PsiParameter>(psi)
+    final override val javaPsi: PsiParameter = unwrap<UParameter, PsiParameter>(psi)
 
-    override val psi = javaPsi
+    override val psi: PsiParameter = javaPsi
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()

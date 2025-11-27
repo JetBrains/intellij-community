@@ -46,7 +46,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyLiteralStringType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -474,7 +477,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
     performActionOnElementOccurrences(operation);
   }
 
-  protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) {}
+  protected void showCanNotIntroduceErrorHint(@NotNull Project project, @NotNull Editor editor) { }
 
   protected void performActionOnElementOccurrences(final IntroduceOperation operation) {
     final Editor editor = operation.getEditor();
@@ -621,7 +624,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText, PsiElement anchor) {
-    LanguageLevel langLevel = ((PyFile) anchor.getContainingFile()).getLanguageLevel();
+    LanguageLevel langLevel = ((PyFile)anchor.getContainingFile()).getLanguageLevel();
     return PyElementGenerator.getInstance(project).createFromText(langLevel, PyAssignmentStatement.class, assignmentText);
   }
 
@@ -701,6 +704,4 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
 
   protected void postRefactoring(PsiElement element) {
   }
-
-
 }

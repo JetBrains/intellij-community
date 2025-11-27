@@ -9,7 +9,7 @@ import com.intellij.platform.debugger.impl.frontend.FrontendEditorLinesBreakpoin
 import com.intellij.platform.debugger.impl.frontend.getAvailableBreakpointTypesFromServer
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

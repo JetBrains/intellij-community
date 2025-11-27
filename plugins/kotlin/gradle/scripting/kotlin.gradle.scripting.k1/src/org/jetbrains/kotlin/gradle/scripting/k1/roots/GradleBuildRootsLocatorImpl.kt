@@ -16,7 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport.Companion.isApplicable
-import org.jetbrains.kotlin.gradle.scripting.shared.getDefinitionsTemplateClasspath
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.getFullDefinitionsClasspath
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.toGradleHomePath
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
@@ -24,8 +25,9 @@ import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -35,6 +37,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).
@@ -239,7 +242,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     private fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean {
         val definition = file.findScriptDefinition(project) ?: return false
 
-        return KotlinScriptingSettingsImpl.getInstance(project).autoReloadConfigurations(definition)
+        return KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
     }
 
     private fun loadStandaloneScriptConfigurations(files: MutableSet<String>) {
@@ -328,6 +331,14 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
         val file = LocalFileSystem.getInstance().findFileByPath(script.file) ?: return null
         val scriptSource = VirtualFileScriptSource(file)
         return definitions.firstOrNull { it.isScript(scriptSource) }
+    }
+
+    private fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
+        getFullDefinitionsClasspath(gradleHome.toGradleHomePath()).map { it.invariantSeparatorsPathString }
+    } catch (e: Throwable) {
+        scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
+
+        emptyList()
     }
 
     companion object {

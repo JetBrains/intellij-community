@@ -64,7 +64,7 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
 
   override val replyVm: StateFlow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion)
+      if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, projectData, discussion)
       else null
     }.stateInNow(cs, null)
 
@@ -118,6 +118,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
   mr: GitLabMergeRequest,
+  projectData: GitLabProject,
   htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabNoteViewModel {
 
@@ -130,7 +131,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val serverUrl: URL = mr.glProject.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+    if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
   override val reactionsVm: GitLabReactionsViewModel? = null
 
   override val body: StateFlow<String> = note.body

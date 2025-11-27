@@ -120,7 +120,7 @@ public final class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, true, parameters, PrefixMatcher.ALWAYS_TRUE);
+      }), false, true, parameters, PlainPrefixMatcher.ALWAYS_TRUE);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);

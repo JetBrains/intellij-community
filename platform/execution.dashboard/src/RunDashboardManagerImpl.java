@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto;
+import com.intellij.platform.execution.dashboard.splitApi.*;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.util.SmartList;
@@ -82,6 +79,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
+  public boolean isInitialized() {
+    return true;
+  }
+
+  @Override
   public void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor) {
     RunContentDescriptorId oldDescriptorId = oldDescriptor.getId();
     if (oldDescriptorId == null) return;
@@ -94,6 +96,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
 
     RunDashboardUiManagerImpl.getInstance(myProject).getDashboardContentManager().addContent(contentWithNewDescriptor);
+  }
+
+  @Override
+  public void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus){
+    RunDashboardService service = findService(descriptorId);
+    if (service == null) return;
+
+    mySharedState.fireNavigateToServiceEvent(service.getUuid(), focus);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -276,6 +286,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   public Flow<Set<String>> getConfigurationTypes() {
     return mySharedState.getConfigurationTypes();
+  }
+
+  public Flow<NavigateToServiceEvent> getNavigateToServiceEvents() {
+    return mySharedState.getNavigateToServiceEvents();
   }
 
   public void runCallbackForLink(@NotNull String link, @NotNull RunDashboardServiceId serviceId) {

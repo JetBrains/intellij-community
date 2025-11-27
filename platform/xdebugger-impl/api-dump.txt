@@ -40,32 +40,22 @@ com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 a:com.intellij.xdebugger.impl.frame.XDebugView
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-- sessionStopped():V
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
 - a:getBackgroundColor():java.awt.Color
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
-f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationHandler
-- <init>(com.intellij.xdebugger.impl.frame.XDebuggerFramesList,kotlinx.coroutines.CoroutineScope):V
-- f:clear():V
-- f:customizePresentation(com.intellij.xdebugger.frame.XStackFrame,com.intellij.ui.ColoredTextContainer):V
-- f:scheduleForFrames(java.util.List):V
-- f:sessionStopped():V
-f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
-- sf:Companion:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager$Companion
-- <init>(kotlinx.coroutines.CoroutineScope):V
-- f:createFor(com.intellij.xdebugger.impl.frame.XDebuggerFramesList):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationHandler
-- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
-f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationManager
 com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 - com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
+a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
+- pF:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 com.intellij.xdebugger.impl.frame.XWatchesView
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
 - a:removeAllWatches():V
 - a:removeWatches(java.util.List):V
+a:com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase
+- com.intellij.openapi.Disposable
 com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
 com.intellij.xdebugger.impl.ui.XValueTextProvider
@@ -77,10 +67,19 @@ com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getPresentation():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - rebuild():V
+a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
+- p:handle(com.intellij.openapi.project.Project,java.lang.String):V
+- p:handle(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+c:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollector
+- <init>(com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase,com.intellij.openapi.project.Project):V
+- handleInCollector(com.intellij.openapi.project.Project,java.lang.String):V
 com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
 - com.intellij.xdebugger.Obsolescent
 - javax.swing.tree.TreeNode
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:setObsolete():V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z,com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState):V
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z,com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState):V
 com.intellij.xdebugger.memory.utils.InstancesProvider
 - a:getInstances(I):java.util.List

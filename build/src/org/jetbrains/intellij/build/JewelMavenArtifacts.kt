@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.text.SemVer
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.plus
 import org.apache.maven.model.Developer
 import org.apache.maven.model.License
 import org.apache.maven.model.Model
@@ -21,7 +24,7 @@ import kotlin.io.path.exists
 
 private const val GROUP_ID: String = "org.jetbrains.jewel"
 
-private val CORE: Map<String, String> = mapOf(
+private val CORE: PersistentMap<String, String> = persistentHashMapOf(
   "intellij.platform.jewel.foundation" to "jewel-foundation",
   "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
   "intellij.platform.jewel.ui" to "jewel-ui",
@@ -37,7 +40,7 @@ private val NOT_PUBLISHED: Set<String> = setOf(
   "intellij.platform.jewel.markdown.ideLafBridgeStyling",
 )
 
-private val transitiveJewelDependencies = mapOf(
+private val transitiveJewelDependencies = persistentHashMapOf(
   "jewel-foundation" to emptySet(),
   "jewel-ui" to emptySet(),
   "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
@@ -53,14 +56,14 @@ private val transitiveJewelDependencies = mapOf(
 )
 
 internal object JewelMavenArtifacts {
-  internal val STANDALONE: Map<String, String> = mapOf(
+  internal val STANDALONE: PersistentMap<String, String> = persistentHashMapOf(
     "intellij.platform.jewel.markdown.intUiStandaloneStyling" to "jewel-markdown-int-ui-standalone-styling",
     "intellij.platform.jewel.intUi.decoratedWindow" to "jewel-int-ui-decorated-window",
     "intellij.platform.jewel.intUi.standalone" to "jewel-int-ui-standalone",
     "intellij.platform.jewel.decoratedWindow" to "jewel-decorated-window",
   )
 
-  private val ALL: Map<String, String> = CORE + STANDALONE
+  private val ALL: PersistentMap<String, String> = CORE + STANDALONE
 
   internal val ALL_MODULES: Set<String> = ALL.keys
 

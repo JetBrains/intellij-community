@@ -78,14 +78,19 @@ fun assertLogicalStructure(
     }
     if (selectedElement != null) {
       val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
-      val select = (structureView as StructureViewComponent).select(selectedElement, true)
-      val actualPaths = try {
-        val treePath = PlatformTestUtil.waitForPromise(select)
-        treePath!!.path.toList().let { it.subList(1, it.size) }
-      } catch (e: Throwable) {
-        e.printStackTrace()
-        throw e
+      var actualPaths: List<Any> = emptyList()
+      for (i in 0..5) {
+        val select = (structureView as StructureViewComponent).select(selectedElement, true)
+        try {
+          val treePath = PlatformTestUtil.waitForPromise(select)
+          if (treePath == null) continue
+          actualPaths = treePath.path.toList().let { it.subList(1, it.size) }
+        } catch (e: Throwable) {
+          e.printStackTrace()
+          throw e
+        }
       }
+      if (actualPaths.isEmpty()) throw AssertionError("No selected node found")
       val nodePaths = nodePath?.split("/") ?: emptyList()
       for ((index, any) in actualPaths.withIndex()) {
         if (index < nodePaths.size) {

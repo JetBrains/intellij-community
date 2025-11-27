@@ -23,6 +23,7 @@ import com.intellij.ui.jcef.*
 import com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
 import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ui.EDT
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
@@ -113,7 +114,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   override fun getState(level: FileEditorStateLevel): FileEditorState =
     ImageFileEditorState(myState.chessboardEnabled, myState.gridEnabled, myState.zoom, !myState.realSize)
   override fun setState(state: FileEditorState) {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       SwingUtilities.invokeLater { setState(state) }
       return
     }

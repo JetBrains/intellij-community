@@ -131,7 +131,10 @@ private class CommandCompletionDocumentationTarget(
       }
     }
 
-    return DocumentationContent.content(updatedClearedContent)
+    @Suppress("HardCodedStringLiteral")
+    return DocumentationContent.content("<${DocumentationHtmlUtil.codePreviewFloatingKey} plain=\"true\">" +
+                                        updatedClearedContent +
+                                        "</${DocumentationHtmlUtil.codePreviewFloatingKey}>")
   }
 
   private fun findIconPath(iconId: String, content: HtmlChunk): String? {

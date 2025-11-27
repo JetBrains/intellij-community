@@ -24,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * In-memory implementation of {@link VirtualFile}.
+ *
+ * @see #builder()
  */
 public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent;
@@ -42,7 +44,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(@NlsSafe @NotNull String name, FileType fileType, @NotNull CharSequence text) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @Nullable FileType fileType, @NotNull CharSequence text) {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
@@ -58,11 +60,9 @@ public class LightVirtualFile extends LightVirtualFileBase {
   public LightVirtualFile(@NlsSafe @NotNull String name,
                           @Nullable FileType fileType,
                           @NlsSafe @NotNull CharSequence text,
-                          Charset charset,
+                          @Nullable Charset charset,
                           long modificationStamp) {
-    super(name, fileType, modificationStamp);
-    setContentImpl(text);
-    setCharset(charset);
+    this(name, fileType, text, charset, modificationStamp, DEFAULT_CREATION_TRACE);
   }
 
   public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull Language language, @NlsSafe @NotNull CharSequence text) {
@@ -70,6 +70,28 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setContentImpl(text);
     setLanguage(language);
     setCharset(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Use {@link #builder()} instead.
+   */
+  private LightVirtualFile(@NlsSafe @NotNull String name,
+                           @Nullable FileType fileType,
+                           @NlsSafe @NotNull CharSequence text,
+                           @Nullable Charset charset,
+                           long modificationStamp,
+                           @Nullable Object creationTrace) {
+    super(name, fileType, modificationStamp, creationTrace);
+    setContentImpl(text);
+    setCharset(charset);
+  }
+
+  /**
+   * Entry point for creating a {@link LightVirtualFile}.
+   * Prefer using this when multiple attributes must be configured.
+   */
+  public static @NotNull Builder builder() {
+    return new Builder();
   }
 
   @Override
@@ -184,5 +206,69 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @Contract("null -> false")
   public static boolean shouldSkipEventSystem(@Nullable VirtualFile virtualFile) {
     return virtualFile instanceof LightVirtualFile && ((LightVirtualFile)virtualFile).shouldSkipEventSystem();
+  }
+
+  /**
+   * Builder for creating {@link LightVirtualFile}.
+   */
+  public static final class Builder {
+    private @NlsSafe @NotNull String name = "";
+    private @NotNull CharSequence content = "";
+    private @Nullable FileType fileType;
+    private @Nullable Language language;
+    private @Nullable Charset charset;
+    private long modificationStamp = LocalTimeCounter.currentTime();
+    private @Nullable Object creationTrace = DEFAULT_CREATION_TRACE;
+
+    private Builder() { }
+
+    public @NotNull Builder name(@NlsSafe @NotNull String name) {
+      this.name = name;
+      return this;
+    }
+
+    public @NotNull Builder content(@NotNull CharSequence content) {
+      this.content = content;
+      return this;
+    }
+
+    public @NotNull Builder fileType(@Nullable FileType fileType) {
+      this.fileType = fileType;
+      return this;
+    }
+
+    public @NotNull Builder language(@NotNull Language language) {
+      this.language = language;
+      return this;
+    }
+
+    public @NotNull Builder charset(@Nullable Charset charset) {
+      this.charset = charset;
+      return this;
+    }
+
+    public @NotNull Builder modificationStamp(long modificationStamp) {
+      this.modificationStamp = modificationStamp;
+      return this;
+    }
+
+    public @NotNull Builder creationTrace(@Nullable Object creationTrace) {
+      this.creationTrace = creationTrace;
+      return this;
+    }
+
+    /**
+     * Create the {@link LightVirtualFile} based on the configured attributes.
+     */
+    public @NotNull LightVirtualFile build() {
+      Charset cs = charset != null ? charset : CharsetUtil.extractCharsetFromFileContent(null, null, fileType, content);
+      LightVirtualFile file = new LightVirtualFile(name, fileType, content, cs, modificationStamp, creationTrace);
+
+      if (language != null) {
+        file.setLanguage(language);
+      }
+
+      return file;
+    }
   }
 }

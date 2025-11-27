@@ -74,19 +74,3 @@ fun fleetClient(
       }
     }
   }.onContext(CoroutineName("fleetClient"))
-
-@Deprecated("the only difference with fleetClient() is that this one puts in on coroutineContext. you can do it yourself. but better don't")
-suspend fun withFleetClient(
-  clientId: ClientId,
-  transportFactory: FleetTransportFactory,
-  abortOnError: Boolean,
-  delayStrategy: DelayStrategy = Exponential,
-  requestInterceptor: RpcInterceptor = RpcInterceptor,
-  body: suspend CoroutineScope.(FleetClient) -> Unit,
-) {
-  fleetClient(clientId, transportFactory, abortOnError, delayStrategy, requestInterceptor).use { fleetClient ->
-    withContext(fleetClient) {
-      body(fleetClient)
-    }
-  }
-}

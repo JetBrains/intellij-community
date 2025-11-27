@@ -1,7 +1,6 @@
 package com.jetbrains.lsp.protocol
 
 import fleet.util.isValidUriString
-import io.ktor.http.Url
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
@@ -26,26 +25,6 @@ value class URI(val uri: String) {
          */
         require(uri.isValidUriString()) { "Invalid URI: $uri" }
     }
-
-    /**
-     * Returns the URI's schema without schema delimiter (`://`)
-     */
-    val scheme: String get() = Url(uri).protocol.name
-
-    /**
-     * Returns the file name
-     */
-    val fileName: String get() = Url(uri).segments.last()
-
-    /**
-     * Returns the file extension (without dot) if present
-     */
-    val fileExtension: String?
-        get() {
-            val name = fileName
-            val dotIndex = name.lastIndexOf('.')
-            return if (dotIndex > 0) name.substring(dotIndex + 1) else null
-        }
 
     object Schemas {
         const val FILE: String = "file"
@@ -137,6 +116,9 @@ enum class PositionEncodingKind {
     UTF32
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range">Range (LSP spec)</a>
+ */
 @Serializable
 data class Range(
     /**
@@ -782,6 +764,9 @@ sealed interface WorkDoneProgress {
     }
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workDoneProgressParams">workDoneProgressParams (LSP spec)</a>
+ */
 interface WorkDoneProgressParams {
     /**
      * An optional token that a server can use to report work done progress.

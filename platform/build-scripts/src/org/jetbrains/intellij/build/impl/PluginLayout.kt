@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
@@ -8,9 +10,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
-import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
@@ -30,6 +30,8 @@ import java.nio.file.attribute.BasicFileAttributes
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
+typealias DeprecatedPostScrambleProcessor = (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
+
 /**
  * Describes layout of a plugin in the product distribution
  */
@@ -46,7 +48,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   }
 
   @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries[null]?.contains(name) == true
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) == true
 
   var directoryName: String = mainJarNameWithoutExtension
     private set
@@ -93,7 +95,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   @JvmField
-  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
+  internal var modulesWithExcludedModuleLibraries: Set<String> = emptySet()
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
     private set
@@ -108,6 +110,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
+
+  internal var deprecatedPostProcessor: PersistentList<DeprecatedPostScrambleProcessor> = persistentListOf()
+
+  fun getDeprecatedPostScrambleProcessor(): List<DeprecatedPostScrambleProcessor> = deprecatedPostProcessor
 
   companion object {
     /**
@@ -148,7 +154,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
     fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
-      return plugin(mainModuleName, auto = true, body)
+      return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
@@ -260,7 +266,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, generator: ResourceGenerator) {
       val key = SupportedDistribution(os, arch, libc)
-      val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator)
+      val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
     }
 
@@ -274,6 +280,16 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withRawPluginXmlPatcher(pluginXmlPatcher: (String, BuildContext) -> String) {
       layout.rawPluginXmlPatcher = pluginXmlPatcher
+    }
+
+    fun withDeprecatedPostProcessor(layoutPatcher: LayoutPatcher, pluginXmlPatcher: DeprecatedPostScrambleProcessor) {
+      // if scrambling is not performed, we need to execute layout patcher (no idea why as we cannot investigate and fix Gateway error)
+      layout.withPatch { moduleOutputPatcher, platformLayout, context ->
+        if (context.proprietaryBuildTools.scrambleTool == null) {
+          layoutPatcher(moduleOutputPatcher, platformLayout, context)
+        }
+      }
+      layout.deprecatedPostProcessor += persistentListOf(pluginXmlPatcher)
     }
   }
 
@@ -326,13 +342,25 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     fun withBin(binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
       withGeneratedResources { targetDir, context ->
-        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+        copyBinaryResource(
+          binPathRelativeToCommunity = binPathRelativeToCommunity,
+          outputPath = outputPath,
+          skipIfDoesntExist = skipIfDoesntExist,
+          targetDir = targetDir,
+          context = context,
+        )
       }
     }
 
     fun withPlatformBin(os: OsFamily, arch: JvmArchitecture, libc: LibcImpl, binPathRelativeToCommunity: String, outputPath: String, skipIfDoesntExist: Boolean = false) {
       withGeneratedPlatformResources(os, arch, libc) { targetDir, context ->
-        copyBinaryResource(binPathRelativeToCommunity, outputPath, skipIfDoesntExist, targetDir, context)
+        copyBinaryResource(
+          binPathRelativeToCommunity = binPathRelativeToCommunity,
+          outputPath = outputPath,
+          skipIfDoesntExist = skipIfDoesntExist,
+          targetDir = targetDir,
+          context = context,
+        )
       }
     }
 
@@ -367,7 +395,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchive(resourcePath: String, relativeOutputFile: String) {
-      withResourceArchiveFromModule(layout.mainModule, resourcePath, relativeOutputFile)
+      withResourceArchiveFromModule(moduleName = layout.mainModule, resourcePath = resourcePath, relativeOutputFile = relativeOutputFile)
     }
 
     /**
@@ -375,10 +403,12 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
-      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                                         resourcePath = resourcePath,
-                                                                         relativeOutputPath = relativeOutputFile,
-                                                                         packToZip = true))
+      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(
+        moduleName = moduleName,
+        resourcePath = resourcePath,
+        relativeOutputPath = relativeOutputFile,
+        packToZip = true,
+      ))
     }
 
     /**
@@ -411,7 +441,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     @Obsolete
     fun doNotCopyModuleLibrariesAutomatically(moduleNames: List<String>) {
-      layout.modulesWithExcludedModuleLibraries = layout.modulesWithExcludedModuleLibraries.toPersistentSet().addAll(moduleNames)
+      layout.modulesWithExcludedModuleLibraries += moduleNames
     }
 
     /**
@@ -423,7 +453,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param relativePath a path to a .jar file relative to the plugin root directory
      */
     fun scramble(relativePath: String) {
-      layout.pathsToScramble = layout.pathsToScramble.add(relativePath)
+      layout.pathsToScramble += relativePath
     }
 
     /**
@@ -446,14 +476,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
      */
     fun scrambleClasspathPlugin(pluginMainModuleName: String) {
-      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null))
+      layout.scrambleClasspathPlugins += ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null)
     }
 
     /**
      * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
     fun scrambleClasspathPlugin(pluginId: String, relativePath: String) {
-      layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath))
+      layout.scrambleClasspathPlugins += ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath)
     }
 
     /**
@@ -507,9 +537,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
             AttributeKey.stringKey("serviceFile"), serviceFileName,
             AttributeKey.stringArrayKey("serviceFiles"), serviceFiles.map { it.first },
           ))
-          patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // the first one wins
-                                    path = "META-INF/services/$serviceFileName",
-                                    content = content)
+          patcher.patchModuleOutput(
+            moduleName = serviceFiles.first().first, // the first one wins
+            path = "META-INF/services/$serviceFileName",
+            content = content,
+          )
         }
       }
     }

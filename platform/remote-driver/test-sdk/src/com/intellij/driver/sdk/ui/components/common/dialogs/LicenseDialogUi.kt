@@ -1,3 +1,5 @@
+@file:Suppress("PublicApiImplicitType")
+
 package com.intellij.driver.sdk.ui.components.common.dialogs
 
 import com.intellij.driver.client.Driver
@@ -6,8 +8,11 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.radioButton
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.ui
+import javax.swing.JTextArea
 
 fun Finder.licenseDialog() = x(LicenseDialogUi::class.java) {
   byTitle("Manage Licenses") or byTitle("Manage Subscriptions")
@@ -17,21 +22,21 @@ fun Finder.licenseDialog(action: LicenseDialogUi.() -> Unit) = licenseDialog().a
 
 fun Driver.licenseDialog(action: LicenseDialogUi.() -> Unit = {}) = ui.licenseDialog().apply(action)
 
-class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
+class LicenseDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val licenseServerRadioButton = radioButton { byAccessibleName("License server") }
-  val licenseServerTextField = x { byClass("JBTextField") }
+  val licenseServerTextField = textField { byClass("JBTextField") }
   val activationCodeRadioButton = radioButton { byAccessibleName("Activation code") }
-  val subscriptionRadioButton = radioButton { or(byAccessibleName("Subscription"), byAccessibleName("JetBrains Account")) }
-  val activationCodeTextField = x("//div[contains(@classhierarchy, 'javax.swing.JTextArea')]")
-  val activateButton = x("//div[@accessiblename='Activate' and @javaclass!='com.intellij.ui.dsl.builder.components.SegmentedButton']")
-  val activateAnotherLicenseButton = x { or(contains(byAccessibleName("Activate Another License")), contains(byAccessibleName("Activate Another Subscription"))) }
+  val subscriptionRadioButton = radioButton { byAccessibleName("Subscription") or byAccessibleName("JetBrains Account") }
+  val activationCodeTextField = textField { byType(JTextArea::class.java) }
+  val activateButton = button { byAccessibleName("Activate") and (byClass("SlowActionButton") or byClass("LicenseDialogButton")) }
+  val activateAnotherLicenseButton = x { contains(byAccessibleName("Activate Another License")) or contains(byAccessibleName("Activate Another Subscription")) }
   val loginWithJbaLinkButton = x { byClass("ActionLink") and contains(byAccessibleName("Log in")) }
   val loginWithJbaButton = x { contains(byAccessibleName("Log In")) }
-  val loginTroublesButton = x { or(contains(byAccessibleName("Troubles")), contains(byAccessibleName("Log in with token"))) }
-  val startTrialTab = x { and(byClass("SegmentedButton"), byAccessibleName("Start trial")) }
-  val startTrialButton = x("//div[@class!='SegmentedButton' and @accessiblename='Start Free 30-Day Trial']")
+  val loginTroublesButton = x { contains(byAccessibleName("Troubles")) or contains(byAccessibleName("Log in with token")) }
+  val startTrialTab = x { byClass("SegmentedButton") and byAccessibleName("Start trial") }
+  val startTrialButton = x { byAccessibleName("Start Free 30-Day Trial") and byClass("SlowActionButton") }
   val continueButton = x { byAccessibleName("Continue") }
-  val removeLicenseButton: UiComponent = x { or(contains(byAccessibleName("Remove License")), contains(byAccessibleName("Deactivate Subscription"))) }
+  val removeLicenseButton: UiComponent = x { contains(byAccessibleName("Remove License")) or contains(byAccessibleName("Deactivate Subscription")) }
   val closeButton = x { byAccessibleName("Close") and byClass("JButton") }
   val optionsButton = x { byAccessibleName("Options") }
   val closeErrorBannerButton = x { byAccessibleName("Close") and contains(byClass("InplaceButton")) }
@@ -46,7 +51,7 @@ fun Finder.authDialog(action: AuthDialogUi.() -> Unit) {
 fun Driver.authDialog(action: AuthDialogUi.() -> Unit = {}) = this.ui.authDialog(action)
 
 class AuthDialogUi(data: ComponentData) : DialogUiComponent(data) {
-  val tokenField = x { and(byClass("JBTextField"), byVisibleText("IDE authorization token")) }
+  val tokenField = textField { and(byClass("JBTextField"), byVisibleText("IDE authorization token")) }
   val checkTokenButton = x { byVisibleText("Check Token") }
   val backButton = x { byText("← Back") }
   val loginToJBAButton = x { byVisibleText("Log in to JetBrains Account") }
@@ -74,7 +79,7 @@ fun LicenseDialogUi.exitConfirmationDialog(action: ExitConfirmationDialogUi.() -
   x(ExitConfirmationDialogUi::class.java) { byTitle("Confirm Exit") }.action()
 }
 
-class ExitConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
+class ExitConfirmationDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val exitConfirmButton: UiComponent = x { byAccessibleName("Exit") }
   val backToActivationButton: UiComponent = x { byAccessibleName("Back to Activation") }
 }
@@ -83,7 +88,7 @@ fun LicenseDialogUi.removeLicenseConfirmationDialog(action: RemoveLicenseConfirm
   x(RemoveLicenseConfirmationDialogUi::class.java) { byTitle("Remove License") or byTitle("Deactivate Subscription") }.action()
 }
 
-class RemoveLicenseConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
+class RemoveLicenseConfirmationDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val confirmButton: UiComponent = x { (byAccessibleName("Remove License") or byAccessibleName("Deactivate and Restart")) and byClass("JButton") }
   val cancelRemoveButton: UiComponent = x { (byAccessibleName("TODO") or byAccessibleName("Keep Subscription")) and byClass("JButton") }
 }

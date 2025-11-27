@@ -13,20 +13,6 @@ import java.awt.*;
 
 public class LabelBasedRenderer extends JLabel {
 
-  public static final class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
-    private static final Border EMPTY = JBUI.Borders.empty(1); // see DefaultListCellRenderer.getNoFocusBorder
-
-    @Override
-    public @NotNull Component getListCellRendererComponent(@NotNull JList<? extends E> list, @Nullable E value,
-                                                           int index, boolean selected, boolean focused) {
-      configure(list, value);
-      setForeground(RenderingUtil.getForeground(list, selected));
-      setBackground(RenderingUtil.getBackground(list, selected));
-      setBorder(EMPTY);
-      return this;
-    }
-  }
-
   public static class Tree extends LabelBasedRenderer implements TreeCellRenderer {
     private static final Border EMPTY = JBUI.Borders.emptyRight(3); // see DefaultTreeCellRenderer.getPreferredSize
 

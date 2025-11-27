@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
@@ -30,7 +30,6 @@ import javax.swing.*;
 import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 
 public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
-    private StateRestoringCheckBox constructorUsages;
     private StateRestoringCheckBox derivedClasses;
     private StateRestoringCheckBox derivedTraits;
     private StateRestoringCheckBox expectedUsages;
@@ -115,12 +114,6 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
                 findWhatPanel,
                 true
         );
-        constructorUsages = addCheckboxToPanel(
-                KotlinBundle.message("find.declaration.constructor.usages.checkbox"),
-                getFindUsagesOptions().getSearchConstructorUsages(),
-                findWhatPanel,
-                true
-        );
         return findWhatPanel;
     }
 
@@ -172,7 +165,7 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
             updateStateOnUsagesStateChange(expectedUsages);
         }
 
-        if (!isOKActionEnabled() && (constructorUsages.isSelected() || derivedTraits.isSelected() || derivedClasses.isSelected())) {
+        if (!isOKActionEnabled() && (derivedTraits.isSelected() || derivedClasses.isSelected())) {
             setOKActionEnabled(true);
         }
     }
@@ -182,7 +175,6 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
         super.calcFindUsagesOptions(options);
 
         KotlinClassFindUsagesOptions kotlinOptions = (KotlinClassFindUsagesOptions) options;
-        kotlinOptions.setSearchConstructorUsages(constructorUsages.isSelected());
         kotlinOptions.isDerivedClasses = derivedClasses.isSelected();
         kotlinOptions.isDerivedInterfaces = derivedTraits.isSelected();
         if (expectedUsages != null) {

@@ -62,7 +62,7 @@ abstract class AbstractFormatCodeCompletionCommand(private val context: CommandC
         CodeStyleManager.getInstance(psiFile.getProject()).reformat(target)
         val origText = context.psiFile.text
         val modifiedText = psiFile.text
-        if (origText == modifiedText) return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.EMPTY
+        if (origText == modifiedText) return@tryToCalculateCommandCompletionPreview IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))
         IntentionPreviewInfo.CustomDiff(context.psiFile.fileType, null, origText, modifiedText, true)
       },
       context = context,

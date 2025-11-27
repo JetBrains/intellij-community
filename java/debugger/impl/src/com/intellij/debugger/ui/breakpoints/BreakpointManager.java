@@ -43,7 +43,11 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -150,7 +154,7 @@ public class BreakpointManager {
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, XBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, MonolithBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
           }
         }
       }

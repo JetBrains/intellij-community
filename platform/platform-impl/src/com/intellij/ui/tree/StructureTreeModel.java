@@ -21,15 +21,19 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jspecify.annotations.NonNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -47,6 +51,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final @NotNull Structure structure;
   private volatile Comparator<? super Node> comparator;
   private final ThreadLocal<Reference<FreshChildrenSet>> freshChildrenSet = ThreadLocal.withInitial(Reference::new);
+  private final ThreadLocal<Reference<TreeModelUpdateRequest>> updateRequest = ThreadLocal.withInitial(Reference::new);
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
     this(structure, null, parent);
@@ -200,6 +205,28 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return onValidThread(__ -> invalidateInternal(null, true));
   }
 
+  @ApiStatus.Internal
+  public final @NotNull CompletableFuture<?> invalidateAsync(@NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
+    return onValidThread(__ -> {
+      var requestRef = updateRequest.get();
+      requestRef.set(request);
+      try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
+        return invalidateInternal(null, true);
+      }
+      finally {
+        requestRef.set(null);
+      }
+    }).whenComplete((p, e) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
+      }
+    });
+  }
+
   /**
    * Invalidates specified nodes and notifies Swing model that these nodes are changed.
    *
@@ -211,6 +238,28 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    */
   public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure) {
     return Promises.asPromise(onValidThread(path, node -> invalidateInternal(node, structure)));
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure, @NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
+    return Promises.asPromise(onValidThread(path, node -> {
+      var requestRef = updateRequest.get();
+      requestRef.set(request);
+      try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
+        return invalidateInternal(node, structure);
+      }
+      finally {
+        requestRef.set(null);
+      }
+    })).onProcessed((p) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
+      }
+    });
   }
 
   /**
@@ -247,6 +296,11 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return ROOT_INVALIDATED;
     }
     boolean updated = node.update();
+    var request = updateRequest.get().get();
+    if (request != null) {
+      // Updated or not, doesn't matter. We've just spent some time trying to update it anyway. 
+      request.nodesLoaded(1);
+    }
     if (structure) {
       node.invalidate();
       TreePath path = TreePathUtil.pathToTreeNode(node);
@@ -258,7 +312,16 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       treeNodesChanged(path, null, null);
       return path;
     }
+    if (request != null) {
+      request.finished();
+    }
     return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected @NonNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
+    return new RequestedTreeModelUpdateEvent(updateRequest.get().get(), this, path, indices, children);
   }
 
   /**

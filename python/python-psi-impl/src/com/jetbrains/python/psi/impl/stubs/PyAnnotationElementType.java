@@ -44,12 +44,12 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
 
   @Override
   public void serialize(final @NotNull PyAnnotationStub stub, final @NotNull StubOutputStream dataStream)
-      throws IOException {
+    throws IOException {
   }
 
   @Override
   public @NotNull PyAnnotationStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
-      throws IOException {
+    throws IOException {
     return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
   }
 

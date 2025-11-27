@@ -15,6 +15,8 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
 
   private val cache = ConcurrentHashMap<XStackFrameId, FrontendXStackFrame>()
 
+  fun findStackFrame(id: XStackFrameId): FrontendXStackFrame? = cache[id]
+
   fun getOrCreateStackFrame(project: Project, scope: CoroutineScope, frameDto: XStackFrameDto): FrontendXStackFrame {
     return cache.computeIfAbsent(frameDto.stackFrameId) {
       with(frameDto) {
@@ -23,7 +25,7 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
           project,
           scope,
           sourcePosition,
-          customBackgroundInfo,
+          backgroundColor,
           equalityObject,
           evaluator,
           captionInfo,
@@ -40,4 +42,11 @@ internal fun CoroutineScope.getOrCreateStackFrame(frameDto: XStackFrameDto, proj
   requireNotNull(storageCache) { "StacksStorage not found" }
 
   return storageCache.getOrCreateStackFrame(project, this, frameDto)
+}
+
+internal fun CoroutineScope.findStackFrame(id: XStackFrameId): FrontendXStackFrame? {
+  val storageCache = coroutineContext[FrontendXStackFramesStorage]
+  requireNotNull(storageCache) { "StacksStorage not found" }
+
+  return storageCache.findStackFrame(id)
 }

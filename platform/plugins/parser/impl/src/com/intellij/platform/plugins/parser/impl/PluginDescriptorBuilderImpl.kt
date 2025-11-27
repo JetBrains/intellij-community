@@ -21,7 +21,7 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override var `package`: String? = null
   override var isSeparateJar: Boolean = false
 
-  override var visibility: ModuleVisibility = ModuleVisibility.PRIVATE
+  override var visibility: ModuleVisibilityValue = ModuleVisibilityValue.PRIVATE
   override var namespace: String? = null
 
   override var url: String? = null

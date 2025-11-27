@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -18,8 +17,9 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import kotlin.jvm.functions.Function0;
+import kotlin.Pair;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.StateFlow;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +178,7 @@ public final class TestWindowManager extends WindowManagerEx {
     @Override
     public @Nullable StatusBar createChild(@NotNull CoroutineScope coroutineScope,
                                            @NotNull IdeFrame frame,
-                                           @NotNull Function0<? extends FileEditor> editorProvider) {
+                                           @NotNull StateFlow<? extends FileEditor> currentFileEditorFlow) {
       return null;
     }
 
@@ -280,8 +280,8 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @NotNull Function0<FileEditor> getCurrentEditor() {
-      return () -> null;
+    public @NotNull StateFlow<FileEditor> getCurrentEditor() {
+      return kotlinx.coroutines.flow.StateFlowKt.MutableStateFlow(null);
     }
   }
 

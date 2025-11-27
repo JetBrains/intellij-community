@@ -21,10 +21,22 @@ interface ChangesViewApi : RemoteApi<Unit> {
    */
   suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent>
 
+  suspend fun canExcludeFromCommit(projectId: ProjectId): Flow<Boolean>
+
   /**
    * Notifies when refresh request with [BackendChangesViewEvent.RefreshRequested.refreshCounter] is performed.
    */
   suspend fun notifyRefreshPerformed(projectId: ProjectId, refreshCounter: Int)
+
+  suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>)
+
+  /**
+   * Emits `true` if Commit toolwindow is enabled, `false` if commit tab is shown inside VCS toolwindow.
+   * Initially emits the current state.
+   *
+   * @see [com.intellij.vcs.commit.CommitMode.useCommitToolWindow]
+   */
+  suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean>
 
   companion object {
     suspend fun getInstance(): ChangesViewApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewApi>())

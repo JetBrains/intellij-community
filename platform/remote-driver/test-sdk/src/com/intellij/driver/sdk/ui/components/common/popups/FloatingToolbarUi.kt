@@ -11,7 +11,7 @@ import javax.swing.JList
 
 
 fun IdeaFrameUI.floatingToolbar(action: FloatingToolbarUi.() -> Unit = {}): FloatingToolbarUi =
-  x(FloatingToolbarUi::class.java) { componentWithChild(byType(Window::class.java), byAccessibleName("Extract")) }.apply(action)
+  x(FloatingToolbarUi::class.java) { componentWithChild(byType(Window::class.java), byAccessibleName("Show Context Actions")) }.apply(action)
 
 class FloatingToolbarUi(data: ComponentData) : PopupUiComponent(data) {
   val bulbActionButton = actionButton { byAccessibleName("Show Context Actions") }

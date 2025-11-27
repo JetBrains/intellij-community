@@ -25,7 +25,11 @@ public class PyKnownDecorator {
     myIsStaticMethod = false;
   }
 
-  private PyKnownDecorator(@NotNull String qualifiedName, boolean isProperty, boolean isMutableProperty, boolean isGeneratorBasedCoroutine, boolean isAbstract,
+  private PyKnownDecorator(@NotNull String qualifiedName,
+                           boolean isProperty,
+                           boolean isMutableProperty,
+                           boolean isGeneratorBasedCoroutine,
+                           boolean isAbstract,
                            boolean isClassMethod,
                            boolean isStaticMethod) {
     myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
@@ -81,7 +85,8 @@ public class PyKnownDecorator {
     }
 
     public @NotNull PyKnownDecorator build() {
-      return new PyKnownDecorator(qualifiedName, isProperty, isMutableProperty, isGeneratorBasedCoroutine, isAbstract, isClassMethod, isStaticMethod);
+      return new PyKnownDecorator(qualifiedName, isProperty, isMutableProperty, isGeneratorBasedCoroutine, isAbstract, isClassMethod,
+                                  isStaticMethod);
     }
   }
 
@@ -102,16 +107,23 @@ public class PyKnownDecorator {
   public final static PyKnownDecorator FUNCTOOLS_WRAPS = new PyKnownDecorator("functools.wraps");
   public final static PyKnownDecorator FUNCTOOLS_TOTAL_ORDERING = new PyKnownDecorator("functools.total_ordering");
   public final static PyKnownDecorator FUNCTOOLS_SINGLEDISPATCH = new PyKnownDecorator("functools.singledispatch");
-  public final static PyKnownDecorator FUNCTOOLS_CACHED_PROPERTY = new PyKnownDecorator.Builder("functools.cached_property").setProperty().setMutableProperty().build();
+  public final static PyKnownDecorator FUNCTOOLS_CACHED_PROPERTY =
+    new PyKnownDecorator.Builder("functools.cached_property").setProperty().setMutableProperty().build();
 
   public final static PyKnownDecorator ABC_ABSTRACTMETHOD = new PyKnownDecorator.Builder("abc.abstractmethod").setAbstract().build();
-  public final static PyKnownDecorator ABC_ABSTRACTCLASSMETHOD = new PyKnownDecorator.Builder("abc.abstractclassmethod").setAbstract().setClassMethod().build();
-  public final static PyKnownDecorator ABC_ABSTRACTSTATICMETHOD = new PyKnownDecorator.Builder("abc.abstractstaticmethod").setAbstract().setStaticMethod().build();
-  public final static PyKnownDecorator ABC_ABSTRACTPROPERTY = new PyKnownDecorator.Builder("abc.abstractproperty").setAbstract().setProperty().build();
+  public final static PyKnownDecorator ABC_ABSTRACTCLASSMETHOD =
+    new PyKnownDecorator.Builder("abc.abstractclassmethod").setAbstract().setClassMethod().build();
+  public final static PyKnownDecorator ABC_ABSTRACTSTATICMETHOD =
+    new PyKnownDecorator.Builder("abc.abstractstaticmethod").setAbstract().setStaticMethod().build();
+  public final static PyKnownDecorator ABC_ABSTRACTPROPERTY =
+    new PyKnownDecorator.Builder("abc.abstractproperty").setAbstract().setProperty().build();
 
-  public final static PyKnownDecorator ASYNCIO_TASKS_COROUTINE = new PyKnownDecorator.Builder("asyncio.tasks.coroutine").setGeneratorBasedCoroutine().build();
-  public final static PyKnownDecorator ASYNCIO_COROUTINES_COROUTINE = new PyKnownDecorator.Builder("asyncio.coroutines.coroutine").setGeneratorBasedCoroutine().build();
-  public final static PyKnownDecorator TYPES_COROUTINE = new PyKnownDecorator.Builder("types.coroutine").setGeneratorBasedCoroutine().build();
+  public final static PyKnownDecorator ASYNCIO_TASKS_COROUTINE =
+    new PyKnownDecorator.Builder("asyncio.tasks.coroutine").setGeneratorBasedCoroutine().build();
+  public final static PyKnownDecorator ASYNCIO_COROUTINES_COROUTINE =
+    new PyKnownDecorator.Builder("asyncio.coroutines.coroutine").setGeneratorBasedCoroutine().build();
+  public final static PyKnownDecorator TYPES_COROUTINE =
+    new PyKnownDecorator.Builder("types.coroutine").setGeneratorBasedCoroutine().build();
 
   public final static PyKnownDecorator UNITTEST_SKIP = new PyKnownDecorator("unittest.case.skip");
   public final static PyKnownDecorator UNITTEST_SKIP_IF = new PyKnownDecorator("unittest.case.skipIf");
@@ -138,8 +150,10 @@ public class PyKnownDecorator {
 
   public final static PyKnownDecorator REPRLIB_RECURSIVE_REPR = new PyKnownDecorator("reprlib.recursive_repr");
 
-  public final static PyKnownDecorator PYRAMID_DECORATOR_REIFY = new PyKnownDecorator.Builder("pyramid.decorator.reify").setProperty().build();
-  public final static PyKnownDecorator KOMBU_UTILS_CACHED_PROPERTY = new PyKnownDecorator.Builder("kombu.utils.cached_property").setProperty().setMutableProperty().build();
+  public final static PyKnownDecorator PYRAMID_DECORATOR_REIFY =
+    new PyKnownDecorator.Builder("pyramid.decorator.reify").setProperty().build();
+  public final static PyKnownDecorator KOMBU_UTILS_CACHED_PROPERTY =
+    new PyKnownDecorator.Builder("kombu.utils.cached_property").setProperty().setMutableProperty().build();
 
   public final static PyKnownDecorator DATACLASSES_DATACLASS = new PyKnownDecorator("dataclasses.dataclass");
   public final static PyKnownDecorator ATTR_S = new PyKnownDecorator("attr.s");

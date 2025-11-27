@@ -93,7 +93,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   @Override
-  public final PsiFile getCachedPsi(@NotNull Language target) {
+  public final @Nullable PsiFile getCachedPsi(@NotNull Language target) {
     return myRoots.get(target);
   }
 

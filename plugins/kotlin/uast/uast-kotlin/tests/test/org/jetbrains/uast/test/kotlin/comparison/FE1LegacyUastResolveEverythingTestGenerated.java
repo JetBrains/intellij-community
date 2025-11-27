@@ -245,6 +245,11 @@ public class FE1LegacyUastResolveEverythingTestGenerated extends AbstractFE1Lega
         runTest("testData/NonTrivialIdentifiers.kt");
     }
 
+    @TestMetadata("ObjectExpressionMultipleInterfaces.kt")
+    public void testObjectExpressionMultipleInterfaces() throws Exception {
+        runTest("testData/ObjectExpressionMultipleInterfaces.kt");
+    }
+
     @TestMetadata("ParameterPropertyWithAnnotation.kt")
     public void testParameterPropertyWithAnnotation() throws Exception {
         runTest("testData/ParameterPropertyWithAnnotation.kt");

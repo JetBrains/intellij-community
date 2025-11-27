@@ -14,13 +14,13 @@ import java.util.*
 class PyTypedDictType @JvmOverloads constructor(
   private val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
-  
+
   private val dictClass: PyClass,
   private val definitionLevel: DefinitionLevel,
   private val ancestors: List<PyTypedDictType>,
   private val declaration: PyQualifiedNameOwner? = null,
 ) :
-  PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE){
+  PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
@@ -112,7 +112,11 @@ class PyTypedDictType @JvmOverloads constructor(
    */
   data class TypedDictFieldQualifiers(val isRequired: Boolean? = true, val isReadOnly: Boolean = false)
 
-  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers()) {
+  data class FieldTypeAndTotality(
+    val value: PyExpression?,
+    val type: PyType?,
+    val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
+  ) {
     val isRequired: Boolean get() = qualifiers.isRequired ?: true
     val isReadOnly: Boolean get() = qualifiers.isReadOnly
   }

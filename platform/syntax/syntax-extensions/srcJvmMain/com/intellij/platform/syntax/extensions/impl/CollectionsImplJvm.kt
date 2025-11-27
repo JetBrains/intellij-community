@@ -25,4 +25,11 @@ private class SyntaxMultiplatformConcurrentMapJvm<K : Any, V : Any> : Multiplatf
   override fun get(key: K): V? = map[key]
   override fun remove(key: K): V? = map.remove(key)
   override fun put(key: K, value: V): V? = map.put(key, value)
+  override fun hashCode(): Int = map.hashCode()
+  override fun toString(): String = map.toString()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SyntaxMultiplatformConcurrentMapJvm<*, *>) return false
+    return map == other.map
+  }
 }

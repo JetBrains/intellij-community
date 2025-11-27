@@ -1090,7 +1090,7 @@ public class FileEncodingTest implements TestDialog {
       }
       encodingManager.waitAllTasksExecuted();
       UIUtil.dispatchAllInvocationEvents();
-    }).start();
+    }).runAsStressTest().start();
   }
 
   @Test

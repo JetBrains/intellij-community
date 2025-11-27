@@ -13,6 +13,29 @@ import kotlin.math.floor
 /**
  * Holds the [patch] between two commits in [fileHistory]
  *
+ *       .............................. O  b.txt               \
+ *       :           :                  ^                      |
+ *       :           :                  |                      |
+ *       :           :                  O  a.txt               |
+ *       :           v                  ^ \                    |
+ *       :         patch                |  \                   |
+ *       :     a.txt -> b.txt           O   \                  |
+ *       :           ^                  ^    \                 |
+ *       :           :                  |     O  a.txt         |
+ *       :           :..................O     ^                | fileHistory
+ *       :                              ^     |                |
+ *       v                              |     O  a.txt         |
+ *       Cumulative                     O     ^                |
+ *       patch                          ^   /                  |
+ *       a.txt -> b.txt                 |  /                   |
+ *       ^                              O                      |
+ *       :                              ^                      |
+ *       :                              |                      |
+ *       .............................. O  a.txt               /
+ *
+ *
+ * @param patch a patch with changes in a file between two commits
+ * @param fileHistory the whole history of changes for the file (file history)
  * @param isCumulative [true] if [patch] is between start and end of [fileHistory] which spans from merge base to last commit,
  *                     [false] if it is a patch between a pair of adjacent commits in [fileHistory]
  */
@@ -26,6 +49,8 @@ class GitTextFilePatchWithHistory(val patch: TextFilePatch, val isCumulative: Bo
   fun contains(commitSha: String, filePath: String): Boolean = fileHistory.contains(commitSha, filePath)
 
   /**
+   * Maps a file line [lineIndex] in a commit [fromCommitSha] to a line on the given [side] of the [patch]
+   *
    * @return `null` only if the commit cannot be found.
    * Otherwise, this function returns the most accurate line number on the given side of the patch history we could derive.
    * If the line is removed during any patch, its location information can no longer be retrieved exactly, so instead, we

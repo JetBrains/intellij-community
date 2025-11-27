@@ -52,7 +52,8 @@ public final class PythonTemplateRunner {
     if (editor != null) {
       Template template = builder.buildInlineTemplate();
       TemplateManager.getInstance(project).startTemplate(editor, template);
-    } else {
+    }
+    else {
       builder.runNonInteractively(true);
     }
   }

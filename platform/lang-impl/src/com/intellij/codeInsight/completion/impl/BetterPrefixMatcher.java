@@ -65,8 +65,8 @@ public class BetterPrefixMatcher extends PrefixMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String string) {
-    return myOriginal.matchingDegree(string);
+  public int matchingDegree(@NotNull String name) {
+    return myOriginal.matchingDegree(name);
   }
 
   @Override

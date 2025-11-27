@@ -101,6 +101,7 @@ data class TabListOptions(
 
   @JvmField val tabPosition: JBTabsPosition = JBTabsPosition.top,
   @JvmField val hideTabs: Boolean = false,
+  @JvmField val showBorder: Boolean = true,
 )
 
 @DirtyUI
@@ -2234,14 +2235,9 @@ open class JBTabsImpl internal constructor(
     for (tabInfo in hiddenInfos.keys) {
       reset(tabInfo = tabInfo, resetLabels = resetLabels)
     }
-    for (eachDeferred in deferredToRemove.keys) {
-      resetLayout(eachDeferred as JComponent)
-    }
   }
 
   private fun reset(tabInfo: TabInfo, resetLabels: Boolean) {
-    val c = tabInfo.component
-    resetLayout(c)
     resetLayout(infoToForeToolbar.get(tabInfo))
     resetLayout(infoToToolbar.get(tabInfo))
     if (resetLabels) {
@@ -2260,7 +2256,7 @@ open class JBTabsImpl internal constructor(
       }
       return
     }
-    tabPainter.fillBackground((g as Graphics2D), Rectangle(0, 0, width, height))
+    tabPainter.fillBackground(this, (g as Graphics2D), Rectangle(0, 0, width, height))
     drawBorder(g)
     drawToolbarSeparator(g)
   }
@@ -2332,7 +2328,7 @@ open class JBTabsImpl internal constructor(
   }
 
   protected fun drawBorder(g: Graphics?) {
-    if (!isHideTabs) {
+    if (!isHideTabs && tabListOptions.showBorder) {
       tabBorder.paintBorder(this, g, 0, 0, width, height)
     }
   }
@@ -2821,6 +2817,17 @@ open class JBTabsImpl internal constructor(
       }
 
       tabListOptions = tabListOptions.copy(hideTabs = value)
+      relayout(forced = true, layoutNow = false)
+    }
+
+  final override var showBorder: Boolean
+    get() = tabListOptions.showBorder
+    set(value) {
+      if (tabListOptions.showBorder == value) {
+        return
+      }
+
+      tabListOptions = tabListOptions.copy(showBorder = value)
       relayout(forced = true, layoutNow = false)
     }
 

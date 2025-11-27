@@ -2,6 +2,7 @@
 package training.ui
 
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import org.assertj.swing.awt.AWT
 import org.assertj.swing.core.*
@@ -15,7 +16,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
-import javax.swing.SwingUtilities
 import kotlin.math.ln
 
 // It is a copy-paster from testGuiFramework (with several changes)
@@ -237,7 +237,7 @@ internal class IftSmartWaitRobot : Robot {
     }
     else {
       Pause.pause(waitConst)
-      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait { }
+      if (!EDT.isCurrentThreadEdt()) EdtInvocationManager.getInstance().invokeAndWait { }
     }
   }
 

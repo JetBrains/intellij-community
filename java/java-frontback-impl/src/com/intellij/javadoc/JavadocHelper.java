@@ -28,9 +28,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +41,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
-
 /**
  * Utility methods to support some Javadoc-related operations like formatting or navigation
  */
@@ -48,8 +48,6 @@ public final class JavadocHelper {
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
     = new Pair<>(null, Collections.emptyList());
   private static final String PARAM_TEXT = "param";
-  private static final @NotNull ParentAwareTokenSet TAG_TOKEN_SET = 
-    ParentAwareTokenSet.create(BASIC_DOC_TAG, BASIC_DOC_SNIPPET_TAG, BASIC_DOC_INLINE_TAG);
 
   private JavadocHelper() {
   }
@@ -134,15 +132,14 @@ public final class JavadocHelper {
       return EMPTY;
     }
 
-    ASTNode nodeAtCaret = BasicJavaAstTreeUtil.toNode(elementAtCaret);
-    ASTNode tag = BasicJavaAstTreeUtil.getParentOfType(nodeAtCaret, TAG_TOKEN_SET);
+    PsiDocTag tag = PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocTag.class);
     if (tag == null) {
       // Due to javadoc PSI specifics.
-      if (BasicJavaAstTreeUtil.isWhiteSpace(nodeAtCaret)) {
-        for (ASTNode e = nodeAtCaret.getTreePrev(); e != null && tag == null; e = e.getTreePrev()) {
-          tag = BasicJavaAstTreeUtil.getParentOfType(e, TAG_TOKEN_SET, false);
+      if (elementAtCaret instanceof PsiWhiteSpace) {
+        for (PsiElement e = elementAtCaret.getPrevSibling(); e != null && tag == null; e = e.getPrevSibling()) {
+          tag = PsiTreeUtil.getParentOfType(e, PsiDocTag.class, false);
           if (e instanceof PsiWhiteSpace
-              || (e.getElementType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
+              || (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
             continue;
           }
           break;
@@ -159,19 +156,19 @@ public final class JavadocHelper {
     }
 
     // Parse previous parameters.
-    for (ASTNode n = tag.getTreePrev(); n != null; n = n.getTreePrev()) {
-      JavadocParameterInfo info = parse(n, editor);
+    for (PsiElement e = tag.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+      JavadocParameterInfo info = parse(e, editor);
       if (info == null) {
         break;
       }
-      result.add(0, info);
+      result.addFirst(info);
     }
 
     result.add(anchorInfo);
 
     // Parse subsequent parameters.
-    for (ASTNode n = tag.getTreeNext(); n != null; n = n.getTreeNext()) {
-      JavadocParameterInfo info = parse(n, editor);
+    for (PsiElement e = tag.getNextSibling(); e != null; e = e.getNextSibling()) {
+      JavadocParameterInfo info = parse(e, editor);
       if (info == null) {
         break;
       }
@@ -181,27 +178,28 @@ public final class JavadocHelper {
     return Pair.create(anchorInfo, result);
   }
 
-  private static @Nullable JavadocParameterInfo parse(@NotNull ASTNode astNode, @NotNull Editor editor) {
-    final ASTNode tag = BasicJavaAstTreeUtil.getParentOfType(astNode, TAG_TOKEN_SET, false);
-    if (tag == null || !PARAM_TEXT.equals(BasicJavaAstTreeUtil.getTagName(tag))) {
+  private static @Nullable JavadocParameterInfo parse(@NotNull PsiElement element, @NotNull Editor editor) {
+    final PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class, false);
+    if (tag == null || !PARAM_TEXT.equals(tag.getName())) {
       return null;
     }
 
-    final ASTNode paramRef = BasicJavaAstTreeUtil.findChildByType(tag, BASIC_DOC_TAG_VALUE_ELEMENT,
-                                                                  BASIC_DOC_METHOD_OR_FIELD_REF,
-                                                                  BASIC_DOC_PARAMETER_REF,
-                                                                  BASIC_DOC_SNIPPET_TAG_VALUE);
+    final PsiDocTagValue paramRef = PsiTreeUtil.getChildOfType(tag, PsiDocTagValue.class);
     if (paramRef == null) {
       return null;
     }
 
-    for (ASTNode node = paramRef.getTreeNext(); node != null; node = node.getTreeNext()) {
+    for (PsiElement e = paramRef.getNextSibling(); e != null; e = e.getNextSibling()) {
+      final ASTNode node = e.getNode();
+      if (node == null) {
+        break;
+      }
       final IElementType elementType = node.getElementType();
       if (elementType == JavaDocTokenType.DOC_COMMENT_DATA) {
         return new JavadocParameterInfo(
           editor.offsetToLogicalPosition(paramRef.getTextRange().getEndOffset()),
-          editor.offsetToLogicalPosition(node.getTextRange().getStartOffset()),
-          editor.getDocument().getLineNumber(node.getTextRange().getEndOffset())
+          editor.offsetToLogicalPosition(e.getTextRange().getStartOffset()),
+          editor.getDocument().getLineNumber(e.getTextRange().getEndOffset())
         );
       }
       else if (elementType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {

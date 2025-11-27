@@ -100,7 +100,7 @@ public final class ReadWriteInstruction extends InstructionImpl {
   public @NotNull ACCESS getAccess() {
     return myAccess;
   }
-  
+
   public static @NotNull ReadWriteInstruction read(final @NotNull ControlFlowBuilder builder,
                                                    final @Nullable PyElement element,
                                                    final @Nullable String name) {
@@ -112,14 +112,14 @@ public final class ReadWriteInstruction extends InstructionImpl {
                                                     final @Nullable String name) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.WRITE);
   }
-  
+
   public static @NotNull ReadWriteInstruction newInstruction(final @NotNull ControlFlowBuilder builder,
                                                              final @Nullable PsiElement element,
                                                              final @Nullable String name,
                                                              final @NotNull ACCESS access) {
     return new ReadWriteInstruction(builder, element, name, access);
   }
-  
+
   public static @NotNull ReadWriteInstruction assertType(final @NotNull ControlFlowBuilder builder,
                                                          final @Nullable PsiElement element,
                                                          final @Nullable String name,

@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document != null) {
       if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
-      PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer();
+      PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(project)).getSynchronizer();
       if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
     }
     return document;

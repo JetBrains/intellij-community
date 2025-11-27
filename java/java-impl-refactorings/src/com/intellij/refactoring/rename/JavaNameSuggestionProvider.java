@@ -13,6 +13,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -85,25 +86,25 @@ public final class JavaNameSuggestionProvider implements NameSuggestionProvider 
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
       prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
-        final String[] words = NameUtilCore.splitNameIntoWords(name);
-        String buffer = Arrays.stream(words).map(StringUtil::toUpperCase).collect(Collectors.joining("_"));
+        final List<@NotNull String> words = NameUtilCore.splitNameIntoWordList(name);
+        String buffer = words.stream().map(StringUtil::toUpperCase).collect(Collectors.joining("_"));
         return new String[] {buffer};
       }
     }
     final List<String> result = new ArrayList<>();
-    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWords(name)));
+    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(name)));
     if (name.startsWith(prefix) && !prefix.isEmpty()) {
       name = name.substring(prefix.length());
-      result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWords(name)));
+      result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(name)));
     }
-    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWords(StringUtil.toLowerCase(name))));
+    result.add(suggestProperlyCasedName(prefix, NameUtilCore.splitNameIntoWordList(StringUtil.toLowerCase(name))));
     return ArrayUtilRt.toStringArray(result);
   }
 
-  private static String suggestProperlyCasedName(String prefix, String[] words) {
+  private static String suggestProperlyCasedName(String prefix, List<@NotNull String> words) {
     StringBuilder buffer = new StringBuilder(prefix);
-    for (int i = 0; i < words.length; i++) {
-      String word = words[i];
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
       final boolean prefixRequiresCapitalization = !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_');
       if (i > 0 || prefixRequiresCapitalization) {
         buffer.append(StringUtil.capitalize(word));

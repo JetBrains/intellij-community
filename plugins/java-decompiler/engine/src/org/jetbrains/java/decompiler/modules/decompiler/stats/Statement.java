@@ -31,11 +31,11 @@ public abstract class Statement implements IMatchable {
   public StatementType type;
   public int id;
 
-  private final Map<EdgeType, List<StatEdge>> mapSuccEdges = new HashMap<>();
-  private final Map<EdgeType, List<StatEdge>> mapPredEdges = new HashMap<>();
+  private final EnumMap<EdgeType, List<StatEdge>> mapSuccEdges = new EnumMap<>(EdgeType.class);
+  private final EnumMap<EdgeType, List<StatEdge>> mapPredEdges = new EnumMap<>(EdgeType.class);
 
-  private final Map<EdgeType, List<Statement>> mapSuccStates = new HashMap<>();
-  private final Map<EdgeType, List<Statement>> mapPredStates = new HashMap<>();
+  private final EnumMap<EdgeType, List<Statement>> mapSuccStates = new EnumMap<>(EdgeType.class);
+  private final EnumMap<EdgeType, List<Statement>> mapPredStates = new EnumMap<>(EdgeType.class);
 
   private final HashSet<StatEdge> labelEdges = new HashSet<>();
   // copied statement, s. deobfuscating of irreducible CFGs
@@ -93,7 +93,7 @@ public abstract class Statement implements IMatchable {
     processMap(mapPredStates);
   }
 
-  private static <T> void processMap(Map<EdgeType, List<T>> map) {
+  private static <T> void processMap(EnumMap<EdgeType, List<T>> map) {
     map.remove(EdgeType.EXCEPTION);
 
     List<T> lst = map.get(EdgeType.DIRECT_ALL);
@@ -210,12 +210,13 @@ public abstract class Statement implements IMatchable {
   }
 
   private void addEdgeDirectInternal(EdgeDirection direction, StatEdge edge, EdgeType edgetype) {
-    Map<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
-    Map<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
+    EnumMap<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
+    EnumMap<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
 
     mapEdges.computeIfAbsent(edgetype, k -> new ArrayList<>()).add(edge);
 
-    mapStates.computeIfAbsent(edgetype, k -> new ArrayList<>()).add(direction == EdgeDirection.BACKWARD ? edge.getSource() : edge.getDestination());
+    mapStates.computeIfAbsent(edgetype, k -> new ArrayList<>())
+      .add(direction == EdgeDirection.BACKWARD ? edge.getSource() : edge.getDestination());
   }
 
   private void addEdgeInternal(EdgeDirection direction, StatEdge edge) {
@@ -236,8 +237,8 @@ public abstract class Statement implements IMatchable {
 
   private void removeEdgeDirectInternal(EdgeDirection direction, StatEdge edge, EdgeType edgetype) {
 
-    Map<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
-    Map<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
+    EnumMap<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
+    EnumMap<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
 
     List<StatEdge> lst = mapEdges.get(edgetype);
     if (lst != null) {
@@ -369,7 +370,8 @@ public abstract class Statement implements IMatchable {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
       }
-      case SYNCHRONIZED, ROOT, GENERAL -> { }
+      case SYNCHRONIZED, ROOT, GENERAL -> {
+      }
       default -> {
         containsMonitorExit = false;
         for (Statement st : stats) {
@@ -578,7 +580,7 @@ public abstract class Statement implements IMatchable {
     }
     setVisited.add(stat);
 
-    for (StatEdge prededge : stat.getEdges(EdgeType.REGULAR.unite(EdgeType.EXCEPTION), EdgeDirection.BACKWARD)) {
+    for (StatEdge prededge : stat.getEdges(EdgeType.REGULAR_EXCEPTION, EdgeDirection.BACKWARD)) {
       Statement pred = prededge.getSource();
       if (!setVisited.contains(pred)) {
         addToPostReversePostOrderList(pred, lst, setVisited);
@@ -595,8 +597,8 @@ public abstract class Statement implements IMatchable {
   public void changeEdgeNode(EdgeDirection direction, StatEdge edge, Statement value) {
     cancellationManager.checkCanceled();
 
-    Map<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
-    Map<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
+    EnumMap<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
+    EnumMap<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
 
     EdgeType type = edge.getType();
 
@@ -652,7 +654,7 @@ public abstract class Statement implements IMatchable {
   private List<StatEdge> getEdges(EdgeType type, @NotNull EdgeDirection direction) {
     cancellationManager.checkCanceled();
 
-    Map<EdgeType, List<StatEdge>> map = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
+    EnumMap<EdgeType, List<StatEdge>> map = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
 
     List<StatEdge> res;
     if ((type.mask() & (type.mask() - 1)) == 0) {
@@ -675,9 +677,11 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Statement> getNeighbours(EdgeType type, EdgeDirection direction) {
-    cancellationManager.checkCanceled();
+    if (type == EdgeType.REGULAR && direction == EdgeDirection.FORWARD) {
+      cancellationManager.checkCanceled();
+    }
 
-    Map<EdgeType, List<Statement>> map = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
+    EnumMap<EdgeType, List<Statement>> map = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
 
     List<Statement> res;
     if ((type.mask() & (type.mask() - 1)) == 0) {
@@ -777,7 +781,7 @@ public abstract class Statement implements IMatchable {
     // FIXME: default switch
 
     return type == StatementType.BASIC_BLOCK || (type == StatementType.IF &&
-                                                        ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
+                                                 ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
            (type == StatementType.DO && ((DoStatement)this).getLoopType() != LoopType.DO);
   }
 
@@ -851,19 +855,23 @@ public abstract class Statement implements IMatchable {
   //TODO: Cleanup/cache?
   public void getOffset(@Nullable BitSet values) {
     if (values == null) return;
-    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
+    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null) {
       values.or(((DummyExitStatement)this).bytecode);
+    }
     if (this.getExprents() != null) {
       for (Exprent e : this.getExprents()) {
         e.fillBytecodeRange(values);
       }
-    } else {
+    }
+    else {
       for (IMatchable obj : this.getSequentialObjects()) {
         if (obj == null) {
           //Humm? Skip it
-        } else if (obj instanceof Statement) {
+        }
+        else if (obj instanceof Statement) {
           ((Statement)obj).getOffset(values);
-        } else if (obj instanceof Exprent) {
+        }
+        else if (obj instanceof Exprent) {
           ((Exprent)obj).fillBytecodeRange(values);
         }
       }
@@ -871,6 +879,7 @@ public abstract class Statement implements IMatchable {
   }
 
   private StartEndPair endpoints;
+
   public StartEndPair getStartEndRange() {
     if (endpoints == null) {
       BitSet set = new BitSet();
@@ -904,7 +913,8 @@ public abstract class Statement implements IMatchable {
       String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
       if (position != null) {
         if (position.matches("-?\\d+")) {
-          return this.exprents.get((this.exprents.size() + Integer.parseInt(position)) % this.exprents.size()); // care for negative positions
+          return this.exprents.get(
+            (this.exprents.size() + Integer.parseInt(position)) % this.exprents.size()); // care for negative positions
         }
       }
       else if (index < this.exprents.size()) { // use 'index' parameter

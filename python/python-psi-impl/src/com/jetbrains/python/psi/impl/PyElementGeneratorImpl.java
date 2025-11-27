@@ -76,9 +76,9 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
 
   @Override
   protected PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
-                                                                 @NotNull String unescaped,
-                                                                 final boolean preferUTF8,
-                                                                 boolean preferDoubleQuotes) {
+                                                                    @NotNull String unescaped,
+                                                                    final boolean preferUTF8,
+                                                                    boolean preferDoubleQuotes) {
     boolean useDouble = (!unescaped.contains("\"") && preferDoubleQuotes) || unescaped.contains("'");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
@@ -344,7 +344,9 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias) {
+  public @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
+                                                          @NotNull String name,
+                                                          @Nullable String alias) {
     final String asClause = StringUtil.isNotEmpty(alias) ? " as " + alias : "";
     final String statement = "import " + name + asClause;
     return createFromText(languageLevel, PyImportStatement.class, statement);

@@ -16,6 +16,8 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointManagerKt;
+import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +40,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     super(type, breakpointManager, properties, state);
     myType = type;
     myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(),
-                                                                 XBreakpointProxyKt.asProxy(this),
+                                                                 MonolithBreakpointProxyKt.asProxy(this),
                                                                  !SplitDebuggerMode.isSplitDebugger(),
-                                                                 XBreakpointManagerProxyKt.asProxy(breakpointManager));
+                                                                 MonolithBreakpointManagerKt.asProxy(breakpointManager));
   }
 
   /**

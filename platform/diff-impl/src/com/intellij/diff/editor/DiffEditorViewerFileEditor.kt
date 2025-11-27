@@ -67,13 +67,7 @@ open class DiffEditorViewerFileEditor(
   override fun getPreferredFocusedComponent(): JComponent? = editorViewer.preferredFocusedComponent
 
   override fun selectNotify() {
-    editorViewer.fireProcessorActivated()
-
-    val project = project ?: editorViewer.context.project
-    if (project != null) {
-      // DiffEditorTabTitleProvider relies on the FileEditor, that is not available for the initial query
-      FileEditorManager.getInstance(project).updateFilePresentation(file)
-    }
+    editorSelectNotify(project, editorViewer, this)
   }
 
   override fun getFilesToRefresh(): List<VirtualFile> = editorViewer.filesToRefresh

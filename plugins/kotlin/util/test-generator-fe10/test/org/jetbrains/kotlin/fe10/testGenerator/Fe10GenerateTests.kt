@@ -210,13 +210,13 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 model(
                     "evaluation/singleBreakpoint",
                     testMethodName = "doSingleBreakpointTest",
-                    targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                    targetBackend = TargetBackend.JVM,
                     excludedDirectories = listOf(
                         "contextParameters",
                     ),
                 )
-                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
+                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM)
             }
         }
 
@@ -228,14 +228,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 model(
                     "evaluation/singleBreakpoint",
                     testMethodName = "doSingleBreakpointTest",
-                    targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                    targetBackend = TargetBackend.JVM,
                     excludedDirectories = listOf(
                         "contextParameters",
                         "contextReceivers",
                     ),
                 )
-                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
+                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM)
             }
         }
 
@@ -244,7 +244,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
           AbstractK1IdeK2CodeScriptEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
-                model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/scripts", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
             }
         }
 
@@ -252,27 +252,27 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model(
                 "evaluation/singleBreakpoint",
                 testMethodName = "doSingleBreakpointTest",
-                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                targetBackend = TargetBackend.JVM,
                 excludedDirectories = listOf(
                     "contextParameters",
                 ),
             )
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
+            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
         }
 
         testClass<AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest> {
             model(
                 "evaluation/singleBreakpoint",
                 testMethodName = "doSingleBreakpointTest",
-                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                targetBackend = TargetBackend.JVM,
                 excludedDirectories = listOf(
                     "contextParameters",
                     "contextReceivers",
                 ),
             )
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
+            model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM)
         }
 
         testClass<AbstractSelectExpressionForDebuggerTestWithAnalysisApi> {

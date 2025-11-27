@@ -9,8 +9,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.project.IntelliJProjectConfiguration
@@ -378,7 +378,7 @@ class PluginModelValidator(
     sourceModuleNameToPluginFileInfo: Map<String, PluginDescriptorFileInfo>,
     contentModuleToContainingPlugins: HashMap<String, MutableList<ModuleInfo>>,
     isMainModule: Boolean,
-    contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRule>,
+    contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRuleValue>,
   ) {
     val moduleDependenciesCount = dependenciesElements.count { 
       it is DependenciesElement.ModuleDependency || it is DependenciesElement.PluginDependency && it.pluginId.startsWith("com.intellij.modules.")
@@ -478,15 +478,15 @@ class PluginModelValidator(
                         |""".trimMargin())
               continue
             }
-            !isMainModule && loadingRule == ModuleLoadingRule.OPTIONAL 
-              && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
+            !isMainModule && loadingRule == ModuleLoadingRuleValue.OPTIONAL
+            && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
                 
               val thisModuleName = referencingModuleInfo.name ?: error("Module name is not specified for $referencingModuleInfo")
               val thisLoadingRule = contentModuleNameFromThisPluginToLoadingRule.getValue(thisModuleName)
               val problemDescription = when (thisLoadingRule) {
-                ModuleLoadingRule.EMBEDDED ->
+                ModuleLoadingRuleValue.EMBEDDED ->
                   "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
-                ModuleLoadingRule.REQUIRED ->
+                ModuleLoadingRuleValue.REQUIRED ->
                   "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
                 else -> null
               }
@@ -507,7 +507,7 @@ class PluginModelValidator(
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
           if (!pluginModuleVisibilityCheckDisabled) {
             when (moduleInfo.descriptor.moduleVisibility) {
-              ModuleVisibility.PRIVATE -> {
+              ModuleVisibilityValue.PRIVATE -> {
                 if (containingPlugins.all { it.pluginId != referencingPluginInfo.pluginId }) {
                   val differentContainingPlugin = containingPlugins.first()
                   registerError("""
@@ -517,7 +517,7 @@ class PluginModelValidator(
                   |""".trimMargin())
                 }
               }
-              ModuleVisibility.INTERNAL -> {
+              ModuleVisibilityValue.INTERNAL -> {
                 val referencingNamespace = referencingPluginInfo.descriptor.namespace
                 val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingNamespace }
                 if (containingPluginFromAnotherNamespace != null) {
@@ -540,7 +540,7 @@ class PluginModelValidator(
                 """.trimMargin())
                 }
               }
-              ModuleVisibility.PUBLIC -> {}
+              ModuleVisibilityValue.PUBLIC -> {}
             }
           }
 
@@ -587,7 +587,7 @@ class PluginModelValidator(
 
       val moduleDescriptorFileInfo = contentModuleNameToFileInfo[moduleName]
       if (moduleDescriptorFileInfo == null) {
-        if (contentElement.loadingRule == ModuleLoadingRule.REQUIRED || contentElement.loadingRule == ModuleLoadingRule.EMBEDDED || !validationOptions.skipUnresolvedOptionalContentModules) {
+        if (contentElement.loadingRule == ModuleLoadingRuleValue.REQUIRED || contentElement.loadingRule == ModuleLoadingRuleValue.EMBEDDED || !validationOptions.skipUnresolvedOptionalContentModules) {
           reportError("Cannot find module $moduleName", referencingModuleInfo.sourceModule, mapOf(
             "referencingDescriptorFile" to referencingModuleInfo.descriptorFile
           ))
@@ -596,7 +596,7 @@ class PluginModelValidator(
       }
 
       val moduleDescriptor = moduleDescriptorFileInfo.descriptor
-      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PRIVATE) {
+      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
         nonPrivateModules.add(moduleName)
       }
       val moduleInfo = createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
@@ -618,7 +618,7 @@ class PluginModelValidator(
       checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
       checkModuleElements(moduleDescriptor, moduleInfo.sourceModule, moduleInfo.descriptorFile)
 
-      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PUBLIC && moduleDescriptor.pluginAliases.isNotEmpty()) {
+      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PUBLIC && moduleDescriptor.pluginAliases.isNotEmpty()) {
         val aliases =
           if (moduleDescriptor.pluginAliases.size > 1) "${moduleDescriptor.pluginAliases.size} plugin aliases (${moduleDescriptor.pluginAliases.joinToString()})"
           else "a plugin alias '${moduleDescriptor.pluginAliases.first()}'"

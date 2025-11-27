@@ -9,13 +9,16 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.ui.*;
+import com.intellij.ui.AbstractFontCombo;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.FontComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.dsl.builder.impl.UtilsKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +82,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       public void textChanged(@NotNull DocumentEvent event) {
-        if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
+        if (myIsInSchemeChange || !EDT.isCurrentThreadEdt()) return;
         String selectedFont = myPrimaryCombo.getFontName();
         if (selectedFont != null) {
           setFontSize(getFontSizeFromField());

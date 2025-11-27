@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -37,7 +37,7 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
   @Override
   public int getCommentStartDelta(final IElementType tokenType) {
     return tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT
-           ? 2 : tokenType == JavaDocElementType.DOC_COMMENT ? 3 : 0;
+           ? 2 : JavaDocElementType.DOC_COMMENT_TOKENS.contains(tokenType) ? 3 : 0;
   }
 
   @Override
@@ -47,6 +47,6 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public @NotNull String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
-    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? "*" : "";
+    return tokenType == JavaTokenType.C_STYLE_COMMENT || tokenType == JavaDocElementType.DOC_COMMENT ? "*" : tokenType == JavaDocElementType.DOC_MARKDOWN_COMMENT ? "///" : "";
   }
 }

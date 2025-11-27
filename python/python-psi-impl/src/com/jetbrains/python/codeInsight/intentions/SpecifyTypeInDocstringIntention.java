@@ -142,7 +142,6 @@ public final class SpecifyTypeInDocstringIntention extends TypeIntention {
         builder.run(targetEditor, true);
         return null;
       });
-
     }
   }
 }

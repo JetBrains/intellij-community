@@ -59,7 +59,7 @@ object ProjectScopeRpcHelper {
     }
   } ?: emptyFlow()
 
-  suspend fun <T : Any> getProjectScoped(projectId: ProjectId, action: suspend (project: Project) -> T): T? {
+  suspend fun <T : Any> getProjectScoped(projectId: ProjectId, action: suspend (project: Project) -> T?): T? {
     val projectOrNull = projectId.findProjectOrNull()
     if (projectOrNull == null) {
       LOG.debug { "Project $projectId was not found" }

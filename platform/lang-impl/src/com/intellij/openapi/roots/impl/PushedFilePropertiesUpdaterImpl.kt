@@ -100,12 +100,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
 
     // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
     // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
-    if (LOG.isDebugEnabled && events.size < 20) {
-      for (event in events) LOG.debug("""
-  File changed: ${event.path}.
-  requestor:${event.requestor}
-  event:$event
-  """.trimIndent())
+    if (LOG.isDebugEnabled) {
+      LOG.debug("${events.size} file(s) changed")
+      if (events.size < 20) {
+        for (event in events) LOG.debug("File changed: ${event.path}.\nrequestor:${event.requestor}\nevent:$event")
+      }
     }
 
     for (event in events) {

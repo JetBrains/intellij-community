@@ -9,9 +9,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ArchivedCompilationContextUtil;
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -26,14 +26,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+
+import static com.intellij.ide.plugins.PluginManagerCoreKt.getPluginDistDirByClass;
 
 final class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance(GroovyHotSwapper.class);
@@ -108,29 +109,54 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     }
 
     if (!project.isDefault() && containsGroovyClasses(project)) {
-      String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(getAgentJarPath(), "groovyHotSwap", GROOVY_HOTSWAP_AGENT_PATH);
+      String agentPath = prepareAgentPath();
       if (agentPath != null) {
-        if (Files.isRegularFile(Path.of(agentPath))) {
-          javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
-        }
-        else {
-          LOG.error("Groovy hotswap agent is not found at: " + agentPath);
-        }
+        javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
       }
     }
   }
 
-  private static String getAgentJarPath() {
-    final File ourJar = new File(PathUtil.getJarPathForClass(GroovyHotSwapper.class));
-    if (ourJar.isDirectory()) { //development mode
-      return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
-    }
-    final String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
-    if (relevantJarsRoot != null && ourJar.toPath().startsWith(relevantJarsRoot)) {
-      return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
+  @Nullable
+  private static String prepareAgentPath() {
+    String agentJarPath = getAgentJarPath();
+    if (agentJarPath == null) {
+      // error already reported from getAgentJarPath
+      return null;
     }
 
-    final File pluginDir = ourJar.getParentFile();
-    return pluginDir.getPath() + File.separator + "agent" + File.separator + "gragent.jar";
+    if (!Files.isRegularFile(Path.of(agentJarPath))) {
+      LOG.error("Groovy hotswap agent is not found at: " + agentJarPath);
+      return null;
+    }
+
+    String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentJarPath, "groovyHotSwap", GROOVY_HOTSWAP_AGENT_PATH);
+    if (agentPath == null) {
+      LOG.error("Unable to handle spaces in path for groovy hotswap agent: " + agentJarPath);
+      return null;
+    }
+
+    if (!Files.isRegularFile(Path.of(agentPath))) {
+      LOG.error("Groovy hotswap agent is not found (after handling spaces) at: " + agentPath +
+                ". original jar path (existing): " + agentJarPath);
+      return null;
+    }
+
+    return agentPath;
+  }
+
+  @Nullable
+  private static String getAgentJarPath() {
+    if (PluginManagerCore.isRunningFromSources()) { //development mode
+      return Path.of(PathManager.getCommunityHomePath(), "plugins", "groovy", "hotswap", "gragent.jar").toString();
+    }
+    else {
+      Path groovyPluginDist = getPluginDistDirByClass(GroovyHotSwapper.class);
+      if (groovyPluginDist == null) {
+        LOG.error("Failed to find groovy plugin dist directory");
+        return null;
+      }
+
+      return groovyPluginDist.resolve("lib").resolve("agent").resolve("gragent.jar").toString();
+    }
   }
 }

@@ -732,6 +732,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public @NotNull @Unmodifiable List<IntentionAction> getAvailableQuickFixes(String @NotNull ... filePaths) {
+    List<IntentionAction> fixes = getAllQuickFixes(filePaths);
+    return ContainerUtil.filter(fixes, action -> action.isAvailable(getProject(), editor, getFile()));
+  }
+
+  @Override
   @NotNull
   @Unmodifiable
   public List<IntentionAction> getAvailableIntentions() {
@@ -1274,6 +1280,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public @NotNull PsiManager getPsiManager() {
+    return myPsiManager;
+  }
+
+  @Override
+  public final @Nullable PsiManager getPsiManagerOrNull() {
     return myPsiManager;
   }
 

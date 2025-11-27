@@ -1,0 +1,58 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider" dynamic="true"/>
+
+    <extensionPoint name="httpRequestHandler" interface="org.jetbrains.ide.HttpRequestHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.binaryRequestHandler" interface="org.jetbrains.ide.BinaryRequestHandler"/>
+    <extensionPoint qualifiedName="org.jetbrains.customPortServerManager" interface="org.jetbrains.ide.CustomPortServerManager"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.jsonRpcDomain" beanClass="org.jetbrains.io.jsonRpc.JsonRpcDomainBean" dynamic="true">
+      <with attribute="implementation" implements="java.lang.Object"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.toolboxServiceHandler" interface="org.jetbrains.ide.ToolboxServiceHandler" dynamic="true" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl"/>
+    <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
+
+    <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
+    <browsersConfigurableProvider instance="org.jetbrains.builtInWebServer.BuiltInServerConfigurable"/>
+    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
+
+    <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.UploadLogsService"/>
+
+    <applicationActivity implementation="org.jetbrains.ide.ToolboxRestLauncher"/>
+    <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxIdeExitHandler"/>
+
+    <settingsEntryPointActionProvider implementation="org.jetbrains.ide.ToolboxSettingsActionRegistryActionProvider"/>
+
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
+
+    <jbProtocolCommand implementation="org.jetbrains.ide.OpenSettingsJbProtocolService"/>
+
+    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer" order="last"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains">
+    <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
+
+    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
+    <webServerFileHandler implementation="org.jetbrains.builtInWebServer.StaticFileHandler" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.LastResortWebServerRootsProvider" id="LastResortProvider" order="last"/>
+
+    <binaryRequestHandler implementation="org.jetbrains.io.jsonRpc.socket.RpcBinaryRequestHandler"/>
+  </extensions>
+</idea-plugin>

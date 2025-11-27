@@ -17,6 +17,7 @@ import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.isLoaded
 import com.intellij.ide.plugins.loadPluginSubDescriptors
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.HtmlChunk
@@ -143,7 +144,7 @@ class PluginDependenciesValidator private constructor(
     val jpsModuleToRuntimeDescriptors = LinkedHashMap<String, MutableList<IdeaPluginDescriptorImpl>>()
     for (descriptor in pluginSet.getEnabledModules()) {
       val jarFiles = descriptor.jarFiles ?: continue
-      if (descriptor.pluginClassLoader == null) {
+      if (!descriptor.isLoaded) {
         //this indicates that actually the module is not enabled, because some of its dependencies were missing in ClassLoaderConfigurator.configureContentModule, so we cannot check it 
         continue
       }
@@ -164,7 +165,7 @@ class PluginDependenciesValidator private constructor(
       for (descriptor in sourceDescriptors) {
         for (pluginDependency in descriptor.dependencies) {
           if (pluginDependency.isOptional && !pluginDependency.pluginId.idString.startsWith("com.intellij.modules.")
-              && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.pluginClassLoader == null) {
+              && pluginDependency.subDescriptor != null && pluginDependency.subDescriptor?.isLoaded == false) {
             //println("Skip checking '$sourceModuleName' because an optional dependency from its plugin '${descriptor.pluginId.idString}' on '${pluginDependency.pluginId}' is not loaded")
             return@mapNotNull null
           }

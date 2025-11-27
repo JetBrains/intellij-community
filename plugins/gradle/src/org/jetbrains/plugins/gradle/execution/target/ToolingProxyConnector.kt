@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.HostPort
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.ProgressManager
@@ -119,8 +120,16 @@ internal class ToolingProxyConnector(
       ProgressManager.checkCanceled()
       val message = receive()
       if (message != null) {
-        if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
-          return
+        try {
+          if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
+            return
+          }
+        }
+        catch (e: InterruptedException) {
+          throw e
+        }
+        catch (e: RuntimeException) {
+          log.error("Unexpected error during communication with Tooling proxy", e)
         }
       }
       Thread.yield()
@@ -139,6 +148,7 @@ internal class ToolingProxyConnector(
     private val classloaderHolder: GradleToolingProxyClassloaderHolder,
     private val serverEnvironmentSetup: GradleServerEnvironmentSetup,
     private val configurationProvider: GradleServerConfigurationProvider?,
+    private val taskId: ExternalSystemTaskId?,
   ) {
 
     fun getConnector(host: String, port: Int): ToolingProxyConnector {
@@ -157,6 +167,7 @@ internal class ToolingProxyConnector(
         HostPort(host, port)
       }
       val communicationAddress = configurationProvider?.getClientCommunicationAddress(
+        taskId,
         serverEnvironmentSetup.getEnvironmentConfiguration(),
         hostPort
       )

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAttributeInspectionBase {
+public final class HtmlUnknownBooleanAttributeInspection extends HtmlUnknownBooleanAttributeInspectionBase {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(

@@ -158,6 +158,9 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       throwExceptions: Boolean = false,
       updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
+      LOG.info("Looking for the last compatible plugin updates for:\n$allIds\n" +
+               "Is update check: $updateCheck")
+
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
 
@@ -190,8 +193,9 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
+      updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
-      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck = true)
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck)
     }
 
     @RequiresBackgroundThread

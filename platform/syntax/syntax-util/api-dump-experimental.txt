@@ -48,12 +48,14 @@
 - advance():V
 - getBufferEnd():I
 - getBufferSequence():java.lang.CharSequence
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
 - f:getFlex():com.intellij.platform.syntax.util.lexer.FlexLexer
 - getState():I
 - getTokenEnd():I
 - getTokenStart():I
 - getTokenType():com.intellij.platform.syntax.SyntaxElementType
 - pf:locateToken():V
+- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
 - start(java.lang.CharSequence,I,I,I):V
 *:com.intellij.platform.syntax.util.lexer.FlexLexer
 - a:advance():com.intellij.platform.syntax.SyntaxElementType
@@ -150,7 +152,6 @@
 - <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V
 - advanceLexer():V
 - enforceCommentTokens(com.intellij.platform.syntax.SyntaxElementTypeSet):V
-- enforceCommentTokensInside(com.intellij.platform.syntax.SyntaxElementTypeSet,kotlin.jvm.functions.Function0):java.lang.Object
 - eof():Z
 - error(java.lang.String):V
 - getCurrentOffset():I

@@ -4,14 +4,14 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
@@ -19,19 +19,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.isOptionalLoadingRule
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JavaSourceRootType
-
-// Contrary to what it looks like, this is not a step back.
-// Previously, it was specified in PLATFORM_IMPLEMENTATION_MODULES/PLATFORM_API_MODULES.
-// Once the shape of the extracted module becomes fully discernible,
-// we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
-internal val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
-  "intellij.rider", listOf(
-  "intellij.platform.debugger.modulesView"
-),
-  "intellij.platform.rpc.backend", listOf(
-  "fleet.rpc.server",
-)
-)
 
 internal fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
   return when {
@@ -55,10 +42,12 @@ internal fun processAndGetProductPluginContentModules(
 
   val element: Element
   val moduleToSetChainMapping: Map<String, List<String>>?
+  val moduleToIncludeDependenciesMapping: Map<String, Boolean>?
   val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
   if (programmaticModulesSpec == null) {
     element = JDOMUtil.load(file)
     moduleToSetChainMapping = null
+    moduleToIncludeDependenciesMapping = null
   }
   else {
     val buildResult = buildProductContentXml(
@@ -74,6 +63,7 @@ internal fun processAndGetProductPluginContentModules(
 
     element = JDOMUtil.load(buildResult.xml)
     moduleToSetChainMapping = buildResult.moduleToSetChainMapping
+    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping
   }
 
   // Scrambling isn’t an issue: the scrambler can modify XML.
@@ -91,12 +81,13 @@ internal fun processAndGetProductPluginContentModules(
   val moduleItems = LinkedHashSet<ModuleItem>()
   filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
     processProductModule(
-      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRule.EMBEDDED.name.lowercase(),
+      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.xmlValue,
       moduleName = moduleName,
       moduleElement = moduleElement,
       frontendModuleFilter = frontendModuleFilter,
       result = moduleItems,
       moduleToSetChainOverride = moduleToSetChainMapping,
+      moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
       descriptorCache = descriptorCache,
       xIncludeResolver = xIncludeResolver,
       context = context,
@@ -150,6 +141,7 @@ private fun processProductModule(
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,
   moduleToSetChainOverride: Map<String, List<String>>? = null,
+  moduleToIncludeDependenciesOverride: Map<String, Boolean>? = null,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
   context: BuildContext,
@@ -166,21 +158,16 @@ private fun processProductModule(
 
   // extract module set from override mapping (for programmatic spec)
   val moduleSet = moduleToSetChainOverride?.get(moduleName)
+  val includeDependencies = moduleToIncludeDependenciesOverride?.get(moduleName) ?: false
   result.add(
     ModuleItem(
       moduleName = moduleName,
       relativeOutputFile = relativeOutFile,
       reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
       moduleSet = moduleSet,
+      includeDependencies = includeDependencies,
     )
   )
-  PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let { list ->
-    list
-      .filter { !context.productProperties.productLayout.productImplementationModules.contains(it) }
-      .mapTo(result) { subModuleName ->
-        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
-      }
-  }
 
   // We do not embed the module descriptor because scrambling can rename classes.
   //

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.jvm.Throws
 
 @ApiStatus.Experimental
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
@@ -93,7 +92,13 @@ object EelInitialization {
 
 @ApiStatus.Experimental
 fun Path.getEelDescriptor(): EelDescriptor {
-  return EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider -> eelProvider.getEelDescriptor(this) } ?: LocalEelDescriptor
+  val application = ApplicationManager.getApplication()
+  if (application != null) {
+    for (eelProvider in EelProvider.EP_NAME.getExtensionsIfPointIsRegistered(application)) {
+      eelProvider.getEelDescriptor(this)?.let { return it }
+    }
+  }
+  return LocalEelDescriptor
 }
 
 /**

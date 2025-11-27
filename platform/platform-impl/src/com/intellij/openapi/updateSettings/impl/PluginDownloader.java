@@ -32,12 +32,13 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
@@ -61,7 +62,7 @@ public final class PluginDownloader {
   private final @Nullable MarketplacePluginDownloadService myDownloadService;
 
   private @NlsSafe String myPluginVersion;
-  private PluginUiModel myModel;
+  private final PluginUiModel myModel;
   private IdeaPluginDescriptor myDescriptor;
   private Path myFile;
   private Path myOldFile;
@@ -77,11 +78,7 @@ public final class PluginDownloader {
     myPluginId = model.getPluginId();
     myPluginName = model.getName();
     myProductCode = model.getProductCode();
-    if (model.getReleaseDate() != null) {
-      myReleaseDate = Date.from(Instant.ofEpochMilli(model.getReleaseDate()));
-    } else {
-      myReleaseDate = null;
-    }
+    myReleaseDate = model.getReleaseDate() != null ? Date.from(Instant.ofEpochMilli(model.getReleaseDate())) : null;
     myReleaseVersion = model.getReleaseVersion();
     myLicenseOptional = model.isLicenseOptional();
     myDescription = model.getDescription();
@@ -137,9 +134,9 @@ public final class PluginDownloader {
 
   public boolean isFromMarketplace() {
     try {
-      return new URL(myPluginUrl).getHost().equals(new URL(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST).getHost());
+      return Objects.equals(new URI(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST).getHost(), new URI(myPluginUrl).getHost());
     }
-    catch (MalformedURLException ignored) {
+    catch (URISyntaxException ignored) {
       return false;
     }
   }
@@ -163,12 +160,8 @@ public final class PluginDownloader {
   }
 
   public @NotNull Path getFilePath() throws IOException {
-    if (myFile != null) {
-      return myFile;
-    }
-    else {
-      throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
-    }
+    if (myFile == null) throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
+    return myFile;
   }
 
   public boolean isShownErrors() {
@@ -189,7 +182,7 @@ public final class PluginDownloader {
       return true;
     }
 
-    IdeaPluginDescriptor descriptor = null;
+    var descriptor = (IdeaPluginDescriptor)null;
 
     if (PluginManagerCore.isPluginInstalled(myPluginId)) {
       descriptor = PluginManagerCore.getPlugin(myPluginId);
@@ -330,7 +323,7 @@ public final class PluginDownloader {
 
   @ApiStatus.Internal
   public boolean checkPluginCanBeDownloaded(@Nullable ProgressIndicator indicator) {
-    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
+    var downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
     return downloader.checkPluginCanBeDownloaded(myPluginUrl, indicator);
   }
 
@@ -348,9 +341,7 @@ public final class PluginDownloader {
     node.setLicenseOptional(isLicenseOptional());
     node.setVersion(getPluginVersion());
     node.setDownloadUrl(myPluginUrl);
-    List<PluginDependencyImpl> dependencies =
-      ContainerUtil.map(myDependencies, dep -> new PluginDependencyImpl(dep.getPluginId(), null, dep.isOptional()));
-    node.setDependencies(dependencies);
+    node.setDependencies(ContainerUtil.map(myDependencies, dep -> new PluginDependencyImpl(dep.getPluginId(), null, dep.isOptional())));
     node.setDescription(myDescription);
     return node;
   }
@@ -399,21 +390,24 @@ public final class PluginDownloader {
 
   private static boolean unloadDescriptorById(PluginId pluginId) {
     var descriptor = PluginManagerCore.findPlugin(pluginId);
-    return descriptor != null &&
-           DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor) &&
-           DynamicPlugins.INSTANCE.unloadPlugin(descriptor,
-                                                new DynamicPlugins.UnloadPluginOptions()
-                                                  .withDisable(false)
-                                                  .withUpdate(true)
-                                                  .withWaitForClassloaderUnload(true));
+    if (descriptor == null) {
+      return false;
+    }
+    var pluginDescriptor = IdeaPluginDescriptorImplKt.getMainDescriptor(descriptor);
+    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
+      return false;
+    }
+    var options = new DynamicPlugins.UnloadPluginOptions().withDisable(false).withUpdate(true).withWaitForClassloaderUnload(true);
+    return DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
   }
 
   @ApiStatus.Internal
-  public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
-                                                           @Nullable String host, // FIXME this should come from pluginUiModel (there is repositoryName)
-                                                           @Nullable BuildNumber buildNumber) throws IOException {
-    return createDownloader(pluginUiModel, host, buildNumber, pluginUiModel.getDownloadUrl(),
-                            pluginUiModel.isFromMarketplace());
+  public static @NotNull PluginDownloader createDownloader(
+    @NotNull PluginUiModel pluginUiModel,
+    @Nullable String host, // FIXME this should come from pluginUiModel (there is repositoryName)
+    @Nullable BuildNumber buildNumber
+  ) throws IOException {
+    return createDownloader(pluginUiModel, host, buildNumber, pluginUiModel.getDownloadUrl(), pluginUiModel.isFromMarketplace());
   }
 
   public static @NotNull PluginDownloader createDownloader(
@@ -421,9 +415,9 @@ public final class PluginDownloader {
     @Nullable String host,
     @Nullable BuildNumber buildNumber
   ) throws IOException {
-    boolean fromMarketplace = descriptor instanceof PluginNode;
-    String downloadUrl = fromMarketplace ? ((PluginNode)descriptor).getDownloadUrl() : null;
-    return createDownloader(new PluginUiModelAdapter(descriptor), host, buildNumber, downloadUrl, fromMarketplace);
+    var isFromCustomRepo = descriptor instanceof PluginNode;
+    var downloadUrl = isFromCustomRepo ? ((PluginNode)descriptor).getDownloadUrl() : null;
+    return createDownloader(new PluginUiModelAdapter(descriptor), host, buildNumber, downloadUrl, isFromCustomRepo);
   }
 
   private static @NotNull PluginDownloader createDownloader(
@@ -431,21 +425,26 @@ public final class PluginDownloader {
     @Nullable String host,
     @Nullable BuildNumber buildNumber,
     @Nullable String downloadUrl,
-    boolean isFromMarketplace
+    boolean isFromCustomRepo
   ) throws IOException {
-    var currentVersion = PluginManagerCore.getPlugin(descriptor.getPluginId());
-    var url = isFromMarketplace && host != null ?
-              toAbsoluteUrl(downloadUrl, host) :
-              MarketplaceUrls.getPluginDownloadUrl(descriptor, getMarketplaceDownloadsUUID(), buildNumber, currentVersion);
+    var url =
+      isFromCustomRepo && host != null && downloadUrl != null ?
+      toAbsoluteUrl(host, downloadUrl) :
+      MarketplaceUrls.getPluginDownloadUrl(
+        descriptor, getMarketplaceDownloadsUUID(), buildNumber, PluginManagerCore.getPlugin(descriptor.getPluginId())
+      );
     return new PluginDownloader(descriptor, url, buildNumber, PluginDownloader::showErrorDialog, null);
   }
 
-  private static String toAbsoluteUrl(String downloadUrl, String host) throws IOException {
-    try {
-      return new URL(new URL(host), downloadUrl).toExternalForm();
+  private static String toAbsoluteUrl(String host, String downloadUrl) throws IOException {
+    if (downloadUrl.indexOf(' ') >= 0) {
+      downloadUrl = downloadUrl.replace(" ", "%20");  // a workaround for clumsily encoded custom plugin repositories
     }
-    catch (MalformedURLException e) {
-      throw new IOException(e);
+    try {
+      return new URI(host).resolve(new URI(downloadUrl)).toASCIIString();
+    }
+    catch (URISyntaxException e) {
+      throw new IOException('[' + host + ", " + downloadUrl + ']', e);
     }
   }
 }

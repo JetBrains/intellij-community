@@ -1,0 +1,3 @@
+- name: dist.all/lib/fleet.rhizomedb.jar
+  modules:
+  - name: fleet.rhizomedb

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public interface PyKeyValueExpression extends PyAstKeyValueExpression, PyExpression {
-  PyKeyValueExpression[] EMPTY_ARRAY = new PyKeyValueExpression[0]; 
+  PyKeyValueExpression[] EMPTY_ARRAY = new PyKeyValueExpression[0];
 
   @Override
   default @NotNull PyExpression getKey() {

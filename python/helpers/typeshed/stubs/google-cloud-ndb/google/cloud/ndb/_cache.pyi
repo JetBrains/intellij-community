@@ -1,5 +1,4 @@
 from _typeshed import Incomplete
-from typing import Any
 
 from google.cloud.ndb import tasklets as tasklets
 
@@ -13,11 +12,11 @@ class _GlobalCacheBatch:
     def make_call(self) -> None: ...
     def future_info(self, key) -> None: ...
 
-global_get: Any
+global_get: Incomplete
 
 class _GlobalCacheGetBatch(_GlobalCacheBatch):
-    todo: Any
-    keys: Any
+    todo: Incomplete
+    keys: Incomplete
     def __init__(self, ignore_options) -> None: ...
     def add(self, key): ...
     def done_callback(self, cache_call) -> None: ...
@@ -27,7 +26,7 @@ class _GlobalCacheGetBatch(_GlobalCacheBatch):
 def global_set(key, value, expires: Incomplete | None = ..., read: bool = ...): ...
 
 class _GlobalCacheSetBatch(_GlobalCacheBatch):
-    expires: Any
+    expires: Incomplete
     todo: object
     futures: object
     def __init__(self, options) -> None: ...
@@ -41,17 +40,17 @@ class _GlobalCacheSetIfNotExistsBatch(_GlobalCacheSetBatch):
     def make_call(self): ...
     def future_info(self, key, value): ...  # type:ignore[override]
 
-global_delete: Any
+global_delete: Incomplete
 
 class _GlobalCacheDeleteBatch(_GlobalCacheBatch):
-    keys: Any
-    futures: Any
+    keys: Incomplete
+    futures: Incomplete
     def __init__(self, ignore_options) -> None: ...
     def add(self, key): ...
     def make_call(self): ...
     def future_info(self, key): ...
 
-global_watch: Any
+global_watch: Incomplete
 
 class _GlobalCacheWatchBatch(_GlobalCacheDeleteBatch):
     def make_call(self): ...
@@ -63,7 +62,7 @@ class _GlobalCacheUnwatchBatch(_GlobalCacheDeleteBatch):
     def make_call(self): ...
     def future_info(self, key): ...
 
-global_compare_and_swap: Any
+global_compare_and_swap: Incomplete
 
 class _GlobalCacheCompareAndSwapBatch(_GlobalCacheSetBatch):
     def make_call(self): ...

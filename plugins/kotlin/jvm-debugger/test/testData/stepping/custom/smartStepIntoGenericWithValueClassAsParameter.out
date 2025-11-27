@@ -1,0 +1,11 @@
+LineBreakpoint created at smartStepIntoGenericWithValueClassAsParameter.kt:12
+LineBreakpoint created at smartStepIntoGenericWithValueClassAsParameter.kt:19
+Run Java
+Connected to the target VM
+smartStepIntoGenericWithValueClassAsParameter.kt:12
+smartStepIntoGenericWithValueClassAsParameter.kt:29
+smartStepIntoGenericWithValueClassAsParameter.kt:19
+smartStepIntoGenericWithValueClassAsParameter.kt:29
+Disconnected from the target VM
+
+Process finished with exit code 0

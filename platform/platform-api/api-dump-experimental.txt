@@ -384,6 +384,8 @@ c:com.intellij.ui.SimpleColoredComponent
 - javax.accessibility.Accessible
 - *s:fromMarkupText(com.intellij.openapi.util.text.MarkupText):com.intellij.ui.SimpleColoredComponent
 - *p:getIconToolTipText():java.lang.String
+f:com.intellij.ui.components.BulkListModelKt
+- *sf:refilterListModelInBulk(javax.swing.JList):V
 *c:com.intellij.ui.components.JBHtmlPane
 - com.intellij.openapi.Disposable
 - javax.swing.JEditorPane

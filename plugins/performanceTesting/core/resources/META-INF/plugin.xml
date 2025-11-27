@@ -92,6 +92,9 @@
 
     <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+
+    <listener class="com.jetbrains.performancePlugin.commands.FileOpenLoggerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">

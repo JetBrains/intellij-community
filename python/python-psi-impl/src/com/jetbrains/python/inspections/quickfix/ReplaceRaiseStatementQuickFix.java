@@ -39,10 +39,16 @@ public class ReplaceRaiseStatementQuickFix extends PsiUpdateModCommandQuickFix {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       String newExpressionText = expressions[0].getText() + "(" + expressions[1].getText() + ")";
       if (expressions.length == 2) {
-        element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyRaiseStatement.class, "raise " + newExpressionText));
-      } else if (expressions.length == 3) {
+        element.replace(
+          elementGenerator.createFromText(LanguageLevel.forElement(element), PyRaiseStatement.class, "raise " + newExpressionText));
+      }
+      else if (expressions.length == 3) {
         element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyRaiseStatement.class,
-                                                               "raise " + newExpressionText + ".with_traceback(" + expressions[2].getText() + ")"));
+                                                        "raise " +
+                                                        newExpressionText +
+                                                        ".with_traceback(" +
+                                                        expressions[2].getText() +
+                                                        ")"));
       }
     }
   }

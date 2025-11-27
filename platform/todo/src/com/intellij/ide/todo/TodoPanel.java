@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -169,7 +169,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
           }
         }
       }).onSuccess(path -> {
-        if (todoItem.equals(getTodoItem(path))) {
+        if (path != null && todoItem.equals(getTodoItem(path))) {
           // TODO setSelectionPath does not work on the first opening right away.
           //      I don't know how to fix that without this hack
           new Alarm().addRequest(() -> {
@@ -612,7 +612,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyShowModulesAction extends ToggleAction implements DumbAware {
-    public MyShowModulesAction() {
+    MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
 
@@ -646,7 +646,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
-    public MyFlattenPackagesAction() {
+    MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 

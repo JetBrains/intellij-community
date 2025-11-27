@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.PyNames.TYPE_ENUM_FLAG;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
@@ -103,7 +104,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     if (referenceTarget instanceof PyQualifiedNameOwner qualifiedNameOwner) {
       final String name = qualifiedNameOwner.getQualifiedName();
-      if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
+      if ((PyNames.TYPE_ENUM + ".name").equals(name) || (TYPE_ENUM_FLAG + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
@@ -112,7 +113,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("enum.StrEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
-      else if ((PyNames.TYPE_ENUM_FLAG + ".value").equals(name)&& anchor instanceof PyReferenceExpression) {
+      else if ((PyNames.TYPE_ENUM_FLAG + ".value").equals(name) && anchor instanceof PyReferenceExpression) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) &&
@@ -297,8 +298,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     EnumAttributeKind attributeKind;
     if (isMember) {
       attributeKind = type instanceof PyLiteralType literalType && literalType.getPyClass().equals(enumClass)
-                                        ? EnumAttributeKind.MEMBER_ALIAS
-                                        : EnumAttributeKind.MEMBER;
+                      ? EnumAttributeKind.MEMBER_ALIAS
+                      : EnumAttributeKind.MEMBER;
     }
     else {
       attributeKind = EnumAttributeKind.NONMEMBER;
@@ -336,7 +337,9 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static @Nullable PyType getEnumAutoConstructorType(@NotNull PsiElement target,
                                                              @NotNull TypeEvalContext context,
                                                              @Nullable PsiElement anchor) {
-    if (target instanceof PyClass && PyNames.TYPE_ENUM_AUTO.equals(((PyClass)target).getQualifiedName()) && anchor instanceof PyCallExpression) {
+    if (target instanceof PyClass &&
+        PyNames.TYPE_ENUM_AUTO.equals(((PyClass)target).getQualifiedName()) &&
+        anchor instanceof PyCallExpression) {
       PyClassLikeType classType = as(context.getType((PyTypedElement)target), PyClassLikeType.class);
       if (classType != null) {
         return new PyCallableTypeImpl(Collections.emptyList(), classType.toInstance());
@@ -387,7 +390,9 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
+                                           @NotNull PyCallSiteExpression callSite,
+                                           @NotNull TypeEvalContext context) {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
@@ -446,7 +451,8 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  private static @Nullable Ref<PyType> getTupleConcatenationResultType(@NotNull PyBinaryExpression addition, @NotNull TypeEvalContext context) {
+  private static @Nullable Ref<PyType> getTupleConcatenationResultType(@NotNull PyBinaryExpression addition,
+                                                                       @NotNull TypeEvalContext context) {
     if (addition.getRightExpression() != null) {
       final PyTupleType leftTupleType = as(context.getType(addition.getLeftExpression()), PyTupleType.class);
       final PyTupleType rightTupleType = as(context.getType(addition.getRightExpression()), PyTupleType.class);

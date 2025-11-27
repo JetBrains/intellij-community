@@ -54,7 +54,8 @@ public class RemovePrefixQuickFix extends PsiUpdateModCommandQuickFix {
         final String nodeText = node.getText();
         final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
         if (nodeText.substring(0, prefixLength).equalsIgnoreCase(myPrefix)) {
-          final PyStringLiteralExpression replacement = elementGenerator.createStringLiteralAlreadyEscaped(nodeText.substring(prefixLength));
+          final PyStringLiteralExpression replacement =
+            elementGenerator.createStringLiteralAlreadyEscaped(nodeText.substring(prefixLength));
           node.getPsi().replace(replacement.getFirstChild());
         }
       }

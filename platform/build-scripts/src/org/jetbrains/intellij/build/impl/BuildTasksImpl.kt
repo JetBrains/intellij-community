@@ -209,7 +209,7 @@ private suspend fun layoutShared(context: BuildContext) {
         Files.createDirectories(to.parent)
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
       }
-      context.productProperties.copyAdditionalFiles(context, context.paths.distAllDir)
+      context.productProperties.copyAdditionalFiles(context.paths.distAllDir, context)
     }
   }
   checkClassFiles(root = context.paths.distAllDir, isDistAll = true, context)
@@ -617,7 +617,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
 
   context.macDistributionCustomizer?.let { macCustomizer ->
     checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
-    checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+    checkPaths(listOf(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
     checkPaths(
@@ -625,7 +625,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
       "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
     )
     context.executeStep(spanBuilder("check .dmg images"), BuildOptions.MAC_DMG_STEP) {
-      checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+      checkPaths(listOf(macCustomizer.dmgImagePath), "productProperties.macCustomizer.dmgImagePath")
       checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
     }
   }
@@ -636,6 +636,10 @@ private suspend fun checkProductProperties(context: BuildContext) {
     context.proprietaryBuildTools.scrambleTool?.let {
       checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context)
     }
+  }
+  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", context)
+  if (properties.contentModulesToScramble.isNotEmpty() && !properties.scrambleMainJar) {
+    context.messages.logErrorAndThrow("productProperties.contentModulesToScramble specifies some modules, but productProperties.scrambleMainJar is not set to true")
   }
 }
 
@@ -767,8 +771,8 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
   }
 }
 
-private fun checkPaths(paths: Collection<String>, propertyName: String) {
-  val nonExistingFiles = paths.filter { Files.notExists(Path.of(it)) }
+private fun checkPaths(paths: Collection<Path>, propertyName: String) {
+  val nonExistingFiles = paths.filter { Files.notExists(it) }
   check(nonExistingFiles.isEmpty()) {
     "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
   }
@@ -789,7 +793,7 @@ private fun checkMandatoryField(value: String?, fieldName: String) {
 
 private fun checkMandatoryPath(path: String, fieldName: String) {
   checkMandatoryField(path, fieldName)
-  checkPaths(listOf(path), fieldName)
+  checkPaths(listOf(Path.of(path)), fieldName)
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {

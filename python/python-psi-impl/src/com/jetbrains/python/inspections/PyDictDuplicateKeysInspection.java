@@ -40,7 +40,7 @@ import java.util.Map;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect using the same value as dictionary key twice.
  */
 public final class PyDictDuplicateKeysInspection extends PyInspection {
@@ -57,6 +57,7 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyDictLiteralExpression(@NotNull PyDictLiteralExpression node) {
       if (node.isEmpty()) return;

@@ -29,18 +29,7 @@ private const val GIL_CHECK_CMD = "from __future__ import print_function; import
 @ApiStatus.Internal
 internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: ExecutablePython): PyResult<PythonInfo> = withContext(Dispatchers.IO) {
   val options = ExecOptions(timeout = 1.minutes)
-  val gilCheckOutput = executePythonAdvanced(
-    python,
-    Args("-c", GIL_CHECK_CMD),
-    processInteractiveHandler = transformerToHandler(null, ZeroCodeStdoutTransformer),
-    options = options
-  ).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }.trim()
-
-  val freeThreaded = when (gilCheckOutput) {
-    "True" -> false
-    "False" -> true
-    else -> return@withContext PyResult.localizedError(message("python.get.version.error", python.userReadableName, gilCheckOutput))
-  }
+  val freeThreaded = !execGetStdoutBoolImpl(python, GIL_CHECK_CMD).getOr(message("python.check.threading.fail")) { return@withContext it }
 
   val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, args = Args(PYTHON_VERSION_ARG), processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null) { r ->
     if (r.exitCode == 0) Result.success(r) else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
@@ -53,6 +42,21 @@ internal suspend fun ExecService.validatePythonAndGetInfoImpl(python: Executable
   }
 
   return@withContext Result.success(PythonInfo(languageLevel, freeThreaded))
+}
+
+@ApiStatus.Internal
+internal suspend fun ExecService.execGetStdoutBoolImpl(python: ExecutablePython, command: @NlsSafe String): PyResult<Boolean> = execGetStdoutImpl(python, command, ZeroCodeStdoutTransformerBool)
+
+@ApiStatus.Internal
+internal suspend fun <T : Any> ExecService.execGetStdoutImpl(python: ExecutablePython, command: @NlsSafe String, transformer: ZeroCodeStdoutTransformerTyped<T>): PyResult<T> = withContext(Dispatchers.IO) {
+  val options = ExecOptions(timeout = 1.minutes)
+  val result = executePythonAdvanced(
+    python,
+    Args("-c", command),
+    processInteractiveHandler = transformerToHandler(null, transformer),
+    options = options
+  ).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }
+  return@withContext Result.success(result)
 }
 
 private val ExecutablePython.userReadableName: @NlsSafe String

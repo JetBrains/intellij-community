@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class PlainPrefixMatcher extends PrefixMatcher {
+  public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
 
   private final boolean myPrefixMatchesOnly;
 

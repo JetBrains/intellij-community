@@ -3273,7 +3273,8 @@ public class PyTypeTest extends PyTestCase {
                                                     expr = UserId""");
 
         for (TypeEvalContext context : getTypeEvalContexts(definition)) {
-          assertInstanceOf(context.getType(definition), PyTypingNewType.class);
+          PyCallableType callableType = assertInstanceOf(context.getType(definition), PyCallableType.class);
+          assertInstanceOf(callableType.getReturnType(context), PyTypingNewType.class);
         }
 
         final PyExpression instance = parseExpr("""
@@ -3308,7 +3309,7 @@ public class PyTypeTest extends PyTestCase {
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTest("Type[UserId]",
+      () -> doTest("(Dict[int, str]) -> UserId",
                    """
                      from typing import Dict, NewType
                      UserId = NewType('UserId', Dict[int, str])

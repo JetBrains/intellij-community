@@ -11,12 +11,12 @@ import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class HgRepositoryInitializer implements VcsRepositoryInitializer {
   @Override
-  public void initRepository(@NotNull File rootDir) throws VcsException {
-    HgCommandResult result = new HgInitCommand(ProjectManager.getInstance().getDefaultProject()).execute(rootDir.getPath());
+  public void initRepository(@NotNull Path rootDir) throws VcsException {
+    HgCommandResult result = new HgInitCommand(ProjectManager.getInstance().getDefaultProject()).execute(rootDir);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       throw new VcsException(result.getRawError());
     }

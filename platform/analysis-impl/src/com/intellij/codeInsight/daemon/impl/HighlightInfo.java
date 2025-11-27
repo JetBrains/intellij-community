@@ -602,7 +602,7 @@ public class HighlightInfo implements Segment {
       s += "; gutter: " + gutterIconRenderer;
     }
     if (toolId != null) {
-      s += showFullQualifiedClassNames ? "; toolId: " + toolId + " (" + toolId.getClass() + ")" :
+      s += showFullQualifiedClassNames ? "; toolId: " + toolId + (toolId instanceof Class ? "" : " (" + toolId.getClass() + ")") :
            "; toolId: " + (toolId instanceof Class<?> c ? c.getSimpleName() : "not specified");
     }
     if (group != HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP) {

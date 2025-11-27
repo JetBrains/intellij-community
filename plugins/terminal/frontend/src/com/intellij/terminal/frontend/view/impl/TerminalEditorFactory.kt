@@ -105,6 +105,7 @@ object TerminalEditorFactory {
     coroutineScope: CoroutineScope,
   ): EditorImpl {
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    editor.settings.isBlockCursor = false // we paint our own cursor, but this setting affects mouse selection subtly (IJPL-190533)
     editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     configureSoftWraps(editor)
