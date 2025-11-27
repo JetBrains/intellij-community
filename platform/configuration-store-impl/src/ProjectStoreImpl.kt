@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -290,7 +291,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 
   private fun getMachineWorkspacePath(storeDescriptor: ProjectStoreDescriptor): Path? {
-    val machine = storeDescriptor.historicalProjectBasePath.asEelPath().descriptor.machine
+    val projectPath = storeDescriptor.historicalProjectBasePath
+    if (projectPath.fileSystem != FileSystems.getDefault()) return null
+    val machine = projectPath.asEelPath().descriptor.machine
     if (machine is LocalEelMachine) return null
     val pathHash = FileUtilRt.pathHashCode(projectBasePath.invariantSeparatorsPathString)
     return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(machine.name)}.${pathHash.toHexString()}.xml")
