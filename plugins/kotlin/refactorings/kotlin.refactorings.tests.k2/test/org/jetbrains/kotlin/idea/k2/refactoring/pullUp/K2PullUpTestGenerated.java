@@ -282,6 +282,16 @@ public abstract class K2PullUpTestGenerated extends AbstractK2PullUpTest {
             runTest("../../idea/tests/testData/refactoring/pullUp/k2k/publicToInterface.kt");
         }
 
+        @TestMetadata("pullUpOverrideFromDeepHierarchy.kt")
+        public void testPullUpOverrideFromDeepHierarchy() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/pullUp/k2k/pullUpOverrideFromDeepHierarchy.kt");
+        }
+
+        @TestMetadata("pullUpOverrideFromDeepHierarchyMakeAbstract.kt")
+        public void testPullUpOverrideFromDeepHierarchyMakeAbstract() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/pullUp/k2k/pullUpOverrideFromDeepHierarchyMakeAbstract.kt");
+        }
+
         @TestMetadata("reformatModifierList.kt")
         public void testReformatModifierList() throws Exception {
             runTest("../../idea/tests/testData/refactoring/pullUp/k2k/reformatModifierList.kt");
