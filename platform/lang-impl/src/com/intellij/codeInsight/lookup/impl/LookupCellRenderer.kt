@@ -69,6 +69,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private val boldMetrics: FontMetrics
 
   private val lookup: LookupImpl
+  private val editor: Editor = lookup.editor
 
   private val nameComponent: SimpleColoredComponent
   private val tailComponent: SimpleColoredComponent
@@ -630,7 +631,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     if (icon is DeferredIcon) {
       icon = icon.baseIcon
     }
-    icon = removeVisibilityIfNeeded(lookup.editor, icon, emptyIcon)
+    icon = removeVisibilityIfNeeded(editor, icon, emptyIcon)
     icon = EmptyIcon.create(icon)
     for (customizer in customizers) {
       icon = customizer.customizeEmptyIcon(icon)
