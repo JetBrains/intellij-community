@@ -113,8 +113,11 @@ public final class MethodParameterInfoHandler
     return new LightJavaParameterInfo(
       ContainerUtil.map(
         candidateWithPresentationArray, candidate -> {
-          UIPresentation presentation = getUIPresentation(candidate.presentation, updateInfoContext.getCurrentParameterIndex(),
-                                                          true, false, true);
+          UIPresentation presentation = getUIPresentation(
+            candidate.presentation,
+            updateInfoContext.getCurrentParameterIndex() == null ? -1 : updateInfoContext.getCurrentParameterIndex(),
+            true, false, true
+          );
           return new LightJavaMethodPresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
         }
       ),

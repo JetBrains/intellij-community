@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 
 
 /**
- * This class is used to extract logic about preferred signature and current paramater without making any changes within the UI.
+ * Class is used to extract logic about preferred signature and current parameter without making any changes within the UI.
  */
 internal class LightJavaParameterUpdateInfoContext(private val file: PsiFile, private val candidates: Array<Any>, private val offset: Int) : UpdateParameterInfoContext {
   private var myCurrentParameterIndex = -1
@@ -41,8 +41,8 @@ internal class LightJavaParameterUpdateInfoContext(private val file: PsiFile, pr
     return if (index == -1) null else index
   }
 
-  fun getCurrentParameterIndex(): Int {
-    return myCurrentParameterIndex
+  fun getCurrentParameterIndex(): Int? {
+    return if (myCurrentParameterIndex == -1) null else myCurrentParameterIndex
   }
 
   override fun isUIComponentEnabled(index: Int): Boolean = false
@@ -51,7 +51,7 @@ internal class LightJavaParameterUpdateInfoContext(private val file: PsiFile, pr
 
   override fun getParameterListStart(): Int = throw UnsupportedOperationException()
 
-  override fun getObjectsToView(): Array<Any>? = candidates
+  override fun getObjectsToView(): Array<Any> = candidates
 
   override fun isPreservedOnHintHidden(): Boolean = false
 
@@ -61,7 +61,7 @@ internal class LightJavaParameterUpdateInfoContext(private val file: PsiFile, pr
 
   override fun isSingleParameterInfo(): Boolean = false
 
-  override fun getCustomContext(): UserDataHolderEx? = throw UnsupportedOperationException()
+  override fun getCustomContext(): UserDataHolderEx = throw UnsupportedOperationException()
 
   override fun getProject(): Project = file.project
 
