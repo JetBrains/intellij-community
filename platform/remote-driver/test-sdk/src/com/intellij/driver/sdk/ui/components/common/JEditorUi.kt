@@ -2,10 +2,8 @@ package com.intellij.driver.sdk.ui.components.common
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
-import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
@@ -15,6 +13,10 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.actionButton
+import com.intellij.driver.sdk.ui.components.elements.checkBox
+import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
 import org.intellij.lang.annotations.Language
@@ -143,17 +145,17 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun goToPosition(line: Int, column: Int): Unit = step("Go to position $line line $column column") {
     click()
     interact {
-      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget
-                                                                                         ?: RdTarget.DEFAULT))
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, component.rdTarget))
     }
+    scrollToCaret()
   }
 
   fun goToLine(line: Int): Unit = step("Go to $line line") {
     click()
     interact {
-      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, (this as? RefWrapper)?.getRef()?.rdTarget
-                                                                                ?: RdTarget.DEFAULT))
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, component.rdTarget))
     }
+    scrollToCaret()
   }
 
   fun moveCaretToOffset(offset: Int) {
@@ -169,13 +171,17 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun clickOnPosition(line: Int, column: Int) {
-    setFocus()
+  fun clickOnPosition(line: Int, column: Int, scrollToPosition: Boolean = true) {
+    if (scrollToPosition) {
+      scrollToPosition(line, column)
+    }
     click(calculatePositionPoint(line, column))
   }
 
-  fun hoverOnPosition(line: Int, column: Int) {
-    setFocus()
+  fun hoverOnPosition(line: Int, column: Int, scrollToPosition: Boolean = true) {
+    if (scrollToPosition) {
+      scrollToPosition(line, column)
+    }
     moveMouse(calculatePositionPoint(line, column))
   }
 
@@ -239,6 +245,20 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getAllHighlights(): List<HighlightInfo> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
     driver.utility(HighlightInfo::class).fromRangeHighlighter(it)
   } + driver.getHighlights(editor.getDocument())
+
+  fun scrollToPosition(line: Int, column: Int) {
+    interact {
+      editor.getScrollingModel().scrollTo(driver.logicalPosition(line, column, component.rdTarget), scrollType())
+    }
+  }
+
+  fun scrollToCaret() {
+    interact {
+      editor.getScrollingModel().scrollToCaret(scrollType())
+    }
+  }
+
+  private fun scrollType(name: String = "CENTER") = driver.utility(ScrollType::class).valueOf(name)
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")

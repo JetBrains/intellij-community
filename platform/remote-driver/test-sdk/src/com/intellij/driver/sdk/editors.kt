@@ -29,6 +29,7 @@ interface Editor {
   fun getSoftWrapModel(): SoftWrapModel
   fun visualLineToY(visualLine: Int): Int
   fun getMarkupModel(): MarkupModel
+  fun getScrollingModel(): ScrollingModel
 }
 
 @Remote("com.intellij.openapi.editor.markup.MarkupModel")
@@ -61,6 +62,17 @@ interface CaretModel {
   fun getLogicalPosition(): LogicalPosition
   fun moveToOffset(offset: Int)
   fun getOffset(): Int
+}
+
+@Remote("com.intellij.openapi.editor.ScrollingModel")
+interface ScrollingModel {
+  fun scrollToCaret(type: ScrollType)
+  fun scrollTo(pos: LogicalPosition, scrollType: ScrollType)
+}
+
+@Remote("com.intellij.openapi.editor.ScrollType")
+interface ScrollType {
+  fun valueOf(name: String): ScrollType
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
@@ -110,7 +122,6 @@ interface InlineCompletionRenderTextBlock {
 interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
-
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry")
 interface TextInlayPresentationEntry {
