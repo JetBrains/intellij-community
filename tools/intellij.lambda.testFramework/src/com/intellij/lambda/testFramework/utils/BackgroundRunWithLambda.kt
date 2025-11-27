@@ -23,17 +23,6 @@ class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTe
                               LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
   }
 
-  @Deprecated("Use LambdaRdTestSession.run instead")
-  suspend fun runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
-    return rdSession.runNamedLambda(namedLambdaClass, params)
-  }
-
-  @Deprecated("Use LambdaRdTestSession.runInBackend instead")
-  suspend fun runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
-    return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
-  }
-
-
   suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(name: String? = null, crossinline lambda: suspend T.() -> Unit) {
     val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
     val lambda = LambdaRdSerializedLambda("${this@run.protocol!!.name}: ${name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))}",

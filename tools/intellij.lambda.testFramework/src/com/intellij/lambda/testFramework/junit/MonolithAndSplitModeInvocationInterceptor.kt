@@ -3,12 +3,14 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.remoteDev.tests.impl.LambdaTestHost
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
+import kotlin.reflect.KClass
 
 /**
  * Wrap test method invocations in lambda that later called on the IDE side.
@@ -65,6 +67,13 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   }
 }
 
+internal suspend fun BackgroundRunWithLambda.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  return rdSession.runNamedLambda(namedLambdaClass, params)
+}
+
+internal suspend fun BackgroundRunWithLambda.runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
+}
 
 internal const val ARGUMENTS_SEPARATOR = "], ["
 
