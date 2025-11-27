@@ -146,8 +146,8 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     }
     presentation.icon = icon
     presentation.disabledIcon = icon
-    @Suppress("DialogTitleCapitalization")
-    presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    //@Suppress("DialogTitleCapitalization")
+    //presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   }
 
@@ -191,6 +191,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy {
     val group = DefaultActionGroup(hotSwapAction)
+    HotSwapUiExtension.computeSafeIfAvailable { it.toggleAction() }?.let {
+      group.add(it)
+    }
     if (addMoreAction) {
       HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
         group.add(it)

@@ -23,6 +23,7 @@ interface HotSwapUiExtension {
   val shouldAddHideButton: Boolean get() = true
   val shouldAddMoreButton: Boolean get() = false
   fun moreAction(): AnAction? = null
+  fun toggleAction(): AnAction? = null
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {
