@@ -53,7 +53,7 @@ public sealed class TypeEvalContext {
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
   protected final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
-  public final Map<PyTypedElement, PyType> myExternalEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<PyTypedElement, PyType> myExternalEvaluated = CollectionFactory.createConcurrentSoftValueMap();
   protected final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
   protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
 
