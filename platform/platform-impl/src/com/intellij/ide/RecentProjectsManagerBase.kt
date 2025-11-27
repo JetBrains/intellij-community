@@ -44,6 +44,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.ProjectStoreOwner
@@ -289,11 +290,13 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
     }
     set(value) {
-      val newValue = value?.takeIf { it.isNotBlank() }?.let { FileUtilRt.toSystemIndependentName(it) }
+      val newValue = value?.takeIf { it.isNotBlank() && isLocal(it)}?.let { FileUtilRt.toSystemIndependentName(it) }
       synchronized(stateLock) {
         state.lastProjectLocation = newValue
       }
     }
+
+  private fun isLocal(location: String): Boolean = Path.of(location).asEelPath().descriptor is LocalEelDescriptor
 
   override fun updateLastProjectPath() {
     if (PlatformUtils.isJetBrainsClient()) {

@@ -43,8 +43,6 @@ import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -531,17 +529,9 @@ object ProjectUtil {
     if (defaultDirectory.isNotEmpty()) {
       return defaultDirectory.replace('/', File.separatorChar)
     }
-    val lastProjectLocation = getLastProjectLocation()
+    val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
     return lastProjectLocation?.replace('/', File.separatorChar) ?: getUserHomeProjectDir()
   }
-
-  private fun getLastProjectLocation(): String? =
-    RecentProjectsManager.getInstance().lastProjectCreationLocation?.let { location ->
-      if (Path.of(location).asEelPath().descriptor is LocalEelDescriptor) {
-        location
-      }
-      else null
-    }
 
   @JvmStatic
   fun getUserHomeProjectDir(): String {
