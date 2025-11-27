@@ -43,6 +43,28 @@ f:com.intellij.ide.rpc.DataContextIdKt
 f:com.intellij.ide.rpc.DocumentIdKt
 - *sf:document(com.intellij.ide.rpc.DocumentId):com.intellij.openapi.editor.Document
 - *sf:rpcId(com.intellij.openapi.editor.Document):com.intellij.ide.rpc.DocumentId
+*f:com.intellij.ide.ui.SerializableTextChunk
+- *sf:Companion:com.intellij.ide.ui.SerializableTextChunk$Companion
+- <init>(com.intellij.usages.TextChunk):V
+- <init>(java.lang.String,com.intellij.ide.ui.colors.ColorId,I,com.intellij.openapi.editor.markup.EffectType,com.intellij.ide.ui.colors.ColorId,com.intellij.usages.TextChunk):V
+- b:<init>(java.lang.String,com.intellij.ide.ui.colors.ColorId,I,com.intellij.openapi.editor.markup.EffectType,com.intellij.ide.ui.colors.ColorId,com.intellij.usages.TextChunk,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
+- <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- f:getEffectColor():com.intellij.ide.ui.colors.ColorId
+- f:getEffectType():com.intellij.openapi.editor.markup.EffectType
+- f:getFontType():I
+- f:getForegroundColorId():com.intellij.ide.ui.colors.ColorId
+- f:getText():java.lang.String
+- f:toTextChunk():com.intellij.usages.TextChunk
+*bf:com.intellij.ide.ui.SerializableTextChunk$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.ui.SerializableTextChunk$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.ui.SerializableTextChunk
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.ui.SerializableTextChunk):V
+*f:com.intellij.ide.ui.SerializableTextChunk$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.ide.ui.WindowFocusFrontendService
 - *sf:Companion:com.intellij.ide.ui.WindowFocusFrontendService$Companion
 - <init>():V

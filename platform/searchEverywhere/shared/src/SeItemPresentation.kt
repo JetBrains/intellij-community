@@ -36,7 +36,7 @@ sealed interface SeItemPresentation {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class SeSimpleItemPresentation(
   val iconId: IconId? = null,

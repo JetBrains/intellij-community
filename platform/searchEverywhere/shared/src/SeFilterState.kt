@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-@ApiStatus.Internal
 @Serializable
 sealed class SeFilterState {
   @Serializable
@@ -16,7 +15,6 @@ sealed class SeFilterState {
 }
 
 @Experimental
-@ApiStatus.Internal
 @Serializable
 sealed class SeFilterValue {
   @Serializable

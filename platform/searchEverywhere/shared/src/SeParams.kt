@@ -5,9 +5,8 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-@ApiStatus.Internal
 @Serializable
-data class SeParams(
+class SeParams(
   val inputQuery: String,
   val filter: SeFilterState,
 )
