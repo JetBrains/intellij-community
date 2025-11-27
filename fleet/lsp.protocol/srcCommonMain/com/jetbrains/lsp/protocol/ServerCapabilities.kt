@@ -140,43 +140,43 @@ data class ServerCapabilities(
     /**
      * The server provides hover support.
      */
-    val hoverProvider: OrBoolean<HoverOptions>? = null,
+    val hoverProvider: OrBoolean<HoverRegistrationOptions>? = null,
 
     /**
      * The server provides signature help support.
      */
-    val signatureHelpProvider: SignatureHelpOptions? = null,
+    val signatureHelpProvider: SignatureHelpRegistrationOptions? = null,
 
     /**
      * The server provides go to declaration support.
      *
      * @since 3.14.0
      */
-    val declarationProvider: OrBoolean<DeclarationOptions>? = null,
+    val declarationProvider: OrBoolean<DeclarationRegistrationOptions>? = null,
 
     /**
      * The server provides goto definition support.
      */
-    val definitionProvider: OrBoolean<DefinitionOptions>? = null,
+    val definitionProvider: OrBoolean<DefinitionRegistrationOptions>? = null,
 
     /**
      * The server provides goto type definition support.
      *
      * @since 3.6.0
      */
-    val typeDefinitionProvider: OrBoolean<TypeDefinitionOptions>? = null,
+    val typeDefinitionProvider: OrBoolean<TypeDefinitionRegistrationOptions>? = null,
 
     /**
      * The server provides goto implementation support.
      *
      * @since 3.6.0
      */
-    val implementationProvider: OrBoolean<ImplementationOptions>? = null,
+    val implementationProvider: OrBoolean<ImplementationRegistrationOptions>? = null,
 
     /**
      * The server provides find references support.
      */
-    val referencesProvider: OrBoolean<ReferenceOptions>? = null,
+    val referencesProvider: OrBoolean<ReferenceRegistrationOptions>? = null,
 
     /**
      * The server provides document highlight support.
@@ -186,19 +186,19 @@ data class ServerCapabilities(
     /**
      * The server provides document symbol support.
      */
-    val documentSymbolProvider: OrBoolean<DocumentSymbolOptions>? = null,
+    val documentSymbolProvider: OrBoolean<DocumentSymbolRegistrationOptions>? = null,
 
     /**
      * The server provides code actions. The `CodeActionOptions` return type is
      * only valid if the client signals code action literal support via the
      * property `textDocument.codeAction.codeActionLiteralSupport`.
      */
-    val codeActionProvider: OrBoolean<CodeActionOptions>? = null,
+    val codeActionProvider: OrBoolean<CodeActionRegistrationOptions>? = null,
 
     /**
      * The server provides code lens.
      */
-    val codeLensProvider: CodeLensOptions? = null,
+    val codeLensProvider: CodeLensRegistrationOptions? = null,
 
     /**
      * The server provides document link support.
@@ -210,17 +210,17 @@ data class ServerCapabilities(
      *
      * @since 3.6.0
      */
-    val colorProvider: OrBoolean<DocumentColorOptions>? = null,
+    val colorProvider: OrBoolean<DocumentColorRegistrationOptions>? = null,
 
     /**
      * The server provides document formatting.
      */
-    val documentFormattingProvider: OrBoolean<DocumentFormattingOptions>? = null,
+    val documentFormattingProvider: OrBoolean<DocumentFormattingRegistrationOptions>? = null,
 
     /**
      * The server provides document range formatting.
      */
-    val documentRangeFormattingProvider: OrBoolean<DocumentRangeFormattingOptions>? = null,
+    val documentRangeFormattingProvider: OrBoolean<DocumentRangeFormattingRegistrationOptions>? = null,
 
     /**
      * The server provides document formatting on typing.
@@ -232,7 +232,7 @@ data class ServerCapabilities(
      * specified if the client states that it supports
      * `prepareSupport` in its initial `initialize` request.
      */
-    val renameProvider: OrBoolean<RenameOptions>? = null,
+    val renameProvider: OrBoolean<RenameRegistrationOptions>? = null,
 
     /**
      * The server provides folding provider support.
@@ -272,7 +272,7 @@ data class ServerCapabilities(
      *
      * @since 3.16.0
      */
-    val semanticTokensProvider: SemanticTokensOptions? = null, // SemanticTokensOptions | SemanticTokensRegistrationOptions
+    val semanticTokensProvider: SemanticTokensRegistrationOptions? = null,
 
     /**
      * Whether server provides moniker support.
@@ -312,7 +312,7 @@ data class ServerCapabilities(
     /**
      * The server provides workspace symbol support.
      */
-    val workspaceSymbolProvider: OrBoolean<WorkspaceSymbolOptions>? = null,
+    val workspaceSymbolProvider: OrBoolean<WorkspaceSymbolRegistrationOptions>? = null,
 
     /**
      * Workspace specific server capabilities
@@ -325,59 +325,132 @@ data class ServerCapabilities(
     val experimental: JsonElement? = null,
 )
 
-typealias HoverOptions = Unknown
-typealias TypeDefinitionOptions = Unknown
-typealias ImplementationOptions = Unknown
-typealias DocumentSymbolOptions = Unknown
 typealias DocumentLinkOptions = Unknown
-typealias DocumentColorOptions = Unknown
-typealias DocumentFormattingOptions = Unknown
-typealias DocumentRangeFormattingOptions = Unknown
 typealias DocumentOnTypeFormattingOptions = Unknown
 typealias FoldingRangeOptions = Unknown
 typealias SelectionRangeOptions = Unknown
 typealias LinkedEditingRangeOptions = Unknown
 typealias CallHierarchyOptions = Unknown
-typealias SemanticTokensRegistrationOptions = Unknown
 typealias MonikerOptions = Unknown
 typealias TypeHierarchyOptions = Unknown
 typealias InlineValueOptions = Unknown
+
+interface DocumentRangeFormattingOptions : WorkDoneProgressOptions
+
+@Serializable
+data class DocumentRangeFormattingRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : DocumentRangeFormattingOptions, TextDocumentRegistrationOptions
+
+interface DocumentFormattingOptions : WorkDoneProgressOptions
+
+@Serializable
+data class DocumentFormattingRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : DocumentFormattingOptions, TextDocumentRegistrationOptions
+
+interface DocumentSymbolOptions : WorkDoneProgressOptions {
+    /**
+     * A human-readable string that is shown when multiple outlines trees
+     * are shown for the same document.
+     *
+     * @since 3.16.0
+     */
+    val label: String?
+}
+
+@Serializable
+data class DocumentSymbolRegistrationOptions(
+    override val label: String?,
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : DocumentSymbolOptions, TextDocumentRegistrationOptions
+
+interface ImplementationOptions : WorkDoneProgressOptions
+
+@Serializable
+data class ImplementationRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+    override val id: String? = null,
+) : ImplementationOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
+
+interface HoverOptions: WorkDoneProgressOptions
+
+@Serializable
+data class HoverRegistrationOptions(
+    override val documentSelector: DocumentSelector? = null,
+    override val workDoneProgress: Boolean? = null,
+) : HoverOptions, TextDocumentRegistrationOptions
+
+interface TypeDefinitionOptions : WorkDoneProgressOptions
+
+@Serializable
+data class TypeDefinitionRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+    override val id: String? = null,
+) : TypeDefinitionOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
+
+interface DocumentColorOptions : WorkDoneProgressOptions
+
+@Serializable
+data class DocumentColorRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+    override val id: String? = null,
+) : DocumentColorOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
 
 @Serializable
 data class DocumentHighlightOptions(
     override val workDoneProgress: Boolean? = null,
 ) : WorkDoneProgressOptions
 
-@Serializable
-data class RenameOptions(
-  /**
-	 * Renames should be checked and tested before being executed.
-	 */
-	val prepareProvider: Boolean?,
-
-  override val workDoneProgress: Boolean? = null,
-) : WorkDoneProgressOptions
+interface RenameOptions : WorkDoneProgressOptions {
+    /**
+     * Renames should be checked and tested before being executed.
+     */
+    val prepareProvider: Boolean?
+}
 
 @Serializable
-data class CodeLensOptions(
-  override val workDoneProgress: Boolean? = null,
+data class RenameRegistrationOptions(
+    /**
+     * Renames should be checked and tested before being executed.
+     */
+    override val prepareProvider: Boolean?,
+
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : RenameOptions, TextDocumentRegistrationOptions
+
+interface CodeLensOptions : WorkDoneProgressOptions {
+    /**
+     * Code lens has a resolve provider as well.
+     */
+    val resolveProvider: Boolean?
+}
+
+@Serializable
+data class CodeLensRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
 
     /**
      * Code lens has a resolve provider as well.
      */
-    val resolveProvider: Boolean? = null,
-  ) : WorkDoneProgressOptions
+    override val resolveProvider: Boolean? = null,
+) : CodeLensOptions, TextDocumentRegistrationOptions
 
-@Serializable
-data class InlayHintOptions(
+interface InlayHintOptions : WorkDoneProgressOptions {
     /**
     * The server provides support to resolve additional
     * information for an inlay hint item.
     */
-   val resolveProvider: Boolean?,
-
-    override val workDoneProgress: Boolean?,
-) : WorkDoneProgressOptions
+    val resolveProvider: Boolean?
+}
 
 @Serializable
 data class InlayHintRegistrationOptions(
@@ -385,42 +458,61 @@ data class InlayHintRegistrationOptions(
      * The server provides support to resolve additional
      * information for an inlay hint item.
      */
-    val resolveProvider: Boolean?,
+    override val resolveProvider: Boolean?,
 
     override val workDoneProgress: Boolean? = null,
     override val documentSelector: DocumentSelector? = null,
     override val id: String? = null,
-) : TextDocumentRegistrationOptions, StaticRegistrationOptions, WorkDoneProgressOptions
+) : InlayHintOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
 
-@Serializable
-data class SemanticTokensOptions(
+interface SemanticTokensOptions : WorkDoneProgressOptions {
     /**
      * The legend used by the server
      */
-    val legend: SemanticTokensLegend,
+    val legend: SemanticTokensLegend
 
     /**
      * Server supports providing semantic tokens for a specific range
      * of a document.
      */
-    val range: OrBoolean<Unit>?,
+    val range: OrBoolean<Unit>?
 
     /**
      * Server supports providing semantic tokens for a full document.
      */
-    val full: OrBoolean<Full>?,
-
-    override val workDoneProgress: Boolean? = null,
-) : WorkDoneProgressOptions {
+    val full: OrBoolean<Full>?
 
     @Serializable
     data class Full(
-        /**
-         * The server supports deltas for full documents.
-         */
-        val delta: Boolean?,
+      /**
+       * The server supports deltas for full documents.
+       */
+      val delta: Boolean?,
     )
 }
+
+@Serializable
+data class SemanticTokensRegistrationOptions(
+    /**
+     * The legend used by the server
+     */
+    override val legend: SemanticTokensLegend,
+
+    /**
+     * Server supports providing semantic tokens for a specific range
+     * of a document.
+     */
+    override val range: OrBoolean<Unit>?,
+
+    /**
+     * Server supports providing semantic tokens for a full document.
+     */
+    override val full: OrBoolean<SemanticTokensOptions.Full>?,
+
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+    override val id: String? = null,
+) : SemanticTokensOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
 
 @Serializable
 data class ServerWorkspaceCapabilities(
