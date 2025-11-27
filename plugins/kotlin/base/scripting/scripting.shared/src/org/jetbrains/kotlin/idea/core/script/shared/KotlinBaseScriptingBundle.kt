@@ -13,4 +13,8 @@ object KotlinBaseScriptingBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
     fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+
+    @Nls
+    @JvmStatic
+    fun htmlMessage(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params).withHtml()
 }

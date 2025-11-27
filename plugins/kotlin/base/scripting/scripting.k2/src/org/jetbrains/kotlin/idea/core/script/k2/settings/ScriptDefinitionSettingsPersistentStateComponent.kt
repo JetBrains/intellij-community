@@ -16,38 +16,35 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 @State(
     name = "ScriptDefinitionSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
-class ScriptDefinitionPersistentSettings(val project: Project) :
-  SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettings {
+internal class ScriptDefinitionSettingsPersistentStateComponent(val project: Project) :
+    SerializablePersistentStateComponent<ScriptDefinitionSettingsPersistentStateComponent.State>(State()), KotlinScriptingSettings {
 
-    fun setSettings(settings: List<ScriptDefinitionSetting>) {
+    fun updateSettings(updateFunction: (ScriptDefinitionSettingsPersistentStateComponent.State) -> ScriptDefinitionSettingsPersistentStateComponent.State) {
         updateState {
-            it.copy(settings = settings)
+            updateFunction(it)
         }
         ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
     }
 
-    override fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean {
-        return state.settings.firstOrNull { it.matches(scriptDefinition) }?.enabled ?: true
-    }
+    override fun isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean = state.isScriptDefinitionEnabled(scriptDefinition)
 
-    override fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
-        val index = state.settings.indexOfFirst { it.matches(scriptDefinition) }
-        return if (index == -1) scriptDefinition.order else index
-    }
+    override fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int = state.getScriptDefinitionOrder(scriptDefinition)
 
     companion object {
-        fun getInstance(project: Project): ScriptDefinitionPersistentSettings =
-            KotlinScriptingSettings.getInstance(project) as ScriptDefinitionPersistentSettings
+        fun getInstance(project: Project): ScriptDefinitionSettingsPersistentStateComponent =
+            KotlinScriptingSettings.getInstance(project) as ScriptDefinitionSettingsPersistentStateComponent
     }
 
-    data class State(
+    internal data class State(
         @JvmField @XCollection(
             propertyElementName = "settings", elementName = "definition"
-        ) val settings: List<ScriptDefinitionSetting> = listOf()
+        ) val settings: List<DefinitionSetting> = listOf(),
+        @JvmField val explicitTemplateClassNames: String = "",
+        @JvmField val explicitTemplateClasspath: String = "",
     )
 
     @Tag("definition")
-    class ScriptDefinitionSetting(
+    internal class DefinitionSetting(
         @JvmField @Attribute val name: String? = null,
         @JvmField @Attribute val definitionId: String? = null,
         @JvmField @Attribute val enabled: Boolean = true
@@ -56,7 +53,7 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
 
-            other as ScriptDefinitionSetting
+            other as DefinitionSetting
 
             if (name != other.name) return false
             if (definitionId != other.definitionId) return false
@@ -73,3 +70,11 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
         fun matches(definition: ScriptDefinition): Boolean = name == definition.name && definitionId == definition.definitionId
     }
 }
+
+internal fun ScriptDefinitionSettingsPersistentStateComponent.State.getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int {
+    val index = settings.indexOfFirst { it.matches(scriptDefinition) }
+    return if (index == -1) scriptDefinition.order else index
+}
+
+internal fun ScriptDefinitionSettingsPersistentStateComponent.State.isScriptDefinitionEnabled(scriptDefinition: ScriptDefinition): Boolean =
+    settings.firstOrNull { it.matches(scriptDefinition) }?.enabled ?: true

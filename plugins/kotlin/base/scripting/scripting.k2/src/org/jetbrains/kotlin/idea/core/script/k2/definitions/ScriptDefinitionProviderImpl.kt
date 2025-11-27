@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings
+import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
@@ -26,7 +26,7 @@ class ScriptDefinitionsModificationTracker : SimpleModificationTracker() {
 class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvider {
     override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
-            val settingsProvider = ScriptDefinitionPersistentSettings.getInstance(project)
+            val settingsProvider = ScriptDefinitionSettingsPersistentStateComponent.getInstance(project)
 
             return definitionsFromSources.asSequence()
                 .filter { settingsProvider.isScriptDefinitionEnabled(it) }
