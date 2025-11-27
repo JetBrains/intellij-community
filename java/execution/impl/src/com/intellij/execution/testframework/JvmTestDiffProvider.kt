@@ -51,6 +51,7 @@ class JvmTestDiffProvider : TestDiffProvider {
       val diffProvider = TestDiffProvider.getProviderByLanguage(file.language).asSafely<JvmTestDiffProvider>()
                          ?: return@findExpected null
       val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@findExpected null
+      if (failedCall.sourcePsi?.isValid != true) return@forEach
       expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })
       if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
         val containingMethod = expectedParam.getContainingUMethod() ?: return@findExpected null
@@ -59,15 +60,20 @@ class JvmTestDiffProvider : TestDiffProvider {
                           ?: return@findExpected null
         diffProvider.getExpectedElement(expectedArg, expected)?.let { return it }
         if (expectedArg is UReferenceExpression) {
-          val resolved = expectedArg.resolveToUElement()
-          if (resolved is UVariable) {
-            resolved.uastInitializer?.let { initializer -> diffProvider.getExpectedElement(initializer, expected)?.let { return it } }
+          if (expectedArg.sourcePsi?.isValid == true) {
+            val resolved = expectedArg.resolveToUElement()
+            if (resolved is UVariable) {
+              resolved.uastInitializer?.let { initializer -> diffProvider.getExpectedElement(initializer, expected)?.let { return it } }
+            }
+            expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
+              val method = resolved.uastParent?.asSafely<UMethod>()
+              if (method != null && !method.isConstructor) resolved else null
+            }
+            else null
           }
-          expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
-            val method = resolved.uastParent?.asSafely<UMethod>()
-            if (method != null && !method.isConstructor) resolved else null
+          else {
+            expectedParam = null
           }
-          else null
         }
       }
     }
@@ -91,8 +97,9 @@ class JvmTestDiffProvider : TestDiffProvider {
   }
 
   private fun findExpectedEntryPointParam(call: UCallExpression): UParameter? {
-    val assertHint = UAssertHint.createAssertEqualsHint(call) ?: return null
     val srcCall = call.sourcePsi ?: return null
+    if (!srcCall.isValid) return null
+    val assertHint = UAssertHint.createAssertEqualsHint(call) ?: return null
     val stringType = PsiType.getJavaLangString(srcCall.manager, srcCall.resolveScope)
     if (assertHint.expected.getExpressionType() != stringType || assertHint.actual.getExpressionType() != stringType) return null
     val method = call.resolveToUElementOfType<UMethod>() ?: return null
