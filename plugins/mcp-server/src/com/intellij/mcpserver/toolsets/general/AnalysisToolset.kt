@@ -12,6 +12,7 @@ import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.toolsets.Constants
+import com.intellij.mcpserver.util.awaitExternalChangesAndIndexing
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.mcpserver.util.resolveInProject
@@ -68,6 +69,7 @@ class AnalysisToolset : McpToolset {
     if (!resolvedPath.exists()) mcpFail("File not found: $filePath")
     if (!resolvedPath.isRegularFile()) mcpFail("Not a file: $filePath")
 
+    awaitExternalChangesAndIndexing(project)
     val errors = CopyOnWriteArrayList<FileProblem>()
     val timedOut = withTimeoutOrNull(timeout.milliseconds) {
       withBackgroundProgress(
