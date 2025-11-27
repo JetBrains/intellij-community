@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.containers.orNull
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -32,6 +33,7 @@ class MonolithAndSplitModeTestTemplateProvider : TestTemplateInvocationContextPr
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
         return if (!isGroupedExecutionEnabled) {
+          IdeInstance.startIde(mode)
           "[$mode]"
         }
         else super.getDisplayName(invocationIndex)
