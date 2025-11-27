@@ -1,105 +1,88 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.actions;
+package com.intellij.xdebugger.impl.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.DebuggerSupport;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.ui.performDebuggerActionAsync
+import com.intellij.xdebugger.impl.DebuggerSupport
 
-import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
-
-public abstract class XDebuggerActionBase extends AnAction {
-  private final boolean myHideDisabledInPopup;
-
-  protected XDebuggerActionBase() {
-    this(false);
-  }
-
-  protected XDebuggerActionBase(final boolean hideDisabledInPopup) {
-    myHideDisabledInPopup = hideDisabledInPopup;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    boolean hidden = isHidden(event);
+abstract class XDebuggerActionBase protected constructor(private val myHideDisabledInPopup: Boolean = false) : AnAction() {
+  override fun update(event: AnActionEvent) {
+    val presentation: Presentation = event.presentation
+    val hidden = isHidden(event)
     if (hidden) {
-      presentation.setEnabledAndVisible(false);
-      return;
+      presentation.setEnabledAndVisible(false)
+      return
     }
 
-    boolean enabled = isEnabled(event);
-    if (myHideDisabledInPopup && event.isFromContextMenu()) {
-      presentation.setVisible(enabled);
+    val enabled = isEnabled(event)
+    if (myHideDisabledInPopup && event.isFromContextMenu) {
+      presentation.setVisible(enabled)
     }
     else {
-      presentation.setVisible(true);
+      presentation.setVisible(true)
     }
-    presentation.setEnabled(enabled);
+    presentation.setEnabled(enabled)
   }
 
-  protected boolean isEnabled(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
+  protected open fun isEnabled(e: AnActionEvent): Boolean {
+    val project: Project? = e.project
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport support = new DebuggerSupport();
+      val support: DebuggerSupport = DebuggerSupport()
       if (isEnabled(project, e, support)) {
-        return true;
+        return true
       }
-      return false;
+      return false
     }
-    return false;
+    return false
   }
 
-  protected abstract @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport);
+  protected abstract fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler
 
-  private boolean isEnabled(final Project project, final AnActionEvent event, final DebuggerSupport support) {
-    return getHandler(support).isEnabled(project, event);
+  private fun isEnabled(project: Project, event: AnActionEvent, support: DebuggerSupport): Boolean {
+    return getHandler(support).isEnabled(project, event)
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    performDebuggerAction(e, () -> performWithHandler(e));
+  override fun actionPerformed(e: AnActionEvent) {
+    performDebuggerActionAsync(e) { performWithHandler(e) }
   }
 
-  protected boolean performWithHandler(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
+  protected fun performWithHandler(e: AnActionEvent): Boolean {
+    val project: Project? = e.project
     if (project == null || project.isDisposed()) {
-      return true;
+      return true
     }
 
-    DebuggerSupport support = new DebuggerSupport();
+    val support: DebuggerSupport = DebuggerSupport()
     if (isEnabled(project, e, support)) {
-      perform(project, e, support);
-      return true;
+      perform(project, e, support)
+      return true
     }
-    return false;
+    return false
   }
 
-  private void perform(@NotNull Project project,
-                       @NotNull AnActionEvent e,
-                       @NotNull DebuggerSupport support) {
-    getHandler(support).perform(project, e);
+  private fun perform(
+    project: Project,
+    e: AnActionEvent,
+    support: DebuggerSupport
+  ) {
+    getHandler(support).perform(project, e)
   }
 
-  protected boolean isHidden(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
+  protected open fun isHidden(event: AnActionEvent): Boolean {
+    val project: Project? = event.project
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport support = new DebuggerSupport();
-      return getHandler(support).isHidden(project, event);
+      val support: DebuggerSupport = DebuggerSupport()
+      return getHandler(support).isHidden(project, event)
     }
-    return true;
+    return true
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
-  @Override
-  public boolean isDumbAware() {
-    return true;
+  override fun isDumbAware(): Boolean {
+    return true
   }
 }
