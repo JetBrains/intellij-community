@@ -4,8 +4,11 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 
+@ApiStatus.NonExtendable
 interface ChangesViewEx : ChangesViewI {
   /**
    * Immediately reset changes view and request refresh when NON_MODAL modality allows (i.e. after a plugin was unloaded or a dialog closed)
@@ -15,6 +18,10 @@ interface ChangesViewEx : ChangesViewI {
 
   @CalledInAny
   fun scheduleRefresh(@RequiresBackgroundThread callback: Runnable)
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  fun createCommitPanel(): ChangesViewCommitWorkflowUi
 
   @get:Deprecated("Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.")
   val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
