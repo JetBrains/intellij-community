@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions
 
 import com.intellij.diff.DiffContentFactory
@@ -7,6 +7,7 @@ import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diff.DiffBundle
@@ -114,8 +115,9 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          if (!element.isValid) return@IntUnaryOperator -1
-          val line = value + original.document.getLineNumber(element.startOffset)
+          val valid = ReadAction.compute<Boolean, Throwable> { element.isValid }
+          if (!valid) return@IntUnaryOperator -1
+          val line = ReadAction.compute<Int, Throwable> { value + original.document.getLineNumber(element.startOffset) }
           originalLineConvertor?.applyAsInt(line) ?: line
         })
       }
