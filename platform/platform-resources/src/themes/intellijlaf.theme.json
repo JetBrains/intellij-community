@@ -1346,7 +1346,10 @@
       "chroniclesBorderColor": "#F7F8FA",
       "chroniclesBackgroundHovered": "#E9EAEE",
       "chroniclesForeground": "#000000",
-      "chroniclesForegroundGreyed": "#868A91"
+      "chroniclesForegroundGreyed": "#868A91",
+      "errorBackground": "#FFFAEB",
+      "errorBorder": "#FED277",
+      "errorForeground": "#000000"
     }
   },
 
