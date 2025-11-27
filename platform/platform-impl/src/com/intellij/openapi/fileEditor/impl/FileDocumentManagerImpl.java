@@ -65,6 +65,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
@@ -182,6 +183,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @TestOnly
+  @RequiresWriteLock
   public void dropAllUnsavedDocuments() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("This method is only for test mode!");
@@ -952,12 +954,19 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
     @Override
     public void connectionOpen() {
-      FileDocumentManagerImpl fileDocumentManager =
-        (FileDocumentManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
-      if (fileDocumentManager != null) {
-        fileDocumentManager.clearDocumentCache();
+      FileDocumentManager fileDocumentManager = ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+      if (fileDocumentManager instanceof FileDocumentManagerImpl impl) {
+        impl.clearDocumentCache();
       }
     }
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  public void prepareForNextTest() {
+    dropAllUnsavedDocuments();
+    clearDocumentCache();
   }
 
   /**

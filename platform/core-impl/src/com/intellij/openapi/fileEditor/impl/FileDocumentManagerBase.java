@@ -190,7 +190,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  public void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  protected void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
@@ -221,7 +221,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @ApiStatus.Internal
-  public void clearDocumentCache() {
+  protected void clearDocumentCache() {
     myDocumentCache.clear();
   }
 
