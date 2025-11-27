@@ -91,6 +91,8 @@ object TestKotlinArtifacts {
     }
 
     private fun downloadFile(label: BazelLabel): Path {
+        // in other modules KotlinTestsDependenciesUtil.downloadFile(label = label) may be used
+        // but here is some more complicated logic
         val downloadFile = findDownloadFile(label)
         val labelUrl = URI(downloadFile.url)
         // Kotlin plugin team use special workflow for simultaneous development Kotlin compiler and IDEA plugin.

@@ -12,6 +12,7 @@ object BazelTestUtil {
   // see https://bazel.build/reference/test-encyclopedia#initial-conditions
   // also https://leimao.github.io/blog/Bazel-Test-Outputs/
   private const val TEST_SRCDIR_ENV_NAME = "TEST_SRCDIR"
+  private const val TEST_TMPDIR_ENV_NAME = "TEST_TMPDIR"
   private const val TEST_UNDECLARED_OUTPUTS_DIR_ENV_NAME = "TEST_UNDECLARED_OUTPUTS_DIR"
   private const val RUNFILES_MANIFEST_ONLY_ENV_NAME = "RUNFILES_MANIFEST_ONLY"
 
@@ -38,7 +39,9 @@ object BazelTestUtil {
         .map { parseRepoEntry(it) }
         .distinct()
         .associateBy { it.repoName }
-    }
+    }.plus(
+        "" to RepoMappingEntry("", "_main")
+    )
   }
 
   @JvmStatic
@@ -66,6 +69,19 @@ object BazelTestUtil {
     val path = Path.of(value).absolute()
     if (!path.isDirectory()) {
       error("Bazel test env '$TEST_SRCDIR_ENV_NAME' points to non-directory: $path")
+    }
+    path
+  }
+
+  @JvmStatic
+  val bazelTestTmpDirPath: Path by lazy {
+    val value = System.getenv(TEST_TMPDIR_ENV_NAME)
+    if (value == null) {
+      error("Not running under `bazel test` because $TEST_TMPDIR_ENV_NAME env is not set. Check isUnderBazelTest first.")
+    }
+    val path = Path.of(value).absolute()
+    if (!path.isDirectory()) {
+      error("Bazel test env '$TEST_TMPDIR_ENV_NAME' points to non-directory: $path")
     }
     path
   }

@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.util.project-model-updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
   </component>
 </module>

@@ -50,6 +50,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
     "//platform/platform-impl/bootstrap/kernel",
+    "//platform/build-scripts/downloader",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.common` end

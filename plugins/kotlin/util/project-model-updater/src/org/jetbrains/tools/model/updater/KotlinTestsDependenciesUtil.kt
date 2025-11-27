@@ -87,6 +87,13 @@ object KotlinTestsDependenciesUtil {
 
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
+    /**
+     * TODO: IJI-3408 remove duplicated code
+     * @see com.intellij.testFramework.common.bazel.BazelTestDependencyHttpFileDownloader
+     * it was agreed to leave it ‘as is’ for a while,
+     * until a more elegant solution for working with bazel labels in project-model-updater is found
+     * and so as not to add dependencies on com.intellij.testFramework.common
+     */
     data class DownloadFile(
         val fileName: String,
         val url: String,
