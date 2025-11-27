@@ -98,6 +98,8 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
     (rowSorter as? TableRowSorter<*>)?.setSortable(0, false) // For the Last Commit Date column (model index 2), sort by timestamp and keep unknowns (Long.MIN_VALUE) last in ascending order
     (rowSorter as? TableRowSorter<*>)?.setSortable(2, true) // Help define initial dialog size via viewport preferred size
     preferredScrollableViewportSize = JBUI.size(900, 300)
+    // Allow selecting multiple rows to toggle by Space
+    selectionModel.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
   }
 
   /** Ensure the Last Commit Date column renders human-readable strings even if default renderer is overridden elsewhere. */
@@ -139,6 +141,7 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
     tableModel.addTableModelListener { _ -> updateDeleteButtonEnabled() }
     installHeaderCheckbox()
     installLastCommitDateColumnRenderer()
+    installSpaceToggleForSelectedRows()
     refreshBranches()
   }
 
@@ -519,6 +522,63 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
       total -> ThreeStateCheckBox.State.SELECTED
       else -> ThreeStateCheckBox.State.DONT_CARE
     }
+  }
+
+  /**
+   * Bind Space key to toggle the "Selected" state for all selected rows.
+   * If the selection contains mixed states, Space will check them all; if all are checked, Space will uncheck them.
+   */
+  private fun installSpaceToggleForSelectedRows() {
+    val im = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    val am = table.actionMap
+    val actionKey = "toggle-selected-rows"
+    im.put(KeyStroke.getKeyStroke("SPACE"), actionKey)
+    am.put(actionKey, object : AbstractAction() {
+      override fun actionPerformed(e: java.awt.event.ActionEvent?) {
+        // Finish editing to avoid conflicts with editor toggling a single cell
+        if (table.isEditing) {
+          val editor = table.cellEditor
+          if (editor != null && !editor.stopCellEditing()) editor.cancelCellEditing()
+        }
+
+        val selectedViewRows = table.selectedRows
+        val rowsToAffect: IntArray = if (selectedViewRows.isNotEmpty()) selectedViewRows else intArrayOf(table.selectionModel.leadSelectionIndex).filter { it >= 0 }.toIntArray()
+        if (rowsToAffect.isEmpty()) return
+
+        // Determine the target state: if all selected are checked -> uncheck; otherwise -> check
+        val allChecked = rowsToAffect.all { viewRow ->
+          val modelRow = table.convertRowIndexToModel(viewRow)
+          modelRow in 0 until tableModel.rowCount && tableModel.items[modelRow].selected
+        }
+        val target = !allChecked
+
+        var minChanged = Int.MAX_VALUE
+        var maxChanged = Int.MIN_VALUE
+        for (viewRow in rowsToAffect) {
+          val modelRow = table.convertRowIndexToModel(viewRow)
+          if (modelRow !in 0 until tableModel.rowCount) continue
+          val item = tableModel.items[modelRow]
+          if (item.selected != target) {
+            item.selected = target
+            minChanged = minOf(minChanged, modelRow)
+            maxChanged = maxOf(maxChanged, modelRow)
+          }
+        }
+
+        if (minChanged != Int.MAX_VALUE) {
+          tableModel.fireTableRowsUpdated(minChanged, maxChanged)
+        }
+
+        // Sync header checkbox state and repaint header cell for the Selected column
+        updateHeaderCheckboxState()
+        val viewIndex = getSelectedColumnViewIndex()
+        if (viewIndex >= 0) {
+          table.tableHeader.repaint(table.tableHeader.getHeaderRect(viewIndex))
+        } else {
+          table.tableHeader.repaint()
+        }
+      }
+    })
   }
 
   private fun Project.getDefaultTargetBranchSuggestion(): String? {
