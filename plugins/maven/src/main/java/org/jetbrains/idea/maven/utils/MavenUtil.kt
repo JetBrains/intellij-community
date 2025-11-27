@@ -2032,19 +2032,15 @@ object MavenUtil {
     return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
   }
 
+  @RequiresBackgroundThread
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
     if (xmlns == null || schemaLocation == null) return false
-    val schemaLocations = schemaLocation.split(' ', '\n')
-    return (xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS)
-           && schemaLocations.all {
-      it.isNullOrBlank() ||
-      it == MAVEN_4_XMLNS ||
-      it == MAVEN_4_XMLNS_HTTPS ||
-      it == MAVEN_4_XSD ||
-      it == MAVEN_4_XSD_HTTPS ||
-      it == MAVEN_4_XSD_UNDERSCORE ||
-      it == MAVEN_4_XSD_HTTPS_UNDERSCORE
+    val xmlns410 = xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS
+    if (!xmlns410) return false
+    val schemaLocations = schemaLocation.split("\\s+".toRegex())
+      .filter { it.isNotBlank() }
+    return schemaLocations.all {
+      Maven4SchemaVersionChecker.is410Xsd(it)
     }
-
   }
 }
