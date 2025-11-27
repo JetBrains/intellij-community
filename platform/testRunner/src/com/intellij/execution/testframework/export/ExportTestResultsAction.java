@@ -4,6 +4,8 @@ package com.intellij.execution.testframework.export;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.ide.BrowserUtil;
@@ -30,8 +32,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
@@ -49,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
 
@@ -273,48 +278,63 @@ public final class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private boolean writeOutputFile(ExportTestResultsConfiguration config, @NotNull Path outputFile) throws IOException, TransformerException, SAXException {
-    switch (config.getExportFormat()) {
+    try {
+      writeOutputFile(new ExportContext(
+        config.getExportFormat(),
+        config.getUserTemplatePath(),
+        myModel.getRoot(),
+        myRunConfiguration,
+        myModel.getProperties(),
+        outputFile
+      ));
+      return true;
+    }
+    catch (NonExistentUserTemplatePathException e) {
+      showBalloon(myRunConfiguration.getProject(), MessageType.ERROR, e.getMessage(), null);
+      return false;
+    }
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static void writeOutputFile(@NotNull ExportContext context) throws IOException, TransformerException, SAXException {
+    switch (context.exportFormat) {
       case Xml -> {
         TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
-        transform(outputFile, handler);
-        return true;
+        transform(context, handler);
       }
       case BundledTemplate -> {
-        try (InputStream bundledXsltUrl = getClass().getResourceAsStream("intellij-export.xsl")) {
-          transformWithXslt(outputFile, new StreamSource(bundledXsltUrl));
-          return true;
+        try (InputStream bundledXsltUrl = ExportTestResultsAction.class.getResourceAsStream("intellij-export.xsl")) {
+          transformWithXslt(context, new StreamSource(bundledXsltUrl));
         }
       }
       case UserTemplate -> {
-        String userTemplatePath = config.getUserTemplatePath();
-        Path xslFile = userTemplatePath != null ? NioFiles.toPath(userTemplatePath) : null;
+        String userTemplatePath = context.userTemplatePath;
+        Path xslFile = StringUtil.isEmptyOrSpaces(userTemplatePath) ? null : NioFiles.toPath(userTemplatePath);
         if (xslFile == null || !Files.isRegularFile(xslFile)) {
-          showBalloon(myRunConfiguration.getProject(), MessageType.ERROR,
-                      ExecutionBundle.message("export.test.results.custom.template.not.found", userTemplatePath), null);
-          return false;
+          throw new NonExistentUserTemplatePathException(userTemplatePath);
         }
-        transformWithXslt(outputFile, new StreamSource(xslFile.toUri().toASCIIString()));
-        return true;
+        transformWithXslt(context, new StreamSource(xslFile.toUri().toASCIIString()));
       }
       default -> throw new IllegalArgumentException();
     }
   }
 
-  private void transformWithXslt(@NotNull Path outputFile, Source xslSource)
+  private static void transformWithXslt(@NotNull ExportContext context, @NotNull Source xslSource)
     throws TransformerConfigurationException, IOException, SAXException {
     TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler(xslSource);
-    handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", myRunConfiguration.getName(),
-                                                                           myRunConfiguration.getType().getDisplayName()));
+    handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", context.runConfiguration.getName(),
+                                                                           context.runConfiguration.getType().getDisplayName()));
 
-    transform(outputFile, handler);
+    transform(context, handler);
   }
 
-  private void transform(@NotNull Path outputFile, TransformerHandler handler) throws IOException, SAXException {
-    try (BufferedWriter w = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8)) {
+  private static void transform(@NotNull ExportContext context, TransformerHandler handler) throws IOException, SAXException {
+    try (BufferedWriter w = Files.newBufferedWriter(context.outputFile, StandardCharsets.UTF_8)) {
       handler.setResult(new StreamResult(w));
-      TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
+      TestResultsXmlFormatter.execute(context.root, context.runConfiguration, context.properties, handler);
     }
   }
 
@@ -330,4 +350,20 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     });
   }
 
+  private static class NonExistentUserTemplatePathException extends RuntimeException {
+    NonExistentUserTemplatePathException(@Nullable String userTemplatePath) {
+      super(ExecutionBundle.message("export.test.results.custom.template.not.found", Objects.requireNonNullElse(userTemplatePath, "N/A")));
+    }
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public record ExportContext(
+    @NotNull ExportTestResultsConfiguration.ExportFormat exportFormat,
+    @Nullable String userTemplatePath,
+    @NotNull AbstractTestProxy root,
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull TestConsoleProperties properties,
+    @NotNull Path outputFile
+  ) {}
 }
