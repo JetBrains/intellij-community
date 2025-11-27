@@ -27,6 +27,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/text-matching",
     "//platform/platform-impl/designer",
+    "//platform/lang-api:lang",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.devkit.uiDesigner` end

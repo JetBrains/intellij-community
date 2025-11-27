@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.idea" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />

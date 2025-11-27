@@ -19,6 +19,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/indexing-api:indexing",

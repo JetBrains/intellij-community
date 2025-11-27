@@ -29,6 +29,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.ui.inspector` end

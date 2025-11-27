@@ -20,6 +20,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/navbar/backend",
     "//platform/navbar/frontend",
+    "//platform/platform-api:ide",
   ]
 )
 ### auto-generated section `build intellij.platform.navbar.monolith` end

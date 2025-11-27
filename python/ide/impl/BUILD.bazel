@@ -72,6 +72,8 @@ jvm_library(
     "//python/python-poetry/common",
     "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -151,6 +153,8 @@ jvm_library(
     "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

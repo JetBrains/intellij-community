@@ -24,6 +24,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/xdebugger-impl/rpc",
   ]
 )

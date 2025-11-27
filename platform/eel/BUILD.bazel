@@ -51,6 +51,7 @@ jvm_library(
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/indices",
+    "//platform/execution",
   ],
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )

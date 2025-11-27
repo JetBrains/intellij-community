@@ -90,6 +90,8 @@ jvm_library(
     "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/diagnostic/telemetry",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 
@@ -177,6 +179,8 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end

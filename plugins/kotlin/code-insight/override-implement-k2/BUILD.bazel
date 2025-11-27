@@ -36,6 +36,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//platform/core-impl",
     "//platform/lang-impl",
+    "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//platform/core-ui",

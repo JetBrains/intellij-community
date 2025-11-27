@@ -15,6 +15,7 @@ jvm_library(
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/execution",
     "//platform/usageView",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/facet",
@@ -48,6 +49,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//platform/execution",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//plugins/kotlin/plugin/k1",

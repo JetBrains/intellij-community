@@ -64,6 +64,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "@lib//:jet_check",
   ],
   exports = [
     "//plugins/grazie",

@@ -83,6 +83,7 @@ jvm_library(
     "//platform/eel-provider",
     "//xml/xml-psi-impl:psi-impl",
     "//xml/xml-ui-common:ui-common",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.maven.tests` end

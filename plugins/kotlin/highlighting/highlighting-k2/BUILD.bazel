@@ -64,6 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/platform-api:ide",
   ]
 )
 
@@ -132,6 +133,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/platform-api:ide",
   ]
 )
 ### auto-generated section `build intellij.kotlin.highlighting` end

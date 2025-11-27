@@ -27,6 +27,7 @@ jvm_library(
     "//libraries/gson",
     "//xml/impl",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//RegExpSupport:regexp",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
@@ -44,6 +45,7 @@ jvm_library(
     "//platform/markdown-utils",
     "//platform/util/text-matching",
     "//platform/polySymbols",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"]
 )

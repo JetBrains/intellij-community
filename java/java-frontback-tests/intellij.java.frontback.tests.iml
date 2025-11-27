@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.tree" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
   </component>
 </module>

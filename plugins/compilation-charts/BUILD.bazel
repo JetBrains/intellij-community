@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.compilation.charts` end

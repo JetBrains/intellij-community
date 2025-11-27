@@ -25,10 +25,12 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/smRunner",
     "//platform/core-ui",
+    "//platform/execution",
   ],
   runtime_deps = ["//platform/backend"]
 )

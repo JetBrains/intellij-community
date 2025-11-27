@@ -30,6 +30,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/util/progress",
     "//platform/lang-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.smRunner.vcs` end

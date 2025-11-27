@@ -60,6 +60,8 @@ jvm_library(
     "//java/debugger/shared",
     "//platform/platform-impl/concurrency",
     "//java/codeserver/core",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//java/execution/openapi:java-execution",

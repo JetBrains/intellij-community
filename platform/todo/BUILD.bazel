@@ -34,6 +34,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-impl",
     "//platform/core-impl",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.todo` end

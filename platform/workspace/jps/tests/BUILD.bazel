@@ -54,6 +54,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
+    "@lib//:jet_check",
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end

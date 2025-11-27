@@ -24,6 +24,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-impl",
     "//java/debugger/openapi:java-debugger",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/projectModel-api:projectModel",
     "//platform/remote-servers/api:remoteServers",
     "//platform/remote-servers/impl",
@@ -33,6 +34,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.java.remoteServers.impl` end

@@ -31,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.properties" exported="" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>

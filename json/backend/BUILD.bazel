@@ -18,6 +18,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
@@ -54,6 +55,7 @@ jvm_library(
     "//json/syntax",
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-util:util",
+    "//platform/execution",
   ],
   exports = ["//json"],
   runtime_deps = ["//platform/backend"]

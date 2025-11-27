@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.vcs.shared" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

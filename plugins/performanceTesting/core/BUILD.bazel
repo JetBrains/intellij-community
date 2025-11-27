@@ -31,6 +31,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//jps/model-api:model",
+    "//platform/lang-api:lang",
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
@@ -69,6 +70,8 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/jbr",
     "@lib//:github-oshi-core",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
     ":libraries_cli-parser_provided",
   ]
 )
@@ -92,6 +95,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//jps/model-api:model",
+    "//platform/lang-api:lang",
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
@@ -137,6 +141,8 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/jbr",
     "@lib//:github-oshi-core",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
     ":libraries_cli-parser_provided",
   ]
 )

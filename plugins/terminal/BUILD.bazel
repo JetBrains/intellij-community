@@ -65,6 +65,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.terminal` end

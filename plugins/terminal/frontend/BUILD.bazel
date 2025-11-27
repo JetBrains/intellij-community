@@ -49,6 +49,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//libraries/pty4j",
     "//platform/util/jdom",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

@@ -30,6 +30,7 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/caffeine",
     "//platform/vcs-api/shared",
+    "//platform/execution",
   ],
   exports = [
     "//platform/vcs-api/vcs-api-core:vcs-core",

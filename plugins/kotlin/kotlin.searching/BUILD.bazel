@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
+    "//platform/platform-api:ide",
     "@lib//:kotlinc-analysis-api",
     "//platform/usageView-impl",
     "//plugins/kotlin/base/indices",

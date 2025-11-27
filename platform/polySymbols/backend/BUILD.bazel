@@ -25,6 +25,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.polySymbols.backend` end

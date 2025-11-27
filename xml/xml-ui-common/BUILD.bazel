@@ -30,6 +30,8 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.xml.ui.common` end

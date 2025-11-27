@@ -45,6 +45,8 @@ jvm_library(
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//java/codeserver/core",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.java.impl.refactorings` end

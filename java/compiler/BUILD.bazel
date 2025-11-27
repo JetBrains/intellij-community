@@ -38,6 +38,7 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
     "//platform/backend/workspace",
+    "@lib//:jet_check",
   ],
   runtime_deps = ["//spellchecker"]
 )

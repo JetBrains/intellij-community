@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
   </component>
 </module>

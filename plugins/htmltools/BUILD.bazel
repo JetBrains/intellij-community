@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
@@ -65,6 +66,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/analysis-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//xml/xml-parser:parser",
     "//platform/refactoring",

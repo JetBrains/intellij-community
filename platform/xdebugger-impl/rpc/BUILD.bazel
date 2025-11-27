@@ -26,6 +26,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/core-api:core",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.rpc` end

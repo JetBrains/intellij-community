@@ -76,6 +76,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//java/debugger/shared",
     "//platform/eel-provider",
+    "//platform/execution",
   ],
   exports = ["//plugins/gradle:gradle-common"],
   runtime_deps = ["@lib//ant/lib:ant-antlr"]
@@ -163,6 +164,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//platform/statistics/testFramework",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.gradle.java.tests` end

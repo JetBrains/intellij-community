@@ -38,6 +38,7 @@ jvm_library(
     "//platform/util/progress",
     "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-impl:analysis-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end

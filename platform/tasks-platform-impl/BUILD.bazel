@@ -26,6 +26,8 @@ jvm_library(
     "//libraries/gson",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/execution",
     "//platform/execution-impl",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-api:debugger",
@@ -36,6 +38,7 @@ jvm_library(
     "//platform/util/text-matching",
     "//platform/statistics",
     "//platform/bookmarks",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.tasks.impl` end

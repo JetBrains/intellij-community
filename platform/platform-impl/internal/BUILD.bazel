@@ -41,6 +41,7 @@ jvm_library(
     "//platform/jbr",
     "//platform/ide-core-impl",
     "//platform/util/coroutines",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/statistics/uploader",
     "//platform/util/jdom",
     "//platform/service-container",
@@ -58,6 +59,7 @@ jvm_library(
     "//platform/platform-impl/update-checker",
     "//libraries/jbr",
     "//platform/projectModel-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

@@ -155,6 +155,8 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
     "//platform/runtime/product",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -323,6 +325,8 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
     "//platform/runtime/product",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/platform-api:ide",

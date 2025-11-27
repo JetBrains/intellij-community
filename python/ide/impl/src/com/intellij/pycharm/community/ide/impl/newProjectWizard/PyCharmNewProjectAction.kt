@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard;
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 /**
  * New project wizard entry point
  */
-class PyCharmNewProjectAction : DumbAwareAction() {
+private class PyCharmNewProjectAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     currentThreadCoroutineScope().launch {
       runCatching {

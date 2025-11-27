@@ -41,6 +41,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/execution",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

@@ -13,6 +13,7 @@ jvm_library(
     "//platform/remote-core",
     "//platform/util/jdom",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/lang-core",
     "//platform/execution",
     "//platform/platform-impl:ide-impl",

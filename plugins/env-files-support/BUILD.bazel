@@ -26,6 +26,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/refactoring",
     "//platform/lang-impl",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.dotenv` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.monolith
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -15,7 +15,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 
-internal class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
+private class MonolithNavbarServiceDelegate(private val project: Project) : NavBarServiceDelegate {
 
   override fun activityFlow(): Flow<Unit> = channelFlow {
     fireOnIdeActivity(project)

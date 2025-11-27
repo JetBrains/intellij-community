@@ -43,6 +43,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/external-system-api:externalSystem",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting.shared` end

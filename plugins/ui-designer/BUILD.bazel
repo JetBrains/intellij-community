@@ -72,6 +72,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
+    "//platform/execution",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
@@ -150,6 +151,7 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//xml/xml-psi-api:psi",
     "//libraries/caffeine",
+    "//platform/execution",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",

@@ -31,8 +31,6 @@ import java.util.List;
 /**
  * This class provides basic functionality for running consoles.
  * It launches external process and handles line input with history
- *
- * @author oleg
  */
 public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
   private final @Nls(capitalization = Nls.Capitalization.Title) String myConsoleTitle;

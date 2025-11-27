@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
  * Uses only for square brackets inside [KDocTokens.MARKDOWN_LINK]
  * KDoc's round brackets are handled by [org.jetbrains.kotlin.idea.KotlinPairMatcher]
  */
-class KDocTypedHandler : TypedHandlerDelegate() {
+private class KDocTypedHandler : TypedHandlerDelegate() {
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
         if (overwriteClosingBracket(c, editor, file)) {
             EditorModificationUtil.moveCaretRelatively(editor, 1)

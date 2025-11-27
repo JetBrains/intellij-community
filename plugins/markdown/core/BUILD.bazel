@@ -65,6 +65,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ],
   exports = ["//platform/ui.jcef"]
 )

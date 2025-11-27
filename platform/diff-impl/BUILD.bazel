@@ -33,6 +33,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/boot",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/fastutil",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:kotlinx-coroutines-core",

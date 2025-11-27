@@ -33,6 +33,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/util/coroutines",
     "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.dev.psiViewer` end

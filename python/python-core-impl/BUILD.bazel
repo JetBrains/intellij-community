@@ -21,6 +21,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//python/python-psi-api:psi",
     "//platform/analysis-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//RegExpSupport:regexp",
     "//libraries/guava",

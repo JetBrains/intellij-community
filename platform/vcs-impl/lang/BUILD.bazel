@@ -41,6 +41,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/todo",
     "//platform/vcs-impl/shared",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.lang` end

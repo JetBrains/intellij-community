@@ -24,7 +24,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core/plugins",
-    "//platform/xdebugger-api:debugger",
     "//libraries/guava",
     "//libraries/gson",
     "//libraries/commons/imaging",
@@ -44,6 +43,7 @@ jvm_library(
     "//platform/util/progress",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-codec-compression",
+    "//platform/execution",
   ],
   exports = ["//platform/built-in-server-api:builtInServer"]
 )

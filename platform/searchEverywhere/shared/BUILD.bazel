@@ -32,6 +32,8 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/statistics",
     "//platform/scopes",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ],
   exports = [
     "//platform/lang-impl",

@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/facet",
+    "//platform/forms_rt:java-guiForms-rt",
     "//plugins/kotlin/base/jps",
     "//platform/core-impl",
     "//platform/core-ui",

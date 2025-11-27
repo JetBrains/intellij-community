@@ -60,8 +60,7 @@ import kotlin.io.path.name
  * This class only supports local, not remote target.
  * TODO: Support remote target (ie \\wsl)
  */
-@ApiStatus.Internal
-class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
+internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = CONDA_TOOL_ID
 

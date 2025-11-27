@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/compiler-configuration",
+    "//platform/execution",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/project-model",

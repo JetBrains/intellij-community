@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.openapi.application.EDT
@@ -16,8 +16,8 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -27,14 +27,12 @@ import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 
 private val logger = fileLogger()
 
-@ApiStatus.Internal
-class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
+private class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 

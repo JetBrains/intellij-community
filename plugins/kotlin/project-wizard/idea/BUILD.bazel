@@ -46,6 +46,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/execution",
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//java/idea-ui:ui",

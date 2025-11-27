@@ -37,6 +37,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.xslt.debugger` end

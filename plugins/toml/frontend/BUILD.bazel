@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/analysis-api:analysis",
     "//platform/core-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
   ]
 )

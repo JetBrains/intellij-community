@@ -39,6 +39,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinx-coroutines-core",
     "//platform/kernel/shared:kernel",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView` end

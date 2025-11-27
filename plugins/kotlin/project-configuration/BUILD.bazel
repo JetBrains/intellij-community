@@ -62,6 +62,8 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/vcs-impl/shared",
     "//platform/backend/workspace",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectConfiguration` end

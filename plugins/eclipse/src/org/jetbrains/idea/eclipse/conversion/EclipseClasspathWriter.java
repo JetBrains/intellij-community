@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,7 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EclipseClasspathWriter {
+public final class EclipseClasspathWriter {
   public static final Logger LOG = Logger.getInstance(EclipseClasspathWriter.class);
 
   private final Map<String, Element> myOldEntries = new HashMap<>();

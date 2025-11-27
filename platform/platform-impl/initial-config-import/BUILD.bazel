@@ -13,6 +13,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/service-container",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/jackson/jackson",
     "//platform/statistics",
     "//platform/core-ui",

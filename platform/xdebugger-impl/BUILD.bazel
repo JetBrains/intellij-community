@@ -40,6 +40,7 @@ jvm_library(
     "//platform/observable",
     "//jps/model-serialization",
     "//platform/lang-core",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/diff-api:diff",
@@ -67,6 +68,7 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/kernel/shared:kernel",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/platform-impl/internal",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
@@ -75,6 +77,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 
@@ -96,6 +99,7 @@ jvm_library(
     "//platform/observable",
     "//jps/model-serialization",
     "//platform/lang-core",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/diff-api:diff",
@@ -130,6 +134,7 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/kernel/shared:kernel",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/platform-impl/internal",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
@@ -138,6 +143,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl` end

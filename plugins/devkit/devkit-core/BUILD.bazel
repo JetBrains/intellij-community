@@ -99,6 +99,8 @@ jvm_library(
     "//libraries/xerces",
     "//platform/usageView-impl",
     "//platform/util/concurrency",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.devkit.core` end

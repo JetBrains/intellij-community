@@ -36,7 +36,6 @@ import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -47,8 +46,7 @@ private val LOGGER = fileLogger()
 
 internal val PY_REQ_TOOL_ID = ToolId("requirements.txt")
 
-@ApiStatus.Internal
-class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
+private class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PY_REQ_TOOL_ID // This is nonsense, but will be dropped soon
 

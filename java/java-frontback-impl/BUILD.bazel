@@ -36,6 +36,8 @@ jvm_library(
     "//platform/threadDumpParser",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlinx-serialization-core",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",

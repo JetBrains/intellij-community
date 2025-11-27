@@ -139,6 +139,7 @@ jvm_library(
     "//platform/service-container:service-container_test_lib",
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//java/execution/impl",
+    "//platform/execution",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//platform/code-style-impl:codeStyle-impl",
@@ -192,6 +193,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//plugins/IntelliLang/backend",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "@lib//:jet_check",
   ],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle",

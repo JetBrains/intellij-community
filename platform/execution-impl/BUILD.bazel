@@ -59,6 +59,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/ijent",
     "//platform/ijent/impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "@lib//:rd-core",
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
@@ -102,6 +103,7 @@ jvm_library(
     "//libraries/jediterm-ui",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end

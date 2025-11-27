@@ -20,7 +20,7 @@ import java.util.Set;
 
 import static org.jetbrains.plugins.textmate.editor.TextMateEditorUtils.getSmartTypingPairs;
 
-public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
+final class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
   @Override
   public void beforeCharDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor) {
   }

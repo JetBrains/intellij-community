@@ -36,6 +36,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/java-runtime:rt",
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
@@ -74,6 +75,7 @@ jvm_library(
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 
@@ -102,6 +104,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/java-runtime:rt",
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
@@ -144,6 +147,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//platform/testFramework/common",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end

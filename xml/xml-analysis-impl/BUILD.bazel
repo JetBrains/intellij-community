@@ -34,6 +34,7 @@ jvm_library(
     "//platform/polySymbols/backend",
     "//libraries/xerces",
     "//platform/polySymbols",
+    "//platform/lang-api:lang",
   ],
   runtime_deps = ["//platform/backend"]
 )

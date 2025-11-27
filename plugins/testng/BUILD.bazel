@@ -55,11 +55,13 @@ jvm_library(
     "//java/typeMigration",
     "//platform/external-system-api:externalSystem",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "@lib//:jgoodies-forms",
+    "//platform/execution",
   ]
 )
 
@@ -107,12 +109,14 @@ jvm_library(
     "//java/typeMigration:typeMigration_test_lib",
     "//platform/external-system-api:externalSystem",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "@lib//:junit4",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
     "@lib//:jgoodies-forms",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.testng` end

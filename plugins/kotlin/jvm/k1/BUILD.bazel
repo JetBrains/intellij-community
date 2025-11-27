@@ -50,6 +50,8 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.jvm.k1` end

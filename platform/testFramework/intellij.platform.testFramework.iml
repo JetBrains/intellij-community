@@ -11,7 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="jetCheck" level="project" />
+    <orderEntry type="library" name="jetCheck" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
@@ -117,5 +117,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

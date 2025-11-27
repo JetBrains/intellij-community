@@ -76,6 +76,8 @@ jvm_library(
     "@lib//:netty-codec-protobuf",
     "//platform/eel-provider",
     "//xml/xml-psi-api:psi",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = ["//java/compiler/openapi:java-compiler"]
 )

@@ -21,6 +21,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/lang-core",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/projectModel-api:projectModel",
     "//xml/impl",
     "//xml/dom-openapi:dom",
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-impl",
     "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -56,6 +58,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/lang-core",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/projectModel-api:projectModel",
     "//xml/impl",
     "//xml/dom-openapi:dom",
@@ -76,6 +79,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-impl",
     "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.relaxng` end

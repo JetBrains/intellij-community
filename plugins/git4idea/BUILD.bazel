@@ -108,6 +108,8 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-impl/recentProjects",
     "//platform/platform-impl/eel:ide-impl-wsl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -224,6 +226,8 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-impl/recentProjects",
     "//platform/platform-impl/eel:ide-impl-wsl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",

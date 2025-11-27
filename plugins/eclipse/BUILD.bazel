@@ -41,6 +41,8 @@ jvm_library(
     "//libraries/kotlin/reflect",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -89,6 +91,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.eclipse` end

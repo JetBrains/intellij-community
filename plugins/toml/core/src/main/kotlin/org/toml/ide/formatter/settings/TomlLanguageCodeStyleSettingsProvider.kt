@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import org.toml.lang.TomlLanguage
 
-class TomlLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
+private class TomlLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
     override fun getLanguage(): Language = TomlLanguage
 
     override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings =

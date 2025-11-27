@@ -33,6 +33,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//platform/backend/observation",
+    "//platform/lang-api:lang",
   ],
   runtime_deps = ["//platform/backend"]
 )

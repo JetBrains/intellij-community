@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kryo5" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspace.storage" />
 </module>

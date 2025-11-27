@@ -40,6 +40,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "//platform/core-impl",
+    "//platform/execution",
   ]
 )
 
@@ -79,6 +80,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "//platform/core-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.coverage` end

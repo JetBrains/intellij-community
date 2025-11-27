@@ -76,6 +76,8 @@ jvm_library(
     "//libraries/guava",
     "//platform/util/trove",
     "//platform/util/coroutines",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
@@ -172,9 +174,11 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//libraries/gson",
     "//libraries/guava",
+    "//platform/execution",
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/testFramework/eelJava",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = ["//platform/execution.dashboard"]

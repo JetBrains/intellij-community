@@ -22,6 +22,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/util",
+    "//platform/ide-core",
   ]
 )
 ### auto-generated section `build intellij.groovy.live.templates` end

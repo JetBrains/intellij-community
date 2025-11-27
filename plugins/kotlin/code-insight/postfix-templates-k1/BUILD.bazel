@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",

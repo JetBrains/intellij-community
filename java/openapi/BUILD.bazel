@@ -55,6 +55,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
+    "//platform/execution",
     ":platform_java-guiForms-rt_provided",
   ],
   exports = [

@@ -50,6 +50,7 @@ jvm_library(
     "//platform/diff-impl",
     "//xml/xml-psi-api:psi",
     "//libraries/fastutil",
+    "@lib//:jet_check",
   ],
   exports = ["//plugins/properties:properties-backend"]
 )

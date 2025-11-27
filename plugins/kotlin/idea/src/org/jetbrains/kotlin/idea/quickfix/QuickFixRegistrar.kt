@@ -44,7 +44,7 @@ import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.INCOMPATIBLE_
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.MISSING_EXCEPTION_IN_THROWS_ON_SUSPEND
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative.THROWS_LIST_EMPTY
 
-class QuickFixRegistrar : QuickFixContributor {
+private class QuickFixRegistrar : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
         fun DiagnosticFactory<*>.registerFactory(vararg factory: QuickFixFactory) {
             quickFixes.register(this, *factory)

@@ -19,6 +19,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/testFramework",
     "//java/idea-ui:ui",
+    "//platform/execution",
     "@lib//:org-codehaus-groovy-groovy",
     "//java/java-syntax:syntax",
   ],

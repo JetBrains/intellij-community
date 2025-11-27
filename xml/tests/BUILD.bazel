@@ -66,6 +66,7 @@ jvm_library(
     "//platform/syntax/syntax-scripts:scripts",
     "//xml/xml-syntax:syntax",
     "//java/java-runtime:rt",
+    "@lib//:jet_check",
     "//xml/xml-analysis-api:analysis",
   ],
   runtime_deps = ["//xml/langInjection"]

@@ -163,6 +163,9 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//platform/testFramework/junit5/codeInsight",
     "//java/java-psi-impl:psi-impl",
+    "//platform/execution",
+    "@lib//:jet_check",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//plugins/java-i18n",

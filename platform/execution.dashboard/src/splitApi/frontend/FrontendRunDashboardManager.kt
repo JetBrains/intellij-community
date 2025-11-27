@@ -35,7 +35,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
+internal class FrontendRunDashboardManager(private val project: Project) : RunDashboardManager {
   private val frontendSettings = MutableStateFlow(RunDashboardSettingsDto())
   private val frontendDtos = MutableStateFlow<List<RunDashboardServiceDto>>(emptyList())
   private val frontendStatuses = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceStatusDto>())

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
@@ -26,8 +26,7 @@ import java.util.List;
  * @author Mikhail Sokolov
  */
 public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Disposable {
-
-  ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereContributor");
+  ExtensionPointName<SearchEverywhereContributorFactory<?>> EP_NAME = new ExtensionPointName<>("com.intellij.searchEverywhereContributor");
 
   /**
    * Unique ID of provider. Usually {@link Class#getSimpleName()} of the implementing class is used.

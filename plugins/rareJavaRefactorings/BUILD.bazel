@@ -30,6 +30,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//libraries/stream",
     "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -59,6 +60,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//libraries/stream",
     "//libraries/fastutil",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end

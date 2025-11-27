@@ -36,6 +36,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/properties/properties-common:properties",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-api:lang",
   ],
   exports = [
     "//plugins/properties/properties-psi-api:psi",

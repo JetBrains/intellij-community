@@ -24,6 +24,7 @@ jvm_library(
     "//platform/structuralsearch:structuralSearch",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/execution",
     "//java/testFramework",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/idea-ui:ui",

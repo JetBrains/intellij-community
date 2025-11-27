@@ -33,6 +33,7 @@ jvm_library(
     "//platform/service-container",
     "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 
@@ -71,6 +72,7 @@ jvm_library(
     "//platform/service-container:service-container_test_lib",
     "//libraries/snakeyaml-engine",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.configurationScript` end
@@ -102,6 +104,7 @@ jvm_library(
     "//java/execution/impl",
     "@lib//:kotlin-stdlib",
     "//platform/lang-core",
+    "//platform/execution",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

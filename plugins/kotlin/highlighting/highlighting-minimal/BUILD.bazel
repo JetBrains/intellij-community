@@ -24,6 +24,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/lang-impl",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/platform-api:ide",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
 )

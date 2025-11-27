@@ -81,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/facet",
     "//platform/util/jdom",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.gradle` end

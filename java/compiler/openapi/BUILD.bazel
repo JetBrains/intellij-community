@@ -28,6 +28,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/projectModel-api:projectModel",
     "//platform/workspace/jps",
+    "//platform/execution",
   ],
   exports = ["//platform/workspace/jps"]
 )

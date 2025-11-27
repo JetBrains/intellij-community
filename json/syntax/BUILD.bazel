@@ -25,10 +25,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-util:util",
-  ],
-  exports = [
-    "//platform/syntax/syntax-api:syntax",
-    "//platform/syntax/syntax-util:util",
   ]
 )
 ### auto-generated section `build intellij.json.syntax` end

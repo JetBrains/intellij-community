@@ -35,6 +35,8 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/scopes",
     "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
   ],
   runtime_deps = ["//platform/backend"]
 )

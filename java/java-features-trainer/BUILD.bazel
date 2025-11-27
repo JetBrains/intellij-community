@@ -37,6 +37,7 @@ jvm_library(
     "//platform/refactoring",
     "//java/execution/impl",
     "//java/debugger/shared",
+    "//platform/execution",
   ]
 )
 
@@ -74,6 +75,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/execution/impl",
     "//java/debugger/shared",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.java.featuresTrainer` end

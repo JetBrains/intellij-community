@@ -34,6 +34,7 @@ jvm_library(
     "//platform/platform-impl/initial-config-import",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.updateChecker` end

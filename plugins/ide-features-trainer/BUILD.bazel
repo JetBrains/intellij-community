@@ -29,6 +29,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-impl",
     "//platform/projectModel-impl",
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/lvcs-impl",
     "//platform/tips-of-the-day:tips",
     "//platform/diagnostic",
+    "//platform/execution",
   ],
   exports = [
     "@lib//:assert_j",
@@ -81,6 +83,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-impl",
     "//platform/projectModel-impl",
@@ -117,6 +120,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:mockito-kotlin",
     "//libraries/mockito",
+    "//platform/execution",
   ],
   exports = [
     "@lib//:assert_j",

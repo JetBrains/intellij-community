@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//plugins/textmate",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",

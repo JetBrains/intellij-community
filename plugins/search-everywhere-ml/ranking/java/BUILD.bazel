@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//plugins/search-everywhere-ml/ranking/core",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",

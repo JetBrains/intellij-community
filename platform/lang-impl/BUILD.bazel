@@ -129,9 +129,10 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
-    "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/util",
   ]
@@ -234,6 +235,8 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/core-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//platform/lang-api:lang",

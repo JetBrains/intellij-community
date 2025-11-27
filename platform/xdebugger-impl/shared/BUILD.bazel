@@ -33,6 +33,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/projectModel-api:projectModel",
     "//platform/execution-impl",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

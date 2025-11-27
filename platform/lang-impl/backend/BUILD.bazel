@@ -21,6 +21,7 @@ jvm_library(
     "//platform/util",
     "//platform/kernel/backend",
     "//jps/model-api:model",
+    "//platform/ide-core",
   ],
   runtime_deps = ["//platform/backend"]
 )

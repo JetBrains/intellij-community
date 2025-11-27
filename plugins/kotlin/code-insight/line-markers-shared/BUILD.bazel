@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/indices",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//java/java-psi-api:psi",

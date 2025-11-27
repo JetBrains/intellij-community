@@ -50,6 +50,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//java/java-psi-api:psi",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end

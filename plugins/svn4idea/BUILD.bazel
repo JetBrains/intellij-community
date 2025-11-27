@@ -32,6 +32,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/util/concurrency",
     "//platform/util-ex",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/guava",
     "//libraries/ini4j",
     "//libraries/oro-matcher",
@@ -89,6 +90,7 @@ jvm_library(
     "//libraries/stream",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.vcs.svn.tests` end
