@@ -228,9 +228,9 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test false positive an with consonant`() {
     myFixture.configureByText("a.java", """
-      // Returns an xlsx file based on given type
-      
-      // writes a uint32_t to a buffer
+      // Returns an xlsx file based on given type.
+      // I have an mp3.
+      // Writes a uint32_t to a buffer.
       """.trimIndent()
     )
     myFixture.checkHighlighting()

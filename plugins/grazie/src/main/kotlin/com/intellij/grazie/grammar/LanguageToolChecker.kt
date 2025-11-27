@@ -38,6 +38,7 @@ import java.util.*
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 
+private val an_exclusions = setOf("xlsx", "mp3")
 
 open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
@@ -74,6 +75,8 @@ open class LanguageToolChecker : ExternalTextChecker() {
     if (sentences.any { it.length > 1000 }) {
       return emptyList()
     }
+
+    val sentenceOffsets = sentences.runningFold(0) { offset, sentence -> offset + sentence.length }
     val matches = runLT(tool, extracted.toString())
     val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
     val state = GrazieConfig.get()
@@ -82,7 +85,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
       .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
       .map { Problem(it, lang, extracted, this is TestChecker) }
       .filterNot { isGitCherryPickedFrom(it.match, extracted) }
-      .filterNot { isKnownLTBug(it.match, extracted) }
+      .filterNot { isKnownLTBug(it.match, extracted, sentenceOffsets) }
       .filterNot {
         val range = when {
           it.fitsGroup(RuleGroup.CASING) -> includeSentenceBounds(extracted, it.patternRange)
@@ -207,7 +210,7 @@ private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean 
           text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
 }
 
-private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
+private fun isKnownLTBug(match: RuleMatch, text: TextContent, sentenceOffsets: List<Int>): Boolean {
   if (match.rule is EnglishUnpairedQuotesRule) {
     if (match.fromPos > 0 &&
         (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
@@ -255,13 +258,21 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
 
   // https://github.com/languagetool-org/languagetool/issues/11598
   if (match.rule.id == "EN_A_VS_AN") {
+    val sentenceIndex = sentenceOffsets.binarySearch(match.fromPos).let {
+      if (it >= 0) it else -it - 2
+    }
+    if (sentenceIndex !in sentenceOffsets.indices) return false
+    val sentenceOffset = sentenceOffsets[sentenceIndex]
+
     val article = text.substring(match.fromPos, match.toPos)
     val tokens = match.sentence.tokensWithoutWhitespace
-    val index = tokens.indexOfFirst { it.token.equals(article) && it.startPos == match.fromPos && it.endPos == match.toPos }
+    val index = tokens
+      .indexOfFirst { sentenceOffset + it.startPos == match.fromPos && sentenceOffset + it.endPos == match.toPos && it.token == article }
+
     if (index == -1 || index + 1 >= tokens.size) return false
     val nextToken = tokens[index + 1].token
     if (article.equals("an", true)) {
-      return nextToken.equals("xlsx", true)
+      return an_exclusions.any { nextToken.equals(it, true) }
     } else {
       return nextToken.startsWith("uint", true)
     }
