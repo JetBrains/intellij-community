@@ -1243,7 +1243,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
-    if (myLocateWithinScreen) {
+    if (StartupUiUtil.isWaylandToolkit()) {
+      var hadToFit = fitSizeToScreen(targetBounds, screen);
+      if (hadToFit && LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
+      }
+    }
+    else if (myLocateWithinScreen) {
       ScreenUtil.moveToFit(targetBounds, screen, null);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
@@ -1427,7 +1433,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (myLocateWithinScreen) {
+    if (StartupUiUtil.isWaylandToolkit()) {
+      var hadToFit = fitSizeToScreen(bounds, screen);
+      if (hadToFit && LOG.isDebugEnabled()) {
+        LOG.debug("Popup shown larger than the screen, adjusted: " + targetBounds);
+      }
+      window.setBounds(bounds);
+    }
+    else if (myLocateWithinScreen) {
       if (
         bounds.x < screen.x ||
         bounds.y < screen.y ||
@@ -1691,6 +1704,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                                                 : ScreenUtil.getMainScreenBounds();
       ScreenUtil.moveToFit(targetBounds, mostAppropriateScreenRectangle, null);
     }
+  }
+  
+  private static boolean fitSizeToScreen(@NotNull Rectangle targetBounds, @NotNull Rectangle screen) {
+    // On Wayland, we have no idea about where we are relative to the screen.
+    // But we still can't show a popup that's bigger than the screen, regardless of its location.
+    var fit = false;
+    if (targetBounds.width > screen.width) {
+      targetBounds.width = screen.width;
+      fit = true;
+    }
+    if (targetBounds.height > screen.height) {
+      targetBounds.height = screen.height;
+      fit = true;
+    }
+    return fit;
   }
 
   public void focusPreferredComponent() {
