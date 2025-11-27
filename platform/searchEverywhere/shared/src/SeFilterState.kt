@@ -8,17 +8,13 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 @Serializable
 sealed class SeFilterState {
-  @Serializable
-  data object Empty : SeFilterState()
-  @Serializable
-  data class Data(val map: Map<String, SeFilterValue>) : SeFilterState()
-}
+  fun get(key: String): List<String>? = (this as? Data)?.map?.get(key)
+  fun getOne(key: String): String? = (this as? Data)?.map?.get(key)?.firstOrNull()
+  fun getBoolean(key: String): Boolean? = (this as? Data)?.map?.get(key)?.firstOrNull()?.toBoolean()
 
-@Experimental
-@Serializable
-sealed class SeFilterValue {
   @Serializable
-  data class One(val value: String) : SeFilterValue()
+  object Empty : SeFilterState()
+
   @Serializable
-  data class Many(val values: List<String>) : SeFilterValue()
+  class Data(val map: Map<String, List<String>>) : SeFilterState()
 }
