@@ -143,6 +143,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
       val project = configuration.project
       val contentIdImpl = backendServiceModel.descriptor?.id as? RunContentDescriptorIdImpl
 
+      val hasSettings = RunManager.getInstance(project).hasSettings(settings)
       if (backendServiceModel is RunDashboardManagerImpl.RunDashboardServiceImpl) {
         return RunDashboardMainServiceDto(
           uuid = backendServiceModel.uuid,
@@ -153,9 +154,9 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
           contentId = contentIdImpl,
-          isRemovable = RunManager.getInstance(project).hasSettings(settings),
+          isRemovable = hasSettings,
           serviceViewId = backendServiceModel.serviceViewId,
-          isStored = RunManager.getInstance(project).hasSettings(settings),
+          isStored = hasSettings,
           isActivateToolWindowBeforeRun = settings.isActivateToolWindowBeforeRun,
           isFocusToolWindowBeforeRun = settings.isFocusToolWindowBeforeRun
         )
@@ -170,9 +171,9 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
           contentId = contentIdImpl,
-          isRemovable = RunManager.getInstance(project).hasSettings(settings),
+          isRemovable = hasSettings,
           serviceViewId = backendServiceModel.serviceViewId,
-          isStored = RunManager.getInstance(project).hasSettings(settings),
+          isStored = hasSettings,
           isActivateToolWindowBeforeRun = settings.isActivateToolWindowBeforeRun,
           isFocusToolWindowBeforeRun = settings.isFocusToolWindowBeforeRun
         )
