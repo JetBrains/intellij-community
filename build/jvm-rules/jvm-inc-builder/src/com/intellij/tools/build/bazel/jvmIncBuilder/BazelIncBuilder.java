@@ -13,9 +13,7 @@ import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
 import org.jetbrains.jps.util.SystemInfo;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -356,12 +354,7 @@ public class BazelIncBuilder {
   private static void copyResource(ResourceGroup resourceGroup, NodeSource res, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
     String destPath = getResourceDestinationPath(resourceGroup, res);
     if (destPath != null) {
-      Path from = pathMapper.toPath(res);
-      try (InputStream in = Files.newInputStream(from)) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        in.transferTo(bytes);
-        out.putEntry(destPath, bytes.toByteArray());
-      }
+      out.putEntry(destPath, pathMapper.toPath(res)); // copy resources lazily
     }
   }
 
