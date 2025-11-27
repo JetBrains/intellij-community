@@ -4,27 +4,28 @@ package com.jetbrains.python.sdk.flavors.conda
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.community.execService.BinOnEel
-import com.intellij.python.community.execService.BinOnTarget
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
-import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
-import java.util.*
-import kotlin.io.path.name
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * TODO: Once we get rid of [TargetCommandExecutor] and have access to [TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see `PyCondaTest`
  */
 @ApiStatus.Internal
-
 data class PyCondaEnv(
   val envIdentity: PyCondaEnvIdentity,
   val fullCondaPathOnTarget: FullPathOnTarget,
@@ -32,39 +33,20 @@ data class PyCondaEnv(
   companion object {
 
     /**
+     * The logic is the following:
+     *
+     * - If an explicit refresh is triggered, ask the cache to reload the value
+     * - If a value is present in the cache, a refresh is triggered if the refresh interval has passed, and the old value is returned:
+     *   - If it's an error, let's try to reload (we may succeed this time)
+     *   - If it's a success, return this value
+     * - If a value is not present in the cache, it will be calculated
+     *
      * @return list of conda environments
      */
     @ApiStatus.Internal
-    suspend fun getEnvs(binaryToExec: BinaryToExec): PyResult<List<PyCondaEnv>> {
-      val condaPath = when (binaryToExec) {
-        is BinOnEel -> binaryToExec.path.toString()
-        is BinOnTarget -> binaryToExec.getLocalExePath().value
-      }
-      val info = CondaExecutor.listEnvs(binaryToExec).getOr { return it }
-      val condaPrefix = info.condaPrefix ?: condaPath.removeSuffix("/bin/conda")
-      val envs = info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }
-      val identities = envs.map { envPath ->
-        // Env name is the basename for envs inside of default location
-        // envPath should be direct child of envs_dirs to be a NamedEnv
-        val isEnvName = info.envsDirs.any {
-          Path.of(it) == Path.of(envPath).parent
-        }
-        val envName = if (isEnvName)
-          Path.of(envPath).name
-        else
-          null
-        val base = envPath.equals(condaPrefix, ignoreCase = true)
-        val identity = if (envName != null) {
-          PyCondaEnvIdentity.NamedEnv(envName)
-        }
-        else {
-          PyCondaEnvIdentity.UnnamedEnv(envPath, base)
-        }
-        PyCondaEnv(identity, condaPath)
-      }
-
-      return PyResult.success(identities)
-    }
+    @JvmOverloads
+    suspend fun getEnvs(binaryToExec: BinaryToExec, forceRefresh: Boolean = false): PyResult<List<PyCondaEnv>> =
+      service<CondaEnvService>().getEnvs(binaryToExec, forceRefresh)
 
     suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): PyResult<Unit> {
       return newCondaEnvInfo.create(command.asBinaryToExec())
@@ -98,4 +80,19 @@ data class PyCondaEnv(
   }
 
   override fun toString(): String = "$envIdentity@$fullCondaPathOnTarget"
+}
+
+@OptIn(IntellijInternalApi::class)
+@Service(Service.Level.APP)
+private class CondaEnvService(scope: CoroutineScope) {
+  private val _condaEnvProviderImpl: Deferred<PyCondaEnvProvider> = scope.async {
+    PyCondaEnvProvider(
+      refreshInterval = RegistryManager.getInstanceAsync().intValue("python.conda.envs.refresh.seconds").seconds,
+      ttlAfterWrite = RegistryManager.getInstanceAsync().intValue("python.conda.envs.cache.ttl.seconds").seconds,
+    )
+  }
+  private suspend fun condaEnvProvider() = _condaEnvProviderImpl.await()
+
+  suspend fun getEnvs(binaryToExec: BinaryToExec, forceRefresh: Boolean): PyResult<List<PyCondaEnv>> =
+    condaEnvProvider().getEnvs(binaryToExec, forceRefresh)
 }

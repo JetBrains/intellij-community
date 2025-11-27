@@ -89,15 +89,15 @@ class CondaViewModel<P : PathHolder>(
       baseCondaEnv.set(null)
 
       if (condaExecutable?.validationResult?.successOrNull != null) {
-        detectCondaEnvironments()
+        detectCondaEnvironments(forceRefresh = false)
       }
     }
   }
 
-  fun detectCondaEnvironments() {
+  fun detectCondaEnvironments(forceRefresh: Boolean) {
     condaEnvironmentsLoading.value = true
     scope.launch(Dispatchers.UI) {
-      condaEnvironmentsResult.value = updateCondaEnvironments()
+      condaEnvironmentsResult.value = updateCondaEnvironments(forceRefresh)
     }.invokeOnCompletion {
       condaEnvironmentsLoading.value = false
     }
@@ -133,13 +133,13 @@ class CondaViewModel<P : PathHolder>(
     path.refreshAndFindVirtualFileOrDirectory()?.takeIf { virtualFile -> virtualFile.isFile }
   }
 
-  private suspend fun updateCondaEnvironments(): PyResult<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
+  private suspend fun updateCondaEnvironments(forceRefresh: Boolean): PyResult<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
     val executable = condaExecutable.get()
     if (executable == null) return@withContext PyResult.localizedError(message("python.sdk.conda.no.exec"))
     executable.validationResult.getOr { return@withContext it }
 
     val binaryToExec = executable.pathHolder?.let { fileSystem.getBinaryToExec(it) }!!
-    val environments = PyCondaEnv.getEnvs(binaryToExec).getOr { return@withContext it }
+    val environments = PyCondaEnv.getEnvs(binaryToExec, forceRefresh).getOr { return@withContext it }
     val baseConda = environments.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
 
     withContext(Dispatchers.UI) {

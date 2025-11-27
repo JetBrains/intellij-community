@@ -122,7 +122,7 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
 
     reloadLink.action = object : AbstractAction(message("sdk.create.custom.conda.refresh.envs")) {
       override fun actionPerformed(e: ActionEvent?) {
-        model.condaViewModel.detectCondaEnvironments()
+        model.condaViewModel.detectCondaEnvironments(forceRefresh = true)
       }
     }
 

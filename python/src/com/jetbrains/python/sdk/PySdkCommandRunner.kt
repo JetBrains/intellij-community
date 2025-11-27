@@ -26,6 +26,7 @@ suspend fun <T> runExecutableWithProgress(
   env: Map<String, String> = emptyMap(),
   vararg args: String,
   transformer: ProcessOutputTransformer<T>,
+  execService: ExecService = ExecService(),
   processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT
 ): PyResult<T> {
   val execOptions = ExecOptions(timeout = timeout, env = env, weight = processWeight)
@@ -37,7 +38,7 @@ suspend fun <T> runExecutableWithProgress(
     }
   }
 
-  return ExecService().execute(
+  return execService.execute(
     binary = binaryToExec,
     args = Args(*args),
     options = execOptions,

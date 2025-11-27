@@ -57,10 +57,11 @@ object CondaExecutor {
     ) { PyResult.success(Unit) }
   }
 
-  suspend fun listEnvs(binaryToExec: BinaryToExec): PyResult<CondaEnvInfo> {
+  suspend fun listEnvs(binaryToExec: BinaryToExec, execService: ExecService = ExecService()): PyResult<CondaEnvInfo> {
     val args = listOf("env", "list", "--json")
     return runConda(
       binaryToExec, args, null,
+      execService = execService,
       transformer = ZeroCodeJsonParserTransformer { CondaExecutionParser.parseListEnvironmentsOutput(it) }
     )
   }
@@ -129,11 +130,20 @@ object CondaExecutor {
     args: List<String>,
     condaEnvIdentity: PyCondaEnvIdentity?,
     timeout: Duration = 15.minutes,
+    execService: ExecService = ExecService(),
     transformer: ProcessOutputTransformer<T>,
   ): PyResult<T> {
     val envs = getFixedEnvs(binaryToExec).getOr { return it }
     val runArgs = prepareCondaRunArgs(args, emptyList(), condaEnvIdentity).toTypedArray()
-    return runExecutableWithProgress(binaryToExec, timeout, env = envs, *runArgs, transformer = transformer, processWeight = ConcurrentProcessWeight.HEAVY)
+    return runExecutableWithProgress(
+      binaryToExec,
+      timeout,
+      env = envs,
+      *runArgs,
+      transformer = transformer,
+      execService = execService,
+      processWeight = ConcurrentProcessWeight.HEAVY
+    )
   }
 
   private fun getFixedEnvs(binaryToExec: BinaryToExec): PyResult<Map<String, String>> {
