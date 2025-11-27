@@ -6,7 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.DebuggerSupport
 
-abstract class XDebuggerActionBase protected constructor(private val myHideDisabledInPopup: Boolean = false) : AnAction() {
+/**
+ * Base class for debugger actions.
+ *
+ * Subclasses should provide the action logic by implementing [getHandler].
+ */
+abstract class XDebuggerActionBase protected constructor(private val myHideDisabledInPopup: Boolean) : AnAction() {
+  protected constructor() : this(false)
+
   override fun update(event: AnActionEvent) {
     val presentation: Presentation = event.presentation
     val hidden = isHidden(event)
@@ -28,19 +35,27 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
   protected open fun isEnabled(e: AnActionEvent): Boolean {
     val project: Project? = e.project
     if (project != null && !project.isDisposed()) {
-      val support: DebuggerSupport = DebuggerSupport()
-      if (isEnabled(project, e, support)) {
-        return true
-      }
-      return false
+      return isEnabled(project, e)
     }
     return false
   }
 
-  protected abstract fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler
+  @Deprecated("Use XDebuggerActionBase#getHandler() instead.")
+  protected open fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
+    throw AbstractMethodError("XDebuggerActionBase#getHandler() should be implemented.")
+  }
 
-  private fun isEnabled(project: Project, event: AnActionEvent, support: DebuggerSupport): Boolean {
-    return getHandler(support).isEnabled(project, event)
+  /**
+   * Returns the handler that performs the actual action logic for this debugger action.
+   * Should be implemented in subclasses.
+   */
+  @Suppress("DEPRECATION")
+  protected open fun getHandler(): DebuggerActionHandler {
+    return getHandler(DebuggerSupport())
+  }
+
+  private fun isEnabled(project: Project, event: AnActionEvent): Boolean {
+    return getHandler().isEnabled(project, event)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -52,28 +67,21 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
     if (project == null || project.isDisposed()) {
       return true
     }
-
-    val support: DebuggerSupport = DebuggerSupport()
-    if (isEnabled(project, e, support)) {
-      perform(project, e, support)
+    if (isEnabled(project, e)) {
+      perform(project, e)
       return true
     }
     return false
   }
 
-  private fun perform(
-    project: Project,
-    e: AnActionEvent,
-    support: DebuggerSupport
-  ) {
-    getHandler(support).perform(project, e)
+  private fun perform(project: Project, e: AnActionEvent) {
+    getHandler().perform(project, e)
   }
 
   protected open fun isHidden(event: AnActionEvent): Boolean {
     val project: Project? = event.project
     if (project != null && !project.isDisposed()) {
-      val support: DebuggerSupport = DebuggerSupport()
-      return getHandler(support).isHidden(project, event)
+      return getHandler().isHidden(project, event)
     }
     return true
   }
