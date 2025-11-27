@@ -47,11 +47,14 @@ public interface CommonProblemDescriptor {
    * The template may contain special markers:
    * <ul>
    * <li>{@code #ref} is replaced with the text of the element in which the problem has been found</li>
-   * <li>{@code #loc} is replaced with the filename and line number in exported inspection results and ignored when viewing within IDE</li>
+   * <li>{@code #loc} is replaced with the filename and line number in exported inspection results and ignored when viewing within IDE.
+   * <b>It is deprecated and must not be used</b>.</li>
    * <li>{@code #treeend} is used as cut-symbol for template when it's shown inside inspection result tree.
    * So any content after this marker is not visible in the tree node.</li>
    * </ul>
    * @return the template for the problem description.
+   * @see ProblemDescriptorUtil#REF_REFERENCE
+   * @see ProblemDescriptorUtil#LOC_REFERENCE
    */
   @InspectionMessage
   @NotNull

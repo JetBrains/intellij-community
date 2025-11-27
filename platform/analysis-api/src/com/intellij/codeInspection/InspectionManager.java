@@ -36,10 +36,10 @@ public abstract class InspectionManager {
                                                                            @NotNull QuickFix<?> @Nullable ... fixes);
 
   /**
-   * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
+   * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods
    *
    * @param psiElement          problem is reported against
-   * @param descriptionTemplate problem message. Use {@code #ref} for a link to problem piece of code and {@code #loc} for location in source code (see {@link CommonProblemDescriptor#getDescriptionTemplate()}).
+   * @param descriptionTemplate problem message. Use {@code #ref} for a link to the problematic piece of code (see {@link CommonProblemDescriptor#getDescriptionTemplate()})
    * @param fix                 should be null if no fix is provided.
    * @param onTheFly            for local tools on batch run
    */
