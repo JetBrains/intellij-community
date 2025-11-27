@@ -56,7 +56,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = -5631633227727675101L
+        const val serializationHash = 1924552879928986652L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -338,9 +338,6 @@ class LambdaRdTestSession private constructor(
     private val _runLambda: RdCall<LambdaRdTestActionParameters, Unit>,
     private val _runSerializedLambda: RdCall<LambdaRdSerializedLambda, Unit>,
     private val _cleanUp: RdCall<Unit, Unit>,
-    private val _requestFocus: RdCall<Boolean, Boolean>,
-    private val _isFocused: RdCall<Unit, Boolean>,
-    private val _visibleFrameNames: RdCall<Unit, List<String>>,
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
     private val _isResponding: RdCall<Unit, Boolean>,
@@ -362,14 +359,11 @@ class LambdaRdTestSession private constructor(
             val _runLambda = RdCall.read(ctx, buffer, LambdaRdTestActionParameters, FrameworkMarshallers.Void)
             val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerializedLambda, FrameworkMarshallers.Void)
             val _cleanUp = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Void)
-            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.Bool, FrameworkMarshallers.Bool)
-            val _isFocused = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            val _visibleFrameNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _cleanUp, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
+            return LambdaRdTestSession(rdIdeType, _ready, _sendException, _closeAllOpenedProjects, _runLambda, _runSerializedLambda, _cleanUp, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdTestSession)  {
@@ -381,9 +375,6 @@ class LambdaRdTestSession private constructor(
             RdCall.write(ctx, buffer, value._runLambda)
             RdCall.write(ctx, buffer, value._runSerializedLambda)
             RdCall.write(ctx, buffer, value._cleanUp)
-            RdCall.write(ctx, buffer, value._requestFocus)
-            RdCall.write(ctx, buffer, value._isFocused)
-            RdCall.write(ctx, buffer, value._visibleFrameNames)
             RdCall.write(ctx, buffer, value._projectsNames)
             RdCall.write(ctx, buffer, value._makeScreenshot)
             RdCall.write(ctx, buffer, value._isResponding)
@@ -401,9 +392,6 @@ class LambdaRdTestSession private constructor(
     val runLambda: RdCall<LambdaRdTestActionParameters, Unit> get() = _runLambda
     val runSerializedLambda: RdCall<LambdaRdSerializedLambda, Unit> get() = _runSerializedLambda
     val cleanUp: RdCall<Unit, Unit> get() = _cleanUp
-    val requestFocus: RdCall<Boolean, Boolean> get() = _requestFocus
-    val isFocused: RdCall<Unit, Boolean> get() = _isFocused
-    val visibleFrameNames: RdCall<Unit, List<String>> get() = _visibleFrameNames
     val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
@@ -420,9 +408,6 @@ class LambdaRdTestSession private constructor(
         _runLambda.async = true
         _runSerializedLambda.async = true
         _cleanUp.async = true
-        _requestFocus.async = true
-        _isFocused.async = true
-        _visibleFrameNames.async = true
         _projectsNames.async = true
         _makeScreenshot.async = true
         _isResponding.async = true
@@ -436,9 +421,6 @@ class LambdaRdTestSession private constructor(
         bindableChildren.add("runLambda" to _runLambda)
         bindableChildren.add("runSerializedLambda" to _runSerializedLambda)
         bindableChildren.add("cleanUp" to _cleanUp)
-        bindableChildren.add("requestFocus" to _requestFocus)
-        bindableChildren.add("isFocused" to _isFocused)
-        bindableChildren.add("visibleFrameNames" to _visibleFrameNames)
         bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
         bindableChildren.add("isResponding" to _isResponding)
@@ -456,9 +438,6 @@ class LambdaRdTestSession private constructor(
         RdCall<LambdaRdTestActionParameters, Unit>(LambdaRdTestActionParameters, FrameworkMarshallers.Void),
         RdCall<LambdaRdSerializedLambda, Unit>(LambdaRdSerializedLambda, FrameworkMarshallers.Void),
         RdCall<Unit, Unit>(FrameworkMarshallers.Void, FrameworkMarshallers.Void),
-        RdCall<Boolean, Boolean>(FrameworkMarshallers.Bool, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
@@ -478,9 +457,6 @@ class LambdaRdTestSession private constructor(
             print("runLambda = "); _runLambda.print(printer); println()
             print("runSerializedLambda = "); _runSerializedLambda.print(printer); println()
             print("cleanUp = "); _cleanUp.print(printer); println()
-            print("requestFocus = "); _requestFocus.print(printer); println()
-            print("isFocused = "); _isFocused.print(printer); println()
-            print("visibleFrameNames = "); _visibleFrameNames.print(printer); println()
             print("projectsNames = "); _projectsNames.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
@@ -498,9 +474,6 @@ class LambdaRdTestSession private constructor(
             _runLambda.deepClonePolymorphic(),
             _runSerializedLambda.deepClonePolymorphic(),
             _cleanUp.deepClonePolymorphic(),
-            _requestFocus.deepClonePolymorphic(),
-            _isFocused.deepClonePolymorphic(),
-            _visibleFrameNames.deepClonePolymorphic(),
             _projectsNames.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),
             _isResponding.deepClonePolymorphic(),
