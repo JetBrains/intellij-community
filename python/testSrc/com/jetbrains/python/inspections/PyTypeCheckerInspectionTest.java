@@ -537,11 +537,6 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
-  // PY-85771
-  public void testFlagName() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
-  }
-
   // PY-28720
   public void testOverriddenBuiltinMethodAgainstTypingProtocol() {
     runWithLanguageLevel(

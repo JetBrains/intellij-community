@@ -3368,6 +3368,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-85771
+  public void testFlagName() {
+    doTestByText("""
+                   from enum import IntFlag
+                   
+                   
+                   def test_int_flag(x: IntFlag) -> str | None:
+                       return x.name
+                   """);
+  }
+
+
   // PY-25989 PY-84544
   public void testTypeVarWidening() {
     myFixture.enableInspections(PyAssertTypeInspection.class);
