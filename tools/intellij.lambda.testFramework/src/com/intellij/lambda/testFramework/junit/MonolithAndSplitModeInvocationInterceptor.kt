@@ -3,7 +3,10 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.toLambdaParams
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -73,6 +76,13 @@ internal suspend fun BackgroundRunWithLambda.runNamedLambda(namedLambdaClass: KC
 
 internal suspend fun BackgroundRunWithLambda.runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
   return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
+}
+
+internal suspend fun LambdaRdTestSession.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  val protocol = this.protocol
+                 ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
+  runLambda.startSuspending(protocol.lifetime,
+                            LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
 }
 
 internal const val ARGUMENTS_SEPARATOR = "], ["
