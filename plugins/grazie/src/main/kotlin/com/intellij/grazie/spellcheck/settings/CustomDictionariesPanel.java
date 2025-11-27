@@ -2,15 +2,13 @@
 package com.intellij.grazie.spellcheck.settings;
 
 import com.intellij.grazie.GrazieBundle;
-import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.spellchecker.DictionaryFileType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.settings.BuiltInDictionariesProvider;
@@ -35,6 +33,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static java.util.Arrays.asList;
 
@@ -119,13 +118,11 @@ public final class CustomDictionariesPanel extends JPanel {
   }
 
   private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {
-    FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.multiFiles()
-      .withExtensionFilter(
-        IdeCoreBundle.message("file.chooser.files.label", GrazieBundle.message("grazie.filetype.dictionary.display.name")),
-        PlainTextFileType.INSTANCE, DictionaryFileType.INSTANCE
-      );
     var directory = ProjectUtil.guessProjectDir(project);
-    FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), directory, consumer);
+    FileChooser.chooseFiles(
+      new CustomDictionariesTableView.DictionaryFileChooserDescriptor(),
+      project, this.getParent(), directory, consumer
+    );
   }
 
   public List<String> getRemovedDictionaries() {
@@ -240,6 +237,19 @@ public final class CustomDictionariesPanel extends JPanel {
           }
         }
       };
+    }
+
+    private static class DictionaryFileChooserDescriptor extends FileChooserDescriptor {
+      private DictionaryFileChooserDescriptor() {
+        super(FileChooserDescriptorFactory.multiFiles());
+      }
+
+      @Override
+      public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
+        if (ContainerUtil.exists(files, f -> !isDic(f.getName()))) {
+          throw new ConfigurationException(GrazieBundle.message("grazie.filetype.dictionary.incorrect.message"));
+        }
+      }
     }
   }
 }
