@@ -253,13 +253,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected fun addToOpened(project: Project): Boolean {
     assert(!project.isDisposed) { "Must not open already disposed project" }
     synchronized(lock) {
-      if (openProjectByHash[project.locationHash] != null) {
+      if (openProjectByHash.put(project.locationHash, project) != null) {
         return false
       }
       openProjects += project
+      LOG.info("Project ${project.name} was added to the list of open projects")
     }
     updateTheOnlyProjectField()
-    openProjectByHash.put(project.locationHash, project)
     return true
   }
 
