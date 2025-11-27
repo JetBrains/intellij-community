@@ -253,6 +253,20 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     return true // https://github.com/languagetool-org/languagetool/issues/8285
   }
 
+  // https://github.com/languagetool-org/languagetool/issues/11598
+  if (match.rule.id == "EN_A_VS_AN") {
+    val article = text.substring(match.fromPos, match.toPos)
+    val tokens = match.sentence.tokensWithoutWhitespace
+    val index = tokens.indexOfFirst { it.token.equals(article) && it.startPos == match.fromPos && it.endPos == match.toPos }
+    if (index == -1 || index + 1 >= tokens.size) return false
+    val nextToken = tokens[index + 1].token
+    if (article.equals("an", true)) {
+      return nextToken.equals("xlsx", true)
+    } else {
+      return nextToken.startsWith("uint", true)
+    }
+  }
+
   return false
 }
 
