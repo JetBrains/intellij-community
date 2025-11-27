@@ -45,12 +45,18 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
     if (kotlinJvmPluginVersion == null) return
     if (!apiDependencyPattern.accepts(callExpression)) return
     if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
+    if (callExpression is GrMethodCall && isNonRedundantConfiguration(callExpression.invokedExpression.text)) return
 
     when {
       callExpression.namedArguments.size == 3 -> processNamedArgumentsDependency(callExpression, callExpression.namedArguments.asList())
       callExpression.expressionArguments.size == 1 -> processSingleArgumentDependency(callExpression, callExpression.expressionArguments.single())
       else -> processListArgumentsDependencies(callExpression)
     }
+  }
+
+  private fun isNonRedundantConfiguration(configurationName: String?): Boolean {
+    if (configurationName == null) return false
+    return NON_REDUNDANT_CONFIGS.any { configurationName.endsWith(it, ignoreCase = true) }
   }
 
   private fun processNamedArgumentsDependency(elementToRemove: GrExpression, namedArguments: List<GrNamedArgument>) {
@@ -207,6 +213,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
     private const val KOTLIN_JAVA_STDLIB_NAME = "kotlin-stdlib"
     private const val KOTLIN_JVM_PLUGIN = "$KOTLIN_GROUP_ID.jvm"
     private val REQUIRED_NAMED_ARGS = setOf("group", "name", "version")
+    private val NON_REDUNDANT_CONFIGS = setOf("compileOnly")
   }
 }
 

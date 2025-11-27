@@ -319,6 +319,36 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
         }
     }
 
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCompileOnly(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                dependencies { 
+                    compileOnly("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testCompileOnlyCustomSourceSet(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, DEFAULT_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                dependencies { 
+                    "customSourceSetCompileOnly"("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
     // VERSION CATALOG RESOLVING TESTS
 
     @ParameterizedTest
@@ -1026,6 +1056,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinJvmPlugin("2.2.0")
                 withPrefix { code("val customConf by configurations.creating {}") }
+                withPrefix { code("val customSourceSet by sourceSets.creating {}") }
             }
         }
         private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("disabled_default_stdlib") { gradleVersion ->

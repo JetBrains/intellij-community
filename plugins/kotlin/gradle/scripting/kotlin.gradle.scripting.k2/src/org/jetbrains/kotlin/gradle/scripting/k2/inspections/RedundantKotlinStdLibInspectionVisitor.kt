@@ -38,6 +38,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
     private fun getKotlinStdLibVersion(dependencyExpression: KtCallExpression): String? {
         val dependencyType = findDependencyType(dependencyExpression) ?: return null
         if (dependencyType == DependencyType.OTHER || !dependencyExpression.lambdaArguments.isEmpty()) return null
+        if (isNonRedundantConfiguration(dependencyExpression.calleeExpression)) return null
 
         val argList = dependencyExpression.valueArgumentList ?: return null
 
@@ -46,6 +47,12 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
             DependencyType.NAMED_ARGUMENTS -> extractVersionFromNamedArguments(argList)
             else -> null
         }
+    }
+
+    private fun isNonRedundantConfiguration(configurationExpression: KtExpression?): Boolean {
+        if (configurationExpression == null) return false
+        val configurationName = configurationExpression.evaluateString() ?: configurationExpression.text
+        return NON_REDUNDANT_CONFIGS.any { configurationName.endsWith(it, ignoreCase = true) }
     }
 
     private fun extractVersionFromSingleArgument(argList: KtValueArgumentList): String? {
@@ -189,6 +196,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
     companion object {
         private const val KOTLIN_JVM_PLUGIN = "$KOTLIN_GROUP_ID.jvm"
         private val REQUIRED_NAMED_ARGS = setOf("group", "name", "version")
+        private val NON_REDUNDANT_CONFIGS = setOf("compileOnly")
     }
 }
 
