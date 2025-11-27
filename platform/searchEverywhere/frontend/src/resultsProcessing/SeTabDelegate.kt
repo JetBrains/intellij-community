@@ -25,9 +25,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
+/**
+ * Delegate for managing the Search Everywhere tab's functionality and results processing.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
 class SeTabDelegate(

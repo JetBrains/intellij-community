@@ -4,10 +4,19 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+/**
+ * Extension point for providing serializable presentation for items from the legacy [com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor]
+ */
 @ApiStatus.Experimental
 interface SeLegacyItemPresentationProvider {
+  /**
+   * The id should match the id of the legacy contributor
+   */
   val id: String
+
+  /**
+   * Retrieves the serializable presentation for the given item, if available.
+   */
   suspend fun getPresentation(item: Any): SeItemPresentation?
 
   companion object {
