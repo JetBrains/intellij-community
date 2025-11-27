@@ -135,8 +135,7 @@ class GroupByModeTestEngine : TestEngine {
       )
       engineDescriptor.addChild(classDescriptor)
 
-      // Add mode containers
-      IdeRunMode.entries.forEach { mode ->
+      getModesToRun(testClass).forEach { mode ->
         classDescriptor.addChild(
           ModeContainerDescriptor(classDescriptor.uniqueId.append("mode", mode.name), mode, selector.className)
         )
