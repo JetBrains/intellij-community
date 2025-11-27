@@ -258,16 +258,14 @@ internal fun KaSession.collectConflicts(
     val pullUpData = K2PullUpData(
         sourceClass, targetClass, memberInfos.mapNotNull { it.member })
 
-    with(pullUpData) {
-        for (memberInfo in memberInfos) {
-            val member = memberInfo.member
-            val memberSymbol = member.symbol
+    for (memberInfo in memberInfos) {
+        val member = memberInfo.member
+        val memberSymbol = member.symbol
 
-            checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
-            checkAccidentalOverrides(pullUpData, member, memberSymbol, conflicts)
-            checkInnerClassToInterface(pullUpData, member, memberSymbol, conflicts)
-            checkVisibility(pullUpData, memberInfo, memberSymbol, conflicts)
-        }
+        checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
+        checkAccidentalOverrides(pullUpData, member, memberSymbol, conflicts)
+        checkInnerClassToInterface(pullUpData, member, memberSymbol, conflicts)
+        checkVisibility(pullUpData, memberInfo, memberSymbol, conflicts)
     }
     checkVisibilityInAbstractedMembers(memberInfos, conflicts)
 }
