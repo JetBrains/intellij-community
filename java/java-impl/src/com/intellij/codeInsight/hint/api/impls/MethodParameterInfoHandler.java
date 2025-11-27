@@ -118,7 +118,7 @@ public final class MethodParameterInfoHandler
             updateInfoContext.getCurrentParameterIndex() == null ? -1 : updateInfoContext.getCurrentParameterIndex(),
             true, false, true
           );
-          return new LightJavaMethodPresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
+          return new LightJavaSignaturePresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
         }
       ),
       updateInfoContext.getHighlightedSignatureIndex(),

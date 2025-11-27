@@ -9,7 +9,7 @@ import com.intellij.util.Range
  * @see LightJavaParameterInfoHandler
  */
 public class LightJavaParameterInfo(
-  public val methodPresentationList: List<LightJavaMethodPresentation>,
+  public val methodPresentationList: List<LightJavaSignaturePresentation>,
   public val currentSignatureIndex: Int?,
   public val currentParameterIndex: Int?,
 )
@@ -18,8 +18,8 @@ public class LightJavaParameterInfo(
  * Stores information about a particular signature within available overloads.
  * @see LightJavaParameterInfo
  */
-public class LightJavaMethodPresentation(
-  public val methodLabel: String,
+public class LightJavaSignaturePresentation(
+  public val label: String,
   public val parameterRangeList: List<LightJavaParameterPresentation>,
   public val currentParameterIndex: Int?,
 )
