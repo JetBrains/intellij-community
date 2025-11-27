@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
+import com.intellij.platform.testFramework.eelJava.EelTestUtil
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker.reportUnavailability
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.IdeaTestUtil
@@ -44,7 +45,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.io.copyRecursively
-import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.lang.JavaVersion
@@ -76,7 +76,7 @@ import org.junit.runners.Parameterized
 import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Consumer
-import kotlin.io.path.*
+import kotlin.io.path.exists
 
 @RunWith(Parameterized::class)
 abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
@@ -403,7 +403,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     val gradleDistributionRootPath = gradleJarPath.parent.parent
     validateGradleJar(gradleJarPath)
 
-    if (!gradleJarPath.exists()) {
+    if (EelTestUtil.isLocalRun() && !gradleJarPath.exists()) {
       val localDistributionRoot = getLocalGradleDistributionRoot(currentGradleVersion)
       if (localDistributionRoot != gradleDistributionRootPath && localDistributionRoot.exists()) {
         gradleDistributionRootPath.delete(true)
