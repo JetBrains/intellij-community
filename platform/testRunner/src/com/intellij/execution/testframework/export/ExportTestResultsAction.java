@@ -324,7 +324,11 @@ public final class ExportTestResultsAction extends DumbAwareAction {
 
   private static void transformWithXslt(@NotNull ExportContext context, @NotNull Source xslSource)
     throws TransformerConfigurationException, IOException, SAXException {
-    TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler(xslSource);
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
+    // Enable extension functions to use `str:tokenize` in `intellij-export.xsl`
+    // https://docs.oracle.com/en/java/javase/25/docs/api/java.xml/module-summary.html#jdk.xml.enableExtensionFunctions
+    transformerFactory.setFeature("jdk.xml.enableExtensionFunctions", true);
+    TransformerHandler handler = transformerFactory.newTransformerHandler(xslSource);
     handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", context.runConfiguration.getName(),
                                                                            context.runConfiguration.getType().getDisplayName()));
 
