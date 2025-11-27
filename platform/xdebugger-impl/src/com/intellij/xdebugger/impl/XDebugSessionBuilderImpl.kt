@@ -5,7 +5,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XSessionBuilder
+import com.intellij.xdebugger.XDebugSessionBuilder
 import com.intellij.xdebugger.XSessionStartedResult
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -34,10 +34,10 @@ internal class SessionStartParams(
   }
 }
 
-internal class XSessionBuilderImpl(
+internal class XDebugSessionBuilderImpl(
   private val manager: XDebuggerManagerImpl,
   private val starter: XDebugProcessStarter,
-) : XSessionBuilder {
+) : XDebugSessionBuilder {
   private var myEnvironment: ExecutionEnvironment? = null
   private var mySessionName: @Nls String? = null
   private var myIcon: Icon? = null
@@ -45,32 +45,32 @@ internal class XSessionBuilderImpl(
   private var myShowTab = false
   private var myShowToolWindowOnSuspendOnly = false
 
-  override fun environment(environment: ExecutionEnvironment): XSessionBuilderImpl {
+  override fun environment(environment: ExecutionEnvironment): XDebugSessionBuilderImpl {
     myEnvironment = environment
     return this
   }
 
-  override fun sessionName(@Nls sessionName: @Nls String): XSessionBuilderImpl {
+  override fun sessionName(@Nls sessionName: @Nls String): XDebugSessionBuilderImpl {
     mySessionName = sessionName
     return this
   }
 
-  override fun icon(icon: Icon?): XSessionBuilderImpl {
+  override fun icon(icon: Icon?): XDebugSessionBuilderImpl {
     myIcon = icon
     return this
   }
 
-  override fun contentToReuse(contentToReuse: RunContentDescriptor?): XSessionBuilderImpl {
+  override fun contentToReuse(contentToReuse: RunContentDescriptor?): XDebugSessionBuilderImpl {
     myContentToReuse = contentToReuse
     return this
   }
 
-  override fun showTab(value: Boolean): XSessionBuilderImpl {
+  override fun showTab(value: Boolean): XDebugSessionBuilderImpl {
     myShowTab = value
     return this
   }
 
-  override fun showToolWindowOnSuspendOnly(value: Boolean): XSessionBuilderImpl {
+  override fun showToolWindowOnSuspendOnly(value: Boolean): XDebugSessionBuilderImpl {
     myShowToolWindowOnSuspendOnly = value
     return this
   }

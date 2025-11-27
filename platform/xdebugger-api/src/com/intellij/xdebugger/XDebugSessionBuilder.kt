@@ -23,17 +23,20 @@ interface XSessionStartedResult {
 
 /**
  * Builder interface for creating and configuring a debugging session.
+ *
+ * By default, the session is not shown after started. In this case, [environment] is a required parameter.
+ * To start a session with tab shown, call [showTab] with `true` and pass a [sessionName].
  */
 @ApiStatus.NonExtendable
 @ApiStatus.Experimental
-interface XSessionBuilder {
+interface XDebugSessionBuilder {
   @Throws(ExecutionException::class)
   fun startSession(): XSessionStartedResult
 
-  fun environment(environment: ExecutionEnvironment): XSessionBuilder
-  fun sessionName(@Nls sessionName: @Nls String): XSessionBuilder
-  fun icon(icon: Icon?): XSessionBuilder
-  fun contentToReuse(contentToReuse: RunContentDescriptor?): XSessionBuilder
-  fun showTab(value: Boolean): XSessionBuilder
-  fun showToolWindowOnSuspendOnly(value: Boolean): XSessionBuilder
+  fun environment(environment: ExecutionEnvironment): XDebugSessionBuilder
+  fun sessionName(@Nls sessionName: @Nls String): XDebugSessionBuilder
+  fun icon(icon: Icon?): XDebugSessionBuilder
+  fun contentToReuse(contentToReuse: RunContentDescriptor?): XDebugSessionBuilder
+  fun showTab(value: Boolean): XDebugSessionBuilder
+  fun showToolWindowOnSuspendOnly(value: Boolean): XDebugSessionBuilder
 }

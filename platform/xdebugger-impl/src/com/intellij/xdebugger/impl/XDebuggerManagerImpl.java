@@ -194,8 +194,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   @Override
-  public @NotNull XSessionBuilder newSessionBuilder(@NotNull XDebugProcessStarter starter) {
-    return new XSessionBuilderImpl(this, starter);
+  public @NotNull XDebugSessionBuilder newSessionBuilder(@NotNull XDebugProcessStarter starter) {
+    return new XDebugSessionBuilderImpl(this, starter);
   }
 
   @NotNull XSessionStartedResult startSession(@NotNull SessionStartParams params) throws ExecutionException {

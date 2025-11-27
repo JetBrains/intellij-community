@@ -30,7 +30,7 @@ import javax.swing.event.HyperlinkListener;
 
 /**
  * Instances of this class are created by the debugging subsystem
- * when the {@link XSessionBuilder#startSession()} method is called.
+ * when the {@link XDebugSessionBuilder#startSession()} method is called.
  * It isn't supposed to be implemented by a plugin.
  * <p>
  * An instance of this class can be obtained from the {@link XDebugProcess#getSession()} method

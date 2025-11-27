@@ -6,17 +6,17 @@ a:com.intellij.xdebugger.XDebugProcess
 - *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
 - *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+*:com.intellij.xdebugger.XDebugSessionBuilder
+- a:contentToReuse(com.intellij.execution.ui.RunContentDescriptor):com.intellij.xdebugger.XDebugSessionBuilder
+- a:environment(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSessionBuilder
+- a:icon(javax.swing.Icon):com.intellij.xdebugger.XDebugSessionBuilder
+- a:sessionName(java.lang.String):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showTab(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:showToolWindowOnSuspendOnly(Z):com.intellij.xdebugger.XDebugSessionBuilder
+- a:startSession():com.intellij.xdebugger.XSessionStartedResult
 com.intellij.xdebugger.XDebugSessionListener
 - java.util.EventListener
 - *:stackFrameChanged(Z):V
-*:com.intellij.xdebugger.XSessionBuilder
-- a:contentToReuse(com.intellij.execution.ui.RunContentDescriptor):com.intellij.xdebugger.XSessionBuilder
-- a:environment(com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XSessionBuilder
-- a:icon(javax.swing.Icon):com.intellij.xdebugger.XSessionBuilder
-- a:sessionName(java.lang.String):com.intellij.xdebugger.XSessionBuilder
-- a:showTab(Z):com.intellij.xdebugger.XSessionBuilder
-- a:showToolWindowOnSuspendOnly(Z):com.intellij.xdebugger.XSessionBuilder
-- a:startSession():com.intellij.xdebugger.XSessionStartedResult
 *:com.intellij.xdebugger.XSessionStartedResult
 - a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - a:getSession():com.intellij.xdebugger.XDebugSession
