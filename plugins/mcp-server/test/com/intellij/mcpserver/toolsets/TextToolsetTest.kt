@@ -5,6 +5,7 @@ package com.intellij.mcpserver.toolsets
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.toolsets.general.TextToolset
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
@@ -20,7 +21,7 @@ class TextToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       TextToolset::get_file_text_by_path.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(testJavaFile.name))
+        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
       },
       "Test.java content"
     )
@@ -31,10 +32,11 @@ class TextToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       TextToolset::replace_text_in_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(mainJavaFile.name))
-        put("text", JsonPrimitive("updated content"))
+        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(mainJavaFile)))
+        put("oldText", JsonPrimitive("Main.java content"))
+        put("newText", JsonPrimitive("updated content"))
       },
-      "ok"
+      "[success]"
     )
   }
 
@@ -57,7 +59,7 @@ class TextToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       TextToolset::replace_text_in_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(testJavaFile.canonicalPath))
+        put("pathInProject", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
         put("oldText", JsonPrimitive(""))  // Empty string causes endless loop
         put("newText", JsonPrimitive("prefix"))
         put("replaceAll", JsonPrimitive(true))

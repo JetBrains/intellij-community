@@ -63,7 +63,7 @@ class McpJsonGenerationTest {
 
     // Verify the JSON structure
     assertEquals("sse", jsonConfig["type"]!!.jsonPrimitive.content)
-    val expectedUrl = "http://localhost:$port/sse"
+    val expectedUrl = "http://127.0.0.1:$port/sse"
     assertEquals(expectedUrl, jsonConfig["url"]!!.jsonPrimitive.content)
   }
 }

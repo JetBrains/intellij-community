@@ -4,6 +4,7 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FileToolset
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import io.kotest.common.runBlocking
@@ -21,7 +22,7 @@ class FileToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       FileToolset::list_directory_tree.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive("/"))
+        put("directoryPath", JsonPrimitive("/"))
         put("maxDepth", JsonPrimitive(2))
       },
       """{"name":"IJ4720168971772072169","type":"directory","path":"","children":[{"name":"Class.java","type":"file","path":"Class.java"},{"name":"Test.java","type":"file","path":"Test.java"},{"name":"Main.java","type":"file","path":"Main.java"}]}"""
@@ -33,9 +34,9 @@ class FileToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       FileToolset::find_files_by_name_keyword.name,
       buildJsonObject {
-        put("nameSubstring", JsonPrimitive("test"))
+        put("nameKeyword", JsonPrimitive("test"))
       },
-      """[{"path": "Test.java", "name": "Test.java"}]"""
+      """{"files":["src/Test.java"]}"""
     )
   }
   @Test
@@ -45,7 +46,7 @@ class FileToolsetTest : McpToolsetTestBase() {
       buildJsonObject {
         put("globPattern", JsonPrimitive("**/*.java"))
       },
-      """[{"path": "Test.java", "name": "Test.java"}]"""
+      """{"files":["src/Main.java","src/Test.java","src/Class.java"]}"""
     )
   }
 
@@ -54,9 +55,9 @@ class FileToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       FileToolset::open_file_in_editor.name,
       buildJsonObject {
-        put("filePath", JsonPrimitive("Test.java"))
+        put("filePath", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(testJavaFile)))
       },
-      "file is opened"
+      "[success]"
     )
   }
 
@@ -68,7 +69,7 @@ class FileToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       FileToolset::get_all_open_file_paths.name,
       buildJsonObject {},
-      "Main.java"
+      """{"activeFilePath":"src/Main.java","openFiles":["src/Main.java"]}"""
     )
   }
 
@@ -76,8 +77,10 @@ class FileToolsetTest : McpToolsetTestBase() {
   fun create_new_file() = runBlocking {
     testMcpTool(
       FileToolset::create_new_file.name,
-      buildJsonObject {},
-      "Main.java"
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive("src/NewFile.java"))
+      },
+      "[success]"
     )
   }
 }

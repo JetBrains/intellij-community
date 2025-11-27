@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeAll
 import org.junit.platform.commons.annotation.Testable
 import kotlin.io.path.Path
-import kotlin.test.DefaultAsserter.assertEquals
+import kotlin.test.assertEquals
 import kotlin.test.fail
 
 @Testable

@@ -4,6 +4,7 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.AnalysisToolset
+import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import io.kotest.common.runBlocking
@@ -22,13 +23,14 @@ class AnalysisToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       AnalysisToolset::get_file_problems.name,
       buildJsonObject {
-        put("filePath", JsonPrimitive(mainJavaFile.path))
+        put("filePath", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(mainJavaFile)))
       },
       /*language=JSON*/ """{"filePath":"src/Main.java","errors":[]}"""
     )
   }
 
-  @Test
+  // tool is disabled now
+  //@Test
   fun build_project() = runBlocking {
     testMcpTool(
       AnalysisToolset::build_project.name,
