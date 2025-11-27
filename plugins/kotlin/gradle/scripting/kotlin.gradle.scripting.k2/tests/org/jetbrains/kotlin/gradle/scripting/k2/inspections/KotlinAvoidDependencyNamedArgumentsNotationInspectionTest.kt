@@ -8,6 +8,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -171,6 +172,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCustomConfiguration(gradleVersion: GradleVersion) {
+        assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
         runTest(gradleVersion) {
             testHighlighting(
                 """
@@ -202,6 +204,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     @AllGradleVersionsSource
     fun testCustomConfigurationString(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
+            assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
                 dependencies { 
@@ -229,6 +232,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     @AllGradleVersionsSource
     fun testCustomSourceSet(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
+            assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
                 dependencies { 
