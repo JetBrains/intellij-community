@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 
@@ -52,10 +53,23 @@ public sealed class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  protected final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
-  protected final Map<PyTypedElement, PyType> myExternalEvaluated = CollectionFactory.createConcurrentSoftValueMap();
-  protected final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
-  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<PyTypedElement, PyType> myEvaluated = getConcurrentMapForCaching();
+  protected final Map<PyTypedElement, PyType> myExternalEvaluated = getConcurrentMapForCaching();
+  protected final Map<PyCallable, PyType> myEvaluatedReturn = getConcurrentMapForCaching();
+  protected final Map<Pair<PyExpression, Object>, PyType> contextTypeCache = getConcurrentMapForCaching();
+
+  private static <T> @NotNull ConcurrentMap<@NotNull T, @NotNull PyType> getConcurrentMapForCaching() {
+    if (Registry.is("python.typing.soft.keys.type.eval.context")) {
+      // In the current implementation, this value is only used to initialize the map and is basically ignored
+      // Just in case, set it to a reasonable value
+      // `Runtime.availableProcessors` shouldn't be called here, as that is a potentially expensive operation
+      int concurrencyLevel = 4;
+      return CollectionFactory.createConcurrentSoftKeySoftValueMap(10, 0.75f, concurrencyLevel);
+    }
+    else {
+      return CollectionFactory.createConcurrentSoftValueMap();
+    }
+  }
 
   protected static final Logger logger = Logger.getInstance(TypeEvalContext.class);
 
