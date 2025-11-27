@@ -4,7 +4,6 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.runner.CurrentTestMethod
-import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
@@ -37,6 +36,8 @@ class LambdaTestExecutionListener : TestExecutionListener {
           }
         }
       }
+
+      ConfigureCoroutineCancellationTimeout.configure()
     }
   }
 
