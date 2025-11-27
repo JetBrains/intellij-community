@@ -131,7 +131,11 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       append(" ")
       append(value.path.name)
       append("   ")
-      append(value.currentBranch.name, SimpleTextAttributes.GRAY_ATTRIBUTES)
+      val presentableBranchName = when (val branch = value.currentBranch) {
+        null -> GitBundle.message("toolwindow.working.trees.tab.detached.working.tree.branch.text")
+        else -> branch.name
+      }
+      append(presentableBranchName, SimpleTextAttributes.GRAY_ATTRIBUTES)
     }
   }
 }

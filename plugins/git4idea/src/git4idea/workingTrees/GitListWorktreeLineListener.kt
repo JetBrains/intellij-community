@@ -32,6 +32,10 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     if (line.isBlank()) return
     try {
       if (outputType == ProcessOutputType.STDOUT) {
+        if (line == "detached") {
+          reportTreeWithBranch(null)
+          return
+        }
         val scanner = StringScanner(line)
         val name = scanner.spaceToken() ?: return
         val value = scanner.line() ?: return
@@ -42,15 +46,7 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
           "HEAD" -> { //ignore for now
           }
           "branch" -> {
-            val path = currentWorktreePath
-            if (path != null) {
-              _trees.add(GitWorkingTree(path, value, isFirst, path == currentRoot))
-              isFirst = false
-            }
-            else {
-              thisLogger().warn("'worktree' wasn't reported for branch $value")
-            }
-            currentWorktreePath = null
+            reportTreeWithBranch(value)
           }
           else -> report(line)
         }
@@ -59,5 +55,17 @@ internal class GitListWorktreeLineListener(repository: GitRepository) : GitLineH
     catch (e: VcsException) {
       report(line, e)
     }
+  }
+
+  private fun reportTreeWithBranch(branchFullName: String?) {
+    val path = currentWorktreePath
+    if (path != null) {
+      _trees.add(GitWorkingTree(path, branchFullName, isFirst, path == currentRoot))
+      isFirst = false
+    }
+    else {
+      thisLogger().warn("'worktree' wasn't reported for branch ${branchFullName ?: "<detached>"}")
+    }
+    currentWorktreePath = null
   }
 }
