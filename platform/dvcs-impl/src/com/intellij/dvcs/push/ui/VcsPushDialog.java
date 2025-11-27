@@ -7,10 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -135,7 +132,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull SimplePushAction simplePushAction) {
-    simplePushAction.getTemplatePresentation().setTextWithMnemonic(() -> TextWithMnemonic.parse(customizer.getNameForSimplePushAction(this)));
+    simplePushAction.getTemplatePresentation()
+      .setTextWithMnemonic(() -> TextWithMnemonic.parse(customizer.getNameForSimplePushAction(this)));
     simplePushAction.setCondition(customizer.getCondition());
   }
 
@@ -420,17 +418,15 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
         myOptions.addAll(myActions.subList(0, firstEnabled));
         myOptions.addAll(myActions.subList(firstEnabled + 1, myActions.size()));
       }
-      VcsPushUi dialog = myDefaultAction.myDialog;
-      PushActionBase realAction = myDefaultAction.myRealAction;
+      setEnabled(myDefaultAction.myDialog.canPush());
 
-      setEnabled(dialog.canPush());
-
-      var textWithMnemonic = realAction.getTemplatePresentation().getTextWithPossibleMnemonic().get();
+      var presentation = buildActionPresentation(myDefaultAction.myRealAction, myDefaultAction.myProject, myDefaultAction.myDialog);
+      var textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       putValue(NAME, textWithMnemonic.getText());
       putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
       putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
 
-      putValue(SHORT_DESCRIPTION, realAction.getDescription(dialog, enabled));
+      putValue(SHORT_DESCRIPTION, presentation.getDescription());
     }
 
     @Override
@@ -459,20 +455,40 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     }
 
     public void update() {
-      boolean enabled = myRealAction.isEnabled(myDialog);
-      setEnabled(enabled);
+      var presentation = buildActionPresentation(myRealAction, myProject, myDialog);
+      setEnabled(presentation.isEnabled());
 
-      var textWithMnemonic = myRealAction.getTemplatePresentation().getTextWithPossibleMnemonic().get();
+      var textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       putValue(NAME, textWithMnemonic.getText());
       putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
       putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
 
-      putValue(SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
+      putValue(SHORT_DESCRIPTION, presentation.getDescription());
     }
 
     public @Nls @NotNull String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());
     }
+  }
+
+  private static Presentation buildActionPresentation(@NotNull AnAction action, @NotNull Project project, @NotNull VcsPushDialog dialog) {
+    var dataContext = new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        if (VCS_PUSH_DIALOG.is(dataId)) {
+          return dialog;
+        }
+        else if (CommonDataKeys.PROJECT.is(dataId)) {
+          return project;
+        }
+        else {
+          return null;
+        }
+      }
+    };
+    var presentation = new Presentation();
+    action.update(AnActionEvent.createEvent(dataContext, presentation, "VcsPushDialog", ActionUiKind.NONE, null));
+    return presentation;
   }
 
   private static class OptionsPanel extends JPanel {
