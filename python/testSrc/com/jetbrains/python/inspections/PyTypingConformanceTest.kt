@@ -56,9 +56,9 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     // The test suite has not been updated for 3.14 by default.
     // In particular, forward references are not enabled by default
     // and require an explicit `from __future__ import annotations`.
-    runWithLanguageLevel(LanguageLevel.PYTHON313, {
+    runWithLanguageLevel(LanguageLevel.PYTHON313) {
       checkHighlighting()
-    })
+    }
   }
 
   private fun getFilePaths(): Array<String> {
