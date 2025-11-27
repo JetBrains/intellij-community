@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -9,6 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -45,36 +46,40 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
   }
 
   @Override
-  public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: execute(editor='" + editor + "')");
-    }
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, caret, dataContext);
+  public void doExecute(@NotNull Editor _editor, @NotNull Caret _caret, DataContext dataContext) {
+    WriteIntentReadAction.run((Runnable)() -> {
+      var caret = _caret;
+      var editor = _editor;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("enter: execute(editor='" + editor + "')");
       }
-      return;
-    }
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project == null) {
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(editor, caret, dataContext);
+        }
+        return;
+      }
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-    TextRange range = selectWord(caret, project);
-    if (editor instanceof EditorWindow) {
-      if (range == null || !isInsideEditableInjection((EditorWindow)editor, range, project) || TextRange.from(0, editor.getDocument().getTextLength()).equals(
-        new TextRange(caret.getSelectionStart(), caret.getSelectionEnd()))) {
-        editor = ((EditorWindow)editor).getDelegate();
-        caret = ((InjectedCaret)caret).getDelegate();
-        range = selectWord(caret, project);
+      TextRange range = selectWord(caret, project);
+      if (editor instanceof EditorWindow) {
+        if (range == null || !isInsideEditableInjection((EditorWindow)editor, range, project) || TextRange.from(0, editor.getDocument().getTextLength()).equals(
+          new TextRange(caret.getSelectionStart(), caret.getSelectionEnd()))) {
+          editor = ((EditorWindow)editor).getDelegate();
+          caret = ((InjectedCaret)caret).getDelegate();
+          range = selectWord(caret, project);
+        }
       }
-    }
-    if (range == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, caret, dataContext);
+      if (range == null) {
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(editor, caret, dataContext);
+        }
       }
-    }
-    else {
-      caret.setSelection(range.getStartOffset(), range.getEndOffset());
-    }
+      else {
+        caret.setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+    });
   }
 
   private static boolean isInsideEditableInjection(EditorWindow editor, TextRange range, Project project) {
