@@ -278,9 +278,9 @@ public final class PyClassRefactoringUtil {
         boolean preferFromImport = useFromImport != null ? useFromImport : true;
         boolean isUsedAsQualifier = sourceNode.getParent() instanceof PyQualifiedExpression &&
                                    ((PyQualifiedExpression)sourceNode.getParent()).getQualifier() == sourceNode;
-        boolean shouldQualifyReference = target instanceof PyFile && 
-                                        PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT && 
-                                        useFromImport != null && useFromImport && 
+        boolean shouldQualifyReference = target instanceof PyFile &&
+                                        !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT &&
+                                        useFromImport != null && useFromImport &&
                                         asName == null &&
                                         !isUsedAsQualifier;
         if (shouldQualifyReference) {
