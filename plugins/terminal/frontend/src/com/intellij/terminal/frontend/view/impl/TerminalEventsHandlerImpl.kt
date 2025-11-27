@@ -2,7 +2,6 @@
 package com.intellij.terminal.frontend.view.impl
 
 import com.google.common.base.Ascii
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.diagnostic.Logger
@@ -10,6 +9,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -422,7 +422,7 @@ internal open class TerminalEventsHandlerImpl(
         && LookupManager.getActiveLookup(editor) == null
         && outputModel.getTextAfterCursor().isBlank()
     ) {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
+      TerminalCommandCompletionService.getInstance(project).invokeCompletion(editor, outputModel, shellIntegration, isAutoPopup = true)
     }
   }
 

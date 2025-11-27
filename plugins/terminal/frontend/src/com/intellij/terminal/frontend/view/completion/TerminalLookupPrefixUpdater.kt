@@ -1,7 +1,5 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.completion.CompletionPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.EDT
@@ -102,7 +100,7 @@ class TerminalLookupPrefixUpdater private constructor(
   }
 
   private fun truncatePrefix(times: Int) {
-    val preserveSelection = CompletionServiceImpl.currentCompletionProgressIndicator?.isAutopopupCompletion != true
+    val preserveSelection = TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.isAutopopupCompletion != true
     val hideOffset = lookup.lookupStart
     repeat(times) {
       if (lookup.isLookupDisposed) {
@@ -136,7 +134,7 @@ class TerminalLookupPrefixUpdater private constructor(
     // If the cursor was placed right before the lookup start offset, let's restart the completion
     val cursorOffset = model.cursorOffset.toRelative(model)
     if (cursorOffset == lookup.lookupOriginalStart - 1) {
-      CompletionServiceImpl.currentCompletionProgressIndicator?.scheduleRestart()
+      TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.scheduleRestart()
     }
     else {
       lookup.hideLookup(false)
@@ -158,7 +156,6 @@ class TerminalLookupPrefixUpdater private constructor(
     }
     if (noMeaningfulItems) {
       lookup.hideLookup(false)
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion)
     }
   }
 
