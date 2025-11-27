@@ -358,7 +358,7 @@ data class IDERunContext(
   }
 
   fun withScreenRecording() {
-    if (testContext is IDERemDevTestContext && testContext != testContext.frontendIDEContext) {
+    if (testContext is IDERemDevTestContext && testContext != testContext.frontendIDEContext && !calculateVmOptions().hasHeadlessMode()) {
       logOutput("Will not record screen for a backend of remote dev")
       return
     }
