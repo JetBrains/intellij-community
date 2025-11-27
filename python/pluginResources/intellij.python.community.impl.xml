@@ -688,6 +688,9 @@
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
 
+    <!-- ux survey -->
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PyCharmUxSurvey"/>
+
     <!-- Debugger Show value tooltip -->
     <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
   </extensions>
