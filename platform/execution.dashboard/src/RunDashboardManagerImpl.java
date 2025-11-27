@@ -153,9 +153,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     if (!myListenersInitialized.compareAndSet(false, true)) return;
 
     MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-    // todo backend updates
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
-      private volatile boolean myUpdateStarted;
+      private final BackendRunDashboardUpdatesQueue synchronizationScheduler
+        = new BackendRunDashboardUpdatesQueue(
+          RunDashboardCoroutineScopeProvider.getInstance(myProject).createChildNamedScope("Backend run manager listener sync requests"),
+          OverlappingTasksStrategy.SKIP_NEW);
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
@@ -163,10 +165,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           // Always include newly added temporary configurations.
           myShownConfigurations.add(settings.getConfiguration());
         }
-        if (!myUpdateStarted) {
+        synchronizationScheduler.submit(() -> {
           syncConfigurations();
           updateDashboardIfNeeded(settings);
-        }
+        });
       }
 
       @Override
@@ -175,29 +177,28 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         myHiddenConfigurations.remove(configuration);
         myShownConfigurations.remove(configuration);
         myConfigurationStatuses.remove(configuration);
-        if (!myUpdateStarted) {
+        synchronizationScheduler.submit(() -> {
           syncConfigurations();
           updateDashboardIfNeeded(settings);
-        }
+        });
       }
 
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        if (!myUpdateStarted) {
+        synchronizationScheduler.submit(() -> {
           updateDashboardIfNeeded(settings);
-        }
+        });
       }
 
       @Override
-      public void beginUpdate() {
-        myUpdateStarted = true;
-      }
+      public void beginUpdate() { }
 
       @Override
       public void endUpdate() {
-        myUpdateStarted = false;
-        syncConfigurations();
-        updateDashboard(true);
+        synchronizationScheduler.submit(() -> {
+          syncConfigurations();
+          updateDashboard(true);
+        });
       }
     });
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
