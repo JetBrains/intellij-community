@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
+import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -193,8 +194,7 @@ internal val bazelOutputRoot: Path? by lazy {
   }
 
   val outputRoot = realPath.root.resolve(realPath.subpath(0, execRootIndex))
-  println("Bazel output root: $outputRoot")
-
+  Span.current().addEvent("Bazel output root: $outputRoot")
   return@lazy outputRoot
 }
 
