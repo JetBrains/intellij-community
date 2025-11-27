@@ -25,7 +25,7 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
         call,
         GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
       ).range(call.argumentList.textRangeInParent)
-        .maybeFix(GradleDependencyNamedArgumentsFix.createPotentialFix(call.argumentList))
+        .maybeFix(GradleDependencyNamedArgumentsFix.createFixIfPossible(call.argumentList))
         .register()
     }
     else {
@@ -36,7 +36,7 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
         holder.problem(
           argument,
           GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-        ).maybeFix(GradleDependencyNamedArgumentsFix.createPotentialFix(argument))
+        ).maybeFix(GradleDependencyNamedArgumentsFix.createFixIfPossible(argument))
           .register()
       }
     }

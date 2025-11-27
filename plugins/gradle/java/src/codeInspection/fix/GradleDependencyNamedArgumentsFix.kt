@@ -91,7 +91,7 @@ class GradleDependencyNamedArgumentsFix(
 
   companion object {
 
-    fun createPotentialFix(argList: GroovyPsiElement): GradleDependencyNamedArgumentsFix? {
+    fun createFixIfPossible(argList: GroovyPsiElement): GradleDependencyNamedArgumentsFix? {
       val namedArguments = when (argList) {
         is GrArgumentList -> argList.namedArguments
         is GrListOrMap -> argList.namedArguments
