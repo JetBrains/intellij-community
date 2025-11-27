@@ -441,8 +441,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             yield { checkBox(cdDnDWithAlt) }
             yield {
               checkBox(cdSmoothScrolling)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.smooth.scrolling.description"))
+                .contextHelp(message("checkbox.smooth.scrolling.description"))
             }
           }
           yield { checkBox(cdEnableControlsMnemonics) }

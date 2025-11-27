@@ -6,9 +6,9 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
+import com.intellij.ui.dsl.builder.impl.checkDeniedHtmlTags
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -22,15 +22,6 @@ import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import kotlin.math.min
-
-/**
- * Denied content and reasons
- */
-private val DENIED_TAGS = mapOf(
-  Regex("<html>", RegexOption.IGNORE_CASE) to "tag <html> inserted automatically and shouldn't be used",
-  Regex("<body>", RegexOption.IGNORE_CASE) to "tag <body> inserted automatically and shouldn't be used",
-  Regex("""<a\s+href\s*=\s*(""|'')\s*>""", RegexOption.IGNORE_CASE) to "empty href like <a href=''> is denied, use <a> instead",
-)
 
 private const val LINK_GROUP = "link"
 private val BROWSER_LINK_REGEX = Regex("""<a\s+href\s*=\s*['"]?(?<href>https?://[^>'"]*)['"]?\s*>(?<link>[^<]*)</a>""",
@@ -140,11 +131,7 @@ class DslLabel(@ApiStatus.Internal val type: DslLabelType) : JEditorPane() {
       return
     }
 
-    for ((regex, reason) in DENIED_TAGS) {
-      if (regex.find(text, 0) != null) {
-        UiDslException.error("Invalid html: $reason, text: $text")
-      }
-    }
+    checkDeniedHtmlTags(text)
 
     @Suppress("HardCodedStringLiteral")
     var processedText = text.replace("<a>", "<a href=''>", ignoreCase = true)

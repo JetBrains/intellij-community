@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
@@ -8,6 +9,8 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.invoke
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
@@ -16,6 +19,7 @@ import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.IconUtil
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
@@ -45,6 +49,12 @@ internal class CellImpl<T : JComponent>(
   override var commentRight: DslLabel? = null
     private set
 
+  var contextHelpLabel: ContextHelpLabel? = null
+    private set
+
+  var contextHelpDescription: @NlsContexts.Tooltip String? = null
+    private set
+
   var label: JLabel? = null
     private set
 
@@ -60,7 +70,7 @@ internal class CellImpl<T : JComponent>(
   private var enabled = viewComponent.isEnabled
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
-  private var lastAccessibleDescriptionFromComment: @NlsSafe String? = null
+  private var lastAutoCalculatedAccessibleDescription: @NlsSafe String? = null
 
   val onChangeManager: OnChangeManager<T> = OnChangeManager(component)
 
@@ -184,6 +194,24 @@ internal class CellImpl<T : JComponent>(
       })
     }
     updateAccessibleContextDescription()
+    return this
+  }
+
+  override fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String?): Cell<T> {
+    checkDeniedHtmlTags(description)
+    if (title != null) {
+      checkDeniedHtmlTags(title)
+    }
+
+    val contextHelpLabel = if (title == null) ContextHelpLabel.create(description)
+    else ContextHelpLabel.create(title, description)
+    contextHelpLabel.disabledIcon = IconUtil.desaturate(contextHelpLabel.icon)
+    this.contextHelpLabel = contextHelpLabel
+    contextHelpDescription = description
+
+    registerCreationStacktrace(contextHelpLabel)
+    updateAccessibleContextDescription()
+
     return this
   }
 
@@ -356,6 +384,7 @@ internal class CellImpl<T : JComponent>(
       viewComponent.isVisible = isVisible
       comment?.let { it.isVisible = isVisible }
       commentRight?.let { it.isVisible = isVisible }
+      contextHelpLabel?.let { it.isVisible = isVisible }
       label?.let { it.isVisible = isVisible }
 
       // Force parent to re-layout
@@ -380,6 +409,7 @@ internal class CellImpl<T : JComponent>(
     }
     comment?.let { it.isEnabled = isEnabled }
     commentRight?.let { it.isEnabled = isEnabled }
+    contextHelpLabel?.let { it.isEnabled = isEnabled }
     label?.let { patchedEnableJLabel(it, isEnabled) }
   }
 
@@ -387,13 +417,21 @@ internal class CellImpl<T : JComponent>(
     val accessibleContext = component.accessibleContext ?: return
     val currentDescription = accessibleContext.accessibleDescription
 
-    if (currentDescription != null && currentDescription != lastAccessibleDescriptionFromComment) {
+    if (currentDescription != null && currentDescription != lastAutoCalculatedAccessibleDescription) {
       // Description is set from another place, don't change it
       return
     }
 
-    lastAccessibleDescriptionFromComment = AccessibleContextUtil.combineAccessibleStrings(commentRight?.getPlainText(), "\n", comment?.getPlainText())
-    component.accessibleContext.accessibleDescription = lastAccessibleDescriptionFromComment
+    lastAutoCalculatedAccessibleDescription = AccessibleContextUtil.combineAccessibleStrings(
+      commentRight?.getPlainText(), "\n", comment?.getPlainText(), "\n", getAccessibleContextHelpDescription())
+    component.accessibleContext.accessibleDescription = lastAutoCalculatedAccessibleDescription
+  }
+
+  private fun getAccessibleContextHelpDescription(): @Nls String? {
+    val html = contextHelpDescription ?: return null
+
+    @Suppress("HardCodedStringLiteral")
+    return StringUtil.stripHtml(html, " ").trim()
   }
 
   /**

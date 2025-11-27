@@ -48,7 +48,7 @@ enum class DslComponentPropertyInternal {
 
   /**
    * Preferred columns width for DslLabel when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
-   * A temporary workaround of IJPL-62164, will be removed later.
+   * A temporary workaround of IJPL-62164 will be removed later.
    *
    * Value: Int
    */
@@ -189,5 +189,23 @@ internal fun warn(message: String) {
 internal fun registerCreationStacktrace(component: JComponent) {
   if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
+  }
+}
+
+/**
+ * Denied content and reasons
+ */
+private val DENIED_TAGS = mapOf(
+  Regex("<html>", RegexOption.IGNORE_CASE) to "tag <html> inserted automatically and shouldn't be used",
+  Regex("<body>", RegexOption.IGNORE_CASE) to "tag <body> inserted automatically and shouldn't be used",
+  Regex("""<a\s+href\s*=\s*(""|'')\s*>""", RegexOption.IGNORE_CASE) to "empty href like <a href=''> is denied, use <a> instead",
+)
+
+@ApiStatus.Internal
+fun checkDeniedHtmlTags(text: String) {
+  for ((regex, reason) in DENIED_TAGS) {
+    if (regex.find(text, 0) != null) {
+      UiDslException.error("Invalid html: $reason, text: $text")
+    }
   }
 }
