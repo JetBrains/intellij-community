@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.VcsFreezingProcess;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -58,15 +59,17 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
                         @NotNull Set<? super String> feedback) {
     MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
-    for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
-      try {
-        doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
+    new VcsFreezingProcess(mySvnVcs.getProject(), SvnBundle.message("progress.title.commit"), () -> {
+      for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
+        try {
+          doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+          exception.add(e);
+        }
       }
-      catch (VcsException e) {
-        LOG.info(e);
-        exception.add(e);
-      }
-    }
+    }).execute();
   }
 
   private void doCommitOneRepo(@NotNull Collection<? extends FilePath> committables,
