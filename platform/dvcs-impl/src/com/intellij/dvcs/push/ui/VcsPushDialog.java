@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,7 +102,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     List<PushActionBase> pushActions = new ArrayList<>(
       ContainerUtil.findAll(group.getChildren(actionManager), PushActionBase.class));
 
-    customizeDialog(ContainerUtil.findInstance(pushActions, SimplePushAction.class));
+    customizeDialog(this, ContainerUtil.findInstance(pushActions, SimplePushAction.class));
 
     List<PushDialogActionsProvider> actionProviders = PUSH_DIALOG_ACTIONS_PROVIDER_EP.getExtensionList();
     for (PushDialogActionsProvider actionProvider : ContainerUtil.reverse(actionProviders)) {
@@ -118,12 +117,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private void customizeDialog(@NotNull SimplePushAction simplePushAction) {
+  private static void customizeDialog(@NotNull VcsPushDialog dialog, @NotNull SimplePushAction simplePushAction) {
     List<PushDialogCustomizer> customizers = PUSH_DIALOG_CUSTOMIZER_EP.getExtensionList();
     if (!customizers.isEmpty()) {
       if (customizers.size() == 1) {
         PushDialogCustomizer customizer = customizers.get(0);
-        customizeDialog(customizer, simplePushAction);
+        customizeDialog(dialog, customizer, simplePushAction);
       }
       else {
         LOG.warn("There can be only one push actions customizer, found: " + customizers);
@@ -131,9 +130,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     }
   }
 
-  private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull SimplePushAction simplePushAction) {
-    simplePushAction.getTemplatePresentation()
-      .setTextWithMnemonic(() -> TextWithMnemonic.parse(customizer.getNameForSimplePushAction(this)));
+  private static void customizeDialog(@NotNull VcsPushDialog dialog,
+                                      @NotNull PushDialogCustomizer customizer,
+                                      @NotNull SimplePushAction simplePushAction) {
+    simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction(dialog));
     simplePushAction.setCondition(customizer.getCondition());
   }
 
@@ -487,6 +487,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
       }
     };
     var presentation = new Presentation();
+    if (action instanceof SimplePushAction simplePushAction) {
+      customizeDialog(dialog, simplePushAction);
+    }
     action.update(AnActionEvent.createEvent(dataContext, presentation, "VcsPushDialog", ActionUiKind.NONE, null));
     return presentation;
   }
