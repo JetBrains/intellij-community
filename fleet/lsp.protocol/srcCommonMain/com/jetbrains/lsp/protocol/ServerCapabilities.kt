@@ -3,53 +3,104 @@ package com.jetbrains.lsp.protocol
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlin.jvm.JvmInline
 
-@Serializable
-@JvmInline
-value class OrBoolean<T>(val value: JsonElement) {
-    constructor(boolean: Boolean) : this(JsonPrimitive(boolean))
+@Serializable(with = OrBoolean.Serializer::class)
+sealed interface OrBoolean<out T> {
+    @Serializable
+    @JvmInline
+    value class Boolean(val value: kotlin.Boolean) : OrBoolean<Nothing>
+
+    @Serializable
+    @JvmInline
+    value class Value<T>(val value: T) : OrBoolean<T>
 
     companion object {
-        fun <T> of(serializer: KSerializer<T>, value: T): OrBoolean<T> {
-            val encoded = LSP.json.encodeToJsonElement(serializer, value)
-            return OrBoolean(encoded)
+        operator fun <T> invoke(value: kotlin.Boolean): OrBoolean<T> = Boolean(value)
+        fun <T> of(value: T): OrBoolean<T> = Value(value)
+    }
+
+    class Serializer<T>(val dataSerializer: KSerializer<T>) : KSerializer<OrBoolean<T>> {
+        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("OrBoolean")
+
+        override fun serialize(encoder: Encoder, value: OrBoolean<T>) {
+            when (value) {
+                is Boolean -> encoder.encodeSerializableValue(Boolean.serializer(), value)
+                is Value -> encoder.encodeSerializableValue(Value.serializer(dataSerializer), value)
+            }
+        }
+
+        override fun deserialize(decoder: Decoder): OrBoolean<T> {
+            val jsonDecoder = decoder as? JsonDecoder
+                              ?: throw SerializationException("Json serializer is required")
+            val element = jsonDecoder.decodeJsonElement()
+            return when (element) {
+                is JsonPrimitive if element.booleanOrNull != null -> jsonDecoder.json.decodeFromJsonElement(Boolean.serializer(), element)
+                else -> jsonDecoder.json.decodeFromJsonElement(Value.serializer(dataSerializer), element)
+            }
         }
     }
 }
 
-fun <T, R> OrBoolean<T>.map(serializer: KSerializer<T>, mapBoolean: (Boolean) -> R, mapOtherwise: (T) -> R): R {
-    return when  {
-        value is JsonPrimitive && value.booleanOrNull != null -> mapBoolean(value.boolean)
-        else -> mapOtherwise(LSP.json.decodeFromJsonElement(serializer, value))
+fun <T, R> OrBoolean<T>.map(mapBoolean: (Boolean) -> R, mapOtherValue: (T) -> R): R {
+    return when (this) {
+        is OrBoolean.Boolean -> mapBoolean(value)
+        is OrBoolean.Value -> mapOtherValue(value)
     }
 }
 
-@Serializable
-@JvmInline
-value class OrString<T>(val value: JsonElement) {
-    constructor(string: String) : this(JsonPrimitive(string))
+@Serializable(with = OrString.Serializer::class)
+sealed interface OrString<out T> {
+    @Serializable
+    @JvmInline
+    value class String(val value: kotlin.String) : OrString<Nothing>
+
+    @Serializable
+    @JvmInline
+    value class Value<T>(val value: T) : OrString<T>
 
     companion object {
-       fun <T> of(serializer: KSerializer<T>, value: T): OrString<T> {
-           val encoded = LSP.json.encodeToJsonElement(serializer, value)
-           return OrString(encoded)
-       }
+        operator fun <T> invoke(value: kotlin.String): OrString<T> = String(value)
+        fun <T> of(value: T): OrString<T> = Value(value)
+    }
+
+    class Serializer<T>(val dataSerializer: KSerializer<T>) : KSerializer<OrString<T>> {
+        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("OrString")
+
+        override fun serialize(encoder: Encoder, value: OrString<T>) {
+            when (value) {
+                is String -> encoder.encodeSerializableValue(String.serializer(), value)
+                is Value -> encoder.encodeSerializableValue(Value.serializer(dataSerializer), value)
+            }
+        }
+
+        override fun deserialize(decoder: Decoder): OrString<T> {
+            val jsonDecoder = decoder as? JsonDecoder
+                              ?: throw SerializationException("Json serializer is required")
+            val element = jsonDecoder.decodeJsonElement()
+            return when (element) {
+                is JsonPrimitive if element.isString -> jsonDecoder.json.decodeFromJsonElement(String.serializer(), element)
+                else -> jsonDecoder.json.decodeFromJsonElement(Value.serializer(dataSerializer), element)
+            }
+        }
     }
 }
 
-fun <T, R> OrString<T>.map(serializer: KSerializer<T>, mapString: (String) -> R, mapOtherwise: (T) -> R): R {
-    return when  {
-        value is JsonPrimitive && value.isString -> mapString(value.content)
-        else -> mapOtherwise(LSP.json.decodeFromJsonElement(serializer,value))
+fun <T, R> OrString<T>.map(mapString: (String) -> R, mapOtherValue: (T) -> R): R {
+    return when (this) {
+        is OrString.String -> mapString(value)
+        is OrString.Value -> mapOtherValue(value)
     }
 }
-
 
 @Serializable
 data class ServerCapabilities(
