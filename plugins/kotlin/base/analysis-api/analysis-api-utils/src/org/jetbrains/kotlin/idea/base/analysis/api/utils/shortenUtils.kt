@@ -16,7 +16,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -229,10 +232,60 @@ fun collectPossibleReferenceShorteningsForIde(
 )
 
 
+/**
+ * Mostly a copy of [ShortenStrategy.defaultClassShortenStrategy] which also respects Kotlin Code Style Settings from the IDE
+ * applied at the [context] position.
+ */
 @ApiStatus.Internal
-fun ShortenStrategy.Companion.defaultClassShortenStrategyForIde(context: KtElement?): (KaClassLikeSymbol) -> ShortenStrategy =
-    defaultClassShortenStrategy
+fun ShortenStrategy.Companion.defaultClassShortenStrategyForIde(context: KtElement?): (KaClassLikeSymbol) -> ShortenStrategy {
+    if (context == null) return defaultClassShortenStrategy
 
+    val codeStyleSettings = context.containingKtFile.kotlinCustomSettings
+    val importNestedClasses = codeStyleSettings.IMPORT_NESTED_CLASSES
+
+    return { classLikeSymbol ->
+        if (classLikeSymbol.classId?.isNestedClass == true && !importNestedClasses) {
+            ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+        } else {
+            ShortenStrategy.SHORTEN_AND_IMPORT
+        }
+    }
+}
+
+/**
+ * Mostly a copy of [ShortenStrategy.defaultCallableShortenStrategy] which also respects Kotlin Code Style Settings from the IDE
+ * applied at the [context] position.
+ */
 @ApiStatus.Internal
-fun ShortenStrategy.Companion.defaultCallableShortenStrategyForIde(context: KtElement?): (KaCallableSymbol) -> ShortenStrategy =
-    defaultCallableShortenStrategy
+fun ShortenStrategy.Companion.defaultCallableShortenStrategyForIde(context: KtElement?): (KaCallableSymbol) -> ShortenStrategy {
+    if (context == null) return defaultCallableShortenStrategy
+
+    val codeStyleSettings = context.containingKtFile.kotlinCustomSettings
+    val importNestedClasses = codeStyleSettings.IMPORT_NESTED_CLASSES
+
+    return { callableSymbol ->
+        when (callableSymbol) {
+            is KaEnumEntrySymbol -> ShortenStrategy.DO_NOT_SHORTEN
+
+            is KaConstructorSymbol -> {
+                val isNestedClassConstructor = callableSymbol.containingClassId?.isNestedClass == true
+
+                if (isNestedClassConstructor && !importNestedClasses) {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+                } else {
+                    ShortenStrategy.SHORTEN_AND_IMPORT
+                }
+            }
+
+            else -> {
+                val isNotTopLevel = callableSymbol.callableId?.classId != null
+
+                if (isNotTopLevel) {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+                } else {
+                    ShortenStrategy.SHORTEN_AND_IMPORT
+                }
+            }
+        }
+    }
+}
