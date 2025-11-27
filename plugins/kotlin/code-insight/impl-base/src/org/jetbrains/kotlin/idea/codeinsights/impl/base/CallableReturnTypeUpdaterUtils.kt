@@ -266,7 +266,7 @@ object CallableReturnTypeUpdaterUtils {
             .distinctBy { createTypeByKtType(it) }
             .let { types ->
                 when {
-                    cannotBeNull -> types.map { it.withNullability(false) }.distinctBy { createTypeByKtType(it) }
+                    cannotBeNull -> types.map { it.withNullability(false) }
                     declarationTypes.any { it.hasFlexibleNullability } -> types.flatMap { type ->
                         listOf(type.withNullability(false), type.withNullability(true))
                     }
@@ -286,7 +286,8 @@ object CallableReturnTypeUpdaterUtils {
     fun getTypeInfo(declaration: KtCallableDeclaration, useSmartCastType: Boolean = false, useTemplate: Boolean = true): TypeInfo {
         val calculateAllTypes = calculateAllTypes(declaration, useSmartCastType = useSmartCastType) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
-                selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
+                // bfs sequence can't be used twice, thus we can convert to list only when we are going to return
+                selectForUnitTest(declaration, allTypes)?.let { return@calculateAllTypes it }
             }
 
             val declarationClassType = declarationType as? KaClassType
@@ -321,13 +322,14 @@ object CallableReturnTypeUpdaterUtils {
     context(_: KaSession)
     private fun selectForUnitTest(
         declaration: KtCallableDeclaration,
-        allTypes: List<KaType>
+        allTypes: Sequence<KaType>
     ): TypeInfo? {
         // This helps to be sure no nullable types are suggested
         if (declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
                 it.text == "// CHOOSE_NULLABLE_TYPE_IF_EXISTS"
             } != null) {
-            val targetType = allTypes.firstOrNull { it.isMarkedNullable } ?: allTypes.first()
+            val types = allTypes.toList()
+            val targetType = types.firstOrNull { it.isMarkedNullable } ?: types.first()
             return createByKtTypes(targetType)
         }
         // This helps to be sure something except Nothing is suggested
@@ -336,7 +338,8 @@ object CallableReturnTypeUpdaterUtils {
             } != null
         ) {
             // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
-            val targetType = allTypes.firstOrNull { !it.isNothingType } ?: allTypes.first()
+            val types = allTypes.toList()
+            val targetType = types.firstOrNull { !it.isNothingType } ?: types.first()
             return createByKtTypes(targetType)
         }
         val chooseElement = declaration.containingKtFile.findDescendantOfType<PsiComment>()?.takeIf {
@@ -344,7 +347,7 @@ object CallableReturnTypeUpdaterUtils {
         }
         if (chooseElement != null) {
             val index = chooseElement.text.removePrefix("// CHOOSE_ELEMENT:").trim().toIntOrNull() ?: return null
-            val targetType = allTypes[index]
+            val targetType = allTypes.toList()[index]
             return createByKtTypes(targetType)
         }
 

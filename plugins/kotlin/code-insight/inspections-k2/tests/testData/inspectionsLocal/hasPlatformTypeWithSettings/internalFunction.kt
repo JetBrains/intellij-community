@@ -2,3 +2,4 @@
 // FIX: Specify return type explicitly
 
 internal fun foo<caret>() = java.lang.String.valueOf(1)
+// IGNORE_K2
