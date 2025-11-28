@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
 import com.intellij.workspaceModel.ide.toPath
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.util.concurrent.ConcurrentHashMap
 
@@ -92,26 +93,29 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
   }
 }
 
-private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : GlobalSdkTableBridge {
-  override fun initializeBridgesAfterLoading(
-    mutableStorage: MutableEntityStorage,
-    initialEntityStorage: VersionedEntityStorage,
-  ): () -> Unit {
-    val environmentName = eelMachine.getInternalEnvironmentName()
-    val sdks = mutableStorage
-      .entities(SdkEntity::class.java)
-      .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
-      .filter(eelMachine::ownsSdkEntry)
-      .map { sdkEntity ->
-        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
-        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
-      }
-      .toList()
-    thisLogger().debug("Initial load of SDKs")
-
-    for ((entity, sdkBridge) in sdks) {
-      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
+@ApiStatus.Internal
+fun initializeSdkBridges(mutableStorage: MutableEntityStorage, eelMachine: EelMachine) {
+  val environmentName = eelMachine.getInternalEnvironmentName()
+  val sdks = mutableStorage
+    .entities(SdkEntity::class.java)
+    .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
+    .filter(eelMachine::ownsSdkEntry)
+    .map { sdkEntity ->
+      val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
+      sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
     }
+    .toList()
+
+  for ((entity, sdkBridge) in sdks) {
+    mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
+  }
+}
+
+private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : GlobalSdkTableBridge {
+  override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
+                                             initialEntityStorage: VersionedEntityStorage): () -> Unit {
+    initializeSdkBridges(mutableStorage, eelMachine)
+    thisLogger().debug("Initial load of SDKs")
     return {}
   }
 
