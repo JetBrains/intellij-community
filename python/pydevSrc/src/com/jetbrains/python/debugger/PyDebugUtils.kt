@@ -44,6 +44,7 @@ object NodeTypes {
   const val GEO_SERIES_NODE_TYPE: String = "GeoSeries"
   const val DATASET_NODE_TYPE: String = "Dataset"
   const val NESTED_ORDERED_DICT_NODE_TYPE: String = "NestedOrderedDict"
+  const val ORDERED_DICT_NODE_TYPE: String = "OrderedDict"
   const val DATASET_DICT_NODE_TYPE: String = "DatasetDict"
 }
 

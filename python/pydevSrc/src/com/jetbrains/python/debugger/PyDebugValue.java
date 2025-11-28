@@ -297,8 +297,8 @@ public class PyDebugValue extends XNamedValue {
       myParent.buildExpression(result);
       if ((NodeTypes.DICT_NODE_TYPE.equals(myParent.getType()) ||
            NodeTypes.LIST_NODE_TYPE.equals(myParent.getType()) ||
-           NodeTypes.TUPLE_NODE_TYPE.equals(myParent.getType())
-           ||
+           NodeTypes.TUPLE_NODE_TYPE.equals(myParent.getType()) ||
+           NodeTypes.ORDERED_DICT_NODE_TYPE.equals(myParent.getType()) ||
            NodeTypes.NESTED_ORDERED_DICT_NODE_TYPE.equals(myParent.getType()) ||
            NodeTypes.DATASET_DICT_NODE_TYPE.equals(myParent.getType())
           ) && !isLen(myName)) {
