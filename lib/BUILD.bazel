@@ -3380,8 +3380,8 @@ jvm_import(
 
 jvm_import(
   name = "jimfs",
-  jar = "@com_google_jimfs-jimfs-1_1_http//file",
-  source_jar = "@com_google_jimfs-jimfs-1_1-sources_http//file",
+  jar = "@com_google_jimfs-jimfs-1_3_0_http//file",
+  source_jar = "@com_google_jimfs-jimfs-1_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -5327,17 +5327,17 @@ http_file(
 )
 
 http_file(
-  name = "com_google_jimfs-jimfs-1_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/jimfs/jimfs/1.1/jimfs-1.1.jar",
-  sha256 = "c4828e28d7c0a930af9387510b3bada7daa5c04d7c25a75c7b8b081f1c257ddd",
-  downloaded_file_path = "jimfs-1.1.jar"
+  name = "com_google_jimfs-jimfs-1_3_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0.jar",
+  sha256 = "82494408bb513f5512652e7b7f63d6f31f01eff57ce35c878644ffc2d25aee4f",
+  downloaded_file_path = "jimfs-1.3.0.jar"
 )
 
 http_file(
-  name = "com_google_jimfs-jimfs-1_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/jimfs/jimfs/1.1/jimfs-1.1-sources.jar",
-  sha256 = "adebb53450d2313d6927db5155c9be85336109e8f8c0af106ec2a30bc37e64ce",
-  downloaded_file_path = "jimfs-1.1-sources.jar"
+  name = "com_google_jimfs-jimfs-1_3_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0-sources.jar",
+  sha256 = "aa30e127e68ddba8e76395d14806f838f22c9ef904b07ff0266dfc5de7163059",
+  downloaded_file_path = "jimfs-1.3.0-sources.jar"
 )
 
 http_file(
