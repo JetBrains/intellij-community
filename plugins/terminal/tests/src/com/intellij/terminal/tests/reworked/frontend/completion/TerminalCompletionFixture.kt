@@ -1,7 +1,6 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -23,6 +22,8 @@ import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
@@ -39,6 +40,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
+import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 class TerminalCompletionFixture(val project: Project, val testRootDisposable: Disposable) {
@@ -94,7 +97,29 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
 
   suspend fun callCompletionPopup() {
     runActionById("Terminal.CommandCompletion.Invoke")
-    awaitLookupPrefixUpdated()
+    awaitNewCompletionPopupOpened()
+  }
+
+  suspend fun awaitNewCompletionPopupOpened() {
+    withTimeout(3.seconds) {
+      suspendCancellableCoroutine { continuation ->
+        val showingListener = object : LookupListener {
+          override fun lookupShown(event: LookupEvent) {
+            event.lookup.removeLookupListener(this)
+            continuation.resume(Unit)
+          }
+        }
+
+        val connection = project.messageBus.connect()
+        continuation.invokeOnCancellation { connection.disconnect() }
+        connection.subscribe(LookupManagerListener.TOPIC, LookupManagerListener { _, newLookup ->
+          if (newLookup != null) {
+            connection.disconnect()
+            newLookup.addLookupListener(showingListener)
+          }
+        })
+      }
+    }
   }
 
   fun getActiveLookup(): LookupImpl? {

@@ -6,6 +6,7 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
@@ -120,6 +121,8 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     val startResult = fixture.getLookupElements().map { it.lookupString }
     assertSameElements(startResult, listOf("start", "status", "stop"))
     fixture.pressKey(VK_LEFT)
+    fixture.awaitNewCompletionPopupOpened()
+
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
     fixture.pressKey(VK_RIGHT)
@@ -145,6 +148,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("start", "status", "stop"))
 
     fixture.pressKey(VK_BACK_SPACE)
+    fixture.awaitNewCompletionPopupOpened()  // it has to restart completion at this moment
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
   }
@@ -157,10 +161,13 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.callCompletionPopup()
 
     fixture.pressKey(VK_BACK_SPACE)
+    fixture.awaitNewCompletionPopupOpened()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_BACK_SPACE)
+    // Wait for some time, because a completion popup might appear
+    delay(2000)
     assertFalse(fixture.isLookupActive())
   }
 
@@ -176,6 +183,8 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_LEFT)
+    // Wait for some time, because a completion popup might appear
+    delay(2000)
     assertFalse(fixture.isLookupActive())
   }
 
