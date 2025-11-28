@@ -216,6 +216,7 @@ class SePopupContentPane(
       vm.currentTabFlow.flatMapLatest {
         withContext(Dispatchers.EDT) {
           resultListModel.reset()
+          semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
         }
         it.searchResults.filterNotNull()
       }.collectLatest { searchContext ->
@@ -282,6 +283,7 @@ class SePopupContentPane(
               val wasFrozen = resultListModel.freezer.isEnabled
 
               resultListModel.addFromThrottledEvent(searchContext, event)
+              semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
 
               // Freeze back if it was frozen before
               if (wasFrozen) resultListModel.freezer.enable()
