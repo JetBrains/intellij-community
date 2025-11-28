@@ -1,10 +1,9 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.completion.CompletionResult
-import com.intellij.codeInsight.completion.CompletionService
-import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -14,10 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
-import com.intellij.terminal.frontend.view.completion.TerminalCommandSpecCompletionContributorGen2.Companion.toLookupElement
-import com.intellij.terminal.frontend.view.completion.TerminalCommandSpecCompletionContributorGen2.TerminalCompletionResult
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -26,6 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
@@ -97,7 +96,7 @@ internal class TerminalCommandCompletionService(
 
   private suspend fun processCompletionRequest(context: TerminalCommandCompletionContext) = coroutineScope {
     val result: TerminalCompletionResult? = withContext(Dispatchers.Default) {
-      val res = TerminalCommandSpecCompletionContributorGen2.getCompletionSuggestions(context)
+      val res = getCompletionSuggestions(context)
       if (res != null && shouldShowCompletion(context, res.suggestions)) res else null
     }
     if (result == null) return@coroutineScope
@@ -214,6 +213,23 @@ internal class TerminalCommandCompletionService(
     val lookup = LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", arranger) as LookupImpl
     lookup.setLookupFocusDegree(if (isAutoPopup) LookupFocusDegree.SEMI_FOCUSED else LookupFocusDegree.FOCUSED)
     return lookup
+  }
+
+  private fun ShellCompletionSuggestion.toLookupElement(): LookupElement {
+    val actualIcon = icon ?: TerminalCompletionUtil.findIconForSuggestion(name, type)
+    val realInsertValue = insertValue?.replace("{cursor}", "")
+    val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
+    val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
+
+    val element = LookupElementBuilder.create(this, escapedInsertValue)
+      .withPresentableText(displayName ?: name)
+      .withTailText(nextSuggestions, true)
+      .withIcon(TerminalStatefulDelegatingIcon(actualIcon))
+    // Actual insertion logic is performed in TerminalLookupListener
+    element.putUserData(CodeCompletionHandlerBase.DIRECT_INSERTION, true)
+
+    val adjustedPriority = priority.coerceIn(0, 100)
+    return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
   }
 
   companion object {
