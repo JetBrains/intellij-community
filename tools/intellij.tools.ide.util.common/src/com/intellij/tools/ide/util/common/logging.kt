@@ -2,6 +2,15 @@ package com.intellij.tools.ide.util.common
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.reflect.KClass
+
+class Logger(clazz: KClass<*>) {
+  private val className = clazz.simpleName
+  fun info(message: String) = logOutput("[$className]: $message")
+  fun error(message: String) = com.intellij.tools.ide.util.common.logError("[$className]: $message")
+}
+
+inline fun <reified T> starterLogger() = Logger(T::class)
 
 private fun getFormattedTime() = LocalDateTime.now().format(DateTimeFormatter.ofPattern("hh:mm:ss"))
 
