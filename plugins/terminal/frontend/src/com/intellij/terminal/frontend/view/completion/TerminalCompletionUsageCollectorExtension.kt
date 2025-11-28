@@ -102,9 +102,9 @@ internal class TerminalCompletionUsageDescriptor : LookupUsageDescriptor {
   }
 
   private fun getCommandContextData(descriptor: LookupResultDescriptor): List<EventPair<*>> {
-    val lookup = descriptor.lookup as? LookupImpl ?: return emptyList()
-    val completingCommand = lookup.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY) ?: return emptyList()
-    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(completingCommand) ?: return emptyList()
+    val service = TerminalCommandCompletionService.getInstance(descriptor.lookup.project)
+    val context = service.activeProcess?.context ?: return emptyList()
+    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(context.commandText) ?: return emptyList()
 
     val command = COMMAND_FIELD with commandData.command
     val subCommand = commandData.subCommand?.let { SUBCOMMAND_FIELD with it }

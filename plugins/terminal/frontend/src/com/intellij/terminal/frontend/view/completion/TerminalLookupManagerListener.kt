@@ -1,8 +1,6 @@
 package com.intellij.terminal.frontend.view.completion
 
 import com.google.common.base.Ascii
-import com.intellij.codeInsight.completion.CompletionProcessEx
-import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -113,16 +111,6 @@ private class TerminalLookupListener : LookupListener {
 
   override fun firstElementShown() {
     TerminalUsageLocalStorage.getInstance().recordCompletionPopupShown()
-  }
-
-  /**
-   * Adds [TerminalCommandCompletion.COMPLETING_COMMAND_KEY] to the lookup once it is shown.
-   */
-  override fun lookupShown(event: LookupEvent) {
-    val process = CompletionService.getCompletionService().currentCompletion as? CompletionProcessEx ?: return
-    val command = process.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY) ?: return
-    val lookup = event.lookup as? LookupImpl ?: return
-    lookup.putUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY, command)
   }
 
   /**

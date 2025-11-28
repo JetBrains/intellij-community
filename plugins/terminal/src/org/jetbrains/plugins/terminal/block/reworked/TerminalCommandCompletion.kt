@@ -17,13 +17,6 @@ import org.jetbrains.plugins.terminal.session.ShellName
 @ApiStatus.Internal
 object TerminalCommandCompletion {
   /**
-   * Command text at the start of the completion process.
-   * Can be stored in [com.intellij.codeInsight.completion.CompletionProcessEx]
-   * or [com.intellij.codeInsight.lookup.impl.LookupImpl].
-   */
-  val COMPLETING_COMMAND_KEY: Key<String> = Key.create("TerminalCommandCompletion.CompletingCommand")
-
-  /**
    * Can be either the item chosen by the user explicitly, or the item that was fully typed,
    * or just the selected item showing in the lookup at the moment of closing.
    */

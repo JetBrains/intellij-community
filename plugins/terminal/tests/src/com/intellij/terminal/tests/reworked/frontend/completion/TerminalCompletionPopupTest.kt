@@ -256,20 +256,6 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `test TerminalCommandCompletion#COMPLETING_COMMAND_KEY is set in lookup when completion popup is shown`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val fixture = createFixture()
-
-    fixture.type("test_cmd st")
-    fixture.callCompletionPopup()
-
-    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
-    assertThat(lookup.items).isNotEmpty
-    assertThat(lookup.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY))
-      .isEqualTo("test_cmd st")
-    Unit
-  }
-
-  @Test
   fun `test TerminalCommandCompletion#LAST_SELECTED_ITEM_KEY is updated in the lookup on selected item change`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
