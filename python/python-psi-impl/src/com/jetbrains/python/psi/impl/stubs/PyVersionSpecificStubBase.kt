@@ -1,10 +1,6 @@
 package com.jetbrains.python.psi.impl.stubs
 
-import com.google.common.collect.BoundType
-import com.google.common.collect.ImmutableRangeSet
-import com.google.common.collect.Range
-import com.google.common.collect.RangeSet
-import com.google.common.collect.TreeRangeSet
+import com.google.common.collect.*
 import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.*
