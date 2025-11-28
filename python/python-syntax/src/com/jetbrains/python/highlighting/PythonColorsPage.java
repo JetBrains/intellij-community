@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -169,7 +168,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
 
   @Override
   public boolean isRainbowType(TextAttributesKey type) {
-    return PyHighlighter.PY_PARAMETER.equals(type) || DefaultLanguageHighlighterColors.LOCAL_VARIABLE.equals(type);
+    return PyHighlighter.PY_PARAMETER.equals(type) || PyHighlighter.PY_LOCAL_VARIABLE.equals(type);
   }
 
   @Override
