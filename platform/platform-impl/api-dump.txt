@@ -192,6 +192,29 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getCustomIcon(com.intellij.ui.BadgeIconSupplier):javax.swing.Icon
 - getSecondIcon():javax.swing.Icon
+a:com.intellij.ide.actions.WindowAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- s:setEnabledFor(java.awt.Window,Z):V
+- f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.WindowAction$DecrementHeight
+- com.intellij.ide.actions.WindowAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.WindowAction$DecrementWidth
+- com.intellij.ide.actions.WindowAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.WindowAction$IncrementHeight
+- com.intellij.ide.actions.WindowAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.WindowAction$IncrementWidth
+- com.intellij.ide.actions.WindowAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.browsers.StartBrowserSettings
 - <init>():V
 - getBrowser():com.intellij.ide.browsers.WebBrowser
