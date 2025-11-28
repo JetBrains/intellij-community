@@ -18,6 +18,7 @@ import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitFor
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JDialog
@@ -54,7 +55,9 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchOptionsButton = x { byAccessibleName("Search Options") }
 
   fun waitLoaded(timeout: Duration = 1.minutes) {
-    x { byType("com.intellij.util.ui.AsyncProcessIcon") }.waitNotFound(timeout)
+    waitFor("no progress indicators on plugins page", timeout) {
+      xx { byType("com.intellij.util.ui.AsyncProcessIcon") }.list().isEmpty()
+    }
   }
 
   fun openSettingsPopup() {
