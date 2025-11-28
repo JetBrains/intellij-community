@@ -1,9 +1,9 @@
 package com.intellij.lambda.testFramework.testApi.utils
 
+import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.ui.UIUtil
-import com.intellij.lambda.testFramework.frameworkLogger
 import java.awt.Component
 import javax.swing.JLabel
 import javax.swing.text.JTextComponent

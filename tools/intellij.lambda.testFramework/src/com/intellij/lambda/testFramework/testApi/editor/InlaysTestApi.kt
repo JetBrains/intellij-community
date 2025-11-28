@@ -2,12 +2,12 @@ package com.intellij.lambda.testFramework.testApi.editor
 
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionLineRenderer
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import kotlin.time.Duration.Companion.seconds
 
 /**

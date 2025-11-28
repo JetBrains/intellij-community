@@ -1,7 +1,7 @@
 package com.intellij.lambda.testFramework.testApi.utils
 
-import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.lambda.testFramework.frameworkLogger
+import com.intellij.remoteDev.tests.impl.utils.runLogged
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration

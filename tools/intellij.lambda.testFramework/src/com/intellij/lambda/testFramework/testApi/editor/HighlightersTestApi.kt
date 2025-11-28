@@ -3,7 +3,6 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -17,6 +16,7 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import org.assertj.core.api.Assertions.assertThat
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

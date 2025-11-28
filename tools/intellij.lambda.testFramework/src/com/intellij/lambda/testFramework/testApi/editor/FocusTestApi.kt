@@ -1,9 +1,9 @@
 package com.intellij.lambda.testFramework.testApi.editor
 
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.lambda.testFramework.testApi.requestAndWaitFocus
 import com.intellij.lambda.testFramework.testApi.waitForFocus
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.remoteDev.tests.LambdaIdeContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

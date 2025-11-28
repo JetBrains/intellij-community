@@ -5,7 +5,6 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
 import com.intellij.lambda.testFramework.testApi.utils.findFirstDifference
 import com.intellij.lambda.testFramework.testApi.utils.formatDifference
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.VisualPosition
@@ -20,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

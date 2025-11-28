@@ -2,10 +2,10 @@ package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import kotlinx.coroutines.delay
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection

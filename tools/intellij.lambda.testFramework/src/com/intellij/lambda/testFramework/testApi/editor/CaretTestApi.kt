@@ -1,5 +1,9 @@
 package com.intellij.lambda.testFramework.testApi.editor
 
+import com.intellij.lambda.testFramework.frameworkLogger
+import com.intellij.lambda.testFramework.testApi.callActionByShortcut
+import com.intellij.lambda.testFramework.testApi.editor.ArrowType.*
+import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
 import com.intellij.openapi.actionSystem.IdeActions.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -7,12 +11,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.remoteDev.tests.LambdaIdeContext
-import com.intellij.testFramework.fixtures.EditorMouseFixture
-import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.callActionByShortcut
-import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.lambda.testFramework.testApi.editor.ArrowType.*
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.testFramework.fixtures.EditorMouseFixture
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
