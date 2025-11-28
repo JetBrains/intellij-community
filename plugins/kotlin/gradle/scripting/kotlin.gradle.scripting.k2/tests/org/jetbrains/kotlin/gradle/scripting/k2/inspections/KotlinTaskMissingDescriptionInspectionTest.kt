@@ -283,7 +283,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    description = ""
+                    description = "<caret>"
                 }
                 """.trimIndent(),
                 "Add a description"
@@ -301,7 +301,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    description = ""
+                    description = "<caret>"
                 }
                 """.trimIndent(),
                 "Add a description"
@@ -321,7 +321,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    description = ""
+                    description = "<caret>"
                     group = "existing group"
                 }
                 """.trimIndent(),
@@ -342,7 +342,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    description = ""
+                    description = "<caret>"
                     group = "existing group"
                 }
                 """.trimIndent(),
@@ -361,7 +361,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    description = ""
+                    description = "<caret>"
                 }
                 """.trimIndent(),
                 "Add a description"
@@ -379,7 +379,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    description = ""
+                    description = "<caret>"
                 }
                 """.trimIndent(),
                 "Add a description"
@@ -400,7 +400,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """
                 tasks {
                     register("someTask") {
-                        description = ""
+                        description = "<caret>"
                     }
                 }
                 """.trimIndent(),
@@ -422,7 +422,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """
                 tasks {
                     val someTask by registering {
-                        description = ""
+                        description = "<caret>"
                     }
                 }
                 """.trimIndent(),
@@ -444,7 +444,7 @@ class KotlinTaskMissingDescriptionInspectionTest : K2GradleCodeInsightTestCase()
                 """
                 tasks {
                     val someTask by registering {
-                        description = ""
+                        description = "<caret>"
                     }
                 }
                 """.trimIndent(),
