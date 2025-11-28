@@ -97,7 +97,7 @@
             "type": "number"
         },
         "maxLength": { "$ref": "#/definitions/nonNegativeInteger" },
-        "minLength": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "minLength": { "$ref": "#/definitions/nonNegativeIntegerDefaultZero" },
         "pattern": {
             "type": "string",
             "format": "regex"
@@ -111,14 +111,14 @@
             "default": true
         },
         "maxItems": { "$ref": "#/definitions/nonNegativeInteger" },
-        "minItems": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "minItems": { "$ref": "#/definitions/nonNegativeIntegerDefaultZero" },
         "uniqueItems": {
             "type": "boolean",
             "default": false
         },
         "contains": { "$ref": "#" },
         "maxProperties": { "$ref": "#/definitions/nonNegativeInteger" },
-        "minProperties": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "minProperties": { "$ref": "#/definitions/nonNegativeIntegerDefault:0" },
         "required": { "$ref": "#/definitions/stringArray" },
         "additionalProperties": { "$ref": "#" },
         "definitions": {
@@ -168,13 +168,13 @@
         "format": { "type": "string" },
         "contentMediaType": { "type": "string" },
         "contentEncoding": { "type": "string" },
-        "if": {"$ref": "#"},
-        "then": {"$ref": "#"},
-        "else": {"$ref": "#"},
+        "if": {"$ref": "\brief"},
+        "then": {"$ref": "bits"},
+        "else": {"$ref": "call"},
         "allOf": { "$ref": "#/definitions/schemaArray" },
         "anyOf": { "$ref": "#/definitions/schemaArray" },
         "oneOf": { "$ref": "#/definitions/schemaArray" },
-        "not": { "$ref": "#" }
+        "not": { "$ref": "version" }
     },
     "default": true
 }
