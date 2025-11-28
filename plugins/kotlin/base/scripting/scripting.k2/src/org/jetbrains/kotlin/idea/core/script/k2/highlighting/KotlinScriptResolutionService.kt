@@ -88,29 +88,36 @@ class KotlinScriptResolutionService(
     }
 
     /**
-     * Suspends and processes a batch of Kotlin scripts.
+     * Suspends and resolves a batch of Kotlin scripts for K2 analysis/highlighting.
      *
-     * Steps:
-     * 1. Filters out unsupported files using [KotlinScriptProcessingFilter].
-     * 2. Finds a [ScriptDefinition] for each input file.
-     * 3. Locates a configuration provider extension suitable for the involved definitions.
-     * 4. Ensures a configuration exists for every file (reusing an existing one or creating a new one).
+     * Pipeline:
+     * 1. Validates input: returns immediately if the collection is empty or if any file is not eligible
+     *    according to `KotlinScriptProcessingFilter.shouldProcessScript(project, file)`.
+     * 2. For each file, locates its `ScriptDefinition` (via `findScriptDefinition`).
+     * 3. Obtains a definition-specific entity provider (`getScriptEntityProvider(project)`) using
+     *    the first definition that reports a provider. The same provider is then used for all files in the batch.
+     * 4. Ensures a `KotlinScriptEntity` exists for each file by reusing an existing entity (`getKotlinScriptEntity`)
+     *    or creating one (`updateWorkspaceModel(virtualFile, definition)`).
      *
-     * Threading: must be called without write access; the method asserts this.
+     * Threading:
+     * - Must be called without write access; the method asserts this (`!application.isWriteAccessAllowed`).
+     * - Any necessary write actions for workspace model updates are handled inside the entity provider.
      *
-     * Caveats:
-     * - If none of the files should be processed, the function returns early.
-     * - All files must have a corresponding configuration provider extension; otherwise, resolution will fail.
+     * This function prepares script entity so that downstream caches/analysis can highlight the scripts correctly.
+     * Cache invalidation and event publication happen reactively via workspace model listeners (see
+     * `KotlinScriptWorkspaceModelListener`).
+     *
+     * @param virtualFiles A collection of `.kts` files to resolve
      */
     suspend fun process(virtualFiles: Iterable<VirtualFile>) {
         if (virtualFiles.none() || virtualFiles.any { !KotlinScriptProcessingFilter.shouldProcessScript(project, it) }) return
 
         val definitionByFile = virtualFiles.associateWith { it.findScriptDefinition() }
-        val configurationProviderExtension = definitionByFile.firstNotNullOf { it.value.getScriptEntityProvider(project) }
+        val entityProvider = definitionByFile.firstNotNullOf { it.value.getScriptEntityProvider(project) }
 
         assert(!application.isWriteAccessAllowed)
         definitionByFile.forEach { (virtualFile, definition) ->
-            with(configurationProviderExtension) {
+            with(entityProvider) {
                 getKotlinScriptEntity(virtualFile) ?: updateWorkspaceModel(virtualFile, definition)
             }
         }

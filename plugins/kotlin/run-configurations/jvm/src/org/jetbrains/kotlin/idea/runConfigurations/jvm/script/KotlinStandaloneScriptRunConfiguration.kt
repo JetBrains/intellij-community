@@ -199,7 +199,8 @@ private class ScriptCommandLineState(
         }
 
         if (classpath.isNotEmpty()) {
-            params.programParametersList.prepend(classpath.joinToString(separator = File.pathSeparator, prefix = "-cp") { it })
+            params.programParametersList.prepend(classpath.joinToString(separator = File.pathSeparator) { it })
+            params.programParametersList.prepend("-cp")
         }
 
         return params
