@@ -80,6 +80,10 @@ internal class ChangesViewApiImpl : ChangesViewApi {
     }
   }
 
+  override suspend fun getEditedCommit(projectId: ProjectId): Flow<EditedCommitPresentation?> = getProjectScoped(projectId) { project ->
+    project.serviceAsync<ChangesViewWorkflowManager>().editedCommit
+  } ?: flowOf(null)
+
   private suspend fun handleNewInclusionModel(newModel: InclusionModel, channel: SendChannel<BackendChangesViewEvent>): Nothing {
     coroutineScope {
       val listener = object : InclusionListener {

@@ -17,7 +17,6 @@ import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal class BackendCommitChangesViewWithToolbarPanel(changesView: ChangesListView, cs: CoroutineScope) : CommitChangesViewWithToolbarPanel(changesView, cs) {
@@ -28,21 +27,6 @@ internal class BackendCommitChangesViewWithToolbarPanel(changesView: ChangesList
     busConnection.subscribe(ChangeListListener.TOPIC, OnChangeListsUpdate(this))
 
     ChangesViewDnDSupport.install(project, changesView, cs.asDisposable())
-
-    cs.launch {
-      ChangesViewWorkflowManager.getInstance(project).editedCommit.collect { editedCommit ->
-        if (editedCommit != null) {
-          scheduleRefreshNow {
-            withContext(Dispatchers.UiWithModelAccess) {
-              changesView.findNodeInTree(editedCommit)?.let { node -> changesView.expandSafe(node) }
-            }
-          }
-        }
-        else {
-          scheduleRefreshNow()
-        }
-      }
-    }
 
     super.initPanel()
   }

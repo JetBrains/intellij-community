@@ -49,6 +49,8 @@
 
     <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
+
+    <vcs.changes.changesViewModifier implementation="com.intellij.platform.vcs.impl.shared.commit.EditedCommitChangesViewModifier"/>
   </extensions>
 
   <actions>
