@@ -237,8 +237,10 @@ data class IDERunContext(
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
-    catchAll {
-      takeScreenshot(logsDir)
+    if (!runContext.calculateVmOptions().hasHeadlessMode()) {
+      catchAll {
+        takeScreenshot(logsDir)
+      }
     }
     if (expectedKill) return
 
