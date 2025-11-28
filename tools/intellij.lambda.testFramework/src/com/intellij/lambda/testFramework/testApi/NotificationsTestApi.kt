@@ -1,7 +1,7 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager

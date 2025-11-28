@@ -12,7 +12,7 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.callActionByShortcut
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
 import com.intellij.lambda.testFramework.testApi.editor.ArrowType.*
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

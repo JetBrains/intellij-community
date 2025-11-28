@@ -1,9 +1,9 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingForOne
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingForOne
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.isFocusAncestor

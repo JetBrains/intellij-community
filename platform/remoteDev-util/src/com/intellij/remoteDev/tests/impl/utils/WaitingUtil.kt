@@ -1,15 +1,31 @@
-package com.intellij.lambda.testFramework.testApi.utils
+package com.intellij.remoteDev.tests.impl.utils
 
-import com.intellij.lambda.testFramework.getTimeoutHonouringDebug
-import com.intellij.lambda.testFramework.isDebugging
-import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.impl.utils.withTimeoutDumping
+import com.intellij.internal.DebugAttachDetector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 private fun <T> defaultFailMessageProvider(result: T) = "Actual: '${result.toString()}'"
+
+
+// Determines if long timeout is used for the local debug of the tests.
+private const val defaultLongWaitingOnDebug = true
+private val debugLongTimeout = 30.minutes
+internal val isDebugging by lazy { DebugAttachDetector.isAttached() }
+
+fun getTimeoutHonouringDebug(providedTimeout: Duration): Duration =
+  if (isDebugging && defaultLongWaitingOnDebug) {
+    debugLongTimeout
+  }
+  else {
+    providedTimeout
+  }
+
+fun getTimeoutHonouringDebug(providedTimeout: Duration?, defaultTimeout: Duration): Duration =
+  getTimeoutHonouringDebug(providedTimeout ?: defaultTimeout)
+
 
 suspend fun <T : Any> waitSuspendingNotNull(
   subjectOfWaiting: String,

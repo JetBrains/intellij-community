@@ -3,8 +3,8 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.executeAction
 import com.intellij.lambda.testFramework.testApi.getProject
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction

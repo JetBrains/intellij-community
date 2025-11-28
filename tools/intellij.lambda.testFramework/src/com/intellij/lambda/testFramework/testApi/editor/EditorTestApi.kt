@@ -5,7 +5,7 @@ import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
 import com.intellij.lambda.testFramework.testApi.utils.findFirstDifference
 import com.intellij.lambda.testFramework.testApi.utils.formatDifference
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.VisualPosition

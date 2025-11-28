@@ -1,7 +1,7 @@
 package com.intellij.lambda.testFramework.testApi
 
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.usages.UsageViewManager
 import org.assertj.core.api.Assertions

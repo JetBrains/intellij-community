@@ -3,7 +3,7 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.callActionByShortcut
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction

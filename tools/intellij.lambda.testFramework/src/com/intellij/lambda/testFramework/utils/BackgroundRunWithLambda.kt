@@ -4,7 +4,6 @@ import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.IBackgroundRun
 import com.intellij.idea.AppMode
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.remoteDev.tests.LambdaBackendContext
@@ -12,6 +11,7 @@ import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambda
 import com.intellij.remoteDev.tests.impl.utils.runLogged
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerializedLambda
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import kotlinx.coroutines.withContext
@@ -44,7 +44,7 @@ class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTe
   suspend inline fun runInBackend(name: String? = null, crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
     return (backendRdSession ?: rdSession).run<LambdaBackendContext>(name) {
       val clientIdCoroutineContext = if (AppMode.isRemoteDevHost()) {
-        runLogged("Got remote client id", 10.seconds) {
+        waitSuspendingNotNull("Got remote client id", 10.seconds) {
           ClientSessionsManager.getAppSessions(ClientKind.REMOTE).singleOrNull()?.clientId
         }.let { ClientIdContextElement(it) }
       }

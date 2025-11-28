@@ -2,7 +2,7 @@ package com.intellij.lambda.testFramework.testApi.editor
 
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionLineRenderer
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay

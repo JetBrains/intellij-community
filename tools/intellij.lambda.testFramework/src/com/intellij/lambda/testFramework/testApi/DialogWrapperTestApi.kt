@@ -3,7 +3,7 @@
 package com.intellij.lambda.testFramework.testApi
 
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.ComponentUtil
 import kotlinx.coroutines.FlowPreview

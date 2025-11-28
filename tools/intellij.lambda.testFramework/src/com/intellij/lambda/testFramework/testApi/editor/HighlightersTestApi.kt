@@ -3,7 +3,7 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.lambda.testFramework.frameworkLogger
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey

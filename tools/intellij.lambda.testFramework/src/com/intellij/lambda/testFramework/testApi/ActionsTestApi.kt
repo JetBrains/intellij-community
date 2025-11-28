@@ -11,8 +11,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import kotlinx.coroutines.delay
 import org.intellij.lang.annotations.Language
 import java.awt.Component
