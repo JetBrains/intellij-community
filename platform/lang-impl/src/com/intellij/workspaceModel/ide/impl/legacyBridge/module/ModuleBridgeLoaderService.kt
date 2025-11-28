@@ -73,6 +73,7 @@ class ModuleBridgeLoaderService : InitProjectActivity {
       if (workspaceModel.loadedFromCache) {
         val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
         span("modules loading with cache") {
+          LOG.info("Workspace model loaded from cache.")
           if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
             LOG.warn("Loaded from cache, but no serialized modules found. " +
                      "Workspace model cache will be ignored, project structure will be recreated.")
