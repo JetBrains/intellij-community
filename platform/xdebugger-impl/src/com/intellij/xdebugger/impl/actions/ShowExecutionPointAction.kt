@@ -3,11 +3,14 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,7 +30,9 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
     performDebuggerActionAsync(session.project, dataContext) {
       val executionStack = session.getCurrentExecutionStack() ?: return@performDebuggerActionAsync
       val topFrame = executionStack.topFrameAsync.await() ?: return@performDebuggerActionAsync
-      session.setCurrentStackFrame(executionStack, topFrame, true)
+      withContext(Dispatchers.EDT) {
+        session.setCurrentStackFrame(executionStack, topFrame, true)
+      }
     }
   }
 }
