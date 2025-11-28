@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import javax.swing.JTable
 
 class ModelDescriptor(
@@ -53,8 +52,7 @@ class KotlinScriptDefinitionsModel private constructor(definitions: MutableList<
     ) {
         override fun valueOf(item: ModelDescriptor): String {
             val definition = item.definition
-            return definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-                ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
+            return (definition as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
                 ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern
                 ?: ("." + definition.fileExtension)
         }

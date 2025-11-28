@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
-import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -14,7 +12,6 @@ open class GradleScriptDefinition(
     private val initialConfiguration: ScriptCompilationConfiguration,
     override val hostConfiguration: ScriptingHostConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?,
-    override val defaultCompilerOptions: Iterable<String> = emptyList(),
     private val _externalProjectPath: String? = null,
 ) : ScriptDefinition.FromConfigurationsBase() {
 
@@ -40,7 +37,7 @@ open class GradleScriptDefinition(
     fun with(body: ScriptCompilationConfiguration.Builder.() -> Unit): GradleScriptDefinition {
         val newConfiguration = ScriptCompilationConfiguration(compilationConfiguration, body = body)
         return GradleScriptDefinition(
-            newConfiguration, hostConfiguration, evaluationConfiguration, defaultCompilerOptions, _externalProjectPath
+            newConfiguration, hostConfiguration, evaluationConfiguration, _externalProjectPath
         )
     }
 
@@ -51,29 +48,12 @@ class BaseScriptDefinition(private val definition: ScriptDefinition) : GradleScr
     definition.compilationConfiguration,
     definition.hostConfiguration,
     definition.evaluationConfiguration,
-    definition.defaultCompilerOptions,
 ) {
     override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
         displayName("${definition.name} (Base)")
     }
 
     override val definitionId: String = "${super.definitionId}_base"
-}
-
-class LegacyGradleScriptDefinition(
-    private val _legacyDefinition: KotlinScriptDefinitionFromAnnotatedTemplate,
-    hostConfiguration: ScriptingHostConfiguration,
-    evaluationConfiguration: ScriptEvaluationConfiguration?,
-    defaultCompilerOptions: Iterable<String>,
-    externalProjectPath: String? = null
-) : GradleScriptDefinition(
-    ScriptCompilationConfigurationFromDefinition(
-        hostConfiguration, _legacyDefinition
-    ), hostConfiguration, evaluationConfiguration, defaultCompilerOptions, externalProjectPath
-) {
-    override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
-        @Suppress("DEPRECATION_ERROR") fileNamePattern.put(_legacyDefinition.scriptFilePattern.pattern)
-    }
 }
 
 class ErrorGradleScriptDefinition : GradleScriptDefinition(

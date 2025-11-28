@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <stubElementTypeHolder externalIdPrefix="kotlin." class="org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelClassByPackageIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionByPackageIndex"/>

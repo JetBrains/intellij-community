@@ -143,9 +143,8 @@ Script definition is a container having:
 
 
 At the moment, we support two types of script definitions represented by the following classes:
-1. `org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition` - outdated
-2. `kotlin.script.experimental.host.ScriptDefinition` as a more modern one (`@KotlinScript`).  
-3. `org.jetbrains.kotlin.scripting.definitions.ScriptDefinition` wrapper over outdated `KotlinScriptDefinition`(1) and modern
+1. `kotlin.script.experimental.host.ScriptDefinition` as a more modern one (`@KotlinScript`).  
+2. `org.jetbrains.kotlin.scripting.definitions.ScriptDefinition` wrapper over outdated `KotlinScriptDefinition`(1) and modern
 `ScriptDefinition`(2).
 There is a hierarchy with this class as its root. Child-classes reflect possible ways of configuration construction. E.g.
 `FromNewDefinition` 

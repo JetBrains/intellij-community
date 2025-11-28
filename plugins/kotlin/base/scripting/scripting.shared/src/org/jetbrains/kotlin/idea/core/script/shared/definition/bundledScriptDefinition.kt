@@ -61,6 +61,10 @@ class BundledScriptDefinition(
     compilationConfiguration,
     evaluationConfiguration
 ) {
+    init {
+      order = Integer.MAX_VALUE
+    }
+
     override val canDefinitionBeSwitchedOff: Boolean = false
     override val isDefault: Boolean = true
     override val definitionId: String

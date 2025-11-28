@@ -66,8 +66,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
             ScriptDefinitionTableModel(
                 id = it.definitionId,
                 name = it.name,
-                pattern = it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-                    ?: (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
+                pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
                     ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
                 canBeSwitchedOff = it.canDefinitionBeSwitchedOff,
                 isEnabled = state.isScriptDefinitionEnabled(it)

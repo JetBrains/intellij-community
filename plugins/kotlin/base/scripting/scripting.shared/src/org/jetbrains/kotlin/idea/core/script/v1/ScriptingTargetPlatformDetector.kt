@@ -109,8 +109,7 @@ private inline fun createCachedValue(project: Project, crossinline body: () -> S
 }
 
 private fun getScriptSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): ScriptLanguageSettings {
-    val compilerOptions = definition.defaultCompilerOptions +
-                          definition.compilerOptions.addGradleSpecificsIfNeeded(definition)
+    val compilerOptions = definition.compilerOptions.addGradleSpecificsIfNeeded(definition).toList()
 
     return if (compilerOptions.isEmpty()) {
         val scriptModule = getScriptModule(project, virtualFile)
