@@ -238,7 +238,8 @@ private fun withAppInfoOverride(
   }
 
   if (branchName != null) {
-    val build = element.getChildren("build", namespace).singleOrNull()
+    val build = element.getChildren("build", namespace).singleOrNull() // for <component xmlns="http://jetbrains.org/intellij/schema/application-info">
+                ?: element.getChildren("build").singleOrNull() // for <component>
                 ?: error("Could not find child element 'build' under root of '$appInfoXmlPath'")
     replaceAttribute(build, "branchName", branchName)
   }
