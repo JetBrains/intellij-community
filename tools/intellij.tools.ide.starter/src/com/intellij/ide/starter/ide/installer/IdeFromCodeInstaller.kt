@@ -135,7 +135,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
           val xvfbRunLog = LinuxIdeDistribution.Companion.createXvfbRunLog(logsDir)
 
           override val commandLine: List<String> = when {
-            SystemInfoRt.isLinux -> LinuxIdeDistribution.Companion.linuxCommandLine(xvfbRunLog, commandEnv = finalVMOptions.environmentVariables) + commandArgs
+            SystemInfoRt.isLinux -> LinuxIdeDistribution.Companion.linuxCommandLine(xvfbRunLog, vmOptions = finalVMOptions) + commandArgs
             else -> commandArgs
           }
 
