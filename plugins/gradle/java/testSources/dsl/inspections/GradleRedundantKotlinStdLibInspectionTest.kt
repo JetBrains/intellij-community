@@ -121,6 +121,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+        configurations { customConf }
         dependencies { 
             <warning>customConf 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'</warning>
         }
@@ -253,6 +254,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+        sourceSets { customSourceSet }
         dependencies { 
             customSourceSetCompileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.2.0'
         }
@@ -375,6 +377,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
+        configurations { customConf }
         dependencies { 
             <warning>customConf libs.kotlin.std.lib1</warning>
         }
@@ -639,6 +642,9 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         withPrefix {
           call("configurations") {
             code("customConf")
+          }
+          call("sourceSets") {
+            code("customSourceSet")
           }
         }
       }

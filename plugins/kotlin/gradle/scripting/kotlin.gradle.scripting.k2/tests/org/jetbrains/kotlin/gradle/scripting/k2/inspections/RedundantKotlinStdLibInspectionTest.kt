@@ -183,6 +183,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
             testHighlighting(
                 """
                 plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val customConf by configurations.creating {}
                 dependencies { 
                     <warning>"customConf"("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</warning>
                 }
@@ -341,6 +342,7 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
             testHighlighting(
                 """
                 plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val customSourceSet by sourceSets.creating {}
                 dependencies { 
                     "customSourceSetCompileOnly"("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
                 }

@@ -207,6 +207,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
+                val customConf by configurations.creating {}
                 dependencies { 
                     "customConf"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
                 }
@@ -214,11 +215,13 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             )
             testIntention(
                 """
+                val customConf by configurations.creating {}
                 dependencies { 
                     "customConf"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
                 }
                 """.trimIndent(),
                 """
+                val customConf by configurations.creating {}
                 dependencies { 
                     "customConf"("org.gradle:gradle-core:1.0")
                 }
@@ -235,6 +238,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
+                val customSourceSet by sourceSets.creating {}
                 dependencies { 
                     "customSourceSetImplementation"$WARNING_START(group = "org.gradle", name = "gradle-core", version = "1.0")$WARNING_END
                 }
@@ -242,11 +246,13 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
             )
             testIntention(
                 """
+                val customSourceSet by sourceSets.creating {}
                 dependencies { 
                     "customSourceSetImplementation"(group = "org.gradle",<caret> name = "gradle-core", version = "1.0")
                 }
                 """.trimIndent(),
                 """
+                val customSourceSet by sourceSets.creating {}
                 dependencies { 
                     "customSourceSetImplementation"("org.gradle:gradle-core:1.0")
                 }

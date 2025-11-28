@@ -186,6 +186,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
     runTest(gradleVersion) {
       testHighlighting(
         """
+        configurations { customConf }
         dependencies { 
             customConf ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: '1.0'$WARNING_END
         }
@@ -193,11 +194,13 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
       )
       testIntention(
         """
+        configurations { customConf }
         dependencies { 
             customConf group: 'org.gradle',<caret> name: 'gradle-core', version: '1.0'
         }
         """.trimIndent(),
         """
+        configurations { customConf }
         dependencies { 
             customConf "org.gradle:gradle-core:1.0"
         }
