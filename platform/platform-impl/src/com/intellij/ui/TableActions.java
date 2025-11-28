@@ -84,6 +84,38 @@ public abstract class TableActions extends SwingActionDelegate {
     }
   }
 
+  public static final class CtrlLeft extends TableActions {
+    public static final @NonNls String ID = "selectFirstColumn";
+
+    public CtrlLeft() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlRight extends TableActions {
+    public static final @NonNls String ID = "selectLastColumn";
+
+    public CtrlRight() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlShiftLeft extends TableActions {
+    public static final @NonNls String ID = "selectFirstColumnExtendSelection";
+
+    public CtrlShiftLeft() {
+      super(ID);
+    }
+  }
+
+  public static final class CtrlShiftRight extends TableActions {
+    public static final @NonNls String ID = "selectLastColumnExtendSelection";
+
+    public CtrlShiftRight() {
+      super(ID);
+    }
+  }
+
   public static final class Left extends TableActions {
     public static final @NonNls String ID = "selectPreviousColumn";
 

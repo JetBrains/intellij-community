@@ -632,6 +632,10 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Tree-selectLast",
     "Tree-selectFirstExtendSelection",
     "Tree-selectFirst",
+    "Table-selectFirstRow",
+    "Table-selectFirstRowExtendSelection",
+    "Table-selectLastRow",
+    "Table-selectLastRowExtendSelection",
     "Vcs.CombinedDiff.CaretToPrevBlock",
     "Vcs.CombinedDiff.CaretToNextBlock"
   );
