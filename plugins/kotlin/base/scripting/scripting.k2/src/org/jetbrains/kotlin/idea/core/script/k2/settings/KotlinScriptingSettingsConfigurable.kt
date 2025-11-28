@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.core.script.shared.KOTLIN_SCRIPTING_SETTINGS_ID
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import java.awt.Font
 import java.util.Objects.hash
 import javax.swing.JComponent
@@ -168,9 +167,9 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
             ScriptDefinitionTableModel(
                 id = it.definitionId,
                 name = it.name,
-                pattern = it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-                    ?: (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
-                    ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern ?: ("." + it.fileExtension),
+                pattern = (it as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
+                    ?: (it as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern
+                    ?: ("." + it.fileExtension),
                 canBeSwitchedOff = it.canDefinitionBeSwitchedOff,
                 isEnabled = true
             )
