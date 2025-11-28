@@ -159,6 +159,7 @@ fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules 
   alias("com.intellij.modules.python-core-capable")
   alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
   alias("com.intellij.platform.ide.provisioner")
+  alias("com.intellij.modules.jcef")
 
   include(CommunityProductFragments.javaIdeBaseFragment())
   deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
