@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.registry.Registry;
@@ -18,6 +19,12 @@ import static java.lang.Math.abs;
 @ApiStatus.Internal
 public final class MaximizeActiveDialogAction extends WindowAction {
   private static final String NORMAL_BOUNDS = "NORMAL_BOUNDS";
+
+  @Override
+  protected @Nullable Icon getIconFor(@Nullable Window window) {
+    if (!(window instanceof JDialog dialog)) return null;
+    return canBeMaximized(dialog) ? AllIcons.Windows.Maximize : AllIcons.Windows.Restore;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
