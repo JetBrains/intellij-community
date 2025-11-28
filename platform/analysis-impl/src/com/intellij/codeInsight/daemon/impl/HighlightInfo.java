@@ -1583,4 +1583,9 @@ public class HighlightInfo implements Segment {
   void invalidate() {
     offsetStore = TOMB;
   }
+
+  @TestOnly
+  public @NotNull HighlightInfoType getType() {
+    return type;
+  }
 }

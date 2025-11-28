@@ -121,6 +121,7 @@ Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - f:getStartOffset():I
 - f:getText():java.lang.String
 - f:getTextAttributes(com.intellij.psi.PsiElement,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.markup.TextAttributes
+- getType():com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - f:hasHint():Z
 - f:isAfterEndOfLine():Z
 - f:registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
