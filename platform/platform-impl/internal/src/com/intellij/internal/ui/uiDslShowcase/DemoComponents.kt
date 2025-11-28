@@ -54,7 +54,12 @@ fun demoComponents(): DialogPanel {
     }
 
     row("segmentedButton:") {
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { text = it }.apply {
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) {
+        text = it
+        if (it == "Button Last") {
+          icon = AllIcons.General.Information
+        }
+      }.apply {
         selectedItem = "Button 2"
       }
     }
@@ -88,7 +93,8 @@ fun demoComponents(): DialogPanel {
     }
 
     row("contextHelp:") {
-      contextHelp("contextHelp description", "contextHelp title")
+      contextHelp("If the context help relates to a specific component, <b>Cell.contextHelp</b> must be used. " +
+                  "See API documentation for more details", "Context Help Title")
     }
 
     row("textField:") {
@@ -96,7 +102,7 @@ fun demoComponents(): DialogPanel {
     }
 
     row("passwordField:") {
-      passwordField().applyToComponent { text = "password" }
+      passwordField().text("password")
     }
 
     row("textFieldWithBrowseButton:") {

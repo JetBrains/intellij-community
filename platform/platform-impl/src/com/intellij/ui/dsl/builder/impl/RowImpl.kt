@@ -278,6 +278,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {
     val result = if (title == null) ContextHelpLabel.create(description)
     else ContextHelpLabel.create(title, description)
+
+    // Do not hide the context help button in the disabled state
+    result.disabledIcon = IconUtil.desaturate(result.icon)
     return cell(result)
   }
 

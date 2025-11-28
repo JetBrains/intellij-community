@@ -205,6 +205,8 @@ internal class CellImpl<T : JComponent>(
 
     val contextHelpLabel = if (title == null) ContextHelpLabel.create(description)
     else ContextHelpLabel.create(title, description)
+
+    // Do not hide the context help button in the disabled state
     contextHelpLabel.disabledIcon = IconUtil.desaturate(contextHelpLabel.icon)
     this.contextHelpLabel = contextHelpLabel
     contextHelpDescription = description

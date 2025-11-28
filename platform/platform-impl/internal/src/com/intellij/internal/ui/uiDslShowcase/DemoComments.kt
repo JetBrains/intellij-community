@@ -24,6 +24,9 @@ fun demoComments(): DialogPanel {
         textField()
           .text("textField2")
           .comment("Bottom comment to textField2")
+        textField()
+          .text("textField3")
+          .contextHelp("Context help related to the component, displayed in a popup")
       }
     }
 
