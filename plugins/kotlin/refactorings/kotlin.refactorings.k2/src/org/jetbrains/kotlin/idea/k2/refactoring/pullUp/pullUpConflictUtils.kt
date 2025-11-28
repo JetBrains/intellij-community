@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaRendererBodyMemberScopeProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.KaDeclarationModifiersRenderer
@@ -265,6 +266,7 @@ internal fun KaSession.collectConflicts(
         checkClashWithSuperDeclaration(pullUpData, member, memberSymbol, conflicts)
         checkAccidentalOverrides(pullUpData, member, memberSymbol, conflicts)
         checkInnerClassToInterface(pullUpData, member, memberSymbol, conflicts)
+        checkFunInterfaceConstraints(pullUpData, memberInfo, memberSymbol, conflicts)
         checkVisibility(pullUpData, memberInfo, memberSymbol, conflicts)
     }
     checkVisibilityInAbstractedMembers(memberInfos, conflicts)
@@ -298,3 +300,35 @@ internal fun KaSession.checkVisibilityInAbstractedMembers(
         }
     }
 }
+
+private fun KaSession.checkFunInterfaceConstraints(
+    data: K2PullUpData,
+    memberInfo: KotlinMemberInfo,
+    memberSymbol: KaDeclarationSymbol,
+    conflicts: MultiMap<PsiElement, String>,
+) {
+    val memberName = memberSymbol.name?.takeIf {
+        memberSymbol.modality == KaSymbolModality.ABSTRACT || memberInfo.isToAbstract
+    } ?: return
+
+    val targetClassSymbol = (data.targetClass as? KtClassOrObject)?.classSymbol as? KaNamedClassSymbol ?: return
+    if (!targetClassSymbol.isFun) return
+
+    val key = when (memberSymbol) {
+        is KaPropertySymbol -> "text.fun.interface.cannot.have.abstract.properties"
+        is KaFunctionSymbol ->
+            if (targetClassSymbol.hasSingleAbstractFunction()) "text.fun.interface.must.have.one.abstract.function" else null
+
+        else -> null
+    } ?: return
+
+    val message = KotlinBundle.message(key, memberName, targetClassSymbol.name)
+
+    conflicts.putValue(memberInfo.member, message.capitalize())
+}
+
+context(_: KaSession)
+private fun KaNamedClassSymbol.hasSingleAbstractFunction(): Boolean =
+    memberScope.callables
+        .filterIsInstance<KaFunctionSymbol>()
+        .count { it.modality == KaSymbolModality.ABSTRACT } == 1

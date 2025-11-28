@@ -1,0 +1,1 @@
+A functional interface cannot contain abstract properties. Refactoring would add the abstract property 'bar' to the functional interface 'FunInterface'
