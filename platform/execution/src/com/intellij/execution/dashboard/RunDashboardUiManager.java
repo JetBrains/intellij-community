@@ -45,5 +45,5 @@ public interface RunDashboardUiManager {
   //todo: split temporary method to disable run executor in Services tool window
   boolean isSupported(@NotNull Executor executor);
 
-  void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus);
+  void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus);
 }

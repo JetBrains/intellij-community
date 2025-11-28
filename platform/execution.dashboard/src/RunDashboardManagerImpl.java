@@ -99,7 +99,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus){
+  public void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus){
     RunDashboardService service = findService(descriptorId);
     if (service == null) return;
 

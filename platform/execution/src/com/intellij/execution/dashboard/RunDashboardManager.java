@@ -76,5 +76,5 @@ public interface RunDashboardManager {
   Set<String> getEnableByDefaultTypes();
 
   @ApiStatus.Internal
-  void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus);
+  void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus);
 }

@@ -250,7 +250,7 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   }
 
   @Override
-  public void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus) {
+  public void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus) {
     if (IdeProductMode.isFrontend()) return;
     RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
     runDashboardManager.navigateToServiceOnRun(descriptorId, focus);
