@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.util;
+package com.intellij.xml.util;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
@@ -42,15 +42,6 @@ public final class JspFileTypeUtil {
   @Contract(pure = true)
   public static boolean isJsp(@Nullable Language language) {
     return language != null && language.getID().equals("JSP");
-  }
-
-  /**
-   * @param file file to check
-   * @return true if the file is a JSPX file
-   */
-  @Contract(pure = true)
-  public static boolean isJspX(@NotNull PsiFile file) {
-    return isJsp(file.getFileType());
   }
 
   /**

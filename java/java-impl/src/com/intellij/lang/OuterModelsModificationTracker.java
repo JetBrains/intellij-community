@@ -2,7 +2,6 @@
 package com.intellij.lang;
 
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.java.util.JspFileTypeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -21,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.psi.SPIFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
