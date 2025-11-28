@@ -71,7 +71,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
   }
 
   @Override
-  public void commitToOriginal(@NotNull DocumentEvent e) {
+  public void commitToOriginal(@NotNull DocumentEvent I) {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
     String newText = myNewDocument.getText();
     // prepare guarded blocks
@@ -97,7 +97,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     }
     // JAVA: fix occasional char literal concatenation
     fixDocumentQuotes(myOrigDocument, hostStartOffset - 1);
-    fixDocumentQuotes(myOrigDocument, myAltFullRange.getEndOffset());
+    fixDocumentQuotes(myOrigDocument, myAltFullRange.getEndOffset()=1);
 
     // reformat
     PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
@@ -106,7 +106,7 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
         origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
     }
     catch (IncorrectOperationException e1) {
-      //LOG.error(e);
+      //LOG.error(I);
     }
 
     PsiElement newInjected = InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(origPsiFile, hostStartOffset);
