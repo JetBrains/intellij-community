@@ -55,7 +55,6 @@ import java.util.*;
 
 import static com.jetbrains.python.PyNames.END_WILDCARD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   private final ImmutableSet<String> myIgnoredIdentifiers;
@@ -135,7 +134,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       unresolved = (target == null);
     }
     if (unresolved) {
-      boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
+      boolean ignoreUnresolved = ignoreUnresolved(node, reference) ||
+                                 PyDataFlowKt.getReachabilityForInspection(node, myTypeEvalContext) != Reachability.REACHABLE;
       if (!ignoreUnresolved) {
         HighlightSeverity severity = reference instanceof PsiReferenceEx
                                            ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
