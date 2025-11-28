@@ -1083,6 +1083,8 @@ com.intellij.psi.templateLanguages.MultipleLangCommentProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canProcess(com.intellij.psi.PsiFile,com.intellij.psi.FileViewProvider):Z
 - a:getLineCommenter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.lang.Language,com.intellij.lang.Language):com.intellij.lang.Commenter
+c:com.intellij.refactoring.actions.RenameElementAction
+- com.intellij.openapi.project.DumbAwareAction
 com.intellij.refactoring.actions.RenameFileActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - enabledInProjectView(com.intellij.psi.PsiFile):Z
@@ -1121,6 +1123,7 @@ com.intellij.refactoring.introduce.IntroduceTarget
 - a:render():java.lang.String
 com.intellij.refactoring.move.MoveCallback
 - a:refactoringCompleted():V
+c:com.intellij.refactoring.rename.PlainDirectoryRenameHandler
 c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:checkLocalScope():com.intellij.psi.PsiElement
 com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback

@@ -311,7 +311,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
+    if (!indexNotReadyException.isNull() || !DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
                                                                                   DumbModeBlockedFunctionality.Refactoring);
       return;
@@ -615,6 +615,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
         for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
+          if (!DumbService.getInstance(myProject).isUsableInCurrentContext(helper)) continue;
+
           Object operation = ReadAction.compute(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });
