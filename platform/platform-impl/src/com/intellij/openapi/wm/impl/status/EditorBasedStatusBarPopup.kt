@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -80,7 +81,9 @@ abstract class EditorBasedStatusBarPopup(
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         update()
         StatusBarPopupShown.log(project, this@EditorBasedStatusBarPopup.javaClass)
-        showPopup(e)
+        runReadAction {
+          showPopup(e)
+        }
         return true
       }
     }.installOn(component, true)
