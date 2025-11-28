@@ -11,9 +11,11 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
+import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.util.cancelOnDispose
-import com.intellij.vcs.changes.ChangeListChangeIdCache
+import com.intellij.vcs.changes.ChangesViewChangeIdCache
 import com.intellij.vcs.changes.viewModel.RpcChangesViewProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +35,8 @@ internal class RemoteChangesViewDiffPreviewProcessor(
   private val changesView: RpcChangesViewProxy,
   private val isInEditor: Boolean,
 ) : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
+  private val changesCache by lazy { ChangesViewChangeIdCache.getInstance(project) }
+
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
 
@@ -66,18 +70,36 @@ internal class RemoteChangesViewDiffPreviewProcessor(
 
   override fun iterateSelectedChanges(): Iterable<Wrapper> {
     val selectedChange = changesView.diffableSelection.value?.selectedChange ?: return emptyList()
-    val changeId = selectedChange.changeId
-    if (changeId != null) {
-      val change = ChangeListChangeIdCache.getInstance(project).getChange(changeId) ?: return emptyList()
-      val tag = (change as? ChangeListChange)
-        ?.let { ChangeListManager.getInstance(project).getChangeList(it.changeListId) }
-        ?.let { ChangeListWrapper(it) }
-      return listOf(ChangeWrapper(change, tag))
+    return wrapChange(selectedChange)
+  }
+
+  private fun wrapChange(selectedChange: ChangesTreePath): List<Wrapper> {
+    val changeId = selectedChange.changeId ?: return listOf(UnversionedFileWrapper(selectedChange.filePath.filePath))
+
+    val changeListChange = changesCache.getChangeListChange(changeId)
+    if (changeListChange != null) {
+      return listOf(createChangeListWrapper(changeListChange))
     }
-    else {
-      val filePath = selectedChange.filePath.filePath
-      return listOf(UnversionedFileWrapper(filePath))
+
+    val amendCommitChange = changesCache.getEditedCommitDetailsChange(changeId)
+    if (amendCommitChange != null) {
+      return listOf(createAmendCommitWrapper(amendCommitChange))
     }
+
+    return emptyList()
+  }
+
+  private fun createChangeListWrapper(change: Change): Wrapper {
+    val tag = (change as? ChangeListChange)
+      ?.let { ChangeListManager.getInstance(project).getChangeList(it.changeListId) }
+      ?.let { ChangeListWrapper(it) }
+    return ChangeWrapper(change, tag)
+  }
+
+  private fun createAmendCommitWrapper(change: Change): Wrapper {
+    val tag = (ChangesViewWorkflowManager.getInstance(project).editedCommit.value as? EditedCommitDetails)
+      ?.let { AmendChangeWrapper(it) }
+    return ChangeWrapper(change, tag)
   }
 
   override fun iterateAllChanges(): Iterable<Wrapper> = iterateSelectedChanges()

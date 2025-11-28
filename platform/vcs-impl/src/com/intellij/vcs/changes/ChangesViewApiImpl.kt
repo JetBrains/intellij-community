@@ -60,8 +60,8 @@ internal class ChangesViewApiImpl : ChangesViewApi {
 
   override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->
     LOG.trace { "Showing resolve conflicts dialog for ${changeIds.size} changes" }
-    val cache = ChangeListChangeIdCache.getInstance(project)
-    val changes = changeIds.mapNotNull { cache.getChange(it) }
+    val cache = ChangesViewChangeIdCache.getInstance(project)
+    val changes = changeIds.mapNotNull { cache.getChangeListChange(it) }
     withContext(Dispatchers.EDT) {
       AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(changes).toList())
     }

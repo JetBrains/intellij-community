@@ -21,7 +21,8 @@ abstract class ChangesViewWorkflowManager @ApiStatus.Internal protected construc
   @ApiStatus.Internal
   protected abstract fun doGetCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler?
 
-  internal abstract fun setEditedCommit(editedCommit: EditedCommitPresentation?)
+  @ApiStatus.Internal
+  abstract fun setEditedCommit(editedCommit: EditedCommitPresentation?)
 
   fun interface ChangesViewWorkflowListener : EventListener {
     fun commitWorkflowChanged()

@@ -64,10 +64,10 @@ internal class ChangesViewInclusionModelApiImpl : ChangesViewInclusionModelApi {
   }
 
   private fun restoreInclusion(project: Project, inclusion: List<InclusionDto>): List<Any> {
-    val changeIdCache = ChangeListChangeIdCache.getInstance(project)
+    val changeIdCache = ChangesViewChangeIdCache.getInstance(project)
     return inclusion.mapNotNull { inclusionItem ->
       when (inclusionItem) {
-        is InclusionDto.Change -> changeIdCache.getChange(inclusionItem.changeId).also { change ->
+        is InclusionDto.Change -> changeIdCache.getChangeListChange(inclusionItem.changeId).also { change ->
           if (change == null) {
             LOG.warn("Change for id ${inclusionItem.changeId} not found in cache")
           }
