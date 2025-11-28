@@ -191,9 +191,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy {
     val group = DefaultActionGroup(hotSwapAction)
-    HotSwapUiExtension.computeSafeIfAvailable { it.toggleAction() }?.let {
-      group.add(it)
-    }
     if (addMoreAction) {
       HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
         group.add(it)
