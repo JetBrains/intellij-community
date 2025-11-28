@@ -20,11 +20,10 @@ class TodoRemoteClient {
     fun findAllTodos(
       project: Project,
       file: VirtualFile,
-      filter: TodoFilter?,
-      maxItems: Int
+      filter: TodoFilter?
     ) : List<TodoResult> = runBlockingCancellable {
       val projectId: ProjectId = project.projectId()
-      val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) }, maxItems)
+      val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
       TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
     }
 

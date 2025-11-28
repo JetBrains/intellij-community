@@ -24,5 +24,4 @@ data class TodoFilterConfig(
 data class TodoQuerySettings(
   val fileId: VirtualFileId,
   val filter: TodoFilterConfig? = null,
-  val maxItems: Int = 10_000,
 )

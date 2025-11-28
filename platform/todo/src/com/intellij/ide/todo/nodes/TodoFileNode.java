@@ -54,9 +54,8 @@ public final class TodoFileNode extends PsiFileNode {
         if (virtualFile == null) return List.of();
 
         TodoFilter filter = getToDoFilter();
-        int maxItems = Integer.MAX_VALUE; // TODO tune
 
-        List<TodoResult> results = TodoRemoteClient.findAllTodos(getProject(), virtualFile, filter, maxItems);
+        List<TodoResult> results = TodoRemoteClient.findAllTodos(getProject(), virtualFile, filter);
         if (results.isEmpty()) return List.of();
 
         List<TodoRemoteItemNode> children = new ArrayList<>(results.size());

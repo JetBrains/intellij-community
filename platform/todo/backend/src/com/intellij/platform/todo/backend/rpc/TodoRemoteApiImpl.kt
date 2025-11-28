@@ -14,7 +14,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import java.util.concurrent.atomic.AtomicInteger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ide.vfs.virtualFile
@@ -31,8 +30,6 @@ private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
   override suspend fun listTodos(projectId: ProjectId, settings: TodoQuerySettings): Flow<TodoResult> {
-    val sentItems = AtomicInteger(0)
-
     return channelFlow {
       val project = projectId.findProjectOrNull()
       if (project == null) {
@@ -66,20 +63,12 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
         } else allTodoItems.asList()
 
-        val items = ArrayList<TodoOccurence>(minOf(filteredTodoItems.size, settings.maxItems))
-
-        for (todoItem in filteredTodoItems) {
-          if (sentItems.get() >= settings.maxItems) break
-
-          val start = todoItem.textRange.startOffset
-          val end = todoItem.textRange.endOffset
-
-          items += TodoOccurence(
-            start = start,
-            end = end,
+        filteredTodoItems.map { todoItem ->
+          TodoOccurence(
+            start = todoItem.textRange.startOffset,
+            end = todoItem.textRange.endOffset,
           )
         }
-        items
       }
 
       val document: Document? = readAction {
@@ -103,8 +92,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           length = item.end - item.start
         )
 
-        val sent = trySend(result)
-        if (sent.isSuccess) sentItems.incrementAndGet()
+        trySend(result)
       }
     }
   }
