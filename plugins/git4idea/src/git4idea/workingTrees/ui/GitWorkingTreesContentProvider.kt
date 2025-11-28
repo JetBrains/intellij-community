@@ -129,7 +129,8 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
         icon = AllIcons.Empty
       }
       append(" ")
-      append(value.path.name)
+      append(value.path.name,
+             if (value.isMain) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
       append("   ")
       val presentableBranchName = when (val branch = value.currentBranch) {
         null -> GitBundle.message("toolwindow.working.trees.tab.detached.working.tree.branch.text")
