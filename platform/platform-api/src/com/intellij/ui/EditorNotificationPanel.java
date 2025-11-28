@@ -10,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -564,7 +565,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           if (!isEnabled()) return;
-          myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
+          ReadAction.run(() -> {
+            myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
+          });
         }
       });
     }
