@@ -83,7 +83,8 @@ private suspend fun deleteDirectory(dir: Path) {
 }
 
 @TestOnly
-internal fun dirFixture(dir: Path): TestFixture<Path> = testFixture("dirFixture") {
+internal fun dirFixture(dir: Path, vararg dependencies: TestFixture<*>): TestFixture<Path> = testFixture("dirFixture") {
+  dependencies.forEach { it.init() }
   createDirectory(dir)
   initialized(dir) {
     deleteDirectory(dir)
