@@ -62,7 +62,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -90,6 +89,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.attachExecutionConsole;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
@@ -234,13 +234,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var consoleManager = getConsoleManagerFor(task);
     var consoleView = consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    if (consoleView == null) {
-      Disposer.register(myProject, processHandler);
-    }
-    else {
-      Disposer.register(myProject, consoleView);
-      Disposer.register(consoleView, processHandler);
-    }
+    attachExecutionConsole(myProject, consoleView, processHandler);
 
     var buildDescriptor = createBuildDescriptor(task, processHandler, consoleManager, consoleView);
 
