@@ -3,16 +3,23 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
 
+/**
+ * @deprecated use com.intellij.java.codeserver.core.JavaPsiAnnotationUtil
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated
 public final class JavaPsiAnnotationUtil {
   /**
-   * @param annotation annotation class
-   * @return annotation retention policy; null if cannot be determined
+   * @deprecated use com.intellij.java.codeserver.core.JavaPsiAnnotationUtil
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static @Nullable RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
     PsiModifierList modifierList = annotation.getModifierList();
     if (modifierList != null) {

@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.codeserver.core.JavaPsiAnnotationUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.AnnotationValueErrorContext;
 import com.intellij.java.syntax.parser.JavaKeywords;

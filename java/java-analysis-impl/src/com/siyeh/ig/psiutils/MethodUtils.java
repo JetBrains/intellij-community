@@ -2,13 +2,12 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.codeserver.core.JavaPsiAnnotationUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -563,28 +562,19 @@ public final class MethodUtils {
         }
       }
 
-      if (element instanceof PsiClassOwner classOwner) {
-        final String packageName = classOwner.getPackageName();
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
-        if (aPackage == null) {
-          return null;
-        }
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
-        if(annotation != null) {
-          // Check that annotation actually belongs to the same library/source root
-          // which could be important in case of split-packages
-          final VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-          final VirtualFile currentFile = classOwner.getVirtualFile();
-          if(annotationFile != null && currentFile != null) {
-            final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
-            final VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
-            final VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
-            if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
-              return null;
+      if (element instanceof PsiFile classOwner) {
+        var processor = new JavaPsiAnnotationUtil.PackageAnnotationProcessor() {
+          PsiAnnotation myAnnotation = null;
+          
+          @Override
+          public void process(@NotNull PsiAnnotation annotation, boolean superPackage) {
+            if (fqAnnotationNames.contains(annotation.getQualifiedName())) {
+              myAnnotation = annotation;
             }
           }
-        }
-        return annotation;
+        };
+        JavaPsiAnnotationUtil.processPackageAnnotations(classOwner, processor, false);
+        return processor.myAnnotation;
       }
 
       element = element.getContext();
