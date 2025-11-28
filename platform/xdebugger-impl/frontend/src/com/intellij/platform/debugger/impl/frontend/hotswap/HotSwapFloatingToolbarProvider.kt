@@ -51,6 +51,10 @@ private val addMoreAction: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddMoreButton } != false
 }
 
+private val addText: Boolean by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddText } != false
+}
+
 @Suppress("DialogTitleCapitalization")
 private fun createHelpTooltip(): HelpTooltip =
   HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
@@ -146,8 +150,10 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     }
     presentation.icon = icon
     presentation.disabledIcon = icon
-    //@Suppress("DialogTitleCapitalization")
-    //presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    if (addText) {
+      @Suppress("DialogTitleCapitalization")
+      presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    }
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   }
 

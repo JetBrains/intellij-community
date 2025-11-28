@@ -22,10 +22,12 @@ interface HotSwapUiExtension {
   fun createTooltip(): HelpTooltip? = null
   val shouldAddHideButton: Boolean get() = true
   val shouldAddMoreButton: Boolean get() = false
+  val shouldAddText: Boolean get() = true
   fun moreAction(): AnAction? = null
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {
+
     private val EP_NAME = com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")
 
     fun <T> computeSafeIfAvailable(action: (HotSwapUiExtension) -> T): T? = EP_NAME.computeSafeIfAny {
