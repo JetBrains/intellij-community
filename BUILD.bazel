@@ -286,6 +286,7 @@ jvm_library(
     "//plugins/maven/maven36-server-impl:server-m36-impl",
     "//plugins/maven/maven40-server-impl:server-m40",
     "//plugins/mcp-server:mcpserver",
+    "//python/pluginCore:community-plugin",
   ]
 )
 
@@ -564,6 +565,7 @@ jvm_library(
     "//plugins/terminal/tests:tests_test_lib",
     "//plugins/git4idea/terminal",
     "//plugins/git4idea/terminal:terminal_test_lib",
+    "//python/pluginCore:community-plugin",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

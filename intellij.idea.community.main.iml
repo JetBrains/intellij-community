@@ -259,5 +259,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
   </component>
 </module>
