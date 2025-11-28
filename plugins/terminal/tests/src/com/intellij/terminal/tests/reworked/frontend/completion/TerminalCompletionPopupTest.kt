@@ -179,6 +179,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.callCompletionPopup()
 
     fixture.pressKey(VK_LEFT)
+    fixture.awaitNewCompletionPopupOpened()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
 

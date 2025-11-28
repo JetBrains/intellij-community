@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -120,9 +121,9 @@ internal class TerminalCommandCompletionProcess(
   }
 
   override fun prefixUpdated() {
-    val curOffset = context.outputModel.cursorOffset
-    val initialOffset = context.initialCursorOffset
-    if (curOffset < initialOffset || restartOnPrefixChange) {
+    val startOffset = lookup.lookupStart
+    val cursorOffset = context.outputModel.cursorOffset.toRelative(context.outputModel)
+    if (cursorOffset > startOffset && restartOnPrefixChange) {
       scheduleRestart()
     }
   }
