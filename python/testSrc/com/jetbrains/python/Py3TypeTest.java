@@ -1071,6 +1071,58 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-41061
+  public void testForIterationOverObjectWithIterAndAiter() {
+    doTest("int",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             for expr in MyIterable(): ...""");
+
+    doTest("int",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             _ = [expr for expr in MyIterable()]""");
+  }
+
+  // PY-41061
+  public void testAsyncForIterationOverObjectWithIterAndAiter() {
+    doTest("str",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             async def foo():
+                 async for expr in MyIterable(): ...""");
+
+    doTest("str",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             async def foo():
+                 _ = [expr async for expr in MyIterable()]""");
+  }
+
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
