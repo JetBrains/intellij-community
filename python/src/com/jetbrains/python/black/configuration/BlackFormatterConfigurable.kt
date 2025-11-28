@@ -90,9 +90,8 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       executionModeComboBox = comboBox(EnumComboBoxModel(
         BlackFormatterConfiguration.ExecutionMode::class.java))
         .applyToComponent { renderer = executionModeComboBoxRenderer }
-        .gap(RightGap.SMALL)
+        .contextHelp(PyBundle.message("black.execution.mode.tooltip.text"))
         .component
-      contextHelp(PyBundle.message("black.execution.mode.tooltip.text"))
       layout(RowLayout.LABEL_ALIGNED)
     }
     row {

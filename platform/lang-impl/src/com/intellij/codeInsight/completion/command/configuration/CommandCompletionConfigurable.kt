@@ -36,9 +36,7 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
           completionEnabledCheckBox = checkBox(CodeInsightBundle.message("options.command.completion.enabled"))
             .bindSelected({ settings.state.isEnabled() },
                           { r -> settings.state.setEnabled(r) })
-            .gap(RightGap.SMALL)
-          contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
-            .gap(RightGap.SMALL)
+            .contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
         }
         if (GroupedCompletionContributor.isGroupEnabledInApp()) {
           indent {

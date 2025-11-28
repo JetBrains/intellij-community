@@ -42,8 +42,7 @@ internal class MLRankingConfigurable(private val availableProviders: List<Rankin
     row {
       enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))
         .bindSelected(settings::isRankingEnabled, settings::setRankingEnabled)
-        .gap(RightGap.SMALL)
-      contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
+        .contextHelp(MLCompletionBundle.message("ml.completion.enable.help"))
     }
     indent {
       for (ranker in providers) {

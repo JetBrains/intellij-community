@@ -57,10 +57,9 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     row(JavaCompilerBundle.message("label.option.resource.patterns.text")) {
       resourcePatternsField = cell(RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER))
         .comment(JavaCompilerBundle.message("compiler.ui.pattern.legend.text"))
-        .resizableColumn()
         .align(AlignX.FILL)
+        .contextHelp(JavaCompilerBundle.message("compiler.ui.pattern.context.help"), JavaCompilerBundle.message("compiler.ui.pattern.context.help.title"))
         .component
-      contextHelp(JavaCompilerBundle.message("compiler.ui.pattern.context.help"), JavaCompilerBundle.message("compiler.ui.pattern.context.help.title"))
     }
       .bottomGap(BottomGap.SMALL)
 
@@ -99,11 +98,11 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       row {
         label(JavaCompilerBundle.message("settings.compile.independent.modules.in.parallel"))
         comboboxJpsParallelCompilation = comboBox(ParallelCompilationOption.entries)
+          .contextHelp(
+            title = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.title"),
+            description = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.description")
+          )
           .component
-        contextHelp(
-          title = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.title"),
-          description = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.description")
-        )
       }
     }
 

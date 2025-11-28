@@ -185,8 +185,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
       .applyIf(component.hasResizableRow) { resizableRow() }
       .applyIf(component is OptNumber || component is OptString || component is OptCheckbox) {
         (component as OptDescribedComponent).description()?.let {
-          cell.gap(RightGap.SMALL)
-          contextHelp (HtmlBuilder().append(it).toString())
+          cell.contextHelp(HtmlBuilder().append(it).toString())
         }
         this
       }

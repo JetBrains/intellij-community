@@ -208,7 +208,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             }
             row {
               radioButton(message("settings.shell.prompt"), value = TerminalPromptStyle.SHELL)
-              contextHelp(message("settings.shell.prompt.description"))
+                .contextHelp(message("settings.shell.prompt.description"))
             }
           }.bind(blockTerminalOptions::promptStyle)
 
@@ -339,13 +339,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           textField()
             .columns(4)
             .enabledIf(enforceContrastCheckbox.selected)
-            .gap(RightGap.SMALL)
+            .contextHelp(message("settings.enforce.minimum.contrast.ratio.description"))
             .bindText(
               getter = { optionsProvider.minContrastRatio.toFormattedString() },
               setter = { optionsProvider.minContrastRatio = parseRatio(it) }
             )
-
-          contextHelp(message("settings.enforce.minimum.contrast.ratio.description"))
         }.visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED))
         row {
           checkBox(message("settings.show.separators.between.blocks"))

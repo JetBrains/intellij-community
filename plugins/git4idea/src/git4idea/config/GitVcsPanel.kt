@@ -274,8 +274,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project))
-          .gap(RightGap.SMALL)
-        contextHelp(DvcsBundle.message("sync.setting.description", GitDisplayName.NAME))
+          .contextHelp(DvcsBundle.message("sync.setting.description", GitDisplayName.NAME))
       }
     }
     branchUpdateInfoRow()

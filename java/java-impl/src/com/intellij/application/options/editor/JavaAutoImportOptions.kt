@@ -106,8 +106,7 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
       row {
         checkBox(ApplicationBundle.message("checkbox.add.unambiguous.imports.on.the.fly"))
           .bindSelected(ciSettings::ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-          .gap(RightGap.SMALL)
-        contextHelp(ApplicationBundle.message("help.add.unambiguous.imports"))
+          .contextHelp(ApplicationBundle.message("help.add.unambiguous.imports"))
       }
       row {
         checkBox(ApplicationBundle.message("checkbox.optimize.imports.on.the.fly"))
