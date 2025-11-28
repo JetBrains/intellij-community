@@ -12,6 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -765,25 +767,31 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
-        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-          ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-            if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.clearCharsetAutoDetectionReason(file);
-              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              file.setCharset(null, null, false);
-              boolean wasWritable = document.isWritable();
-              document.setReadOnly(false);
-              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-              isReloadable[0] = isReloadable(file, document, project);
-              if (isReloadable[0]) {
-                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                setDocumentTooLarge(document, tooLarge);
+        // Special handling for files with decompiler - run decompilation in background with progress
+        if (isBinaryWithDecompiler(file)) {
+          reloadFromDiskWithDecompiler(document, project, file);
+        }
+        else {
+          CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+            ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+              if (!isBinaryWithoutDecompiler(file)) {
+                LoadTextUtil.clearCharsetAutoDetectionReason(file);
+                file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+                file.setCharset(null, null, false);
+                boolean wasWritable = document.isWritable();
+                document.setReadOnly(false);
+                boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+                isReloadable[0] = isReloadable(file, document, project);
+                if (isReloadable[0]) {
+                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
+                  ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+                  setDocumentTooLarge(document, tooLarge);
+                }
+                document.setReadOnly(!wasWritable);
               }
-              document.setReadOnly(!wasWritable);
-            }
-          })
-        ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+            })
+          ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+        }
       }
       if (isReloadable[0]) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
@@ -801,6 +809,38 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       return null;
     });
+  }
+
+  private void reloadFromDiskWithDecompiler(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file) {
+    CharSequence[] decompiledText = {null};
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    boolean finished = app.runWriteActionWithCancellableProgressInDispatchThread(
+      UIBundle.message("progress.decompiling.file", file.getName()),
+      project,
+      null,
+      indicator -> {
+        decompiledText[0] = LoadTextUtil.loadText(file);
+      }
+    );
+
+    if (!finished || decompiledText[0] == null) {
+      unbindFileFromDocument(file, document);
+      closeAllEditorsFor(file);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
+        .afterDocumentUnbound(file, document);
+      return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+      ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+        file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+        file.setCharset(null, null, false);
+        boolean wasWritable = document.isWritable();
+        document.setReadOnly(false);
+        ((DocumentEx)document).replaceText(decompiledText[0], file.getModificationStamp());
+        document.setReadOnly(!wasWritable);
+      })
+    ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
