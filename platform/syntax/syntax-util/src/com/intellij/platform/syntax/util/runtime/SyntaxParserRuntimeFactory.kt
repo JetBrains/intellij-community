@@ -6,5 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SyntaxParserRuntimeFactory {
-  fun buildParserRuntime(builder: SyntaxTreeBuilder, extendedState: SyntaxGeneratedParserRuntime.ParserUserState? = null): SyntaxGeneratedParserRuntime
+  fun buildParserRuntime(
+    builder: SyntaxTreeBuilder,
+    extendedState: SyntaxGeneratedParserRuntime.ParserUserState? = null,
+  ): SyntaxGeneratedParserRuntime
 }
