@@ -1917,7 +1917,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                          @NotNull @Unmodifiable Set<Project> containingProjects,
                                          @NotNull List<Project> dirtyQueueProjects) {
     myIndexableFilesFilterHolder.removeFile(fileId);
-    if (containingProjects.isEmpty() && canBeIndexed(file)) {
+    if (containingProjects.isEmpty() && file.isValid()) {
       myDirtyFiles.addFile(Collections.emptyList(), fileId); // can be indexed by project which is currently closed
     }
     IndexingFlag.cleanProcessedFlagRecursively(file);
