@@ -186,12 +186,12 @@
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateDependenciesInspection"
                      isInternal="true"/>
 
-    <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingGroupAndDescription"
+    <localInspection language="UAST" groupPath="Gradle" shortName="TaskMissingDescription"
                      bundle="messages.GradleInspectionBundle"
-                     key="inspection.display.name.task.missing.group.and.description" groupKey="inspection.best.practises"
+                     key="inspection.display.name.task.missing.description" groupKey="inspection.best.practises"
                      groupBundle="messages.GradleInspectionBundle"
                      enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingGroupAndDescriptionInspection"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
                      isInternal="true"/>
 
   </extensions>

@@ -100,14 +100,14 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
         return KotlinAvoidDuplicateDependenciesInspectionVisitor(holder, isOnTheFly)
     }
 
-    override fun isTaskMissingGroupAndDescriptionInspectionAvailable(file: PsiFile): Boolean {
+    override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean {
         return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
     }
 
-    override fun getTaskMissingGroupAndDescriptionInspectionVisitor(
+    override fun getTaskMissingDescriptionInspectionVisitor(
         holder: ProblemsHolder,
         onTheFly: Boolean
     ): PsiElementVisitor {
-        return KotlinTaskMissingGroupAndDescriptionInspectionVisitor(holder)
+        return KotlinTaskMissingDescriptionInspectionVisitor(holder)
     }
 }
