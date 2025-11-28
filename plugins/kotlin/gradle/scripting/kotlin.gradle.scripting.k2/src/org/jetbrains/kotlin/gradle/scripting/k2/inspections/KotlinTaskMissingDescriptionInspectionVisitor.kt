@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 
 private const val DESCRIPTION_PROPERTY = "description"
@@ -98,7 +99,7 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         .any {
             analyze(it) {
                 val parentPackage = it.left?.resolveExpression()?.getFqNameIfPackageOrNonLocal()?.parentOrNull()
-                parentPackage.toString().startsWith(GRADLE_API_COMMON_PACKAGE) || parentPackage == GRADLE_KOTLIN_PROJECT_DELEGATE
+                parentPackage == FqName(GRADLE_API_TASK)
             }
         }
 
@@ -110,14 +111,12 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
             analyze(it) {
                 val classId = it.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.classId?.asSingleFqName()
                     ?: return@analyze false
-                classId.toString().startsWith(GRADLE_API_COMMON_PACKAGE) || classId == GRADLE_KOTLIN_PROJECT_DELEGATE
+                classId == FqName(GRADLE_API_TASK)
             }
         }
 
     companion object {
         private const val DESCRIPTION_SETTER = "setDescription"
-        private const val GRADLE_API_COMMON_PACKAGE = "org.gradle.api"
-        private val GRADLE_KOTLIN_PROJECT_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.ProjectDelegate")
         private val GRADLE_KOTLIN_TASK_CONTAINER_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.TaskContainerDelegate")
     }
 }
