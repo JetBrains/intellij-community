@@ -94,6 +94,9 @@ suspend fun executeShellCommand(
           exitCode.completeExceptionally(ExecutionException("Terminal tab closed by user"))
           processHandler.destroyProcess()
         }
+        content.setDisposer {
+          Disposer.dispose(executionConsole)
+        }
         if (sessionId != null) {
           content.putUserData(MCP_TERMINAL_KEY, CommandSession(sessionId, executionConsole))
         }
