@@ -485,8 +485,14 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    if not typing.TYPE_CHECKING:
                        x: str = 'ab'
                    
+                   class A:
+                       if not typing.TYPE_CHECKING:
+                           foo: int = -1
+                       ...
+                   
                    if not typing.TYPE_CHECKING:
                        _ = x
+                       _ = A.foo
                    """);
   }
 
