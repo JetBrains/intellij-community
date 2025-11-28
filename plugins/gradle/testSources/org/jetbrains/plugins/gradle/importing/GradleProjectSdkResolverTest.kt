@@ -62,7 +62,8 @@ class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
             assertSdks(sdk, "project", "project.main", "project.test")
 
             reloadProject()
-            assertSdks(sdk, "project", "project.main", "project.test")
+            assertProjectSdk(sdk) // Bug IDEA-258496 should be Gradle JVM (jdk)
+            assertModuleSdks(jdk, "project", "project.main", "project.test")
           }
         }
       }

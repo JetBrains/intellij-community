@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -212,7 +213,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       }
     }
     moduleNode.createChild(JavaModuleData.KEY, createHolderModuleData(ideaModule, sourceSetModel));
-    moduleNode.createChild(ModuleSdkData.KEY, createHolderModuleSdkData(ideaModule));
+    moduleNode.createChild(ModuleSdkData.KEY, createHolderModuleSdkData(ideaModule, sourceSetModel));
   }
 
   private static @NotNull JavaModuleData createHolderModuleData(
@@ -379,8 +380,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return new ProjectSdkData(sdkName);
   }
 
-  private @NotNull ModuleSdkData createHolderModuleSdkData(@NotNull IdeaModule ideaModule) {
-    var sdk = lookupHolderModuleSdk(ideaModule);
+  private @NotNull ModuleSdkData createHolderModuleSdkData(@NotNull IdeaModule ideaModule, @NotNull GradleSourceSetModel sourceSetModel) {
+    var sdk = lookupHolderModuleSdk(ideaModule, sourceSetModel);
     var sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
     return new ModuleSdkData(sdkName);
   }
@@ -392,6 +393,14 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private @Nullable Sdk lookupProjectSdk(@NotNull IdeaProject ideaProject) {
+    var sdk = collectAllSourceSetModels(ideaProject)
+      .map(it -> lookupHolderModuleSdk(it.first, it.second))
+      .filter(Objects::nonNull)
+      .min(JavaSdkVersionUtil.naturalJavaSdkOrder(false))
+      .orElse(null);
+    if (sdk != null) {
+      return sdk;
+    }
     var sdkName = ideaProject.getJdkName();
     if (sdkName != null) {
       return lookupGradleJdkByName(sdkName);
@@ -399,10 +408,18 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return null;
   }
 
-  private @Nullable Sdk lookupHolderModuleSdk(@NotNull IdeaModule ideaModule) {
+  private @Nullable Sdk lookupHolderModuleSdk(@NotNull IdeaModule ideaModule, @NotNull GradleSourceSetModel sourceSetModel) {
     var sdkName = ideaModule.getJdkName();
     if (sdkName != null) {
       return lookupGradleJdkByName(sdkName);
+    }
+    var toolchainVersion = sourceSetModel.getToolchainVersion();
+    if (toolchainVersion != null) {
+      return lookupGradleJdkByVersion(JavaVersion.compose(toolchainVersion));
+    }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      return lookupGradleJdkByName(projectSdkName);
     }
     return null;
   }
@@ -415,6 +432,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     var javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
     if (javaToolchainHome != null) {
       return lookupGradleJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
+    }
+    var projectSdkName = ideaModule.getProject().getJdkName();
+    if (projectSdkName != null) {
+      return lookupGradleJdkByName(projectSdkName);
     }
     return null;
   }
@@ -429,6 +450,12 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     var gradleJvm = lookupGradleJvmByPath(sdkHome);
     if (gradleJvm != null) return gradleJvm;
     return ExternalSystemJdkUtil.lookupJdkByPath(sdkHome);
+  }
+
+  private @Nullable Sdk lookupGradleJdkByVersion(@NotNull JavaVersion sdkVersion) {
+    var gradleJvm = lookupGradleJvmByVersion(sdkVersion);
+    if (gradleJvm != null) return gradleJvm;
+    return ExternalSystemJdkUtil.lookupJdkByVersion(sdkVersion);
   }
 
   private @Nullable Sdk lookupGradleJvmByName(@NotNull String sdkName) {

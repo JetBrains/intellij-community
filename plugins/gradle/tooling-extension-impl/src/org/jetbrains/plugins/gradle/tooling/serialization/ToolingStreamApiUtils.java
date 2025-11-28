@@ -46,6 +46,32 @@ public final class ToolingStreamApiUtils {
     return reader.intValue();
   }
 
+  public static void writeInteger(
+    @NotNull IonWriter writer,
+    @NotNull String fieldName,
+    @Nullable Integer value
+  ) throws IOException {
+    writer.setFieldName(fieldName);
+    if (value == null) {
+      writer.writeNull(IonType.INT);
+    } else {
+      writer.writeInt(value);
+    }
+  }
+
+  public static @Nullable Integer readInteger(
+    @NotNull IonReader reader,
+    @Nullable String fieldName
+  ) {
+    reader.next();
+    assertFieldName(reader, fieldName);
+    if (reader.isNullValue()) {
+      return null;
+    } else {
+      return reader.intValue();
+    }
+  }
+
   public static void writeLong(
     @NotNull IonWriter writer,
     @NotNull String fieldName,

@@ -48,6 +48,7 @@ import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.create
@@ -103,6 +104,9 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
   var gradleJdkHome: String? = null
     private set
+
+  val gradleJvmInfo: JdkVersionDetector.JdkVersionInfo
+    get() = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJdkHome!!)!!
 
   private val removedSdks: MutableList<Sdk> = SmartList<Sdk>()
   private val myTestDisposable by lazy { Disposer.newDisposable() }

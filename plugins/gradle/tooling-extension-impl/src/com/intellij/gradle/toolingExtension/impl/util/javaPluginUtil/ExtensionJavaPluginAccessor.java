@@ -17,7 +17,6 @@ public class ExtensionJavaPluginAccessor implements JavaPluginAccessor {
     return myProject.getExtensions().findByType(JavaPluginExtension.class);
   }
 
-
   @Override
   public @Nullable SourceSetContainer getSourceSetContainer() {
     JavaPluginExtension javaExtension = getJavaPluginExtension();

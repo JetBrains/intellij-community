@@ -12,6 +12,8 @@ import java.util.Set;
 
 public interface GradleSourceSetModel extends Serializable {
 
+  @Nullable Integer getToolchainVersion();
+
   @Nullable String getSourceCompatibility();
 
   @Nullable String getTargetCompatibility();
