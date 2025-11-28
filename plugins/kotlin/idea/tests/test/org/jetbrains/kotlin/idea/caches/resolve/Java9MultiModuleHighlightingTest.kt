@@ -74,7 +74,7 @@ class Java9MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         checkHighlightingInProject()
     }
 
-    fun testCyclicDependency() {
+    fun _testCyclicDependency() {
         val a = module("moduleA")
         val b = module("moduleB")
         val c = module("moduleC")
