@@ -3,7 +3,7 @@ package com.intellij.terminal.frontend.view.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,7 @@ internal class TerminalShellIntegrationEventsHandler(
           if (shellIntegration == null && event.sessionState.isShellIntegrationEnabled) {
             initShellIntegration()
           }
-          shellIntegration?.blocksModel?.restoreFromState(event.blocksModelState.toState())
+          shellIntegration?.restoreFromState(event.blocksModelState.toState())
         }
       }
       is TerminalStateChangedEvent -> {
@@ -86,7 +86,7 @@ internal class TerminalShellIntegrationEventsHandler(
     val integration = TerminalShellIntegrationImpl(
       outputModelController.model,
       sessionModel,
-      coroutineScope.childScope("TerminalShellIntegration")
+      coroutineScope.asDisposable()
     )
     shellIntegrationDeferred.complete(integration)
   }

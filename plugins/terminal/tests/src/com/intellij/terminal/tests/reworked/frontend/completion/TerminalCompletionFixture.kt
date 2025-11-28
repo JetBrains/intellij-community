@@ -57,7 +57,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
-    val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, terminalScope.childScope("TerminalShellIntegration"))
+    val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, testRootDisposable)
     view.shellIntegrationDeferred.complete(shellIntegration)
 
     // Need to specify some options to make `TerminalCommandCompletion.isSupportedForShell` pass.

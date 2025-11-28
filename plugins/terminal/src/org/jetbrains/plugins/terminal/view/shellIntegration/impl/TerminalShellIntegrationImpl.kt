@@ -3,14 +3,13 @@ package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.asDisposable
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.session.impl.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -21,9 +20,9 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 class TerminalShellIntegrationImpl(
   private val outputModel: TerminalOutputModel,
   sessionModel: TerminalSessionModel,
-  coroutineScope: CoroutineScope,
+  parentDisposable: Disposable,
 ) : TerminalShellIntegration {
-  override val blocksModel: TerminalBlocksModelImpl = TerminalBlocksModelImpl(outputModel, sessionModel, coroutineScope.asDisposable())
+  override val blocksModel: TerminalBlocksModelImpl = TerminalBlocksModelImpl(outputModel, sessionModel, parentDisposable)
 
   private val commandExecutionListeners = DisposableWrapperList<TerminalCommandExecutionListener>()
 
@@ -64,6 +63,22 @@ class TerminalShellIntegrationImpl(
 
     val block = blocksModel.activeBlock as TerminalCommandBlock
     fireCommandExecutionListeners(TerminalCommandFinishedEventImpl(outputModel, block))
+  }
+
+  fun restoreFromState(blocksModelState: TerminalBlocksModelState) {
+    blocksModel.restoreFromState(blocksModelState)
+
+    val activeBlock = blocksModel.activeBlock as TerminalCommandBlock
+    mutableOutputStatus.value = when {
+      activeBlock.commandStartOffset == null -> WaitingForPrompt
+      activeBlock.commandStartOffset != null && activeBlock.outputStartOffset == null -> TypingCommand
+      activeBlock.outputStartOffset != null -> ExecutingCommand
+      else -> {
+        // shouldn't be possible with the conditions above, but let's add protection for possible changes
+        LOG.warn("Unexpected state of blocks model: $blocksModelState")
+        WaitingForPrompt
+      }
+    }
   }
 
   private fun fireCommandExecutionListeners(event: TerminalCommandExecutionEvent) {
