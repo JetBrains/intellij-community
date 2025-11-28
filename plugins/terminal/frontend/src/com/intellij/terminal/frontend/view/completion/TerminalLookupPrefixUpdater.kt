@@ -70,7 +70,7 @@ class TerminalLookupPrefixUpdater private constructor(
     val newPrefix = calculateUpdatedPrefix()
     if (newPrefix == null) {
       // The text was changed in some way, so the lookup is not valid now. Let's close it
-      closeLookupOrRestart()
+      lookup.hideLookup(false)
       return
     }
 
@@ -127,17 +127,6 @@ class TerminalLookupPrefixUpdater private constructor(
       }
       lookup.fireBeforeAppendPrefix(c)
       lookup.appendPrefix(c)
-    }
-  }
-
-  private fun closeLookupOrRestart() {
-    // If the cursor was placed right before the lookup start offset, let's restart the completion
-    val cursorOffset = model.cursorOffset.toRelative(model)
-    if (cursorOffset == lookup.lookupOriginalStart - 1) {
-      TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.scheduleRestart()
-    }
-    else {
-      lookup.hideLookup(false)
     }
   }
 

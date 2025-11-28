@@ -26,7 +26,12 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       subcommand("stop")
       subcommand("set")
       subcommand("sync")
-      subcommand("show")
+      subcommand("show") {
+        argument {
+          isOptional = true
+          suggestions("roots", "files", "statuses")
+        }
+      }
 
       subcommand("start") {
         argument {
@@ -182,6 +187,21 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.awaitNewCompletionPopupOpened()
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
+
+    fixture.pressKey(VK_LEFT)
+    // Wait for some time, because a completion popup might appear
+    delay(2000)
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
+  fun `test completion popup closes on pressing left when completion called on empty prefix`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd show ")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("roots", "files", "statuses"))
 
     fixture.pressKey(VK_LEFT)
     // Wait for some time, because a completion popup might appear
