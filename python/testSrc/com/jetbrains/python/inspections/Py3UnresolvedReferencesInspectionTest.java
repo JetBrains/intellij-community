@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
+import org.junit.ComparisonFailure;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -485,6 +486,31 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
         configureInspection();
         assertSdkRootsNotParsed(currentFile);
       });
+    });
+  }
+
+  // PY-85880
+  public void testLiteralUnionInTuple() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   def f(e: Literal[1, 2]):
+                       _ = e in ()
+                   """);
+  }
+
+  // PY-85880
+  public void testLiteralInUnionTupleNone() {
+    fixme("PY-85880", ComparisonFailure.class, () -> {
+      doTestByText("""
+                     from typing import Literal
+                     
+                     
+                     def f(e: Literal[1, 2]):
+                         a: tuple | None = None
+                         _ = e <weak_warning descr="Member 'None' of 'tuple | None' does not have attribute '__contains__'">in</weak_warning> a
+                     """);
     });
   }
 }
