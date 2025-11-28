@@ -81,6 +81,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
+import static com.intellij.util.ui.WaylandUtilKt.getNearestTopLevelAncestor;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
@@ -1545,7 +1546,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private static Point getLocationRelativeToParent(Rectangle bounds, Window popupParent) {
     Rectangle newBounds = new Rectangle(bounds);
     // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
-    var toplevelParent = ComponentUtil.findUltimateParent(popupParent);
+    var toplevelParent = getNearestTopLevelAncestor(popupParent);
+    if (toplevelParent == null) {
+      LOG.warn("The popup parent " + popupParent + " has no top-level ancestor");
+      return bounds.getLocation();
+    }
     var toplevelParentLocation = toplevelParent.getLocationOnScreen();
     if (LOG.isDebugEnabled()) {
       LOG.debug(
