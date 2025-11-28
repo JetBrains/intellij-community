@@ -38,7 +38,24 @@ import java.util.*
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 
-private val an_exclusions = setOf("xlsx", "mp3")
+private enum class ExclusionType {
+  StartsWith, Equals;
+
+  fun match(token: String, toMatch: String): Boolean {
+    return when (this) {
+      StartsWith -> token.startsWith(toMatch)
+      Equals -> token.equals(toMatch, ignoreCase = true)
+    }
+  }
+}
+
+private val an_vs_a_exclusions = mapOf(
+  "an" to mapOf(ExclusionType.Equals to arrayListOf("xlsx", "mp3")),
+  "a" to mapOf(
+    ExclusionType.StartsWith to arrayListOf("uint"),
+    ExclusionType.Equals to arrayListOf("SCORM")
+  )
+)
 
 open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
@@ -271,11 +288,11 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent, sentenceOffsets: L
 
     if (index == -1 || index + 1 >= tokens.size) return false
     val nextToken = tokens[index + 1].token
-    if (article.equals("an", true)) {
-      return an_exclusions.any { nextToken.equals(it, true) }
-    } else {
-      return nextToken.startsWith("uint", true)
-    }
+    return an_vs_a_exclusions[article.lowercase()]!!
+      .entries
+      .find { (type, exclusions) ->
+        exclusions.any { exclusion -> type.match(nextToken.lowercase(), exclusion) }
+      } != null
   }
 
   return false

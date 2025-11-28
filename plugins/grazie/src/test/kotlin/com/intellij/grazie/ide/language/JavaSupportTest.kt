@@ -229,7 +229,7 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test false positive an with consonant`() {
     myFixture.configureByText("a.java", """
       // Returns an xlsx file based on given type.
-      // I have an mp3.
+      // I have an mp3. Is a SCORM with no grade?
       // Writes a uint32_t to a buffer.
       """.trimIndent()
     )
