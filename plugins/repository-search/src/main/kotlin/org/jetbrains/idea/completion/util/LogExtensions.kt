@@ -16,12 +16,13 @@
 
 @file:Suppress("unused")
 
-package org.jetbrains.idea.reposearch
+package org.jetbrains.idea.completion.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.idea.reposearch.PluginEnvironment
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
