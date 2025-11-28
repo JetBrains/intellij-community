@@ -2797,7 +2797,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myCommandProcessor == null || e.isConsumed() || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
       return;
     }
-    myCommandProcessor.executeCommand(myProject, () -> mouseDragHandler.mouseDragged(e), "", MOUSE_DRAGGED_COMMAND_GROUP,
+    myCommandProcessor.executeCommand(myProject, () -> WriteIntentReadAction.run((Runnable)() -> mouseDragHandler.mouseDragged(e)), "",
+                                      MOUSE_DRAGGED_COMMAND_GROUP,
                                       UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
