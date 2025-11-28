@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.ui.layout.PlaceInGrid
+import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
@@ -25,6 +26,7 @@ data class XDebuggerSessionAdditionalTabDto(
   val contentId: String,
   val title: @NlsSafe String, val tooltip: String?, val icon: IconId?,
   val closeable: Boolean,
+  val toolbarActionGroupId: AnActionId?,
 )
 
 typealias XDebuggerTabId = ComponentDirectTransferId
