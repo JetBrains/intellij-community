@@ -4,7 +4,7 @@ package com.intellij.ui
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.getPopupParentBounds
+import com.intellij.util.ui.getValidBoundsForPopup
 import com.jetbrains.JBR
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
@@ -299,7 +299,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   override fun makeChangeValid(oldBounds: Rectangle, newBounds: Rectangle, view: Component) {
     if (!isRelativeMovementMode()) return
 
-    val windowBounds = getPopupParentBounds(view) ?: return
+    val windowBounds = getValidBoundsForPopup(view) ?: return
     LOG.debug { "Trying to fit the popup into $windowBounds after change $oldBounds -> $newBounds" }
     val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
 
