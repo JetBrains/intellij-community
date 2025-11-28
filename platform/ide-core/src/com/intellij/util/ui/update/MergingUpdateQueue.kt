@@ -51,7 +51,9 @@ private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
  * [kotlinx.coroutines.flow.Flow] and [kotlinx.coroutines.flow.FlowKt.debounce].
  * If you are still using [MergingUpdateQueue], you can consider queuing via [MergingQueueUtil.queueTracked]
  * in order to notify the platform about scheduled updates.
-
+ *
+ * **Note:** consider to use [setRestartTimerOnAdd] to avoid updates stuck in the queue.
+ *
  * @param name                   name of this queue, used only for debugging purposes
  * @param mergingTimeSpan        time (in milliseconds) for which execution of tasks will be postponed
  * @param isActive               if `true` the queue will execute tasks otherwise it'll just collect them and execute only after [.activate] is called
