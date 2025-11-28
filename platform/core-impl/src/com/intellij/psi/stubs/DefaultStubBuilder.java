@@ -28,7 +28,12 @@ public class DefaultStubBuilder implements StubBuilder {
   }
 
   protected final @NotNull StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
-    new StubBuildingWalkingVisitor(root, parentStub).buildStubTree();
+    StubBuildCachedValuesManager.startBuildingStubs();
+    try {
+      new StubBuildingWalkingVisitor(root, parentStub).buildStubTree();
+    } finally {
+      StubBuildCachedValuesManager.finishBuildingStubs();
+    }
     return parentStub;
   }
 
