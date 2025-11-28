@@ -687,6 +687,8 @@ com.intellij.lang.parameterInfo.ParameterInfoUIContextEx
 - com.intellij.lang.parameterInfo.ParameterInfoUIContext
 - a:setEscapeFunction(com.intellij.util.Function):V
 - a:setupUIComponentPresentation(java.lang.String[],java.util.EnumSet[],java.awt.Color):java.lang.String
+f:com.intellij.lang.parameterInfo.ParameterInfoUtils
+- s:findParentOfType(com.intellij.psi.PsiElement,java.lang.Class):com.intellij.psi.PsiElement
 com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 - com.intellij.lang.parameterInfo.ParameterInfoContext
 - a:getCustomContext():com.intellij.openapi.util.UserDataHolderEx
