@@ -64,7 +64,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
         }
       }
     } catch (IOException e) {
-      fail(e.getMessage());
+      addTest(e.getMessage(), filePath + " file was found.", extensions);
     }
     /*
       JsonObject jsonObject = new GsonBuilder().setLenient().create()
