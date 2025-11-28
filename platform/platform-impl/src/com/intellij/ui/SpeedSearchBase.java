@@ -516,7 +516,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {
       var text = e.getText();
-      if (text != null && text.current() != CharacterIterator.DONE) {
+      if (text != null && text.first() != CharacterIterator.DONE) {
         showPopup();
       }
     }
