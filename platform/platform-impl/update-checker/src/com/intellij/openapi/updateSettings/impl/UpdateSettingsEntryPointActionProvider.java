@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginStateListener;
 import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.marketplace.PluginUpdateActivity;
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
@@ -264,7 +265,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
               private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator);
+                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator, null,
+                                                              PluginUpdateActivity.INSTALLED_VERSIONS);
               }
             });
 

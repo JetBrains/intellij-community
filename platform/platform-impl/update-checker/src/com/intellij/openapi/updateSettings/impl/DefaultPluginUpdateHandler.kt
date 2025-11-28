@@ -1,7 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+﻿// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -22,7 +23,8 @@ object DefaultPluginUpdateHandler : PluginUpdateHandler {
     indicator: ProgressIndicator?,
   ): PluginUpdatesModel {
     val buildNumber = BuildNumber.fromString(buildNumber)
-    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(buildNumber, indicator)
+    val internalPluginUpdates = service<UpdateCheckerFacade>().getInternalPluginUpdates(buildNumber, indicator,
+                                                                                        activity = PluginUpdateActivity.INSTALLED_VERSIONS)
     val pluginUpdates = internalPluginUpdates.pluginUpdates
     val notIgnoredDownloaders = pluginUpdates.allEnabled.filterNot { UpdateChecker.isIgnored(it.descriptor) }
     val updateModels = notIgnoredDownloaders.mapNotNull { it.uiModel }
@@ -68,8 +70,6 @@ object DefaultPluginUpdateHandler : PluginUpdateHandler {
   private fun deleteSession(sessionId: String) {
     downloaders.remove(sessionId)
   }
-
 }
-
 
 typealias PluginDownloaders = ConcurrentHashMap<String, PluginDownloader>
