@@ -26,11 +26,14 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -86,10 +89,28 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   private static final Key<Map<FileViewProvider, Map<Object, ToolHighlights>>> VISITED_PSI_ELEMENTS = Key.create("VISITED_PSI_ELEMENTS");
   // list of HighlightInfos for psi elements which were gc-ed
   private static final Key<List<HighlightInfo>> EVICTED_PSI_ELEMENTS = Key.create("EVICTED_PSI_ELEMENTS"); // list guarded by this
-  private final Project myProject;
 
   // true if some complex internal invariants must be checked on every operation;
-  private boolean ASSERT_INVARIANTS /*= true*/;
+  private boolean ASSERT_INVARIANTS;
+
+  HighlightInfoUpdaterImpl(Project project) {
+    FileManagerEx fileManager = (FileManagerEx)PsiManagerEx.getInstanceEx(project).getFileManager();
+    Disposer.register(this, () -> {
+      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null));
+      if (FileDocumentManager.getInstance() instanceof FileDocumentManagerBase base) {
+        base.forEachCachedDocument(document -> {
+          // this complicated to make it work when the project is disposed
+          Map<FileViewProvider, Map<Object, ToolHighlights>> map = document.getUserData(VISITED_PSI_ELEMENTS);
+          FileViewProvider[] array = (map==null?Map.<FileViewProvider, Map<Object, ToolHighlights>>of():map).keySet().toArray(new FileViewProvider[0]);
+          Project docProject = array.length == 0 ? null : array[0].getManager().getProject();
+          if (docProject == project) {
+            document.putUserData(VISITED_PSI_ELEMENTS, null);
+          }
+        });
+      }
+    });
+  }
+
   private boolean isAssertInvariants() {
     //return ApplicationManagerEx.getApplicationEx().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
     return ASSERT_INVARIANTS;
@@ -117,7 +138,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   };
 
-  private @NotNull CollectionFactory.EvictionListener<@NotNull FileViewProvider, Map<Object, ToolHighlights>, Map<Object, ToolHighlights>> psiFileEvictionListener(@NotNull Document document, @NotNull Project project) {
+  private @NotNull CollectionFactory.EvictionListener<@NotNull FileViewProvider, Map<Object, ToolHighlights>, Map<Object, ToolHighlights>> psiFileEvictionListener(@NotNull Document document) {
     return (__, hash, oldMap) -> {
       if (LOG.isTraceEnabled()) {
         List<HighlightInfo> infos = ContainerUtil.flatten(ContainerUtil.map(ContainerUtil.notNullize(oldMap).values(), t -> ContainerUtil.flatten(t.elementHighlights.values())));
@@ -125,12 +146,14 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                   "\noldMap:" + oldMap +
                   "\nall infos:(" + infos.size() + "): " + infos);
       }
-      // all maps for a FileViewProvider were gc-ed, we need to dispose the dangling range highlighters from the document markup
-      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
-      if (markupModel != null) {
-        List<HighlightInfo> allInfos = ContainerUtil.mapNotNull(markupModel.getAllHighlighters(), h -> HighlightInfo.fromRangeHighlighter(h));
-        List<HighlightInfo> infos = ContainerUtil.filter(allInfos, h-> h.toolId != null);
-        addEvictedInfos(infos);
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        // all maps for a FileViewProvider were gc-ed, we need to dispose the dangling range highlighters from the document markup
+        MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
+        if (markupModel != null) {
+          List<HighlightInfo> allInfos = ContainerUtil.mapNotNull(markupModel.getAllHighlighters(), h -> HighlightInfo.fromRangeHighlighter(h));
+          List<HighlightInfo> infos = ContainerUtil.filter(allInfos, h-> h.toolId != null);
+          addEvictedInfos(infos);
+        }
       }
     };
   }
@@ -165,13 +188,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     static int cmp(long lat1, long lat2) {
       return Long.compare(lat1 == 0 ? Long.MAX_VALUE : lat1, lat2 == 0 ? Long.MAX_VALUE : lat2);
     }
-  }
-
-  HighlightInfoUpdaterImpl(Project project) {
-    myProject = project;
-    FileManagerEx fileManager = (FileManagerEx)PsiManagerEx.getInstanceEx(project).getFileManager();
-    Disposer.register(this, () ->
-      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null)));
   }
 
   @Override
@@ -236,7 +252,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           return o1 == o2;
         }
       };
-      data = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createConcurrentSoftMap(strategy, psiFileEvictionListener(hostDocument, myProject)));
+      data = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createConcurrentSoftMap(strategy, psiFileEvictionListener(hostDocument)));
     }
     return data;
   }
