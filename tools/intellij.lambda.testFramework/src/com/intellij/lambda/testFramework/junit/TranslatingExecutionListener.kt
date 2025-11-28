@@ -9,6 +9,7 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.reporting.ReportEntry
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor
 import org.junit.platform.engine.support.descriptor.ClassSource
+import org.junit.platform.engine.support.descriptor.MethodSource
 
 /**
  * Listener that translates Jupiter execution events to our custom descriptors
@@ -95,23 +96,41 @@ class TranslatingExecutionListener(
     }
   }
 
+
   private fun createSyntheticDescriptor(jupiterDescriptor: TestDescriptor): TestDescriptor {
-    // Extract just the method name from the chain of execution
-    val testMethodName = jupiterDescriptor.uniqueId.segments[2].value
+    val originalDisplayName = jupiterDescriptor.displayName
+    val invocationIndex = jupiterDescriptor.uniqueId.segments.firstOrNull {
+      it.type.contains("invocation", ignoreCase = true)
+    }?.value?.removePrefix("#") ?: ""
+
     val cleanedDisplayName = when {
+      jupiterDescriptor.isTest -> {
+        val methodSource = (jupiterDescriptor.source.get() as MethodSource)
+        val nameWithoutInvocationIndex = originalDisplayName.removePrefix("[$invocationIndex]").trim()
+
+        if (!originalDisplayName.contains(methodSource.methodName)) {
+          "${methodSource.methodName}($nameWithoutInvocationIndex)"
+        }
+        else nameWithoutInvocationIndex
+      }
+
       // If it already has the mode prefix, keep it
-      testMethodName.startsWith("[") -> testMethodName
-      // Otherwise, extract the method name (remove parameters if present)
-      else -> testMethodName.substringBefore("(").takeIf { it.isNotEmpty() } ?: testMethodName
+      originalDisplayName.startsWith("[") -> originalDisplayName
+
+      // Otherwise, extract just the method name
+      else -> {
+        val testMethodName = jupiterDescriptor.uniqueId.segments[2].value
+        testMethodName.substringBefore("(").takeIf { it.isNotEmpty() } ?: testMethodName
+      }
     }
 
-    // filter only test and invocation segments
+    // do not include class and engine segments that were already added
     val syntheticId = jupiterDescriptor.uniqueId.segments.filterNot { it.type in listOf("engine", "class") }
       .fold(modeContainer.uniqueId) { acc, segment -> acc.append(segment) }
 
     val synthetic = object : AbstractTestDescriptor(
       syntheticId,
-      cleanedDisplayName,  // Use the cleaned display name
+      cleanedDisplayName,  // Use the cleaned display name with parameters
       jupiterDescriptor.source.orElse(null)
     ) {
       override fun getType(): TestDescriptor.Type = jupiterDescriptor.type
