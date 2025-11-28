@@ -38,11 +38,11 @@ public class ProblemsHolder {
   }
 
   //region Getters
-  public @NotNull @Unmodifiable List<ProblemDescriptor> getResults() {
+  public @NotNull @Unmodifiable List<@NotNull ProblemDescriptor> getResults() {
     return myProblems;
   }
 
-  public ProblemDescriptor @NotNull [] getResultsArray() {
+  public @NotNull ProblemDescriptor @NotNull [] getResultsArray() {
     List<ProblemDescriptor> problems = getResults();
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
@@ -241,7 +241,6 @@ public class ProblemsHolder {
   /**
    * The builder to create a problem report
    */
-  @SuppressWarnings("UnstableApiUsage")
   public final class ProblemBuilder {
     private final @InspectionMessage @NotNull String myDescriptionTemplate;
     private final @NotNull PsiElement myPsiElement;
