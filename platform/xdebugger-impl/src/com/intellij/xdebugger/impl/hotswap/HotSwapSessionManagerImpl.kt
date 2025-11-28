@@ -148,7 +148,7 @@ class HotSwapSessionImpl<T> internal constructor(
 
   override fun getChanges(): Set<T> = changesCollector.getChanges()
 
-  override fun startHotSwapListening(): HotSwapResultListener {
+  override fun startHotSwapListening(showSuccessNotification: Boolean): HotSwapResultListener {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     val statusBefore = currentStatus
     setStatus(HotSwapVisibleStatus.IN_PROGRESS)
@@ -180,7 +180,7 @@ class HotSwapSessionImpl<T> internal constructor(
         if (customFire) {
           HotSwapSessionManagerImpl.getInstance(project).fireStatusChanged(this@HotSwapSessionImpl, forceStatus)
         }
-        if (forceStatus == HotSwapVisibleStatus.SUCCESS) {
+        if (forceStatus == HotSwapVisibleStatus.SUCCESS && showSuccessNotification) {
           HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
         }
       }

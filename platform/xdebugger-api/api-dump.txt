@@ -711,7 +711,8 @@ com.intellij.xdebugger.hotswap.HotSwapResultListener
 com.intellij.xdebugger.hotswap.HotSwapSession
 - a:getChanges():java.util.Set
 - a:getProject():com.intellij.openapi.project.Project
-- a:startHotSwapListening():com.intellij.xdebugger.hotswap.HotSwapResultListener
+- a:startHotSwapListening(Z):com.intellij.xdebugger.hotswap.HotSwapResultListener
+- bs:startHotSwapListening$default(com.intellij.xdebugger.hotswap.HotSwapSession,Z,I,java.lang.Object):com.intellij.xdebugger.hotswap.HotSwapResultListener
 com.intellij.xdebugger.hotswap.HotSwapSessionManager
 - a:createSession(com.intellij.xdebugger.hotswap.HotSwapProvider,com.intellij.openapi.Disposable):com.intellij.xdebugger.hotswap.HotSwapSession
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.hotswap.HotSwapSessionManager
