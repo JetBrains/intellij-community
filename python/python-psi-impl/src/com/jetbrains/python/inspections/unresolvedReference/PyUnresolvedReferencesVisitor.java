@@ -162,7 +162,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     else if (PyUnionType.isStrictSemanticsEnabled() && node instanceof PyQualifiedExpression qualifiedExpression) {
       String referencedName = qualifiedExpression.getReferencedName();
-      PyExpression qualifier = qualifiedExpression.getQualifier();
+      PyExpression qualifier;
+      if (qualifiedExpression instanceof PyCallSiteExpression callSiteExpression && target instanceof PyCallable callable) {
+        qualifier = callSiteExpression.getReceiver(callable);
+      }
+      else {
+        qualifier = qualifiedExpression.getQualifier();
+      }
       if (referencedName != null && qualifier != null) {
         PyType qualifierType = myTypeEvalContext.getType(qualifier);
         if (qualifierType instanceof PyUnionType unionType) {

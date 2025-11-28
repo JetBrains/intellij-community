@@ -521,4 +521,27 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
       });
     });
   }
+
+  // PY-85880
+  public void testLiteralUnionInTuple() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   def f(e: Literal[1, 2]):
+                       _ = e in ()
+                   """);
+  }
+
+  // PY-85880
+  public void testLiteralInUnionTupleNone() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   def f(e: Literal[1, 2]):
+                       a: tuple | None = None
+                       _ = e <weak_warning descr="Member 'None' of 'tuple | None' does not have attribute '__contains__'">in</weak_warning> a
+                   """);
+  }
 }
