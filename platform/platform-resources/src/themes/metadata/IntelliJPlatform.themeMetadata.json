@@ -1908,6 +1908,11 @@
       "since": "2023.1"
     },
     {
+      "key": "TitlePane.Dialog.Button.preferredWidth",
+      "description": "Dialog additional title pane actions (maximize, restore) width",
+      "since": "2026.1"
+    },
+    {
       "key": "TitlePane.inactiveBackground",
       "description": "Borderless mode. Header background when the window is not in focus",
       "since": "2019.3"

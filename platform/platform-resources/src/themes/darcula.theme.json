@@ -790,7 +790,8 @@
     "TitlePane": {
       "background": "panel",
       "Button.preferredSize": "47,28",
-      "Button.preferredSize.compact": "44,32"
+      "Button.preferredSize.compact": "44,32",
+      "Dialog.Button.preferredWidth": "32"
     },
 
     "activeCaption": "#434E60",

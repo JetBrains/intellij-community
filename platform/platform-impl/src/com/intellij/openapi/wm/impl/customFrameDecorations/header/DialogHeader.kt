@@ -4,9 +4,9 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.WindowsDialogButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.util.system.OS
 import com.intellij.util.ui.GridBag
@@ -106,6 +106,10 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
   }
 
   private fun createButtonsPane(): CustomFrameButtons? {
-    return if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
+    return when (OS.CURRENT) {
+      OS.Windows -> WindowsDialogButtons()
+      OS.Linux -> if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
+      else -> null
+    }
   }
 }

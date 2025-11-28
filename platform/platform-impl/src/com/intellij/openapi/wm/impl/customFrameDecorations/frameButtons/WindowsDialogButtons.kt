@@ -1,0 +1,86 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
+
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.awaitCancellation
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import javax.swing.JComponent
+import javax.swing.JPanel
+
+internal class WindowsDialogButtons : CustomFrameButtons {
+  /**
+   * Has no effect because it's not applicable for dialogs.
+   */
+  override var isCompactMode: Boolean = false
+
+  private val buttonsPanel: JComponent = createButtonsPanel()
+
+  override fun getContent(): JComponent = buttonsPanel
+
+  override fun updateVisibility() { }
+
+  override fun onUpdateFrameActive() { }
+}
+
+private fun createButtonsPanel(): JPanel {
+  val buttonsPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+  buttonsPanel.background = null // we want it to blend with the header, regardless of its color (e.g., when the dialog is not focused)
+  val maximizeButton = createMaximizeButton() ?: return buttonsPanel
+  buttonsPanel.add(maximizeButton)
+  buttonsPanel.launchOnShow("WindowsDialogButtons init and updates") {
+    buttonsPanel.parent?.revalidate() // for some reason, it's displayed over the system close button otherwise
+    val dialog = ComponentUtil.getWindow(buttonsPanel) ?: return@launchOnShow
+    // Set up manual action updates on size/location change.
+    val listener = object : ComponentAdapter() {
+      override fun componentMoved(e: ComponentEvent?) {
+        update()
+      }
+
+      override fun componentResized(e: ComponentEvent?) {
+        update()
+      }
+
+      private fun update() {
+        maximizeButton.update()
+      }
+    }
+    try {
+      dialog.addComponentListener(listener)
+      awaitCancellation()
+    }
+    finally {
+      dialog.removeComponentListener(listener)
+    }
+  }
+  return buttonsPanel
+}
+
+private fun createMaximizeButton(): ActionButton? {
+  val maximizeAction = ActionManager.getInstance().getAction("MaximizeActiveDialog")
+  if (maximizeAction == null) return null
+  val maximizeButton = ActionButton(maximizeAction, null, "DialogHeader") {
+    val width = JBUI.scale(JBUI.CurrentTheme.TitlePane.dialogButtonPreferredWidth())
+    val height = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader = false)
+    Dimension(width, height) // already scaled
+  }
+  // Match the overall Windows L&F.
+  maximizeButton.setLook(object : IdeaActionButtonLook() {
+    override fun getButtonArc(): JBValue = JBValue.Float.EMPTY
+    override fun getStateBackground(component: JComponent?, state: Int): Color? {
+      return if (state == ActionButtonComponent.NORMAL) null else super.getStateBackground(component, state)
+    }
+  })
+  return maximizeButton
+}
