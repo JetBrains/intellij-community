@@ -27,7 +27,6 @@ interface HotSwapUiExtension {
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {
-
     private val EP_NAME = com.intellij.openapi.extensions.ExtensionPointName<HotSwapUiExtension>("com.intellij.xdebugger.hotSwapUiExtension")
 
     fun <T> computeSafeIfAvailable(action: (HotSwapUiExtension) -> T): T? = EP_NAME.computeSafeIfAny {
