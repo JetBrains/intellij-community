@@ -18,12 +18,12 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
+import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
 import kotlinx.coroutines.*
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
@@ -42,6 +42,7 @@ class TransportTest {
       return arrayOf(
         StdioTransportHolder(project),
         SseTransportHolder(project),
+        HttpTransportHolder(project),
       )
     }
   }
@@ -53,12 +54,8 @@ class TransportTest {
     assert(listTools.tools.isNotEmpty()) { "No tools returned" }
   }
 
-  @Test
-  fun tool_call_has_project_stdio() = tool_call_has_project(StdioTransportHolder(project))
-
-  @Test
-  fun tool_call_has_project_sse() = tool_call_has_project(StdioTransportHolder(project))
-
+  @ParameterizedTest
+  @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
@@ -152,9 +149,8 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
 
 class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
-    val port = McpServerService.getInstance().port
-    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
-    val transportUrl = addressProvider?.httpUrl("/sse", portOverride = port) ?: "http://localhost:$port/sse"
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val transportUrl = addressProvider.serverSseUrl
     SseClientTransport(HttpClient {
       install(SSE)
     }, transportUrl) {
@@ -164,5 +160,21 @@ class SseTransportHolder(project: Project) : TransportHolder() {
 
   override fun toString(): String {
     return "SSE"
+  }
+}
+
+class HttpTransportHolder(project: Project) : TransportHolder() {
+  override val transport: AbstractTransport by lazy {
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val transportUrl = addressProvider.serverStreamUrl
+    StreamableHttpClientTransport(HttpClient {
+      install(SSE)
+    }, transportUrl) {
+      project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+    }
+  }
+
+  override fun toString(): String {
+    return "Http Stream"
   }
 }
