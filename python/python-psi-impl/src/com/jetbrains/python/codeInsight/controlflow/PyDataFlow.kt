@@ -2,11 +2,9 @@ package com.jetbrains.python.codeInsight.controlflow
 
 import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
-import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.getEffectiveLanguageLevel
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.PyNeverType
@@ -24,19 +22,12 @@ enum class Reachability {
 }
 
 @ApiStatus.Internal
-class PyDataFlow(
-  scopeOwner: ScopeOwner,
-  private val controlFlow: PyControlFlow,
-  context: FlowContext,
-) : ControlFlow by controlFlow {
+class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) : ControlFlow by controlFlow {
   private val reachability: Array<Reachability>
 
   init {
-    val languageLevel = getEffectiveLanguageLevel(scopeOwner.containingFile)
-    val languageVersion = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
-
-    val reachabilityStrict = computeReachability(instructions, languageVersion, false, context)
-    val reachabilitySoft = computeReachability(instructions, languageVersion, true, context)
+    val reachabilityStrict = computeReachability(instructions, false, context)
+    val reachabilitySoft = computeReachability(instructions, true, context)
 
     reachability = Array(instructions.size) { i ->
       if (reachabilityStrict[i]) {
@@ -54,7 +45,6 @@ class PyDataFlow(
 
   private fun computeReachability(
     instructions: Array<Instruction>,
-    languageVersion: Version,
     includeUnreachableForTypeChecking: Boolean,
     context: FlowContext,
   ): BooleanArray {
