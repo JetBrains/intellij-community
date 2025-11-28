@@ -1178,6 +1178,7 @@
     },
     
     "Recap": {
+      "ijnext": "#55339C",
       "cardBackground": "#2B2B2B",
       "cardBorderColor": "#2B2B2B",
       "cardHeaderTitle": "#D3D3D3",
