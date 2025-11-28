@@ -2,4 +2,6 @@
 
 set -e -u -o pipefail
 
-exec "$BAZEL_REAL" "$@"
+_bazel="$BAZEL_REAL"
+unset BAZEL_REAL BAZELISK_SKIP_WRAPPER
+exec "$_bazel" "$@"
