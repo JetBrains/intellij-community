@@ -2,13 +2,13 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,12 +68,11 @@ public class XmlElementSignatureProvider extends AbstractElementSignatureProvide
         String unescapedName = unescape(name);
         PsiElement result = restoreElementInternal(parent, unescapedName, index, XmlTag.class);
 
-        if (result == null &&
-            file.getFileType() == StdFileTypes.JSP) {
+        if (result == null && JspFileTypeUtil.isJsp(file)) {
           //TODO: FoldingBuilder API, psi roots, etc?
-          if (parent instanceof XmlDocument) {
+          if (parent instanceof XmlDocument xmlDocument) {
             // html tag, not found in jsp tree
-            result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), unescapedName, index, XmlTag.class);
+            result = restoreElementInternal(HtmlUtil.getRealXmlDocument(xmlDocument), unescapedName, index, XmlTag.class);
           }
           else if (name.equals("<unnamed>")) {
             // scriplet/declaration missed because null name
