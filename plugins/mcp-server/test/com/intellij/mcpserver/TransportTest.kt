@@ -19,10 +19,7 @@ import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
@@ -88,7 +85,12 @@ class TransportTest {
     try {
       McpServerService.getInstance().start()
       val client = Client(Implementation(name = "test client", version = "1.0"))
-      client.connect(transportHolder.transport)
+      try {
+        client.connect(transportHolder.transport)
+      }
+      catch (e: Exception) {
+        fail("Failed to connect to the server: ${e.message}. Additional diagnostics:\r\n${transportHolder.diagnostics}")
+      }
       action(client)
     }
     finally {
@@ -100,6 +102,7 @@ class TransportTest {
 
 abstract class TransportHolder {
   abstract val transport: AbstractTransport
+  open val diagnostics: String = ""
 
   // do not make it AutoCloseable because Junit tries to close it automatically but we want to close it in test method manually
   open fun close() {
@@ -109,17 +112,35 @@ abstract class TransportHolder {
   }
 }
 
+@Suppress("RAW_SCOPE_CREATION")
 class StdioTransportHolder(project: Project) : TransportHolder() {
+
+  private val scope = CoroutineScope(Job())
+  private val diag = StringBuilder()
+
   val process: Process by lazy {
-    createStdioMcpServerCommandLine(McpServerService.getInstance().port, project.basePath).toProcessBuilder().start()
+    val mcpServerCommandLine = createStdioMcpServerCommandLine(McpServerService.getInstance().port, project.basePath)
+    val proc = mcpServerCommandLine.toProcessBuilder().start()
+    scope.launch {
+      proc.errorStream.bufferedReader().use { reader ->
+        reader.forEachLine {
+          diag.appendLine(it)
+        }
+      }
+    }
+    return@lazy proc
   }
 
   override val transport: AbstractTransport by lazy {
     StdioClientTransport(process.inputStream.asSource().buffered(), process.outputStream.asSink().buffered())
   }
 
+  override val diagnostics: String
+    get() = diag.toString()
+
   override fun close() {
     super.close() //sseClientTransport.close()
+    scope.cancel()
     if (!process.waitFor(10, TimeUnit.SECONDS)) process.destroyForcibly()
     if (!process.waitFor(10, TimeUnit.SECONDS)) fail("Process is still alive")
   }
