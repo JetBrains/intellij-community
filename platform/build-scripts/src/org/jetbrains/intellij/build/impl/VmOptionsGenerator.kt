@@ -109,7 +109,7 @@ object VmOptionsGenerator {
 private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
   val artifactsServer = context.proprietaryBuildTools.artifactsServer
   if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-    val paths = listOf(context.nonBundledPlugins.name, context.nonBundledPluginsToBePublished.name)
+    val paths = listOf(context.nonBundledPlugins.name, "${context.nonBundledPlugins.name}/${context.nonBundledPluginsToBePublished.name}")
       return paths.mapNotNull {
         getBuiltinPluginsRepoUrl(artifactsServer, it, context)
       }.takeIf { it.isNotEmpty() }?.joinToString(",")
