@@ -17,13 +17,7 @@ class PyTypingNewType(
   override fun getName(): String = name
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
-    val instance = classType.toInstance()
-    return if (instance is PyClassType) {
-      PyTypingNewType(instance, name, declaration)
-    }
-    else {
-      classType.getCallType(context, callSite)
-    }
+    return PyTypingNewType(classType.toInstance(), name, declaration)
   }
 
   override fun toClass(): PyTypingNewType {
