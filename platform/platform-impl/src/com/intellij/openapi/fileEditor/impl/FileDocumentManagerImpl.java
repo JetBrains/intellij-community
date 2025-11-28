@@ -85,6 +85,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
@@ -775,19 +776,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
           CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
             ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
               if (!isBinaryWithoutDecompiler(file)) {
-                LoadTextUtil.clearCharsetAutoDetectionReason(file);
-                file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-                file.setCharset(null, null, false);
-                boolean wasWritable = document.isWritable();
-                document.setReadOnly(false);
-                boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-                isReloadable[0] = isReloadable(file, document, project);
-                if (isReloadable[0]) {
-                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                  ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                  setDocumentTooLarge(document, tooLarge);
-                }
-                document.setReadOnly(!wasWritable);
+                setNewText(document, project, file, vFile -> {
+                  boolean tooLarge = FileUtilRt.isTooLarge(vFile.getLength());
+                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
+                  return reloaded;
+                });
               }
             })
           ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
@@ -809,6 +802,25 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       return null;
     });
+  }
+
+  private static void setNewText(@NotNull Document document,
+                                 @Nullable Project project,
+                                 @NotNull VirtualFile file,
+                                 @NotNull Function<@NotNull VirtualFile, @NotNull CharSequence> loader) {
+    LoadTextUtil.clearCharsetAutoDetectionReason(file);
+    file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+    file.setCharset(null, null, false);
+    boolean wasWritable = document.isWritable();
+    document.setReadOnly(false);
+    boolean[] isReloadable = {isReloadable(file, document, project)};
+    if (isReloadable[0]) {
+      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+      CharSequence reloaded = loader.apply(file);
+      ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+      setDocumentTooLarge(document, tooLarge);
+    }
+    document.setReadOnly(!wasWritable);
   }
 
   private void reloadFromDiskWithDecompiler(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file) {
@@ -833,12 +845,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
       ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-        file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-        file.setCharset(null, null, false);
-        boolean wasWritable = document.isWritable();
-        document.setReadOnly(false);
-        ((DocumentEx)document).replaceText(decompiledText[0], file.getModificationStamp());
-        document.setReadOnly(!wasWritable);
+        setNewText(document, project, file, vFile -> decompiledText[0]);
       })
     ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
