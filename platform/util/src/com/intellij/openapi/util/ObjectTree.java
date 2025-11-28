@@ -247,6 +247,21 @@ public final class ObjectTree {
     }
   }
 
+  /**
+   * Asserts that no objects matching the given predicate are reachable in the Tree.
+   *
+   * @param predicate the predicate to test objects against; returns {@code true} for objects that should not be present
+   * @throws AssertionError if any object matching the predicate is found reachable from any node in the tree
+   */
+  @TestOnly
+  public void assertNoReferenceKeptInTree(@NotNull Predicate<Object> predicate) {
+    synchronized (getTreeLock()) {
+      for (ObjectNode node : myObject2ParentNode.values()) {
+        node.assertNoReferencesKept(predicate);
+      }
+    }
+  }
+
 
   @ApiStatus.Internal
   void assertIsEmpty(boolean throwError) {

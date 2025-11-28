@@ -136,6 +136,22 @@ public final class ObjectNode {
     }
   }
 
+  /**
+   * Use to check that no objects matching the predicate are reachable from the current node
+   *
+   * @param predicate the predicate to test objects against; returns {@code true} for objects that should not be present
+   * @throws AssertionError if any object matching the predicate is found in the tree rooted at this node
+   */
+  @TestOnly
+  void assertNoReferencesKept(@NotNull Predicate<Object> predicate) {
+    assert !predicate.test(getObject());
+    for (ObjectNode node : myChildren.getAllNodes()) {
+      node.assertNoReferencesKept(predicate);
+    }
+  }
+
+
+
   ObjectNode findChildNode(@NotNull Disposable object) {
     return myChildren.findChildNode(object);
   }
