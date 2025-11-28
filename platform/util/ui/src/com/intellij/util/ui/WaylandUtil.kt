@@ -57,10 +57,8 @@ fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
 
   val topLevelBounds = getNearestTopLevelParentBounds(parent) ?: return
 
-  val parentLocation = parent.location
-  LOG.debug { "The relative parent location is $parentLocation" }
-  SwingUtilities.convertPointToScreen(parentLocation, parent.parent)
-  val parentBounds = Rectangle(parentLocation, parent.size)
+  LOG.debug { "The relative parent location is ${parent.location}" }
+  val parentBounds = Rectangle(parent.locationOnScreen, parent.size)
   LOG.debug { "The screen parent bounds are $parentBounds" }
 
   childLocation.x = fitValue(
