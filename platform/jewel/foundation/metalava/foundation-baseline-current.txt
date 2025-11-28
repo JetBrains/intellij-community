@@ -1,1 +1,3 @@
 // Baseline format: 1.0
+RemovedDeprecatedClass: org.jetbrains.jewel.foundation.actionSystem.DataProviderNode:
+    Binary breaking change: Removed deprecated class org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
