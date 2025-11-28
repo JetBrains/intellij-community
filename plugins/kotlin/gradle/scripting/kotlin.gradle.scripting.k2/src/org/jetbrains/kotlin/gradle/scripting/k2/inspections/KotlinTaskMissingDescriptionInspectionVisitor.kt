@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
-import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -135,19 +133,13 @@ private class AddDescriptionFix() : KotlinModCommandQuickFix<KtCallExpression>()
     ) {
         val block = element.getBlock() ?: return
         val psiFactory = KtPsiFactory(project, true)
-        val templateBuilder = updater.templateBuilder()
 
-        val assignment = psiFactory.createExpression("${DESCRIPTION_PROPERTY} = \"\"")
-        val templateElement = block.addAfter(assignment, null)
+        val assignment = psiFactory.createExpression("$DESCRIPTION_PROPERTY = \"\"")
+        val emptyStringPos = block.addAfter(assignment, null)
             .apply { block.addAfter(psiFactory.createNewLine(), this) }
-            .asSafely<KtBinaryExpression>()!!.right!!
+            .asSafely<KtBinaryExpression>()!!.right!!.textOffset
 
-        templateBuilder.field(
-            templateElement,
-            TextRange(1, 1),
-            "descriptionField",
-            ConstantNode("")
-        )
+        updater.moveCaretTo(emptyStringPos + 1)
     }
 }
 
@@ -162,24 +154,19 @@ private class AddConfigBlockWithDescriptionFix() : KotlinModCommandQuickFix<KtEl
     ) {
         val selectorName = element.text
         val psiFactory = KtPsiFactory(project, true)
-        val templateBuilder = updater.templateBuilder()
+
         val replacement = psiFactory.createExpression(
             """
             $selectorName {
-                ${DESCRIPTION_PROPERTY} = ""
+                $DESCRIPTION_PROPERTY = ""
             }
             """.trimIndent()
         ) as KtCallExpression
         val replaced = element.replace(replacement) as KtCallExpression
-        val templateDescriptionElement = replaced.getBlock()!!.children.map {
+        val emptyStringPos = replaced.getBlock()!!.children.map {
             it.asSafely<KtBinaryExpression>()!!.right!!
-        }.single()
+        }.single().textOffset
 
-        templateBuilder.field(
-            templateDescriptionElement,
-            TextRange(1, 1),
-            "descriptionField",
-            ConstantNode("")
-        )
+        updater.moveCaretTo(emptyStringPos + 1)
     }
 }
