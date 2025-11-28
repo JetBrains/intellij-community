@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "mcpserver_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "mcpserver",
   module_name = "intellij.mcpserver",
@@ -82,7 +76,6 @@ jvm_library(
   name = "mcpserver_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":mcpserver_test_resources"],
   associates = [":mcpserver"],
   deps = [
     "@lib//:jetbrains-annotations",
