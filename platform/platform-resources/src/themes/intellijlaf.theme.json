@@ -1336,6 +1336,7 @@
       }
     },
     "Recap": {
+      "ijnext": "#DCCBFB",
       "cardBackground": "#FFFFFF",
       "cardBorderColor": "#FFFFFF",
       "cardHeaderTitle": "#000000",

@@ -1212,6 +1212,7 @@
     "InlineBanner.pressedBackground": "#FFFFFF1E",
     
     "Recap": {
+      "ijnext": "#55339C",
       "cardBackground": "#1E1F22",
       "cardBorderColor": "#1E1F22",
       "cardHeaderTitle": "#F0F1F2",
