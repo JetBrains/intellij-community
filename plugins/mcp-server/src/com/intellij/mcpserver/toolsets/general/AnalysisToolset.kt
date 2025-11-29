@@ -19,6 +19,7 @@ import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
@@ -69,7 +70,9 @@ class AnalysisToolset : McpToolset {
     if (!resolvedPath.exists()) mcpFail("File not found: $filePath")
     if (!resolvedPath.isRegularFile()) mcpFail("Not a file: $filePath")
 
+    logger.trace { "Awaiting external changes and indexing" }
     awaitExternalChangesAndIndexing(project)
+    logger.trace { "External changes and indexing completed" }
     val errors = CopyOnWriteArrayList<FileProblem>()
     val timedOut = withTimeoutOrNull(timeout.milliseconds) {
       withBackgroundProgress(
@@ -77,11 +80,14 @@ class AnalysisToolset : McpToolset {
         McpServerBundle.message("progress.title.analyzing.file", resolvedPath.fileName),
         cancellable = true
       ) {
+        logger.trace { "Refreshing and finding file in VFS" }
         val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
                    ?: mcpFail("Cannot access file: $filePath")
+        logger.trace { "File found in VFS: ${file.path}" }
         readAction {
           val document = FileDocumentManager.getInstance().getDocument(file)
                          ?: mcpFail("Cannot read file: $filePath")
+          logger.trace { "Document obtained, text length: ${document.textLength}" }
 
           DaemonCodeAnalyzerEx.processHighlights(
             document,
@@ -93,10 +99,12 @@ class AnalysisToolset : McpToolset {
             errors.add(createFileProblem(document, highlightInfo))
             true
           }
+          logger.trace { "Processed highlights, found ${errors.size} problems" }
         }
       }
     } == null
 
+    logger.trace { "get_file_problems completed: timedOut=$timedOut, errorsCount=${errors.size}" }
     return FileProblemsResult(
       filePath = projectDir.relativize(resolvedPath).pathString,
       errors = errors,
@@ -128,14 +136,19 @@ class AnalysisToolset : McpToolset {
 
     val problems = CopyOnWriteArrayList<ProjectProblem>()
 
+    logger.trace { "Starting build task with timeout ${timeout}ms" }
     val buildResult = withTimeoutOrNull(timeout.milliseconds) {
       return@withTimeoutOrNull coroutineScope {
+        logger.trace { "Creating all modules build task, isIncrementalBuild=${!rebuild}" }
         val task = ProjectTaskManager.getInstance(project).createAllModulesBuildTask(!rebuild, project)
         val context = ProjectTaskContext(callId)
+        logger.trace { "Running build task with context" }
         return@coroutineScope ProjectTaskManager.getInstance(project).run(context, task).await()
       }
     }
+    logger.trace { "Build task completed: result=$buildResult, hasErrors(may lie)=${buildResult?.hasErrors()}" }
 
+    logger.trace { "Starting problems collection with timeout ${timeout / 2}ms" }
     val problemsCollectionTimedOut = withTimeoutOrNull(timeout.milliseconds / 2) {
       withBackgroundProgress(
         project,
@@ -147,8 +160,12 @@ class AnalysisToolset : McpToolset {
                             .flatMap {
                               collector.getFileProblems(it)
                             } + collector.getOtherProblems()
+        logger.trace { "Iterating through collected problems" }
         for (problem in allProblems) {
-          if (!coroutineContext.isActive) break
+          if (!currentCoroutineContext().isActive) {
+            logger.trace { "Coroutine context is not active, stopping problem collection" }
+            break
+          }
           val problem = if (problem is com.intellij.analysis.problemsView.FileProblem) {
             val kind = (problem as? BuildViewProblemsService.FileBuildProblem)?.event?.kind
             ProjectProblem(
@@ -168,11 +185,14 @@ class AnalysisToolset : McpToolset {
               description = problem.description,
             )
           }
+          logger.trace { "Collected problem: $problem" }
           problems.add(problem)
         }
+        logger.trace { "Problems collection completed, total problems: ${problems.size}" }
       }
     } == null
 
+    logger.trace { "build_project completed: buildTimedOut=${buildResult == null}, problemsCollectionTimedOut=$problemsCollectionTimedOut, problemsCount=${problems.size}" }
     return BuildProjectResult(timedOut = buildResult == null || problemsCollectionTimedOut,
                               isSuccess = (buildResult != null && !buildResult.hasErrors() && problems.all { it.kind != Kind.ERROR.name }),
                               problems = problems)
