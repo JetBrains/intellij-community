@@ -110,4 +110,15 @@ class KotlinGradleDslInspectionProvider : GradleDslInspectionProvider {
     ): PsiElementVisitor {
         return KotlinTaskMissingDescriptionInspectionVisitor(holder)
     }
+
+    override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean {
+        return FileUtilRt.extensionEquals(file.name, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)
+    }
+
+    override fun getAvoidDuplicateRepositoriesInspectionVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): PsiElementVisitor {
+        return KotlinAvoidDuplicateRepositoriesInspectionVisitor(holder)
+    }
 }
