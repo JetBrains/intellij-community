@@ -20,13 +20,12 @@ class XmlFileElementType : IFileElementType(XMLLanguage.INSTANCE) {
       text = chameleon.chars,
     )
     val syntaxTreeBuilder = builder.getSyntaxTreeBuilder()
-
-    val startTime = System.nanoTime()
     syntaxTreeBuilder.enforceCommentTokens(emptySyntaxElementTypeSet())
     builder.setCustomComparator(REPARSE_XML_TAG_BY_NAME)
-    XmlParser().parse(syntaxTreeBuilder)
-    val node = builder.getTreeBuilt()
-    registerParse(builder, XMLLanguage.INSTANCE, System.nanoTime() - startTime)
-    return node.getFirstChildNode()
+
+    return registerParse(builder, XMLLanguage.INSTANCE) {
+      XmlParser().parse(syntaxTreeBuilder)
+      builder.getTreeBuilt().getFirstChildNode()
+    }
   }
 }
