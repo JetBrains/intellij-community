@@ -396,7 +396,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void hideConfigurations(Collection<? extends RunConfiguration> configurations) {
+  public void hideConfigurations(@NotNull Collection<? extends RunConfiguration> configurations) {
     for (RunConfiguration configuration : configurations) {
       if (myState.excludedNewTypes.contains(configuration.getType().getId())) {
         myShownConfigurations.remove(configuration);
