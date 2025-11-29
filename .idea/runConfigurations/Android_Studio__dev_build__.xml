@@ -8,7 +8,7 @@
     <option name="MAIN_CLASS_NAME" value="org.jetbrains.intellij.build.devServer.DevMainKt" />
     <module name="intellij.platform.bootstrap.dev" />
     <shortenClasspath name="ARGS_FILE" />
-    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=AndroidStudio -Didea.dev.build.unpacked=false -Dadditional.modules=&quot;intellij.webp,intellij.android.plugin.descriptor,intellij.android.design-plugin.descriptor,intellij.android.compose-ide-plugin&quot;" />
+    <option name="VM_PARAMETERS" value="-Didea.platform.prefix=AndroidStudio -Didea.dev.build.unpacked=false" />
     <method v="2">
       <option name="MakeProject" enabled="true" />
     </method>

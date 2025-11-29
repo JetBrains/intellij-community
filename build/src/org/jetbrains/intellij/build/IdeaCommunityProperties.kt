@@ -41,8 +41,8 @@ internal suspend fun createCommunityBuildContext(
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrainsProductProperties() {
   init {
     configurePropertiesForAllEditionsOfIntelliJIdea(this)
-    platformPrefix = System.getProperty("idea.platform.prefix", "Idea")
-    applicationInfoModule = if (platformPrefix == "AndroidStudio") "intellij.idea.android.customization" else "intellij.idea.community.customization"
+    platformPrefix = "Idea"
+    applicationInfoModule = "intellij.idea.community.customization"
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
@@ -52,9 +52,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
       "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
-    if (platformPrefix == "AndroidStudio") {
-      productLayout.productImplementationModules += "intellij.idea.android.customization"
-    }
 
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
       "intellij.javaFX.community"
@@ -117,7 +114,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     get() = "idea"
 
   override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
-    include(intellijCommunityBaseFragment())
+    include(intellijCommunityBaseFragment(platformPrefix))
     include(communityExtensionsFragment())
   }
 
@@ -152,12 +149,33 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
 }
 
+@Suppress("unused")
+open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProperties(communityHomeDir) {
+  init {
+    platformPrefix = "AndroidStudio"
+    applicationInfoModule = "intellij.idea.android.customization"
+
+    productLayout.productImplementationModules += "intellij.idea.android.customization"
+    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + persistentListOf(
+      "intellij.webp",
+      "intellij.android.plugin.descriptor",
+      "intellij.android.design-plugin.descriptor",
+      "intellij.android.compose-ide-plugin"
+    )
+  }
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+    include(intellijCommunityBaseFragment(platformPrefix))
+    // no community extensions
+  }
+}
+
 /**
  * Base IntelliJ Community content fragment.
  * This fragment is composable - subclasses can include this and optionally add community extensions.
  */
-fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules {
-  if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
+fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModulesContentSpec = productModules {
+  if (platformPrefix == "AndroidStudio") {
     alias("com.intellij.modules.androidstudio")
   }
   else {
@@ -168,8 +186,11 @@ fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules 
   alias("com.intellij.modules.java-capable")
   alias("com.intellij.modules.python-core-capable")
   alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
-  alias("com.intellij.platform.ide.provisioner")
-  alias("com.intellij.modules.jcef")
+
+  if (platformPrefix != "AndroidStudio") {
+    alias("com.intellij.platform.ide.provisioner")
+    alias("com.intellij.modules.jcef")
+  }
 
   include(CommunityProductFragments.javaIdeBaseFragment())
   deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
