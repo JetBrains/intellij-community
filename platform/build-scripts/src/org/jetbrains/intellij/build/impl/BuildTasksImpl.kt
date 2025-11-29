@@ -140,11 +140,11 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(os = currentOs, arch = arch, libc = targetLibcImpl, destinationDir = targetDirectory.resolve("jbr"))
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch, targetLibcImpl).keys)
-      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch, libc = targetLibcImpl)
+      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch, libc = targetLibcImpl, context = context)
       builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
-      copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch, libcImpl = targetLibcImpl)
+      copyDistFiles(newDir = targetDirectory, os = currentOs, arch = arch, libcImpl = targetLibcImpl, context = context)
     }
   }
 }
@@ -616,7 +616,9 @@ private suspend fun checkProductProperties(context: BuildContext) {
   }
 
   context.macDistributionCustomizer?.let { macCustomizer ->
-    checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+    checkNotNull(macCustomizer.bundleIdentifier) {
+      "Mandatory property '${"productProperties.macCustomizer.bundleIdentifier"}' is not specified"
+    }
     checkPaths(listOf(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
@@ -783,17 +785,6 @@ private fun checkPaths2(paths: Collection<Path>, propertyName: String) {
   check(nonExistingFiles.isEmpty()) {
     "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
   }
-}
-
-private fun checkMandatoryField(value: String?, fieldName: String) {
-  checkNotNull(value) {
-    "Mandatory property '$fieldName' is not specified"
-  }
-}
-
-private fun checkMandatoryPath(path: String, fieldName: String) {
-  checkMandatoryField(path, fieldName)
-  checkPaths(listOf(Path.of(path)), fieldName)
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
@@ -1165,7 +1156,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
   }
 }
 
-internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl) {
+internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl, context: BuildContext) {
   for (item in context.getDistFiles(os, arch, libcImpl)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
@@ -1178,7 +1169,7 @@ internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, ar
   }
 }
 
-internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
+internal fun generateBuildTxt(targetDirectory: Path, context: BuildContext) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
 }
 

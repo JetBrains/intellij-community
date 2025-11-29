@@ -19,7 +19,10 @@ import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleReposito
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
@@ -79,14 +82,28 @@ class BazelCompilationContext(
   }
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    return delegate.getModuleRuntimeClasspath(module, forTests).map(Path::of).flatMap {
-      if (it.startsWith(classesOutputDirectory)) {
-        getModuleOutputRoots(findRequiredModule(it.name), it.parent.name == "test").map { it.toString() }
-      }
-      else {
-        listOf(it.toString())
+    val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
+      .also { if (forTests) it.withoutSdk() }
+      .includedIn(JpsJavaClasspathKind.runtime(forTests))
+
+    val result = LinkedHashSet<String>()
+
+    // Map each module through BazelModuleOutputProvider
+    for (depModule in enumerator.modules) {
+      for (path in moduleOutputProvider.getModuleOutputRoots(depModule, forTests = false)) {
+        result.add(path.toString())
       }
     }
+
+    // Map each library through BazelModuleOutputProvider
+    for (library in enumerator.libraries) {
+      val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+      for (path in moduleOutputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
+        result.add(path.toString())
+      }
+    }
+
+    return result.toList()
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)
