@@ -1,5 +1,6 @@
 RegExpSupport
 aether-dependency-resolver
+android-customization
 android/adt-testutils
 android/adt-ui
 android/adt-ui-compose

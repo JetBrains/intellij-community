@@ -38,8 +38,8 @@ internal suspend fun createCommunityBuildContext(
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrainsProductProperties() {
   init {
     configurePropertiesForAllEditionsOfIntelliJIdea(this)
-    platformPrefix = "Idea"
-    applicationInfoModule = "intellij.idea.community.customization"
+    platformPrefix = System.getProperty("idea.platform.prefix", "Idea")
+    applicationInfoModule = if (platformPrefix == "AndroidStudio") "intellij.idea.android.customization" else "intellij.idea.community.customization"
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
@@ -49,6 +49,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
       "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
+    if (platformPrefix == "AndroidStudio") {
+      productLayout.productImplementationModules += "intellij.idea.android.customization"
+    }
+
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + sequenceOf(
       "intellij.javaFX.community"
     )
@@ -153,8 +157,14 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
  * This fragment is composable - subclasses can include this and optionally add community extensions.
  */
 fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules {
-  alias("com.intellij.modules.idea")
-  alias("com.intellij.modules.idea.community")
+  if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
+    alias("com.intellij.modules.androidstudio")
+  }
+  else {
+    alias("com.intellij.modules.idea")
+    alias("com.intellij.modules.idea.community")
+  }
+
   alias("com.intellij.modules.java-capable")
   alias("com.intellij.modules.python-core-capable")
   alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
@@ -176,6 +186,10 @@ fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules 
   module("intellij.idea.customization.base")
   module("intellij.idea.customization.backend")
   module("intellij.platform.tips")
+
+  if (System.getProperty("idea.platform.prefix") == "AndroidStudio") {
+    module("intellij.idea.android.customization")
+  }
 
   moduleSet(CommunityModuleSets.ideCommon())
   moduleSet(CommunityModuleSets.rdCommon())
