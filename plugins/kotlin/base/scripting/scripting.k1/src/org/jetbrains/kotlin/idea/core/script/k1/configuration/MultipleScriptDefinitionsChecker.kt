@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import java.util.function.Function
 import javax.swing.JComponent
@@ -61,11 +59,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                 val list = JBPopupFactory.getInstance().createListPopup(
                     object : BaseListPopupStep<ScriptDefinition>(null, defs) {
                         override fun getTextFor(value: ScriptDefinition): String {
-                            @NlsSafe
-                            val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
-                                it.name + " (${it.scriptFilePattern})"
-                            } ?: (value.name + " (${value.fileExtension})")
-                            return text
+                            return value.name + " (${value.fileExtension})"
                         }
                     }
                 )

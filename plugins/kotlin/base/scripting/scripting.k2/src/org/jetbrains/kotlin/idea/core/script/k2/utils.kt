@@ -26,8 +26,8 @@ fun KotlinScriptEntity.toConfigurationResult(): ScriptCompilationConfigurationRe
     val result = if (configuration == null) {
         ResultWithDiagnostics.Failure(listOf())
     } else {
-        ResultWithDiagnostics.Success<ScriptCompilationConfigurationWrapper>(
-            ScriptCompilationConfigurationWrapper.FromCompilationConfiguration(
+        ResultWithDiagnostics.Success(
+            ScriptCompilationConfigurationWrapper(
                 VirtualFileScriptSource(virtualFile), configuration?.deserialize()
             ), reports.map { report -> report.toScriptDiagnostic() })
     }

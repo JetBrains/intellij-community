@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.gradle.scripting.shared.definition
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
-import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import java.io.File
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -46,16 +47,13 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
         templateClassNames = templateClasses,
         templateClasspath = templateClasspath,
         additionalResolverClasspath = kotlinLibsClassPath,
-        baseHostConfiguration = hostConfiguration,
-        defaultCompilerOptions = languageVersionCompilerOptions
+        baseHostConfiguration = hostConfiguration
     ).map {
-        it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDefinition ->
-            LegacyGradleScriptDefinition(
-                legacyDefinition, it.hostConfiguration, it.evaluationConfiguration, it.defaultCompilerOptions, params.workingDir
-            )
-        } ?: GradleScriptDefinition(
-            it.compilationConfiguration, it.hostConfiguration, it.evaluationConfiguration, it.defaultCompilerOptions, params.workingDir
-        )
+        GradleScriptDefinition(
+            it.compilationConfiguration,
+            it.hostConfiguration,
+            it.evaluationConfiguration,
+            params.workingDir)
     }.ifEmpty { sequenceOf(ErrorGradleScriptDefinition()) }.toList()
 }
 
