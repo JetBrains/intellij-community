@@ -3,12 +3,11 @@ JsonFile: n_object_bracket_key.json
     PsiElement({)('{')
     PsiErrorElement:<property> or '}' expected, got '['
       <empty list>
-  JsonArray
-    PsiElement([)('[')
-    PsiErrorElement:<value> expected, got ':'
-      PsiElement(:)(':')
-  PsiWhiteSpace(' ')
-  JsonStringLiteral
-    PsiElement(DOUBLE_QUOTED_STRING)('"x"')
-  PsiErrorElement:<value> expected, got '}'
+    JsonArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ':'
+        PsiElement(:)(':')
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"x"')
     PsiElement(})('}')

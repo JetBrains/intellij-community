@@ -113,6 +113,14 @@ public class JsonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testBroken() {
+    doTest();
+  }
+
+  public void testBroken2() {
+    doTest();
+  }
+
   public void test1000_open_arrays() {
     doTest();
   }

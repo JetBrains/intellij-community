@@ -1,0 +1,77 @@
+JsonFile: Broken2.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace('\n  ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"field1"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace('\n  ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"innerMap1"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonObject
+        PsiElement({)('{')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"field2"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonNumberLiteral
+            PsiElement(NUMBER)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"field3"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"brokenInnerMap"')
+        PsiWhiteSpace('\n    ')
+        PsiErrorElement:',' or '}' expected, got ':'
+          PsiElement(:)(':')
+        PsiErrorElement:<property> or '}' expected, got '{'
+          <empty list>
+        PsiWhiteSpace(' ')
+        JsonObject
+          PsiElement({)('{')
+          PsiWhiteSpace('\n  ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"broken1"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonNumberLiteral
+              PsiElement(NUMBER)('1')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n  ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"broken2"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonNumberLiteral
+              PsiElement(NUMBER)('2')
+          PsiElement(,)(',')
+          PsiWhiteSpace('\n  ')
+          JsonProperty
+            JsonStringLiteral
+              PsiElement(DOUBLE_QUOTED_STRING)('"broken3"')
+            PsiElement(:)(':')
+            PsiWhiteSpace(' ')
+            JsonNumberLiteral
+              PsiElement(NUMBER)('3')
+          PsiWhiteSpace('\n')
+          PsiElement(})('}')
+        PsiWhiteSpace('\n')
+        PsiElement(})('}')
+    PsiWhiteSpace('\n')
+    PsiElement(})('}')

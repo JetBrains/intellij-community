@@ -4,5 +4,5 @@ JsonFile: n_array_extra_close.json
     JsonStringLiteral
       PsiElement(DOUBLE_QUOTED_STRING)('"x"')
     PsiElement(])(']')
-  PsiErrorElement:<value> expected, got ']'
+  PsiErrorElement:']' unexpected
     PsiElement(])(']')

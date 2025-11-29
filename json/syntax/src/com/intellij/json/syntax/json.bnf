@@ -66,25 +66,51 @@
 
 // For compatibility we allow any value at root level (see JsonStandardComplianceAnnotator)
 // Empty file is also allowed
-json ::= value*
+json ::= top_level_value*
 
-object ::= '{' <<consumeObjectContentIfTooDeep>> object_element* '}' {
+// parses top-level object eagerly
+private top_level_value ::= object | array | literal | reference_expression {
+  recoverWhile = top_level_value_recoverer
+}
+
+private top_level_value_recoverer ::= !value_start
+
+private shallow_object ::= &'{' <<shallowParseObject>>
+
+object ::= '{' <<consumeObjectContentIfTooDeep>> object_element* object_leftovers '}' {
   pin=1
   methods=[
     findProperty
     getPresentation
+    value=""
   ]
   mixin="com.intellij.json.psi.impl.JsonObjectMixin"
+  extraRoot = true
+  syntaxElementTypeFactory='com.intellij.json.syntax.JsonSyntaxElementFactory.getType'
+  elementTypeFactory='com.intellij.json.JsonElementFactory.getType'
 }
 
-// Hackity-hack to parse array elements and properties even if separating commas are missing,
-// TODO: Find out if there is any simpler way to do so in GrammarKit
+// consuming leftovers as part of `object` because:
+// 1. object is a root node and there is always `}` in the end of object (or EOF) because
+//    `shallow_object` stops only when occuring closing `}`
+// 2. if we can't parse object_elements anymore, then it's better to parse something.
+//    There still be an error element between them, so it's not going to be weird.
+// 3. it is guaranteed that in the end there will be either EOF or the closing brace of the wrapping object.
+//    If this is not true in some scenario, then it's a bug. Closing braces must be NEVER consumed by recoverWhile rules because of this.
+private object_leftovers ::= &'}' | <<eof>> | <<leftoverErrorInObject>> leftover_value_inside_object*
+
+private leftover_value_inside_object ::= value_impl {
+  recoverWhile = leftover_value_inside_object_recoverer
+}
+
+private leftover_value_inside_object_recoverer ::= !(value_start | '}')
+
 private object_element ::= property (','|&'}') {
   recoverWhile = not_brace_or_next_value
   pin = 1
 }
 
-private property_value ::= value
+private property_value ::= value_impl
 
 property ::= property_name (':' property_value) {
   methods=[
@@ -108,7 +134,7 @@ array ::= '[' <<consumeArrayContentIfTooDeep>> array_element* ']' {
   pin=1
 }
 
-private array_element ::= value (','|&']') {
+private array_element ::= value_impl (','|&']') {
   recoverWhile = not_bracket_or_next_value
   pin=1
 }
@@ -149,10 +175,13 @@ reference_expression ::= IDENTIFIER {
   mixin="com.intellij.json.psi.impl.JsonReferenceLiteralMixin"
 }
 
-value ::= object | array | literal | reference_expression
+// fake rule for keeping the hierarchy
+value ::= shallow_object | array | literal | reference_expression
+
+private value_impl ::= shallow_object | array | literal | reference_expression
 
 // Recoveries
-private not_bracket_or_next_value ::= !( ']' | value_start )
+private not_bracket_or_next_value ::= !( ']' | '}' | value_start )
 private not_brace_or_next_value ::= !( '}' | value_start )
 
 private value_start ::= '{' | '[' | SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING | NUMBER | TRUE | FALSE | NULL | IDENTIFIER

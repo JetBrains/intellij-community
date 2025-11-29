@@ -12,5 +12,5 @@ JsonFile: n_array_newlines_unclosed.json
     JsonNumberLiteral
       PsiElement(NUMBER)('1')
     PsiElement(,)(',')
-    PsiErrorElement:<value> or ']' expected
+    PsiErrorElement:<literal>, IDENTIFIER, '[', ']' or '{' expected
       <empty list>

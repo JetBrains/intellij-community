@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package com.intellij.json;
 
@@ -15,7 +13,7 @@ public interface JsonElementTypes {
   IElementType LITERAL = new JsonElementType("LITERAL");
   IElementType NULL_LITERAL = new JsonElementType("NULL_LITERAL");
   IElementType NUMBER_LITERAL = new JsonElementType("NUMBER_LITERAL");
-  IElementType OBJECT = new JsonElementType("OBJECT");
+  IElementType OBJECT = JsonElementFactory.getType("OBJECT");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
   IElementType REFERENCE_EXPRESSION = new JsonElementType("REFERENCE_EXPRESSION");
   IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
@@ -63,6 +61,9 @@ public interface JsonElementTypes {
       }
       else if (type == STRING_LITERAL) {
         return new JsonStringLiteralImpl(node);
+      }
+      else if (type == VALUE) {
+        return new JsonValueImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

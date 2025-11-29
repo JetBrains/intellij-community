@@ -1,0 +1,12 @@
+{
+  "field1": 1,
+  "innerMap1": {
+    "field2": 1,
+    "field3": "brokenInnerMap"
+    : {
+  "broken1": 1,
+  "broken2": 2,
+  "broken3": 3
+}
+}
+}

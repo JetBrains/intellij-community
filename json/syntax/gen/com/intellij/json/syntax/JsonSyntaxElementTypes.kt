@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // This is a generated file. Not intended for manual editing.
 package com.intellij.json.syntax
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.json.syntax.JsonSyntaxElementFactory
 
 object JsonSyntaxElementTypes {
   val ARRAY = SyntaxElementType("ARRAY")
@@ -12,7 +12,7 @@ object JsonSyntaxElementTypes {
   val LITERAL = SyntaxElementType("LITERAL")
   val NULL_LITERAL = SyntaxElementType("NULL_LITERAL")
   val NUMBER_LITERAL = SyntaxElementType("NUMBER_LITERAL")
-  val OBJECT = SyntaxElementType("OBJECT")
+  val OBJECT = JsonSyntaxElementFactory.getType("OBJECT")
   val PROPERTY = SyntaxElementType("PROPERTY")
   val REFERENCE_EXPRESSION = SyntaxElementType("REFERENCE_EXPRESSION")
   val STRING_LITERAL = SyntaxElementType("STRING_LITERAL")

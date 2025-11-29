@@ -5,7 +5,7 @@ JsonFile: n_object_double_colon.json
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('"x"')
       PsiElement(:)(':')
-      PsiErrorElement:<value> expected, got ':'
+      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ':'
         <empty list>
     PsiElement(:)(':')
     JsonProperty

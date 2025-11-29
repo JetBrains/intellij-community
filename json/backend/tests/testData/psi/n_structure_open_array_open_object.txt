@@ -5,3 +5,5 @@ JsonFile: n_structure_open_array_open_object.json
       PsiElement({)('{')
       PsiErrorElement:<property> or '}' expected
         <empty list>
+    PsiErrorElement:',' or ']' expected
+      <empty list>

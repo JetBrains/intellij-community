@@ -5,5 +5,5 @@ JsonFile: n_structure_object_unclosed_no_value.json
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('""')
       PsiElement(:)(':')
-      PsiErrorElement:<value> expected
+      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected
         <empty list>

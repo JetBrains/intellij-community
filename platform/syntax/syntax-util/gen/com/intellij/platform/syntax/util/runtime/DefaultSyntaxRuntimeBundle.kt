@@ -15,5 +15,6 @@ internal object DefaultSyntaxRuntimeBundle {
     "parsing.error.or" to "or",
     "parsing.error.unexpected" to "''{0}'' unexpected",
     "parsing.error.unmatched.input" to "unmatched input",
+    "parsing.error.leftover.in.object" to "<property> or ''}'' expected, got ''{0}''",
   )
 }

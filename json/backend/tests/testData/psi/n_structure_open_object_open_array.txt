@@ -3,7 +3,7 @@ JsonFile: n_structure_open_object_open_array.json
     PsiElement({)('{')
     PsiErrorElement:<property> or '}' expected, got '['
       <empty list>
-  JsonArray
-    PsiElement([)('[')
-    PsiErrorElement:<value> or ']' expected
-      <empty list>
+    JsonArray
+      PsiElement([)('[')
+      PsiErrorElement:<literal>, IDENTIFIER, '[', ']' or '{' expected
+        <empty list>

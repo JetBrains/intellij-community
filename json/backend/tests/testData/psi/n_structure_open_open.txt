@@ -9,13 +9,17 @@ JsonFile: n_structure_open_open.json
       PsiElement({)('{')
       PsiErrorElement:<property> or '}' expected, got '['
         <empty list>
-    JsonArray
-      PsiElement([)('[')
-      JsonStringLiteral
-        PsiElement(DOUBLE_QUOTED_STRING)('"\{["')
-      PsiErrorElement:',' or ']' expected, got '\'
-        PsiElement(BAD_CHARACTER)('\')
-      JsonObject
-        PsiElement({)('{')
-        PsiErrorElement:<property> or '}' expected
+      JsonArray
+        PsiElement([)('[')
+        JsonStringLiteral
+          PsiElement(DOUBLE_QUOTED_STRING)('"\{["')
+        PsiErrorElement:',' or ']' expected, got '\'
+          PsiElement(BAD_CHARACTER)('\')
+        JsonObject
+          PsiElement({)('{')
+          PsiErrorElement:<property> or '}' expected
+            <empty list>
+        PsiErrorElement:',' or ']' expected
           <empty list>
+    PsiErrorElement:',' or ']' expected
+      <empty list>

@@ -8,8 +8,8 @@ JsonFile: n_structure_trailing__.json
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('"b"')
     PsiElement(})('}')
-  PsiErrorElement:<value> expected, got '#'
+  PsiErrorElement:'#' unexpected
     PsiElement(BAD_CHARACTER)('#')
-  PsiElement(DUMMY_BLOCK)
+  JsonObject
     PsiElement({)('{')
     PsiElement(})('}')

@@ -6,7 +6,7 @@ JsonFile: IncompleteObjectProperties.json
       JsonStringLiteral
         PsiElement(DOUBLE_QUOTED_STRING)('"foo"')
       PsiElement(:)(':')
-      PsiErrorElement:<value> expected, got ','
+      PsiErrorElement:<literal>, IDENTIFIER, '[' or '{' expected, got ','
         <empty list>
     PsiWhiteSpace(' ')
     PsiElement(,)(',')
