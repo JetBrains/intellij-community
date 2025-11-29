@@ -178,6 +178,7 @@ jvm_library(
     "//platform/testFramework/junit5/highlighting",
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
+    "@lib//:jediterm-core",
   ],
   runtime_deps = [
     "//xml/dom-impl",
