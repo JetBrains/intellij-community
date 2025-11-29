@@ -204,5 +204,13 @@
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingDescriptionInspection"
                      isInternal="false"/>
 
+    <localInspection language="UAST" groupPath="Gradle" shortName="AvoidDuplicateRepositories"
+                     bundle="messages.GradleInspectionBundle"
+                     key="inspection.display.name.avoid.duplicate.repositories" groupKey="inspection.best.practices"
+                     groupBundle="messages.GradleInspectionBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDuplicateRepositoriesInspection"
+                     isInternal="true"/>
+
   </extensions>
 </idea-plugin>

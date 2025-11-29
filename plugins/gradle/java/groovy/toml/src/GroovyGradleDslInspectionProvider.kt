@@ -59,4 +59,8 @@ class GroovyGradleDslInspectionProvider : GradleDslInspectionProvider {
   override fun isTaskMissingDescriptionInspectionAvailable(file: PsiFile): Boolean = false
   override fun getTaskMissingDescriptionInspectionVisitor(holder: ProblemsHolder, onTheFly: Boolean): PsiElementVisitor =
     PsiElementVisitor.EMPTY_VISITOR
+
+  override fun isAvoidDuplicateRepositoriesInspectionAvailable(file: PsiFile): Boolean = false
+  override fun getAvoidDuplicateRepositoriesInspectionVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    PsiElementVisitor.EMPTY_VISITOR
 }
