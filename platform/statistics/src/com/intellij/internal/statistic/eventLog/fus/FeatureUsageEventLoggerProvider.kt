@@ -38,7 +38,7 @@ internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProviderEx
 
   private fun isAllowedByUserConsentWithJetBrains(): Boolean {
     val consentProvider = serviceOrNull<JetBrainsConsentProvider>() ?: return false
-    val providerPlugin = PluginManager.getPluginByClass(JetBrainsConsentProvider::class.java) ?: return false
+    val providerPlugin = PluginManager.getPluginByClass(consentProvider.javaClass) ?: return false
     if (!PluginManagerCore.isDevelopedExclusivelyByJetBrains(providerPlugin)) return false
     return consentProvider.isAllowedByUserConsentWithJetBrains()
   }
