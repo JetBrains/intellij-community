@@ -37,7 +37,7 @@
     "sourceType": "org.springframework.boot.actuate.endpoint.EnvironmentEndpoint",
     "description": ""<error descr="',' or '}' expected, got 'ption'">p</error>tion<error descr="':' expected, got '\": \"'">"</error>: "<error descr="':' expected, got 'Keys'">K</error>eys<error descr="':' expected, got 'that'"> </error>that<error descr="':' expected, got 'should'"> </error>should<error descr="':' expected, got 'be'"> </error>be<error descr="':' expected, got 'sanitized.'"> </error>sanitized.<error descr="':' expected, got 'Keys'"> </error>Keys<error descr="':' expected, got 'can'"> </error>can<error descr="':' expected, got 'be'"> </error>be<error descr="':' expected, got 'simple'"> </error>simple<error descr="':' expected, got 'strings'"> </error>strings<error descr="':' expected, got 'that'"> </error>that<error descr="':' expected, got 'the'"> </error>the<error descr="':' expected, got 'property'"> </error>property<error descr="':' expected, got 'ends'"> </error>ends<error descr="':' expected, got 'with'"> </error>with<error descr="':' expected, got 'or'"> </error>or<error descr="':' expected, got 'regex'"> </error>regex<error descr="':' expected, got 'expressions.'"> </error>expressions.<error descr="Missing closing quote"><error descr="':' expected, got '\",'">"</error>,</error><EOLError descr="':' expected, got '\"defaultValue\"'"></EOLError>
     "defaultValue": [
-      <error descr="<value> expected, got ','">,</error>
+      <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error>
       "secret"<error descr="':' expected, got ','">,</error>
       "key"<error descr="':' expected, got ','">,</error>
       "token"<error descr="':' expected, got ','">,</error>
@@ -125,7 +125,7 @@
     "defaultValue": true
   },
   {
-    "name":<error descr="<value> expected, got ','"> </error>,
+    "name":<error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','"> </error>,
     "type": "java.lang.Boolean",
     "description": "Enable Redis health check.",
     "defaultValue": true
@@ -151,7 +151,7 @@
   },
   {
     "name": "management.info.defaults.enabled",
-    "type":<error descr="<value> expected, got ','"> </error>,
+    "type":<error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','"> </error>,
     "description": "Enable default info contributors.",
     "defaultValue": true
   },
@@ -176,9 +176,9 @@
     "description": "Resource reference to a generated git info properties file.",
     "deprecation": {
       "replacement"<error descr="':' expected, got '\"hints\"'">"</error>hints": [
-  <error descr="<value> expected, got ','">,</error>
+  <error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','">,</error>
   {
-    "name":<error descr="<value> expected, got ','"> </error>,
+    "name":<error descr="<literal>, IDENTIFIER, '[' or '{' expected, got ','"> </error>,
     "values": [false<EOLError descr="',' or ']' expected, got '{'"></EOLError>
       {
         "value": "*"
@@ -189,7 +189,7 @@
         "name": "any"
       }
     ]
-  },
+  }<error descr="',' unexpected">,</error>
   {
     "name": "management.endpoints.cors.allowed-origins",
     "values": [
@@ -202,7 +202,7 @@
         "name": "any"
       }
     ]
-  },
+  }<error descr="',' unexpected">,</error>
   {
     "name": "management.health.status.order",
     "values": [
@@ -213,15 +213,15 @@
         "value": "UP"
       },
       <error descr="',' unexpected">,</error>
-      CE<error descr="',' or ']' expected, got '\"'"><error descr="Missing closing quote">"</error></error>
-      <error descr="',' or ']' expected, got '}'">}</error>
-    ],
-    "providers": [
+      CE<error descr="',' or ']' expected, got '\"'"><error descr="Missing closing quote">"</error></error><EOLError descr="',' or ']' expected, got '}'"></EOLError>
+      }
+    <error descr="']' unexpected">]</error>,
+    "providers"<error descr="':' unexpected">:</error> [
       {
         "name": "any"
       }
     ]
   }
-]}
+<error descr="',' or '}' expected, got ']'">]</error>}<EOLError descr="',' or ']' expected"></EOLError>
 
 
