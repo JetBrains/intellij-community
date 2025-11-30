@@ -238,17 +238,16 @@ class JsonTypingHandlingTest : JsonTestCase() {
   }
 
   fun testNoCommaInNextQuotes() {
-    testWithPairQuotes(false,
-                       Runnable {
-                         doTypingTest(""""ccc": """",
-                                      """{<caret>"aaa": "bbb"}""",
-                                      """{"ccc": "<caret>"aaa": "bbb"}""",
-                                      "json")
-                       })
+    testWithPairQuotes(false) {
+      doTypingTest(""""ccc": """",
+                   """{<caret>"aaa": "bbb"}""",
+                   """{"ccc": "<caret>"aaa": "bbb"}""",
+                   "json")
+    }
   }
 
   fun testNoCommaAfterArray() {
-    testWithPairQuotes(false, Runnable {
+    testWithPairQuotes(false) {
       doTypingTest('"', """
         [
           {"aaa": [<caret>]},
@@ -260,16 +259,16 @@ class JsonTypingHandlingTest : JsonTestCase() {
           {}
         ]
       """.trimIndent(), "json")
-    })
+    }
   }
 
   fun testAddCommaWithPairedQuotes() {
-    testWithPairQuotes(true, Runnable {
+    testWithPairQuotes(true) {
       doTypingTest(""""ccc": """",
                    """{<caret>"aaa": "bbb"}""",
                    """{"ccc": "<caret>","aaa": "bbb"}""",
                    "json")
-    })
+    }
   }
 
   fun testNoCommaIfRBraceAndNoNewline() {
@@ -417,17 +416,15 @@ class JsonTypingHandlingTest : JsonTestCase() {
     )
   }
 
-  companion object {
-    private fun testWithPairQuotes(on: Boolean, test: Runnable) {
-      val settings = CodeInsightSettings.getInstance()
-      val oldQuote = settings.AUTOINSERT_PAIR_QUOTE
-      try {
-        settings.AUTOINSERT_PAIR_QUOTE = on
-        test.run()
-      }
-      finally {
-        settings.AUTOINSERT_PAIR_QUOTE = oldQuote
-      }
+  private fun testWithPairQuotes(on: Boolean, test: () -> Unit) {
+    val settings = CodeInsightSettings.getInstance()
+    val oldQuote = settings.AUTOINSERT_PAIR_QUOTE
+    try {
+      settings.AUTOINSERT_PAIR_QUOTE = on
+      test()
+    }
+    finally {
+      settings.AUTOINSERT_PAIR_QUOTE = oldQuote
     }
   }
 }
