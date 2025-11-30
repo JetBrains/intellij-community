@@ -671,8 +671,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Unmodifiable
   List<GutterMark> findAllGutters();
 
-  void type(final char c);
+  void type(char c);
 
+  /**
+   * Types all chars from the specified string one by one.
+   *
+   * @see #type(char)
+   */
   void type(@NotNull String s);
 
   /**
