@@ -12,8 +12,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -238,9 +236,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
     }
 
     Object lock = new Object();
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     List<LineMarkerInfo<PsiElement>> found = new ArrayList<>();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(tasks, computable -> {
       List<LineMarkerInfo<PsiElement>> infos = computable.compute();
       synchronized (lock) {
         found.addAll(infos);

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.RainbowVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,12 +103,12 @@ class HighlightVisitorRunner {
     List<VisitorInfo> visitorInfos = ContainerUtil.map(visitors, v -> new VisitorInfo(v, new HashSet<>(), infoHolderProducer.get()));
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
-      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitors: " + Arrays.toString(visitors)+"; psiFile="+psiFile+"; progress="+progress);
+      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: visitors: " + Arrays.toString(visitors)+"; psiFile="+psiFile+"; progress="+progress+"; context job:"+ThreadContext.currentThreadContext().get(Job.Key));
     }
-    boolean res = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(visitorInfos, progress, visitorInfo -> {
+    boolean res = JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(visitorInfos, visitorInfo -> {
         HighlightVisitor visitor = visitorInfo.visitor();
         if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
-          GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile+"; "+Thread.currentThread()+"; progress="+progress);
+          GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: running visitor: " + visitor+"("+visitor.getClass()+"); psiFile="+psiFile+"; "+Thread.currentThread()+"; progress="+progress+"; context job:"+ThreadContext.currentThreadContext().get(Job.Key));
         }
         try {
           int[] sizeAfterRunVisitor = new int[1];
@@ -129,13 +131,13 @@ class HighlightVisitorRunner {
         }
         catch (Exception e) {
           if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
-            GeneralHighlightingPass.LOG.trace("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread()+"; progress="+progress);
+            GeneralHighlightingPass.LOG.trace("GHP: visitor " + visitor + "(" + visitor.getClass() + ") threw " + ExceptionUtil.getThrowableText(e)+"; "+Thread.currentThread()+"; progress="+progress+"; context job:"+ThreadContext.currentThreadContext().get(Job.Key));
           }
           throw e;
         }
       });
     if (GeneralHighlightingPass.LOG.isTraceEnabled()) {
-      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread()+"; progress="+progress);
+      GeneralHighlightingPass.LOG.trace("HighlightVisitorRunner: all visitors ran; result="+res+" visitorInfos="+visitorInfos+"; "+Thread.currentThread()+"; progress="+progress+"; context job:"+ThreadContext.currentThreadContext().get(Job.Key));
     }
     return res;
   }

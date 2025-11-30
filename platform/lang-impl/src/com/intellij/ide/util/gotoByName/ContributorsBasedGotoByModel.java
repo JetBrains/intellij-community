@@ -97,7 +97,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(contributors, indicator, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(contributors, processor)) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
