@@ -46,9 +46,8 @@
 
     <group id="ProductivityFeatures">
       <reference ref="ShowTips"/>
-      <separator/>
       <action id="ProductivityGuide" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
-      <add-to-group group-id="HelpMenu" relative-to-action="Help.KeymapReference" anchor="after"/>
+      <add-to-group group-id="LearnGroup"/>
     </group>
 
     <group id="TipsAndFeatures" internal="true" popup="true">

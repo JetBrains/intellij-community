@@ -45,6 +45,10 @@
 
     <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"/>
     <action id="SimulateRWFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateRWFreeze"/>
+
+    <reference ref="CaptureMemorySnapShot">
+      <add-to-group group-id="HelpMenu" relative-to-action="CollectZippedLogs" anchor="after"/>
+    </reference>
   </actions>
 
   <extensionPoints>
