@@ -372,28 +372,32 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
                   "\"field2\": 1,\n" +
                   "  " +
                       "  \"field3\": \"brokenInnerMap\"\n" +
-                      "    : {\n" +
-                      "  \"broken1\": 1,\n" +
-                      "  \"broken2\": 2,\n" +
-                      "  \"broken3\": 3\n" +
-                      "}\n" +
-                      "}\n" +
-                      "}";
+                      "    :\n" +
+                      "    {\n" +
+                      "      \"broken1\": 1,\n" +
+                      "      \"broken2\": 2,\n" +
+                      "      \"broken3\": 3\n" +
+                      "    }\n" +
+                  "  " +
+                  "}\n" +
+                  "}";
             }
           }
       """.trimIndent(), true)
+
       TestCase.assertEquals("""
           {
             "field1": 1,
             "innerMap1": {
               "field2": 1,
               "field3": "brokenInnerMap"
-              : {
-            "broken1": 1,
-            "broken2": 2,
-            "broken3": 3
-          }
-          }
+              :
+              {
+                "broken1": 1,
+                "broken2": 2,
+                "broken3": 3
+              }
+            }
           }
       """.trimIndent(), fragmentFile.text)
 
