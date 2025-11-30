@@ -75,7 +75,7 @@ public final class ThreadingAssertions {
    */
   public static void assertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      throwThreadAccessException(MUST_EXECUTE_IN_EDT);
+      throwThreadAccessException(MUST_EXECUTE_IN_EDT, false);
     }
   }
 
@@ -98,7 +98,7 @@ public final class ThreadingAssertions {
    */
   public static void assertBackgroundThread() {
     if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT, false);
     }
   }
 
@@ -126,7 +126,7 @@ public final class ThreadingAssertions {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       if (!application.isReadAccessAllowed()) {
-        throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
+        throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION, true);
       }
       else {
         trySoftAssertReadAccessWhenLocksAreForbidden(application);
@@ -174,7 +174,7 @@ public final class ThreadingAssertions {
   public static void assertNoReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION, true);
     }
   }
 
@@ -184,7 +184,7 @@ public final class ThreadingAssertions {
   public static void assertNoOwnReadAccess() {
     Application application = ApplicationManager.getApplication();
     if (application != null && application.holdsReadLock()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION, true);
     }
   }
 
@@ -214,7 +214,7 @@ public final class ThreadingAssertions {
    * Throw error that current thread hasn't write-intent read access.
    */
   public static void throwWriteIntentReadAccess() {
-    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION);
+    throwThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION, true);
   }
 
   /**
@@ -226,7 +226,7 @@ public final class ThreadingAssertions {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       if (!application.isWriteAccessAllowed()) {
-        throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
+        throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION, true);
       }
       else {
         trySoftAssertWriteAccessWhenLocksAreForbidden(application);
@@ -241,9 +241,11 @@ public final class ThreadingAssertions {
     }
   }
 
-  private static void throwThreadAccessException(@NotNull @NonNls String message) {
+  private static void throwThreadAccessException(@NotNull @NonNls String message, boolean isThreading) {
     RuntimeExceptionWithAttachments exception = createThreadAccessException(message);
-    processExceptionWithThreadLocal(exception);
+    if (isThreading) {
+      processExceptionWithThreadLocal(exception);
+    }
     throw exception;
   }
 
