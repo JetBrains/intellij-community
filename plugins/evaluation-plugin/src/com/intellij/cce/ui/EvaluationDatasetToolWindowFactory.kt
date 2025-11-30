@@ -1,5 +1,6 @@
 package com.intellij.cce.ui
 
+import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.actions.ActionArraySerializer
 import com.intellij.cce.actions.ActionSerializer
 import com.intellij.cce.actions.ActionsBuilder.SessionBuilder
@@ -11,15 +12,18 @@ import com.intellij.cce.core.TypeProperty
 import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FilesHelper
+import com.intellij.icons.AllIcons
 import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.*
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
@@ -31,6 +35,8 @@ import javax.swing.JPanel
 import javax.swing.JTextArea
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeToOrNull
+
+private const val TOOLWINDOW_ID = "Evaluation Dataset"
 
 @Suppress("HardCodedStringLiteral")
 class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
@@ -226,5 +232,43 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
     private fun getCurrentSelectionText(): String = getCurrentEditor()?.selectionModel?.selectedText ?: ""
 
     private fun getCurrentEditor(): Editor? = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
+  }
+}
+
+internal class EvaluationDatasetToolAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val toolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID)
+
+    if (toolWindow == null) {
+      registerToolwindow(toolWindowManager).activate { }
+    }
+    else {
+      toolWindow.activate { }
+    }
+  }
+
+  private fun registerToolwindow(toolWindowManager: ToolWindowManager): ToolWindow {
+    val toolWindow = toolWindowManager.registerToolWindow(
+      RegisterToolWindowTask(
+        id = TOOLWINDOW_ID,
+        anchor = ToolWindowAnchor.BOTTOM,
+        component = null,
+        icon = AllIcons.Toolwindows.ToolWindowDataView,
+        contentFactory = EvaluationDatasetToolWindowFactory(),
+        stripeTitle = EvaluationPluginBundle.messagePointer("toolwindow.evaluation.dataset.title"),
+      )
+    )
+    return toolWindow
   }
 }
