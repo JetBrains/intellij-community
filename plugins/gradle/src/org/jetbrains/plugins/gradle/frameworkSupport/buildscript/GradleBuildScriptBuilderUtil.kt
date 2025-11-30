@@ -146,3 +146,7 @@ fun isGroovyApacheSupported(groovyVersion: String): Boolean {
 fun isVersionCatalogsSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4")
 }
+
+fun isDependencyResolutionManagementSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.8")
+}

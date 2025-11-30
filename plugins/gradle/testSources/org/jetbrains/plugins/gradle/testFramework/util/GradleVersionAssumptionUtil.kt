@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isConfigurationCacheSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isDependencyResolutionManagementSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGroovy5Supported
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isIsolatedProjectsSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaConventionsBlockSupported
@@ -93,5 +94,11 @@ fun assumeThatIsolatedProjectsIsSupported(gradleVersion: GradleVersion) {
 fun assumeThatVersionCatalogsAreSupported(gradleVersion: GradleVersion) {
   Assumptions.assumeTrue(isVersionCatalogsSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support version catalogs."
+  }
+}
+
+fun assumeThatDependencyResolutionManagementIsSupported(gradleVersion: GradleVersion) {
+  Assumptions.assumeTrue(isDependencyResolutionManagementSupported(gradleVersion)) {
+    "Gradle ${gradleVersion.version} doesn't support DependencyResolutionManagement."
   }
 }
