@@ -1,3 +1,3 @@
 ```json
-<error descr="<value> expected, got '|'">|</error>|
+<error descr="<literal>, IDENTIFIER, '[' or '{' expected, got '|'">|</error>|
 ```
