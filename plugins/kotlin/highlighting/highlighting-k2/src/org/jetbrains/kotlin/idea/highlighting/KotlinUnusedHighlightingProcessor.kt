@@ -14,7 +14,6 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -176,7 +175,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         for (declaration in psiElements) {
             declaration.accept(namedElementVisitor)
         }
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(namedElements, ProgressManager.getGlobalProgressIndicator()) { declaration ->
+        JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(namedElements) { declaration ->
             analyze(declaration) {
                 handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
             }

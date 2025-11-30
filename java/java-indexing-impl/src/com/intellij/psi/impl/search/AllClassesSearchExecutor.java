@@ -56,7 +56,7 @@ public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, A
     sorted.sort(String.CASE_INSENSITIVE_ORDER);
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(sorted, ProgressIndicatorProvider.getGlobalProgressIndicator(), name ->
+    return JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(sorted, name ->
       processByName(project, scope, processor, cache, name));
   }
 

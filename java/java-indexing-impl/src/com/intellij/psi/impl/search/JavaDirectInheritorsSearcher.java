@@ -7,7 +7,6 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -189,7 +188,7 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
       return;
     }
     if (size > 100) {
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(collection), ProgressIndicatorProvider.getGlobalProgressIndicator(), processor);
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(new ArrayList<>(collection), processor);
     }
     else {
       ContainerUtil.process(collection, processor);

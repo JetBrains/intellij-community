@@ -6,9 +6,6 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -16,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +46,6 @@ final class JavaTelescope {
 
   public static int usagesCount(@NotNull PsiFile psiFile, List<PsiMember> members, SearchScope scope) {
     Project project = psiFile.getProject();
-    ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), /*todo remove*/new EmptyProgressIndicator());
     AtomicInteger totalUsageCount = new AtomicInteger();
 
     if (Registry.is("java.telescope.usages.single.threaded", true)) {
@@ -58,7 +53,7 @@ final class JavaTelescope {
         if (!countUsagesForMember(psiFile, scope, member, project, totalUsageCount)) break;
       }
     } else {
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
+      JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(members, member -> {
         return countUsagesForMember(psiFile, scope, member, project, totalUsageCount);
       });
     }
