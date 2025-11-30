@@ -4,8 +4,8 @@ package com.intellij.concurrency;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.progress.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +50,27 @@ public abstract class JobLauncher {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
   }
+
+  /**
+   * The same as {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)}, but tries to infer {@link ProgressIndicator}
+   * from the caller context.
+   */
+  public <T> boolean invokeConcurrentlyUnderContextProgress(@NotNull List<? extends T> things,
+                                                            @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    //noinspection TestOnlyProblems
+    if (progressIndicator == null && Cancellation.currentJob() != null) {
+      return CoroutinesKt.blockingContextToIndicator(
+        () -> invokeConcurrentlyUnderProgress(things, ProgressIndicatorProvider.getGlobalProgressIndicator(), app.isReadAccessAllowed(),
+                                              app.isInImpatientReader(), thingProcessor));
+    }
+    else {
+      return invokeConcurrentlyUnderProgress(things, progressIndicator, app.isReadAccessAllowed(), app.isInImpatientReader(),
+                                             thingProcessor);
+    }
+  }
+
   /**
    * Schedules concurrent execution of #thingProcessor over each element of #things and waits for completion
    * With checkCanceled in each thread delegated to our current progress
