@@ -188,9 +188,12 @@ open class EditorComposite internal constructor(
   fun isAvailable(): Boolean = fileEditorWithProviders.value !== INITIAL_EMPTY
 
   @Internal
-  protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
+  protected open suspend fun beforeFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {
+  }
+
   @Internal
-  protected open suspend fun afterFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {}
+  protected open suspend fun afterFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {
+  }
 
   private suspend fun handleModel(model: EditorCompositeModel) {
     val fileEditorWithProviders = model.fileEditorAndProviderList
@@ -280,6 +283,7 @@ open class EditorComposite internal constructor(
     val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
     applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
   }
+
   private fun List<FileEditorWithProvider>.assignEditorProperties(): Unit = forEach { it.fileEditor.assignProperties() }
 
   private fun oldBadForRemoteDevGetStates(
@@ -765,7 +769,7 @@ open class EditorComposite internal constructor(
       Disposer.dispose(fileEditor)
     }
 
-    fileEditorWithProviderList.update { oldList -> oldList.toMutableList().also { it.removeAll(toRemove)} }
+    fileEditorWithProviderList.update { oldList -> oldList.toMutableList().also { it.removeAll(toRemove) } }
 
     if (fileEditorWithProviderList.value.isEmpty()) {
       compositePanel.removeAll()
@@ -952,12 +956,12 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     skeletonScope.cancel()
     removeAll()
 
-      val scrollPanes = UIUtil.uiTraverser(newComponent)
-        .expand { o -> o === newComponent || o is JPanel || o is JLayeredPane }
-        .filter(JScrollPane::class.java)
-      for (scrollPane in scrollPanes) {
-        scrollPane.border = SideBorder(JBColor.border(), SideBorder.NONE)
-      }
+    val scrollPanes = UIUtil.uiTraverser(newComponent)
+      .expand { o -> o === newComponent || o is JPanel || o is JLayeredPane }
+      .filter(JScrollPane::class.java)
+    for (scrollPane in scrollPanes) {
+      scrollPane.border = SideBorder(JBColor.border(), SideBorder.NONE)
+    }
 
     add(newComponent, BorderLayout.CENTER)
     this.focusComponent = focusComponent

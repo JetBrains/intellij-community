@@ -262,10 +262,10 @@ open class FileEditorManagerImpl(
           // In RD that's not true due to latency and overhead complexity. So, we've observed a second state, which breaks a history
           .dropWhile { it == null && !composite.isAvailable() }
           .mapLatest { fileEditorWithProvider ->
-          fileEditorWithProvider?.let {
-            SelectionState(composite = composite, fileEditorProvider = it)
+            fileEditorWithProvider?.let {
+              SelectionState(composite = composite, fileEditorProvider = it)
+            }
           }
-        }
       }
       .stateIn(scope = coroutineScope, started = SharingStarted.Eagerly, initialValue = null)
 
@@ -951,7 +951,10 @@ open class FileEditorManagerImpl(
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
       withContext(Dispatchers.EDT) {
-        openInRightSplit(file, options.requestFocus, options.forceFocus, explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
+        openInRightSplit(file,
+                         options.requestFocus,
+                         options.forceFocus,
+                         explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
       }?.let { composite ->
         if (composite is EditorComposite) {
           composite.waitForAvailable()
@@ -1062,7 +1065,7 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     requestFocus: Boolean,
     forceFocus: Boolean,
-    explicitlySetCompositeProvider: (() -> EditorComposite?)? = null
+    explicitlySetCompositeProvider: (() -> EditorComposite?)? = null,
   ): FileEditorComposite? {
     val window = splitters.currentWindow ?: return null
     if (window.inSplitter()) {
@@ -1076,7 +1079,8 @@ open class FileEditorManagerImpl(
         return composite
       }
     }
-    return window.owner.openInRightSplit(file, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)?.composites()?.firstOrNull { it.file == file }
+    return window.owner.openInRightSplit(file, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+      ?.composites()?.firstOrNull { it.file == file }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -1278,7 +1282,8 @@ open class FileEditorManagerImpl(
       val isNewEditor = composite == null
       if (composite == null) {
         // IJPL-183875: Explicitly set a composite to open a backend supplied composite
-        composite = options.explicitlyOpenCompositeProvider?.invoke()?.also { LOG.info("doOpenInEdt: Using explicitly selected composite for file=${file.name}")}
+        composite = options.explicitlyOpenCompositeProvider?.invoke()
+                      ?.also { LOG.info("doOpenInEdt: Using explicitly selected composite for file=${file.name}") }
                     ?: createCompositeAndModel(file = file, window = window, fileEntry = fileEntry)
                     ?: return@Computable null
         openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
@@ -1811,7 +1816,8 @@ open class FileEditorManagerImpl(
     val state = Element("state")
     mainSplitters.writeExternal(
       element = state,
-      delayedStates = openedCompositeEntries.asSequence().filter { it.delayedState != null }.associateBy(keySelector = { it.composite }, valueTransform = { it.delayedState!! }),
+      delayedStates = openedCompositeEntries.asSequence().filter { it.delayedState != null }
+        .associateBy(keySelector = { it.composite }, valueTransform = { it.delayedState!! }),
     )
     return state
   }
@@ -2382,7 +2388,9 @@ suspend fun waitForFullyCompleted(composite: FileEditorComposite) {
 @Internal
 fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
   if (event is MouseEvent) {
-    val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED || event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
+    val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED ||
+                       event.getID() == MouseEvent.MOUSE_PRESSED ||
+                       event.getID() == MouseEvent.MOUSE_RELEASED
     val modifiers = event.modifiersEx
     if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
       return FileEditorManagerImpl.OpenMode.NEW_WINDOW
@@ -2429,6 +2437,7 @@ private inline fun <T> runBulkTabChangeInEdt(splitters: EditorsSplitters, task: 
     }
   }
 }
+
 @RequiresEdt
 fun reopenVirtualFileEditor(project: Project, oldFile: VirtualFile, newFile: VirtualFile) {
   reopenVirtualFileEditor(project, oldFile, newFile, false)
@@ -2454,7 +2463,7 @@ private fun reopenVirtualFileInEditor(
   window: EditorWindow,
   oldFile: VirtualFile,
   newFile: VirtualFile,
-  fullReplacement: Boolean
+  fullReplacement: Boolean,
 ) {
   val oldComposite = window.getComposite(oldFile) ?: return // the old file is not opened in this split
   val active = window.selectedComposite == oldComposite
@@ -2558,14 +2567,17 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
         withContext(Dispatchers.EDT) {
           val tab = window.findTabByComposite(composite) ?: return@withContext
           tab.setText(title)
-          tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) splitters.manager.getFileTooltipText(composite.file, composite) else null)
+          tab.setTooltipText(if (UISettings.getInstance().showTabsTooltips) splitters.manager.getFileTooltipText(composite.file,
+                                                                                                                 composite)
+                             else null)
         }
       }
     }
   }
 }
 
-internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
+internal fun isSingletonFileEditor(fileEditor: FileEditor?): Boolean =
+  FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW.get(fileEditor, false)
 
 private fun isSingletonDockWindow(window: EditorWindow): Boolean {
   val windowDockContainer = getWindowDockContainer(window)

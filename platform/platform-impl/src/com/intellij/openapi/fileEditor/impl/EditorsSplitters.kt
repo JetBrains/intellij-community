@@ -127,6 +127,7 @@ open class EditorsSplitters internal constructor(
   }
 
   private val _currentWindowFlow = MutableStateFlow<EditorWindow?>(null)
+
   @JvmField
   internal val currentWindowFlow: StateFlow<EditorWindow?> = _currentWindowFlow.asStateFlow()
 
@@ -401,7 +402,7 @@ open class EditorsSplitters internal constructor(
 
   internal fun setCurrentWindow(window: EditorWindow?) {
     LOG.debug {
-     "set editor window to $window: ${ExceptionUtil.currentStackTrace()}"
+      "set editor window to $window: ${ExceptionUtil.currentStackTrace()}"
     }
     _currentWindowFlow.value = window
   }
@@ -787,20 +788,20 @@ open class EditorsSplitters internal constructor(
     }
 
     /**
-      Rolls back the last focus gained time if focus change was temporary
+    Rolls back the last focus gained time if focus change was temporary
 
-      Fixes the following situation:
+    Fixes the following situation:
 
-      1. The user clicks an inactive IDE window.
-      2. The window gets focus, the last focused editor becomes focused.
-      3. The component that the user clicked becomes focused immediately after that.
+    1. The user clicks an inactive IDE window.
+    2. The window gets focus, the last focused editor becomes focused.
+    3. The component that the user clicked becomes focused immediately after that.
 
-      In this case, the IDE should behave as if the editor never received this last focus to begin with.
-      However, it's impossible to detect when the editor gains focus.
-      At that point, the mouse click may not even be in the event queue yet,
-      and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
-      Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
-    */
+    In this case, the IDE should behave as if the editor never received this last focus to begin with.
+    However, it's impossible to detect when the editor gains focus.
+    At that point, the mouse click may not even be in the event queue yet,
+    and it's anyone's guess whether the window was activated by a mouse click or, say, with Alt+Tab.
+    Therefore, we update the editor's last focused time anyway, but then roll back if this situation is detected.
+     */
     private fun rollbackFocusGainedIfNecessary(newFocusedComponent: Component) {
       if (previousFocusGainedTime == 0L) return // Nothing to roll back.
       if (ComponentUtil.getParentOfType(EditorsSplitters::class.java, newFocusedComponent) == this@EditorsSplitters) {
@@ -820,9 +821,15 @@ open class EditorsSplitters internal constructor(
 
   @JvmOverloads
   @RequiresEdt
-  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? = openInRightSplit(file, requestFocus, forceFocus, null)
+  fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false): EditorWindow? =
+    openInRightSplit(file, requestFocus, forceFocus, null)
 
-  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, forceFocus: Boolean = false, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
+  internal fun openInRightSplit(
+    file: VirtualFile,
+    requestFocus: Boolean = true,
+    forceFocus: Boolean = false,
+    explicitlySetCompositeProvider: (() -> EditorComposite?)?,
+  ): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
     if (parent is Splitter) {
@@ -833,13 +840,21 @@ open class EditorsSplitters internal constructor(
           manager.openFile(
             file = file,
             window = rightSplitWindow,
-            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, forceFocus = forceFocus, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
+            options = FileEditorOpenOptions(requestFocus = requestFocus,
+                                            waitForCompositeOpen = false,
+                                            forceFocus = forceFocus,
+                                            explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
           )
           return rightSplitWindow
         }
       }
     }
-    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT, forceSplit = true, virtualFile = file, focusNew = requestFocus, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+    return window.split(orientation = JSplitPane.HORIZONTAL_SPLIT,
+                        forceSplit = true,
+                        virtualFile = file,
+                        focusNew = requestFocus,
+                        forceFocus = forceFocus,
+                        explicitlySetCompositeProvider = explicitlySetCompositeProvider)
   }
 }
 
@@ -921,6 +936,7 @@ internal class EditorSplitterStateLeaf(element: Element, storedIdeFingerprint: I
 class EditorSplitterState(element: Element) {
   @JvmField
   internal val splitters: EditorSplitterStateSplitter?
+
   @JvmField
   internal val leaf: EditorSplitterStateLeaf?
 
@@ -1108,26 +1124,27 @@ private fun computeFileEntry(
   val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return null
 
   // do not expose `file` variable to avoid using it instead of `fileProvider`
-  val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
-    // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
-    // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
-    if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-      ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-        try {
-          notFullyPreparedFile.contentsToByteArray(true)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (ignore: FileTooBigException) {
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
+  val fileProviderDeferred =
+    compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
+      // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
+      // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
+      if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
+        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+          try {
+            notFullyPreparedFile.contentsToByteArray(true)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (ignore: FileTooBigException) {
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }
+      notFullyPreparedFile
     }
-    notFullyPreparedFile
-  }
 
   val fileProvider = suspend { fileProviderDeferred.await() }
 
@@ -1294,7 +1311,8 @@ private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: Virt
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
     if (fileEntry.managingFsCreationTimestamp != null) {
       fileIdAdapter.getFileWithTimestamp(fileEntry.id, fileEntry, fileEntry.managingFsCreationTimestamp)
-    } else {
+    }
+    else {
       fileIdAdapter.getFile(fileEntry.id, fileEntry)
     }
   }

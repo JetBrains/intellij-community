@@ -977,7 +977,8 @@ class EditorWindow internal constructor(
     return null
   }
 
-  private fun findComponentIndex(composite: EditorComposite): Int = tabbedPane.tabs.tabs.indexOfFirst { it.component === composite.component }
+  private fun findComponentIndex(composite: EditorComposite): Int =
+    tabbedPane.tabs.tabs.indexOfFirst { it.component === composite.component }
 
   internal fun findTabByComposite(composite: EditorComposite): TabInfo? = tabbedPane.tabs.tabs.firstOrNull { it.composite === composite }
 

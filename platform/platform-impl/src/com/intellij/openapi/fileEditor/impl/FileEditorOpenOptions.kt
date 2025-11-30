@@ -21,11 +21,11 @@ data class FileEditorOpenOptions(
   @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,
   @Internal @JvmField val forceFocus: Boolean = false,
   /**
-    * **DO NOT USE!**
-    *
-    * IJPL-183875: Workaround to open an explicitly set composite that has been supplied from the backend.
-    * Closure is used instead of `EditorComposite?`, since if the composite is created, it will start initialization.
-    * However, frontend requires showing the composite asap
+   * **DO NOT USE!**
+   *
+   * IJPL-183875: Workaround to open an explicitly set composite that has been supplied from the backend.
+   * Closure is used instead of `EditorComposite?`, since if the composite is created, it will start initialization.
+   * However, frontend requires showing the composite asap
    **/
   @Internal @JvmField val explicitlyOpenCompositeProvider: (() -> EditorComposite?)? = null,
 ) {
