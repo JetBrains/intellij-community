@@ -18,7 +18,7 @@ bool_flag(
     build_setting_default = False,
 )
 
-# used by _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
+# used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],
     visibility = ["//visibility:private"],
@@ -336,17 +336,5 @@ label_flag(
 label_flag(
     name = "jvm-builder-jvm_flags",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
-    visibility = ["//visibility:public"],
-)
-
-label_flag(
-    name = "resource-packager",
-    build_setting_default = "//src/misc:worker-jvm_deploy.jar",
-    visibility = ["//visibility:public"],
-)
-
-label_flag(
-    name = "resource-packager-jvm_flags",
-    build_setting_default = "//src/misc:worker-jvm-jvm_flags",
     visibility = ["//visibility:public"],
 )
