@@ -66,7 +66,8 @@ public abstract class JobLauncher {
                                               app.isInImpatientReader(), thingProcessor));
     }
     else {
-      return invokeConcurrentlyUnderProgress(things, progressIndicator, app.isReadAccessAllowed(), app.isInImpatientReader(),
+      ProgressIndicator actualIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
+      return invokeConcurrentlyUnderProgress(things, actualIndicator, app.isReadAccessAllowed(), app.isInImpatientReader(),
                                              thingProcessor);
     }
   }
