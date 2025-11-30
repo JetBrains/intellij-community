@@ -107,12 +107,11 @@ private val supportedLanguages = mapOf(
   Pair("en-us", LanguageResourcesDescriptor(isRequired = true, resPath = ""))
 )
 
-private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
+private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: Collection<Path>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
       supportedLanguages.forEach { (lang, descriptor) ->
         val topicPath = resourceRoot.resolve("${descriptor.resPath}topics")
-
         if (topicPath.exists())
           runJavaForIntellijModule(
             context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
@@ -121,10 +120,11 @@ private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: L
               topicPath.toString(),
             ),
             jvmArgs = emptyList(),
-            classPath = classPath,
+            classPath = classPath.map { it.toString() },
           )
-        else
+        else {
           Span.current().addEvent("skip \"${lang}\" for offline help plugin because it was not supplied. ")
+        }
       }
     }
 

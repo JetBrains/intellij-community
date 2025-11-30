@@ -472,7 +472,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         .map(Path::toFile)
       for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
         if (!testRoots.contains(testFrameworkOutput)) {
-          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
+          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map { it.toFile() } )
         }
       }
     }
@@ -494,7 +494,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
-    val bootstrapClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false).toMutableList()
+    val bootstrapClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule("intellij.tools.testsBootstrap"), forTests = false)
+      .mapTo(mutableListOf()) { it.toString() }
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
@@ -509,7 +510,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
-    prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
+    prepareEnvForTestRun(jvmArgs = allJvmArgs, systemProperties = systemProperties, classPath = bootstrapClasspath, remoteDebugging = remoteDebugging)
     val messages = context.messages
     if (isRunningInBatchMode) {
       messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
@@ -774,7 +775,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val classpath = context.project.modules
       .flatMap { context.getModuleRuntimeClasspath(module = it, forTests = true) }
       .distinct()
-      .map { Path.of(it) }
     val classloader = UrlClassLoader.build().files(classpath).get()
     val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
 
@@ -1243,6 +1243,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       val bootClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(IJENT_BOOT_CLASSPATH_MODULE), forTests = false)
       val classpath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(devBuildSettings.mainClassModule), forTests = false)
         .filter { !bootClasspath.contains(it) }
+        .map { it.toString() }
 
       val messages = context.messages
       messages.info("Effective main module: $mainModule")

@@ -369,7 +369,7 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
         outputPath.absolutePathString(),
       ),
       jvmArgs = listOf("-Djava.awt.headless=true"),
-      classPath = context.getModuleRuntimeClasspath(module = generatorModule, forTests = false),
+      classPath = context.getModuleRuntimeClasspath(module = generatorModule, forTests = false).map { it.toString() },
       javaExe = context.stableJavaExecutable,
     )
   }

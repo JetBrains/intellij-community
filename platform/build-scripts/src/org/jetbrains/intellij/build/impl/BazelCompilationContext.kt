@@ -81,29 +81,30 @@ class BazelCompilationContext(
     return moduleOutputProvider.getModuleOutputRoots(module, forTests)
   }
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-      .also { if (forTests) it.withoutSdk() }
+      .also {
+        if (forTests) {
+          it.withoutSdk()
+        }
+      }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
 
-    val result = LinkedHashSet<String>()
-
-    // Map each module through BazelModuleOutputProvider
-    for (depModule in enumerator.modules) {
-      for (path in moduleOutputProvider.getModuleOutputRoots(depModule, forTests = false)) {
-        result.add(path.toString())
+    val result = LinkedHashSet<Path>()
+    enumerator.processModuleAndLibraries(
+      { depModule ->
+        for (path in moduleOutputProvider.getModuleOutputRoots(depModule, forTests = forTests)) {
+          result.add(path)
+        }
+      },
+      { library ->
+        val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+        for (path in moduleOutputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
+          result.add(path)
+        }
       }
-    }
-
-    // Map each library through BazelModuleOutputProvider
-    for (library in enumerator.libraries) {
-      val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
-      for (path in moduleOutputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
-        result.add(path.toString())
-      }
-    }
-
-    return result.toList()
+    )
+    return result
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)

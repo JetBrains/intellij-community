@@ -314,12 +314,13 @@ class CompilationContextImpl private constructor(
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+    return JpsJavaExtensionService.dependencies(module).recursively()
       // if a project requires different SDKs, they all shouldn't be added to the test classpath
       .also { if (forTests) it.withoutSdk() }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
-    return enumerator.classes().paths.map { it.toString() }
+      .classes()
+      .paths
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {

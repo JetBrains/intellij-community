@@ -58,7 +58,7 @@ interface CompilationContext : ModuleOutputProvider {
     return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
   }
 
-  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
+  suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
 
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 
