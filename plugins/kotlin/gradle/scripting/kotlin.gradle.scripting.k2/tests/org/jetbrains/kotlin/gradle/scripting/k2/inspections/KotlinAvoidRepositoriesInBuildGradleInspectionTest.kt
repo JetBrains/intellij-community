@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradl
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatDependencyResolutionManagementIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -1394,9 +1394,5 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         private fun repositoriesModeText(gradleVersion: GradleVersion, mode: String) =
             if (gradleVersion >= GradleVersion.version("8.2")) "repositoriesMode = RepositoriesMode.$mode"
             else "repositoriesMode.set(RepositoriesMode.$mode)"
-
-        private fun assumeThatDependencyResolutionManagementIsSupported(gradleVersion: GradleVersion) {
-            assumeThatGradleIsAtLeast(gradleVersion, "6.8") { "dependencyResolutionManagement was added in Gradle 6.8" }
-        }
     }
 }
