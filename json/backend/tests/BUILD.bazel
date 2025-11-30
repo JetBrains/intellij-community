@@ -53,6 +53,7 @@ jvm_library(
     "//json/syntax",
     "//platform/syntax/syntax-util:util",
     "//platform/core-impl",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.json.tests` end
