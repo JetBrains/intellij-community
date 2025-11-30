@@ -428,6 +428,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
+     * This plugin will be compatible with IDE versions with the same two digits of the build number.
+     * See [org.jetbrains.intellij.build.CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE]
+     */
+    fun pluginCompatibilitySameRelease() {
+      layout.pluginCompatibilitySameRelease = true
+    }
+
+    /**
      * `<product-description>` is usually removed for bundled plugins.
      * Call this method to retain it in plugin.xml
      */
