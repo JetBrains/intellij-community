@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "test_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":test_resources"],
+  exports = ["@lib//:kotlinx-coroutines-test"],
+  runtime_deps = [
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:kotlinx-coroutines-test",
+  ]
+)
+### auto-generated section `build intellij.libraries.kotlinx.coroutines.test` end

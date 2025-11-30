@@ -54,7 +54,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "//libraries/caffeine",

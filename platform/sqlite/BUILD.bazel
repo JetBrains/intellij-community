@@ -25,7 +25,7 @@ jvm_library(
     "//platform/util-ex",
     "@lib//:junit5",
     "@lib//:assert_j",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 ### auto-generated section `build intellij.platform.sqlite` end

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/util",
     "//jps/model-serialization",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util-ex",
     "//platform/util/concurrency",
     "//platform/workspace/storage",

@@ -15,7 +15,7 @@ jvm_library(
   resources = [":impl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util",
     "@lib//:opentelemetry",
     "//platform/core-api:core",

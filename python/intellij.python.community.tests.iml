@@ -70,8 +70,8 @@
     <orderEntry type="module" module-name="intellij.python.grazie" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />

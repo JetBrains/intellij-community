@@ -28,7 +28,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/jdom",
     "//libraries/jackson/jackson",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 
@@ -52,7 +52,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:assert_j",
     "//libraries/jackson/jackson",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` end

@@ -82,7 +82,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:junit5",

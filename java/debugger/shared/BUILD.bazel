@@ -25,7 +25,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/kernel/shared:kernel",
     "//platform/core-ui",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-impl/rpc",

@@ -9,8 +9,8 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-debug",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/debug",
     "@lib//:jetbrains-annotations",
   ]
 )

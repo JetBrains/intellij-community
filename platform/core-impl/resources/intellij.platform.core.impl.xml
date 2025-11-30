@@ -5,6 +5,7 @@
     <module name="intellij.libraries.automaton"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
   </dependencies>
   <!-- end editor-fold -->

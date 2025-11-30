@@ -1,5 +1,10 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "libraries_kotlinx_coroutines_core_provided",
+  lib = "//libraries/kotlinx/coroutines/core"
+)
 
 jvm_library(
   name = "telemetry",
@@ -9,12 +14,12 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib-provided",
-    "@lib//:kotlinx-coroutines-core-provided",
     "@lib//:opentelemetry-provided",
     "@lib//:opentelemetry-semconv-provided",
     "@lib//:opentelemetry-extension-kotlin-provided",
     "//platform/util",
     "//platform/diagnostic",
+    ":libraries_kotlinx_coroutines_core_provided",
   ],
   exports = ["//platform/diagnostic"]
 )
@@ -27,7 +32,6 @@ jvm_library(
   associates = [":telemetry"],
   deps = [
     "@lib//:kotlin-stdlib-provided",
-    "@lib//:kotlinx-coroutines-core-provided",
     "@lib//:opentelemetry-provided",
     "@lib//:opentelemetry-semconv-provided",
     "@lib//:opentelemetry-extension-kotlin-provided",
@@ -35,6 +39,7 @@ jvm_library(
     "//platform/diagnostic",
     "@lib//:junit5",
     "@lib//:kotlin-test-assertions-core-jvm",
+    ":libraries_kotlinx_coroutines_core_provided",
   ],
   exports = ["//platform/diagnostic"]
 )

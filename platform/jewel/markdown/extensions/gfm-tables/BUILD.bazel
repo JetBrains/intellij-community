@@ -29,7 +29,7 @@ jvm_library(
   kotlinc_opts = ":custom_gfm-tables",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/core",
     "//platform/jewel/ui",

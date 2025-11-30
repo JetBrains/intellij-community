@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
   ]
 )
 ### auto-generated section `build intellij.platform.eel` end
@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//java/openapi:java",
@@ -85,7 +85,7 @@ jvm_library(
     "@lib//:junit5Params",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "//platform/util-class-loader:util-classLoader",
   ]
 )

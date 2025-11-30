@@ -40,7 +40,7 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />

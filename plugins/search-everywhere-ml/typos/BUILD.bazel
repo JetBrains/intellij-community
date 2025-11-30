@@ -15,7 +15,7 @@ jvm_library(
   resources = [":typos_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/lang-api:lang",
@@ -41,7 +41,7 @@ jvm_library(
   associates = [":typos"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/lang-api:lang",

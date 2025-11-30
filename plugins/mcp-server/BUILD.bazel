@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:io-modelcontextprotocol-kotlin-sdk",
@@ -82,7 +82,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:io-modelcontextprotocol-kotlin-sdk",
@@ -136,7 +136,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlin-test",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlin-test-junit",
     "//platform/testFramework/junit5/projectStructure",

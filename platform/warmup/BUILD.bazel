@@ -31,7 +31,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/platform-impl/bootstrap",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/backend/observation",
     "//platform/lang-api:lang",
   ],

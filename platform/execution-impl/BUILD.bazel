@@ -51,7 +51,7 @@ jvm_library(
     "//platform/wsl-impl",
     "//platform/util/jdom",
     "//platform/workspace/storage",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jna",
     "//libraries/hash4j",
     "//platform/workspace/jps",

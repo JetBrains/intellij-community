@@ -13,6 +13,9 @@
     <module name="intellij.libraries.kotlinx.collections.immutable" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.datetime" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.html" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.debug" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.coroutines.guava"/>
     <module name="intellij.libraries.kotlinx.coroutines.slf4j" loading="embedded"/>
     <module name="intellij.libraries.aalto.xml" loading="embedded"/>
     <module name="intellij.libraries.asm" loading="embedded"/>

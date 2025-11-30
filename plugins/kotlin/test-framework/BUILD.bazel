@@ -34,7 +34,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",

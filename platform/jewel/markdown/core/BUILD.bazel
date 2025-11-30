@@ -35,7 +35,7 @@ jvm_library(
   kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
@@ -56,7 +56,7 @@ jvm_library(
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",
     "//platform/jewel/ui:ui_test_lib",

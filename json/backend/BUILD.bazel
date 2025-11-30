@@ -42,7 +42,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jackson/databind",
     "//libraries/jackson/jackson",
     "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",

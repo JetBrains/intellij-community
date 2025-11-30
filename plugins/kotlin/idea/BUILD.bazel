@@ -50,7 +50,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",

@@ -85,7 +85,7 @@ jvm_library(
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/util/concurrency",
     "//libraries/fastutil",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/platform-util-io:ide-util-io",
     "//build/deps:dependencies",
     "//platform/build-scripts/downloader",

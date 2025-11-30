@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/IntelliLang:langInjection",
     "//libraries/jsonpath",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:assert_j",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",

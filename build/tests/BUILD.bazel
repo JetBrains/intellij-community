@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:assert_j",
     "//platform/util",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/build-scripts/downloader",
   ]
 )

@@ -34,7 +34,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/text-matching",
     "//platform/statistics",
     "//platform/bookmarks",

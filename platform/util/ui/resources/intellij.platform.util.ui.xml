@@ -8,6 +8,7 @@
     <module name="intellij.libraries.imgscalr"/>
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jsvg"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
     <module name="intellij.libraries.mvstore"/>

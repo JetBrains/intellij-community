@@ -1,6 +1,3 @@
 - name: dist.all/lib/intellij.platform.vcs.log.impl.jar
   modules:
   - name: intellij.platform.vcs.log.impl
-  library: kotlinx-coroutines-guava
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1/kotlinx-coroutines-guava-1.jar

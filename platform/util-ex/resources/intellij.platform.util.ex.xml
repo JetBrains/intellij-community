@@ -6,6 +6,7 @@
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jcip"/>
     <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.lz4"/>
     <module name="intellij.libraries.mvstore"/>
   </dependencies>

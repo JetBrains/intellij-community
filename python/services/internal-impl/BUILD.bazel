@@ -26,7 +26,7 @@ jvm_library(
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//python/python-sdk:sdk",
     "//python/python-exec-service/execService.python",
   ]
@@ -51,7 +51,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
     "@lib//:hamcrest",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",

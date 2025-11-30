@@ -37,7 +37,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//spellchecker",
     "//libraries/miglayout-swing",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-api:ide",
     "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",

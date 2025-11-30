@@ -15,7 +15,7 @@ jvm_library(
   resources = [":tools-ide-starter-bus_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
@@ -34,7 +34,7 @@ jvm_library(
   associates = [":tools-ide-starter-bus"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",

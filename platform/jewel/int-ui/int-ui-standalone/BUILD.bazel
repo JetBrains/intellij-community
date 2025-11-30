@@ -29,7 +29,7 @@ jvm_library(
   kotlinc_opts = ":custom_jewel-intUi-standalone",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/skiko",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/ui",

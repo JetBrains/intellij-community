@@ -38,7 +38,7 @@ jvm_library(
     "//platform/util/progress",
     "@lib//:jna",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/jdom",
     "//platform/util-ex",
     "//platform/util/concurrency",

@@ -12,7 +12,7 @@ jvm_library(
     "@lib//:java_compatibility",
     "@lib//:javax-inject",
     "@lib//:vavr",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jna",
     "//libraries/lz4",
     "@lib//:jsr305",

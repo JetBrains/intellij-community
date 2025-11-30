@@ -10,7 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/execution",
     "//platform/util",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/core-api:core",
     "//libraries/lz4",

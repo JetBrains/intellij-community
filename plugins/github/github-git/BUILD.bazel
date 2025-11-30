@@ -15,7 +15,7 @@ jvm_library(
   resources = [":vcs-github-git_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/caffeine",
     "//platform/core-api:core",
     "//platform/platform-api:ide",

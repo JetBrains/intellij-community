@@ -4,6 +4,7 @@
     <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

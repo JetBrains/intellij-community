@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:assert_j",
     "@lib//:junit4",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

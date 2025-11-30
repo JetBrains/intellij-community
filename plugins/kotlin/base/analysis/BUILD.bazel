@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

@@ -15,7 +15,7 @@ jvm_library(
   resources = [":client_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "@lib//:protobuf",
     "//platform/execution-process-mediator/daemon",
@@ -38,7 +38,7 @@ jvm_library(
   associates = [":client"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "@lib//:protobuf",
     "//platform/execution-process-mediator/daemon",

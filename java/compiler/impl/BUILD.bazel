@@ -65,7 +65,7 @@ jvm_library(
     "//libraries/winp",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlin/reflect",
     "//libraries/kryo5",
     "//libraries/guava",

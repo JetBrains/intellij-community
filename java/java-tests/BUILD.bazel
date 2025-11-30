@@ -113,7 +113,7 @@ jvm_library(
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/stream",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:jaxb-api",

@@ -59,6 +59,10 @@ object CommunityModuleSets  {
     embeddedModule("intellij.libraries.kotlinx.collections.immutable")
     embeddedModule("intellij.libraries.kotlinx.datetime")
     embeddedModule("intellij.libraries.kotlinx.html")
+    // kotlinx-coroutines libraries
+    embeddedModule("intellij.libraries.kotlinx.coroutines.core")
+    embeddedModule("intellij.libraries.kotlinx.coroutines.debug")
+    module("intellij.libraries.kotlinx.coroutines.guava")
     @Suppress("GrazieInspection")
     // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
     // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.

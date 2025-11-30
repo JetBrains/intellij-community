@@ -68,7 +68,7 @@
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.blockmap" />
     <orderEntry type="module" module-name="intellij.libraries.commons.io" />

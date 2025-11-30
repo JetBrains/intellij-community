@@ -11,7 +11,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//fleet/andel",
     "//fleet/kernel",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/kotlinx/serialization/core",
     "//libraries/fastutil",

@@ -21,7 +21,7 @@ jvm_library(
   resources = [":ide-starter-build-server_resources"],
   kotlinc_opts = ":custom_ide-starter-build-server",
   deps = [
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/build-scripts",
     "@lib//:kodein-di-jvm",

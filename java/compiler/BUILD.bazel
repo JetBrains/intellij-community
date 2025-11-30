@@ -36,7 +36,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/backend/workspace",
     "@lib//:jet_check",
   ],

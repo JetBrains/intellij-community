@@ -23,7 +23,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util",
     "//platform/util:util-ui",
     "//platform/core-api:core",

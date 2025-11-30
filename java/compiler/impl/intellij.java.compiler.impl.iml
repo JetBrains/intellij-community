@@ -65,7 +65,7 @@
     <orderEntry type="module" module-name="intellij.libraries.winp" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.libraries.kryo5" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />

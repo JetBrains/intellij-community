@@ -428,7 +428,11 @@ libraries/kotlin/reflect
 libraries/kotlin/test
 libraries/kotlin/test-assertions-core-jvm
 libraries/kotlinx/collections-immutable
+libraries/kotlinx/coroutines/core
+libraries/kotlinx/coroutines/debug
+libraries/kotlinx/coroutines/guava
 libraries/kotlinx/coroutines/slf4j
+libraries/kotlinx/coroutines/test
 libraries/kotlinx/datetime
 libraries/kotlinx/document-store-mvstore
 libraries/kotlinx/html

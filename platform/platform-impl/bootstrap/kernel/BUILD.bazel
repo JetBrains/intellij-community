@@ -11,7 +11,7 @@ jvm_library(
     "//fleet/kernel",
     "//platform/kernel/shared:kernel",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/kernel/pasta",
   ]

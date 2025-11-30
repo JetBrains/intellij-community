@@ -40,7 +40,7 @@ jvm_library(
     "//libraries/commons/lang3",
     "//platform/util/jdom",
     "//platform/workspace/storage/testEntities:testEntities_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlin-test",

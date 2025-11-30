@@ -29,7 +29,7 @@ jvm_library(
     "//libraries/jackson/databind",
     "//platform/ide-core-impl",
     "//platform/core-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/datetime",

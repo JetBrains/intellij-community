@@ -14,6 +14,11 @@ resourcegroup(
 )
 
 jvm_provided_library(
+  name = "libraries_kotlinx_coroutines_core_provided",
+  lib = "//libraries/kotlinx/coroutines/core"
+)
+
+jvm_provided_library(
   name = "libraries_kotlinx_libraries-kotlinx-collections-immutable_provided",
   lib = "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"
 )
@@ -32,7 +37,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:slf4j-api",
-    "@lib//:kotlinx-coroutines-core-provided",
+    ":libraries_kotlinx_coroutines_core_provided",
     ":libraries_kotlinx_libraries-kotlinx-collections-immutable_provided",
   ]
 )

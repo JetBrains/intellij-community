@@ -102,7 +102,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
   ]

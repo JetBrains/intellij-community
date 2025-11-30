@@ -4448,13 +4448,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinx-coroutines-core-provided",
-  exports = [":kotlinx-coroutines-core"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinx-coroutines-debug",
   jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-1_http//file",

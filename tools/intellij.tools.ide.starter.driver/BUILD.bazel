@@ -23,7 +23,7 @@ jvm_library(
   deps = [
     "//platform/remote-driver/client",
     "//platform/remote-driver/model",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//tools/intellij.tools.ide.starter:ide-starter",
     "@lib//:kodein-di-jvm",

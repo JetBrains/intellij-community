@@ -19,7 +19,7 @@ jvm_library(
     "//platform/util",
     "//platform/util/jdom",
     "//libraries/jcip",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/fastutil",
     "@lib//:netty-buffer",
     "//libraries/caffeine",

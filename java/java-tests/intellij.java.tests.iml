@@ -88,7 +88,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jaxb-api" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />

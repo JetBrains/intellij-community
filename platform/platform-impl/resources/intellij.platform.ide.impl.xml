@@ -27,6 +27,7 @@
     <module name="intellij.libraries.jvm.native.trusted.roots"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.lz4"/>

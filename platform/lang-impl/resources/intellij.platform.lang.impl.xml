@@ -14,6 +14,7 @@
     <module name="intellij.libraries.jackson.module.kotlin"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.html"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>

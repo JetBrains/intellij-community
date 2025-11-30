@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/projectModel-impl",
     "//platform/core-api:core",
     "//platform/core-ui",

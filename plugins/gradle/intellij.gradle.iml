@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingProxy" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.dependencyUpdater" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />

@@ -64,7 +64,7 @@ jvm_library(
     "//plugins/maven/jps-plugin:jps_test_lib",
     "//plugins/maven/maven3-server-common:server-m3-common",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/external-system-api/testFramework",
     "//platform/backend/workspace",

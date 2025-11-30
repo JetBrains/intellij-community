@@ -55,7 +55,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/plugin:plugin-main",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/grazie/markdown",

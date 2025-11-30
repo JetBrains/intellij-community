@@ -14,7 +14,7 @@ jvm_library(
     "//platform/util",
     "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:opentelemetry",
     "//platform/diagnostic/telemetry",
   ]

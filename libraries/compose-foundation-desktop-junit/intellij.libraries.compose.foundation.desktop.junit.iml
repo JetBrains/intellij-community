@@ -55,7 +55,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" exported="" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" exported="" scope="TEST" />
   </component>

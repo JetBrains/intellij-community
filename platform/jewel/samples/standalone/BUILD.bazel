@@ -30,7 +30,7 @@ jvm_library(
   kotlinc_opts = ":custom_standalone",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/markdown/extensions/autolink",
     "//platform/jewel/ui",

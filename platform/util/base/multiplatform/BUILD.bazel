@@ -15,8 +15,8 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-debug",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/debug",
     ":platform_multiplatformSupport_provided",
   ]
 )

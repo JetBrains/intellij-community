@@ -62,6 +62,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.python.processOutput" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-debug" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" scope="TEST" />
   </component>
 </module>
