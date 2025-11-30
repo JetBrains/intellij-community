@@ -29,6 +29,11 @@
       <entry name="!*.iml" />
       <entry name="!*.gant" />
     </wildcardResourcePatterns>
+    <annotationProcessing>
+      <profile name="jmh" enabled="true">
+        <module name="intellij.platform.benchmarks" />
+      </profile>
+    </annotationProcessing>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="GENERATE_NO_WARNINGS" value="true" />
