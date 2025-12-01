@@ -542,7 +542,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
         reportProblem(holder, returnValue, LocalQuickFix.EMPTY_ARRAY,
                       messageKey, new Object[]{""},
-                      messageKey, new Object[]{NullableStuffInspectionUtil.getTypePresentationInNullabilityConflict(context)});
+                      messageKey, new Object[]{NullableStuffInspectionUtil.getNullabilityConflictPresentation(context)});
       }
 
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,

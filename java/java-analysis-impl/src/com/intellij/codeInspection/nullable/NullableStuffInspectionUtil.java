@@ -16,38 +16,47 @@ import java.util.Collections;
 import java.util.List;
 
 final class NullableStuffInspectionUtil {
-  static @NotNull @NlsSafe String getTypePresentationInNullabilityConflict(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
-    PsiElement place = context.getPlace();
-    if (place == null) return "";
-    int dimensionsInArray = (context.type() instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
+  static @NotNull @NlsSafe String getNullabilityConflictPresentation(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
+    HtmlChunk expectedChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.EXPECTED);
+    HtmlChunk actualChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.ACTUAL);
+    if (expectedChunk.isEmpty() || actualChunk.isEmpty()) return "";
+    return HtmlChunk.tag("table")
+      .children(expectedChunk, actualChunk)
+      .toString();
+  }
+
+  private static @NotNull HtmlChunk getSideChunk(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context,
+                                                  @NotNull JavaTypeNullabilityUtil.Side side) {
+    PsiElement place = context.getPlace(side);
+    if (place == null) return HtmlChunk.empty();
+    int dimensionsInArray = (context.getType(side) instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
 
     PsiTypeElement topmostType = PsiTreeUtil.getTopmostParentOfType(place, PsiTypeElement.class);
-    if (topmostType == null) return "";
+    if (topmostType == null) return HtmlChunk.empty();
 
     PsiTypeElement target = PsiTreeUtil.getParentOfType(place, PsiTypeElement.class, false);
-    if (target == null) return "";
+    if (target == null) return HtmlChunk.empty();
 
     PsiType outerType = topmostType.getType();
     if (target == topmostType) {
       // Presentation is not handling with the whole type
-      return "";
+      return HtmlChunk.empty();
     }
 
     List<Integer> path = computeTypeArgumentPath(topmostType, target, dimensionsInArray);
-    if (path == null) return "";
+    if (path == null) return HtmlChunk.empty();
 
     Context presentationContext = getPresentationContext(outerType, path, outerType instanceof PsiArrayType);
 
     String typeText = presentationContext.sb.toString();
-    String annotationText = getAnnotationText(context);
-    if (presentationContext.position == null || annotationText == null) return "";
-    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, presentationContext.position);
-
-    return result.toString();
+    String annotationText = getAnnotationText(context, side);
+    if (presentationContext.position == null || annotationText == null) return HtmlChunk.empty();
+    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, side, presentationContext.position);
+    return result;
   }
-  
-  private static @Nullable String getAnnotationText(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
-    PsiAnnotation annotation = context.getAnnotation();
+
+  private static @Nullable String getAnnotationText(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context, @NotNull JavaTypeNullabilityUtil.Side side) {
+    PsiAnnotation annotation = context.getAnnotation(side);
     if (annotation == null) return null;
     PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
     if (ref == null) return null;
@@ -56,18 +65,24 @@ final class NullableStuffInspectionUtil {
 
   private static @NotNull HtmlChunk generateHtmlChunk(@NlsSafe String text,
                                                       @NlsSafe String annotationText,
+                                                      @NotNull JavaTypeNullabilityUtil.Side side,
                                                       int position) {
-    HtmlChunk result = HtmlChunk
-      .p()
+    return HtmlChunk.tag("tr")
       .children(
-        HtmlChunk.text(JavaAnalysisBundle.message("returning.a.type.nullability.conflict.message")),
-        HtmlChunk.text(" "),
-        HtmlChunk.text(text.substring(0, position)),
-        HtmlChunk.tag("b").addText(annotationText),
-        HtmlChunk.text(" "),
-        HtmlChunk.text(text.substring(position))
+        HtmlChunk.tag("td")
+          .addText(
+            JavaAnalysisBundle.message(
+              side == JavaTypeNullabilityUtil.Side.EXPECTED ? "expected.type.nullability.conflict.message"
+                                                            : "actual.type.nullability.conflict.message"
+            )
+          ),
+        HtmlChunk.tag("td").children(
+          HtmlChunk.text(text.substring(0, position)),
+          HtmlChunk.tag("b").addText(annotationText),
+          HtmlChunk.text(" "),
+          HtmlChunk.text(text.substring(position))
+        )
       );
-    return result;
   }
 
   private static @Nullable List<@NotNull Integer> computeTypeArgumentPath(@NotNull PsiTypeElement top, @NotNull PsiTypeElement target, int firstArrayDepth) {
