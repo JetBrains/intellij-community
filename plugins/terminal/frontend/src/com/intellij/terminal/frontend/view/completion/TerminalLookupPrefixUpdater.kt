@@ -81,6 +81,7 @@ class TerminalLookupPrefixUpdater private constructor(
     appendPrefix(textToAppend)
 
     if (!lookup.isLookupDisposed && (truncateTimes > 0 || textToAppend.isNotEmpty())) {
+      TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.prefixUpdated()
       closeLookupIfMeaningless()
     }
   }

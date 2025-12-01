@@ -149,11 +149,11 @@ class TerminalCommandCompletionService(
     val prefixMatcher = PlainPrefixMatcher(prefix, true)
     val sorter = CompletionService.getCompletionService().defaultSorter(process.parameters, prefixMatcher)
 
-    for (suggestion in result.suggestions) {
-      val element = suggestion.toLookupElement()
-      val result = CompletionResult.wrap(element, prefixMatcher, sorter) ?: continue
-      process.addItem(result)
+    val items = result.suggestions.mapNotNull {
+      val element = it.toLookupElement()
+      CompletionResult.wrap(element, prefixMatcher, sorter)
     }
+    process.addItems(items)
   }
 
   /**

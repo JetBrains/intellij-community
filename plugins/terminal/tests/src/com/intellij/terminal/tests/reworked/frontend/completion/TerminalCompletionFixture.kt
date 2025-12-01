@@ -82,10 +82,16 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   }
 
   private fun typeChar(keyChar: Char) {
-    val keyEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_TYPED, 1, 0,
-                            VK_UNDEFINED, keyChar, KeyEvent.KEY_LOCATION_UNKNOWN)
-    val timedKeyEvent = TimedKeyEvent(keyEvent, TimeSource.Monotonic.markNow())
-    view.outputEditorEventsHandler.keyTyped(timedKeyEvent)
+    // Key pressed event shouldn't be handled, but it is required
+    // to clear the ` ignoreNextKeyTypedEvent ` state in `TerminalEventsHandlerImpl`.
+    // Otherwise, the next key typed event might be ignored.
+    val fakeKeyPressEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_PRESSED, 0, 0,
+                                     0, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_STANDARD)
+    view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(fakeKeyPressEvent, TimeSource.Monotonic.markNow()))
+
+    val keyTypedEvent = KeyEvent(view.outputEditor.component, KeyEvent.KEY_TYPED, 0, 0,
+                                 VK_UNDEFINED, keyChar, KeyEvent.KEY_LOCATION_UNKNOWN)
+    view.outputEditorEventsHandler.keyTyped(TimedKeyEvent(keyTypedEvent, TimeSource.Monotonic.markNow()))
   }
 
   suspend fun callCompletionPopup(waitForPopup: Boolean = true) {

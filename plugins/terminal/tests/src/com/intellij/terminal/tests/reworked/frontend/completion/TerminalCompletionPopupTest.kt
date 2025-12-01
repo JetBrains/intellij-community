@@ -1,7 +1,9 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.tests.reworked.frontend.completion.TerminalCompletionPopupTest.Companion.MAX_ITEMS_COUNT
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -42,9 +44,18 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     }
 
     subcommands {
-      subcommand("build")
       subcommand("bind")
       subcommand("branch")
+      subcommand("build") {
+        argument {
+          val count = MAX_ITEMS_COUNT + 10
+          val items = buildList {
+            repeat(count) { add("ab$it") }
+            repeat(count) { add("ac$it") }
+          }
+          suggestions(*items.toTypedArray())
+        }
+      }
     }
   }
 
@@ -156,6 +167,47 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.awaitNewCompletionPopupOpened()  // it has to restart completion at this moment
     assertSameElements(fixture.getLookupElements().map { it.lookupString },
                        listOf("set", "show", "start", "status", "stop", "sync"))
+  }
+
+  @Test
+  fun `test completion popup is reopened on any prefix change when suggestions count reach the limit`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd build a")
+    fixture.callCompletionPopup()
+    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+
+    // Popup should reopen with items for the "ab" prefix
+    fixture.type("b")
+    fixture.awaitNewCompletionPopupOpened()
+    assertThat(fixture.getLookupElements())
+      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+      .allMatch { it.lookupString.startsWith("ab") }
+
+    // Popup should reopen with items for the "a" prefix
+    fixture.pressKey(VK_LEFT)
+    fixture.awaitNewCompletionPopupOpened()
+    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+
+    // Popup should reopen with items for the "ab" prefix
+    fixture.pressKey(VK_RIGHT)
+    fixture.awaitNewCompletionPopupOpened()
+    assertThat(fixture.getLookupElements())
+      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+      .allMatch { it.lookupString.startsWith("ab") }
+
+    // Popup should reopen with items for the "a" prefix
+    fixture.pressKey(VK_BACK_SPACE)
+    fixture.awaitNewCompletionPopupOpened()
+    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+
+    // Popup should reopen with items for the "ac" prefix
+    fixture.type("c")
+    fixture.awaitNewCompletionPopupOpened()
+    assertThat(fixture.getLookupElements())
+      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+      .allMatch { it.lookupString.startsWith("ac") }
+    Unit
   }
 
   @Test
@@ -331,5 +383,13 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     )
     fixture.awaitShellIntegrationFeaturesInitialized()
     return fixture
+  }
+
+  companion object {
+    /** Max items count to be shown in lookup */
+    private val MAX_ITEMS_COUNT = Registry.intValue("ide.completion.variant.limit")
+
+    /** Once [MAX_ITEMS_COUNT] limit is reached, lookup trims half of the items and this value becomes true max size */
+    private val MAX_ITEMS_COUNT_AFTER_TRIM = MAX_ITEMS_COUNT / 2
   }
 }

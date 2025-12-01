@@ -29,7 +29,7 @@ import javax.swing.Icon
 
 /**
  * Contains the data related to the terminal completion session and methods for manipulating it,
- * such as [addItem], [tryInsertOrShowPopup], [cancel], etc.
+ * such as [addItems], [tryInsertOrShowPopup], [cancel], etc.
  *
  * Have to inherit [CompletionProcessEx] to be compatible with platform completion APIs like [BaseCompletionLookupArranger].
  *
@@ -93,15 +93,20 @@ internal class TerminalCommandCompletionProcess(
     lookup.refreshUi(true, false)
   }
 
-  fun addItem(item: CompletionResult) {
-    coroutineScope.coroutineContext.ensureActive()
+  fun addItems(items: List<CompletionResult>) {
     if (lookup.isLookupDisposed()) {
       return
     }
 
-    arranger?.associateSorter(item.lookupElement, item.sorter as CompletionSorterImpl)
-    lookup.addItem(item.lookupElement, item.prefixMatcher)
-    arranger?.setLastLookupPrefix(lookup.additionalPrefix)
+    val curArranger = arranger ?: error("CompletionLookupArrangerImpl is null")
+    curArranger.batchUpdate {
+      for (item in items) {
+        coroutineScope.coroutineContext.ensureActive()
+        curArranger.associateSorter(item.lookupElement, item.sorter as CompletionSorterImpl)
+        lookup.addItem(item.lookupElement, item.prefixMatcher)
+      }
+    }
+    curArranger.setLastLookupPrefix(lookup.additionalPrefix)
   }
 
   /** Returns true if the completion popup was shown to the user */
