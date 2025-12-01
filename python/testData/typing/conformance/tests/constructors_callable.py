@@ -179,7 +179,7 @@ class Class8(Generic[T]):
 
 
 r8 = accepts_callable(Class8)
-reveal_type(r8)  # `def [T] (x: T, y: list[T]) -> Class8[T]`
+reveal_type(r8)  # `def [T] (x: list[T], y: list[T]) -> Class8[T]`
 assert_type(r8([""], [""]), Class8[str])
 r8([1], [""])  # E
 
