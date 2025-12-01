@@ -117,7 +117,7 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
 
     private fun findContextParameterByIndex(function: KtNamedFunction, index: Int): KtParameter? {
         if (!function.containingKtFile.isUnderKotlinSourceRootTypes()) return null
-        return function.contextReceiverList?.contextParameters?.getOrNull(index)
+        return function.contextParameters.getOrNull(index)
     }
 
     private fun KaSession.suggestParameterNameByType(ktParameter: KtParameter, ownerFunction: KtNamedFunction): String? {

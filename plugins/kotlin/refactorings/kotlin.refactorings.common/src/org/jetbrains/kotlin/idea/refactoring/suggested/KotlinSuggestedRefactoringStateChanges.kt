@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.util.TextRange
@@ -64,7 +64,7 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
             return Signature.create(name, null, emptyList(), null)
         }
 
-        val parameters = (anchor.modifierList?.contextReceiverList?.contextParameters.orEmpty() + anchor.valueParameters).map { it.extractParameterData() ?: return null }
+        val parameters = (anchor.contextParameters + anchor.valueParameters).map { it.extractParameterData() ?: return null }
         val type = anchor.typeReference?.text
         val receiverType = anchor.receiverTypeReference?.text
         val signature = Signature.create(
@@ -79,7 +79,7 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
 
     override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
         if (anchor !is KtCallableDeclaration) return emptyList()
-        return (anchor.modifierList?.contextReceiverList?.contextParameters.orEmpty() + (anchor as? KtFunction)?.valueParameters.orEmpty()).map { it.colon?.textRange }
+        return (anchor.contextParameters + (anchor as? KtFunction)?.valueParameters.orEmpty()).map { it.colon?.textRange }
     }
 
     private fun KtParameter.extractParameterData(): Parameter? {

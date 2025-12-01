@@ -509,11 +509,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val newModifierList = psiFactory.createFunction("context($contextParametersSignature) fun test() {}").modifierList!!
             val modifierList = element.modifierList
             if (modifierList != null) {
-                val contextReceiverList = modifierList.contextReceiverList
-                val contextReceivers = if (contextReceiverList == null) {
-                    modifierList.addBefore(newModifierList.contextReceiverList!!, modifierList.firstChild)
+                val contextParameterList = modifierList.contextParameterList
+                val contextReceivers = if (contextParameterList == null) {
+                    modifierList.addBefore(newModifierList.contextParameterList!!, modifierList.firstChild)
                 } else {
-                    contextReceiverList.replace(newModifierList.contextReceiverList!!)
+                    contextParameterList.replace(newModifierList.contextParameterList!!)
                 }
                 shortenReferences(contextReceivers as KtElement)
             } else {
@@ -521,7 +521,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 shortenReferences(element.modifierList!!)
             }
         } else {
-            (element as? KtTypeParameterListOwnerStub<*>)?.contextReceiverList?.delete()
+            element.modifierList?.contextParameterList?.delete()
         }
     }
 

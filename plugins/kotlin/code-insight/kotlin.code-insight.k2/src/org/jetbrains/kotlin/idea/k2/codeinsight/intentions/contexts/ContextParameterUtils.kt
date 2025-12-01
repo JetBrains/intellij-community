@@ -84,11 +84,7 @@ object ContextParameterUtils {
      * The utility mitigates the awkward declaration of context parameters in the Kotlin PSI hierarchy.
      */
     fun KtCallableDeclaration.getContextParameters(): List<KtParameter>? {
-        return when (this) {
-            is KtNamedFunction -> contextReceiverList?.contextParameters
-            is KtProperty -> contextReceiverList?.contextParameters
-            else -> null
-        }
+        return takeIf { this is KtNamedFunction || this is KtProperty }?.contextParameters
     }
 
     /**

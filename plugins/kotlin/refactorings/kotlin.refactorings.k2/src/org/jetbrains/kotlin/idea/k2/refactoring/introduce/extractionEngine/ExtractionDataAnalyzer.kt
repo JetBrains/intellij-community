@@ -11,11 +11,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.KaDataFlowExitPointSnapshot
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.diagnostics
-import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
-import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -361,7 +357,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
 
     val namedFunction = result.declaration as? KtNamedFunction
     val valueParameterList = namedFunction?.valueParameterList
-    val contextReceiverList = namedFunction?.contextReceiverList
+    val contextParameterList = namedFunction?.modifierList?.contextParameterList
     val typeParameterList = namedFunction?.typeParameterList
 
     fun processReference(currentRefExpr: KtSimpleNameExpression) {
@@ -372,7 +368,7 @@ private fun ExtractableCodeDescriptor.validateTempResult(
 
         val currentDescriptor = currentRefExpr.mainReference.resolve()
         if (currentDescriptor is KtParameter && currentDescriptor.parent == valueParameterList) return
-        if (currentDescriptor is KtParameter && currentDescriptor.isContextParameter && currentDescriptor.parent == contextReceiverList) return
+        if (currentDescriptor is KtParameter && currentDescriptor.isContextParameter && currentDescriptor.parent == contextParameterList) return
         if (currentDescriptor is KtTypeParameter && currentDescriptor.parent == typeParameterList) return
         if (currentDescriptor is KtProperty && currentDescriptor.isLocal
             && parameters.any { it.mirrorVarName == currentDescriptor.name }

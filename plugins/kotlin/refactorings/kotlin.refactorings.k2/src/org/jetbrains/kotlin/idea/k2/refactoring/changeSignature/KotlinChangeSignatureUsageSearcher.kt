@@ -34,7 +34,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         val receiverOffset = if (ktCallableDeclaration.receiverTypeReference != null) 1 else 0
         for ((i, parameterInfo) in changeInfo.newParameters.withIndex()) {
             val oldParam = if (parameterInfo.wasContextParameter) {
-              ktCallableDeclaration.modifierList?.contextReceiverList?.contextParameters?.getOrNull(parameterInfo.oldIndex)
+              ktCallableDeclaration.contextParameters.getOrNull(parameterInfo.oldIndex)
             } else {
                 val oldIndex = parameterInfo.oldIndex - receiverOffset
                 if (oldIndex >= 0 && oldIndex < oldSignatureParameters.size) {
@@ -77,7 +77,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
 
         if (changeInfo is KotlinChangeInfo) {
-          val contextParameters = changeInfo.method.modifierList?.contextReceiverList?.contextParameters
+          val contextParameters = changeInfo.method.modifierList?.contextParameterList?.contextParameters
             val parameterInfos = changeInfo.newParameters.filter { it.isContextParameter }
             if ((contextParameters?.size ?: 0) != parameterInfos.size) {
                 findContextParameterReferences(ktCallableDeclaration, result, changeInfo)
