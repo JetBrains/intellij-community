@@ -57,6 +57,7 @@ class SettingsSyncBridge(
 
 
   private val eventsMutex = Mutex()
+  private val initializationMutex = Mutex()
 
   private val settingsChangeListener = object : SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
@@ -90,27 +91,33 @@ class SettingsSyncBridge(
 
   internal fun initialize(initMode: InitMode) {
     coroutineScope.launch {
-      withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
-        try {
-          // We only due it on `PushToServer` because  with other init modes this method can be called too early in the IDE initialization process
-          // and cause saving settings to fail — see fhttps://github.com/JetBrains/intellij-community/pull/2793#discussion_r1692737467 for context.
-          if (initMode == InitMode.PushToServer) {
-            // Flush settings explicitly – if this is not done before sending sync events, then remotely synced settings
-            // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
-            saveIdeSettings()
-          }
-          settingsLog.initialize()
-
-          // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-          SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
-          ideMediator.activateStreamProvider()
-
-          applyInitialChanges(initMode)
-
-          startQueue()
+      initializationMutex.withLock {
+        if (isInitialized) {
+          LOG.warn("Settings sync is already initialized, skipping initialization.")
+          return@withLock
         }
-        catch (ex: Exception) {
-          stopSyncingAndRollback(null, ex)
+        withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
+          try {
+            // We only due it on `PushToServer` because  with other init modes this method can be called too early in the IDE initialization process
+            // and cause saving settings to fail — see fhttps://github.com/JetBrains/intellij-community/pull/2793#discussion_r1692737467 for context.
+            if (initMode == InitMode.PushToServer) {
+              // Flush settings explicitly – if this is not done before sending sync events, then remotely synced settings
+              // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
+              saveIdeSettings()
+            }
+            settingsLog.initialize()
+
+            // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+            SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
+            ideMediator.activateStreamProvider()
+
+            applyInitialChanges(initMode)
+
+            startQueue()
+          }
+          catch (ex: Exception) {
+            stopSyncingAndRollback(null, ex)
+          }
         }
       }
     }

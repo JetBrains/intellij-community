@@ -369,9 +369,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    initSettingsSync()
 
+    val controls = SettingsSyncMain.init(this, disposable, settingsSyncStorage, configDir, ideMediator)
+    updateChecker = controls.updateChecker
+    bridge = controls.bridge
     SettingsSyncSettings.getInstance().syncEnabled = true
+
     val task1: suspend () -> Unit = {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
