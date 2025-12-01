@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
@@ -204,7 +204,8 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
     )
 
     private val NOT_FORBIDDEN_CANDIDATE_PARENT_TYPES = setOf(
-        KtContextReceiverList::class.java, // it's located inside KtDeclarationModifierList, so should be allowed explicitly
+        KtContextParameterList::class.java, // it's located inside KtDeclarationModifierList, so should be allowed explicitly
+        KtContextReceiverList::class.java, // The list is still required to be declared since it's the implementation
     )
 
     private fun isAcceptedAsCandidate(element: PsiElement): Boolean {
