@@ -23,6 +23,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -247,15 +248,16 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   } + driver.getHighlights(editor.getDocument())
 
   fun scrollToPosition(line: Int, column: Int) {
-    interact {
-      editor.getScrollingModel().scrollTo(driver.logicalPosition(line, column, component.rdTarget), scrollType())
-    }
+    val position = driver.logicalPosition(line, column, component.rdTarget)
+    val scrollType = scrollType()
+    interact { editor.getScrollingModel().scrollTo(position, scrollType) }
+    wait(200.milliseconds) // wait for scroll to finish
   }
 
   fun scrollToCaret() {
-    interact {
-      editor.getScrollingModel().scrollToCaret(scrollType())
-    }
+    val scrollType = scrollType()
+    interact { editor.getScrollingModel().scrollToCaret(scrollType) }
+    wait(200.milliseconds) // wait for scroll to finish
   }
 
   private fun scrollType(name: String = "CENTER") = driver.utility(ScrollType::class).valueOf(name)
