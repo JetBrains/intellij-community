@@ -74,23 +74,29 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   }
 
   override suspend fun getBreakpointsInfo(projectId: ProjectId, fileId: VirtualFileId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>? {
-    val project = projectId.findProjectOrNull() ?: return null
-    val file = fileId.virtualFile() ?: return null
-    val editorBreakpointsRawInfo: List<BreakpointsLineRawInfo?> = readAction {
-      val document = file.findDocument()
-      blockingContextToIndicator {
-        (start..endInclusive).map { line ->
-          if (document == null) return@map null
-          if (!DocumentUtil.isValidLine(line, document)) return@map null
-          ProgressManager.checkCanceled()
-          val position = XDebuggerUtil.getInstance().createPosition(file, line) ?: return@map null
-          computeBreakpointsLineRawInfo(project, position)
+    try {
+      val project = projectId.findProjectOrNull() ?: return null
+      val file = fileId.virtualFile() ?: return null
+      val editorBreakpointsRawInfo: List<BreakpointsLineRawInfo?> = readAction {
+        val document = file.findDocument()
+        blockingContextToIndicator {
+          (start..endInclusive).map { line ->
+            if (document == null) return@map null
+            if (!DocumentUtil.isValidLine(line, document)) return@map null
+            ProgressManager.checkCanceled()
+            val position = XDebuggerUtil.getInstance().createPosition(file, line) ?: return@map null
+            computeBreakpointsLineRawInfo(project, position)
+          }
         }
       }
-    }
 
-    return editorBreakpointsRawInfo.map {
-      it?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
+      return editorBreakpointsRawInfo.map {
+        it?.toDto() ?: XBreakpointsLineInfo(listOf(), false)
+      }
+    }
+    catch (e: CancellationException) {
+      LOG.info("Request getBreakpointsInfo was cancelled: $e")
+      return null
     }
   }
 
