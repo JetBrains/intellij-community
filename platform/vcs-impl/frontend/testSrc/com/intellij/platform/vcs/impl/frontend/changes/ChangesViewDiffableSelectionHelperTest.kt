@@ -7,11 +7,15 @@ import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.platform.vcs.impl.changes.ChangesViewTestBase
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 
 internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   fun `test current change then next unversioned and no previous`() {
@@ -189,6 +193,68 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     assertNull(selection.nextChange)
   }
 
+  fun `test change node and amend node affecting same file both selectable`() {
+    val filePath = path("a.txt")
+
+    val defaultList = defaultChangeList(filePath)
+
+    val changeInAmend = change(filePath, "amend-revision")
+    val editedCommit = createEditedCommit(listOf(changeInAmend))
+
+    val model = buildModel(view, listOf(defaultList), emptyList(), editedCommit)
+    updateModelAndSelect(view, model, filePath)
+
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    checkNotNull(selection)
+
+    assertTreePath(selection.selectedChange, defaultList.changes.single())
+    assertTreePath(selection.nextChange!!, changeInAmend)
+    assertNull(selection.previousChange)
+  }
+
+  fun `test multiple changes under amend node all navigable`() {
+    val pathInTheMiddle = path("c2.txt")
+
+    val c1 = change(path("c1.txt"))
+    val c2 = change(path("c2.txt"))
+    val c3 = change(path("c3.txt"))
+    val editedCommit = createEditedCommit(listOf(c1, c2, c3))
+
+    val model = buildModel(view, emptyList(), emptyList(), editedCommit)
+    updateModelAndSelect(view, model, pathInTheMiddle)
+
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
+    checkNotNull(selection)
+
+    assertTreePath(selection.selectedChange, c2)
+    assertTreePath(selection.previousChange!!, c1)
+    assertTreePath(selection.nextChange!!, c3)
+  }
+
+  fun `test switch from change node to amend node affecting same file`() {
+    val filePath = path("a.txt")
+
+    val defaultList = defaultChangeList(filePath)
+
+    val changeInAmend = change(filePath, "amend-revision")
+    val model = buildModel(view, listOf(defaultList), emptyList(), createEditedCommit(listOf(changeInAmend)))
+    updateModelAndSelect(view, model, filePath)
+
+    val helper = ChangesViewDiffableSelectionHelper(view)
+    val previous = helper.updateSelection()
+    checkNotNull(previous)
+    assertTreePath(previous.selectedChange, defaultList.changes.single())
+
+    // Switch selection to the amend node for the same file
+    findNodeAndSelect(changeInAmend)
+
+    val selection = helper.updateSelection()
+    checkNotNull(selection)
+    assertTreePath(selection.selectedChange, changeInAmend)
+    assertTreePath(selection.previousChange!!, defaultList.changes.single())
+    assertNull(selection.nextChange)
+  }
+
   private fun ChangesViewDiffableSelectionHelper.updateSelection(): ChangesViewDiffableSelection? {
     runInEdtAndWait { tryUpdateSelection() }
     return diffableSelection.value
@@ -214,8 +280,26 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     return Change(null, contentRevisionDto.contentRevision)
   }
 
+  private fun createEditedCommit(changes: List<Change>): EditedCommitDetails {
+    val message = "Amend commit"
+    val author = VcsUserUtil.createUser("John Doe", "john@example.com")
+    return EditedCommitDetails(
+      currentUser = null,
+      committer = author,
+      author = author,
+      commitHash = HashImpl.build("abc123"),
+      subject = message,
+      fullMessage = message,
+      changes = changes
+    )
+  }
+
   private fun assertTreePath(path: ChangesTreePath, expected: FilePath, expectChangeId: Boolean) {
     assertEquals(expected, path.filePath.filePath)
     if (expectChangeId) assertNotNull(path.changeId) else assertNull(path.changeId)
+  }
+
+  private fun assertTreePath(path: ChangesTreePath, expected: Change) {
+    assertEquals(ChangeId.getId(expected), path.changeId)
   }
 }
