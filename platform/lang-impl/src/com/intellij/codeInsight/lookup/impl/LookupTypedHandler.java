@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
 
-    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file, null)) {
+    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file)) {
       return;
     }
 
@@ -77,13 +76,11 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  @ApiStatus.Internal
-  public static boolean beforeCharTyped(final char charTyped,
-                                Project project,
-                                final Editor originalEditor,
-                                final Editor editor,
-                                PsiFile file,
-                                @Nullable Runnable doUpdateDocument) {
+  private static boolean beforeCharTyped(final char charTyped,
+                                         Project project,
+                                         final Editor originalEditor,
+                                         final Editor editor,
+                                         PsiFile file) {
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
     if (lookup == null){
       return false;
@@ -104,12 +101,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
 
       if (!lookup.performGuardedChange(() -> {
         lookup.fireBeforeAppendPrefix(charTyped);
-        if (doUpdateDocument == null) {
-          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-        }
-        else {
-          doUpdateDocument.run();
-        }
+        EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
       })) {
         return true;
       }

@@ -93,7 +93,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final @NotNull Caret myCaret;
   private @Nullable CompletionParameters myParameters;
   private final @NotNull CodeCompletionHandlerBase handler;
-  private @NotNull CompletionLookupArrangerImpl myArranger;
+  private final @NotNull CompletionLookupArrangerImpl myArranger;
   private final @NotNull CompletionType myCompletionType;
   private final int myInvocationCount;
   private @NotNull OffsetsInFile myHostOffsets;
@@ -168,7 +168,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    */
   private volatile int myUnfreezeAfterNItems = -1;
 
-  public CompletionProgressIndicator(@NotNull Editor editor,
+  CompletionProgressIndicator(@NotNull Editor editor,
                                      @NotNull Caret caret,
                                      int invocationCount,
                                      @NotNull CodeCompletionHandlerBase handler,
@@ -405,13 +405,6 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   @Override
   public void setParameters(@NotNull CompletionParameters parameters) {
     myParameters = parameters;
-  }
-
-  public void setLookupArranger(@NotNull CompletionLookupArrangerImpl arranger) {
-    myArranger = arranger;
-    lookup.setArranger(arranger);
-    // Refresh to update the presentableArranger in the lookup
-    lookup.refreshUi(true, false);
   }
 
   @Override
@@ -809,8 +802,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return myCaret;
   }
 
-  @ApiStatus.Internal
-  public boolean isRepeatedInvocation(@NotNull CompletionType completionType, @NotNull Editor editor) {
+  boolean isRepeatedInvocation(@NotNull CompletionType completionType, @NotNull Editor editor) {
     if (completionType != myCompletionType || editor != myEditor) {
       return false;
     }

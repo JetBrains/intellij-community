@@ -78,9 +78,8 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     editor: Editor,
     private val event: TypedEvent?
   ) : CompletionPhase(indicator) {
-    @ApiStatus.Internal
     @JvmField
-    var replaced: Boolean = false
+    internal var replaced: Boolean = false
 
     private val myTracker: ActionTracker = ActionTracker(editor, this)
     private var myState: CommittingState = InProgress(1) // access available on EDT only

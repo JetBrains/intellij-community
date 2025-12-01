@@ -155,8 +155,7 @@ public class CodeCompletionHandlerBase {
     invokeCompletionWithTracing(project, editor, time, hasModifiers, editor.getCaretModel().getPrimaryCaret());
   }
 
-  @ApiStatus.Internal
-  protected void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
+  private void invokeCompletion(@NotNull Project project, @NotNull Editor editor, int time, boolean hasModifiers, @NotNull Caret caret) {
     markCaretAsProcessed(caret);
 
     if (invokedExplicitly) {
@@ -317,8 +316,7 @@ public class CodeCompletionHandlerBase {
     scheduleContributorsAfterAsyncCommit(initContext, indicator, hasModifiers);
   }
 
-  @ApiStatus.Internal
-  protected void scheduleContributorsAfterAsyncCommit(@NotNull CompletionInitializationContextImpl initContext,
+  private void scheduleContributorsAfterAsyncCommit(@NotNull CompletionInitializationContextImpl initContext,
                                                     @NotNull CompletionProgressIndicator indicator,
                                                     boolean hasModifiers) {
     CompletionPhase phase;
@@ -353,8 +351,7 @@ public class CodeCompletionHandlerBase {
    * 2. It waits for them to be computed for the given timeout.
    * 3. If candidates are computed until timeout, the UI is updated immediately, otherwise computation continues and the phase is set to BgCalculation.
    */
-  @ApiStatus.Internal
-  protected void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
+  private void trySynchronousCompletion(@NotNull CompletionInitializationContextImpl initContext,
                                         boolean hasModifiers,
                                         long startingTime,
                                         @NotNull CompletionProgressIndicator indicator,
@@ -832,15 +829,13 @@ public class CodeCompletionHandlerBase {
     };
   }
 
-  @ApiStatus.Internal
-  protected static void clearCaretMarkers(@NotNull Editor editor) {
+  private static void clearCaretMarkers(@NotNull Editor editor) {
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       caret.putUserData(CARET_PROCESSED, null);
     }
   }
 
-  @ApiStatus.Internal
-  protected static void markCaretAsProcessed(@NotNull Caret caret) {
+  private static void markCaretAsProcessed(@NotNull Caret caret) {
     caret.putUserData(CARET_PROCESSED, Boolean.TRUE);
   }
 
@@ -861,8 +856,7 @@ public class CodeCompletionHandlerBase {
     return ProgressIndicatorUtils.withTimeout(maxDurationMillis, task);
   }
 
-  @ApiStatus.Internal
-  protected static int calcSyncTimeOut(long startTime) {
+  private static int calcSyncTimeOut(long startTime) {
     return (int)Math.max(300, ourAutoInsertItemTimeout - (System.currentTimeMillis() - startTime));
   }
 

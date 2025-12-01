@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.view.impl
 
-import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
@@ -255,8 +254,6 @@ class TerminalViewImpl(
       terminalInput = terminalInput,
       coroutineScope = hyperlinkScope,
     )
-
-    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Invoke")
 
     val terminalAliasesStorage = TerminalAliasesStorage()
     outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
