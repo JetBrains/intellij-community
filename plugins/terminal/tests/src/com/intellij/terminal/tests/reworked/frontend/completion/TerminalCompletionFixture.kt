@@ -16,6 +16,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
+import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionService
 import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
@@ -114,6 +115,10 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
         })
       }
     }
+  }
+
+  suspend fun awaitPendingRequestsProcessed() {
+    TerminalCommandCompletionService.getInstance(project).awaitPendingRequestsProcessed()
   }
 
   fun getActiveLookup(): LookupImpl? {

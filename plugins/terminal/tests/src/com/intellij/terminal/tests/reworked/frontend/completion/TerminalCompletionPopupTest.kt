@@ -6,7 +6,6 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
@@ -172,8 +171,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_BACK_SPACE)
-    // Wait for some time, because a completion popup might appear
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
 
@@ -190,8 +188,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("set", "show", "start", "status", "stop", "sync"))
 
     fixture.pressKey(VK_LEFT)
-    // Wait for some time, because a completion popup might appear
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
 
@@ -205,8 +202,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("roots", "files", "statuses"))
 
     fixture.pressKey(VK_LEFT)
-    // Wait for some time, because a completion popup might appear
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertFalse(fixture.isLookupActive())
   }
 

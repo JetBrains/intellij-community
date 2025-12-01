@@ -4,7 +4,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
@@ -86,7 +85,7 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
     val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
 
     fixture.type("test_cmd st")
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertThat(fixture.isLookupActive()).isFalse()
     Unit
   }
@@ -122,7 +121,7 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
     val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
 
     fixture.type("test_cmd stop -")
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertThat(fixture.isLookupActive()).isFalse()
     Unit
   }
@@ -132,7 +131,7 @@ internal class TerminalAutoCompletionPopupTest : BasePlatformTestCase() {
     val fixture = createFixture(TerminalCommandCompletionShowingMode.ONLY_PARAMETERS)
 
     fixture.type("test_cmd stop -a")
-    delay(2000)
+    fixture.awaitPendingRequestsProcessed()
     assertThat(fixture.isLookupActive()).isFalse()
     Unit
   }

@@ -20,8 +20,9 @@ import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
@@ -36,28 +37,36 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegra
  * Use [invokeCompletion] to schedule a new completion request.
  * Use [activeProcess] to get the currently running completion session.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class TerminalCommandCompletionService(
+class TerminalCommandCompletionService(
   private val project: Project,
   coroutineScope: CoroutineScope,
 ) {
   @get:RequiresEdt
-  var activeProcess: TerminalCommandCompletionProcess? = null
+  internal var activeProcess: TerminalCommandCompletionProcess? = null
     private set
 
-  private val requestsChannel = Channel<TerminalCommandCompletionContext>(Channel.CONFLATED)
+  private val requestsCount = MutableStateFlow(0)
+  private val requestsChannel = Channel<TerminalCommandCompletionContext>(
+    capacity = Channel.CONFLATED,
+    onUndeliveredElement = { requestsCount.update { it - 1 } }
+  )
 
   init {
     coroutineScope.launch(Dispatchers.UiWithModelAccess + CoroutineName("Completion requests processing")) {
-      requestsChannel.consumeAsFlow().collectLatest {
+      requestsChannel.consumeAsFlow().collectLatest { request ->
         try {
-          processCompletionRequest(it)
+          processCompletionRequest(request)
         }
         catch (e: CancellationException) {
           throw e
         }
         catch (e: Exception) {
           LOG.error("Exception during completion requests processing", e)
+        }
+        finally {
+          requestsCount.update { it - 1 }
         }
       }
     }
@@ -91,7 +100,12 @@ internal class TerminalCommandCompletionService(
       commandText = commandText,
       isAutoPopup = isAutoPopup,
     )
-    requestsChannel.trySend(context)
+
+    requestsCount.update { it + 1 }
+    val result = requestsChannel.trySend(context)
+    if (!result.isSuccess) {
+      requestsCount.update { it - 1 }
+    }
   }
 
   private suspend fun processCompletionRequest(context: TerminalCommandCompletionContext) = coroutineScope {
@@ -230,6 +244,11 @@ internal class TerminalCommandCompletionService(
 
     val adjustedPriority = priority.coerceIn(0, 100)
     return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
+  }
+
+  @TestOnly
+  suspend fun awaitPendingRequestsProcessed() {
+    requestsCount.first { it == 0 }
   }
 
   companion object {
