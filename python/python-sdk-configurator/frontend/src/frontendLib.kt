@@ -3,6 +3,7 @@ package com.intellij.python.sdkConfigurator.frontend
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateSet
+import androidx.compose.ui.state.ToggleableState
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.common.tools.getIcon
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
@@ -21,7 +22,7 @@ import org.jetbrains.jewel.ui.icon.IntelliJIconKey
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * UI should display [filteredModules] (either enabled or disabled). On each click call [clicked].
+ * UI should display [filteredParentModules] (either enabled or disabled). On each click call [moduleClicked].
  * Show filter from [moduleFilter]
  * Result can be taken from [checkedModules].
  * While composable is displayed. call [processFilterUpdates]
@@ -41,33 +42,55 @@ internal class ModulesViewModel(modulesDTO: ModulesDTO) {
       Pair(toolId, icon)
     }.toTypedArray())
 
-  private val modules: List<ModuleDTO> = modulesDTO.modules.sortedBy { it.name }
+  private val parentModules: List<ModuleDTO> = modulesDTO.modules.sortedBy { it.name }
+  private val parentModuleNames: Set<ModuleName> = parentModules.map { it.name }.toSet()
 
-  var filteredModules: List<ModuleDTO> by mutableStateOf(modules)
+  var selectAllState: ToggleableState by mutableStateOf(ToggleableState.Off)
+  var filteredParentModules: List<ModuleDTO> by mutableStateOf(parentModules)
   val checkedModules: SnapshotStateSet<ModuleName> = mutableStateSetOf()
   val moduleFilter = TextFieldState()
 
   // parent -> children
-  private val children: ImmutableMap<ModuleName, ImmutableSet<ModuleName>> = filteredModules.associate {
+  private val children: ImmutableMap<ModuleName, ImmutableSet<ModuleName>> = filteredParentModules.associate {
     Pair(it.name, it.childModules.toPersistentSet())
   }.toPersistentMap()
+
+  private val parentOnlyCheckedModules: Set<ModuleName> get() = parentModuleNames.intersect(checkedModules)
 
   // child -> parent
   private val parents: ImmutableMap<ModuleName, ModuleName> = children.flatMap { (parent, children) ->
     children.map { Pair(it, parent) }
   }.toMap().toImmutableMap()
 
-  fun clicked(module: ModuleName) {
-    val what = parents[module] ?: module // Get parent if child module
-    val toChange = setOf(what) + children.getOrDefault(what, emptySet()) // Get children if parent
-    val checkBoxSet = what !in checkedModules
-    if (checkBoxSet) {
-      checkedModules.addAll(toChange)
+  fun selectAllClicked() {
+    val checked = when (selectAllState) {
+      ToggleableState.On -> false
+      ToggleableState.Off, ToggleableState.Indeterminate -> true
+    }
+    setParentModules(checked = checked, parentModulesToSet = parentModuleNames.toTypedArray())
+  }
+
+  fun moduleClicked(module: ModuleName) {
+    val parentModule = parents[module] ?: module // Get parent if child module
+    val alreadyChecked = parentModule in checkedModules
+    setParentModules(checked = !alreadyChecked, parentModule)
+  }
+
+  private fun setParentModules(checked: Boolean, vararg parentModulesToSet: ModuleName) {
+    val parentModulesToSet = parentModulesToSet.toSet()
+    val parentsAndChildrenModules = parentModulesToSet + parentModulesToSet.flatMap { children.getOrDefault(it, emptySet()) } // Get children if parent
+    if (checked) {
+      checkedModules.addAll(parentsAndChildrenModules)
     }
     else {
-      checkedModules.removeAll(toChange)
+      checkedModules.removeAll(parentsAndChildrenModules)
     }
     callEnabledButtonListener()
+    selectAllState = when (parentOnlyCheckedModules.size) {
+      0 -> ToggleableState.Off
+      parentModules.size -> ToggleableState.On // All parent modules are checked
+      else -> ToggleableState.Indeterminate
+    }
   }
 
   private fun callEnabledButtonListener() {
@@ -83,7 +106,7 @@ internal class ModulesViewModel(modulesDTO: ModulesDTO) {
       .collectLatest { filter ->
         withContext(Dispatchers.Default) {
           val filter = filter.trim()
-          filteredModules = if (filter.isEmpty()) modules else modules.filter { filter in it.name }
+          filteredParentModules = if (filter.isEmpty()) parentModules else parentModules.filter { filter in it.name }
         }
       }
   }

@@ -24,6 +24,7 @@ import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.IntelliJIconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 /**
  * List of modules from [viewModel]. Screen sizes are in physical pixels
@@ -36,36 +37,40 @@ internal fun ModuleList(
     viewModel.processFilterUpdates()
   }
   val topLabel = remember { message("python.sdk.configurator.frontend.choose.modules.text") }
-  val projectStructureLabel = remember { message("python.sdk.configurator.frontend.choose.modules.project.structure") }
+  val searchTitle = remember { message("python.sdk.configurator.frontend.choose.modules.project.search") }
   val environmentLabel = remember { message("python.sdk.configurator.frontend.choose.modules.environment") }
+  val selectAllLabel = remember { message("python.sdk.configurator.frontend.choose.modules.select.all") }
 
   val border = Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)
   val space = 5.dp
   VerticallyScrollableContainer(Modifier.padding(space).then(border).fillMaxSize()) {
-    val checkboxArrangement = Arrangement.spacedBy(space)
-    Column(Modifier.fillMaxSize(), verticalArrangement = checkboxArrangement) {
+    val checkBoxArrangement = Arrangement.spacedBy(space)
+    Column(Modifier.fillMaxSize(), verticalArrangement = checkBoxArrangement) {
       Text(text = topLabel, Modifier.padding(space))
 
-      Column(Modifier.fillMaxSize(), verticalArrangement = checkboxArrangement) {
-        Row(Modifier.fillMaxSize().then(border).padding(space), horizontalArrangement = checkboxArrangement) {
-          ModuleRow(
-            left = { modifier ->
-              Row(modifier) {
-                Text(projectStructureLabel)
-                Spacer(Modifier.width(1.dp))
-                TextField(viewModel.moduleFilter, undecorated = true, modifier = Modifier.weight(1f))
-              }
-            },
-            right = { modifier ->
-              Text(environmentLabel, modifier = modifier)
-            },
-          )
-        }
-        for (module in viewModel.filteredModules) {
-          key(module.name) {
-            Row(verticalAlignment = Alignment.Top, horizontalArrangement = checkboxArrangement, modifier = Modifier.padding(horizontal = space)) {
-              Module(module.name in viewModel.checkedModules, viewModel::clicked, module, viewModel.icons, checkboxArrangement)
+
+      Row(Modifier.fillMaxSize().then(border).padding(space), horizontalArrangement = checkBoxArrangement, verticalAlignment = Alignment.CenterVertically) {
+        ModuleRow(
+          left = { modifier ->
+            Row(modifier) {
+              TextField(viewModel.moduleFilter, undecorated = false, modifier = Modifier.weight(1f), leadingIcon = { Icon(AllIconsKeys.Actions.Find, searchTitle) })
             }
+          },
+          right = { modifier ->
+            Text(environmentLabel, modifier = modifier)
+          },
+        )
+      }
+      Column(Modifier.fillMaxSize(), verticalArrangement = checkBoxArrangement) {
+        Row(verticalAlignment = Alignment.Top) {
+          // TODO: Get real size instead of "invisible" checkbox
+          OpenArrow(false, {}, Modifier.alpha(0.0f))
+          TriStateCheckboxRow(selectAllLabel, viewModel.selectAllState, viewModel::selectAllClicked)
+          Spacer(Modifier.weight(1f))
+        }
+        for (module in viewModel.filteredParentModules) {
+          key(module.name) {
+            Module(module.name in viewModel.checkedModules, viewModel::moduleClicked, module, viewModel.icons, checkBoxArrangement)
           }
         }
       }
@@ -93,7 +98,7 @@ private fun Module(
   Row(verticalAlignment = Alignment.Top, horizontalArrangement = checkBoxArrangement) {
     ModuleRow(
       left = { modifier ->
-        Row(modifier) {
+        Row(modifier, verticalAlignment = if (subModuleOpened) Alignment.Top else Alignment.CenterVertically) {
           // TODO: Get real size instead of "invisible" checkbox
           OpenArrow(subModuleOpened, { subModuleOpened = !subModuleOpened },
                     modifier = if (module.childModules.isEmpty()) {
