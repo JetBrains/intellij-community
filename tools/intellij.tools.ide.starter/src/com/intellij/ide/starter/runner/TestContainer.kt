@@ -2,6 +2,7 @@ package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.getUnitTestMode
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.ide.InstalledIde
@@ -86,6 +87,11 @@ interface TestContainer<T> {
             if (!CIServer.instance.isBuildRunningOnCI) {
               //this option is affecting only local launches
               disableTraceDataSharingNotification()
+            }
+            if (ConfigurationStorage.getUnitTestMode()) {
+              applyVMOptionsPatch {
+                inUnitTestMode()
+              }
             }
           }
       }
