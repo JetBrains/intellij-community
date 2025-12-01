@@ -19,7 +19,9 @@ import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import com.siyeh.ig.psiutils.CollectionUtils
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -96,7 +98,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         initializedOriginalDescriptor = false
 
-        val result = hashSetOf<UsageInfo>()
+        val result = ContainerUtil.newConcurrentSet<UsageInfo>()
 
         result.add(OriginalJavaMethodDescriptorWrapper(info.method))
 
