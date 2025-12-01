@@ -1093,7 +1093,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           if (depId == pluginId) {
             return@processAllNonOptionalDependencyIds FileVisitResult.CONTINUE
           }
-          if ((!session.pluginStates.contains(depId) && !pluginsState.wasInstalled(depId) && !pluginsState.wasUpdated(depId) && !pluginsState.wasInstalledWithoutRestart(depId)) || session.isPluginDisabled(depId)) {
+          if ((!session.pluginStates.contains(depId) && !pluginsState.wasInstalled(depId) && !pluginsState.wasUpdated(depId) && !pluginsState.wasInstalledWithoutRestart(depId)) || !session.isPluginEnabled(depId)) {
             session.dependentToRequiredListMap.putIfAbsent(pluginId, mutableSetOf())
             session.dependentToRequiredListMap[pluginId]!!.add(depId)
           }
