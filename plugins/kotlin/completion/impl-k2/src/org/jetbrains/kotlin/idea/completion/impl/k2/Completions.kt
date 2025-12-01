@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateI
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
@@ -106,20 +107,41 @@ internal object Completions {
         // We make sure the type parameters match before, so this cast is safe.
         val completionRunnerResult = completionRunner.runCompletion(completionContext, sections)
 
-        val chainCompletionContributors = completionRunnerResult.registeredChainContributors
-        if (positionContext is KotlinNameReferencePositionContext
-            && chainCompletionContributors.isNotEmpty()
-            && RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")
-        ) {
-            K2CompletionRunner.runChainCompletion(
-                originalPositionContext = positionContext,
-                completionResultSet = resultSet,
-                parameters = parameters,
-                chainCompletionContributors = chainCompletionContributors,
-            )
-        }
+        runChainCompletionIfNecessary(
+            completionResult = completionRunnerResult,
+            positionContext = positionContext,
+            resultSet = resultSet,
+            parameters = parameters
+        )
 
         return completionRunnerResult.addedElements > 0
+    }
+
+    private fun runChainCompletionIfNecessary(
+        completionResult: K2CompletionRunnerResult,
+        positionContext: KotlinRawPositionContext,
+        resultSet: CompletionResultSet,
+        parameters: KotlinFirCompletionParameters,
+    ) {
+        if (completionResult.registeredChainContributors.isEmpty()) return
+        if (positionContext !is KotlinNameReferencePositionContext) return
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return
+
+        (positionContext.explicitReceiver as? KtExpression)?.let { receiver ->
+            analyze(receiver) {
+                if (receiver.resolveExpression() != null) {
+                    // The explicit receiver is already resolved, no point in running chain completion
+                    return@runChainCompletionIfNecessary
+                }
+            }
+        }
+
+        K2CompletionRunner.runChainCompletion(
+            originalPositionContext = positionContext,
+            completionResultSet = resultSet,
+            parameters = parameters,
+            chainCompletionContributors = completionResult.registeredChainContributors,
+        )
     }
 
 
