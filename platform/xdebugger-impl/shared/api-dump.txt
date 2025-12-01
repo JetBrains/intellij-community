@@ -4,6 +4,11 @@ e:com.intellij.xdebugger.impl.XSourceKind
 - sf:MAIN:com.intellij.xdebugger.impl.XSourceKind
 - s:valueOf(java.lang.String):com.intellij.xdebugger.impl.XSourceKind
 - s:values():com.intellij.xdebugger.impl.XSourceKind[]
+com.intellij.xdebugger.impl.XWatch
+- a:getCanBePaused():Z
+- a:getExpression():com.intellij.xdebugger.XExpression
+- a:isPaused():Z
+- a:setPaused(Z):V
 Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - canMarkValue(com.intellij.xdebugger.frame.XValue):Z
 - clear():V
@@ -12,6 +17,17 @@ Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - getMarkup(com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 - markValue(com.intellij.xdebugger.frame.XValue,com.intellij.xdebugger.impl.ui.tree.ValueMarkup):org.jetbrains.concurrency.Promise
 - unmarkValue(com.intellij.xdebugger.frame.XValue):org.jetbrains.concurrency.Promise
+f:com.intellij.xdebugger.impl.inline.InlineWatch
+- <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
+- f:getExpression():com.intellij.xdebugger.XExpression
+- f:getLine():I
+- f:getPosition():com.intellij.xdebugger.XSourcePosition
+- f:setMarker():Z
+- f:updatePosition():Z
+com.intellij.xdebugger.impl.inline.XInlineWatchesView
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- a:addInlineWatchExpression(com.intellij.xdebugger.impl.inline.InlineWatch,I,Z):V
+- a:removeInlineWatches(java.util.Collection):V
 c:com.intellij.xdebugger.impl.ui.XDebugSessionData
 - com.intellij.openapi.util.UserDataHolderBase
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
