@@ -111,7 +111,7 @@ public abstract class StubProcessingHelperBase {
                                                             @NotNull Collection<CodeInsightContext> contexts) {
     if (ourContextErrorCounter.get() < MAX_CONTEXT_ERROR_NUMBER) {
       // todo IJPL-339 we need to process the file twice in this case. Not supported yet
-      LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
+      LOG.warn("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
       ourContextErrorCounter.incrementAndGet();
     }
   }
