@@ -55,7 +55,8 @@ data class DiscoveredProduct(
  * Example: DotnetExternalProductProperties class is in ReSharperExternalProductProperties.kt file.
  */
 private val CLASS_TO_FILE_NAME_OVERRIDES = mapOf(
-  "com.jetbrains.rider.build.product.DotnetExternalProductProperties" to "ReSharperExternalProductProperties.kt"
+  "com.jetbrains.rider.build.product.DotnetExternalProductProperties" to "ReSharperExternalProductProperties.kt",
+  "org.jetbrains.intellij.build.AndroidStudioWithMarketplaceProperties" to "UltimateAwareIdeaCommunityProperties.kt",
 )
 
 /**
