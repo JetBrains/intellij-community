@@ -123,16 +123,18 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
     )
 
     context(_: KaSession)
-    private fun KtCallExpression.findConversionAndResolvedCall(): Pair<Conversion, KaFunctionCall<*>>? {
+    private fun KtCallExpression.findConversionsAndResolvedCall(): Pair<List<Conversion>, KaFunctionCall<*>>? {
         val calleeText = calleeExpression?.text ?: return null
-        val resolvedCall: KaFunctionCall<*>? by lazy { this.resolveToCall()?.successfulFunctionCallOrNull() }
-        for (conversion in conversions) {
-            if (conversion.shortName != calleeText) continue
-            if (resolvedCall?.symbol?.callableId?.asSingleFqName() == conversion.fqName) {
-                return conversion to resolvedCall!!
+        val resolvedCall = this.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val possibleConversions = buildList {
+            for (conversion in conversions) {
+                if (conversion.shortName != calleeText) continue
+                if (resolvedCall.symbol.callableId?.asSingleFqName() == conversion.fqName) {
+                    add(conversion)
+                }
             }
         }
-        return null
+        return possibleConversions to resolvedCall
     }
 
     override fun getProblemDescription(
@@ -157,10 +159,13 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
 
     override fun KaSession.prepareContext(element: KtExpression): Context? {
         val callExpression = element.parent as? KtCallExpression ?: return null
-        val (conversion, resolvedCall) = callExpression.findConversionAndResolvedCall() ?: return null
-        if (!conversion.callChecker(resolvedCall)) return null
-        val replacement = conversion.analyze(callExpression) ?: return null
-        return Context(conversion.shortName, replacement)
+        val (conversions, resolvedCall) = callExpression.findConversionsAndResolvedCall() ?: return null
+        for (conversion in conversions) {
+            if (!conversion.callChecker(resolvedCall)) continue
+            val replacement = conversion.analyze(callExpression) ?: continue
+            return Context(conversion.shortName, replacement)
+        }
+        return null
     }
 
     private class SimplifyCallFix(
