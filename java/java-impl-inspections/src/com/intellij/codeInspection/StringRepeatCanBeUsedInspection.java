@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -24,12 +25,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final CallMatcher APPEND = CallMatcher.instanceCall("java.lang.AbstractStringBuilder", "append").parameterCount(1);
+  private static final CallMatcher APPEND = CallMatcher.instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterCount(1);
+  private static final CallMatcher REPEAT = CallMatcher.instanceCall(JAVA_LANG_STRING, "repeat").parameterCount(1);
 
   public boolean ADD_MATH_MAX = true;
 
@@ -63,14 +65,45 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
           if (type == null) return;
           String builderClassName = type.getPresentableText();
           holder.registerProblem(statement.getFirstChild(),
-                                 JavaBundle.message("inspection.message.can.be.replaced.with.builder.repeat",
-                                                    builderClassName + ".repeat()"),
-                                 new AbstractStringBuilderRepeatCanBeUsedFix(ADD_MATH_MAX, builderClassName));
+                                 messageForCanBeReplacedWithBuilderRepeat(builderClassName),
+                                 new ConvertForLoopToStringBuilderRepeatFix(ADD_MATH_MAX, builderClassName));
         }
         else {
           holder.registerProblem(statement.getFirstChild(), JavaBundle.message("inspection.message.can.be.replaced.with.string.repeat"),
-                                 new StringRepeatCanBeUsedFix(ADD_MATH_MAX));
+                                 new ConvertForLoopToStringRepeatFix(ADD_MATH_MAX));
         }
+      }
+
+      /**
+       * Detects AbstractStringBuilder.append() call with String.repeat() as an argument, for example
+       * <pre>
+       *   StringBuilder sb = new StringBuilder();
+       *   sb.append("*".repeat(10))
+       * </pre>
+       */
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+        if (!languageLevel.isAtLeast(LanguageLevel.JDK_21)) return;
+        if (!APPEND.test(call)) return;
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return;
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length != 1) return;
+        PsiMethodCallExpression repeatCall = tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiMethodCallExpression.class);
+        if (repeatCall == null) return;
+        if (!REPEAT.test(repeatCall)) return;
+        if (ErrorUtil.containsDeepError(call)) return;
+        PsiType type = qualifier.getType();
+        if (type == null) return;
+        String builderClassName = type.getPresentableText();
+        PsiElement reference = call.getMethodExpression().getReferenceNameElement();
+        if (reference == null) return;
+        holder.registerProblem(reference, messageForCanBeReplacedWithBuilderRepeat(builderClassName),
+                               new ConvertStringRepeatToStringBuilderRepeatFix(builderClassName));
+      }
+
+      private static @Nls @NotNull String messageForCanBeReplacedWithBuilderRepeat(String builderClassName) {
+        return JavaBundle.message("inspection.message.can.be.replaced.with.builder.repeat", builderClassName + ".repeat()");
       }
     };
   }
@@ -83,10 +116,24 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     return call;
   }
 
-  private static final class AbstractStringBuilderRepeatCanBeUsedFix extends RepeatCanBeUsedFix {
+  /**
+   * Replaces a for loop containing a call to AbstractStringBuilder.append(s), for example
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * for(int i=0; i<100; i++) {
+   *   sb.append(" ");
+   * }
+   * </pre>
+   * with single call to AbstractStringBuilder.repeat()
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * sb.repeat(" ", 100);
+   * </pre>
+   */
+  private static final class ConvertForLoopToStringBuilderRepeatFix extends ConvertToRepeatFix {
     private final String builderClassShortName;
 
-    private AbstractStringBuilderRepeatCanBeUsedFix(boolean addMathMax, String builderClassShortName) {
+    private ConvertForLoopToStringBuilderRepeatFix(boolean addMathMax, String builderClassShortName) {
       super(addMathMax);
       this.builderClassShortName = builderClassShortName;
     }
@@ -114,8 +161,22 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private static final class StringRepeatCanBeUsedFix extends RepeatCanBeUsedFix {
-    private StringRepeatCanBeUsedFix(boolean addMathMax) {
+  /**
+   * Replaces a for loop containing a call to AbstractStringBuilder.append(s), for example
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * for(int i=0; i<100; i++) {
+   *   sb.append(" ");
+   * }
+   * </pre>
+   * with single call to AbstractStringBuilder.append() that uses String.repeat()
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * sb.append(" ".repeat(100));
+   * </pre>
+   */
+  private static final class ConvertForLoopToStringRepeatFix extends ConvertToRepeatFix {
+    private ConvertForLoopToStringRepeatFix(boolean addMathMax) {
       super(addMathMax);
     }
 
@@ -144,10 +205,10 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private static abstract class RepeatCanBeUsedFix extends PsiUpdateModCommandQuickFix {
+  private static abstract class ConvertToRepeatFix extends PsiUpdateModCommandQuickFix {
     protected final boolean myAddMathMax;
 
-    private RepeatCanBeUsedFix(boolean addMathMax) {
+    private ConvertToRepeatFix(boolean addMathMax) {
       myAddMathMax = addMathMax;
     }
 
@@ -233,7 +294,66 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       if (isStringType && NullabilityUtil.getExpressionNullability(arg, true) == Nullability.NOT_NULL) {
         return ct.text(arg, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
       }
-      return CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + ct.text(arg) + ")";
+      return JAVA_LANG_STRING + ".valueOf(" + ct.text(arg) + ")";
+    }
+  }
+
+  /**
+   * Replaces AbstractStringBuilder.append() containing String.repeat(...) argument
+   * with AbstractStringBuilder.repeat(), for example
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * sb.append(" ".repeat(100));
+   * </pre>
+   * with call to AbstractStringBuilder.repeat()
+   * <pre>
+   * StringBuilder sb = new StringBuilder();
+   * sb.repeat(" ", 100));
+   * </pre>
+   */
+  private static final class ConvertStringRepeatToStringBuilderRepeatFix extends PsiUpdateModCommandQuickFix {
+    private final String builderClassShortName;
+
+    private ConvertStringRepeatToStringBuilderRepeatFix(String builderClassShortName) {
+      this.builderClassShortName = builderClassShortName;
+    }
+
+    @Override
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", builderClassShortName + ".repeat()");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression appendCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (appendCall == null || !APPEND.test(appendCall)) return;
+      if (ErrorUtil.containsDeepError(appendCall)) return;
+
+      PsiExpression qualifierExpression = appendCall.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression == null) return;
+
+      PsiExpression[] args = appendCall.getArgumentList().getExpressions();
+      if (args.length != 1) return;
+      PsiMethodCallExpression repeatCall = tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiMethodCallExpression.class);
+      if (repeatCall == null) return;
+      PsiExpression[] repeatArgs = repeatCall.getArgumentList().getExpressions();
+      if (repeatArgs.length != 1) return;
+      PsiExpression count = repeatArgs[0];
+
+      PsiExpression stringExpression = PsiUtil.skipParenthesizedExprDown(repeatCall.getMethodExpression().getQualifierExpression());
+      if (stringExpression == null) return;
+      CommentTracker ct = new CommentTracker();
+      String replacement =
+        ct.text(qualifierExpression) + ".repeat(" + sanitizedStringExpression(stringExpression, ct) + ", " + ct.text(count) + ")";
+      var replaced = ct.replaceAndRestoreComments(appendCall, replacement);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
+    }
+
+    private static String sanitizedStringExpression(PsiExpression stringExpression, CommentTracker ct) {
+      if (NullabilityUtil.getExpressionNullability(stringExpression, true) == Nullability.NOT_NULL) {
+        return ct.text(stringExpression);
+      }
+      return JAVA_UTIL_OBJECTS + ".requireNonNull(" + ct.text(stringExpression) + ")";
     }
   }
 }
