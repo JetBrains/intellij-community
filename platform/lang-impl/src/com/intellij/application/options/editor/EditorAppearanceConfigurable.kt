@@ -145,12 +145,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       row {
         checkBox(myShowIntentionPreviewCheckBox)
       }
-      row {
-        checkBox(myRenderedDocCheckBox)
-          .commentRight(IdeBundle.message("checkbox.also.in.reader.mode")) {
-            ReaderModeSettingsListener.goToEditorReaderMode()
-          }
-      }
+      assert(lazyInlineDocAdditionalConfigurable.isNotEmpty())
+      val bestInlineDocAdditionalConfigurable = lazyInlineDocAdditionalConfigurable.first()
+      appendDslConfigurable(bestInlineDocAdditionalConfigurable)
       row {
         checkBox(myCodeLensCheckBox)
       }
@@ -174,7 +171,7 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
 
   override fun apply() {
     val showEditorTooltip = UISettings.getInstance().showEditorToolTip
-    val docRenderingEnabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
+    val participatingSettingsBefore = lazyInlineDocAdditionalConfigurable.first().getParticipatingSettingsFlags()
 
     super.apply()
 
@@ -183,7 +180,8 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       LafManager.getInstance().repaintUI()
       UISettings.getInstance().fireUISettingsChanged()
     }
-    if (docRenderingEnabled != EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled) {
+    val participatingSettingsAfter = lazyInlineDocAdditionalConfigurable.first().getParticipatingSettingsFlags()
+    if (!participatingSettingsBefore.contentEquals(participatingSettingsAfter)) {
       DocRenderManager.resetAllEditorsToDefaultState()
     }
 
@@ -191,6 +189,24 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
     ApplicationManager.getApplication().messageBus.syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied()
   }
 
+  private val INLINE_DOC_EP_NAME = ExtensionPointName.create<InlineDocAdditionalHandlerEP>("com.intellij.editorAppearanceInlineDocHandler")
   private val EP_NAME = ExtensionPointName.create<EditorAppearanceConfigurableEP>("com.intellij.editorAppearanceConfigurable")
 
+  private val lazyInlineDocAdditionalConfigurable by lazy { ConfigurableWrapper.createConfigurables(INLINE_DOC_EP_NAME) }
+
+  class DefaultInlineDocAdditionalConfigurable : InlineDocsAdditionalConfigurable() {
+    override fun getParticipatingSettingsFlags(): Array<Boolean> {
+      return arrayOf(EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled)
+    }
+
+    override fun Panel.createContent() {
+      row {
+        checkBox(myRenderedDocCheckBox)
+          .commentRight(IdeBundle.message("checkbox.also.in.reader.mode")) {
+            ReaderModeSettingsListener.goToEditorReaderMode()
+          }
+      }
+    }
+
+  }
 }

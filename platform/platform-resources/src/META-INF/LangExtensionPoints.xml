@@ -33,6 +33,9 @@
     <extensionPoint dynamic="true" name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
+    <extensionPoint dynamic="true" qualifiedName="com.intellij.editorAppearanceInlineDocHandler" beanClass="com.intellij.application.options.editor.InlineDocAdditionalHandlerEP">
+      <with attribute="instance" implements="com.intellij.application.options.editor.InlineDocsAdditionalConfigurable"/>
+    </extensionPoint>
     <extensionPoint dynamic="true" name="editorTabsConfigurable" beanClass="com.intellij.application.options.editor.EditorTabsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
