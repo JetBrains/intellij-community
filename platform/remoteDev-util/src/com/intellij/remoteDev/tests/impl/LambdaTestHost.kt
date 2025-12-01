@@ -25,7 +25,6 @@ import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
@@ -33,7 +32,6 @@ import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -100,15 +98,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
   }
 
-  open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
-    LOG.info("Setting up test logging factory")
-    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
-  }
-
-  protected open fun assertLoggerFactory() {
-    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
-  }
-
   init {
     val hostAddress =
       System.getProperty(LambdaTestsConstants.protocolHostPropertyName)?.let {
@@ -158,13 +147,12 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     val model = protocol.lambdaTestModel
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
-    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
+    model.session.viewNotNull(lifetime) { _, session ->
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
         val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Lambda test session dispatcher")
 
-        setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
 
         // Needed to enable proper focus behaviour
@@ -227,9 +215,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               runLogged(parameters.reference, 1.minutes) {
                 ideAction.runLambda(parameters.parameters)
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
@@ -271,9 +256,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               runLogged(serializedLambda.methodName, 1.minutes) {
                 consumer.accept(app)
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
