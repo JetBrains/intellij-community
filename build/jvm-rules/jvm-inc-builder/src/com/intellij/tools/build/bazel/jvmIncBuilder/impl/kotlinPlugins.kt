@@ -145,13 +145,25 @@ private class CompilerPluginProvider {
 
     fun provide(id: String, internalPluginIdToPluginOptions: Map<String, List<CliOptionValue>>): RegisteredPluginInfo {
       return when (id) {
-        "jetbrains.fleet.expects-compiler-plugin" -> RegisteredPluginInfoCreator.createPluginInfo(expects, internalPluginIdToPluginOptions)
-        "com.jetbrains.fleet.rpc-compiler-plugin" -> RegisteredPluginInfoCreator.createPluginInfo(rpc, internalPluginIdToPluginOptions)
-        "jetbrains.fleet.noria-compiler-plugin" -> RegisteredPluginInfoCreator.createPluginInfo(noria, internalPluginIdToPluginOptions)
+        "jetbrains.fleet.expects-compiler-plugin" -> createPluginInfo(expects, internalPluginIdToPluginOptions)
+        "com.jetbrains.fleet.rpc-compiler-plugin" -> createPluginInfo(rpc, internalPluginIdToPluginOptions)
+        "jetbrains.fleet.noria-compiler-plugin" -> createPluginInfo(noria, internalPluginIdToPluginOptions)
         else -> throw IllegalArgumentException("plugin requires classpath: $id")
       }
     }
+
   }
+}
+
+@OptIn(ExperimentalCompilerApi::class)
+private fun createPluginInfo(data: Pair<MethodHandle, MethodHandle?>, internalPluginIdToPluginOptions: Map<String, List<CliOptionValue>>): RegisteredPluginInfo {
+  val processor = data.second?.invoke() as CommandLineProcessor?
+  return RegisteredPluginInfo(
+    componentRegistrar = null,
+    compilerPluginRegistrar = data.first.invoke() as CompilerPluginRegistrar,
+    commandLineProcessor = processor,
+    pluginOptions = if (processor== null) emptyList() else internalPluginIdToPluginOptions[processor.pluginId] ?: emptyList(),
+  )
 }
 
 private fun getConstructor(registrar: String, commandLineProcessor: String?): Lazy<Pair<MethodHandle, MethodHandle?>> {
