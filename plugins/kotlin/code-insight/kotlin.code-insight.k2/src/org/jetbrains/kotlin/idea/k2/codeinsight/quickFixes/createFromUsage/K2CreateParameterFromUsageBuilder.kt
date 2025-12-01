@@ -142,7 +142,7 @@ object K2CreateParameterFromUsageBuilder {
             val container = containerPointer.element ?: return IntentionPreviewInfo.EMPTY
             val originalExpression = originalExprPointer.element ?: return IntentionPreviewInfo.EMPTY
 
-            val typeText = analyze(container) {
+            val typeText = analyze(originalExpression) {
                 getExpectedType(originalExpression).render(position = Variance.IN_VARIANCE)
             }
             val valVar =
