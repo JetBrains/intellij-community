@@ -48,7 +48,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
     productLayout.skipUnresolvedContentModules = true
-    
+
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
@@ -101,7 +101,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     icoPathForEAP = "python/build/resources/PyCharmCore_EAP.ico"
     installerImagesPath = "python/build/resources"
 
-    fileAssociations = listOf("py")
+    fileAssociations = SUPPORTED_FILE_EXTENSIONS
 
     fullName { "PyCharm Community Edition" }
 
