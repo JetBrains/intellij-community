@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -118,5 +119,19 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
     FontMetrics fontMetrics = this.getFontMetrics(getFont());
     int lineHeight = fontMetrics.getHeight();
     return JBUIScale.scale((lines - 1) * lineHeight);
+  }
+
+  @Nullable
+  private Integer forcedMinWidth;
+
+  @Internal
+  @Override
+  protected int getForcedMinWidth() {
+    return forcedMinWidth == null ? 0 : forcedMinWidth;
+  }
+
+  @Internal
+  public void setForcedMinWidth(int width) {
+    forcedMinWidth = width;
   }
 }

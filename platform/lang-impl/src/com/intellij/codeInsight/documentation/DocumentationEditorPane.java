@@ -112,6 +112,10 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
       Math.max(Math.max(contentsPreferredWidth(), getMinimumSize().width), minWidth),
       maxWidth
     );
+    int forcedMinWidth = getForcedMinWidth();
+    if (width < forcedMinWidth) {
+      width = forcedMinWidth;
+    }
     int height = getPreferredHeightByWidth(width);
     return new Dimension(width, height);
   }
@@ -144,6 +148,11 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     int elementsPreferredWidth = new DocumentationPanePreferredWidthProvider(getUI().getRootView(this)).get();
     int preferredContentWidth = getPreferredContentWidth(getDocument().getLength());
     return Math.max(elementsPreferredWidth, preferredContentWidth);
+  }
+
+  @Internal
+  protected int getForcedMinWidth() {
+    return 0;
   }
 
   private static int getPreferredContentWidth(int textLength) {
