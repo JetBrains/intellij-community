@@ -85,8 +85,8 @@ object ContextParameterUtils {
      */
     fun KtCallableDeclaration.getContextParameters(): List<KtParameter>? {
         return when (this) {
-            is KtNamedFunction -> contextReceiverList?.contextParameters()
-            is KtProperty -> contextReceiverList?.contextParameters()
+            is KtNamedFunction -> contextReceiverList?.contextParameters
+            is KtProperty -> contextReceiverList?.contextParameters
             else -> null
         }
     }

@@ -9,7 +9,7 @@ class KotlinMoveLeftRightHandler : MoveElementLeftRightHandler() {
     override fun getMovableSubElements(element: PsiElement): Array<PsiElement> {
         when (element) {
             is KtParameterList -> return element.parameters.toTypedArray()
-            is KtContextParameterList -> return element.contextParameters().toTypedArray()
+            is KtContextParameterList -> return element.contextParameters.toTypedArray()
             is KtValueArgumentList -> return element.arguments.toTypedArray()
             is KtArrayAccessExpression -> return element.indexExpressions.toTypedArray()
             is KtTypeParameterList -> return element.parameters.toTypedArray()

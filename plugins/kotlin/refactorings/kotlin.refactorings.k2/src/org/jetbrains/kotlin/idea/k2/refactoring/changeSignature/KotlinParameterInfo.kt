@@ -104,7 +104,7 @@ class KotlinParameterInfo(
         val name = this.name.quoteIfNeeded()
 
         if (wasContextParameter) {
-            val contextParameters = inheritor?.modifierList?.contextReceiverList?.contextParameters() ?: return name
+            val contextParameters = inheritor?.modifierList?.contextReceiverList?.contextParameters ?: return name
             if (oldIndex < 0 || oldIndex >= contextParameters.size) return name
             return contextParameters[oldIndex].name ?: name
         }

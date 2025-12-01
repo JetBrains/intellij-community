@@ -217,7 +217,12 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         }
 
         return detectAvailableRefactoring(
-            oldSignature, newSignature, updateUsagesData, updateOverridesData, declaration, declaration.modifierList?.contextReceiverList?.contextParameters().orEmpty() + declaration.valueParameters
+            oldSignature,
+            newSignature,
+            updateUsagesData,
+            updateOverridesData,
+            declaration,
+            declaration.modifierList?.contextReceiverList?.contextParameters.orEmpty() + declaration.valueParameters,
         )
     }
 

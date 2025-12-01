@@ -90,7 +90,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
                 var oldParamIndex = 0
-                callable.modifierList?.contextReceiverList?.contextParameters()?.forEach { p ->
+                callable.modifierList?.contextReceiverList?.contextParameters?.forEach { p ->
                     val parameterInfo = KotlinParameterInfo(
                         originalIndex = oldParamIndex++,
                         originalType = KotlinTypeInfo(p.returnType, callable),

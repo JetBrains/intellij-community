@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -48,7 +47,7 @@ class KotlinSuggestedRefactoringExecution(
             }
 
             val valueParameters = (descriptorWithNewSignature as? KaFunctionSymbol)?.valueParameters
-            val contextParameters = declaration.modifierList?.contextReceiverList?.contextParameters()?.map { it.symbol }
+            val contextParameters = declaration.modifierList?.contextReceiverList?.contextParameters?.map { it.symbol }
             require(((valueParameters?.size ?:0) + (contextParameters?.size ?: 0)) == newSignature.parameters.size) {
                 "Number of parameters of newSignature is ${newSignature.parameters.size} and of the descriptor is ${valueParameters?.size ?: 0}"
             }

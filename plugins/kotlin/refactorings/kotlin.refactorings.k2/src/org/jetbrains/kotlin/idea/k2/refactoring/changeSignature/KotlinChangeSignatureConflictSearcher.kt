@@ -74,7 +74,12 @@ class KotlinChangeSignatureConflictSearcher(
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
                 val ktParameter = when {
                     parameter.isNewParameter -> null
-                    parameter.wasContextParameter -> function.modifierList?.contextReceiverList?.contextParameters()?.getOrNull(parameter.oldIndex)
+                    parameter.wasContextParameter ->
+                        function.modifierList
+                            ?.contextReceiverList
+                            ?.contextParameters
+                            ?.getOrNull(parameter.oldIndex)
+
                     originalInfo.oldReceiverInfo != null && parameter.oldIndex == 0 -> null // it's a former receiver
                     else -> function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
                 }
@@ -217,7 +222,7 @@ class KotlinChangeSignatureConflictSearcher(
             }
         }
 
-        val oldContextParameters = callableDeclaration.modifierList?.contextReceiverList?.contextParameters()
+      val oldContextParameters = callableDeclaration.modifierList?.contextReceiverList?.contextParameters
         if (oldContextParameters != null && oldContextParameters.isNotEmpty()) {
             val usedIndexes = changeInfo.newParameters.filter { it.wasContextParameter }.map { it.oldIndex }
             oldContextParameters.withIndex().filter { it.index !in usedIndexes }.forEach {

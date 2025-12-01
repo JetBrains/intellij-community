@@ -378,7 +378,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 deleteSeparatingComma(element)
                 if (element.isContextParameter) {
                     val contextParameterList = element.parent as KtContextParameterList
-                    if (contextParameterList.contextParameters().size == 1) {
+                    if (contextParameterList.contextParameters.size == 1) {
                         contextParameterList.delete()
                     }
                 }

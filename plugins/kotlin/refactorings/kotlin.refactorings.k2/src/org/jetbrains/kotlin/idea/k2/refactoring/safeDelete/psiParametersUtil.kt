@@ -48,7 +48,7 @@ private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
     val processElement: (PsiElement) -> Unit = { owner ->
 
         fun rememberContextParameter(owner: KtCallableDeclaration) {
-            owner.modifierList?.contextReceiverList?.contextParameters()?.get(parameterIndex)?.let { param ->
+          owner.modifierList?.contextReceiverList?.contextParameters?.get(parameterIndex)?.let { param ->
                 parametersToDelete.add(param)
             }
         }
