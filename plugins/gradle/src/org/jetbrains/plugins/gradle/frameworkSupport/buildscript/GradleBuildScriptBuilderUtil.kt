@@ -95,10 +95,6 @@ fun isSpockSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6")
 }
 
-fun isRobolectricSupported(gradleVersion: GradleVersion): Boolean {
-  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.6")
-}
-
 fun isTopLevelJavaConventionsSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")
 }
