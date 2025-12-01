@@ -18,14 +18,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource
+import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
-import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
-import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -45,10 +45,6 @@ private val hotSwapIcon: Icon by lazy {
 
 private val addHideAction: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddHideButton } != false
-}
-
-private val addMoreAction: Boolean by lazy {
-  HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddMoreButton } != false
 }
 
 private val addText: Boolean by lazy {
@@ -197,10 +193,8 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy {
     val group = DefaultActionGroup(hotSwapAction)
-    if (addMoreAction) {
-      HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
-        group.add(it)
-      }
+    HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
+      group.add(it)
     }
     if (addHideAction) {
       group.add(HideAction())
