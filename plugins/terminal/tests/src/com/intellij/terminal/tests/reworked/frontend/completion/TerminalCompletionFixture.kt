@@ -20,27 +20,28 @@ import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdate
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
+import com.intellij.terminal.tests.reworked.util.EchoingTerminalSession
 import com.intellij.testFramework.ExtensionTestUtil
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
-import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
-import org.junit.Assert.assertEquals
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
 import kotlin.coroutines.resume
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -52,29 +53,18 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     get() = view.activeOutputModel() as MutableTerminalOutputModel
 
   init {
+    Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)
+    TerminalCommandCompletion.enableForTests(testRootDisposable)
+    // Terminal completion might still be disabled if not supported yet on some OS.
+    Assume.assumeTrue(TerminalCommandCompletion.isEnabled(project))
+
     val terminalScope = terminalProjectScope(project).childScope("TerminalViewImpl")
     Disposer.register(testRootDisposable) {
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
-    val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, testRootDisposable)
-    view.shellIntegrationDeferred.complete(shellIntegration)
-
-    // Need to specify some options to make `TerminalCommandCompletion.isSupportedForShell` pass.
-    val startupOptions = TerminalStartupOptionsImpl(
-      shellCommand = listOf("/bin/zsh", "--login", "-i"),
-      workingDirectory = project.basePath!!,
-      envVariables = emptyMap(),
-    )
-    view.startupOptionsDeferred.complete(startupOptions)
-
-    shellIntegration.onPromptFinished(TerminalOffset.ZERO)  // To make TerminalOutputStatus = TypingCommand
-    assertEquals(TerminalOutputStatus.TypingCommand, shellIntegration.outputStatus.value)
-
-    Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)
-    TerminalCommandCompletion.enableForTests(testRootDisposable)
-    // Terminal completion might still be disabled if not supported yet on some OS.
-    Assume.assumeTrue(TerminalCommandCompletion.isEnabled(project))
+    val session = EchoingTerminalSession(coroutineScope = terminalScope.childScope("EchoingTerminalSession"))
+    view.connectToSession(session)
   }
 
   suspend fun awaitShellIntegrationFeaturesInitialized() {
@@ -142,6 +132,10 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     return activeLookup?.currentItem
   }
 
+  fun insertSelectedItem() {
+    runActionById("Terminal.CommandCompletion.InsertSuggestion")
+  }
+
   fun downCompletionPopup() {
     runActionById("Terminal.CommandCompletion.SelectSuggestionBelow")
   }
@@ -190,6 +184,40 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     if (event.presentation.isEnabledAndVisible) {
       ActionUtil.performAction(action, event)
     }
+  }
+
+  /** Returns true if the output model state met the condition in the given timeout */
+  suspend fun awaitOutputModelState(timeout: Duration, condition: (TerminalOutputModel) -> Boolean): Boolean {
+    val result = withTimeoutOrNull(timeout) {
+      suspendCancellableCoroutine { continuation ->
+        val model = view.activeOutputModel()
+        if (condition(model)) {
+          continuation.resume(Unit)
+        }
+
+        val disposable = Disposer.newDisposable()
+        continuation.invokeOnCancellation { Disposer.dispose(disposable) }
+
+        fun check() {
+          if (condition(model)) {
+            Disposer.dispose(disposable)
+            continuation.resume(Unit)
+          }
+        }
+
+        model.addListener(disposable, object : TerminalOutputModelListener {
+          override fun afterContentChanged(event: TerminalContentChangeEvent) {
+            check()
+          }
+
+          override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
+            check()
+          }
+        })
+      }
+    }
+
+    return result != null
   }
 
   fun mockTestShellCommand(testCommandSpec: ShellCommandSpec) {

@@ -18,21 +18,23 @@ class TerminalSessionModelImpl : TerminalSessionModel {
     mutableTerminalStateFlow.value = state
   }
 
-  private fun getInitialState(): TerminalState {
-    return TerminalState(
-      isCursorVisible = true,
-      cursorShape = null,
-      mouseMode = MouseMode.MOUSE_REPORTING_NONE,
-      mouseFormat = MouseFormat.MOUSE_FORMAT_XTERM,
-      isAlternateScreenBuffer = false,
-      isApplicationArrowKeys = false,
-      isApplicationKeypad = false,
-      isAutoNewLine = false,
-      isAltSendsEscape = true,
-      isBracketedPasteMode = false,
-      windowTitle = "",
-      isShellIntegrationEnabled = false,
-      currentDirectory = "",
-    )
+  companion object {
+    fun getInitialState(): TerminalState {
+      return TerminalState(
+        isCursorVisible = true,
+        cursorShape = null,
+        mouseMode = MouseMode.MOUSE_REPORTING_NONE,
+        mouseFormat = MouseFormat.MOUSE_FORMAT_XTERM,
+        isAlternateScreenBuffer = false,
+        isApplicationArrowKeys = false,
+        isApplicationKeypad = false,
+        isAutoNewLine = false,
+        isAltSendsEscape = true,
+        isBracketedPasteMode = false,
+        windowTitle = "",
+        isShellIntegrationEnabled = false,
+        currentDirectory = "",
+      )
+    }
   }
 }
