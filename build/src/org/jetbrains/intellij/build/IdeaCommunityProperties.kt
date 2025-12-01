@@ -156,11 +156,17 @@ open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProper
     applicationInfoModule = "intellij.idea.android.customization"
 
     productLayout.productImplementationModules += "intellij.idea.android.customization"
-    productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS + persistentListOf(
-      "intellij.webp",
-      "intellij.android.plugin.descriptor",
+
+    val defaultBundledPlugins = IDEA_BUNDLED_PLUGINS
+      .remove("intellij.mcpserver")
+      .remove("intellij.featuresTrainer")
+
+    productLayout.bundledPluginModules = defaultBundledPlugins + persistentListOf(
+      "intellij.android.compose-ide-plugin",
       "intellij.android.design-plugin.descriptor",
-      "intellij.android.compose-ide-plugin"
+      "intellij.android.plugin.descriptor",
+      "intellij.android.smali",
+      "intellij.webp",
     )
   }
 
