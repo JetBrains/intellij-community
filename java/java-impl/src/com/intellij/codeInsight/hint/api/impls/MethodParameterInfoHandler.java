@@ -55,7 +55,7 @@ import java.util.*;
  */
 public final class MethodParameterInfoHandler
   implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>,
-             LightJavaParameterInfoHandler,
+             ReadOnlyJavaParameterInfoHandler,
              DumbAware {
   private static final Set<Class<?>> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
@@ -101,16 +101,17 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public @Nullable LightJavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
+  public @Nullable JavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
     PsiExpressionList expressionList = findArgumentList(file, offset, -1, true);
     if (expressionList == null) return null;
     CandidateWithPresentation[] candidateWithPresentationArray = getMethodsWithPresentation(expressionList, false);
     if (candidateWithPresentationArray == null) return null;
 
-    LightJavaParameterUpdateInfoContext updateInfoContext = new LightJavaParameterUpdateInfoContext(file, candidateWithPresentationArray, offset);
+    ReadOnlyJavaParameterUpdateInfoContext
+      updateInfoContext = new ReadOnlyJavaParameterUpdateInfoContext(file, candidateWithPresentationArray, offset);
     updateParameterInfoInternal(expressionList, updateInfoContext);
 
-    return new LightJavaParameterInfo(
+    return new JavaParameterInfo(
       ContainerUtil.map(
         candidateWithPresentationArray, candidate -> {
           UIPresentation presentation = getUIPresentation(
@@ -118,7 +119,7 @@ public final class MethodParameterInfoHandler
             updateInfoContext.getCurrentParameterIndex() == null ? -1 : updateInfoContext.getCurrentParameterIndex(),
             true, false, true
           );
-          return new LightJavaSignaturePresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
+          return new JavaSignaturePresentation(presentation.text(), presentation.parameterList(), presentation.activeParameterIndex());
         }
       ),
       updateInfoContext.getHighlightedSignatureIndex(),
@@ -758,7 +759,7 @@ public final class MethodParameterInfoHandler
                                                            boolean isSingleParameterInfo,
                                                            boolean isUIEnabled) {
     int numParams = methodPresentation.parameters().size();
-    ArrayList<LightJavaParameterPresentation> parameterRangeList = new ArrayList<>(numParams);
+    ArrayList<JavaParameterPresentation> parameterRangeList = new ArrayList<>(numParams);
     @Nls StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (showFullSignature && !isSingleParameterInfo) {
@@ -818,7 +819,7 @@ public final class MethodParameterInfoHandler
           }
         }
 
-        parameterRangeList.add(new LightJavaParameterPresentation(
+        parameterRangeList.add(new JavaParameterPresentation(
           new Range<>(startOffset, endOffset),
           parameterPresentation.javaDoc()
         ));
@@ -949,7 +950,7 @@ public final class MethodParameterInfoHandler
   }
 
 
-  private record UIPresentation(@Nls @NotNull String text, @NotNull List<LightJavaParameterPresentation> parameterList, @Nullable Integer activeParameterIndex) {
+  private record UIPresentation(@Nls @NotNull String text, @NotNull List<JavaParameterPresentation> parameterList, @Nullable Integer activeParameterIndex) {
   }
 
   private record CandidateWithPresentation(@NotNull CandidateInfo candidateInfo, @NotNull MethodPresentation presentation) {

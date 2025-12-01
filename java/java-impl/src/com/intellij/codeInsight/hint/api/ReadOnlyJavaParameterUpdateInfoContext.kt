@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile
 /**
  * Class is used to extract logic about preferred signature and current parameter without making any changes within the UI.
  */
-internal class LightJavaParameterUpdateInfoContext(private val file: PsiFile, private val candidates: Array<Any>?, private val offset: Int) : UpdateParameterInfoContext {
+internal class ReadOnlyJavaParameterUpdateInfoContext(private val file: PsiFile, private val candidates: Array<Any>?, private val offset: Int) : UpdateParameterInfoContext {
   private var myCurrentParameterIndex = -1
   private var myHighlightedParameter: Any? = null
 

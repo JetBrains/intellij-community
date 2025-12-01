@@ -6,29 +6,29 @@ import com.intellij.util.Range
 /**
  * Stores information about available signatures for the current context. The context means here the place where `Parameter Info`
  * action or similar is invoked.
- * @see LightJavaParameterInfoHandler
+ * @see ReadOnlyJavaParameterInfoHandler
  */
-public class LightJavaParameterInfo(
-  public val signaturePresentationList: List<LightJavaSignaturePresentation>,
+public class JavaParameterInfo(
+  public val signaturePresentationList: List<JavaSignaturePresentation>,
   public val currentSignatureIndex: Int?,
   public val currentParameterIndex: Int?,
 )
 
 /**
  * Stores information about a particular signature within available overloads.
- * @see LightJavaParameterInfo
+ * @see JavaParameterInfo
  */
-public class LightJavaSignaturePresentation(
+public class JavaSignaturePresentation(
   public val label: String,
-  public val parameterRangeList: List<LightJavaParameterPresentation>,
+  public val parameterRangeList: List<JavaParameterPresentation>,
   public val currentParameterIndex: Int?,
 )
 
 /**
  * Stores simplified information about parameter within signature.
- * @see LightJavaParameterPresentation
+ * @see JavaParameterPresentation
  */
-public class LightJavaParameterPresentation(
+public class JavaParameterPresentation(
   public val range: Range<Int>,
   public val documentation: String?,
 )

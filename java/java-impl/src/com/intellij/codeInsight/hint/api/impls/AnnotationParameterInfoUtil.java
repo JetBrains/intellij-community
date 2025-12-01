@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.api.LightJavaParameterInfo;
-import com.intellij.codeInsight.hint.api.LightJavaParameterPresentation;
-import com.intellij.codeInsight.hint.api.LightJavaSignaturePresentation;
+import com.intellij.codeInsight.hint.api.JavaParameterInfo;
+import com.intellij.codeInsight.hint.api.JavaParameterPresentation;
+import com.intellij.codeInsight.hint.api.JavaSignaturePresentation;
 import com.intellij.lang.parameterInfo.ParameterInfoUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,10 +57,10 @@ final class AnnotationParameterInfoUtil {
     return result;
   }
 
-  static @Nullable LightJavaParameterInfo createLightJavaParameterInfo(@NotNull PsiFile file,
-                                                                       int offset,
-                                                                       @NotNull List<PsiAnnotationMethod> methodList,
-                                                                       PsiNameValuePair @NotNull [] attributes) {
+  static @Nullable JavaParameterInfo createLightJavaParameterInfo(@NotNull PsiFile file,
+                                                                  int offset,
+                                                                  @NotNull List<PsiAnnotationMethod> methodList,
+                                                                  PsiNameValuePair @NotNull [] attributes) {
     UIModel model = getUIModel(file, offset, methodList, attributes);
     if (model == null) return null;
 
@@ -89,10 +89,10 @@ final class AnnotationParameterInfoUtil {
       buffer.append(CodeInsightBundle.message("parameter.info.no.parameters"));
     }
 
-    return new LightJavaParameterInfo(List.of(
-      new LightJavaSignaturePresentation(
+    return new JavaParameterInfo(List.of(
+      new JavaSignaturePresentation(
         buffer.toString(),
-        ContainerUtil.map(rangeList, range -> new LightJavaParameterPresentation(range, null)),
+        ContainerUtil.map(rangeList, range -> new JavaParameterPresentation(range, null)),
         null
       )
     ), 0, model.currentParameterIndex());

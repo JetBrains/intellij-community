@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.hint.api.LightJavaParameterInfo;
-import com.intellij.codeInsight.hint.api.LightJavaParameterInfoHandler;
+import com.intellij.codeInsight.hint.api.JavaParameterInfo;
+import com.intellij.codeInsight.hint.api.ReadOnlyJavaParameterInfoHandler;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
@@ -19,7 +19,7 @@ import java.util.*;
  * @author Maxim.Mossienko
  */
 public final class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>,
-                                                             LightJavaParameterInfoHandler, DumbAware {
+                                                             ReadOnlyJavaParameterInfoHandler, DumbAware {
 
   @Override
   public PsiAnnotationParameterList findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
@@ -68,7 +68,7 @@ public final class AnnotationParameterInfoHandler implements ParameterInfoHandle
   }
 
   @Override
-  public @Nullable LightJavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
+  public @Nullable JavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(file, offset, PsiAnnotation.class);
     if (annotation == null) return null;
 

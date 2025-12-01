@@ -19,7 +19,7 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 public final class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter>,
-                                                            LightJavaParameterInfoHandler {
+                                                            ReadOnlyJavaParameterInfoHandler {
 
   @Override
   public PsiReferenceParameterList findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
@@ -71,7 +71,7 @@ public final class ReferenceParameterInfoHandler implements ParameterInfoHandler
   }
 
   @Override
-  public @Nullable LightJavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
+  public @Nullable JavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
     final PsiReferenceParameterList referenceParameterList =
       ParameterInfoUtils.findParentOfType(file, offset, PsiReferenceParameterList.class);
     if (referenceParameterList == null) return null;
@@ -79,31 +79,31 @@ public final class ReferenceParameterInfoHandler implements ParameterInfoHandler
     PsiTypeParameter[] typeParameters = getTypeParameters(referenceParameterList);
     if (typeParameters == null) return null;
 
-    LightJavaParameterUpdateInfoContext context = new LightJavaParameterUpdateInfoContext(file, typeParameters, offset);
+    ReadOnlyJavaParameterUpdateInfoContext context = new ReadOnlyJavaParameterUpdateInfoContext(file, typeParameters, offset);
     updateParameterInfo(referenceParameterList, context);
 
     return createLightJavaParameterInfo(typeParameters, context);
   }
 
-  private static @NotNull LightJavaParameterInfo createLightJavaParameterInfo(PsiTypeParameter @NotNull [] typeParameters,
-                                                                              LightJavaParameterUpdateInfoContext context) {
+  private static @NotNull JavaParameterInfo createLightJavaParameterInfo(PsiTypeParameter @NotNull [] typeParameters,
+                                                                         ReadOnlyJavaParameterUpdateInfoContext context) {
     List<@NotNull UIPresentation> parameterPresentation =
       ContainerUtil.map(typeParameters, typeParameter -> getTypeParameterPresentation(typeParameter));
 
     StringBuilder buffer = new StringBuilder();
-    List<LightJavaParameterPresentation> parameterPresentationList = new ArrayList<>(parameterPresentation.size());
+    List<JavaParameterPresentation> parameterPresentationList = new ArrayList<>(parameterPresentation.size());
 
     for (int i = 0; i < typeParameters.length; i++) {
       int highlightStartOffset = buffer.length();
-      parameterPresentationList.add(new LightJavaParameterPresentation(
+      parameterPresentationList.add(new JavaParameterPresentation(
         new Range<>(highlightStartOffset, highlightStartOffset + parameterPresentation.get(i).highlightEndOffset), null)
       );
       buffer.append(parameterPresentation.get(i).label());
       if (i < typeParameters.length - 1) buffer.append(", ");
     }
 
-    return new LightJavaParameterInfo(
-      List.of(new LightJavaSignaturePresentation(buffer.toString(), parameterPresentationList, context.getCurrentParameterIndex())),
+    return new JavaParameterInfo(
+      List.of(new JavaSignaturePresentation(buffer.toString(), parameterPresentationList, context.getCurrentParameterIndex())),
       null,
       context.getCurrentParameterIndex()
     );
