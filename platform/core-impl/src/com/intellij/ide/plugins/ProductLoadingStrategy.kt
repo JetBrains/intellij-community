@@ -48,6 +48,7 @@ abstract class ProductLoadingStrategy {
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
+    isInDevServerMode: Boolean,
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,

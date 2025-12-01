@@ -2,7 +2,6 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
-import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -83,12 +82,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
+    isInDevServerMode: Boolean,
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
   ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
-    val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
     val classpathPathResolver = ClassPathXmlPathResolver(
       classLoader = mainClassLoader,

@@ -26,6 +26,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
+    isInDevServerMode: Boolean,
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
@@ -33,6 +34,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     return scope.loadPluginDescriptorsForPathBasedLoader(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
+      isInDevServerMode = isInDevServerMode,
       isRunningFromSources = isRunningFromSources,
       mainClassLoader = mainClassLoader,
       zipPool = zipPool,
