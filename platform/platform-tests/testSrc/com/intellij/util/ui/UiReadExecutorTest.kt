@@ -26,6 +26,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions
+import java.util.concurrent.atomic.AtomicBoolean
 
 @TestApplication
 class UiReadExecutorTest {
@@ -41,19 +42,21 @@ class UiReadExecutorTest {
     val label = JLabel().also { container.add(it) }
     val executor = UiReadExecutor.conflatedUiReadExecutor(label, disposable, "test-disposable")
 
-    var run = false
+    val run = AtomicBoolean(false)
 
     // Block read actions so executeWithReadAccess enqueues into the conflated flow
     val waCanFinish = Job(coroutineContext.job)
+    val waStarted = Job(coroutineContext.job)
     launch(Dispatchers.Default) {
       backgroundWriteAction {
+        waStarted.complete()
         waCanFinish.asCompletableFuture().join()
       }
     }
-    Thread.sleep(10)
+    waStarted.asCompletableFuture().join()
 
     // Enqueue an action to be executed later (after write finishes)
-    executor.executeWithReadAccess(Runnable { run = true })
+    executor.executeWithReadAccess(Runnable { run.set(true) })
 
     // Dispose the disposable before the write action is finished — this should cancel the collector
     Disposer.dispose(disposable)
@@ -61,7 +64,7 @@ class UiReadExecutorTest {
     // Unblock write action; since the collector is cancelled, the runnable must never execute
     waCanFinish.complete()
     delay(10.milliseconds)
-    assertEquals(false, run)
+    assertEquals(false, run.get())
 
     // Also verify that additional submissions after disposal do not execute either
     val wa2 = Job(coroutineContext.job)
@@ -71,10 +74,10 @@ class UiReadExecutorTest {
       }
     }
     Thread.sleep(10)
-    executor.executeWithReadAccess(Runnable { run = true })
+    executor.executeWithReadAccess(Runnable { run.set(true) })
     wa2.complete()
     delay(10.milliseconds)
-    assertEquals(false, run)
+    assertEquals(false, run.get())
   }
 
   private val container = JPanel().also { forceMarkAsShowing(it, true) }
