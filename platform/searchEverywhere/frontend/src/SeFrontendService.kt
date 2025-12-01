@@ -365,6 +365,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }, popup)
     }
 
+    project?.let {
+      Disposer.register(it, popup)
+    }
+
     Disposer.register(popup) {
       getStateService().putSize(POPUP_LOCATION_SETTINGS_KEY, panel.popupExtendedSize)
       Disposer.dispose(panel)
