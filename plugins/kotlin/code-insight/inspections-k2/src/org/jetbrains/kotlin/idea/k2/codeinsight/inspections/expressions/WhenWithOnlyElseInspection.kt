@@ -66,7 +66,7 @@ internal class WhenWithOnlyElseInspection
     )
 
     override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
-        KotlinBundle.message("inspection.when.with.only.else.display.name")
+        KotlinBundle.message("when.has.only.else.branch.and.should.be.simplified")
 
     override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRanges.whenKeyword(element)
