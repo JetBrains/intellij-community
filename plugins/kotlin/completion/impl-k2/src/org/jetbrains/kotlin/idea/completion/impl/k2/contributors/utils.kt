@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadat
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.argList
-import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
