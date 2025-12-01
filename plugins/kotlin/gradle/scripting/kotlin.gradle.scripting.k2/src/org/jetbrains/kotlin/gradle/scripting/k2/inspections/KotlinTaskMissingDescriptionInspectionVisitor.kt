@@ -7,16 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.asSafely
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK
@@ -26,25 +19,8 @@ private const val DESCRIPTION_PROPERTY = "description"
 
 class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
-        analyze(expression) {
-            when (expression.calleeExpression?.text) {
-                "register", "create" -> {
-                    val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
-                    if (callableId.classId?.asSingleFqName() !in setOf(
-                            FqName(GRADLE_API_TASK_CONTAINER),
-                            GRADLE_KOTLIN_TASK_CONTAINER_DELEGATE
-                        )
-                    ) return
-                }
-
-                "registering", "creating" -> {
-                    val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
-                    if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
-                }
-
-                else -> return
-            }
-        }
+        if (expression.calleeExpression?.text !in setOf("register", "create", "registering", "creating")) return
+        if (!expression.isTaskContainerReceiver()) return
 
         val blockExpression = expression.getBlock()
         if (blockExpression != null) checkConfigBlockAndReport(expression, blockExpression)
@@ -54,13 +30,13 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
     override fun visitReferenceExpression(expression: KtReferenceExpression) {
         if (expression.text !in setOf("registering", "creating")) return
         if (expression !is KtNameReferenceExpression || expression.parent is KtCallExpression) return
-        analyze(expression) {
-            val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
-            if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
-        }
+        if (!expression.isTaskContainerReceiver()) return
 
         reportReference(expression)
     }
+
+    private fun KtExpression.isTaskContainerReceiver(): Boolean =
+        this.getReceiverClassFqName() in setOf(FqName(GRADLE_API_TASK_CONTAINER), GRADLE_KOTLIN_DSL_TASK_CONTAINER_SCOPE)
 
     private fun checkConfigBlockAndReport(callExpression: KtCallExpression, blockExpression: KtBlockExpression) {
         if (blockExpression.hasDescriptionAssignment() || blockExpression.hasDescriptionSetter()) return
@@ -97,10 +73,7 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
         }
         .filter { it.operationReference.node.findChildByType(BinaryOperationPrecedence.ASSIGNMENT.tokenSet) != null }
         .any {
-            analyze(it) {
-                val parentPackage = it.left?.resolveExpression()?.getFqNameIfPackageOrNonLocal()?.parentOrNull()
-                parentPackage == FqName(GRADLE_API_TASK)
-            }
+            it.left?.getReceiverClassFqName() == FqName(GRADLE_API_TASK)
         }
 
     private fun KtBlockExpression.hasDescriptionSetter(): Boolean = this.descendantsOfType<KtCallExpression>()
@@ -108,16 +81,12 @@ class KotlinTaskMissingDescriptionInspectionVisitor(private val holder: Problems
             val callName = it.calleeExpression?.text
             callName == DESCRIPTION_SETTER
         }.any {
-            analyze(it) {
-                val classId = it.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.classId?.asSingleFqName()
-                    ?: return@analyze false
-                classId == FqName(GRADLE_API_TASK)
-            }
+            it.getReceiverClassFqName() == FqName(GRADLE_API_TASK)
         }
 
     companion object {
         private const val DESCRIPTION_SETTER = "setDescription"
-        private val GRADLE_KOTLIN_TASK_CONTAINER_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.TaskContainerDelegate")
+        private val GRADLE_KOTLIN_DSL_TASK_CONTAINER_SCOPE = FqName("org.gradle.kotlin.dsl.TaskContainerScope")
     }
 }
 

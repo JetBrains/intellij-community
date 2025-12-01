@@ -5,9 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.descendants
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.gradleJava.run.getReceiverClassFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -35,27 +38,34 @@ internal enum class DependencyType {
 /**
  * @return dependency argument type or null if the expression is not a dependency call
  */
-internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
-    analyze(expression) {
-        val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
-        if (symbol.callableId?.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return null
-        val returnType = symbol.returnType.symbol?.classId?.asSingleFqName() ?: return null
+internal fun findDependencyType(expression: KtCallExpression): DependencyType? = analyze(expression) {
+    val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
+    if (symbol.callableId?.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return null
+    val returnType = symbol.returnType.symbol?.classId?.asSingleFqName() ?: return null
 
-        if (returnType == FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
-            || returnType == FqName(GRADLE_API_ARTIFACTS_DEPENDENCY)
-        ) {
-            when (symbol.valueParameters.firstOrNull()?.name?.identifier) {
-                "group" -> return DependencyType.NAMED_ARGUMENTS
-                "dependencyNotation" -> return DependencyType.SINGLE_ARGUMENT
-                else -> return DependencyType.OTHER
-            }
-        } else if (symbol.callableId?.callableName?.asString() == "invoke" && returnType == FqName("kotlin.Unit")) {
-            // customConf(libs.version.catalog.library) case
-            if (symbol.valueParameters.firstOrNull()?.name?.identifier == "dependency") return DependencyType.SINGLE_ARGUMENT
-            else DependencyType.OTHER
+    if (returnType == FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+        || returnType == FqName(GRADLE_API_ARTIFACTS_DEPENDENCY)
+    ) {
+        when (symbol.valueParameters.firstOrNull()?.name?.identifier) {
+            "group" -> return DependencyType.NAMED_ARGUMENTS
+            "dependencyNotation" -> return DependencyType.SINGLE_ARGUMENT
+            else -> return DependencyType.OTHER
         }
-        return null
+    } else if (symbol.callableId?.callableName?.asString() == "invoke" && returnType == FqName("kotlin.Unit")) {
+        // customConf(libs.version.catalog.library) case
+        if (symbol.valueParameters.firstOrNull()?.name?.identifier == "dependency") return DependencyType.SINGLE_ARGUMENT
+        else DependencyType.OTHER
     }
+    return null
+}
+
+internal fun KtExpression.getReceiverClassFqName(): FqName? = analyze(this) {
+    val resolvedCall = this@getReceiverClassFqName.resolveToCall() ?: return null
+    val singleCall = resolvedCall.singleFunctionCallOrNull()
+        ?: resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()
+        ?: return null
+    val callableId = singleCall.partiallyAppliedSymbol.symbol.callableId ?: return null
+    getReceiverClassFqName(singleCall) ?: callableId.classId?.asSingleFqName()
 }
 
 /**
