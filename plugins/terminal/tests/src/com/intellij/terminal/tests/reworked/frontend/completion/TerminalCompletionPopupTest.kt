@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.junit.Assert.assertNotEquals
@@ -327,6 +328,11 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   private suspend fun createFixture(): TerminalCompletionFixture {
     val fixture = TerminalCompletionFixture(project, testRootDisposable)
     fixture.mockTestShellCommand(testCommandSpec)
+    fixture.setCompletionOptions(
+      showPopupAutomatically = false,
+      showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+      parentDisposable = testRootDisposable
+    )
     fixture.awaitShellIntegrationFeaturesInitialized()
     return fixture
   }

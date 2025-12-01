@@ -27,6 +27,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
@@ -227,6 +229,24 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       ShellCommandSpecInfo.create(testCommandSpec, ShellCommandSpecConflictStrategy.DEFAULT)
     )
     ExtensionTestUtil.maskExtensions(ShellCommandSpecsProvider.EP_NAME, listOf(specsProvider), testRootDisposable)
+  }
+
+  fun setCompletionOptions(
+    showPopupAutomatically: Boolean,
+    showingMode: TerminalCommandCompletionShowingMode,
+    parentDisposable: Disposable,
+  ) {
+    val options = TerminalOptionsProvider.instance
+    val curShowPopupAutomatically = options.showCompletionPopupAutomatically
+    val curShowingMode = options.commandCompletionShowingMode
+
+    options.showCompletionPopupAutomatically = showPopupAutomatically
+    options.commandCompletionShowingMode = showingMode
+
+    Disposer.register(parentDisposable) {
+      options.showCompletionPopupAutomatically = curShowPopupAutomatically
+      options.commandCompletionShowingMode = curShowingMode
+    }
   }
 
   private suspend fun awaitLookupPrefixUpdated() {

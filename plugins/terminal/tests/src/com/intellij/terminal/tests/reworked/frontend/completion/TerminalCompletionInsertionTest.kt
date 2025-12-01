@@ -5,6 +5,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.junit.Test
@@ -144,6 +145,11 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
   private suspend fun createFixture(): TerminalCompletionFixture {
     val fixture = TerminalCompletionFixture(project, testRootDisposable)
     fixture.mockTestShellCommand(testCommandSpec)
+    fixture.setCompletionOptions(
+      showPopupAutomatically = false,
+      showingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS,
+      parentDisposable = testRootDisposable
+    )
     fixture.awaitShellIntegrationFeaturesInitialized()
     return fixture
   }
