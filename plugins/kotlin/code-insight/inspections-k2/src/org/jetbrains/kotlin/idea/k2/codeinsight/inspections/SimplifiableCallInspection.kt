@@ -48,7 +48,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
     }
 
-    private class FlattenConversion : Conversion("kotlin.collections.flatMap") {
+    private class FlatMapToFlattenConversion : Conversion("kotlin.collections.flatMap") {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -70,43 +70,23 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private class FilterConversion : Conversion("kotlin.collections.filter") {
+    private class FilterToFilterNotNullConversion : Conversion("kotlin.collections.filter") {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
             val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
             val statement = lambdaExpression.singleStatement() ?: return null
-            when (statement) {
-                is KtBinaryExpression -> {
-                    if (statement.operationToken != KtTokens.EXCLEQ && statement.operationToken != KtTokens.EXCLEQEQEQ) return null
-                    val left = statement.left ?: return null
-                    val right = statement.right ?: return null
-                    if (left.isNameReferenceTo(lambdaParameterName) && right.isNull() ||
-                        right.isNameReferenceTo(lambdaParameterName) && left.isNull()
-                    ) {
-                        return "filterNotNull()"
-                    }
-                }
-                is KtIsExpression -> {
-                    if (statement.isNegated) return null
-                    if (!statement.leftHandSide.isNameReferenceTo(lambdaParameterName)) return null
-                    val rightTypeReference = statement.typeReference ?: return null
-                    val rightType = rightTypeReference.type
 
-                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+            if (statement !is KtBinaryExpression) return null
+            if (statement.operationToken != KtTokens.EXCLEQ && statement.operationToken != KtTokens.EXCLEQEQEQ) return null
 
-                    if (resolvedCall != null) {
-                        val resultingElementType = (resolvedCall.partiallyAppliedSymbol.signature.returnType as? KaClassType)
-                            ?.typeArguments?.singleOrNull()?.takeIf { it !is KaStarTypeProjection }?.type
-                        if (resultingElementType != null && !rightType.isSubtypeOf(resultingElementType)) {
-                            return null
-                        }
-                    }
-
-                    return "filterIsInstance<${rightTypeReference.text}>()"
-                }
+            val left = statement.left ?: return null
+            val right = statement.right ?: return null
+            if (left.isNameReferenceTo(lambdaParameterName) && right.isNull() ||
+                right.isNameReferenceTo(lambdaParameterName) && left.isNull()
+            ) {
+                return "filterNotNull()"
             }
-
             return null
         }
 
@@ -117,9 +97,44 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
+    private class FilterToFilterIsInstanceConversion : Conversion("kotlin.collections.filter") {
+        context(_: KaSession)
+        override fun analyze(callExpression: KtCallExpression): String? {
+            val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
+            val statement = lambdaExpression.singleStatement() ?: return null
+
+            if (statement !is KtIsExpression) return null
+
+            if (statement.isNegated) return null
+            if (!statement.leftHandSide.isNameReferenceTo(lambdaParameterName)) return null
+            val rightTypeReference = statement.typeReference ?: return null
+            val rightType = rightTypeReference.type
+
+            val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+
+            if (resolvedCall != null) {
+                val resultingElementType = (resolvedCall.partiallyAppliedSymbol.signature.returnType as? KaClassType)
+                    ?.typeArguments?.singleOrNull()?.takeIf { it !is KaStarTypeProjection }?.type
+                if (resultingElementType != null && !rightType.isSubtypeOf(resultingElementType)) {
+                    return null
+                }
+            }
+
+            return "filterIsInstance<${rightTypeReference.text}>()"
+        }
+
+        context(_: KaSession)
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean {
+            val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
+            return !extensionReceiverType.isMap
+        }
+    }
+
     private val conversions: List<Conversion> = listOf(
-        FlattenConversion(),
-        FilterConversion(),
+        FlatMapToFlattenConversion(),
+        FilterToFilterNotNullConversion(),
+        FilterToFilterIsInstanceConversion(),
     )
 
     context(_: KaSession)
