@@ -54,4 +54,11 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- end editor-fold -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      key="ide.project.frame.auto.fix.size.windows.interval"
+      defaultValue="60"
+      description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
+    />
+  </extensions>
 </idea-plugin>
