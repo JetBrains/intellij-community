@@ -347,9 +347,23 @@ sealed interface CommandOrCodeAction {
 }
 
 object CodeActions {
-    val CodeActionRequest: RequestType<CodeActionParams, List<CommandOrCodeAction>?, Unit> =
-        RequestType("textDocument/codeAction", CodeActionParams.serializer(), ListSerializer(CommandOrCodeAction.serializer()).nullable, Unit.serializer())
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction">textDocument/codeAction (LSP spec)</a>
+   */
+  val CodeActionRequest: RequestType<CodeActionParams, List<CommandOrCodeAction>?, Unit> = RequestType(
+    method = "textDocument/codeAction",
+    paramsSerializer = CodeActionParams.serializer(),
+    resultSerializer = ListSerializer(elementSerializer = CommandOrCodeAction.serializer()).nullable,
+    errorSerializer = Unit.serializer(),
+  )
 
-    val ResolveCodeAction: RequestType<CodeAction, CodeAction, Unit> =
-        RequestType("codeAction/resolve", CodeAction.serializer(), CodeAction.serializer(), Unit.serializer())
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction">textDocument/codeAction (LSP spec)</a>
+   */
+  val ResolveCodeAction: RequestType<CodeAction, CodeAction, Unit> = RequestType(
+    method = "codeAction/resolve",
+    paramsSerializer = CodeAction.serializer(),
+    resultSerializer = CodeAction.serializer(),
+    errorSerializer = Unit.serializer(),
+  )
 }
