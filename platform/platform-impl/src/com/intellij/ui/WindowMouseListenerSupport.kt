@@ -65,6 +65,14 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       return
     }
 
+    if (isBusy && start) {
+      LOG.debug {
+        "Received a mouse pressed event while in a drag session. " +
+        "This means that the release event was missed, cleaning up the previous session"
+      }
+      stop()
+    }
+
     if (!isBusy) {
       val content = source.getContent(event)
       val view = source.getView(content)
