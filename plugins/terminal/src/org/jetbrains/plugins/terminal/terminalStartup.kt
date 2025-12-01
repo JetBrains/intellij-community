@@ -230,8 +230,8 @@ internal fun fetchMinimalEnvironmentVariablesBlocking(eelDescriptor: EelDescript
 
 
 internal class ShellProcessHolder(
-  eelProcess: EelProcess,
-  private val eelApi: EelApi,
+  val eelProcess: EelProcess,
+  val eelApi: EelApi,
 ) {
   val isPosix: Boolean get() = eelApi.platform.isPosix
 
