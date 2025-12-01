@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Com
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionCommonSectionDataSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSectionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -230,22 +231,24 @@ internal fun createExtensionChecker(
 private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
     completionContext: K2CompletionContext<P>,
 ): K2CompletionSectionCommonData<P>? {
-    val parameters = completionContext.parameters
-    val positionContext = completionContext.positionContext
-    val weighingContext = createWeighingContext(positionContext, parameters) ?: return null
-    val visibilityChecker = CompletionVisibilityChecker(parameters)
-    val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
-    val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
+    CompletionCommonSectionDataSetupEvent().timeEvent {
+        val parameters = completionContext.parameters
+        val positionContext = completionContext.positionContext
+        val weighingContext = createWeighingContext(positionContext, parameters) ?: return null
+        val visibilityChecker = CompletionVisibilityChecker(parameters)
+        val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
+        val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
 
-    return K2CompletionSectionCommonData(
-        completionContext = completionContext,
-        weighingContext = weighingContext,
-        prefixMatcher = completionContext.resultSet.prefixMatcher,
-        visibilityChecker = visibilityChecker,
-        symbolFromIndexProvider = symbolFromIndexProvider,
-        importStrategyDetector = importStrategyDetector,
-        session = this,
-    )
+        return K2CompletionSectionCommonData(
+            completionContext = completionContext,
+            weighingContext = weighingContext,
+            prefixMatcher = completionContext.resultSet.prefixMatcher,
+            visibilityChecker = visibilityChecker,
+            symbolFromIndexProvider = symbolFromIndexProvider,
+            importStrategyDetector = importStrategyDetector,
+            session = this@createCommonSectionData,
+        )
+    }
 }
 
 /**
