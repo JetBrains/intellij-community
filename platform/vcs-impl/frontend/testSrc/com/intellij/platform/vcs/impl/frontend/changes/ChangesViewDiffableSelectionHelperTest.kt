@@ -7,22 +7,17 @@ import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.platform.vcs.impl.changes.ChangesViewTestBase
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
-import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
-import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.VcsUserUtil
 
 internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   fun `test current change then next unversioned and no previous`() {
     val changePath = path("a.txt")
     val unversioned = path("u1.txt")
 
-    val defaultList = defaultChangeList(changePath)
+    val defaultList = defaultChangeList(project, changePath)
 
     val model = buildModel(view, listOf(defaultList), listOf(unversioned))
     updateModelAndSelect(view, model, changePath)
@@ -58,7 +53,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val u1 = path("u1.txt")
     val u2 = path("u2.txt")
 
-    val defaultList = defaultChangeList(c1)
+    val defaultList = defaultChangeList(project, c1)
 
     val model = buildModel(view, listOf(defaultList), listOf(u1, u2))
     updateModelAndSelect(view, model, u1)
@@ -87,7 +82,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
 
   fun `test only current change`() {
     val c1 = path("c1.txt")
-    val defaultList = defaultChangeList(c1)
+    val defaultList = defaultChangeList(project, c1)
 
     val model = buildModel(view, listOf(defaultList), emptyList())
     updateModelAndSelect(view, model, c1)
@@ -176,7 +171,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val c1 = path("c1.txt")
     val u1 = path("u1.txt")
 
-    val defaultList = defaultChangeList(c1)
+    val defaultList = defaultChangeList(project, c1)
     val model = buildModel(view, listOf(defaultList), listOf(u1))
     updateModelAndSelect(view, model, c1)
 
@@ -196,7 +191,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   fun `test change node and amend node affecting same file both selectable`() {
     val filePath = path("a.txt")
 
-    val defaultList = defaultChangeList(filePath)
+    val defaultList = defaultChangeList(project, filePath)
 
     val changeInAmend = change(filePath, "amend-revision")
     val editedCommit = createEditedCommit(listOf(changeInAmend))
@@ -234,7 +229,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
   fun `test switch from change node to amend node affecting same file`() {
     val filePath = path("a.txt")
 
-    val defaultList = defaultChangeList(filePath)
+    val defaultList = defaultChangeList(project, filePath)
 
     val changeInAmend = change(filePath, "amend-revision")
     val model = buildModel(view, listOf(defaultList), emptyList(), createEditedCommit(listOf(changeInAmend)))
@@ -268,30 +263,6 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
       view.addSelectionPath(TreeUtil.getPathFromRoot(amendNodePath))
       assertEquals(1, view.selectionCount)
     }
-  }
-
-  private fun defaultChangeList(changePath: FilePath): LocalChangeListImpl = LocalChangeListImpl.Builder(project, "Default")
-    .setDefault(true)
-    .setChanges(listOf(change(changePath)))
-    .build()
-
-  private fun change(path: FilePath, revision: String = "default-revision"): Change {
-    val contentRevisionDto = ContentRevisionDto(revision, FilePathDto.toDto(path))
-    return Change(null, contentRevisionDto.contentRevision)
-  }
-
-  private fun createEditedCommit(changes: List<Change>): EditedCommitDetails {
-    val message = "Amend commit"
-    val author = VcsUserUtil.createUser("John Doe", "john@example.com")
-    return EditedCommitDetails(
-      currentUser = null,
-      committer = author,
-      author = author,
-      commitHash = HashImpl.build("abc123"),
-      subject = message,
-      fullMessage = message,
-      changes = changes
-    )
   }
 
   private fun assertTreePath(path: ChangesTreePath, expected: FilePath, expectChangeId: Boolean) {
