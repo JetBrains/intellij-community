@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.contentModules
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
@@ -279,6 +280,11 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     private fun staticRegisterIconLayer(flagMask: Int, icon: Icon?) {
       for (iconLayer in iconLayers) {
         if (iconLayer.flagMask == flagMask) {
+          val application = ApplicationManager.getApplication()
+          if (application != null && application.isUnitTestMode) {
+            logger<CoreIconManager>().info("Icon layer with flagMask=$flagMask already registered: ${iconLayer.icon}")
+            return // com.intellij.testFramework.UsefulTestCase.isIconRequired can't properly handle IconManager hotswap
+          }
           logger<CoreIconManager>().error("Icon layer with flagMask=$flagMask already registered: ${iconLayer.icon}")
           return
         }
