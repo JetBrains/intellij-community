@@ -1,0 +1,12 @@
+annotationProcessor
+api
+implementation
+compileOnly
+compileOnlyApi
+kapt
+kaptAndroidTest
+kaptTest
+runtimeOnly
+testImplementation
+testCompileOnly
+testRuntimeOnly
