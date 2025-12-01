@@ -23,12 +23,14 @@ jvm_library(
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
     "@lib//:tc_service_messages",
-    "@lib//:junit5Jupiter-provided",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
     "@lib//:asm-tools",
     ":libraries_junit5-vintage_provided",
   ],
-  runtime_deps = ["//platform/boot"]
+  runtime_deps = [
+    "//platform/boot",
+    "//libraries/junit5-jupiter",
+  ]
 )
 ### auto-generated section `build intellij.tools.testsBootstrap` end

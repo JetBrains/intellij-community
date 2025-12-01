@@ -14,6 +14,11 @@ resourcegroup(
 )
 
 jvm_provided_library(
+  name = "libraries_junit5-jupiter_provided",
+  lib = "//libraries/junit5-jupiter"
+)
+
+jvm_provided_library(
   name = "libraries_junit5_provided",
   lib = "//libraries/junit5"
 )
@@ -30,7 +35,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":junit5_resources"],
   deps = [
-    "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -54,6 +58,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/util/jdom",
+    ":libraries_junit5-jupiter_provided",
     ":libraries_junit5_provided",
     ":libraries_junit5-launcher_provided",
   ]
@@ -66,7 +71,6 @@ jvm_library(
   resources = [":junit5_test_resources"],
   associates = [":junit5"],
   deps = [
-    "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/coroutines/core",
@@ -91,6 +95,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util-ex",
     "//platform/util/jdom",
+    ":libraries_junit5-jupiter_provided",
     ":libraries_junit5_provided",
     ":libraries_junit5-launcher_provided",
   ]

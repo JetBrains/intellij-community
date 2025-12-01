@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+
+    <!-- ensure org.junit.vintage.engine.VintageTestEngine appears before org.junit.jupiter.engine.JupiterTestEngine after the topological sort -->
+    <module name="intellij.libraries.junit5.vintage"/>
+  </dependencies>
+</idea-plugin>
