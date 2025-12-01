@@ -111,8 +111,8 @@ internal class TerminalCommandCompletionService(
         submitSuggestions(process, result)
       }
       // Show the lookup only if context is still valid
-      if (checkContextValid(context) && process.showLookup()) {
-        // Wait until the shown lookup is closed
+      if (checkContextValid(context) && process.tryInsertOrShowPopup()) {
+        // If a lookup was shown, leave the process alive until the shown lookup is closed
         awaitCancellation()
       }
     }

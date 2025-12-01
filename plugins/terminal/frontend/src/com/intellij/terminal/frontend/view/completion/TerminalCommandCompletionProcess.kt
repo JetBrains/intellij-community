@@ -29,7 +29,7 @@ import javax.swing.Icon
 
 /**
  * Contains the data related to the terminal completion session and methods for manipulating it,
- * such as [addItem], [showLookup], [cancel], etc.
+ * such as [addItem], [tryInsertOrShowPopup], [cancel], etc.
  *
  * Have to inherit [CompletionProcessEx] to be compatible with platform completion APIs like [BaseCompletionLookupArranger].
  *
@@ -46,8 +46,6 @@ internal class TerminalCommandCompletionProcess(
   private var arranger: CompletionLookupArrangerImpl? = lookup.arranger as? CompletionLookupArrangerImpl
   private val parameters: CompletionParameters
 
-  @Volatile
-  private var itemsCount = 0
   private var restartOnPrefixChange = false
 
   init {
@@ -103,13 +101,23 @@ internal class TerminalCommandCompletionProcess(
 
     arranger?.associateSorter(item.lookupElement, item.sorter as CompletionSorterImpl)
     lookup.addItem(item.lookupElement, item.prefixMatcher)
-    itemsCount++
     arranger?.setLastLookupPrefix(lookup.additionalPrefix)
   }
 
+  /** Returns true if the completion popup was shown to the user */
   @RequiresEdt
-  fun showLookup(): Boolean {
-    if (itemsCount == 0) return false
+  fun tryInsertOrShowPopup(): Boolean {
+    lookup.refreshUi(true, false)
+    val items = lookup.items
+    if (items.isEmpty()) {
+      return false
+    }
+
+    if (!isAutopopupCompletion && items.size == 1) {
+      // Auto-insert a single suggestion if completion is called using action
+      lookup.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, items.single())
+      return false
+    }
 
     if (!lookup.isShown) {
       val shown = lookup.showLookup()

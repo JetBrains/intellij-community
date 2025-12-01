@@ -85,9 +85,11 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     view.outputEditorEventsHandler.keyTyped(timedKeyEvent)
   }
 
-  suspend fun callCompletionPopup() {
+  suspend fun callCompletionPopup(waitForPopup: Boolean = true) {
     runActionById("Terminal.CommandCompletion.Invoke")
-    awaitNewCompletionPopupOpened()
+    if (waitForPopup) {
+      awaitNewCompletionPopupOpened()
+    }
   }
 
   suspend fun awaitNewCompletionPopupOpened() {

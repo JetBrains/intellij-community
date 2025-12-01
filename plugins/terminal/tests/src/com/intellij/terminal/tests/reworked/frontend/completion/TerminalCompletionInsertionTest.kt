@@ -18,7 +18,11 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
 
   val testCommandSpec = ShellCommandSpec("test_cmd") {
     subcommands {
-      subcommand("status")
+      subcommand("status") {
+        argument {
+          suggestions("single-suggestion")
+        }
+      }
       subcommand("stop")
       subcommand("start")
     }
@@ -38,6 +42,18 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     fixture.insertSelectedItem()
 
     val expectedText = "test_cmd ${selectedItem.lookupString}"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test single matching completion item inserted automatically on invoking completion action`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd status single")
+    fixture.callCompletionPopup(waitForPopup = false)
+
+    val expectedText = "test_cmd status single-suggestion"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
