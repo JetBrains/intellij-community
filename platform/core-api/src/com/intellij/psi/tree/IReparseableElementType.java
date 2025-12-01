@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
@@ -53,19 +53,19 @@ public class IReparseableElementType extends ILazyParseableElementType implement
   /**
    * The same as {@link this#isParsable(CharSequence, Language, Project)}
    * but with parent ASTNode of the old node.
-   *
+   * <p>
    * Override this method only if you really understand what are doing.
    * In other cases override {@link this#isParsable(CharSequence, Language, Project)}
-   *
+   * <p>
    * Known valid use-case:
-   *  Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
-   *  Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
-   *  So it cannot be reparsed and whole file or parent block should be reparsed.
+   * Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
+   * Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
+   * So it cannot be reparsed and whole file or parent block should be reparsed.
    *
-   * @param parent parent node of old (or collapsed) reparseable node.
-   * @param buffer the content to parse.
+   * @param parent       parent node of old (or collapsed) reparseable node.
+   * @param buffer       the content to parse.
    * @param fileLanguage language of the file
-   * @param project the project containing the content.
+   * @param project      the project containing the content.
    * @return true if the content is valid, false if not
    */
   @Override
