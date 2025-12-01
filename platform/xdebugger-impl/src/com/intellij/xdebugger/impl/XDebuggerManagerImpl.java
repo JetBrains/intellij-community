@@ -216,7 +216,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
       ProcessHandler handler = session.getDebugProcess().getProcessHandler();
       handler.startNotify();
-      return new XSessionStartedResultImpl(session, session.getMockRunContentDescriptor());
+      return new XSessionStartedResultImpl(session, session.getMockRunContentDescriptorIfInitialized());
     }
     else {
       XDebugSessionImpl session = new XDebugSessionImpl(environment, this);

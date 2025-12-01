@@ -169,9 +169,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
   String getSessionName();
 
   /**
-   * @deprecated To access {@link com.intellij.execution.process.ProcessHandler}, use {@link XDebugProcess#getProcessHandler()} instead.
+   * @deprecated Do not use.
+   * <p>
    * To return the {@link RunContentDescriptor} instance into {@link AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)},
-   * use {@link XSessionStartedResult#getRunContentDescriptor()} instead.
+   * use {@link XDebuggerManager#newSessionBuilder} and {@link XSessionStartedResult#getRunContentDescriptor()} instead.
+   * <p>
+   * To access {@link com.intellij.execution.process.ProcessHandler}, use {@link XDebugProcess#getProcessHandler()} instead.
    */
   @Deprecated
   @NotNull

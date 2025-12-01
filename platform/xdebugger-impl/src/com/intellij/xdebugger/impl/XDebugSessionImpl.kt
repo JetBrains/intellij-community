@@ -218,26 +218,19 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   @Deprecated("Deprecated in Java")
   override fun getRunContentDescriptor(): RunContentDescriptor {
-    if (SplitDebuggerMode.showSplitWarnings()) {
-      LOG.error("[Split debugger] RunContentDescriptor should not be used in split mode from XDebugSession")
+    if (!application.isUnitTestMode && SplitDebuggerMode.showSplitWarnings()) {
+      LOG.error("[Split debugger] RunContentDescriptor should not be used in split mode from XDebugSession. " +
+                "XDebugSession.getRunContentDescriptor is deprecated, see the javadoc for details")
     }
-    return getMockRunContentDescriptor()
-  }
-
-  /**
-   * This method relies on creation of a mock [RunContentDescriptor] on backend when in split mode.
-   * The descriptor returned from this method is not registered in the [com.intellij.execution.ui.RunContentManagerImpl] and is not shown in the UI.
-   * To access the UI-visible [RunContentDescriptor], use [XDebugSessionProxy.sessionTab] instead.
-   */
-  @ApiStatus.Internal
-  fun getMockRunContentDescriptor(): RunContentDescriptor {
     val descriptor = getMockRunContentDescriptorIfInitialized()
     LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!")
     return descriptor!!
   }
 
   /**
-   * @see getMockRunContentDescriptor
+   * This method relies on creation of a mock [RunContentDescriptor] on backend when in split mode.
+   * The descriptor returned from this method is not registered in the [com.intellij.execution.ui.RunContentManagerImpl] and is not shown in the UI.
+   * To access the UI-visible [RunContentDescriptor], use [XDebugSessionProxy.sessionTab] instead.
    */
   @ApiStatus.Internal
   fun getMockRunContentDescriptorIfInitialized(): RunContentDescriptor? {
