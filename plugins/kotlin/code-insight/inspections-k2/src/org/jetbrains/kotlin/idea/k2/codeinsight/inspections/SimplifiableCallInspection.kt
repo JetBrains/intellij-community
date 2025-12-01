@@ -48,7 +48,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
     }
 
-    private val flattenConversion = object : Conversion("kotlin.collections.flatMap") {
+    private class FlattenConversion : Conversion("kotlin.collections.flatMap") {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -70,7 +70,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private val filterConversion = object : Conversion("kotlin.collections.filter") {
+    private class FilterConversion : Conversion("kotlin.collections.filter") {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -118,8 +118,8 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
     }
 
     private val conversions: List<Conversion> = listOf(
-        flattenConversion,
-        filterConversion,
+        FlattenConversion(),
+        FilterConversion(),
     )
 
     context(_: KaSession)
