@@ -34,101 +34,99 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         val replacement: String,
     )
 
-    internal object Holder {
-        abstract class Conversion(
-            callFqName: String
-        ) {
-            val fqName = FqName(callFqName)
+    private abstract class Conversion(
+        callFqName: String
+    ) {
+        val fqName = FqName(callFqName)
 
-            val shortName = fqName.shortName().asString()
+        val shortName = fqName.shortName().asString()
 
-            context(_: KaSession)
-            abstract fun analyze(callExpression: KtCallExpression): String?
+        context(_: KaSession)
+        abstract fun analyze(callExpression: KtCallExpression): String?
 
-            context(_: KaSession)
-            open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
-        }
-
-        private val flattenConversion = object : Conversion("kotlin.collections.flatMap") {
-            context(_: KaSession)
-            override fun analyze(callExpression: KtCallExpression): String? {
-                val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
-                val reference = lambdaExpression.singleStatement() ?: return null
-                val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
-                if (!reference.isNameReferenceTo(lambdaParameterName)) return null
-                val resolvedCallSymbol =
-                    callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol ?: return null
-                val receiver = resolvedCallSymbol.dispatchReceiver ?: resolvedCallSymbol.extensionReceiver ?: return null
-                val receiverType = receiver.type
-                if (receiverType.isPrimitiveArray) return null
-                val typeArguments = (receiverType as? KaClassType)?.typeArguments
-                val receiverTypeArgument = typeArguments?.singleOrNull()?.type ?: return null
-                when {
-                    receiverType.isArray -> if (!receiverTypeArgument.isArray) return null
-                    else -> if (!receiverTypeArgument.isIterable) return null
-                }
-                return "flatten()"
-            }
-        }
-
-        private val filterConversion = object : Conversion("kotlin.collections.filter") {
-            context(_: KaSession)
-            override fun analyze(callExpression: KtCallExpression): String? {
-                val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
-                val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
-                val statement = lambdaExpression.singleStatement() ?: return null
-                when (statement) {
-                    is KtBinaryExpression -> {
-                        if (statement.operationToken != KtTokens.EXCLEQ && statement.operationToken != KtTokens.EXCLEQEQEQ) return null
-                        val left = statement.left ?: return null
-                        val right = statement.right ?: return null
-                        if (left.isNameReferenceTo(lambdaParameterName) && right.isNull() ||
-                            right.isNameReferenceTo(lambdaParameterName) && left.isNull()
-                        ) {
-                            return "filterNotNull()"
-                        }
-                    }
-                    is KtIsExpression -> {
-                        if (statement.isNegated) return null
-                        if (!statement.leftHandSide.isNameReferenceTo(lambdaParameterName)) return null
-                        val rightTypeReference = statement.typeReference ?: return null
-                        val rightType = rightTypeReference.type
-
-                        val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
-
-                        if (resolvedCall != null) {
-                            val resultingElementType = (resolvedCall.partiallyAppliedSymbol.signature.returnType as? KaClassType)
-                                ?.typeArguments?.singleOrNull()?.takeIf { it !is KaStarTypeProjection }?.type
-                            if (resultingElementType != null && !rightType.isSubtypeOf(resultingElementType)) {
-                                return null
-                            }
-                        }
-
-                        return "filterIsInstance<${rightTypeReference.text}>()"
-                    }
-                }
-
-                return null
-            }
-
-            context(_: KaSession)
-            override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean {
-                val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
-                return !extensionReceiverType.isMap
-            }
-        }
-
-        val conversions: List<Conversion> = listOf(
-            flattenConversion,
-            filterConversion,
-        )
+        context(_: KaSession)
+        open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
     }
 
+    private val flattenConversion = object : Conversion("kotlin.collections.flatMap") {
+        context(_: KaSession)
+        override fun analyze(callExpression: KtCallExpression): String? {
+            val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val reference = lambdaExpression.singleStatement() ?: return null
+            val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
+            if (!reference.isNameReferenceTo(lambdaParameterName)) return null
+            val resolvedCallSymbol =
+                callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol ?: return null
+            val receiver = resolvedCallSymbol.dispatchReceiver ?: resolvedCallSymbol.extensionReceiver ?: return null
+            val receiverType = receiver.type
+            if (receiverType.isPrimitiveArray) return null
+            val typeArguments = (receiverType as? KaClassType)?.typeArguments
+            val receiverTypeArgument = typeArguments?.singleOrNull()?.type ?: return null
+            when {
+                receiverType.isArray -> if (!receiverTypeArgument.isArray) return null
+                else -> if (!receiverTypeArgument.isIterable) return null
+            }
+            return "flatten()"
+        }
+    }
+
+    private val filterConversion = object : Conversion("kotlin.collections.filter") {
+        context(_: KaSession)
+        override fun analyze(callExpression: KtCallExpression): String? {
+            val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
+            val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
+            val statement = lambdaExpression.singleStatement() ?: return null
+            when (statement) {
+                is KtBinaryExpression -> {
+                    if (statement.operationToken != KtTokens.EXCLEQ && statement.operationToken != KtTokens.EXCLEQEQEQ) return null
+                    val left = statement.left ?: return null
+                    val right = statement.right ?: return null
+                    if (left.isNameReferenceTo(lambdaParameterName) && right.isNull() ||
+                        right.isNameReferenceTo(lambdaParameterName) && left.isNull()
+                    ) {
+                        return "filterNotNull()"
+                    }
+                }
+                is KtIsExpression -> {
+                    if (statement.isNegated) return null
+                    if (!statement.leftHandSide.isNameReferenceTo(lambdaParameterName)) return null
+                    val rightTypeReference = statement.typeReference ?: return null
+                    val rightType = rightTypeReference.type
+
+                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
+
+                    if (resolvedCall != null) {
+                        val resultingElementType = (resolvedCall.partiallyAppliedSymbol.signature.returnType as? KaClassType)
+                            ?.typeArguments?.singleOrNull()?.takeIf { it !is KaStarTypeProjection }?.type
+                        if (resultingElementType != null && !rightType.isSubtypeOf(resultingElementType)) {
+                            return null
+                        }
+                    }
+
+                    return "filterIsInstance<${rightTypeReference.text}>()"
+                }
+            }
+
+            return null
+        }
+
+        context(_: KaSession)
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean {
+            val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
+            return !extensionReceiverType.isMap
+        }
+    }
+
+    private val conversions: List<Conversion> = listOf(
+        flattenConversion,
+        filterConversion,
+    )
+
     context(_: KaSession)
-    private fun KtCallExpression.findConversionAndResolvedCall(): Pair<Holder.Conversion, KaFunctionCall<*>>? {
+    private fun KtCallExpression.findConversionAndResolvedCall(): Pair<Conversion, KaFunctionCall<*>>? {
         val calleeText = calleeExpression?.text ?: return null
         val resolvedCall: KaFunctionCall<*>? by lazy { this.resolveToCall()?.successfulFunctionCallOrNull() }
-        for (conversion in Holder.conversions) {
+        for (conversion in conversions) {
             if (conversion.shortName != calleeText) continue
             if (resolvedCall?.symbol?.callableId?.asSingleFqName() == conversion.fqName) {
                 return conversion to resolvedCall!!
