@@ -6,7 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +26,7 @@ import com.pty4j.windows.winpty.WinPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.util.TerminalEelProcessesKt;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
 
 import java.io.IOException;
@@ -43,12 +44,28 @@ public final class TerminalUtil {
     if (!connector.isConnected()) return false;
     ProcessTtyConnector processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
     if (processTtyConnector == null) return true;
-    return hasRunningCommands(processTtyConnector.getProcess());
+    Process javaProcess = processTtyConnector.getProcess();
+    Boolean localResult = localProcessHasRunningCommands(javaProcess);
+    if (localResult != null) return localResult;
+    if (processTtyConnector instanceof LocalTerminalTtyConnector localConnector) {
+      return TerminalEelProcessesKt.hasRunningCommandsBlocking(localConnector.getShellEelProcess());
+    }
+    if (javaProcess instanceof RemoteSshProcess) {
+      // No way to determine if `RemoteSshProcess` has child processes.
+      // However, SSH processes spawned via EelApi are covered by
+      // `org.jetbrains.plugins.terminal.util.TerminalEelProcessesKt.hasRunningCommands`
+      return true;
+    }
+    LOG.warn("Cannot determine if there are running processes: " + SystemInfoRt.OS_NAME + ", " + javaProcess.getClass().getName());
+    return false;
   }
 
-  private static boolean hasRunningCommands(@NotNull Process process) throws IllegalStateException {
-    if (process instanceof RemoteSshProcess) return true;
-    if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
+  /**
+   * Kept as a safe implementation in 2025.3.x.
+   * To be merged into {@link TerminalEelProcessesKt#hasRunningCommands} in 2026.1
+   */
+  private static @Nullable Boolean localProcessHasRunningCommands(@NotNull Process process) throws IllegalStateException {
+    if (process instanceof UnixPtyProcess) {
       int shellPid = (int)process.pid();
       MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
       UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), s -> {
@@ -60,7 +77,7 @@ public final class TerminalUtil {
       });
       return !pidToChildPidsMap.get(shellPid).isEmpty();
     }
-    if (SystemInfo.isWindows && process instanceof WinPtyProcess winPty) {
+    if (process instanceof WinPtyProcess winPty) {
       try {
         String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty)));
         int consoleProcessCount = winPty.getConsoleProcessCount();
@@ -86,8 +103,7 @@ public final class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    LOG.warn("Cannot determine if there are running processes: " + SystemInfo.OS_NAME + ", " + process.getClass().getName());
-    return false;
+    return null;
   }
 
   private static @Nullable String getExecutable(@NotNull WinPtyProcess process) {

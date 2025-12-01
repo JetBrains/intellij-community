@@ -14,6 +14,7 @@ import org.jetbrains.plugins.terminal.session.impl.StyleRange
 import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
+import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Internal
 object TerminalTestUtil {
@@ -53,6 +54,14 @@ object TerminalTestUtil {
     options.terminalEngine = engine
     Disposer.register(parentDisposable) {
       options.terminalEngine = prevValue
+    }
+  }
+
+  fun <V> KMutableProperty0<V>.setValueInTest(newValue: V, disposable: Disposable) {
+    val prevValue = this.get()
+    this.set(newValue)
+    Disposer.register(disposable) {
+      this.set(prevValue)
     }
   }
 }
