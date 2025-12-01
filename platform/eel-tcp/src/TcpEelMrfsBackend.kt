@@ -51,7 +51,7 @@ class TcpEelMrfsBackend : MultiRoutingFileSystemBackend {
   }
 
   override fun getCustomRoots(): Collection<@MultiRoutingFileSystemPath String> {
-    return cache.keys.map { "/$it" }
+    return cache.keys.map { "${TcpEelConstants.TCP_PROTOCOL_PREFIX}$it" }
   }
 
   override fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> {

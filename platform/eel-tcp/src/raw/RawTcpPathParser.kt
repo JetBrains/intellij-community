@@ -5,28 +5,21 @@ import com.intellij.platform.eel.tcp.TcpEelConstants
 import com.intellij.platform.eel.tcp.TcpEelDescriptor
 import com.intellij.platform.eel.tcp.TcpEelPathParser
 import com.intellij.platform.ijent.tcp.TcpEndpoint
-import java.nio.file.Path
-import kotlin.io.path.pathString
 
 class RawTcpPathParser : TcpEelPathParser {
   override fun isPathCompatible(path: String): Boolean {
-    return path.startsWith(TcpEelConstants.TCP_PREFIX)
+    return path.startsWith(TcpEelConstants.TCP_RAW_PREFIX)
 
   }
 
   override fun extractInternalMachineId(path: String): String? {
     if (!isPathCompatible(path)) return null
-    return path.substringAfter("/").substringBefore("/")
-  }
-
-  override fun extractInternalMachineId(path: Path): String? {
-    if (!isPathCompatible(path.pathString)) return null
-    return path.root?.pathString
+    return path.substringAfter(TcpEelConstants.TCP_PROTOCOL_PREFIX).substringBefore("/")
   }
 
   override fun toDescriptor(internalName: String): TcpEelDescriptor? {
-    if (!internalName.startsWith(TcpEelConstants.TCP_SCHEME)) return null
-    val host = internalName.substringAfter(TcpEelConstants.TCP_SCHEME).drop(1)
+    if (!internalName.startsWith(TcpEelConstants.TCP_RAW_SCHEME)) return null
+    val host = internalName.substringAfter(TcpEelConstants.TCP_RAW_SCHEME).drop(1)
     return RawTcpEelDescriptor(TcpEndpoint(host))
   }
 }

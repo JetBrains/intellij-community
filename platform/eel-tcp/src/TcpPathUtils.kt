@@ -4,8 +4,9 @@ package com.intellij.platform.eel.tcp
 import com.intellij.platform.ijent.tcp.TcpEndpoint
 
 object TcpEelConstants {
-  const val TCP_PREFIX: String = "/tcp"
-  const val TCP_SCHEME: String = "tcp"
+  const val TCP_PROTOCOL_PREFIX: String = "/tcp-"
+  const val TCP_RAW_SCHEME: String = "raw"
+  const val TCP_RAW_PREFIX: String = "/tcp-raw-"
 }
 
 internal fun TcpEndpoint.toPath(): String = host
