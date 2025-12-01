@@ -6,7 +6,6 @@ import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
@@ -18,32 +17,23 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspend
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
-import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
-import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import java.awt.Frame
-import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
@@ -51,7 +41,6 @@ import java.net.InetAddress
 import java.net.URLClassLoader
 import java.time.LocalTime
 import javax.imageio.ImageIO
-import javax.swing.JFrame
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
@@ -90,15 +79,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
       }
     }
-  }
-
-  open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
-    LOG.info("Setting up test logging factory")
-    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
-  }
-
-  protected open fun assertLoggerFactory() {
-    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
   init {
@@ -176,14 +156,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     val model = protocol.lambdaTestModel
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
-    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
+    model.session.viewNotNull(lifetime) { _, session ->
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
         val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Lambda test session dispatcher")
-
-        setUpTestLoggingFactory(sessionLifetime, session)
-        val app = ApplicationManager.getApplication()
 
         // Needed to enable proper focus behaviour
         if (SystemInfoRt.isWindows) {
@@ -257,9 +234,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               runLogged(parameters.reference, 1.minutes) {
                 ideAction.runLambda(parameters.parameters ?: listOf())
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
@@ -283,9 +257,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
                   }
                 }
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
