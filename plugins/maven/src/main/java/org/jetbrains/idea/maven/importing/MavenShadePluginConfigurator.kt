@@ -253,7 +253,7 @@ internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportCon
     val projectsManager = MavenProjectsManager.getInstance(project)
     val projectsTree = projectsManager.projectsTree
     val projectRoot = projectsTree.findRootProject(shadedMavenProjects.keys.first()) // assume there's only one root project
-    val baseDir = MavenUtil.getBaseDir(projectRoot.directoryFile).toString()
+    val baseDir = MavenUtil.getBaseDir(projectRoot.directoryFile)
     val syncConsole = projectsManager.syncConsole
 
     val userProperties = Properties()
@@ -330,13 +330,14 @@ internal class MavenShadeFacetRemapPostTaskConfigurator : MavenAfterImportConfig
     val baseDirsToMavenProjects = MavenUtil.groupByBasedir(projectRoots, projectsTree)
 
     for (baseDir in baseDirsToMavenProjects.keySet()) {
-      doCompile(project, baseDirsToMavenProjects[baseDir], baseDir, projectsManager.syncConsole)
+      doCompile(project, baseDirsToMavenProjects[baseDir], Path.of(baseDir), projectsManager.syncConsole)
     }
   }
 
   private fun doCompile(project: Project,
                         mavenProjects: Collection<MavenProject>,
-                        baseDir: String, mavenEventHandler: MavenEventHandler) {
+                        baseDir: Path,
+                        mavenEventHandler: MavenEventHandler) {
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       val embedder = runBlockingMaybeCancellable {

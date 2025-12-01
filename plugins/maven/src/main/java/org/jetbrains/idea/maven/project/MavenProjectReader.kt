@@ -109,7 +109,7 @@ class MavenProjectReader(
     problems: MutableCollection<MavenProjectProblem>,
     alwaysOnProfiles: MutableSet<String>,
   ): RawModelReadResult {
-    var result: MavenModel? = null
+    var result: MavenModel?
     val baseDir = MavenUtil.getBaseDir(file)
     val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }

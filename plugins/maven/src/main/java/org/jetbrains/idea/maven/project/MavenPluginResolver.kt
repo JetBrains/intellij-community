@@ -37,7 +37,7 @@ private class MavenPluginResolverImpl : MavenPluginResolver {
     if (mavenProjects.isEmpty()) return PluginResolutionResult(emptySet())
 
     val firstProject = sortAndGetFirst(mavenProjects)
-    val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
+    val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile)
     process.text(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
     val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
     val filesToRefresh: MutableSet<Path> = HashSet()
