@@ -80,10 +80,10 @@ class RpcCausalityTimeout(msg: String?, cause: Throwable?)
  *
  * see [RpcClientException]
  * */
-class ProducerIsCancelledException(msg: String?, cause: Throwable?)
+class RemoteIsCancelledException(msg: String?, cause: Throwable?)
   : RpcClientException(msg, cause),
-    CopyableThrowable<ProducerIsCancelledException> {
-  override fun createCopy(): ProducerIsCancelledException {
-    return ProducerIsCancelledException(message, this)
+    CopyableThrowable<RemoteIsCancelledException> {
+  override fun createCopy(): RemoteIsCancelledException {
+    return RemoteIsCancelledException(message, this)
   }
 }

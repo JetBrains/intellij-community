@@ -454,6 +454,7 @@ private class RpcClient(
         error.conflict != null -> AssumptionsViolatedException(error.conflict)
         error.serviceNotReady != null -> RpcServiceNotReady(rpc.call)
         error.unresolvedService != null -> UnresolvedServiceException(rpc.call.service)
+        error.producerCancelled != null -> RemoteIsCancelledException(error.producerCancelled, null)
         else -> RpcException.callFailed(rpc.call, error)
       }
 
@@ -500,7 +501,7 @@ private class RpcClient(
       is InternalStreamDescriptor.FromRemote -> {
         val producerCancelled = error?.producerCancelled
         val causePrime = if (producerCancelled != null) {
-          ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
+          RemoteIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
         }
         else {
           cause as Throwable? // without `as Throwable?` wasm compiles but throws on wasm compilation in the browser (same as in FL-32234)
