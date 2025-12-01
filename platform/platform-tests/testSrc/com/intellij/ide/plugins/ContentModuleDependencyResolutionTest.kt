@@ -11,6 +11,10 @@ import java.nio.file.Path
 import com.intellij.platform.testFramework.plugins.plugin as buildPlugin
 
 internal class ContentModuleDependencyResolutionTest {
+  init {
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
+  }
+
   @RegisterExtension
   @JvmField
   val inMemoryFs = InMemoryFsExtension()
