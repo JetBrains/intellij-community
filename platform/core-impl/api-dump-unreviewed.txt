@@ -3328,7 +3328,7 @@ c:com.intellij.psi.stubs.DefaultStubBuilder
 pc:com.intellij.psi.stubs.DefaultStubBuilder$StubBuildingWalkingVisitor
 - p:<init>(com.intellij.psi.stubs.DefaultStubBuilder,com.intellij.lang.ASTNode,com.intellij.psi.stubs.StubElement):V
 - f:buildStubTree():V
-- p:createStub(com.intellij.psi.stubs.StubElement,com.intellij.lang.ASTNode):com.intellij.psi.stubs.StubElement
+- p:createStub(com.intellij.psi.stubs.StubElement,com.intellij.lang.ASTNode,com.intellij.psi.stubs.StubElementRegistryService):com.intellij.psi.stubs.StubElement
 - pf:peekNextElement():com.intellij.lang.ASTNode
 - p:visitNode(com.intellij.psi.stubs.StubElement,com.intellij.lang.ASTNode,Z):V
 c:com.intellij.psi.stubs.LightStubBuilder

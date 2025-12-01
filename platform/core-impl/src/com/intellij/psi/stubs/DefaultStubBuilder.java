@@ -46,6 +46,7 @@ public class DefaultStubBuilder implements StubBuilder {
     private final Stack<StubElement> parentStubs = new Stack<>();
     private final Stack<ASTNode> parentNodes = new Stack<>();
     private final BooleanStack parentNodesStubbed = new BooleanStack();
+    private final StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
 
     protected StubBuildingWalkingVisitor(ASTNode root, StubElement parentStub) {
       parentNodes.push(root);
@@ -60,7 +61,7 @@ public class DefaultStubBuilder implements StubBuilder {
     }
 
     protected void visitNode(StubElement parentStub, ASTNode node, boolean immediateParentStubbed) {
-      StubElement stub = createStub(parentStub, node);
+      StubElement stub = createStub(parentStub, node, stubElementRegistryService);
       if (stub != null && !immediateParentStubbed) {
         ((ObjectStubBase<?>)stub).markDangling();
       }
@@ -72,10 +73,10 @@ public class DefaultStubBuilder implements StubBuilder {
       return parentNodes.isEmpty() ? null : parentNodes.peek();
     }
 
-    protected @Nullable StubElement createStub(StubElement parentStub, ASTNode node) {
+    protected @Nullable StubElement createStub(StubElement parentStub, ASTNode node, StubElementRegistryService stubElementRegistryService) {
       IElementType nodeType = node.getElementType();
 
-      StubElementFactory factory = StubElementRegistryService.getInstance().getStubFactory(nodeType);
+      StubElementFactory factory = stubElementRegistryService.getStubFactory(nodeType);
       if (factory == null) {
         return null;
       }
