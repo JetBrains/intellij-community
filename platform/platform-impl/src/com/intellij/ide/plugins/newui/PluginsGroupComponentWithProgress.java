@@ -45,7 +45,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   public void startLoading() {
-    LOG.info("Marketplace tab: loading started");
+    LOG.debug("Marketplace tab: loading started");
     if (myIcon != null) {
       myIcon.setVisible(true);
       myIcon.resume();
@@ -54,7 +54,7 @@ public abstract class PluginsGroupComponentWithProgress extends PluginsGroupComp
   }
 
   public void stopLoading() {
-    LOG.info("Marketplace tab: loading stopped");
+    LOG.debug("Marketplace tab: loading stopped");
     if (myIcon != null) {
       myIcon.suspend();
       myIcon.setVisible(false);
