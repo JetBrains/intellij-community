@@ -19,6 +19,13 @@ object IdeInstance {
     private set
   private lateinit var runContext: IDERunContext
 
+  /**
+   * Returns the current `BackgroundRunWithLambda` if the IDE was started in this process,
+   * or `null` otherwise. Useful for JUnit lifecycle callbacks that should tolerate missing IDE.
+   */
+  fun backgroundRunOrNull(): BackgroundRunWithLambda? =
+    if (this::ideBackgroundRun.isInitialized) ideBackgroundRun else null
+
   fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
     try {
       logOutput("Starting IDE in mode: $runMode")
