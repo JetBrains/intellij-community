@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
-import com.intellij.idea.IJIgnore
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
@@ -9,6 +8,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -169,10 +169,10 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
     }
 
-    @IJIgnore(issue = "IDEA-381769") // Affects Gradle 9.1.0+
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCustomConfiguration(gradleVersion: GradleVersion) {
+        assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
         runTest(gradleVersion) {
             testHighlighting(
                 """
@@ -200,11 +200,11 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
     }
 
-    @IJIgnore(issue = "IDEA-381769") // Affects Gradle 9.1.0+
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCustomConfigurationString(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
+            assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
                 val customConf by configurations.creating {}
@@ -231,11 +231,11 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         }
     }
 
-    @IJIgnore(issue = "IDEA-381769") // Affects Gradle 9.1.0+
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCustomSourceSet(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
+            assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") { "Skip until IDEA-381769 is resolved" }
             testHighlighting(
                 """
                 val customSourceSet by sourceSets.creating {}
