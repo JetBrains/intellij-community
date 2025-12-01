@@ -4561,13 +4561,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "kryo5",
-  jar = "@com_esotericsoftware-kryo5-5_6_0_http//file",
-  source_jar = "@com_esotericsoftware-kryo5-5_6_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "ktor-client-cio",
   exports = [
@@ -5454,6 +5447,13 @@ jvm_import(
   name = "libraries-kotlinx-html-kotlinx-html-jvm",
   jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
   source_jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-kryo5-kryo",
+  jar = "@com_esotericsoftware-kryo5-5_6_0_http//file",
+  source_jar = "@com_esotericsoftware-kryo5-5_6_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

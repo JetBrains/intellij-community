@@ -7028,20 +7028,6 @@ http_file(
 )
 
 http_file(
-  name = "com_esotericsoftware-kryo5-5_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0.jar",
-  sha256 = "2ceef6a5a0527ad89ab6d1fd71bba4fef355cded510970c650d1443412b18dc5",
-  downloaded_file_path = "kryo5-5.6.0.jar"
-)
-
-http_file(
-  name = "com_esotericsoftware-kryo5-5_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0-sources.jar",
-  sha256 = "904f9be6740252664dc0d0d10878d681657ff367dca9b52da3a5796a3ca2b924",
-  downloaded_file_path = "kryo5-5.6.0-sources.jar"
-)
-
-http_file(
   name = "io_ktor-ktor-client-java-jvm-3_3_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-java-jvm/3.3.2/ktor-client-java-jvm-3.3.2.jar",
   sha256 = "cd511e17141fba45f344c69e8af8ab4ea3fd7e65ec2671a6e0c381a2e3d534c2",
@@ -8152,6 +8138,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0-sources.jar",
   sha256 = "58083e72e92c79dec4de05056ee1bbf56ff87fcebf0d82c0886c366a90830df0",
   downloaded_file_path = "kotlinx-html-jvm-0.12.0-sources.jar"
+)
+
+http_file(
+  name = "com_esotericsoftware-kryo5-5_6_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0.jar",
+  sha256 = "2ceef6a5a0527ad89ab6d1fd71bba4fef355cded510970c650d1443412b18dc5",
+  downloaded_file_path = "kryo5-5.6.0.jar"
+)
+
+http_file(
+  name = "com_esotericsoftware-kryo5-5_6_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0-sources.jar",
+  sha256 = "904f9be6740252664dc0d0d10878d681657ff367dca9b52da3a5796a3ca2b924",
+  downloaded_file_path = "kryo5-5.6.0-sources.jar"
 )
 
 http_file(
