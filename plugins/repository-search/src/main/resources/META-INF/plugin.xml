@@ -22,6 +22,9 @@
   <extensionPoints>
     <extensionPoint name="provider"
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
+
+    <extensionPoint name="contributor"
+                    interface="org.jetbrains.idea.completion.api.DependencyCompletionContributor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -38,6 +41,9 @@
                  restartRequired="false"/>
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.reposearch.statistics.TopPackageIdValidationRule"/>
+
+    <applicationService serviceInterface="org.jetbrains.idea.completion.api.DependencyCompletionService"
+                        serviceImplementation="org.jetbrains.idea.completion.impl.DependencyCompletionServiceImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
