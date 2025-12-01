@@ -410,6 +410,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-76911
+  public void testFrozenInheritanceDataclassTransformMetaclassNoDefault() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     myFixture.copyDirectoryToProject("packages/attr", "attr");

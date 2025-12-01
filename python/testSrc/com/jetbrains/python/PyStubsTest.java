@@ -1192,7 +1192,6 @@ public class PyStubsTest extends PyTestCase {
     assertFalse(customStub.getEqDefault());
     assertTrue(customStub.getOrderDefault());
     assertFalse(customStub.getKwOnlyDefault());
-    assertFalse(customStub.getFrozenDefault());
     assertEquals(
       List.of(
         QualifiedName.fromDottedString("field1"),

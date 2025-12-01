@@ -92,7 +92,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         return null
       }
 
-      if (dataclassParameters.frozen) {
+      if (dataclassParameters.frozen == true) {
         return null
       }
 
@@ -103,7 +103,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       return listOf(PyTypeMember(null, PyBuiltinCache.getInstance(type.pyClass).noneType))
     }
     else {
-      if (dataclassParameters.frozen) {
+      if (dataclassParameters.frozen == true) {
         val resolvedMembers = type.resolveMember(name, location, direction, context, false)
         if (resolvedMembers?.isNotEmpty() == true) {
           return resolvedMembers.map {
