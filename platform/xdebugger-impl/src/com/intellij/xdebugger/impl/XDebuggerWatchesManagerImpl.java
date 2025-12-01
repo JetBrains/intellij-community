@@ -14,7 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
-public final class XDebuggerWatchesManager {
+public final class XDebuggerWatchesManagerImpl implements XDebuggerWatchesManager {
   /**
    * Maps configuration name to a list of watches.
    *
@@ -53,7 +53,7 @@ public final class XDebuggerWatchesManager {
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
 
-  public XDebuggerWatchesManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  public XDebuggerWatchesManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
@@ -66,10 +66,12 @@ public final class XDebuggerWatchesManager {
     myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
   }
 
-  public @NotNull List<XWatch> getWatchEntries(String configurationName) {
+  @Override
+  public @NotNull List<XWatch> getWatchEntries(@NotNull String configurationName) {
     return ContainerUtil.notNullize(watches.get(configurationName));
   }
 
+  @Override
   public void setWatchEntries(@NotNull String configurationName, @NotNull List<XWatch> watchList) {
     if (watchList.isEmpty()) {
       watches.remove(configurationName);
@@ -100,7 +102,8 @@ public final class XDebuggerWatchesManager {
     }
   }
 
-  public List<InlineWatch> getInlineWatches() {
+  @Override
+  public @NotNull List<InlineWatch> getInlineWatches() {
     return inlineWatches.values().stream().flatMap(l -> l.stream()).collect(Collectors.toList());
   }
 
@@ -119,6 +122,7 @@ public final class XDebuggerWatchesManager {
     return state;
   }
 
+  @Override
   public void clearContext() {
     watches.clear();
     inlineWatches.clear();
@@ -170,6 +174,7 @@ public final class XDebuggerWatchesManager {
     });
   }
 
+  @Override
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
                                 @NotNull Editor mainEditor,
                                 @NotNull XDebugSessionProxy session,
@@ -178,7 +183,8 @@ public final class XDebuggerWatchesManager {
     inplaceEditor.show();
   }
 
-  public void inlineWatchesRemoved(List<InlineWatch> removed, XInlineWatchesView watchesView) {
+  @Override
+  public void inlineWatchesRemoved(@NotNull List<InlineWatch> removed, XInlineWatchesView watchesView) {
     inlineWatches.values().forEach(set -> removed.forEach(set::remove));
     getWatchesViews().filter(v -> v != watchesView).forEach(view -> view.removeInlineWatches(removed));
   }
@@ -194,8 +200,8 @@ public final class XDebuggerWatchesManager {
     }
   }
 
-  @RequiresEdt
-  public void addInlineWatchExpression(@NotNull XExpression expression, int index, XSourcePosition position, boolean navigateToWatchNode) {
+  @Override
+  public void addInlineWatchExpression(@NotNull XExpression expression, int index, @NotNull XSourcePosition position, boolean navigateToWatchNode) {
     InlineWatch watch = new InlineWatch(expression, position);
     watch.setMarker();
     String fileUrl = position.getFile().getUrl();
@@ -234,7 +240,7 @@ public final class XDebuggerWatchesManager {
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }
 
-  public @NotNull Collection<InlineWatch> getDocumentInlines(Document document) {
+  public @NotNull Collection<InlineWatch> getDocumentInlines(@NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
       Set<InlineWatch> inlineWatches = this.inlineWatches.get(file.getUrl());

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -45,7 +46,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -561,7 +561,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   protected @NotNull List<XExpression> getExpressions() {
-    return getWatchesManager().getWatches(myConfigurationName);
+    return ContainerUtil.map(ContainerUtil.notNullize(getWatchesManager().getWatchEntries(myConfigurationName)), XWatch::getExpression);
   }
 
   @Override

@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities;
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -107,7 +108,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     SimpleMessageBusConnection messageBusConnection = project.getMessageBus().connect(coroutineScope);
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
-    myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
+    myWatchesManager = new XDebuggerWatchesManagerImpl(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
 
     if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
@@ -390,7 +391,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   public XDebuggerState getState() {
     XDebuggerState state = myState;
     myBreakpointManager.saveState(state.getBreakpointManagerState());
-    myWatchesManager.saveState(state.getWatchesManagerState());
+    ((XDebuggerWatchesManagerImpl)myWatchesManager).saveState(state.getWatchesManagerState());
     myPinToTopManager.saveState(state.getPinToTopManagerState());
     return state;
   }
@@ -399,7 +400,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   public void loadState(@NotNull XDebuggerState state) {
     myState = state;
     myBreakpointManager.loadState(state.getBreakpointManagerState());
-    myWatchesManager.loadState(state.getWatchesManagerState());
+    ((XDebuggerWatchesManagerImpl)myWatchesManager).loadState(state.getWatchesManagerState());
     myPinToTopManager.loadState(state.getPinToTopManagerState());
   }
 

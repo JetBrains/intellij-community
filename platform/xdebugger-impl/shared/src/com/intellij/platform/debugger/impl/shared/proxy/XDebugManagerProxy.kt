@@ -1,27 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.frame
+package com.intellij.platform.debugger.impl.shared.proxy
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
 import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.XDebuggerExecutionPointManager
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This is a set of util functions that can be used in the shared code with [com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy], RPC ID, etc.
+ * This is a set of util functions that can be used in the shared code with [XDebugSessionProxy], RPC ID, etc.
  *
  * This manager and all its usages should be moved to the frontend module in the future.
  * For now, it is kept here to avoid breaking the LUXed implementation.
  *
- * @see com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+ * @see XDebugSessionProxy
  */
 @ApiStatus.Internal
 interface XDebugManagerProxy {

@@ -12,10 +12,10 @@ import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.proxy.withTemporaryXValueId
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.flow.Flow
@@ -71,8 +71,8 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return getFrontendManager(project).breakpointsManager
   }
 
-  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
-    return XDebuggerExecutionPointManager.getInstance(project)
+  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManagerImpl {
+    return XDebuggerExecutionPointManagerImpl.getInstance(project)
   }
 
   override fun getWatchesManager(project: Project): XDebuggerWatchesManager {

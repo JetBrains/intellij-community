@@ -13,12 +13,12 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import kotlinx.coroutines.*
@@ -75,11 +75,11 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     return manager.asProxy()
   }
 
-  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManager? {
+  override fun getDebuggerExecutionPointManager(project: Project): XDebuggerExecutionPointManagerImpl? {
     if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
       return null
     }
-    return XDebuggerExecutionPointManager.getInstance(project)
+    return XDebuggerExecutionPointManagerImpl.getInstance(project)
   }
 
   override fun hasBackendCounterpart(xValue: XValue): Boolean {
