@@ -328,7 +328,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
+    myWatcher = new MavenProjectManagerWatcher(myProject);
   }
 
   public void listenForExternalChanges() {

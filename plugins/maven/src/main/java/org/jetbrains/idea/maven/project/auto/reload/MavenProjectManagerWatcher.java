@@ -10,27 +10,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 @ApiStatus.Internal
 public final class MavenProjectManagerWatcher {
 
   private final Project myProject;
-  private @NotNull MavenProjectsTree myProjectTree;
-
   private final MavenProjectAware myProjectAware;
   private final MavenProfileWatcher myProfileWatcher;
   private final MavenRenameModuleWatcher myRenameModuleWatcher;
   private final MavenGeneralSettingsWatcher myGeneralSettingsWatcher;
   private final Disposable myDisposable;
 
-  public MavenProjectManagerWatcher(Project project, @NotNull MavenProjectsTree projectTree) {
+  public MavenProjectManagerWatcher(Project project) {
     myProject = project;
-    myProjectTree = projectTree;
 
     var backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MavenProjectsManagerWatcher.backgroundExecutor", 1);
     var projectManager = MavenProjectsManager.getInstance(myProject);
@@ -62,13 +57,5 @@ public final class MavenProjectManagerWatcher {
 
   public synchronized void stop() {
     Disposer.dispose(myDisposable);
-  }
-
-  public @NotNull MavenProjectsTree getProjectTree() {
-    return myProjectTree;
-  }
-
-  public void setProjectTree(@NotNull MavenProjectsTree projectTree) {
-    myProjectTree = projectTree;
   }
 }
