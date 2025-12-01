@@ -84,6 +84,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
@@ -380,6 +381,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  @RequiresEdt
   private void checkDaemonReaction(boolean mustCancelItself, @NotNull Runnable action) throws Exception {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     highlightErrors();
@@ -1564,11 +1566,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  @RequiresEdt
   private void checkFoldingState(String expected) {
     assertEquals(expected, Arrays.toString(myEditor.getFoldingModel().getAllFoldRegions()));
   }
 
   // return elapsed time in ms
+  @RequiresEdt
   static long waitForDaemonToFinish(@NotNull Project project, @NotNull Document document) {
     ThreadingAssertions.assertEventDispatchThread();
     long start = System.currentTimeMillis();
@@ -1591,6 +1595,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return System.currentTimeMillis()-start;
   }
 
+  @RequiresEdt
   private static void waitForDaemonToStart(@NotNull Project project, @NotNull Document document, long timeoutMs) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     long deadline = System.currentTimeMillis() + timeoutMs;
@@ -2019,6 +2024,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertInvalidPSIElementHighlightingIsRemovedImmediatelyAfterRepairingChange(text, "Unexpected token", () -> type("//"));
   }
 
+  @RequiresEdt
   private void assertInvalidPSIElementHighlightingIsRemovedImmediatelyAfterRepairingChange(@Language("JAVA") String text,
                                                                                            String errorDescription,
                                                                                            Runnable repairingChange // the change which is supposed to fix the invalid PSI highlight
@@ -2135,9 +2141,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   // after each typing, wait for the daemon to start and immediately proceed to type the next char
   // thus making daemon interrupt itself constantly, in hope for multiple highlighting sessions overlappings to manifest themselves more quickly.
   // after all typings are over, wait for final highlighting to complete and check that no errors are left in the markup
+  @RequiresEdt
   private void assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(String initialText, String textToType, Runnable afterWaitForDaemonToStart) {
     // run expensive consistency checks on each typing
-    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdaterImpl.getInstance(getProject());
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject());
     updater.runAssertingInvariants(() -> {
       String finalText = initialText.replace("<caret>", textToType);
       configureByText(JavaFileType.INSTANCE, finalText);

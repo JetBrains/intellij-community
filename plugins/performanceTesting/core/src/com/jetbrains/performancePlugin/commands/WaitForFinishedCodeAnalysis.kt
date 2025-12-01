@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -130,6 +131,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   /**
    * @throws TimeoutException when stopped due to provided [timeout]
    */
+  @RequiresBackgroundThread
   suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
