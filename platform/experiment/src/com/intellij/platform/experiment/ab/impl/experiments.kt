@@ -36,7 +36,9 @@ enum class ABExperimentOption {
       "UNASSIGNED experiment option is not supposed to be used in the isEnabled() method"
     }
     val decision = thisUserDecision
-    ABExperimentCountCollector.logABExperimentOptionUsed(decision)
+    if (decision.option != UNASSIGNED) {
+      ABExperimentCountCollector.logABExperimentOptionUsed(decision)
+    }
     return isAllowed(decision.option) && decision.option == this && !decision.isControlGroup
   }
 }
