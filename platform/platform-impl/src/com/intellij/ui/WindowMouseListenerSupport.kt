@@ -92,6 +92,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       view.bounds,
       event.getButton(),
     )
+    LOG.debug { "Starting a new move/resize session: $currentSession" }
     onStarted(event, view)
   }
 
@@ -147,6 +148,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val view = source.getView(content)
     // Enter in move mode only after mouse move, so double click is supported
     if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
+      LOG.debug("Entering the move-with-the-mouse mode")
       enterJbrMoveMode(session, view)
       return
     }
@@ -168,6 +170,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
         val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
         val reallyMoveWindow = !moveAfterMouseRelease() || !mouseMove
         if ((moved && reallyMoveWindow) || resized) {
+          LOG.debug { "Applying the new bounds: $bounds" }
           setViewBounds(view, bounds, moved, resized)
         }
       }
@@ -183,7 +186,9 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val location = session.location
     val dx: Int = event.xOnScreen - location.x
     val dy: Int = event.yOnScreen - location.y
-    return Point(dx, dy)
+    val offset = Point(dx, dy)
+    LOG.debug { "Relative mouse movement computed: ${event.locationOnScreen} - $location = $offset" }
+    return offset
   }
 
   private fun setViewBounds(view: Component, bounds: Rectangle, moved: Boolean, resized: Boolean) {
@@ -219,6 +224,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   }
 
   private fun stop() {
+    LOG.debug { "The move/resize session has finished: $currentSession" }
     currentSession = null
   }
 
@@ -289,7 +295,9 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
       val delta = JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
       dx += delta.x
       dy += delta.y
-      return Point(dx, dy)
+      val offset = Point(dx, dy)
+      LOG.debug { "Relative mouse movement from the protocol: $delta, new offset is $offset" }
+      return offset
     }
     else {
       return super.computeOffsetFromInitialLocation(session, event)
