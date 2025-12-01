@@ -44,4 +44,19 @@
     <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
   <!-- end editor-fold -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"
+                    interface="com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.SourceOrLibraryCanBeSelectedInProjectPaneProvider"/>
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.ArchiveCanBeSelectedInProjectPaneProvider"/>
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.ScratchCanBeSelectedInProjectPaneProvider"/>
+  </extensions>
 </idea-plugin>
