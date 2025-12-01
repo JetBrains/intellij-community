@@ -12,7 +12,10 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
 public final class MavenProjectManagerWatcher {
@@ -23,6 +26,7 @@ public final class MavenProjectManagerWatcher {
   private final MavenRenameModuleWatcher myRenameModuleWatcher;
   private final MavenGeneralSettingsWatcher myGeneralSettingsWatcher;
   private final Disposable myDisposable;
+  private final AtomicBoolean myStarted = new AtomicBoolean(false);
 
   public MavenProjectManagerWatcher(Project project) {
     myProject = project;
@@ -39,6 +43,10 @@ public final class MavenProjectManagerWatcher {
   }
 
   public synchronized void start() {
+    if (!myStarted.compareAndSet(false, true)) {
+      MavenLog.LOG.error("Trying to start the watcher one more time", new Exception());
+      return;
+    }
     var busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ModuleListener.TOPIC, myRenameModuleWatcher);
     myGeneralSettingsWatcher.subscribeOnSettingsChanges(myDisposable);
