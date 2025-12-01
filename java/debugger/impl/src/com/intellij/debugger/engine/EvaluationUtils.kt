@@ -23,7 +23,8 @@ import kotlin.time.Duration
  * Throws [kotlinx.coroutines.TimeoutCancellationException] if fails to get proper context in the given amount of [timeToSuspend].
  */
 @ApiStatus.Experimental
-internal suspend fun <R> suspendAllAndEvaluate(
+@ApiStatus.Internal
+suspend fun <R> suspendAllAndEvaluate(
   context: DebuggerContextImpl,
   timeToSuspend: Duration,
   action: suspend (SuspendContextImpl) -> R,

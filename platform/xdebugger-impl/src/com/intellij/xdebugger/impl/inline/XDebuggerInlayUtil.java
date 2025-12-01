@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +40,7 @@ import java.util.List;
 @Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
+  public static final Key<Boolean> CUSTOM_DEBUGGER_HINT = Key.create("custom debugger hint");
   private final @NotNull Project myProject;
 
   public static XDebuggerInlayUtil getInstance(Project project) {
@@ -106,6 +108,10 @@ public final class XDebuggerInlayUtil {
       List<Inlay<? extends InlineDebugRenderer>> existingInlays =
         e.getInlayModel().getAfterLineEndElementsInRange(lineStart, lineEnd, InlineDebugRenderer.class);
       if (ContainerUtil.exists(existingInlays, i -> i.getRenderer().getValueNode().equals(renderer.getValueNode()))) {
+        return;
+      }
+      List<Inlay<?>> inlays = e.getInlayModel().getAfterLineEndElementsInRange(lineStart, lineEnd);
+      if (ContainerUtil.exists(inlays, inlay -> CUSTOM_DEBUGGER_HINT.get(inlay) != null)) {
         return;
       }
 
