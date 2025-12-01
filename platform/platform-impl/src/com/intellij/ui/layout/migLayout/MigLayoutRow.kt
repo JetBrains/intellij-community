@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
@@ -117,28 +119,25 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val columnIndexIncludingSubRows: Int
     get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.maxOrNull() ?: -1)
 
-  override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
-    return createChildRow(indent, label, isSeparated, noGrid, title)
+  override fun createChildRow(label: JLabel?, isSeparated: Boolean): MigLayoutRow {
+    return createChildRow(indent, label, isSeparated)
   }
 
   private fun createChildRow(indent: Int,
                              label: JLabel? = null,
-                             isSeparated: Boolean = false,
-                             noGrid: Boolean = false,
-                             @NlsContexts.Separator title: String? = null,
-                             incrementsIndent: Boolean = true): MigLayoutRow {
+                             isSeparated: Boolean = false): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
     val newIndent = if (!this.incrementsIndent) indent else indent + spacing.indentLevel
 
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
-                           noGrid = noGrid,
+                           noGrid = false,
                            indent = newIndent,
-                           incrementsIndent = incrementsIndent)
+                           incrementsIndent = true)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
-      configureSeparatorRow(separatorRow, title)
+      configureSeparatorRow(separatorRow, null)
       separatorRow.visible = true
       row.getOrCreateSubRowsList().add(separatorRow)
     }
@@ -306,7 +305,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
    * Assigns next to label REASONABLE component with the label
    */
   override fun row(label: JLabel?, separated: Boolean, init: Row.() -> Unit): Row {
-    val result = super.row(label, separated, init)
+    val result = super.rowInternal(label, separated, init)
 
     if (label != null && result is MigLayoutRow && result.components.size > 1) {
       val component = result.components[1]
