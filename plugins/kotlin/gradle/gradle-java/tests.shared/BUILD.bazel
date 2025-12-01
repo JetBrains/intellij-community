@@ -109,6 +109,9 @@ jvm_library(
     "//java/java-runtime:rt",
     "//platform/execution",
     "//plugins/junit",
+    "//plugins/repository-search",
+    "//plugins/repository-search:repository-search_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"],
   runtime_deps = [":tests.shared"]

@@ -80,5 +80,7 @@
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.repository.search" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
   </component>
 </module>
