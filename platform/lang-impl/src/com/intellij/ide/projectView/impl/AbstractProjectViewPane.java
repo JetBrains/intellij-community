@@ -357,6 +357,11 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return false;
   }
 
+  @ApiStatus.Internal
+  protected Navigatable @NotNull [] getCachedNavigatablesFromSelectedPaths(TreePath @NotNull [] paths) {
+    return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
+  }
+
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     TreePath[] paths = getSelectionPaths();
@@ -382,6 +387,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
           navigatables.add(new CachedNodeNavigatable(myProject, o));
         }
       }
+      Navigatable[] cachedNavigatables = getCachedNavigatablesFromSelectedPaths(paths);
+      navigatables.addAll(Arrays.asList(cachedNavigatables));
       sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
                navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
     }
