@@ -38,7 +38,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
    * Children are cached in order to be able to filter nodes with no (interesting) children.
    * @see DirectoryCoverageViewExtension#getChildrenNodes(AbstractTreeNode)
    */
-  private List<AbstractTreeNode<?>> myCachedChildren;
+  private volatile List<AbstractTreeNode<?>> myCachedChildren;
 
   /**
    * @deprecated Use {@link CoverageListNode#CoverageListNode(Project, PsiNamedElement, CoverageSuitesBundle)}
@@ -83,10 +83,14 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   @Override
-  public synchronized @NotNull List<? extends AbstractTreeNode<?>> getChildren() {
-    if (myCachedChildren != null) return myCachedChildren;
-    return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
+  public @NotNull List<? extends AbstractTreeNode<?>> getChildren() {
+    List<AbstractTreeNode<?>> children = myCachedChildren;
+    if (children != null) return children;
+
+    children = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
       .getChildrenNodes(this);
+    myCachedChildren = children;
+    return children;
   }
 
   @Override
