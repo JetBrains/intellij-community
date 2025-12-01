@@ -201,7 +201,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Editor editor;
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
-  private VirtualFileFilter myVirtualFileFilter = f -> false;
+  private VirtualFileFilter myVirtualFileFilter = VirtualFileFilter.NONE;
   private boolean myAllowDirt;
   private boolean caresAboutInjection = true;
   private boolean myReadEditorMarkupModel;
@@ -1876,7 +1876,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void allowTreeAccessForAllFiles() {
-    myVirtualFileFilter = f -> false;
+    myVirtualFileFilter = VirtualFileFilter.NONE;
   }
 
   private void checkResultByFile(@NotNull String expectedFile, @NotNull PsiFile originalFile, boolean stripTrailingSpaces) {
