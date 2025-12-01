@@ -71,9 +71,9 @@ private fun createMaximizeButton(): ActionButton? {
   val maximizeAction = ActionManager.getInstance().getAction("MaximizeActiveDialog")
   if (maximizeAction == null) return null
   val maximizeButton = ActionButton(maximizeAction, null, "DialogHeader") {
-    val width = JBUI.scale(JBUI.CurrentTheme.TitlePane.dialogButtonPreferredWidth())
-    val height = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader = false)
-    Dimension(width, height) // already scaled
+    val width = JBUI.CurrentTheme.TitlePane.dialogButtonPreferredWidth()
+    val height = CustomWindowHeaderUtil.getPreferredWindowHeaderHeightUnscaled(isCompactHeader = false)
+    Dimension(width, height) // ActionButton does the scaling
   }
   // Match the overall Windows L&F.
   maximizeButton.setLook(object : IdeaActionButtonLook() {
