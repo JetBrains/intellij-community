@@ -3,6 +3,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * that all the document's changes are inside an AST node with reparseable type,
  * {@link #isReparseable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
  * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
+ * <p>
+ * Remember to implement {@link #createNode(CharSequence)}, otherwise reparsing infrastructure won't work.
  */
 public class IReparseableElementType extends ILazyParseableElementType implements IReparseableElementTypeBase {
   public IReparseableElementType(@NotNull @NonNls String debugName) {
@@ -74,6 +77,14 @@ public class IReparseableElementType extends ILazyParseableElementType implement
                             @NotNull Language fileLanguage,
                             @NotNull Project project) {
     return isParsable(buffer, fileLanguage, project);
+  }
+
+  @Override
+  public ASTNode createNode(CharSequence text) {
+    Logger.getInstance(getClass()).error("`createNode` method should be implemented in " + getClass().getName() + ". " +
+                                         "Otherwise, reparsing infrastructure won't work. " +
+                                         "If you don't need reparsing, consider ILazyParseableElementType instead.");
+    return null;
   }
 
   // Please, add no more public methods here. Add them to `IReparseableElementTypeBase` instead.

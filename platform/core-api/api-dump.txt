@@ -1593,6 +1593,8 @@ com.intellij.psi.tree.ILeafElementType
 - a:createLeafNode(java.lang.CharSequence):com.intellij.lang.ASTNode
 com.intellij.psi.tree.ILightLazyParseableElementType
 - a:parseContents(com.intellij.lang.LighterLazyParseableNode):com.intellij.util.diff.FlyweightCapableTreeStructure
+c:com.intellij.psi.tree.IReparseableElementType
+- createNode(java.lang.CharSequence):com.intellij.lang.ASTNode
 com.intellij.psi.tree.IReparseableElementTypeBase
 - com.intellij.psi.tree.ILazyParseableElementTypeBase
 - isParsable(com.intellij.lang.ASTNode,java.lang.CharSequence,com.intellij.lang.Language,com.intellij.openapi.project.Project):Z
