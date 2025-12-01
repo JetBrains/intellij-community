@@ -678,8 +678,9 @@ internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
   const val PRODUCT_EMBEDDED_MODULES: String = "productEmbeddedModule"
 
-  fun isProductModule(reason: String?): Boolean =
-    reason == PRODUCT_MODULES ||
-    reason == PRODUCT_EMBEDDED_MODULES ||
-    reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
+  fun isProductModule(reason: String?): Boolean {
+    return reason == PRODUCT_MODULES ||
+           reason == PRODUCT_EMBEDDED_MODULES ||
+           reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
+  }
 }
