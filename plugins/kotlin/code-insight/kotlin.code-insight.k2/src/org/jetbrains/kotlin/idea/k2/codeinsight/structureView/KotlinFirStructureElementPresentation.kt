@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -66,6 +67,7 @@ internal class KotlinFirStructureElementPresentation(
             parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
             constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
             namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }
 
