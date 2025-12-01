@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere
 
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
@@ -18,7 +17,7 @@ sealed class SeFilterState {
   }
 
   @Serializable
-  class Data(val map: Map<String, List<String>>) : SeFilterState() {
+  class Data(private val map: Map<String, List<String>>) : SeFilterState() {
     override fun get(key: String): List<String>? = map[key]
   }
 }

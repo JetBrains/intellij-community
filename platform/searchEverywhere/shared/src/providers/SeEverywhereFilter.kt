@@ -27,7 +27,7 @@ class SeEverywhereFilter(val isAllTab: Boolean, val isEverywhere: Boolean, val d
           val isAllTab = isAllTab(state) ?: false
           val isEverywhere = isEverywhere(state) ?: false
 
-          val disabledProviderIds = state.map[ENABLED_PROVIDER_IDS]?.map {
+          val disabledProviderIds = state.get(ENABLED_PROVIDER_IDS)?.map {
             SeProviderId(it)
           } ?: emptyList()
 

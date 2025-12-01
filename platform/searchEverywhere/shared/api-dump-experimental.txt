@@ -21,7 +21,6 @@
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeFilterState$Data$Companion
 - <init>(java.util.Map):V
 - get(java.lang.String):java.util.List
-- f:getMap():java.util.Map
 *bf:com.intellij.platform.searchEverywhere.SeFilterState$Data$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.searchEverywhere.SeFilterState$Data$$serializer
