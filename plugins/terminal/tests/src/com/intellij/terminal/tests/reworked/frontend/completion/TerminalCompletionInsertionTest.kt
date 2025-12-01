@@ -23,8 +23,16 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
           suggestions("single-suggestion")
         }
       }
-      subcommand("stop")
-      subcommand("start")
+      subcommand("stop") {
+        argument {
+          suggestions("platform/", "platform-ui/", "shared\\", "shared-ui\\")
+        }
+      }
+      subcommand("start") {
+        argument {
+          suggestions("app", "application")
+        }
+      }
     }
   }
 
@@ -54,6 +62,60 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
     fixture.callCompletionPopup(waitForPopup = false)
 
     val expectedText = "test_cmd status single-suggestion"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test Enter key event is sent after inserting fully matching completion item`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd start a")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("app", "application"))
+
+    fixture.type("pp")
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd start app\n"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test Enter key event is sent after inserting directory name without file separator (Unix)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd stop plat")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("platform/", "platform-ui/"))
+
+    fixture.type("form")
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd stop platform/\n"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test Enter key event is sent after inserting directory name without file separator (Windows)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd stop sha")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("shared\\", "shared-ui\\"))
+
+    fixture.type("red")
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd stop shared\\\n"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
