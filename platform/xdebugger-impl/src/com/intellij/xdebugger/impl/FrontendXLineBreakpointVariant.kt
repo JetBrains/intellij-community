@@ -12,7 +12,7 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointInstallationInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope

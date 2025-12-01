@@ -15,8 +15,7 @@ import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerPr
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.util.Range;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

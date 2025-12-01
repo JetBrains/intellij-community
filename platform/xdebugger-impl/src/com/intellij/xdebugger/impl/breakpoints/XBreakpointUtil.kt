@@ -32,7 +32,7 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.proxy.MonolithBreakpointProxy
 import com.intellij.xdebugger.impl.proxy.MonolithLineBreakpointProxy
 import kotlinx.coroutines.CoroutineScope

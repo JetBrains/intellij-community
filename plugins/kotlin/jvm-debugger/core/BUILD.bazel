@@ -49,6 +49,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/base/util",
     "//platform/core-ui",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
     "//platform/projectModel-impl",
     "//platform/util:util-ui",
     "//platform/script-debugger/debugger-ui:scriptDebugger-ui",

@@ -8,7 +8,7 @@ import com.intellij.platform.debugger.impl.rpc.ShowSessionTabRequest
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.xdebugger.impl.frame.ShowSessionTabUtils
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 
 private class ShowSessionTabRemoteTopicListener : ProjectRemoteTopicListener<ShowSessionTabRequest> {

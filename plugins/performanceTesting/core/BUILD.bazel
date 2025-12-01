@@ -72,6 +72,7 @@ jvm_library(
     "@lib//:github-oshi-core",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/xdebugger-impl/shared",
     ":libraries_cli-parser_provided",
   ]
 )
@@ -143,6 +144,7 @@ jvm_library(
     "@lib//:github-oshi-core",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/xdebugger-impl/shared",
     ":libraries_cli-parser_provided",
   ]
 )

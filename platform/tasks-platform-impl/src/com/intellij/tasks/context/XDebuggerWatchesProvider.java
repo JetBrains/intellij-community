@@ -7,7 +7,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.xdebugger.impl.WatchesManagerState;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

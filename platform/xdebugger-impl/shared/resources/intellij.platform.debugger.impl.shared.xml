@@ -10,5 +10,7 @@
     <extensionPoint name="xdebugger.descriptorStateManager"
                     interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
                     dynamic="true"/>
+    <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
