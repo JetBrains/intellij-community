@@ -50,6 +50,9 @@ public abstract class InspectionManager {
                                                                      @NotNull ProblemHighlightType highlightType,
                                                                      boolean onTheFly);
 
+  /**
+   * @see InspectionManager#createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, String, boolean, LocalQuickFix...)
+   */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @NotNull @InspectionMessage String descriptionTemplate,
@@ -57,6 +60,11 @@ public abstract class InspectionManager {
                                                                      @NotNull LocalQuickFix @Nullable [] fixes,
                                                                      @NotNull ProblemHighlightType highlightType);
 
+  /**
+   * @param isAfterEndOfLine whether the highlighting forced to be placed after the end of the line.
+   *                         Note, it might be outside of the range of the {@code psiElement}
+   * @see InspectionManager#createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, String, boolean, LocalQuickFix...)
+   */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @NotNull @InspectionMessage String descriptionTemplate,
@@ -64,7 +72,12 @@ public abstract class InspectionManager {
                                                                      @NotNull ProblemHighlightType highlightType,
                                                                      boolean onTheFly,
                                                                      boolean isAfterEndOfLine);
-
+  /**
+   * @param startElement the first element of the range to be highlighted
+   * @param endElement the last element of the range to be highlighted
+   *
+   * @see InspectionManager#createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, String, boolean, LocalQuickFix...)
+   */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                                      @NotNull PsiElement endElement,
@@ -73,6 +86,9 @@ public abstract class InspectionManager {
                                                                      boolean onTheFly,
                                                                      @NotNull LocalQuickFix @Nullable ... fixes);
 
+  /**
+   * @see InspectionManager#createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, String, boolean, LocalQuickFix...)
+   */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @Nullable("null means the text range of the element") TextRange rangeInElement,
@@ -81,6 +97,18 @@ public abstract class InspectionManager {
                                                                      boolean onTheFly,
                                                                      @NotNull LocalQuickFix @Nullable ... fixes);
 
+  /**
+   * Creates a container holding information about the highlighting by inspection.
+   *
+   * @param psiElement PSI element associated with the problem
+   * @param rangeInElement text range within the element that will be highlighted
+   * @param descriptionTemplate message that will be displayed if the inspection is run intentionally via {@code Run Inspection by Name} action.
+   *                            This message should not contain HTML elements
+   * @param highlightType  type of the highlighting, see the Javadoc of {@link ProblemHighlightType} for more details
+   * @param tooltipMessage HTML message that will be displayed in the editor once the user hovers over the problem
+   * @param onTheFly whether the inspection can be executed in batch mode
+   * @param fixes quick fixes available for the problem
+   */
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @Nullable("null means the text range of the element") TextRange rangeInElement,
                                                                      @NotNull @InspectionMessage String descriptionTemplate,
@@ -89,6 +117,10 @@ public abstract class InspectionManager {
                                                                      boolean onTheFly,
                                                                      @NotNull LocalQuickFix @Nullable ... fixes);
 
+  /**
+   * @param showTooltip whether the tooltip should be shown in the editor.
+   * @see InspectionManager#createProblemDescriptor(PsiElement, TextRange, String, ProblemHighlightType, String, boolean, LocalQuickFix...)
+   */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @NotNull @InspectionMessage String descriptionTemplate,

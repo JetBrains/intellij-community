@@ -255,14 +255,29 @@ public final class JavaTypeNullabilityUtil {
    * Holds information about the nullability conflict that might be used to provide more descriptive error messages.
    */
   public static class NullabilityConflictContext {
-    public final @NotNull NullabilityConflict nullabilityConflict;
-    public final @Nullable PsiType type;
+    private final @NotNull NullabilityConflict nullabilityConflict;
+    private final @Nullable PsiType type;
 
     public static final NullabilityConflictContext UNKNOWN = new NullabilityConflictContext(NullabilityConflict.UNKNOWN, null);
 
     public NullabilityConflictContext(@NotNull NullabilityConflict nullabilityConflict, @Nullable PsiType type) {
       this.type = type;
       this.nullabilityConflict = nullabilityConflict;
+    }
+
+    /**
+     * @see NullabilityConflict
+     * @return nullability conflict type
+     */
+    public @NotNull NullabilityConflict nullabilityConflict() {
+      return nullabilityConflict;
+    }
+
+    /**
+     * @return part of the actual {@code PsiType} in which the conflict is occurred.
+     */
+    public PsiType type() {
+      return type;
     }
 
     /**

@@ -536,8 +536,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         JavaTypeNullabilityUtil.NullabilityConflictContext
           context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
                                                                                REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
-        if (context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
-        String messageKey = context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
+        if (context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
+        String messageKey = context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
                             "returning.a.class.with.notnull.arguments" : "returning.a.class.with.nullable.arguments";
 
         reportProblem(holder, returnValue, LocalQuickFix.EMPTY_ARRAY,

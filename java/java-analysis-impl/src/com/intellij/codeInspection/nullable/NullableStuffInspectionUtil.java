@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ final class NullableStuffInspectionUtil {
   static @NotNull @NlsSafe String getTypePresentationInNullabilityConflict(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
     PsiElement place = context.getPlace();
     if (place == null) return "";
-    int dimensionsInArray = (context.type instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
+    int dimensionsInArray = (context.type() instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
 
     PsiTypeElement topmostType = PsiTreeUtil.getTopmostParentOfType(place, PsiTypeElement.class);
     if (topmostType == null) return "";
@@ -56,16 +57,16 @@ final class NullableStuffInspectionUtil {
   private static @NotNull HtmlChunk generateHtmlChunk(@NlsSafe String text,
                                                       @NlsSafe String annotationText,
                                                       int position) {
-    HtmlChunk result = HtmlChunk.p().child(
-      HtmlChunk.fragment(
+    HtmlChunk result = HtmlChunk
+      .p()
+      .children(
         HtmlChunk.text(JavaAnalysisBundle.message("returning.a.type.nullability.conflict.message")),
         HtmlChunk.text(" "),
         HtmlChunk.text(text.substring(0, position)),
-        HtmlChunk.tag("b").children(HtmlChunk.text(annotationText)),
+        HtmlChunk.tag("b").addText(annotationText),
         HtmlChunk.text(" "),
         HtmlChunk.text(text.substring(position))
-      )
-    );
+      );
     return result;
   }
 
@@ -83,13 +84,7 @@ final class NullableStuffInspectionUtil {
         PsiReferenceParameterList params = ref.getParameterList();
         if (params == null) return null;
         PsiTypeElement[] args = params.getTypeParameterElements();
-        int found = -1;
-        for (int i = 0; i < args.length; i++) {
-          if (args[i] == current) {
-            found = i;
-            break;
-          }
-        }
+        int found = ArrayUtil.indexOf(args, current);
         if (found < 0) return null;
         indices.add(found);
       }
@@ -127,7 +122,7 @@ final class NullableStuffInspectionUtil {
   /**
    * Constructs the simplified presentable view of the type and detects the place in which the nullability annotation should be inserted.
    * The result of this method is stored in the {@link Context#sb} member.
-   * @param isInsideArray - Corresponds to the state whether the method is called within the array dimension. It is used to distinguish
+   * @param isInsideArray corresponds to the state whether the method is called within the array dimension. It is used to distinguish
    *                      cases {@code @Nullable String[]} and {@code String @Nullable [][]}.
    */
   private static void buildTextRepresentation(@NotNull PsiType type,
