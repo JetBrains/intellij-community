@@ -1249,7 +1249,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   if (psiElement == null) continue;
                 }
                 LocalQuickFix fix = isAnnotatingApplicable(parameter, defaultNotNull)
-                                    ? new AnnotateOverriddenMethodParameterFix(Nullability.NOT_NULL, defaultNotNull)
+                                    ? new AnnotateOverriddenMethodParameterFix(Nullability.NOT_NULL)
                                     : null;
                 reportProblem(holder, psiElement, fix,
                               "nullable.stuff.problems.overridden.method.parameters.are.not.annotated");
