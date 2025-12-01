@@ -212,7 +212,8 @@ public class PyEvaluator {
     return null;
   }
 
-  private static int @Nullable [] evaluateAsVersion(@Nullable PyExpression expression) {
+  @ApiStatus.Internal
+  public static int @Nullable [] evaluateAsVersion(@Nullable PyExpression expression) {
     if (!(PyPsiUtils.flattenParens(expression) instanceof PyTupleExpression tupleExpression)) {
       return null;
     }

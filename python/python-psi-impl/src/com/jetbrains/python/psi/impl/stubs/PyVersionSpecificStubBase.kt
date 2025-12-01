@@ -6,12 +6,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub
-import java.math.BigInteger
 
 internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,
@@ -89,11 +88,12 @@ private fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<
     }
 
     PyTokenTypes.LT, PyTokenTypes.GT, PyTokenTypes.LE, PyTokenTypes.GE -> {
-      val refExpr = PyPsiUtils.flattenParens(binaryExpr.leftExpression) as? PyReferenceExpression ?: return null
-      if (SYS_VERSION_INFO_QUALIFIED_NAME != refExpr.asQualifiedName()) return null
+      if (!PyEvaluator.isSysVersionInfoExpression(binaryExpr.leftExpression)) return null
 
-      val tuple = PyPsiUtils.flattenParens(binaryExpr.rightExpression) as? PyTupleExpression ?: return null
-      val version = evaluateVersion(tuple) ?: return null
+      val versionArray = PyEvaluator.evaluateAsVersion(binaryExpr.rightExpression) ?: return null
+      val major = versionArray.firstOrNull() ?: return null
+      val minor = versionArray.getOrElse(1) { 0 }
+      val version = Version(major, minor, 0)
 
       val range = when (operator) {
         PyTokenTypes.LT -> Range.lessThan(version)
@@ -107,39 +107,6 @@ private fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<
 
     else -> return null
   }
-}
-
-private val SYS_VERSION_INFO_QUALIFIED_NAME = QualifiedName.fromDottedString("sys.version_info")
-
-private fun evaluateVersion(versionTuple: PyTupleExpression): Version? {
-  val elements = versionTuple.elements
-  if (elements.size != 1 && elements.size != 2) {
-    return null
-  }
-
-  val major = evaluateNumber(elements[0])
-  if (major == null) {
-    return null
-  }
-
-  if (elements.size == 1) {
-    return Version(major, 0, 0)
-  }
-
-  val minor = evaluateNumber(elements[1])
-  if (minor == null) {
-    return null
-  }
-
-  return Version(major, minor, 0)
-}
-
-private fun evaluateNumber(expression: PyExpression?): Int? {
-  if (expression !is PyNumericLiteralExpression) return null
-  if (!expression.isIntegerLiteral) return null
-  val value = expression.bigIntegerValue
-  val intValue = value.toInt()
-  return if (BigInteger.valueOf(intValue.toLong()) == value) intValue else null
 }
 
 internal fun serializeVersions(versions: RangeSet<Version>, outputStream: StubOutputStream) {
