@@ -39,31 +39,37 @@ sealed interface SeItemPresentation {
 @ApiStatus.Experimental
 @Serializable
 class SeSimpleItemPresentation(
-  val iconId: IconId? = null,
-  val textChunk: SerializableTextChunk? = null,
-  val selectedTextChunk: SerializableTextChunk? = null,
-  val description: @NlsSafe String? = null,
-  val accessibleAdditionToText: @NlsSafe String? = null,
-  override val extendedInfo: SeExtendedInfo? = null,
+  val iconId: IconId?,
+  val textChunk: SerializableTextChunk,
+  val selectedTextChunk: SerializableTextChunk?,
+  val description: @NlsSafe String?,
+  val accessibleAdditionToText: @NlsSafe String?,
+  override val extendedInfo: SeExtendedInfo?,
   override val isMultiSelectionSupported: Boolean,
 ) : SeItemPresentation {
-  override val text: @Nls String get() = textChunk?.text ?: ""
+  override val text: @Nls String get() = textChunk.text
 
   constructor(
-    iconId: IconId? = null,
-    text: @NlsSafe String? = null,
-    description: @NlsSafe String? = null,
-    accessibleAdditionToText: @NlsSafe String? = null,
-    extendedInfo: SeExtendedInfo? = null,
+    iconId: IconId?,
+    text: @NlsSafe String,
+    description: @NlsSafe String?,
+    accessibleAdditionToText: @NlsSafe String?,
+    extendedInfo: SeExtendedInfo?,
     isMultiSelectionSupported: Boolean,
   ) : this(
     iconId,
-    text?.let { SerializableTextChunk(it) },
+    SerializableTextChunk(text),
     null,
     description,
     accessibleAdditionToText,
     extendedInfo,
     isMultiSelectionSupported)
+
+  constructor(text: @NlsSafe String, isMultiSelectionSupported: Boolean) : this(null, SerializableTextChunk(text), null, null, null, null, isMultiSelectionSupported)
+  constructor(iconId: IconId?,
+              text: @NlsSafe String,
+              extendedInfo: SeExtendedInfo?,
+              isMultiSelectionSupported: Boolean) : this(iconId, SerializableTextChunk(text), null, null, null, extendedInfo, isMultiSelectionSupported)
 
   override fun contentEquals(other: SeItemPresentation?): Boolean {
     if (this === other) return true

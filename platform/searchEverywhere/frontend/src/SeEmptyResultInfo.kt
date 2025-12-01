@@ -13,7 +13,11 @@ class SeEmptyResultInfo(val chunks: List<SeEmptyResultInfoChunk>)
 @ApiStatus.Experimental
 class SeEmptyResultInfoChunk(
   val text: @Nls String,
-  val onNewLine: Boolean = false,
-  val attrs: SimpleTextAttributes = StatusText.DEFAULT_ATTRIBUTES,
-  val listener: ActionListener? = null,
-)
+  val onNewLine: Boolean,
+  val attrs: SimpleTextAttributes,
+  val listener: ActionListener?,
+) {
+  constructor(text: @Nls String, attrs: SimpleTextAttributes, listener: ActionListener?) : this(text, false, attrs, listener)
+  constructor(text: @Nls String, onNewLine: Boolean) : this(text, onNewLine, StatusText.DEFAULT_ATTRIBUTES, null)
+  constructor(text: @Nls String) : this(text, onNewLine = false)
+}

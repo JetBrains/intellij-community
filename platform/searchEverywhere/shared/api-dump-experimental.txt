@@ -125,9 +125,9 @@
 - com.intellij.platform.searchEverywhere.SeItemPresentation
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSimpleItemPresentation$Companion
 - <init>(com.intellij.ide.ui.icons.IconId,com.intellij.ide.ui.SerializableTextChunk,com.intellij.ide.ui.SerializableTextChunk,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
-- b:<init>(com.intellij.ide.ui.icons.IconId,com.intellij.ide.ui.SerializableTextChunk,com.intellij.ide.ui.SerializableTextChunk,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.ide.ui.icons.IconId,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
 - <init>(com.intellij.ide.ui.icons.IconId,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
-- b:<init>(com.intellij.ide.ui.icons.IconId,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,Z):V
 - contentEquals(com.intellij.platform.searchEverywhere.SeItemPresentation):Z
 - f:getAccessibleAdditionToText():java.lang.String
 - f:getDescription():java.lang.String

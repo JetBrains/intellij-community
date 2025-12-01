@@ -19,7 +19,7 @@ fun TextChunk.toSerializableTextChunk(): SerializableTextChunk = SerializableTex
 
 @ApiStatus.Experimental
 @Serializable
-class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId? = null, val fontType: Int = Font.PLAIN, val effectType: EffectType? = EffectType.BOXED, val effectColor: ColorId? = null, @Transient private val textChunk: TextChunk? = null) {
+class SerializableTextChunk @ApiStatus.Internal constructor(val text: @NlsSafe String, val foregroundColorId: ColorId? = null, val fontType: Int = Font.PLAIN, val effectType: EffectType? = EffectType.BOXED, val effectColor: ColorId? = null, @Transient private val textChunk: TextChunk? = null) {
 
   constructor(textChunk: TextChunk) : this(textChunk.text, textChunk.attributes.foregroundColor?.rpcId(), textChunk.attributes.fontType, textChunk.attributes.effectType, textChunk.attributes.effectColor?.rpcId(), textChunk)
 

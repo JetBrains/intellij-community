@@ -1,4 +1,3 @@
-kotlin/jvm/internal/DefaultConstructorMarker
 kotlinx/serialization/descriptors/SerialDescriptor
 kotlinx/serialization/encoding/Decoder
 kotlinx/serialization/encoding/Encoder

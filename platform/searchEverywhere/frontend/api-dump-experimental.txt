@@ -4,8 +4,10 @@
 - <init>(java.util.List):V
 - f:getChunks():java.util.List
 *f:com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoChunk
+- <init>(java.lang.String):V
+- <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):V
+- <init>(java.lang.String,Z):V
 - <init>(java.lang.String,Z,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):V
-- b:<init>(java.lang.String,Z,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getAttrs():com.intellij.ui.SimpleTextAttributes
 - f:getListener():java.awt.event.ActionListener
 - f:getOnNewLine():Z
