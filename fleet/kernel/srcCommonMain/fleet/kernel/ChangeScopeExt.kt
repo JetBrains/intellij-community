@@ -48,7 +48,8 @@ private data class RetractionRelation(override val eid: EID) : Entity {
   }
 }
 
-fun ChangeScope.sharedCascadeDelete(parent: Entity, child: Entity?) {
+context(_: ChangeScope)
+fun sharedCascadeDelete(parent: Entity, child: Entity?) {
   if (child != null) {
     withDefaultPart(SharedPart) {
       SharedRetractionRelation.new {
@@ -59,7 +60,8 @@ fun ChangeScope.sharedCascadeDelete(parent: Entity, child: Entity?) {
   }
 }
 
-fun ChangeScope.cascadeDelete(parent: Entity, child: Entity?) {
+context(_: ChangeScope)
+fun cascadeDelete(parent: Entity, child: Entity?) {
   if (child != null) {
     RetractionRelation.new {
       it[RetractionRelation.ParentAttr] = parent
