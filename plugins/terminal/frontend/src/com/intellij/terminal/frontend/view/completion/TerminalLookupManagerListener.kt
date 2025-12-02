@@ -217,9 +217,8 @@ private class TerminalLookupOutputModelListener(
  * Returns `true` if we need to execute the command immediately if user select [chosenItemString] in the Lookup.
  */
 internal fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
-  val isCaseSensitive = SystemInfo.isFileSystemCaseSensitive
-  return chosenItemString.equals(typedString, ignoreCase = !isCaseSensitive)
+  return chosenItemString.equals(typedString, ignoreCase = true)
          // If the typed string differs only by the absence of the trailing slash, execute the command as well
-         || chosenItemString.equals("$typedString/", ignoreCase = !isCaseSensitive)
-         || chosenItemString.equals("$typedString\\", ignoreCase = !isCaseSensitive)
+         || chosenItemString.equals("$typedString/", ignoreCase = true)
+         || chosenItemString.equals("$typedString\\", ignoreCase = true)
 }
