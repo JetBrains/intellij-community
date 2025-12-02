@@ -34,8 +34,6 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
  *     e2
  *   }
  * ```
- *
- * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

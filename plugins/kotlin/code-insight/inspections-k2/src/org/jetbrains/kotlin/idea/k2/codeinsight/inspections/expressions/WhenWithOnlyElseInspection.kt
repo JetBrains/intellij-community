@@ -36,8 +36,6 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
  *     e2
  *   }
  * ```
- *
- * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection
     : KotlinApplicableInspectionBase.Simple<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
@@ -63,21 +61,8 @@ internal class WhenWithOnlyElseInspection
     override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRanges.whenKeyword(element)
 
-    /**
-     * STEP 1:
-     * Discard `when` expressions that are not of the form
-     * ```kotlin
-     * when (...) { else -> ... }
-     * ```
-     */
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = element.entries.singleOrNull()?.isElse == true
 
-    /**
-     * STEP 2:
-     * Gather the necessary semantic information for the transformation:
-     *   - whether the `when` expression itself is used as an expression
-     *   - for the subject variable, if present, whether the initializer is pure.
-     */
     override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
