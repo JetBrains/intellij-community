@@ -928,13 +928,14 @@ private fun loadContentModuleDescriptors(
     val moduleId = module.moduleId
     val subDescriptorFile = "${moduleId.name}.xml"
 
+    val jarFileForModule = jarFileForModule(moduleId, moduleDir)
     if (moduleDirExists &&
         !isRunningFromSourcesWithoutDevBuild &&
         // module-based loader is not supported, descriptorContent maybe null
         (!isDeprecatedLoader || module.descriptorContent != null) &&
         (moduleId.name.startsWith("intellij.") || moduleId.name.startsWith("fleet.")) &&
         loadProductModule(
-          jarFile = jarFileForModule(moduleId, moduleDir),
+          jarFile = jarFileForModule,
           module = module,
           subDescriptorFile = subDescriptorFile,
           loadingContext = loadingContext,
@@ -944,13 +945,32 @@ private fun loadContentModuleDescriptors(
       continue
     }
 
-    val raw = pathResolver.resolveModuleFile(readContext = loadingContext.readContext, dataLoader = dataLoader, path = subDescriptorFile)
-    val subDescriptor = descriptor.createContentModule(subBuilder = raw, descriptorPath = subDescriptorFile, module = module)
-    val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleId)
-    if (customModuleClassesRoots.isNotEmpty()) {
-      subDescriptor.jarFiles = customModuleClassesRoots
+    if (isDeprecatedLoader && jarFileForModule != null && Files.exists(jarFileForModule)) {
+      val raw = MixedDirAndJarDataLoader(files = arrayOf(FileItem(jarFileForModule, subDescriptorFile)), pool = pool, jarOnly = true).use { dataLoader ->
+        val consumer = PluginDescriptorFromXmlStreamConsumer(
+          readContext = loadingContext.readContext,
+          xIncludeLoader = createXIncludeLoader(pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, dataLoader = dataLoader),
+        )
+        val data = pool.load(jarFileForModule).use {
+          it.loadZipEntry(subDescriptorFile)
+        } ?: error("Failed to load entry '$subDescriptorFile' from jar file '$jarFileForModule'")
+        consumer.consume(data, dataLoader.toString())
+        consumer.getBuilder()
+      }
+
+      val subDescriptor = descriptor.createContentModule(subBuilder = raw, descriptorPath = subDescriptorFile, module = module)
+      subDescriptor.jarFiles = listOf(jarFileForModule)
+      module.assignDescriptor(subDescriptor)
     }
-    module.assignDescriptor(subDescriptor)
+    else {
+      val raw = pathResolver.resolveModuleFile(readContext = loadingContext.readContext, dataLoader = dataLoader, path = subDescriptorFile)
+      val subDescriptor = descriptor.createContentModule(subBuilder = raw, descriptorPath = subDescriptorFile, module = module)
+      val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleId)
+      if (customModuleClassesRoots.isNotEmpty()) {
+        subDescriptor.jarFiles = customModuleClassesRoots
+      }
+      module.assignDescriptor(subDescriptor)
+    }
   }
 }
 
