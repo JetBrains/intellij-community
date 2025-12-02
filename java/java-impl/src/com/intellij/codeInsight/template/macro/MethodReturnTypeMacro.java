@@ -23,8 +23,8 @@ public final class MethodReturnTypeMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while (place != null) {
-      if (place instanceof PsiMethod) {
-        PsiType returnType = ((PsiMethod)place).getReturnType();
+      if (place instanceof PsiMethod method) {
+        PsiType returnType = method.getReturnType();
         if (returnType != null) {
           return new PsiTypeResult(returnType, place.getProject());
         }

@@ -3,8 +3,8 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,9 +26,9 @@ public final class MethodParametersMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){
-      if (place instanceof PsiMethod){
+      if (place instanceof PsiParameterListOwner method){
         List<Result> result = new ArrayList<>();
-        for (PsiParameter parameter : ((PsiMethod)place).getParameterList().getParameters()) {
+        for (PsiParameter parameter : method.getParameterList().getParameters()) {
           result.add(new TextResult(parameter.getName()));
         }
         return new ListResult(result);

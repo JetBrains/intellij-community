@@ -26,10 +26,10 @@ public final class MethodNameMacro extends Macro {
     PsiElement elementAtStartOffset = context.getPsiElementAtStartOffset();
     PsiElement place = elementAtStartOffset;
     while(place != null){
-      if (place instanceof PsiMethod){
-        return new TextResult(((PsiMethod)place).getName());
-      } else if (place instanceof PsiClassInitializer) {
-        return ((PsiClassInitializer) place).hasModifierProperty(PsiModifier.STATIC) ?
+      if (place instanceof PsiMethod method){
+        return new TextResult(method.getName());
+      } else if (place instanceof PsiClassInitializer initializer) {
+        return initializer.hasModifierProperty(PsiModifier.STATIC) ?
                new TextResult(JavaBundle.message("java.terms.static.initializer")) :
                new TextResult(JavaBundle.message("java.terms.instance.initializer"));
       }
@@ -38,8 +38,8 @@ public final class MethodNameMacro extends Macro {
     
     if (elementAtStartOffset != null) {
       PsiElement sibling = elementAtStartOffset.getNextSibling();
-      if (sibling instanceof PsiMethod) {
-        return new TextResult(((PsiMethod)sibling).getName());
+      if (sibling instanceof PsiMethod method) {
+        return new TextResult(method.getName());
       }
     }
     return null;

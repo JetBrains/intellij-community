@@ -304,7 +304,7 @@
   </template>
   <template resource-bundle="messages.JavaBundle" key="livetemplate.description.soutp"
             name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
-    <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;_1.isEmpty() ? '' : '\&quot;' + _1.withIndex().collect { el, index -> el + ' = \&quot; + ' + (_2[index].indexOf('[') > 0 ? (_2[index].lastIndexOf('[') != _2[index].indexOf('[') ? 'java.util.Arrays.deepToString(' : 'java.util.Arrays.toString(') + el + ')' : el) }.join(' + \&quot;, ')&quot;, methodParameters(), methodParameterTypes())" name="FORMAT" />
+    <variable alwaysStopAt="false" defaultValue="" expression="parameterInfo()" name="FORMAT" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

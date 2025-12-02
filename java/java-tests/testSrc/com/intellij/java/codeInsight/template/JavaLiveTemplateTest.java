@@ -251,6 +251,12 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     checkResult();
   }
 
+  public void testSoutpLambda() {
+    configure();
+    startTemplate("soutp", "Java");
+    checkResult();
+  }
+
   public void testItm() {
     configure();
     startTemplate("itm", "Java");
