@@ -1,4 +1,16 @@
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- end editor-fold -->
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlRegistrationCheck -->
     <projectService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeModelService"
