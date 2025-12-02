@@ -21,9 +21,12 @@ package noria.plugin
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.fromSymbolOwner
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -60,8 +63,9 @@ internal class ComposableTypeTransformer(
   private val context: IrPluginContext,
   private val typeRemapper: ComposableTypeRemapper,
 ) : IrElementTransformerVoid() {
+  private val externalTransformedDecls = mutableSetOf<IrDeclaration>()
+
   override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement {
-    declaration.returnType = declaration.returnType.remapType()
     declaration.remapOverriddenFunctionTypes()
     return super.visitSimpleFunction(declaration)
   }
@@ -103,7 +107,10 @@ internal class ComposableTypeTransformer(
       ownerFn.origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB &&
       ownerFn.needsComposableRemapping()
     ) {
-      ownerFn.transform(this, null)
+      if (!externalTransformedDecls.contains(ownerFn)) {
+        externalTransformedDecls.add(ownerFn)
+        ownerFn.transform(this, null)
+      }
     }
     return super.visitConstructorCall(expression)
   }
@@ -134,7 +141,10 @@ internal class ComposableTypeTransformer(
       clsSymbol.owner.isFun &&
       clsSymbol.functions.any { it.owner.needsComposableRemapping() }
     ) {
-      clsSymbol.owner.transform(this, null)
+      if (!externalTransformedDecls.contains(clsSymbol.owner)) {
+        externalTransformedDecls.add(clsSymbol.owner)
+        clsSymbol.owner.transform(this, null)
+      }
     }
 
     return super.visitTypeOperator(expression)
@@ -152,11 +162,15 @@ internal class ComposableTypeTransformer(
       owner.origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB &&
       owner.needsComposableRemapping()
     ) {
-      owner.transform(this, null)
+      if (!externalTransformedDecls.contains(owner)) {
+        externalTransformedDecls.add(owner)
+        owner.transform(this, null)
+      }
     }
     return super.visitDelegatingConstructorCall(expression)
   }
 
+  @OptIn(ObsoleteDescriptorBasedAPI::class)
   override fun visitCall(expression: IrCall): IrExpression {
     val ownerFn = expression.symbol.owner
     val containingClass = ownerFn.parentClassOrNull
@@ -215,11 +229,22 @@ internal class ComposableTypeTransformer(
       ownerFn.correspondingPropertySymbol != null
     ) {
       val property = ownerFn.correspondingPropertySymbol!!.owner
-      property.transform(this, null)
+      if (!externalTransformedDecls.contains(property)) {
+        externalTransformedDecls.add(property)
+        property.transform(this, null)
+      }
     }
 
-    if (ownerFn.needsComposableRemapping()) {
-      ownerFn.transform(this, null)
+    val isFunInterface = (ownerFn.parent as? IrClass)?.isFun ?: false
+    if (
+      !isFunInterface &&  // fun interfaces are transformed in [visitTypeOperator]
+      ownerFn.fileOrNull?.module?.descriptor != context.moduleDescriptor && // only transform declarations from non-current module
+      ownerFn.needsComposableRemapping()
+    ) {
+      if (!externalTransformedDecls.contains(ownerFn)) {
+        externalTransformedDecls.add(ownerFn)
+        ownerFn.transform(this, null)
+      }
     }
 
     return super.visitCall(expression)
@@ -300,6 +325,8 @@ class ComposableTypeRemapper(
 
   override fun leaveScope() {}
 
+  private val composableSymbol = context.referenceClass(NoriaRuntime.ComposableClassId)!!
+
   override fun remapType(type: IrType): IrType {
     if (type !is IrSimpleType) return type
     if (!type.isComposableFunction()) {
@@ -325,11 +352,22 @@ class ComposableTypeRemapper(
     val newArgSize = oldIrArguments.size - 1 + extraArgs.size
     val functionCls = context.irBuiltIns.functionN(newArgSize)
 
+    val annotations: List<IrConstructorCall> =
+      if (type.isComposableFunction() && !type.annotations.any { it.isAnnotation(NoriaRuntime.ComposableClassId.asSingleFqName()) }) {
+        val annotation = IrConstructorCallImpl.fromSymbolOwner(
+          composableSymbol.owner.defaultType,
+          composableSymbol.constructors.single(),
+        )
+        type.annotations + annotation
+      } else {
+        type.annotations
+      }
+
     return IrSimpleTypeImpl(
       functionCls.symbol,
       type.nullability,
       newIrArguments.map { remapTypeArgument(it) },
-      type.annotations.filter { !it.isAnnotation(NoriaRuntime.ComposableClassId.asSingleFqName()) }
+      annotations
     )
   }
 
