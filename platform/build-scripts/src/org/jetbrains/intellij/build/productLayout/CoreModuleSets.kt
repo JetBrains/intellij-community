@@ -191,7 +191,7 @@ object CoreModuleSets {
    * @see coreLang for just language support without editor/search/RPC
    * @see corePlatform for analysis tools without editing
    */
-  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
+  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal", includeDependencies = true) {
     // Lang includes corePlatform (which includes librariesPlatform) as nested set
     moduleSet(coreLang())
 
@@ -203,8 +203,8 @@ object CoreModuleSets {
     moduleSet(librariesMisc())  // For specialized uses (XML-RPC, CSV, document store)
 
     // Credential store (needed by 36 products)
-    embeddedModule("intellij.platform.credentialStore.ui", includeDependencies = true)
-    embeddedModule("intellij.platform.credentialStore.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.credentialStore.ui")
+    embeddedModule("intellij.platform.credentialStore.impl")
 
     // Core platform backend/frontend split
     module("intellij.platform.settings.local")
