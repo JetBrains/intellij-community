@@ -23,9 +23,9 @@ object SearchEverywhereFeature {
     else PLATFORM_KEY
 
   private val platformBasedProductKey: String? get() =
-    if (PlatformUtils.isRider()) RIDER_KEY
+    if (isGuest) CWM_CLIENT_KEY
+    else if (PlatformUtils.isRider()) RIDER_KEY
     else if (PlatformUtils.isCLion()) CLION_KEY
-    else if (isGuest) CWM_CLIENT_KEY
     else null
 
   var isSplit: Boolean
