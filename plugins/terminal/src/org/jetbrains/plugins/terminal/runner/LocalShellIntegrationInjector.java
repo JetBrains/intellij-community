@@ -4,8 +4,6 @@ package org.jetbrains.plugins.terminal.runner;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -27,7 +25,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.plugins.terminal.*;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
+import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
 import org.jetbrains.plugins.terminal.util.ShellType;
@@ -163,30 +163,12 @@ public final class LocalShellIntegrationInjector {
 
   @VisibleForTesting
   public static @NotNull Path findAbsolutePath(@NotNull String relativePath) throws IOException {
-    String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
-    final Path result;
+    Path result;
     if (PluginManagerCore.isRunningFromSources()) {
       result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath);
-    } else if (jarPath.endsWith(".jar")) {
-      Path jarFile = Path.of(jarPath);
-      if (!Files.isRegularFile(jarFile)) {
-        throw new IOException("Broken installation: " + jarPath + " is not a file");
-      }
-      // Find "plugins/terminal" by "plugins/terminal/lib/terminal.jar"
-      Path pluginBaseDir = jarFile.getParent().getParent();
-      result = pluginBaseDir.resolve(relativePath);
     }
     else {
-      Application application = ApplicationManager.getApplication();
-      if (application != null && application.isInternal()) {
-        jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
-        String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
-                                        "/community/plugins/terminal/resources/");
-        if (Files.isDirectory(Path.of(srcDir))) {
-          jarPath = srcDir;
-        }
-      }
-      result = Path.of(jarPath).resolve(relativePath);
+      result = PathManager.getHomeDir().resolve("plugins/terminal").resolve(relativePath);
     }
     if (!Files.isRegularFile(result)) {
       throw new IOException("Cannot find " + relativePath + ": " + result + " is not a file");
