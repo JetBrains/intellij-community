@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
 
 @Internal
 class MergeImportUtil {
@@ -143,7 +142,8 @@ internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
       return
     }
 
-    e.presentation.isEnabled = viewer.myResolveImportsPossible && MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
+    e.presentation.isEnabledAndVisible = viewer.myResolveImportsPossible
+                                         && MergeImportUtil.isEnabledFor(viewer.project, viewer.editor.document)
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
