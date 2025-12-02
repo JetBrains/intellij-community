@@ -1,19 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb
 
 import com.intellij.util.xml.dom.XmlElement
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.*
 
 @Suppress("ObjectPropertyName")
@@ -26,22 +24,10 @@ val __json: Json = Json {
   ignoreUnknownKeys = true
 }
 
-private val lookup = MethodHandles.lookup()
-private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
-
 @SettingsInternalApi
 @Internal
 class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
-  private val serializer: KSerializer<Any>
-
-  init {
-    // use `in` as it fixes memory leak - JDK impl hold reference to a created method handle, and we cannot unload the plugin
-    val lookup = lookup.`in`(aClass)
-    val findStaticGetter = lookup.findStaticGetter(aClass, "Companion", aClass.classLoader.loadClass(aClass.name + "\$Companion"))
-    val companion = findStaticGetter.invoke()
-    @Suppress("UNCHECKED_CAST")
-    serializer = lookup.findVirtual(companion.javaClass, "serializer", kotlinMethodType).invoke(companion) as KSerializer<Any>
-  }
+  private val serializer = serializer(aClass)
 
   override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement {
     return __json.encodeToJsonElement(serializer, bean)
