@@ -18,6 +18,9 @@ import com.intellij.platform.debugger.impl.frontend.frame.*
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
+import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -34,9 +37,6 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
-import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.*
@@ -191,7 +191,7 @@ class FrontendXDebuggerSession private constructor(
 
   private val dropFrameHandler = FrontendDropFrameHandler(id, scope)
 
-  private var localTabLayouter: XDebugTabLayouter? = null
+  private var tabLayouter: XDebugTabLayouter? = null
 
   init {
     DebuggerInlayListener.getInstance(project).startListening()
@@ -321,7 +321,8 @@ class FrontendXDebuggerSession private constructor(
     val (tabInfo, pausedFlow) = tabDto
     if (tabInfo !is XDebuggerSessionTabInfo) return
 
-    localTabLayouter = tabInfo.localLayouter
+    val layouterDto = tabInfo.tabLayouterDto.await()
+    tabLayouter = createLayouter(layouterDto, tabScope)
     val backendRunContentDescriptorId = tabInfo.backendRunContendDescriptorId.await()
     val executionEnvironmentId = tabInfo.executionEnvironmentId
 
@@ -448,7 +449,7 @@ class FrontendXDebuggerSession private constructor(
   private fun getCurrentSuspendContext() = suspendContext.get()
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    return localTabLayouter ?: createLayouter(id, tabScope)
+    return tabLayouter ?: error("Tab layouter is accessed before tab initialization")
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {

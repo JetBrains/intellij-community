@@ -194,6 +194,18 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   ConsoleView getConsoleView();
 
+  /**
+   * Tab UI should not be configured from a backend session.
+   * <p>
+   * By using this method in RemDev, the tabs are passed to the frontend as LUXed UI.
+   * <p>
+   * To migrate, please use one of the following approaches:
+   * <ul>
+   *   <li>Use {@link XDebugProcess#createTabLayouter()} to create static tabs. Note that this option still uses LUX.</li>
+   *   <li>Use {@link com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy#getSessionTab()} to add a tab on the frontend.</li>
+   * </ul>
+   */
+  @ApiStatus.Obsolete
   @Nullable RunnerLayoutUi getUI();
 
   @ApiStatus.Internal

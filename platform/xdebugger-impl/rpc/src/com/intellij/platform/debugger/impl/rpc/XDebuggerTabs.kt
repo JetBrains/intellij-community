@@ -6,6 +6,8 @@ import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.rpc.Id
+import com.intellij.platform.rpc.UID
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -31,6 +33,9 @@ data class XDebuggerSessionAdditionalTabDto(
 
 typealias XDebuggerTabId = ComponentDirectTransferId
 
+@ApiStatus.Internal
+@Serializable
+data class XDebugTabLayouterId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
