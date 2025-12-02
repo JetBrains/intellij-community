@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
@@ -92,7 +93,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
 @Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun ComboBox(
-    labelText: String,
+    @Nls labelText: String,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -153,7 +154,7 @@ public fun ComboBox(
 @Composable
 @Deprecated("Deprecated in favor of the method with 'maxPopupWidth' parameter", level = DeprecationLevel.HIDDEN)
 public fun ComboBox(
-    labelText: String,
+    @Nls labelText: String,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
     enabled: Boolean = true,
