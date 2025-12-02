@@ -39,6 +39,7 @@ val SERVER_LANGUAGE_LEVELS_KEY: Key<List<StarterLanguageLevel>> = Key.create("la
 val SERVER_PROJECT_TYPES: Key<List<StarterProjectType>> = Key.create("projectTypes")
 val SERVER_APPLICATION_TYPES: Key<List<StarterAppType>> = Key.create("appTypes")
 val SERVER_PACKAGING_TYPES: Key<List<StarterAppPackaging>> = Key.create("packagingTypes")
+val SERVER_CONFIGURATION_FILE_FORMAT_TYPES: Key<List<StarterConfigFileFormat>> = Key.create("configurationFileFormatTypes")
 
 open class WebStarterFrameworkVersion(
   val id: String,
