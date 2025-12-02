@@ -2,6 +2,7 @@
 package com.intellij.platform.completion.common.protocol
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.serialization.FrontendFriendlyInsertHandlerSerializer
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -34,6 +35,7 @@ sealed interface RpcInsertHandler {
    */
   @Serializable
   data class Frontend(
+    @Serializable(with = FrontendFriendlyInsertHandlerSerializer::class)
     val insertHandler: FrontendFriendlyInsertHandler,
   ) : RpcInsertHandler {
     override fun toString(): String = buildToString("Frontend") {
