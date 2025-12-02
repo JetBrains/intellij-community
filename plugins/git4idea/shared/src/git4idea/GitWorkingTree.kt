@@ -16,7 +16,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable(GitWorkingTreeSerializer::class)
-class GitWorkingTree(
+data class GitWorkingTree(
   val path: @NlsSafe FilePath,
   val currentBranch: @NlsSafe GitStandardLocalBranch,
   val isMain: Boolean,
@@ -25,32 +25,6 @@ class GitWorkingTree(
 
   constructor(path: @NlsSafe String, fullBranchName: @NlsSafe String, isMain: Boolean, isCurrent: Boolean) :
     this(LocalFilePath(path, true), GitStandardLocalBranch(fullBranchName), isMain, isCurrent)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as GitWorkingTree
-
-    if (isMain != other.isMain) return false
-    if (isCurrent != other.isCurrent) return false
-    if (path != other.path) return false
-    if (currentBranch != other.currentBranch) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = isMain.hashCode()
-    result = 31 * result + isCurrent.hashCode()
-    result = 31 * result + path.hashCode()
-    result = 31 * result + currentBranch.hashCode()
-    return result
-  }
-
-  override fun toString(): String {
-    return "GitWorkingTree(path='$path', fullBranchName='$currentBranch', isMain=$isMain, isCurrent=$isCurrent)"
-  }
 
 }
 
