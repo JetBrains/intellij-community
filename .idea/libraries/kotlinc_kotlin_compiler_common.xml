@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.3.20-ij253-34">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.3.20-ij253-39">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-34/kotlin-compiler-common-for-ide-2.3.20-ij253-34.jar">
-          <sha256sum>aeeaa61c7f5372b77403cc80fb93ec26d2f315448f21085580fb2711512bacf0</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-39/kotlin-compiler-common-for-ide-2.3.20-ij253-39.jar">
+          <sha256sum>179f1a3db95900cb5f2deb4bed40931ea42818b78ad63388076ec8dfc9622828</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-34/kotlin-compiler-common-for-ide-2.3.20-ij253-34.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-39/kotlin-compiler-common-for-ide-2.3.20-ij253-39.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-34/kotlin-compiler-common-for-ide-2.3.20-ij253-34-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.3.20-ij253-39/kotlin-compiler-common-for-ide-2.3.20-ij253-39-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
