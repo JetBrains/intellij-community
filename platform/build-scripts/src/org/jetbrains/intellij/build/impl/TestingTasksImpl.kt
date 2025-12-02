@@ -457,12 +457,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val useKotlinK2 = !System.getProperty("idea.kotlin.plugin.use.k1", "false").toBoolean() ||
                       jvmArgs.contains("-Didea.kotlin.plugin.use.k1=false")
     val mainJpsModule = context.findRequiredModule(mainModule)
-    val testRoots = JpsJavaExtensionService.dependencies(mainJpsModule).recursively()
-      .withoutSdk()  // if the project requires different SDKs, they all shouldn't be added to the test classpath
-      .includedIn(JpsJavaClasspathKind.runtime(true))
-      .classes()
-      .roots
-      .filterTo(mutableListOf()) { useKotlinK2 || it.name != "kotlin.plugin.k2" }
+    val testRoots = context.getModuleRuntimeClasspath(mainJpsModule, forTests = true)
+      .map(Path::toFile)
+      .toMutableList()
+      .apply {
+        if (!useKotlinK2) {
+          val kotlinPluginK2Module = context.findRequiredModule("kotlin.plugin.k2")
+          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = false).map(Path::toFile))
+          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = true).map(Path::toFile))
+        }
+      }
 
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
