@@ -92,6 +92,10 @@ interface PolySymbolCodeCompletionItem {
 
   fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem
 
+  fun withCompletionRestartedOnPrefixChange(prefix: String): PolySymbolCodeCompletionItem
+
+  fun withCompletionRestartedOnAnyPrefixChange(): PolySymbolCodeCompletionItem
+
   companion object {
 
     @JvmStatic
