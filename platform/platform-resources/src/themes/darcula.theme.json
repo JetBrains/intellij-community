@@ -791,7 +791,9 @@
       "background": "panel",
       "Button.preferredSize": "47,28",
       "Button.preferredSize.compact": "44,32",
-      "Dialog.Button.preferredWidth": "32"
+      "Dialog.Button.preferredWidth": "32",
+      "Dialog.Button.insets": "12,0,12,0",
+      "Dialog.Button.insets.compact": "8,0,8,0"
     },
 
     "activeCaption": "#434E60",

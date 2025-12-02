@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.DialogHeader
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.toStrokeIcon
@@ -17,6 +18,7 @@ import kotlinx.coroutines.awaitCancellation
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.FlowLayout
+import java.awt.Insets
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowAdapter
@@ -45,6 +47,7 @@ private fun createButtonsPanel(): JPanel {
   val maximizeButton = createMaximizeButton() ?: return buttonsPanel
   buttonsPanel.add(maximizeButton)
   buttonsPanel.launchOnShow("WindowsDialogButtons init and updates") {
+    maximizeButton.updateIconInsets() // factor in the header's own border
     buttonsPanel.parent?.revalidate() // for some reason, it's displayed over the system close button otherwise
     val dialog = ComponentUtil.getWindow(buttonsPanel) ?: return@launchOnShow
     fun update() {
@@ -98,6 +101,7 @@ private fun createMaximizeButton(): WindowsDialogHeaderButton? {
       return if (state == ActionButtonComponent.NORMAL) null else super.getStateBackground(component, state)
     }
   })
+  maximizeButton.updateIconInsets()
   return maximizeButton
 }
 
@@ -118,5 +122,21 @@ private class WindowsDialogHeaderButton(
   override fun updateUI() {
     super.updateUI()
     updateIcon()
+    updateIconInsets()
+  }
+
+  fun updateIconInsets() {
+    setIconInsets(computeIconInsets())
+  }
+
+  private fun computeIconInsets(): Insets {
+    val baseInsets = JBUI.CurrentTheme.TitlePane.dialogButtonInsets()
+    val headerBorder = (ComponentUtil.findParentByCondition(this) { it is DialogHeader } as? DialogHeader?)?.insets
+    if (headerBorder == null) return baseInsets
+    // If the header has its own border, it's not factored in for the "close" button,
+    // and therefore we should compensate for that to align the buttons properly.
+    baseInsets.top -= headerBorder.top
+    baseInsets.bottom += headerBorder.bottom
+    return baseInsets
   }
 }

@@ -1913,6 +1913,11 @@
       "since": "2026.1"
     },
     {
+      "key": "TitlePane.Dialog.Button.insets",
+      "description": "Dialog additional title pane actions (maximize, restore) insets",
+      "since": "2026.1"
+    },
+    {
       "key": "TitlePane.inactiveBackground",
       "description": "Borderless mode. Header background when the window is not in focus",
       "since": "2019.3"

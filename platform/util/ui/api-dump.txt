@@ -4664,6 +4664,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$TitlePane
 - <init>():V
 - s:buttonPreferredSize(F):java.awt.Dimension
 - s:buttonPreferredSizeKey():java.lang.String
+- s:dialogButtonInsets():java.awt.Insets
 - s:dialogButtonPreferredWidth():I
 f:com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow
 - <init>():V
