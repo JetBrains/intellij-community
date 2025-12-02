@@ -982,15 +982,5 @@ internal class SeparatorLookupElement(
   }
 }
 
-internal object AlwaysSeparatorMatcher : PrefixMatcher(""){
-  override fun prefixMatches(name: String): Boolean {
-    return true
-  }
-
-  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
-    return AlwaysSeparatorMatcher
-  }
-}
-
 @ApiStatus.Internal
 fun LookupElement.isSeparator(): Boolean = this.`as`(SeparatorLookupElement::class.java) != null

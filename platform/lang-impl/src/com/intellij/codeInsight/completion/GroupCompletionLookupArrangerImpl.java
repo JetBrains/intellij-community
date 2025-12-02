@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.group.CompletionGroup;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupGroupArranger;
-import com.intellij.codeInsight.lookup.impl.AlwaysSeparatorMatcher;
 import com.intellij.codeInsight.lookup.impl.SeparatorLookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.JBIterable;
@@ -98,7 +97,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     for (int i = 0; i < groups.size(); i++) {
       Pair<Integer, CompletionGroup> group = groups.get(i);
       SeparatorLookupElement separatorLookupElement = new SeparatorLookupElement(group.second.displayName());
-      registerMatcher(separatorLookupElement, AlwaysSeparatorMatcher.INSTANCE);
+      registerMatcher(separatorLookupElement, PlainPrefixMatcher.ALWAYS_TRUE);
       associateSorter(separatorLookupElement, new CompletionSorterImpl(new ArrayList<>()));
       model.add(group.first + i, separatorLookupElement);
     }
