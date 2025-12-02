@@ -38,24 +38,6 @@ import java.util.*
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
 
-private enum class ExclusionType {
-  StartsWith, Equals;
-
-  fun match(token: String, toMatch: String): Boolean {
-    return when (this) {
-      StartsWith -> token.startsWith(toMatch)
-      Equals -> token.equals(toMatch, ignoreCase = true)
-    }
-  }
-}
-
-private val an_vs_a_exclusions = mapOf(
-  "an" to mapOf(ExclusionType.Equals to arrayListOf("xlsx", "mp3")),
-  "a" to mapOf(
-    ExclusionType.StartsWith to arrayListOf("uint"),
-    ExclusionType.Equals to arrayListOf("SCORM")
-  )
-)
 
 open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
@@ -93,7 +75,6 @@ open class LanguageToolChecker : ExternalTextChecker() {
       return emptyList()
     }
 
-    val sentenceOffsets = sentences.runningFold(0) { offset, sentence -> offset + sentence.length }
     val matches = runLT(tool, extracted.toString())
     val disappearsAfterAddingQuotes by lazy { checkQuotedText(extracted, tool) }
     val state = GrazieConfig.get()
@@ -102,7 +83,7 @@ open class LanguageToolChecker : ExternalTextChecker() {
       .filterNot { possiblyMarkupDependent(it) && disappearsAfterAddingQuotes.test(it) }
       .map { Problem(it, lang, extracted, this is TestChecker) }
       .filterNot { isGitCherryPickedFrom(it.match, extracted) }
-      .filterNot { isKnownLTBug(it.match, extracted, sentenceOffsets) }
+      .filterNot { isKnownLTBug(it.match, extracted) }
       .filterNot {
         val range = when {
           it.fitsGroup(RuleGroup.CASING) -> includeSentenceBounds(extracted, it.patternRange)
@@ -208,6 +189,17 @@ private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
+private val nextWordPattern = Regex("\\s+(\\w+)")
+private val an_vs_a_exclusions = mapOf(
+  "an" to listOf(
+    Regex("xlsx", RegexOption.IGNORE_CASE),
+    Regex("mp3", RegexOption.IGNORE_CASE)
+  ),
+  "a" to listOf(
+    Regex("uint.*", RegexOption.IGNORE_CASE),
+    Regex("SCORM", RegexOption.IGNORE_CASE)
+  )
+)
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
@@ -227,7 +219,7 @@ private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean 
           text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
 }
 
-private fun isKnownLTBug(match: RuleMatch, text: TextContent, sentenceOffsets: List<Int>): Boolean {
+private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   if (match.rule is EnglishUnpairedQuotesRule) {
     if (match.fromPos > 0 &&
         (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
@@ -275,24 +267,10 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent, sentenceOffsets: L
 
   // https://github.com/languagetool-org/languagetool/issues/11598
   if (match.rule.id == "EN_A_VS_AN") {
-    val sentenceIndex = sentenceOffsets.binarySearch(match.fromPos).let {
-      if (it >= 0) it else -it - 2
-    }
-    if (sentenceIndex !in sentenceOffsets.indices) return false
-    val sentenceOffset = sentenceOffsets[sentenceIndex]
-
     val article = text.substring(match.fromPos, match.toPos)
-    val tokens = match.sentence.tokensWithoutWhitespace
-    val index = tokens
-      .indexOfFirst { sentenceOffset + it.startPos == match.fromPos && sentenceOffset + it.endPos == match.toPos && it.token == article }
-
-    if (index == -1 || index + 1 >= tokens.size) return false
-    val nextToken = tokens[index + 1].token
-    return an_vs_a_exclusions[article.lowercase()]!!
-      .entries
-      .find { (type, exclusions) ->
-        exclusions.any { exclusion -> type.match(nextToken.lowercase(), exclusion) }
-      } != null
+    val nextWordMatch = nextWordPattern.find(text.subSequence(match.toPos, text.length))
+    val nextWord = nextWordMatch?.groupValues?.get(1) ?: return false
+    return an_vs_a_exclusions[article.lowercase()]!!.any { regex -> regex.matches(nextWord) }
   }
 
   return false

@@ -228,9 +228,12 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test false positive an with consonant`() {
     myFixture.configureByText("a.java", """
-      // Returns an xlsx file based on given type.
-      // I have an mp3. Is a SCORM with no grade?
+      // Returns an xlsx file based on given type. I have an mp3.
       // Writes a uint32_t to a buffer.
+      // It is an SA disk. It is an SC disk. It is a SATA disk.
+      // It is a SCORN with no grade. It is a SCORM with no grade.
+      // It is an ECO summit. It is an ECS summit.
+      // It is an ISS mission. It is an ISSA mission.
       """.trimIndent()
     )
     myFixture.checkHighlighting()
