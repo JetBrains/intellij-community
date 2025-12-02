@@ -1,3 +1,5 @@
 - name: dist.all/lib/intellij.platform.smRunner.jar
   modules:
+  - name: intellij.platform.execution.impl
   - name: intellij.platform.smRunner
+  - name: intellij.platform.wsl.impl

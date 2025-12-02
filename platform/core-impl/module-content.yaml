@@ -3,3 +3,4 @@
   - name: intellij.platform.core.impl
   - name: intellij.platform.plugins.parser.impl
   - name: intellij.platform.syntax
+  - name: intellij.platform.util.diff

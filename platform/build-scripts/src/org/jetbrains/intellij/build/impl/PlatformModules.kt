@@ -2,6 +2,8 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.graph.DFSTBuilder
+import com.intellij.util.graph.OutboundSemiGraph
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
@@ -466,55 +468,32 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
  * Sorts embedded modules topologically so dependencies are processed before dependents.
  * This ensures that when computing transitive dependencies, modules don't incorrectly
  * include dependencies that should belong to their own dependencies.
- *
- * @param embeddedModules modules to sort
- * @param context build context
- * @return list of modules in dependency order (dependencies before dependents)
  */
-private fun sortEmbeddedModulesTopologically(
-  embeddedModules: Collection<ModuleItem>,
-  context: ModuleOutputProvider,
-): List<ModuleItem> {
-  val moduleByName = embeddedModules.associateByTo(HashMap(embeddedModules.size)) { it.moduleName }
-  val moduleNames = moduleByName.keys
-
-  val result = mutableListOf<ModuleItem>()
-  val visited = HashSet<String>()
-  val visiting = HashSet<String>()
-
-  fun visit(moduleName: String) {
-    if (moduleName in visited) {
-      return
-    }
-
-    if (moduleName in visiting) {
-      throw IllegalStateException("Circular dependency: ${(visiting - moduleName).joinToString(" -> ")}")
-    }
-
-    visiting.add(moduleName)
-
-    // visit dependencies first (only those in our processing set)
-    val jpsModule = context.findRequiredModule(moduleName)
-    for (dep in jpsModule.dependenciesList.dependencies) {
-      if (dep is JpsModuleDependency) {
-        val depName = dep.moduleReference.moduleName
-        if (moduleByName.containsKey(depName)) {
-          visit(depName)
-        }
-      }
-    }
-
-    visiting.remove(moduleName)
-    visited.add(moduleName)
-    moduleByName.get(moduleName)?.let { result.add(it) }
+private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleItem>, moduleOutputProvider: ModuleOutputProvider): List<ModuleItem> {
+  val graph = EmbeddedModuleGraph(embeddedModules, moduleOutputProvider)
+  val builder = DFSTBuilder(graph)
+  builder.circularDependency?.let { (from, to) ->
+    throw IllegalStateException("Circular dependency detected: ${from.moduleName} -> ${to.moduleName}")
   }
+  return builder.sortedNodes
+}
 
-  // Visit all modules
-  for (moduleName in moduleNames) {
-    visit(moduleName)
+private class EmbeddedModuleGraph(
+  private val modules: Collection<ModuleItem>,
+  private val moduleOutputProvider: ModuleOutputProvider,
+) : OutboundSemiGraph<ModuleItem> {
+  private val moduleByName = modules.associateBy { it.moduleName }
+
+  override fun getNodes(): Collection<ModuleItem> = modules
+
+  override fun getOut(node: ModuleItem): Iterator<ModuleItem> {
+    val jpsModule = moduleOutputProvider.findRequiredModule(node.moduleName)
+    return jpsModule.dependenciesList.dependencies
+      .asSequence()
+      .filterIsInstance<JpsModuleDependency>()
+      .mapNotNull { moduleByName.get(it.moduleReference.moduleName) }
+      .iterator()
   }
-
-  return result
 }
 
 /**
@@ -535,11 +514,7 @@ private fun computeEmbeddedModuleDependencies(
   val result = LinkedHashSet<ModuleItem>()
   val rootChain = persistentListOf<String>()
 
-  // Sort modules topologically to ensure dependencies are processed before dependents
-  val sortedEmbeddedModules = sortEmbeddedModulesTopologically(embeddedModules, context)
-
-  // For each embedded module, compute its transitive dependencies
-  for (embeddedModule in sortedEmbeddedModules) {
+  for (embeddedModule in sortEmbeddedModulesTopologically(embeddedModules, context).asReversed()) {
     val moduleName = embeddedModule.moduleName
     val relativeOutputFile = embeddedModule.relativeOutputFile
     val moduleSet = embeddedModule.moduleSet
