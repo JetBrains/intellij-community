@@ -35,15 +35,17 @@ class PyRegexTest : PyTestCase() {
   @TestFor(issues = ["PY-21499"])
   fun `language injection`(regexFunction: String) {
     runBare {
-      runWithAdditionalFileInLibDir("regex.py", "def $regexFunction(): ...") {
-        doTestInjectedText(
-          """
+      runWithAdditionalFileInLibDir("regex/__init__.py", "from ._main import $regexFunction") {
+        runWithAdditionalFileInLibDir("regex/_main.py", "def $regexFunction(): ...") {
+          doTestInjectedText(
+            """
           import regex
          
           regex.$regexFunction("<caret>.*a")
           """.trimIndent(),
-          ".*a"
-        )
+            ".*a"
+          )
+        }
       }
     }
   }
