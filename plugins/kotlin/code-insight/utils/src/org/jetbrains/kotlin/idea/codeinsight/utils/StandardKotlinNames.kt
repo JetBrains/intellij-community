@@ -23,7 +23,10 @@ object StandardKotlinNames {
     object Collections {
         @JvmField val asSequence: FqName = BASE_COLLECTIONS_PACKAGE + "asSequence"
         @JvmField val filter: FqName = BASE_COLLECTIONS_PACKAGE + "filter"
+        @JvmField val filterIsInstance: FqName = BASE_COLLECTIONS_PACKAGE + "filterIsInstance"
+        @JvmField val filterNotNull: FqName = BASE_COLLECTIONS_PACKAGE + "filterNotNull"
         @JvmField val flatMap: FqName = BASE_COLLECTIONS_PACKAGE + "flatMap"
+        @JvmField val flatten: FqName = BASE_COLLECTIONS_PACKAGE + "flatten"
         @JvmField val map: FqName = BASE_COLLECTIONS_PACKAGE + "map"
         @JvmField val mapIndexed: FqName = BASE_COLLECTIONS_PACKAGE + "mapIndexed"
 

@@ -22,7 +22,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.isIterable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.Collections
+import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.SimplifiableCallInspection.Context
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -32,13 +33,15 @@ import org.jetbrains.kotlin.psi.*
 internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simple<KtExpression, Context>() {
     class Context(
         val conversionName: String,
-        val replacement: String,
+        val replacementCall: String,
+        val replacementFqName: FqName,
     )
 
     private abstract class Conversion(
-        val fqName: FqName
+        val targetFqName: FqName,
+        val replacementFqName: FqName,
     ) {
-        val shortName = fqName.shortName().asString()
+        val targetShortName = targetFqName.shortName().asString()
 
         context(_: KaSession)
         abstract fun analyze(callExpression: KtCallExpression): String?
@@ -47,7 +50,10 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
     }
 
-    private class FlatMapToFlattenConversion : Conversion(StandardKotlinNames.Collections.flatMap) {
+    private class FlatMapToFlattenConversion : Conversion(
+        targetFqName = Collections.flatMap,
+        replacementFqName = Collections.flatten,
+    ) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -69,7 +75,10 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private class FilterToFilterNotNullConversion : Conversion(StandardKotlinNames.Collections.filter) {
+    private class FilterToFilterNotNullConversion : Conversion(
+        targetFqName = Collections.filter,
+        replacementFqName = Collections.filterNotNull,
+    ) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -96,7 +105,10 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private class FilterToFilterIsInstanceConversion : Conversion(StandardKotlinNames.Collections.filter) {
+    private class FilterToFilterIsInstanceConversion : Conversion(
+        targetFqName = Collections.filter,
+        replacementFqName = Collections.filterIsInstance,
+    ) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -142,8 +154,8 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         val resolvedCall = this.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val possibleConversions = buildList {
             for (conversion in conversions) {
-                if (conversion.shortName != calleeText) continue
-                if (resolvedCall.symbol.callableId?.asSingleFqName() == conversion.fqName) {
+                if (conversion.targetShortName != calleeText) continue
+                if (resolvedCall.symbol.callableId?.asSingleFqName() == conversion.targetFqName) {
                     add(conversion)
                 }
             }
@@ -154,7 +166,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
     override fun getProblemDescription(
         element: KtExpression,
         context: Context
-    ): @InspectionMessage String = KotlinBundle.message("0.call.could.be.simplified.to.1", context.conversionName, context.replacement)
+    ): @InspectionMessage String = KotlinBundle.message("0.call.could.be.simplified.to.1", context.conversionName, context.replacementCall)
 
 
 
@@ -176,8 +188,8 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         val (conversions, resolvedCall) = callExpression.findConversionsAndResolvedCall() ?: return null
         for (conversion in conversions) {
             if (!conversion.callChecker(resolvedCall)) continue
-            val replacement = conversion.analyze(callExpression) ?: continue
-            return Context(conversion.shortName, replacement)
+            val replacementCall = conversion.analyze(callExpression) ?: continue
+            return Context(conversion.targetShortName, replacementCall, conversion.replacementFqName)
         }
         return null
     }
@@ -186,15 +198,17 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         val context: Context
     ) : KotlinModCommandQuickFix<KtExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String =
-            KotlinBundle.message("simplify.call.fix.text", context.conversionName, context.replacement)
+            KotlinBundle.message("simplify.call.fix.text", context.conversionName, context.replacementCall)
 
         override fun applyFix(
             project: Project,
             element: KtExpression,
             updater: ModPsiUpdater
         ) {
+            val containingFile = element.containingKtFile
             val callExpression = element.parent as? KtCallExpression ?: return
-            callExpression.replace(KtPsiFactory(project).createExpression(context.replacement))
+            callExpression.replace(KtPsiFactory(project).createExpression(context.replacementCall))
+            containingFile.addImportFor(context.replacementFqName)
         }
     }
 }
