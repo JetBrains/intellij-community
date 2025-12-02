@@ -132,15 +132,13 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
    * @throws TimeoutException when stopped due to provided [timeout]
    */
   @RequiresBackgroundThread
-  suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
+  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
     }
     LOG.info("Waiting for code analysis to finish in $timeout")
     val future = CompletableFuture<Unit>()
-    if (timeout != null) {
-      future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-    }
+    future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     coroutineScope {
       launch {
         while (true) {
