@@ -93,6 +93,14 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.remotedev.RpcInterfaceDoesNotExtendRemoteApiInspection"
                      key="inspection.remote.dev.rpc.interface.does.not.extend.remote.api.name"/>
 
+    <localInspection language="kotlin" shortName="PrivateExtensionClass"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.PrivateExtensionClassInspection"
+                     key="inspection.private.extension.class"/>
+
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
 
     <registryKey key="devkit.inspections.forbidden.method.in.suspend.context" defaultValue="false"
