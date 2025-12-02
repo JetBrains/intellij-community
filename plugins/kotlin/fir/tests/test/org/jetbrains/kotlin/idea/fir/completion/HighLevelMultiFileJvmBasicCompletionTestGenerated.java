@@ -55,6 +55,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ChainCompletionDontDuplicate/");
     }
 
+    @TestMetadata("ChainCompletionDontShowSameProperty")
+    public void testChainCompletionDontShowSameProperty() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ChainCompletionDontShowSameProperty/");
+    }
+
     @TestMetadata("ClassInExcludedPackage")
     public void testClassInExcludedPackage() throws Exception {
         runTest("../../completion/testData/basic/multifile/ClassInExcludedPackage/");
