@@ -3,10 +3,13 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.JBColor
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.launchOnShow
@@ -16,6 +19,8 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -42,8 +47,12 @@ private fun createButtonsPanel(): JPanel {
   buttonsPanel.launchOnShow("WindowsDialogButtons init and updates") {
     buttonsPanel.parent?.revalidate() // for some reason, it's displayed over the system close button otherwise
     val dialog = ComponentUtil.getWindow(buttonsPanel) ?: return@launchOnShow
+    fun update() {
+      maximizeButton.isActive = dialog.isActive
+      maximizeButton.update()
+    }
     // Set up manual action updates on size/location change.
-    val listener = object : ComponentAdapter() {
+    val componentListener = object : ComponentAdapter() {
       override fun componentMoved(e: ComponentEvent?) {
         update()
       }
@@ -51,26 +60,33 @@ private fun createButtonsPanel(): JPanel {
       override fun componentResized(e: ComponentEvent?) {
         update()
       }
+    }
+    val windowListener = object : WindowAdapter() {
+      override fun windowActivated(e: WindowEvent?) {
+        update()
+      }
 
-      private fun update() {
-        maximizeButton.update()
+      override fun windowDeactivated(e: WindowEvent?) {
+        update()
       }
     }
     try {
-      dialog.addComponentListener(listener)
+      dialog.addComponentListener(componentListener)
+      dialog.addWindowListener(windowListener)
       awaitCancellation()
     }
     finally {
-      dialog.removeComponentListener(listener)
+      dialog.removeWindowListener(windowListener)
+      dialog.removeComponentListener(componentListener)
     }
   }
   return buttonsPanel
 }
 
-private fun createMaximizeButton(): ActionButton? {
+private fun createMaximizeButton(): WindowsDialogHeaderButton? {
   val maximizeAction = ActionManager.getInstance().getAction("MaximizeActiveDialog")
   if (maximizeAction == null) return null
-  val maximizeButton = ActionButton(maximizeAction, null, "DialogHeader") {
+  val maximizeButton = WindowsDialogHeaderButton(maximizeAction) {
     val width = JBUI.CurrentTheme.TitlePane.dialogButtonPreferredWidth()
     val height = CustomWindowHeaderUtil.getPreferredWindowHeaderHeightUnscaled(isCompactHeader = false)
     Dimension(width, height) // ActionButton does the scaling
@@ -83,4 +99,24 @@ private fun createMaximizeButton(): ActionButton? {
     }
   })
   return maximizeButton
+}
+
+private class WindowsDialogHeaderButton(
+  maximizeAction: AnAction,
+  minSize: () -> Dimension,
+) : ActionButton(maximizeAction, null, "DialogHeader", minSize) {
+  var isActive = true
+
+  override fun updateIcon() {
+    super.updateIcon()
+    val icon = icon
+    if (icon != null) {
+      this.icon = toStrokeIcon(icon, JBColor.namedColor(if (isActive) "Panel.foreground" else "Panel.disabledForeground"))
+    }
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateIcon()
+  }
 }
