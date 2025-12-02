@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -643,7 +644,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
         logMousePressed(e);
         myLightBulbPanel.onMousePress();
-        showPopup(true);
+        WriteIntentReadAction.run((Runnable)() -> {
+          showPopup(true);
+        });
       }
     }
 
