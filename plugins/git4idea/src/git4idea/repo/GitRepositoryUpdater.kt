@@ -68,6 +68,7 @@ internal class GitRepositoryUpdater(
     var tagChanged = false
     var reftableChanged = false
     var gitignoreChanged = false
+    var worktreesChanged = false
 
     val toReloadVfs = HashSet<VirtualFile>()
     for (event in events) {
@@ -126,6 +127,9 @@ internal class GitRepositoryUpdater(
             // TODO watch file stored in `core.excludesfile`
             gitignoreChanged = true
           }
+          repositoryFiles.isWorktreeDirectory(filePath) -> {
+            worktreesChanged = true
+          }
         }
       }
       else if (filePath.endsWith(GitRepositoryFiles.GITIGNORE)) {
@@ -158,6 +162,9 @@ internal class GitRepositoryUpdater(
     }
     if (indexChanged) {
       refreshRoots(repository.project, listOf(repository.root))
+    }
+    if (worktreesChanged) {
+      repository.workingTreeHolder.reload()
     }
   }
 

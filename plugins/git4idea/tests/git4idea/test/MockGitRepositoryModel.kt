@@ -14,6 +14,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import git4idea.remoteApi.GitRepositoryToDtoConverter.convertTrackingInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -38,6 +39,8 @@ internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel 
     override val operationState: GitOperationState
       get() = throw UnsupportedOperationException()
     private val trackingInfo: Map<String, GitStandardRemoteBranch> = convertTrackingInfo(repo.info.branchTrackInfosMap)
+    override val workingTrees: Collection<GitWorkingTree>
+      get() = throw UnsupportedOperationException()
 
     override fun getDisplayableBranchText(): @Nls String =
       throw UnsupportedOperationException()

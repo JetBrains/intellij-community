@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt button1",              "EditorCreateRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
       {"alt shift LEFT",           "Diff.PrevChange", "PreviousEditorTab"},
       {"alt shift RIGHT",          "Diff.NextChange", "NextEditorTab"},
-      {"button1 doubleClick",      "Git.Log.Branches.Change.Branch.Filter", "Console.TableResult.GotoReferencedResult"},
+      {"button1 doubleClick",      "Git.Log.Branches.Change.Branch.Filter", "Console.TableResult.GotoReferencedResult", "Git.WorkingTrees.Open"},
       {"button2",                  "EditorPasteFromX11", "GotoDeclaration", "EditorCreateRectangularSelectionOnMouseDrag"},
       {"control 1",                "FileChooser.GotoHome", "GotoBookmark1", "DuplicatesForm.SendToLeft"},
       {"control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},

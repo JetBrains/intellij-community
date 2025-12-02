@@ -222,6 +222,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
     VCS_LOG(ChangesViewContentManager.VCS_LOG, 50), // main tab
     CONSOLE(ChangesViewContentManager.CONSOLE, 60),
+    WORKING_TREES(ChangesViewContentManager.WORKING_TREES, 70),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
@@ -328,6 +329,7 @@ class ChangesViewContentManager private constructor(private val project: Project
     const val SHELF: @NonNls String = "Shelf"
     const val BRANCHES: @NonNls String = "Branches"
     const val VCS_LOG: @NonNls String = "Log"
+    const val WORKING_TREES: @NonNls String = "Working Trees"
   }
 }
 

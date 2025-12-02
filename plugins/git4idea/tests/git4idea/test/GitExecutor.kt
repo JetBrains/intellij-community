@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitExecutor")
 package git4idea.test
 
@@ -26,7 +26,7 @@ fun GitRepository.git(command: String, ignoreNonZeroExitCode: Boolean = false) =
 fun GitPlatformTest.git(command: String, ignoreNonZeroExitCode: Boolean = false) = git(project, command, ignoreNonZeroExitCode)
 
 @JvmOverloads
-internal fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = false): String {
+internal fun git(project: Project?, command: String, ignoreNonZeroExitCode: Boolean = false): String {
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
@@ -158,7 +158,7 @@ fun GitRepository.mv(from: File, to: File) {
 private const val DefaultInitBranch = "master"
 fun GitPlatformTest.gitInit(vararg params: String, initialBranch: String = DefaultInitBranch) =
   gitInit(project, *params, initialBranch =  initialBranch)
-fun gitInit(project: Project, vararg params: String, initialBranch: String = DefaultInitBranch) =
+fun gitInit(project: Project?, vararg params: String, initialBranch: String = DefaultInitBranch) =
   git(project, "init --initial-branch=$initialBranch ${params.joinToString(" ")}")
 
 fun GitRepository.prepareConflict(initialBranch: String = "master",

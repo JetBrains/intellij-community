@@ -22,6 +22,7 @@ import fleet.rpc.client.durable
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -147,6 +148,9 @@ class GitRepositoriesHolder(
         is GitRepositoryEvent.TagsLoaded -> {
           info.state.tags = event.tags
         }
+        is GitRepositoryEvent.WorkingTreesLoaded -> {
+          info.state.workingTrees = event.workingTrees
+        }
       }
 
       info
@@ -189,6 +193,7 @@ class GitRepositoriesHolder(
         localBranches = repositoryStateDto.localBranches,
         remoteBranches = repositoryStateDto.remoteBranches,
         tags = repositoryStateDto.tags,
+        workingTrees = repositoryStateDto.workingTrees,
         recentBranches = repositoryStateDto.recentBranches,
         operationState = repositoryStateDto.operationState,
         trackingInfo = repositoryStateDto.trackingInfo,
@@ -201,6 +206,7 @@ class GitRepositoriesHolder(
       is GitRepositoryEvent.RepositoryStateUpdated -> UpdateType.REPOSITORY_STATE_UPDATED
       GitRepositoryEvent.TagsHidden -> UpdateType.TAGS_HIDDEN
       is GitRepositoryEvent.TagsLoaded -> UpdateType.TAGS_LOADED
+      is GitRepositoryEvent.WorkingTreesLoaded -> UpdateType.WORKING_TREES_LOADED
       is GitRepositoryEvent.ReloadState -> UpdateType.RELOAD_STATE
       is GitRepositoryEvent.RepositoriesSync -> null
     }
@@ -213,7 +219,8 @@ class GitRepositoriesHolder(
 
   @ApiStatus.Internal
   enum class UpdateType {
-    REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN, RELOAD_STATE
+    REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN, WORKING_TREES_LOADED,
+    RELOAD_STATE
   }
 }
 
@@ -234,6 +241,7 @@ private class GitRepositoryStateImpl(
   override val localBranches: Set<GitStandardLocalBranch>,
   override val remoteBranches: Set<GitStandardRemoteBranch>,
   override var tags: Set<GitTag>,
+  override var workingTrees: Collection<GitWorkingTree>,
   override val recentBranches: List<GitStandardLocalBranch>,
   override val operationState: GitOperationState,
   private val trackingInfo: Map<String, GitStandardRemoteBranch>,

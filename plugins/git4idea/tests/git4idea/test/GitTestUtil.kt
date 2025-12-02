@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitTestUtil")
 
 package git4idea.test
@@ -70,7 +70,7 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   rootDir.refresh(false, true)
 }
 
-internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boolean) {
+internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
   gitInit(project)
@@ -99,7 +99,7 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   setupDefaultUsername()
 }
 
-internal fun setupDefaultUsername(project: Project) {
+internal fun setupDefaultUsername(project: Project?) {
   setupUsername(project, USER_NAME, USER_EMAIL)
 }
 
@@ -107,7 +107,7 @@ internal fun GitPlatformTest.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 
-internal fun setupUsername(project: Project, name: String, email: String) {
+internal fun setupUsername(project: Project?, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
   assertFalse("Can not set empty user email ", email.isEmpty())
   git(project, "config user.name '$name'")

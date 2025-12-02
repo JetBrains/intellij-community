@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
 import com.intellij.openapi.util.io.FileUtil
@@ -22,11 +22,15 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    repo = createRepository(project, projectNioRoot, makeInitialCommit())
+    repo = createRepository()
     cd(projectPath)
   }
 
   protected open fun makeInitialCommit() = true
+
+  protected open fun createRepository() : GitRepository {
+    return createRepository(project, projectNioRoot, makeInitialCommit())
+  }
 
   protected fun VcsConfiguration.StandardConfirmation.doSilently() =
     AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, this, DO_ACTION_SILENTLY)

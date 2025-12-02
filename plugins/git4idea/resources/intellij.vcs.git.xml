@@ -38,6 +38,9 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
+    <action id="Git.Show.WorkingTrees" class="git4idea.actions.workingTree.ShowWorkingTreesAction">
+      <add-to-group group-id="Vcs.Log.ToolWindow.TabActions.DropDown" relative-to-action="Vcs.ShowConsoleTab" anchor="after"/>
+    </action>
 
     <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
@@ -157,6 +160,8 @@
       <reference ref="Git.CreateNewBranch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag"/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
+      <separator/>
+      <reference ref="Git.Show.WorkingTrees"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
       <reference ref="Patch.MainMenu"/>
@@ -330,6 +335,8 @@
               class="git4idea.log.action.GitCreateNewBranchFromCommitAction"
               use-shortcut-of="Git.CreateNewBranch"/>
       <reference ref="Git.CreateNewTag"/>
+      <separator/>
+      <reference ref="Git.Show.WorkingTrees"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
@@ -533,6 +540,21 @@
 
     <action id="Git.Branches.Popup.Fetch"
             class="git4idea.ui.branch.GitBranchPopupFetchAction"/>
+
+    <action id="Git.WorkingTrees.Remove" class="git4idea.workingTrees.ui.RemoveWorkingTreeAction"
+            icon="AllIcons.General.Delete" use-shortcut-of="$Delete"/>
+    <action id="Git.WorkingTrees.Open" class="git4idea.workingTrees.ui.OpenWorkingTreeAction">
+      <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
+    </action>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Toolbar">
+      <reference ref="Git.WorkingTrees.Remove"/>
+    </group>
+
+    <group id="Git.WorkingTrees.ToolwindowGroup.Popup" popup="true">
+      <reference ref="Git.WorkingTrees.Open"/>
+      <reference ref="Git.WorkingTrees.Remove"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -852,6 +874,13 @@
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
+    <changesViewContent id="git.working.trees" tabName="Working Trees" className="git4idea.workingTrees.ui.GitWorkingTreesContentProvider"
+                        predicateClassName="git4idea.workingTrees.ui.GitWorkingTreesContentVisibilityPredicate"
+                        preloaderClassName="git4idea.workingTrees.ui.GitWorkingTreesContentPreloader"
+                        isInCommitToolWindow="false"/>
+    <registryKey key="git.enable.working.trees.feature" defaultValue="false" restartRequired="true"
+                 description="Enables the 'Working Trees' feature, see https://youtrack.jetbrains.com/issue/IJPL-204771"/>
+
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
     <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic"
@@ -955,5 +984,7 @@
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
     <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
               topic="com.intellij.openapi.vcs.VcsMappingListener"/>
+    <listener class="git4idea.workingTrees.ui.GitWorkingTreeToolwindowUpdateListener"
+              topic="com.intellij.vcs.git.repo.GitRepositoriesHolder$UpdatesListener"/>
   </projectListeners>
 </idea-plugin>
