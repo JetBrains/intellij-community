@@ -296,6 +296,22 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  /**
+   * @return true when all registered statuses are clean
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean allDirtyScopesAreNull() {
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.allDirtyScopesAreNull();
+    }
+  }
+
+  @Override
+  public String toString() {
+    return myFileStatusMapState.toString();
+  }
+
   public @NotNull String toString(@NotNull Document document) {
     synchronized (myFileStatusMapState) {
       return myFileStatusMapState.toString(document);

@@ -28,4 +28,6 @@ sealed interface FileStatusMapState permits ClassicFileStatusMapState, Multivers
   void clear();
 
   @NotNull String toString(@NotNull Document document);
+
+  boolean allDirtyScopesAreNull();
 }

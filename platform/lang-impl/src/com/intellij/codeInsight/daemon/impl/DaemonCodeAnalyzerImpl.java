@@ -904,6 +904,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
            myFileStatusMap.allDirtyScopesAreNull(document, context);
   }
 
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public boolean isAllAnalysisFinished() {
+    if (myDisposed) {
+      return false;
+    }
+    boolean updateCompleted;
+    synchronized (this) {
+      updateCompleted = myUpdateRunnableFuture.isDone();
+    }
+    return
+      !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
+      myFileStatusMap.allDirtyScopesAreNull() &&
+      updateCompleted;
+  }
+
   @Override
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) {

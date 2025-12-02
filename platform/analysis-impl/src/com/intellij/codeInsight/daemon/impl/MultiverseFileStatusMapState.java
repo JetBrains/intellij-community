@@ -74,4 +74,16 @@ final class MultiverseFileStatusMapState implements FileStatusMapState {
 
     return CodeInsightContextManager.getInstance(myProject).getPreferredContext(file);
   }
+
+  @Override
+  public boolean allDirtyScopesAreNull() {
+    return myDocumentToStatusMap.values().stream()
+      .flatMap(m -> m.values().stream())
+      .allMatch(status -> !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull());
+  }
+
+  @Override
+  public String toString() {
+    return myDocumentToStatusMap.toString();
+  }
 }
