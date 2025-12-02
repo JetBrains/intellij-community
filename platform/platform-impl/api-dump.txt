@@ -558,6 +558,7 @@ c:com.intellij.openapi.actionSystem.impl.ActionButton
 - pf:getEnableOrDisable(javax.swing.Icon):javax.swing.Icon
 - p:getFallbackIcon(Z):javax.swing.Icon
 - getIcon():javax.swing.Icon
+- getIconInsets():java.awt.Insets
 - getMinimumSize():java.awt.Dimension
 - getPopState():I
 - getPreferredSize():java.awt.Dimension

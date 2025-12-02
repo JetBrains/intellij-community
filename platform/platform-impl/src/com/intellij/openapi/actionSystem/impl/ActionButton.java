@@ -382,6 +382,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return size;
   }
 
+  public @NotNull Insets getIconInsets() {
+    return myInsets;
+  }
+
   public void setIconInsets(@Nullable Insets insets) {
     myInsets = insets != null ? JBInsets.create(insets) : JBInsets.emptyInsets();
   }
