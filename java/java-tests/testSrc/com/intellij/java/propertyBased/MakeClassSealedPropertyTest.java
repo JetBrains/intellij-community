@@ -85,7 +85,8 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
       env.executeCommands(IntDistribution.uniform(1, 5),
                           Generator.constant(new InvokeIntention(fileToChange, new JavaGreenIntentionPolicy())));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      relatedFiles.forEach(f -> assertFalse(MadTestingUtil.containsErrorElements(f.getViewProvider())));
+      relatedFiles.forEach(f -> assertFalse("File " + f.getName() + " should not contain error elements.",
+                                            MadTestingUtil.containsErrorElements(f.getViewProvider())));
     });
   }
 
