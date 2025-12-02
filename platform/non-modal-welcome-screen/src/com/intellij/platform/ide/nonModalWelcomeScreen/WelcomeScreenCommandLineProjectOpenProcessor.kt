@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -54,7 +55,10 @@ private class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenPro
     FUSProjectHotStartUpMeasurer.lightEditProjectFound()
     val project = executeNoProjectStateHandlerExpectingNonWelcomeScreenImplementation()
     project.serviceAsync<WelcomeScreenPreventWelcomeTabFocusService>().preventFocusOnWelcomeTab()
-    LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)?.let { focusOnFile(project, it) }
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file) ?: return project
+
+    focusOnFile(project, virtualFile)
+    NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
     return project
   }
 
