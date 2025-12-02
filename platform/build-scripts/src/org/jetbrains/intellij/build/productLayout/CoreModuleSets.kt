@@ -323,21 +323,21 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.debugger.impl", includeDependencies = true)
   }
 
-  fun fleet(): ModuleSet = moduleSet("fleet") {
+  fun fleet(): ModuleSet = moduleSet("fleet", includeDependencies = true) {
     // Same modules as fleet() - all are required
     embeddedModule("fleet.bifurcan")
     embeddedModule("fleet.fastutil")
-    embeddedModule("fleet.kernel", includeDependencies = true)
+    embeddedModule("fleet.kernel")
     embeddedModule("fleet.multiplatform.shims")
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")
     embeddedModule("fleet.rhizomedb")
-    embeddedModule("fleet.rpc", includeDependencies = true)
+    embeddedModule("fleet.rpc")
     embeddedModule("fleet.util.codepoints")
     embeddedModule("fleet.util.core")
     embeddedModule("fleet.util.logging.api")
     embeddedModule("fleet.util.serialization")
-    embeddedModule("fleet.rpc.server", includeDependencies = true)
+    embeddedModule("fleet.rpc.server")
   }
 
   /**
