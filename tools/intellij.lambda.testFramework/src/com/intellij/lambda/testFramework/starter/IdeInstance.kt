@@ -12,6 +12,8 @@ import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
 import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = starterLogger<IdeInstance>()
 
@@ -66,8 +68,10 @@ object IdeInstance {
   fun cleanup() = synchronized(this) {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(testSuiteSupervisorScope.coroutineContext) {
-      catchAll("IDE instance cleanup") {
-        ide.cleanUp()
+      withTimeout(5.seconds) {
+        catchAll("IDE instance cleanup") {
+          ide.cleanUp()
+        }
       }
     }
   }
