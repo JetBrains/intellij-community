@@ -10,6 +10,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
@@ -175,7 +176,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
           try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-            myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+            WriteIntentReadAction.run((Runnable)() -> {
+              myCallback.consume(ProjectSettingsStepBase.this, getPeer());
+            });
           }
         }
       }
