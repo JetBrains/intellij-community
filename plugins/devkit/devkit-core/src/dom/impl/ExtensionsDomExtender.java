@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static java.util.Collections.singleton;
+
 public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   private static final DomExtender<Extension> EXTENSION_EXTENDER = new ExtensionDomExtender();
 
@@ -42,9 +45,20 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   public void registerExtensions(final @NotNull Extensions extensions, final @NotNull DomExtensionsRegistrar registrar) {
     Project project = extensions.getManager().getProject();
     VirtualFile currentFile = getVirtualFile(extensions);
+
     if (currentFile == null || DumbService.isDumb(project)) return;
 
-    Set<VirtualFile> files = getVisibleFiles(project, currentFile);
+    Set<VirtualFile> files;
+    if (currentFile instanceof VirtualFileWithId) {
+      files = getVisibleFiles(project, currentFile);
+    }
+    else if (currentFile instanceof VirtualFileWindow) {
+      // injected code, consider it the context of all project files
+      files = new HashSet<>(PluginIdModuleIndex.getFiles(project, ""));
+    }
+    else {
+      return;
+    }
 
     String epPrefix = extensions.getEpPrefix();
     Map<String, Supplier<ExtensionPoint>> points = ExtensionPointIndex.getExtensionPoints(project, files, epPrefix);
@@ -60,8 +74,7 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
   }
 
   private static @Nullable VirtualFile getVirtualFile(DomElement domElement) {
-    final VirtualFile file = DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
-    return file instanceof VirtualFileWithId ? file : null;
+    return DomUtil.getFile(domElement).getOriginalFile().getVirtualFile();
   }
 
   private static Set<VirtualFile> getVisibleFiles(Project project, @NotNull VirtualFile file) {
@@ -98,7 +111,7 @@ public final class ExtensionsDomExtender extends DomExtender<Extensions> {
     Set<String> result = new HashSet<>();
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
-    result.addAll(PluginIdDependenciesIndex.getPluginAndDependsIds(project, Collections.singleton(currentFile)));
+    result.addAll(PluginIdDependenciesIndex.getPluginAndDependsIds(project, singleton(currentFile)));
 
     final String pluginId = PluginIdDependenciesIndex.getPluginId(project, currentFile);
     if (pluginId != null) {
