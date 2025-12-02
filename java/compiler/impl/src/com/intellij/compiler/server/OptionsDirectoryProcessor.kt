@@ -21,7 +21,7 @@ internal fun transferOptionsToRemote(optionsDir: Path, project: Project): Path {
   val eelDescriptor = project.getEelDescriptor()
   val machine = project.getEelMachine()
 
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", true)) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return transferLocalContentToRemote(optionsDir, EelPathUtils.TransferTarget.Temporary(eelDescriptor))
   }
   val internalName = machine.internalName
