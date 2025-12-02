@@ -93,8 +93,9 @@ class BazelCompilationContext(
     val result = LinkedHashSet<Path>()
     enumerator.processModuleAndLibraries(
       { depModule ->
-        for (path in moduleOutputProvider.getModuleOutputRoots(depModule, forTests = forTests)) {
-          result.add(path)
+        result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = forTests))
+        if (forTests) {  // incl. production
+          result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = false))
         }
       },
       { library ->
