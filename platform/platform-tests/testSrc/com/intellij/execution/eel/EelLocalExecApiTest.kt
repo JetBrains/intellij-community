@@ -166,7 +166,7 @@ class EelLocalExecApiTest {
       // Test tty api
       logger.warn("Test tty api")
       val endHelloIndex = if (helloAndTermInfoAreInStdout) {
-        // Since hello is also in stdout, we need to find its end to look for the begining of the next output
+        // Since hello is also in stdout, we need to find its end to look for the beginning of the next output
         output.get(STDOUT).indexOf(HELLO) + HELLO.length
       }
       else {
@@ -177,13 +177,14 @@ class EelLocalExecApiTest {
       var ttyState: TTYState?
       withTimeout(30.seconds) {
         while (true) {
-          val line = output.get(STDOUT).substring(endHelloIndex)
-          ttyState = TTYState.deserializeIfValid(line, logger::warn)
+          val fullLine = output.get(STDOUT)
+          val line = fullLine.substring(endHelloIndex)
+          ttyState = TTYState.deserializeIfValid(line, logger::warn) ?: TTYState.deserializeIfValid(fullLine, logger::warn)
           if (ttyState != null) {
             break
           }
           else {
-            logger.warn("No tty in $line")
+            logger.warn("No tty in $line (before cut we had $fullLine)")
             delay(3.seconds)
           }
         }
