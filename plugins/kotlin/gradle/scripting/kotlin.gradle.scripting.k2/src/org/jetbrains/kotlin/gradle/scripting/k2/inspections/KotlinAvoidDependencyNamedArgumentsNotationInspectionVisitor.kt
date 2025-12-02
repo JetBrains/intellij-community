@@ -35,12 +35,12 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
     private fun createPotentialFix(callExpression: KtCallExpression): GradleDependencyNamedArgumentsFix? {
         val argList = callExpression.valueArgumentList ?: return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)?.text ?: return null
-        val name = findNamedOrPositionalArgument(argList, "name", 1)?.text ?: return null
-        val version = findNamedOrPositionalArgument(argList, "version", 2)?.text
-        val targetConfig = findNamedOrPositionalArgument(argList, "configuration", 3)?.text
-        val classifier = findNamedOrPositionalArgument(argList, "classifier", 4)?.text
-        val ext = findNamedOrPositionalArgument(argList, "ext", 5)?.text
+        val group = argList.findNamedOrPositionalArgument("group", 0)?.text ?: return null
+        val name = argList.findNamedOrPositionalArgument("name", 1)?.text ?: return null
+        val version = argList.findNamedOrPositionalArgument("version", 2)?.text
+        val targetConfig = argList.findNamedOrPositionalArgument("configuration", 3)?.text
+        val classifier = argList.findNamedOrPositionalArgument("classifier", 4)?.text
+        val ext = argList.findNamedOrPositionalArgument("ext", 5)?.text
 
         // check that all arguments are single-line expressions
         if (group.contains('\n') || name.contains('\n') || version?.contains('\n') == true ||

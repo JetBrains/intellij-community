@@ -87,11 +87,11 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val argNames = args.mapNotNull { it.getArgumentName()?.asName?.identifier }.toSet()
         if (!REQUIRED_NAMED_ARGS.containsAll(argNames)) return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
+        val group = argList.findNamedOrPositionalArgument("group", 0)?.evaluateString()
             ?: return null
-        val name = findNamedOrPositionalArgument(argList, "name", 1)?.evaluateString()
+        val name = argList.findNamedOrPositionalArgument("name", 1)?.evaluateString()
             ?: return null
-        val version = findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
+        val version = argList.findNamedOrPositionalArgument("version", 2)?.evaluateString()
             ?: return null
 
         return if (isKotlinStdLib(group, name)) version else null
