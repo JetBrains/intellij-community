@@ -98,7 +98,7 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     for (int i = 0; i < groups.size(); i++) {
       Pair<Integer, CompletionGroup> group = groups.get(i);
       SeparatorLookupElement separatorLookupElement = new SeparatorLookupElement(group.second.displayName());
-      registerMatcher(separatorLookupElement, new AlwaysSeparatorMatcher());
+      registerMatcher(separatorLookupElement, AlwaysSeparatorMatcher.INSTANCE);
       associateSorter(separatorLookupElement, new CompletionSorterImpl(new ArrayList<>()));
       model.add(group.first + i, separatorLookupElement);
     }

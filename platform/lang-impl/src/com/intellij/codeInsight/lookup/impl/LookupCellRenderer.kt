@@ -982,13 +982,13 @@ internal class SeparatorLookupElement(
   }
 }
 
-internal class AlwaysSeparatorMatcher : PrefixMatcher(""){
+internal object AlwaysSeparatorMatcher : PrefixMatcher(""){
   override fun prefixMatches(name: String): Boolean {
     return true
   }
 
   override fun cloneWithPrefix(prefix: String): PrefixMatcher {
-    return AlwaysSeparatorMatcher()
+    return AlwaysSeparatorMatcher
   }
 }
 
