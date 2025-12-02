@@ -67,6 +67,7 @@ object CoroutinesIds {
 
         val count: CallableId = CallableId(PACKAGE, Name.identifier("count"))
         val filter: CallableId = CallableId(PACKAGE, Name.identifier("filter"))
+        val filterIsInstance: CallableId = CallableId(PACKAGE, Name.identifier("filterIsInstance"))
         val filterNotNull: CallableId = CallableId(PACKAGE, Name.identifier("filterNotNull"))
         val first: CallableId = CallableId(PACKAGE, Name.identifier("first"))
         val firstOrNull: CallableId = CallableId(PACKAGE, Name.identifier("firstOrNull"))

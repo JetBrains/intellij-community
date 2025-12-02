@@ -4358,6 +4358,30 @@ public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspec
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/coroutines/simplifiableFlowCall")
+        public static class SimplifiableFlowCall extends AbstractLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("filterIsInstanceSimple.kt")
+            public void testFilterIsInstanceSimple() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCall/filterIsInstanceSimple.kt");
+            }
+
+            @TestMetadata("filterNotNullSimple.kt")
+            public void testFilterNotNullSimple() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCall/filterNotNullSimple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain")
         public static class SimplifiableFlowCallChain extends AbstractK1LocalInspectionTest {
             @java.lang.Override
