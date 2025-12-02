@@ -1054,17 +1054,6 @@ c:com.intellij.ide.util.DelegatingProgressIndicator
 - start():V
 - startNonCancelableSection():V
 - stop():V
-f:com.intellij.ide.util.PropertiesComponentExKt
-- sf:propComponentProperty(com.intellij.openapi.project.Project,I):kotlin.properties.ReadWriteProperty
-- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String):kotlin.properties.ReadWriteProperty
-- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):kotlin.properties.ReadWriteProperty
-- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,Z):kotlin.properties.ReadWriteProperty
-- sf:propComponentProperty(com.intellij.openapi.project.Project,Z):kotlin.properties.ReadWriteProperty
-- bs:propComponentProperty$default(com.intellij.openapi.project.Project,I,I,java.lang.Object):kotlin.properties.ReadWriteProperty
-- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,I,java.lang.Object):kotlin.properties.ReadWriteProperty
-- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,I,java.lang.Object):kotlin.properties.ReadWriteProperty
-- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,Z,I,java.lang.Object):kotlin.properties.ReadWriteProperty
-- bs:propComponentProperty$default(com.intellij.openapi.project.Project,Z,I,java.lang.Object):kotlin.properties.ReadWriteProperty
 c:com.intellij.ide.util.treeView.NodeRenderer
 - com.intellij.ui.ColoredTreeCellRenderer
 - <init>():V

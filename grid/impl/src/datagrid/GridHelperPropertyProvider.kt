@@ -6,15 +6,15 @@ import kotlin.properties.ReadWriteProperty
 const val IS_INSIDE_NOTEBOOK_DEFAULT_VALUE: Boolean = true
 
 interface GridHelperPropertyProvider {
-  var defaultPageSizeProperty: Int
-  var defaultLimitPageSizeProperty: Boolean
+  var defaultPageSize: Int
+  var defaultLimitPageSize: Boolean
 }
 
 open class GridHelperPropertyProviderImpl(
   private val isInsideNotebook: Boolean = IS_INSIDE_NOTEBOOK_DEFAULT_VALUE,
 ): GridHelperPropertyProvider {
-  override var defaultPageSizeProperty: Int by getDefaultPageSizeProperty()
-  override var defaultLimitPageSizeProperty: Boolean by getDefaultLimitPageSizeProperty()
+  override var defaultPageSize: Int by getDefaultPageSizeProperty()
+  override var defaultLimitPageSize: Boolean by getDefaultLimitPageSizeProperty()
 
   protected fun getDefaultPageSizeProperty(
     defaultValueInsideNotebook: Int = 10,

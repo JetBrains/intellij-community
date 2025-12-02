@@ -106,6 +106,19 @@ com.intellij.ide.dnd.DropActionHandler
 com.intellij.ide.highlighter.FileTypeRegistrar
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:initFileType(com.intellij.openapi.fileTypes.FileType):V
+f:com.intellij.ide.util.PropertiesComponentExKt
+- sf:propComponentProperty(com.intellij.openapi.project.Project,I):kotlin.properties.ReadWriteProperty
+- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String):kotlin.properties.ReadWriteProperty
+- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,I):kotlin.properties.ReadWriteProperty
+- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):kotlin.properties.ReadWriteProperty
+- sf:propComponentProperty(com.intellij.openapi.project.Project,java.lang.String,Z):kotlin.properties.ReadWriteProperty
+- sf:propComponentProperty(com.intellij.openapi.project.Project,Z):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,I,I,java.lang.Object):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,I,I,java.lang.Object):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,I,java.lang.Object):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,I,java.lang.Object):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,java.lang.String,Z,I,java.lang.Object):kotlin.properties.ReadWriteProperty
+- bs:propComponentProperty$default(com.intellij.openapi.project.Project,Z,I,java.lang.Object):kotlin.properties.ReadWriteProperty
 com.intellij.ide.wizard.Step
 - a:_commit(Z):V
 - a:_init():V
