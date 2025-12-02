@@ -64,7 +64,6 @@ suspend fun generateModuleDescriptorDependencies(
     descriptorCache = cache,
     allowUnresolvableProducts = setOf(
       // TODO: Fix these products' module dependencies
-      "AppCode",
       "CLion",
       "DataSpell",
       "RustRover",

@@ -49,7 +49,7 @@ data class ModuleSet(
  * DSL builder for creating ModuleSets with reduced boilerplate.
  */
 @ProductDslMarker
-class ModuleSetBuilder {
+class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) {
   private val modules = mutableListOf<ContentModule>()
   private val nestedSets = mutableListOf<ModuleSet>()
 
@@ -63,7 +63,7 @@ class ModuleSetBuilder {
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String, includeDependencies: Boolean = false) {
+  fun embeddedModule(name: String, includeDependencies: Boolean = defaultIncludeDependencies) {
     modules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED, includeDependencies))
   }
 
@@ -104,10 +104,24 @@ class ModuleSetBuilder {
  * fun corePlatform() = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core") {
  *   // Must include all dependencies - validated in isolation
  * }
+ *
+ * // With includeDependencies default for all embedded modules:
+ * fun corePlatform() = moduleSet("core.platform", includeDependencies = true) {
+ *   embeddedModule("intellij.platform.util.ex")  // inherits includeDependencies=true
+ *   embeddedModule("intellij.platform.core")     // inherits includeDependencies=true
+ *   embeddedModule("some.module", includeDependencies = false)  // explicit override
+ * }
  * ```
  */
-inline fun moduleSet(name: String, alias: String? = null, outputModule: String? = null, selfContained: Boolean = false, block: ModuleSetBuilder.() -> Unit): ModuleSet {
-  val (modules, nestedSets) = ModuleSetBuilder().apply(block).build()
+inline fun moduleSet(
+  name: String,
+  alias: String? = null,
+  outputModule: String? = null,
+  selfContained: Boolean = false,
+  includeDependencies: Boolean = false,
+  block: ModuleSetBuilder.() -> Unit,
+): ModuleSet {
+  val (modules, nestedSets) = ModuleSetBuilder(defaultIncludeDependencies = includeDependencies).apply(block).build()
   return ModuleSet(name = name, modules = modules, nestedSets = nestedSets, alias = alias, outputModule = outputModule, selfContained = selfContained)
 }
 

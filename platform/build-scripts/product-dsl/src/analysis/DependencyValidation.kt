@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.analysis
 
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.AnsiColors
 import org.jetbrains.intellij.build.productLayout.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.ModuleSet
@@ -220,32 +221,58 @@ internal fun validateProductModuleSets(
     }
     
     // Validate module dependencies within product scope
+    // Note: For non-embedded modules, we use a heuristic: if a dependency has an XML
+    // descriptor but is not in the product's content modules, we assume it's a plugin
+    // module and skip validation. This is because non-embedded content modules can
+    // depend on plugins (bundled or not). This heuristic does not verify the plugin
+    // is actually bundled with the product - that's a separate validation concern.
     val missingDependencies = mutableMapOf<String, MutableSet<String>>()
-    
+
     for (moduleName in productIndex.allModules) {
       val info = descriptorCache.getOrAnalyze(moduleName) ?: continue
       val reachableModules = productIndex.moduleToReachableModules[moduleName] ?: emptySet()
-      
+      val isEmbedded = moduleName in productIndex.embeddedModules
+
       // Check direct dependencies
       for (dependency in info.dependencies) {
-        if (dependency !in reachableModules && dependency !in KNOWN_MISSING_DEPENDENCIES) {
+        if (dependency in reachableModules || dependency in KNOWN_MISSING_DEPENDENCIES) {
+          continue // OK - in content or known exception
+        }
+
+        if (isEmbedded) {
+          // Embedded modules: strict - must be in content
           missingDependencies.getOrPut(moduleName) { mutableSetOf() }.add(dependency)
+        } else {
+          // Non-embedded modules: heuristic - if has descriptor, assume plugin module
+          if (!descriptorCache.hasDescriptor(dependency)) {
+            // No descriptor = truly missing
+            missingDependencies.getOrPut(moduleName) { mutableSetOf() }.add(dependency)
+          }
+          // else: has descriptor, assume it's a plugin module - OK
         }
       }
-      
+
       // Check transitive dependencies
       val visited = mutableSetOf(moduleName)
       val queue = ArrayDeque(info.dependencies)
-      
+
       while (queue.isNotEmpty()) {
         val dep = queue.removeFirst()
         if (dep in visited) continue
         visited.add(dep)
-        
+
         if (dep !in reachableModules && dep !in KNOWN_MISSING_DEPENDENCIES) {
-          missingDependencies.getOrPut(moduleName) { mutableSetOf() }.add(dep)
+          if (isEmbedded) {
+            // Embedded modules: strict - must be in content
+            missingDependencies.getOrPut(moduleName) { mutableSetOf() }.add(dep)
+          } else {
+            // Non-embedded modules: heuristic - if has descriptor, assume plugin module
+            if (!descriptorCache.hasDescriptor(dep)) {
+              missingDependencies.getOrPut(moduleName) { mutableSetOf() }.add(dep)
+            }
+          }
         }
-        
+
         val depInfo = descriptorCache.getOrAnalyze(dep)
         if (depInfo != null) {
           queue.addAll(depInfo.dependencies)
@@ -316,6 +343,7 @@ internal fun validateProductModuleSets(
 private data class ProductModuleIndex(
   val productName: String,
   val allModules: Set<String>,  // All modules available in this product
+  val embeddedModules: Set<String>,  // Modules with EMBEDDED loading
   val moduleToReachableModules: Map<String, Set<String>>,  // Product-scoped reachability
   val referencedModuleSets: Set<String>,  // Module set names used by product
 )
@@ -325,18 +353,22 @@ private fun buildProductModuleIndex(
   spec: ProductModulesContentSpec,
 ): ProductModuleIndex {
   val allModules = mutableSetOf<String>()
+  val embeddedModules = mutableSetOf<String>()
   val referencedModuleSets = mutableSetOf<String>()
 
   // Recursively collect all modules from a module set
   fun collectModulesFromSet(moduleSet: ModuleSet) {
     for (module in moduleSet.modules) {
       allModules.add(module.name)
+      if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+        embeddedModules.add(module.name)
+      }
     }
     for (nestedSet in moduleSet.nestedSets) {
       collectModulesFromSet(nestedSet)
     }
   }
-  
+
   // Process all module sets referenced by the product
   // Use moduleSetWithOverrides.moduleSet directly - it already contains the full ModuleSet
   for (moduleSetWithOverrides in spec.moduleSets) {
@@ -344,19 +376,23 @@ private fun buildProductModuleIndex(
     referencedModuleSets.add(moduleSet.name)
     collectModulesFromSet(moduleSet)
   }
-  
+
   // Add additional individual modules
   for (module in spec.additionalModules) {
     allModules.add(module.name)
+    if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+      embeddedModules.add(module.name)
+    }
   }
-  
+
   // Build product-scoped reachability: each module can see all other modules in the product
   // This is different from module set validation where modules can only see within their set
   val moduleToReachableModules = allModules.associateWith { allModules }
-  
+
   return ProductModuleIndex(
     productName = productName,
     allModules = allModules,
+    embeddedModules = embeddedModules,
     moduleToReachableModules = moduleToReachableModules,
     referencedModuleSets = referencedModuleSets,
   )

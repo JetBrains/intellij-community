@@ -75,8 +75,6 @@ object CoreModuleSets {
     moduleSet(rpcMinimal())
 
     embeddedModule("intellij.platform.ide.core", includeDependencies = true)
-
-    // Note: intellij.platform.kernel now comes from rpcMinimal() above
   }
 
   /**
@@ -168,8 +166,6 @@ object CoreModuleSets {
    * - Editor modules (editor, editor.backend)
    * - Search modules (searchEverywhere with backend/frontend)
    * - Inline completion
-   *
-   * **Total:** ~162 modules including all dependencies
    *
    * **Use when:** Building lightweight IDE products that provide code editing functionality
    *
