@@ -16,13 +16,12 @@ import java.util.Collections;
 import java.util.List;
 
 final class NullableStuffInspectionUtil {
-  static @NotNull @NlsSafe String getNullabilityConflictPresentation(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
+  static @NotNull @NlsSafe HtmlChunk getNullabilityConflictPresentation(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
     HtmlChunk expectedChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.EXPECTED);
     HtmlChunk actualChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.ACTUAL);
-    if (expectedChunk.isEmpty() || actualChunk.isEmpty()) return "";
+    if (expectedChunk.isEmpty() || actualChunk.isEmpty()) return HtmlChunk.empty();
     return HtmlChunk.tag("table")
-      .children(expectedChunk, actualChunk)
-      .toString();
+      .children(expectedChunk, actualChunk);
   }
 
   private static @NotNull HtmlChunk getSideChunk(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context,
