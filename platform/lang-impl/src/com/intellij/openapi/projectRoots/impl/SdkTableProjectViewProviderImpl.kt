@@ -21,7 +21,7 @@ import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
 
 private fun EelMachine.ownsSdk(sdk: Sdk): Boolean {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return true
   }
 
@@ -50,7 +50,7 @@ private class SdkTableProjectViewProviderImpl(private val project: Project) : Sd
 
   init {
     val registryValue = Registry.get("ide.workspace.model.per.environment.model.separation")
-    perEnvironmentModelSeparation = registryValue.asBoolean()
+    perEnvironmentModelSeparation = Registry.`is`("ide.workspace.model.per.environment.model.separation", false)
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         perEnvironmentModelSeparation = value.asBoolean()

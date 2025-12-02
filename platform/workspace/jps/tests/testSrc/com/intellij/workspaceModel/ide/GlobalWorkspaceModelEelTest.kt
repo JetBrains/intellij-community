@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -40,7 +39,7 @@ class GlobalWorkspaceModelEelTest {
      * even before [com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache] is initialized
      * (see [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener])
      */
-    Assumptions.assumeTrue(Registry.get("ide.workspace.model.per.environment.model.separation").asBoolean())
+    Assumptions.assumeTrue(Registry.`is`("ide.workspace.model.per.environment.model.separation", false))
   }
 
   @Test

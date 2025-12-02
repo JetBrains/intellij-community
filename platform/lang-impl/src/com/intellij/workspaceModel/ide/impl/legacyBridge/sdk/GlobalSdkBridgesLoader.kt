@@ -52,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap
  * @see com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
  */
 private fun EelMachine.ownsSdkEntry(sdkEntity: SdkEntity): Boolean {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return true
   }
 

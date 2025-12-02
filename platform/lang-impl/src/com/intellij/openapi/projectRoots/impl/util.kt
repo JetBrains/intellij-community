@@ -53,7 +53,7 @@ fun findClashingSdk(project: Project?, sdkName: String, sdk: Sdk): SdkEntity? {
  * @see com.intellij.platform.eel.provider.getEelDescriptor
  */
 fun getEffectiveWorkspaceEelDescriptorOfHomePath(homePath: String): EelDescriptor {
-  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
     return LocalEelDescriptor
   }
   return try {
