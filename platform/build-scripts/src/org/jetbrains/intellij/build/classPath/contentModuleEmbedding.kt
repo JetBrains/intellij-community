@@ -406,7 +406,6 @@ internal class XIncludeElementResolverImpl(
 private val badIncludesForPluginCollector = hashSetOf(
   // rider includes some CWM files
   "META-INF/designer-gradle.xml",
-  "META-INF/cwmBackendConnection.xml",
   // android module does not have dependency at all in iml
   "META-INF/screenshot-testing-gradle.xml",
   "META-INF/screenshot-testing.xml",
