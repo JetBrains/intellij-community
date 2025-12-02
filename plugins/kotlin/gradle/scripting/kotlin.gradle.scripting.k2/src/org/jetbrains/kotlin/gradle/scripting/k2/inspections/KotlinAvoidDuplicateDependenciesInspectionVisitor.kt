@@ -11,9 +11,11 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
@@ -183,21 +185,20 @@ private class ShowDuplicateElementsFix(
 
     override fun perform(context: ActionContext, element: NavigatablePsiElement): ModCommand {
         val navigateActions = this.duplicatePsiElements.map { NavigateToAction(it) }
-        val message = GradleInspectionBundle.message("intention.choose.action.name.choose.duplicate.dependency")
+        val message = GradleInspectionBundle.message("intention.choose.action.name.select.duplicate.dependency")
         return ModCommand.chooseAction(message, navigateActions)
     }
 
     override fun generatePreview(context: ActionContext?, element: NavigatablePsiElement?): IntentionPreviewInfo {
-        val builder = HtmlBuilder()
-        val elements = duplicatePsiElements
-        for (i in elements.indices) {
-            if (i != 0) {
-                builder.append(HtmlChunk.br())
-            }
-            val current = elements[i]
-            builder.append(IntentionPreviewInfo.navigatePreviewHtmlChunk(current.getContainingFile(), current.getTextOffset()))
+        val chunks = duplicatePsiElements.map {
+            HtmlBuilder()
+                .append(HtmlChunk.htmlEntity("&rarr;"))
+                .append(" ")
+                .append(getLineMessage(it.containingFile, it.textRange))
+                .toFragment()
         }
-        return IntentionPreviewInfo.Html(builder.toFragment())
+        val content = HtmlBuilder().appendWithSeparators(HtmlChunk.br(), chunks).toFragment()
+        return IntentionPreviewInfo.Html(content)
     }
 
     private val duplicatePsiElements: List<NavigatablePsiElement>
@@ -211,8 +212,7 @@ private class ShowDuplicateElementsFix(
             GradleInspectionBundle.message("intention.family.name.navigate.to.duplicate.dependency")
 
         override fun getPresentation(context: ActionContext, element: NavigatablePsiElement): Presentation {
-            val lineNumber = element.getContainingFile().getFileDocument().getLineNumber(element.getTextOffset())
-            val message = GradleInspectionBundle.message("intention.name.duplicate.dependency.line.number", lineNumber + 1)
+            val message = getLineMessage(element.containingFile, element.textRange)
             return Presentation.of(message).withHighlighting(element.getTextRange())
         }
 
@@ -222,6 +222,22 @@ private class ShowDuplicateElementsFix(
 
         override fun perform(context: ActionContext, element: NavigatablePsiElement): ModCommand {
             return ModCommand.select(element)
+        }
+    }
+
+    companion object {
+        private fun getLineMessage(file: PsiFile, textRange: TextRange): @IntentionName String {
+            val firstLineNumber = file.fileDocument.getLineNumber(textRange.startOffset) + 1
+            val lastLineNumber = file.fileDocument.getLineNumber(textRange.endOffset) + 1
+            return if (firstLineNumber == lastLineNumber) {
+                GradleInspectionBundle.message("intention.name.duplicate.dependency.line.number", firstLineNumber)
+            } else {
+                GradleInspectionBundle.message(
+                    "intention.name.duplicate.dependency.line.number.range",
+                    firstLineNumber,
+                    lastLineNumber
+                )
+            }
         }
     }
 }
