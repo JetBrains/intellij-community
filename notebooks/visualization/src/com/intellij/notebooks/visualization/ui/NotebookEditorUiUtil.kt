@@ -115,7 +115,7 @@ val EditorEx.textEditingAreaWidth: Int
 
 private fun EditorEx.getFirstFullyVisibleLogicalLine(): Int? {
   val visibleArea = contentComponent.visibleRect
-  val startY = visibleArea.y
+  val startY = visibleArea.y + stickyLinesPanelHeight
   val endY = visibleArea.y + visibleArea.height
 
   val visibleLine = xyToLogicalPosition(Point(0, startY)).line
