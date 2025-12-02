@@ -12,10 +12,8 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
-import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.readAllBytes
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
@@ -54,7 +52,7 @@ class EelLocalExecApiTest {
   }
 
 
-  enum class ExitType() {
+  enum class ExitType {
     KILL, TERMINATE, INTERRUPT, EXIT_WITH_COMMAND
   }
 
@@ -139,13 +137,12 @@ class EelLocalExecApiTest {
       }
     }
 
-    // For TTY, stderr is the same as stdout, so helloAndTermInfoAreInStdout
-    val (outputType, helloAndTermInfoAreInStdout) =
+    val outputType =
       if (ptyManagement.hasTTY) {
-        Pair(OutputType.TTY(PTY_COLS, PTY_ROWS), true)
+        OutputType.TTY(PTY_COLS, PTY_ROWS)
       }
       else {
-        Pair(OutputType.NoTTY(process.stderr), false)
+        OutputType.NoTTY(process.stderr)
       }
     ProcessOutputReader(process.stdout, outputType).use { output ->
 
@@ -163,22 +160,11 @@ class EelLocalExecApiTest {
       }
 
 
-      // Test tty api
-      logger.warn("Test tty api")
-      val endHelloIndex = if (helloAndTermInfoAreInStdout) {
-        // Since hello is also in stdout, we need to find its end to look for the beginning of the next output
-        output.get(STDOUT).indexOf(HELLO) + HELLO.length
-      }
-      else {
-        0
-      }
-      assert(endHelloIndex > -1)
-
       var ttyState: TTYState?
       withTimeout(30.seconds) {
         while (true) {
           val fullLine = output.get(STDOUT)
-          val line = fullLine.substring(endHelloIndex)
+          val line = fullLine.replace(DROP_HELLO, "")
           ttyState = TTYState.deserializeIfValid(line, logger::warn) ?: TTYState.deserializeIfValid(fullLine, logger::warn)
           if (ttyState != null) {
             break
@@ -236,7 +222,9 @@ class EelLocalExecApiTest {
         }
         else {
           val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)", exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          assertThat("Exit code must be signal code or +128 (if run using shell)",
+                     exitCode,
+                     anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
         }
       }
       ExitType.INTERRUPT -> {
@@ -317,18 +305,6 @@ class EelLocalExecApiTest {
   }
 
   /**
-   * Reads all bytes from the channel asynchronously. Otherwise, a PTY process
-   * launched with `unixOpenTtyToPreserveOutputAfterTermination=true` won't exit.
-   *
-   * @see `com.pty4j.PtyProcessBuilder.setUnixOpenTtyToPreserveOutputAfterTermination`
-   */
-  private fun EelReceiveChannel.readAllBytesAsync(coroutineScope: CoroutineScope) {
-    coroutineScope.launch {
-      readAllBytes()
-    }
-  }
-
-  /**
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
@@ -339,3 +315,4 @@ class EelLocalExecApiTest {
     get() = this is EelWindowsProcess && convertToJavaProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
 }
 
+private val DROP_HELLO = Regex("^.*$HELLO")
