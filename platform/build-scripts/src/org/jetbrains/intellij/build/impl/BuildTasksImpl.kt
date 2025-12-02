@@ -10,8 +10,6 @@ import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -105,19 +103,19 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
 
     // build required dist/lib components for scrambling of plugins such as Marketplace
-    val traceContext = Context.current().asContextElement()
-    val buildPlatformLibJob = coroutineScope {
-      async(traceContext + CoroutineName("build platform lib")) {
-        buildPlatform(
-          ModuleOutputPatcher(), distState, searchableOptionSet, false, context
-        )
-      }
-    }
+    //val traceContext = Context.current().asContextElement()
+    //val buildPlatformLibJob = coroutineScope {
+    //  async(traceContext + CoroutineName("build platform lib")) {
+    //    buildPlatform(
+    //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
+    //    )
+    //  }
+    //}
 
     buildNonBundledPlugins(
       pluginsToPublish = pluginsToPublish,
       compressPluginArchive = context.options.compressZipFiles,
-      buildPlatformLibJob = buildPlatformLibJob,
+      buildPlatformLibJob = null /* buildPlatformLibJob */,
       state = distState,
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
