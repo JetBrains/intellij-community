@@ -49,12 +49,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonPrimitive
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 
@@ -83,7 +84,10 @@ class McpServerService(val cs: CoroutineScope) {
   class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
 
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
-  @OptIn(ExperimentalAtomicApi::class)
+
+  private class ServerAndCount(var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>?, var userCount: Int)
+  private val privateServer: ServerAndCount = ServerAndCount(null, 0)
+  private val privateServerMutex = Mutex()
   private val callId = AtomicInteger(0)
 
   private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
@@ -122,7 +126,16 @@ class McpServerService(val cs: CoroutineScope) {
   suspend fun authorizedSession(mcpSessionOptions: McpSessionOptions, block: suspend CoroutineScope.(port: Int, authTokenName: String, authTokenValue: String) -> Unit) {
     // open server here on random port
     val uuid = UUID.randomUUID().toString()
-    val server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true)
+
+    val server = privateServerMutex.withLock {
+      if (privateServer.server == null) {
+        logger.trace { "No active private server. Starting private MCP server..." }
+        privateServer.server = startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true)
+      }
+      privateServer.userCount++
+      logger.trace { "Current private server user count before session $uuid: ${privateServer.userCount}" }
+      return@withLock privateServer.server ?: error("Server must not be null")
+    }
     try {
       val occupiedPort = server.engine.resolvedConnectors().first().port
       logger.trace { "Authorized MCP session started on port $occupiedPort" }
@@ -133,20 +146,29 @@ class McpServerService(val cs: CoroutineScope) {
     }
     finally {
       activeAuthorizedSessions.remove(uuid)
-      try {
-        // if to call `stopSuspend` without NonCancellable in the case of the current coroutine cancellation the stopSuspend won't run
-        // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
-        withContext(NonCancellable) {
-          withContext(Dispatchers.IO) {
-            // timeout exception will be reported in the catch below
-            withTimeout(2000) {
-              server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
+      privateServerMutex.withLock {
+        privateServer.userCount--
+        logger.trace { "Current private server user count after session $uuid: ${privateServer.userCount}" }
+        if (privateServer.userCount == 0) {
+          logger.trace { "No active private server users. Stopping private MCP server..." }
+          try {
+            // if to call `stopSuspend` without NonCancellable in the case of the current coroutine cancellation the stopSuspend won't run
+            // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
+            withContext(NonCancellable) {
+              withContext(Dispatchers.IO) {
+                // timeout exception will be reported in the catch below
+                withTimeout(2000) {
+                  server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
+                }
+              }
             }
           }
+          catch (t: Throwable) {
+            logger.error("Failed to gracefully shutdown authorized MCP server", t)
+          }
+          privateServer.server = null
+          logger.trace { "Private MCP server stopped" }
         }
-      }
-      catch (t: Throwable) {
-        logger.error("Failed to gracefully shutdown authorized MCP server", t)
       }
       logger.trace { "Authorized MCP session stopped" }
     }
