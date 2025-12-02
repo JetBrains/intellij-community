@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -478,7 +479,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintButtonLook(g);
   }
 
-  // used in Rider, please don't change visibility
+  @ApiStatus.Internal
   protected void jComponentPaint(Graphics g) {
     super.paintComponent(g);
   }
@@ -555,6 +556,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  @ApiStatus.Internal
   protected void resetMouseState() {
     myMouseDown = false;
     ourGlobalMouseDown = false;
@@ -570,6 +572,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
 
+  @ApiStatus.Internal
   protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
     return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }

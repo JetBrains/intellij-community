@@ -549,7 +549,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionButton
 - <init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation,java.lang.String,java.util.function.Supplier):V
 - p:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - addNotify():V
-- p:checkSkipPressForEvent(java.awt.event.MouseEvent):Z
 - click():V
 - p:createAndShowActionGroupPopup(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.ui.popup.JBPopup
 - getAccessibleContext():javax.accessibility.AccessibleContext
@@ -569,7 +568,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionButton
 - f:isMouseDown():Z
 - f:isRollover():Z
 - f:isSelected():Z
-- p:jComponentPaint(java.awt.Graphics):V
 - p:onMousePressed(java.awt.event.MouseEvent):V
 - p:onMouseReleased(java.awt.event.MouseEvent):V
 - p:paintButtonLook(java.awt.Graphics):V
@@ -579,7 +577,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionButton
 - p:presentationPropertyChanged(java.beans.PropertyChangeEvent):V
 - p:processMouseEvent(java.awt.event.MouseEvent):V
 - removeNotify():V
-- p:resetMouseState():V
 - p:setCustomToolTipText(java.lang.String):V
 - setIcon(javax.swing.Icon):V
 - setIconInsets(java.awt.Insets):V
