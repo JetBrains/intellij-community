@@ -1,6 +1,5 @@
 package com.intellij.ide.starter.ide
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.starter.buildTool.BuildTool
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
@@ -65,6 +64,14 @@ open class IDETestContext(
 ) {
   companion object {
     const val OPENTELEMETRY_FILE: String = "opentelemetry.json"
+
+    private val SEARCH_EVERYWHERE_REGISTRY_KEYS: List<String> get() = listOf(
+      "search.everywhere.new.enabled",
+      "search.everywhere.new.internal.enabled",
+      "search.everywhere.new.rider.enabled",
+      "search.everywhere.new.clion.enabled",
+      "search.everywhere.new.cwm.client.enabled"
+    )
   }
 
   fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null): IDETestContext {
@@ -317,12 +324,12 @@ open class IDETestContext(
 
   @Suppress("TestOnlyProblems")
   fun disableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    SearchEverywhereFeature.allRegistryKeys.forEach { addSystemProperty(it, false) }
+    SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, false) }
   }
 
   @Suppress("TestOnlyProblems")
   fun enableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    SearchEverywhereFeature.allRegistryKeys.forEach { addSystemProperty(it, true) }
+    SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, true) }
   }
 
   fun withKotlinPluginK2(): IDETestContext = applyVMOptionsPatch {
