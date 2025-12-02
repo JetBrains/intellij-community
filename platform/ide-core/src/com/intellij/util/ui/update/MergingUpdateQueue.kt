@@ -38,8 +38,6 @@ import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 import kotlin.coroutines.coroutineContext
 
-private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
-
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
@@ -123,12 +121,12 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     activationComponent: JComponent? = null,
     executeInDispatchThread: Boolean = true,
   ) : this(
-    name = name,
-    mergingTimeSpan = mergingTimeSpan,
-    isActive = isActive,
-    modalityStateComponent = modalityStateComponent,
-    parent = parent,
-    activationComponent = activationComponent,
+    name,
+    mergingTimeSpan,
+    isActive,
+    modalityStateComponent,
+    parent,
+    activationComponent,
     thread = if (executeInDispatchThread) ThreadToUse.SWING_THREAD else ThreadToUse.POOLED_THREAD,
     coroutineScope = null,
   )
@@ -138,29 +136,17 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       @Suppress("LeakingThis")
       Disposer.register(parent, this)
     }
-
-    waiterForMerge = if (coroutineScope == null) {
+    waiterForMerge =
       @Suppress("LeakingThis")
       SingleAlarm(
         task = getFlushTask(),
         delay = mergingTimeSpan,
         // due to historical reasons, we don't pass parent disposable if EDT
-        parentDisposable = if (thread == ThreadToUse.SWING_THREAD) null else this,
+        parentDisposable = if (thread == ThreadToUse.SWING_THREAD || coroutineScope != null) null else this,
         threadToUse = thread,
-        modalityState = null,
-        coroutineScope = null,
+        modalityState = if (thread == ThreadToUse.SWING_THREAD && coroutineScope != null) ModalityState.nonModal() else null,
+        coroutineScope,
       )
-    }
-    else {
-      @Suppress("LeakingThis")
-      SingleAlarm(
-        task = getFlushTask(),
-        delay = mergingTimeSpan,
-        parentDisposable = null,
-        threadToUse = thread,
-        coroutineScope = coroutineScope,
-      )
-    }
 
     if (coroutineScope != null) {
       coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
@@ -240,6 +226,8 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         }
       }
     }
+    private val priorityComparator: Comparator<Update> = Comparator.comparingInt { it.priority }
+    private fun isExpired(update: Update): Boolean = update.isDisposed || update.isExpired
   }
 
   fun setMergingTimeSpan(timeSpan: Int) {
@@ -655,4 +643,3 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   }
 }
 
-private fun isExpired(update: Update): Boolean = update.isDisposed || update.isExpired
