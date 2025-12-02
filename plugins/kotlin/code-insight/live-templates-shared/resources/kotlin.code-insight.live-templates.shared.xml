@@ -1,4 +1,8 @@
 <idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.liveTemplates">
+  <dependencies>
+    <plugin id="org.intellij.groovy.live.templates" />
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
 
