@@ -79,14 +79,7 @@ public final class AnnotationParameterInfoHandler implements ParameterInfoHandle
     if (attributeList == null) return null;
     PsiNameValuePair[] attributes = attributeList.getAttributes();
 
-    List<PsiAnnotationMethod> methodList = ContainerUtil.mapNotNull(
-      aClass.getMethods(), method -> {
-        if (PsiUtil.isAnnotationMethod(method)) {
-          return (PsiAnnotationMethod)method;
-        }
-        return null;
-      }
-    );
+    List<PsiAnnotationMethod> methodList = ContainerUtil.filterIsInstance(aClass.getMethods(), PsiAnnotationMethod.class);
 
     return AnnotationParameterInfoUtil.createLightJavaParameterInfo(file, offset, methodList, attributes);
   }

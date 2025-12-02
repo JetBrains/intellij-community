@@ -52,8 +52,7 @@ final class AnnotationParameterInfoUtil {
     if (index == -1) {
       index = attributes.length;
     }
-    int currentParameterIndex = index;
-    UIModel result = new UIModel(rearrangedMethodList, currentParameterIndex);
+    UIModel result = new UIModel(rearrangedMethodList, index);
     return result;
   }
 
