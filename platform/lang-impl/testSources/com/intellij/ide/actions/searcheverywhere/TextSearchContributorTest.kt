@@ -16,7 +16,7 @@ import java.awt.Font.BOLD
 
 class TextSearchContributorTest : BasePlatformTestCase() {
   fun testPresentation() {
-    setRegistryPropertyForTest(SearchEverywhereFeature.registryKey, "false")
+    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
 
     UsageInfo2UsageAdapter.disableAutomaticPresentationCalculationInTests {
       myFixture.addFileToProject("a.txt", """

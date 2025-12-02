@@ -29,7 +29,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
-    setRegistryPropertyForTest(SearchEverywhereFeature.registryKey, "false")
+    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
 
     waitForEssentialFlag = SEParam(
       { AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors") },

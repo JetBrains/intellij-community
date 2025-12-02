@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.ide
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
 import com.intellij.ide.starter.buildTool.BuildTool
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
@@ -314,16 +315,14 @@ open class IDETestContext(
     addSystemProperty("llm.show.ai.promotion.window.on.start", false)
   }
 
+  @Suppress("TestOnlyProblems")
   fun disableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    addSystemProperty("search.everywhere.new.enabled", false)
-    addSystemProperty("search.everywhere.new.rider.enabled", false)
-    addSystemProperty("search.everywhere.new.cwm.client.enabled", false)
+    SearchEverywhereFeature.allRegistryKeys.forEach { addSystemProperty(it, false) }
   }
 
+  @Suppress("TestOnlyProblems")
   fun enableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    addSystemProperty("search.everywhere.new.enabled", true)
-    addSystemProperty("search.everywhere.new.rider.enabled", true)
-    addSystemProperty("search.everywhere.new.cwm.client.enabled", true)
+    SearchEverywhereFeature.allRegistryKeys.forEach { addSystemProperty(it, true) }
   }
 
   fun withKotlinPluginK2(): IDETestContext = applyVMOptionsPatch {

@@ -43,7 +43,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Before
   fun setup() {
-    setRegistryPropertyForTest(SearchEverywhereFeature.registryKey, "false")
+    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
   }
 
   @Test

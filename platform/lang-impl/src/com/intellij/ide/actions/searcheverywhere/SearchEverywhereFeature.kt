@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -10,29 +11,46 @@ import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 object SearchEverywhereFeature {
-  val isSplit: Boolean get() = Registry.`is`(registryKey, false)
+  private const val PLATFORM_KEY = "search.everywhere.new.enabled"
+  private const val PLATFORM_INTERNAL_KEY = "search.everywhere.new.internal.enabled"
+
+  private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
+  private const val CLION_KEY = "search.everywhere.new.clion.enabled"
+  private const val CWM_CLIENT_KEY = "search.everywhere.new.cwm.client.enabled"
+
+  private val platformKey: String get() =
+    if (ApplicationManager.getApplication().isInternal) PLATFORM_INTERNAL_KEY
+    else PLATFORM_KEY
+
+  private val platformBasedProductKey: String? get() =
+    if (PlatformUtils.isRider()) RIDER_KEY
+    else if (PlatformUtils.isCLion()) CLION_KEY
+    else if (isGuest) CWM_CLIENT_KEY
+    else null
+
+  var isSplit: Boolean
+    get() =
+      Registry.`is`(platformKey, false) &&
+      (platformBasedProductKey?.let {
+        Registry.`is`(it, false)
+      } ?: true)
+
+    set(value) {
+      Registry.get(platformKey).setValue(value)
+      platformBasedProductKey?.let {
+        Registry.get(it).setValue(value)
+      }
+    }
 
   private val isGuest: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()
     return (frontendType is FrontendType.Remote && frontendType.isGuest())
   }
 
-  val registryKey: String get() =
-    if (PlatformUtils.isRider()) "search.everywhere.new.rider.enabled"
-    else if (isGuest) "search.everywhere.new.cwm.client.enabled"
-    else "search.everywhere.new.enabled"
-
-  // Enable the first Search Everywhere implementation (`com.intellij.ide.actions.searcheverywhere`).
-  @get:TestOnly
-  val additionalRegistryToTurnOffSplitSEInTests: Map<String, String>
-    get() = mapOf("search.everywhere.new.enabled" to "false",
-                  "search.everywhere.new.rider.enabled" to "false",
-                  "search.everywhere.new.cwm.client.enabled" to "false")
-
-  // Enable the new Search Everywhere implementation (`com.intellij.platform.searchEverywhere`).
-  @get:TestOnly
-  val additionalRegistryToTurnOnSplitSEInTests: Map<String, String>
-    get() = mapOf("search.everywhere.new.enabled" to "true",
-                  "search.everywhere.new.rider.enabled" to "true",
-                  "search.everywhere.new.cwm.client.enabled" to "true")
+  val allRegistryKeys: List<String>
+  @TestOnly get() = listOf(PLATFORM_KEY,
+                           PLATFORM_INTERNAL_KEY,
+                           RIDER_KEY,
+                           CLION_KEY,
+                           CWM_CLIENT_KEY)
 }
