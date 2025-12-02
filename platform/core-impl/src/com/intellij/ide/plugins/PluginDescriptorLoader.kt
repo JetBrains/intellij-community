@@ -623,6 +623,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
         },
         jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
+        pool = zipPool,
         isDeprecatedLoader = isGateway,
       )
     }
@@ -872,6 +873,7 @@ internal fun loadCoreProductPlugin(
   reader: XMLStreamReader2,
   isRunningFromSourcesWithoutDevBuild: Boolean,
   isDeprecatedLoader: Boolean,
+  pool: ZipEntryResolverPool,
   jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
 ): PluginMainDescriptor {
   val dataLoader = object : DataLoader {
@@ -898,6 +900,7 @@ internal fun loadCoreProductPlugin(
     dataLoader = dataLoader,
     xIncludeLoader = xIncludeLoader,
     isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild,
+    pool = pool,
     isDeprecatedLoader = isDeprecatedLoader,
   )
   loadPluginDependencyDescriptors(descriptor = descriptor, loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
@@ -914,6 +917,7 @@ private fun loadContentModuleDescriptors(
   xIncludeLoader: XIncludeLoader,
   isRunningFromSourcesWithoutDevBuild: Boolean,
   isDeprecatedLoader: Boolean,
+  pool: ZipEntryResolverPool,
 ) {
   val moduleDirExists = Files.isDirectory(moduleDir)
   for (module in descriptor.content.modules) {
@@ -1252,6 +1256,7 @@ internal fun testOrDeprecatedLoadDescriptorFromResource(
         dataLoader = dataLoader,
         xIncludeLoader = createXIncludeLoader(pathResolver, dataLoader),
         isRunningFromSourcesWithoutDevBuild = pathResolver.isRunningFromSourcesWithoutDevBuild,
+        pool = pool,
         isDeprecatedLoader = true,
       )
     }
