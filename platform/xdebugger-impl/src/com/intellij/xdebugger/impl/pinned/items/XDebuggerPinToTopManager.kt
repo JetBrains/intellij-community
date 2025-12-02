@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.pinned.items
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -65,7 +66,9 @@ class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
       val node = nodeRef.get() ?: return@Disposable
       val xValuePresentation = node.valuePresentation
       if (node.icon == PlatformDebuggerImplIcons.PinToTop.UnpinnedItem && xValuePresentation != null) {
-        node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
+        WriteIntentReadAction.run {
+          node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
+        }
       }
       activeNode = null
       nodeHoverLifetime = null

@@ -1287,7 +1287,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (event.isConsumed()) {
           return;
         }
-        if (processKeyTyped(event)) {
+        if (WriteIntentReadAction.compute((Computable<Boolean>)() -> processKeyTyped(event))) {
           event.consume();
         }
       }
