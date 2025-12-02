@@ -69,6 +69,7 @@ jvm_library(
     "//libraries/ktor/client-cio:libraries-ktor-client-cio",
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
+    "//platform/eel",
     "//libraries/ktor/io",
     "//platform/execution",
     "//platform/diagnostic/telemetry",
