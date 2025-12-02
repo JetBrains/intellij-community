@@ -100,8 +100,10 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
 
         // kotlin(id) argument
         if (argumentExpression is KtCallExpression && argumentExpression.calleeExpression?.text == "kotlin") {
-            val argumentExpressionInKotlin = argumentExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
-            return argumentExpressionInKotlin.evaluateString()?.let { "kotlin(\"$it\")" }
+            val argList = argumentExpression.valueArgumentList ?: return null
+            val module = argList.findNamedOrPositionalArgument("module", 0)?.evaluateString() ?: return null
+            val version = argList.findNamedOrPositionalArgument("version", 1)?.evaluateString()
+            return if (version != null) "kotlin($module:$version)" else "kotlin($module)"
         }
 
         // version catalog argument
