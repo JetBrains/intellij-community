@@ -40,6 +40,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xdebugger.DapMode;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -245,7 +246,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return true;
     });
 
-    if (Registry.is("debugger.renderers.annotations")) {
+    if (Registry.is("debugger.renderers.annotations") && !DapMode.isDap()) {
       addAnnotationRenderers(allRenderers, project);
     }
 

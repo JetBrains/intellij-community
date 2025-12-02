@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.xdebugger.DapMode;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +30,11 @@ public class RemoteStateState implements RemoteState {
 
   @Override
   public ExecutionResult execute(final Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject, myAutoRestart);
+    if (DapMode.isDap()) {
+      return new DefaultExecutionResult(null, process);
+    }
+    ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
     consoleView.attachToProcess(process);
     return new DefaultExecutionResult(consoleView, process);
   }

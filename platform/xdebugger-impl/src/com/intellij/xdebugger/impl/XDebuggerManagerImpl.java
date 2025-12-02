@@ -115,15 +115,16 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     if (!SplitDebuggerMode.isSplitDebugger() || AppMode.isRemoteDevHost()) {
       startContentSelectionListening(messageBusConnection);
     }
-
-    GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.addEditorMouseMotionListener(listener, this);
-    eventMulticaster.addEditorMouseListener(listener, this);
-    if (ExperimentalUI.isNewUI()) {
-      myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
-      eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
-      eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+    if (!DapMode.isDap()) {
+      GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
+      EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+      eventMulticaster.addEditorMouseMotionListener(listener, this);
+      eventMulticaster.addEditorMouseListener(listener, this);
+      if (ExperimentalUI.isNewUI()) {
+        myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
+        eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
+        eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+      }
     }
   }
 

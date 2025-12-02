@@ -181,8 +181,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   init {
     var contentToReuse = contentToReuse
-    ValueLookupManagerController.getInstance(myProject).startListening()
-    DebuggerInlayListener.getInstance(myProject).startListening()
+    if (!DapMode.isDap()) {
+      ValueLookupManagerController.getInstance(myProject).startListening()
+      DebuggerInlayListener.getInstance(myProject).startListening()
+    }
 
     var oldSessionData: XDebugSessionData? = null
     if (contentToReuse == null) {
@@ -397,9 +399,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     })
     //todo make 'createConsole()' method return ConsoleView
-    myConsoleView = process.createConsole() as ConsoleView
-    if (!myShowToolWindowOnSuspendOnly) {
-      initSessionTab(contentToReuse, false)
+    if (!DapMode.isDap()) {
+      myConsoleView = process.createConsole() as ConsoleView
+      if (!myShowToolWindowOnSuspendOnly) {
+        initSessionTab(contentToReuse, false)
+      }
     }
     sessionInitializedDeferred.complete(Unit)
   }
@@ -1111,7 +1115,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val needsInitialization = myTabInitDataFlow.value == null
     if (needsInitialization || attract) {
       invokeLaterIfProjectAlive(myProject, Runnable {
-        if (needsInitialization) {
+        if (needsInitialization && !DapMode.isDap()) {
           initSessionTab(null, true)
         }
         val topFrameIsAbsent = topFramePosition == null

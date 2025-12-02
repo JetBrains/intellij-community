@@ -77,6 +77,7 @@ import com.intellij.util.system.OS;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.DapMode;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -422,7 +423,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     int mask = getTraceMask();
     if (ApplicationManager.getApplication().isUnitTestMode() && vm instanceof VirtualMachineImpl extendedVM) {
       extendedVM.disableSoftReferences();
-      if (mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
+      if (!DapMode.isDap() && mask == VirtualMachine.TRACE_NONE && Registry.is("debugger.log.jdi.in.unit.tests")) {
         mask = VirtualMachine.TRACE_ALL;
         extendedVM.setDebugTraceConsumer(
           strings -> LOG.debug(strings.stream().map(s -> "[JDI: " + s + "]").collect(Collectors.joining("\n"))));
