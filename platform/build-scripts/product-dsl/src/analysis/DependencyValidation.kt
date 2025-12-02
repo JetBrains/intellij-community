@@ -147,14 +147,12 @@ internal fun validateSelfContainedModuleSets(
  * @param allModuleSets All available module sets (community + ultimate)
  * @param productSpecs List of (productName, ProductModulesContentSpec) pairs
  * @param descriptorCache Cache for module descriptor information
- * @param allowUnresolvableProducts Set of product names explicitly allowed to have unresolvable dependencies (e.g., test products)
  * @throws IllegalStateException if any product has unresolvable dependencies
  */
 internal fun validateProductModuleSets(
   allModuleSets: List<ModuleSet>,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>>,
   descriptorCache: ModuleDescriptorCache,
-  allowUnresolvableProducts: Set<String> = setOf()
 ) {
   data class ProductError(
     val productName: String,
@@ -213,11 +211,6 @@ internal fun validateProductModuleSets(
         appendLine("${AnsiColors.BLUE}💡 This causes runtime error: \"Plugin has duplicated content modules declarations\"${AnsiColors.RESET}")
         appendLine("${AnsiColors.BLUE}Fix: Remove duplicate moduleSet() nesting or redundant module() calls${AnsiColors.RESET}")
       })
-    }
-    
-    // Skip missing dependency validation for explicitly allowed products
-    if (productName in allowUnresolvableProducts) {
-      continue
     }
     
     // Validate module dependencies within product scope

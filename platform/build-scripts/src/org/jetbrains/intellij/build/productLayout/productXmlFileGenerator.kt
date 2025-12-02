@@ -42,38 +42,3 @@ suspend fun discoverAllProducts(projectRoot: Path, moduleOutputProvider: ModuleO
 
   return products
 }
-
-/**
- * Discovers all products for validation purposes.
- * Convenience wrapper that calls discoverAllProducts() and extracts validation data.
- *
- * @param projectRoot The project root path
- * @param moduleOutputProvider Module output provider
- * @return List of product name and spec pairs for validation
- */
-suspend fun discoverAllProductsForValidation(projectRoot: Path, moduleOutputProvider: ModuleOutputProvider): List<Pair<String, ProductModulesContentSpec?>> {
-  return extractProductsForValidation(discoverAllProducts(projectRoot, moduleOutputProvider))
-}
-
-/**
- * Generates product XMLs for all products using programmatic content.
- * Convenience wrapper that discovers products then delegates to product-dsl generation logic.
- *
- * @param projectRoot The project root path
- * @param testProductSpecs Test product specifications (name to ProductModulesContentSpec pairs)
- * @param moduleOutputProvider Module output provider
- * @return Result containing generation statistics
- */
-suspend fun generateAllProductXmlFiles(
-  projectRoot: Path,
-  testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
-  moduleOutputProvider: ModuleOutputProvider,
-): ProductGenerationResult {
-  val discoveredProducts = discoverAllProducts(projectRoot, moduleOutputProvider)
-  return generateAllProductXmlFiles(
-    discoveredProducts = discoveredProducts,
-    testProductSpecs = testProductSpecs,
-    projectRoot = projectRoot,
-    moduleOutputProvider = moduleOutputProvider
-  )
-}

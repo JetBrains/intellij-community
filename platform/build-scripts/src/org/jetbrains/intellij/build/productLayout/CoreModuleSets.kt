@@ -52,29 +52,29 @@ object CoreModuleSets {
    * @see coreLang for platform with IDE and language support
    * @see essentialMinimal for lightweight IDE with editing (most IDE products should use this)
    */
-  fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core") {
+  fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     // Include only core libraries (universal infrastructure)
     moduleSet(librariesPlatform())
 
-    embeddedModule("intellij.platform.util.ex", includeDependencies = true)
-    embeddedModule("intellij.platform.util.ui", includeDependencies = true)
+    embeddedModule("intellij.platform.util.ex")
+    embeddedModule("intellij.platform.util.ui")
 
-    embeddedModule("intellij.platform.core", includeDependencies = true)
-    embeddedModule("intellij.platform.core.ui", includeDependencies = true)
-    embeddedModule("intellij.platform.core.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.core")
+    embeddedModule("intellij.platform.core.ui")
+    embeddedModule("intellij.platform.core.impl")
 
-    embeddedModule("intellij.platform.projectModel", includeDependencies = true)
-    embeddedModule("intellij.platform.projectModel.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.projectModel")
+    embeddedModule("intellij.platform.projectModel.impl")
 
     // Analysis modules needed by core platform modules
-    embeddedModule("intellij.platform.analysis", includeDependencies = true)
-    embeddedModule("intellij.platform.analysis.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.analysis")
+    embeddedModule("intellij.platform.analysis.impl")
 
     // Include minimal RPC infrastructure AFTER core platform modules
     // (kernel depends on platform.core, so core must be available first)
     moduleSet(rpcMinimal())
 
-    embeddedModule("intellij.platform.ide.core", includeDependencies = true)
+    embeddedModule("intellij.platform.ide.core")
   }
 
   /**
@@ -93,7 +93,7 @@ object CoreModuleSets {
    * @see corePlatform for platform without IDE functionality
    * @see coreLang for IDE with language support
    */
-  fun coreIde(): ModuleSet = moduleSet("core.ide") {
+  fun coreIde(): ModuleSet = moduleSet("core.ide", includeDependencies = true) {
     // Include core platform (util, core, projectModel, analysis, ide.core, kernel)
     moduleSet(corePlatform())
 
@@ -101,7 +101,7 @@ object CoreModuleSets {
     moduleSet(librariesIde())
 
     // Add basic IDE functionality on top of platform
-    embeddedModule("intellij.platform.ide", includeDependencies = true)
+    embeddedModule("intellij.platform.ide")
   }
 
   /**
@@ -132,16 +132,16 @@ object CoreModuleSets {
    * @see corePlatform for base platform without IDE or language support
    * @see essentialMinimal for full minimal IDE (includes this + RPC + editor + search) - RECOMMENDED
    */
-  fun coreLang(): ModuleSet = moduleSet("core.lang") {
+  fun coreLang(): ModuleSet = moduleSet("core.lang", includeDependencies = true) {
     // Include core IDE (corePlatform + intellij.platform.ide)
     moduleSet(coreIde())
 
-    embeddedModule("intellij.platform.lang.core", includeDependencies = true)
-    embeddedModule("intellij.platform.lang", includeDependencies = true)
-    embeddedModule("intellij.platform.lang.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.lang.core")
+    embeddedModule("intellij.platform.lang")
+    embeddedModule("intellij.platform.lang.impl")
 
     // IDE implementation (depends on lang.core, so must come after)
-    embeddedModule("intellij.platform.ide.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.ide.impl")
 
     // Additional dependencies specific to lang.impl and ide.impl
     embeddedModule("intellij.platform.ide.concurrency")
@@ -150,7 +150,7 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.eel.impl")
     embeddedModule("intellij.platform.diff")
     embeddedModule("intellij.platform.diff.impl")
-    embeddedModule("fleet.andel", includeDependencies = true)
+    embeddedModule("fleet.andel")
 
     // Temporary: lang.impl incorrectly depends on xstream (should be removed)
     moduleSet(librariesTemporaryBundled())
@@ -295,7 +295,6 @@ object CoreModuleSets {
     module("intellij.platform.execution.impl.backend")
     module("intellij.platform.eel.tcp")
 
-
     module("intellij.platform.completion.common")
     module("intellij.platform.completion.frontend")
     module("intellij.platform.completion.backend")
@@ -355,14 +354,14 @@ object CoreModuleSets {
    * @see rpcBackend for full RPC functionality with backend/frontend split (includes kernel.backend)
    * @see fleet for the fleet module set definition
    */
-  fun rpcMinimal(): ModuleSet = moduleSet("rpc.minimal", outputModule = "intellij.platform.ide.core") {
+  fun rpcMinimal(): ModuleSet = moduleSet("rpc.minimal", outputModule = "intellij.platform.ide.core", includeDependencies = true) {
     // All fleet modules (13 total) including transitive content dependencies
     // All modules are content modules with XML descriptors, so splitting is not practical
     moduleSet(fleet())
 
     // Base RPC and kernel modules (backend modules are in rpc(), not here)
-    embeddedModule("intellij.platform.rpc", includeDependencies = true)
-    embeddedModule("intellij.platform.kernel", includeDependencies = true)
+    embeddedModule("intellij.platform.rpc")
+    embeddedModule("intellij.platform.kernel")
   }
 
   /**

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
  * - OLD: No validation error (only checked direct dependencies)
  * - NEW: Validation catches the missing `fleet.kernel` transitive dependency
  */
-suspend fun generateModuleDescriptorDependencies(
+internal suspend fun generateModuleDescriptorDependencies(
   communityModuleSets: List<ModuleSet>,
   ultimateModuleSets: List<ModuleSet>,
   coreModuleSets: List<ModuleSet> = emptyList(),
@@ -58,19 +58,7 @@ suspend fun generateModuleDescriptorDependencies(
   
   // Tier 2: Validate product-level dependencies
   // This ensures all products can load without missing dependency errors
-  validateProductModuleSets(
-    allModuleSets = allModuleSets,
-    productSpecs = productSpecs,
-    descriptorCache = cache,
-    allowUnresolvableProducts = setOf(
-      // TODO: Fix these products' module dependencies
-      "CLion",
-      "RustRover",
-      "Rider",
-      "WebStorm",
-      "GoLand",
-    )
-  )
+  validateProductModuleSets(allModuleSets = allModuleSets, productSpecs = productSpecs, descriptorCache = cache)
 
   // Write XML files in parallel
   val results = modulesToProcess.map { moduleName ->
@@ -81,7 +69,7 @@ suspend fun generateModuleDescriptorDependencies(
         moduleName = moduleName,
         descriptorPath = info.descriptorPath,
         status = status,
-        dependencyCount = info.dependencies.size
+        dependencyCount = info.dependencies.size,
       )
     }
   }.awaitAll().filterNotNull()
@@ -93,7 +81,7 @@ suspend fun generateModuleDescriptorDependencies(
  * Cache for module descriptor information to avoid redundant file system lookups.
  * Made public for access from analysis package.
  */
-class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOutputProvider) {
+internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOutputProvider) {
   data class DescriptorInfo(
     val descriptorPath: Path,
     val dependencies: List<String>,
