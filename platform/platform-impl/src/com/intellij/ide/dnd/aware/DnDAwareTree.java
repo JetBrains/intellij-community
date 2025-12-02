@@ -131,7 +131,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     protected Transferable createTransferable(JComponent component) {
       if (component instanceof JTree tree) {
         TreePath[] selection = tree.getSelectionPaths();
-        if (selection != null && selection.length > 1) {
+        if (selection != null && selection.length > 0) {
           return new TransferableList<>(selection) {
             @Override
             protected String toString(TreePath path) {
