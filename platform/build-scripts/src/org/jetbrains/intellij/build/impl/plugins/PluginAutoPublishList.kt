@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.plugins
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.nio.file.Files
@@ -12,13 +12,13 @@ import java.util.function.Predicate
 import kotlin.io.path.useLines
 
 /**
- * Predicate to test if the given plugin should be published to plugins.jetbrains.com
+ * Predicate to test if the given plugin should be published to the Marketplace.
+ * See `build/plugins-autoupload.txt` for the specification.
  *
- * @see `build/plugins-autoupload.txt` for the specification
  * @see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins]
  * @see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish]
  */
-@Internal
+@ApiStatus.Internal
 class PluginAutoPublishList(private val context: BuildContext) : Predicate<PluginLayout> {
   private val expectedFile: Path = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
 
@@ -59,11 +59,7 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
     !excludedFromProduct && (includeInAllProducts || includeInProduct)
   }
 
-  override fun test(pluginLayout: PluginLayout): Boolean {
-    return predicate.test(pluginLayout)
-  }
+  override fun test(pluginLayout: PluginLayout): Boolean = predicate.test(pluginLayout)
 
-  override fun toString(): String {
-    return "$expectedFile"
-  }
+  override fun toString(): String = "$expectedFile"
 }
