@@ -23,7 +23,7 @@ jvm_library(
     "//libraries/asm",
     "//platform/util/jdom",
     "//platform/util/nanoxml",
-    "@lib//:jgoodies-forms",
+    "//libraries/jgoodies/forms",
     "@lib//:protobuf",
     "//jps/model-api:model",
     "//jps/model-serialization",

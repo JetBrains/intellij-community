@@ -54,7 +54,7 @@ jvm_library(
     "//java/execution/impl",
     "//java/debugger/impl",
     "//java/idea-ui:ui",
-    "@lib//:jgoodies-forms",
+    "//libraries/jgoodies/forms",
     "//libraries/gson",
     "//plugins/groovy",
     "//libraries/guava",

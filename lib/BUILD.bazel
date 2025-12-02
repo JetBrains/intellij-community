@@ -3366,19 +3366,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "jgoodies-common",
-  jar = "@com_jgoodies-jgoodies-common-1_4_0_http//file",
-  source_jar = "@com_jgoodies-jgoodies-common-1_4_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "jgoodies-forms",
-  jar = "@com_jgoodies-forms-1_1-preview_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "jimfs",
   jar = "@com_google_jimfs-jimfs-1_3_0_http//file",
   source_jar = "@com_google_jimfs-jimfs-1_3_0-sources_http//file",
@@ -5426,6 +5413,19 @@ jvm_import(
   name = "libraries-jettison-jettison",
   jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
   source_jar = "@org_codehaus_jettison-jettison-1_5_4-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jgoodies-common-jgoodies-common",
+  jar = "@com_jgoodies-jgoodies-common-1_4_0_http//file",
+  source_jar = "@com_jgoodies-jgoodies-common-1_4_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jgoodies-forms-jgoodies-forms",
+  jar = "@com_jgoodies-forms-1_1-preview_http//file",
   visibility = ["//visibility:public"]
 )
 

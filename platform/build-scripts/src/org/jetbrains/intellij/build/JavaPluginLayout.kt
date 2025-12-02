@@ -80,8 +80,6 @@ object JavaPluginLayout {
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
 
       spec.withProjectLibrary("Eclipse", "ecj")
-      // used in JPS - do not use uber jar
-      spec.withProjectLibrary("jgoodies-common")
       spec.withProjectLibrary("jps-javac-extension")
       spec.withProjectLibrary("kotlin-metadata")
       // gpl-cpe license - do not use uber jar

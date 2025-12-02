@@ -413,6 +413,8 @@ libraries/jcip
 libraries/jediterm-core
 libraries/jediterm-ui
 libraries/jettison
+libraries/jgoodies/common
+libraries/jgoodies/forms
 libraries/jsonpath
 libraries/jsoup
 libraries/jsvg

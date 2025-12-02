@@ -60,7 +60,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
-    "@lib//:jgoodies-forms",
+    "//libraries/jgoodies/forms",
     "//platform/execution",
   ]
 )
@@ -115,7 +115,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
-    "@lib//:jgoodies-forms",
+    "//libraries/jgoodies/forms",
     "//platform/execution",
   ]
 )

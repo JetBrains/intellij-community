@@ -5306,27 +5306,6 @@ http_file(
 )
 
 http_file(
-  name = "com_jgoodies-jgoodies-common-1_4_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0.jar",
-  sha256 = "efd986ec851c3a5cd57907e72f27d1af9c1e5b1874b07a8b778588646d71d9fc",
-  downloaded_file_path = "jgoodies-common-1.4.0.jar"
-)
-
-http_file(
-  name = "com_jgoodies-jgoodies-common-1_4_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0-sources.jar",
-  sha256 = "c2231fc5ac6112407bb39c45db21cb52c76b553d29a3891317e149b8cf4db30b",
-  downloaded_file_path = "jgoodies-common-1.4.0-sources.jar"
-)
-
-http_file(
-  name = "com_jgoodies-forms-1_1-preview_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/forms/1.1-preview/forms-1.1-preview.jar",
-  sha256 = "26b0fc745ea051b57462be22a150c7600dbac6716b24cc60a5ecc0e8085c41a0",
-  downloaded_file_path = "forms-1.1-preview.jar"
-)
-
-http_file(
   name = "com_google_jimfs-jimfs-1_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/jimfs/jimfs/1.3.0/jimfs-1.3.0.jar",
   sha256 = "82494408bb513f5512652e7b7f63d6f31f01eff57ce35c878644ffc2d25aee4f",
@@ -8110,6 +8089,27 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/jettison/jettison/1.5.4/jettison-1.5.4-sources.jar",
   sha256 = "bc7643e6bdb8c3a2995a4420d150ae5b414902eafedbadfdb4cf94c5de31469c",
   downloaded_file_path = "jettison-1.5.4-sources.jar"
+)
+
+http_file(
+  name = "com_jgoodies-jgoodies-common-1_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0.jar",
+  sha256 = "efd986ec851c3a5cd57907e72f27d1af9c1e5b1874b07a8b778588646d71d9fc",
+  downloaded_file_path = "jgoodies-common-1.4.0.jar"
+)
+
+http_file(
+  name = "com_jgoodies-jgoodies-common-1_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/jgoodies-common/1.4.0/jgoodies-common-1.4.0-sources.jar",
+  sha256 = "c2231fc5ac6112407bb39c45db21cb52c76b553d29a3891317e149b8cf4db30b",
+  downloaded_file_path = "jgoodies-common-1.4.0-sources.jar"
+)
+
+http_file(
+  name = "com_jgoodies-forms-1_1-preview_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jgoodies/forms/1.1-preview/forms-1.1-preview.jar",
+  sha256 = "26b0fc745ea051b57462be22a150c7600dbac6716b24cc60a5ecc0e8085c41a0",
+  downloaded_file_path = "forms-1.1-preview.jar"
 )
 
 http_file(

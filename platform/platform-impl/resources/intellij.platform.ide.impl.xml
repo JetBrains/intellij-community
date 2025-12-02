@@ -23,6 +23,8 @@
     <module name="intellij.libraries.jackson.jr.objects"/>
     <module name="intellij.libraries.jbr"/>
     <module name="intellij.libraries.jcef"/>
+    <module name="intellij.libraries.jgoodies.common"/>
+    <module name="intellij.libraries.jgoodies.forms"/>
     <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.jvm.native.trusted.roots"/>
     <module name="intellij.libraries.kotlin.reflect"/>

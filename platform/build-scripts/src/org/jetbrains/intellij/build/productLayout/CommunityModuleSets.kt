@@ -143,6 +143,8 @@ object CommunityModuleSets  {
     embeddedModule("intellij.libraries.jcef")
     embeddedModule("intellij.libraries.jediterm.core")
     embeddedModule("intellij.libraries.jediterm.ui")
+    embeddedModule("intellij.libraries.jgoodies.common")
+    embeddedModule("intellij.libraries.jgoodies.forms")
     embeddedModule("intellij.libraries.miglayout.swing")
     embeddedModule("intellij.libraries.pty4j")
     embeddedModule("intellij.libraries.sshj")

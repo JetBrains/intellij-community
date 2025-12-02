@@ -88,8 +88,6 @@ private val libsUsedInJps = setOf(
   // see getBuildProcessApplicationClasspath - used in JPS
   "jna",
   "maven-resolver-provider",
-  "jgoodies-forms",
-  "jgoodies-common",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
   "kotlin-stdlib",
@@ -100,13 +98,6 @@ private val presignedLibNames = setOf(
 )
 
 private fun isLibPreSigned(library: JpsLibrary) = presignedLibNames.contains(library.name)
-
-private val notImportantKotlinLibs = setOf(
-  "kotlinx-collections-immutable",
-  "kotlinx-coroutines-guava",
-  "kotlinx-datetime-jvm",
-  "kotlinx-html-jvm",
-)
 
 const val rdJarName: String = "rd.jar"
 
@@ -121,7 +112,7 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
   PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
   // see ClassPathUtil.getUtilClassPath
-  UTIL_8_JAR to { it, _ -> libsUsedInJps.contains(it) || (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) },
+  UTIL_8_JAR to { it, _ -> libsUsedInJps.contains(it) || (it.startsWith("kotlinx-")) },
 
   // used in an external process - see `ConsoleProcessListFetcher.getConsoleProcessCount`
   UTIL_JAR to { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" },
