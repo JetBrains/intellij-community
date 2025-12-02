@@ -35,8 +35,8 @@ internal class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvide
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
 
-  override fun canOpenFilesFromSystemFileManager(): Boolean {
-    return Registry.`is`("welcome.screen.open.files", false)
+  override fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
+    return Registry.`is`("welcome.screen.open.files", false) && filePath.endsWith(".ipynb")
   }
 
   override suspend fun doCreateOrOpenWelcomeScreenProject(path: Path): Project {
