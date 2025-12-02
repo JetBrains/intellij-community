@@ -51,6 +51,7 @@ jvm_library(
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/util",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-reference-index.tests` end

@@ -30,6 +30,14 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import java.io.File
 import kotlin.test.assertTrue
 
+data class Diagnostic(val message: String, val severity: Severity)
+
+val k1DiagnosticsProvider: (KtFile) -> List<Diagnostic> =
+    mapFromK1Provider { it.analyzeWithContent().diagnostics }
+
+fun mapFromK1Provider(diagnosticsProvider: (KtFile) -> Diagnostics): (KtFile) -> List<Diagnostic> = { file ->
+    diagnosticsProvider(file).map { Diagnostic(DefaultErrorMessages.render(it), it.severity) }
+}
 
 object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE_ERRORS"
@@ -59,7 +67,7 @@ object DirectiveBasedActionUtils {
     fun checkForUnexpectedErrors(
         file: KtFile,
         directive: String = ERROR_DIRECTIVE,
-        diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
+        diagnosticsProvider: (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
     ) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
             return
@@ -72,7 +80,7 @@ object DirectiveBasedActionUtils {
         file: KtFile,
         disabledByDefault: Boolean = true,
         directiveName: String = Severity.WARNING.name,
-        diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
+        diagnosticsProvider: (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
     ) {
         if (disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ENABLE_WARNINGS_DIRECTIVE).isEmpty() ||
             !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()
@@ -85,7 +93,7 @@ object DirectiveBasedActionUtils {
 
     private fun checkForUnexpected(
         file: KtFile,
-        diagnosticsProvider: (KtFile) -> Diagnostics,
+        diagnosticsProvider: (KtFile) -> List<Diagnostic>,
         directive: String,
         name: String,
         severity: Severity,
@@ -97,7 +105,7 @@ object DirectiveBasedActionUtils {
         val diagnostics = diagnosticsProvider(file)
         val actual = diagnostics
             .filter { it.severity == severity }
-            .map { "$directive ${DefaultErrorMessages.render(it).replace("\n", "<br>")}" }
+            .map { "$directive ${it.message.replace("\n", "<br>")}" }
             .sorted()
 
         if (actual.isEmpty() && expected.isEmpty()) return

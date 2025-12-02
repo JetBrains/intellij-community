@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/findUsages/stdlibUsages")
-public class KotlinFindUsagesWithStdlibTestGenerated extends AbstractKotlinFindUsagesWithStdlibTest {
+public class KotlinFindUsagesWithStdlibTestGenerated extends AbstractK1KotlinFindUsagesWithStdlibTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

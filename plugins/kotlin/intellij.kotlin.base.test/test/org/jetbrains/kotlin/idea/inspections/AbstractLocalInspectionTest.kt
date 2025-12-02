@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -11,6 +10,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
-import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.currentJavaVersion
@@ -28,24 +28,20 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
-import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.withExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.collections.forEach
+import kotlin.io.nameWithoutExtension
 import kotlin.io.path.createFile
 import kotlin.io.path.div
-
 
 abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open val inspectionFileName: String
@@ -108,30 +104,32 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val fileText = FileUtil.loadFile(mainFile, true)
         assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
-        withCustomCompilerOptions(fileText, project, module) {
-            val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
-            if (minJavaVersion != null && !currentJavaVersion().isAtLeast(minJavaVersion)) {
-                return@withCustomCompilerOptions
-            }
-
-
-            val extraFileNames = findExtraFilesForTest(mainFile)
-
-            myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
-
-            registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable)
-
-            val ktFile = myFixture.file as KtFile
-            if (ktFile.isScript()) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
-            }
-            checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
-
-            doTestFor(mainFile, inspection, fileText)
-
-            PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+      withCustomCompilerOptions(fileText, project, module) {
+        val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
+        if (minJavaVersion != null && !currentJavaVersion().isAtLeast(minJavaVersion)) {
+          return@withCustomCompilerOptions
         }
+
+
+        val extraFileNames = findExtraFilesForTest(mainFile)
+
+        myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
+
+        registerDirectiveBasedChooserOptionInterceptor(fileText, myFixture.testRootDisposable)
+
+        val ktFile = myFixture.file as KtFile
+        if (ktFile.isScript()) {
+          updateScriptDependencies(ktFile)
+        }
+        checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
+
+        doTestFor(mainFile, inspection, fileText)
+
+        PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+      }
     }
+
+    protected open fun updateScriptDependencies(ktFile: KtFile) {}
 
     /**
       For each test file `xxx.foo` there can be several "extra" files configured, to be copied to the same project with the main file.
@@ -188,18 +186,14 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
-    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
-    }
+    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {}
 
-    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = AFTER_ERROR_DIRECTIVE)
-    }
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {}
 
     protected fun runInspectionWithFixesAndCheck(
         inspection: LocalInspectionTool,
@@ -215,7 +209,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         myFixture.enableInspections(inspection::class.java)
 
         // Set default level to WARNING to make possible to test DO_NOT_SHOW
-        val inspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
+        val inspectionProfileManager = ProjectInspectionProfileManager.Companion.getInstance(project)
         val inspectionProfile = inspectionProfileManager.currentProfile
         val state = inspectionProfile.getToolDefaultState(inspection.shortName, project)
         state.level = HighlightDisplayLevel.WARNING
@@ -304,10 +298,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val modCommandAction = localFixAction!!.asModCommandAction()
         if (modCommandAction != null) {
             val actionContext = ActionContext.from(editor, file)
-            val command: ModCommand = project.computeOnBackground {
-                runReadAction {
-                    modCommandAction.perform(actionContext)
-                }
+            val command: ModCommand = ActionUtil.underModalProgress(project, "compute") {
+              runReadAction {
+                modCommandAction.perform(actionContext)
+              }
             }
             project.executeCommand(localFixAction.text, null) {
                 ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
@@ -315,7 +309,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         } else {
             project.executeCommand(localFixAction.text, null) {
                 if (localFixAction.startInWriteAction()) {
-                    runWriteAction { localFixAction.invoke(project, editor, file) }
+                  runWriteAction { localFixAction.invoke(project, editor, file) }
                 } else {
                     localFixAction.invoke(project, editor, file)
                 }
@@ -381,13 +375,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     protected open fun passesToIgnore(): IntArray {
         return intArrayOf(
-            Pass.LINE_MARKERS,
-            Pass.SLOW_LINE_MARKERS,
-            Pass.EXTERNAL_TOOLS,
-            Pass.POPUP_HINTS,
-            Pass.UPDATE_ALL,
-            Pass.UPDATE_FOLDING,
-            Pass.WOLF
+          Pass.LINE_MARKERS,
+          Pass.SLOW_LINE_MARKERS,
+          Pass.EXTERNAL_TOOLS,
+          Pass.POPUP_HINTS,
+          Pass.UPDATE_ALL,
+          Pass.UPDATE_FOLDING,
+          Pass.WOLF
         )
     }
 
@@ -398,7 +392,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun getAfterTestDataAbsolutePath(mainFileName: String) =
-        testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
+      testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
 
     protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         val mainFileName = mainFile.name
@@ -432,14 +426,14 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
-        dispatchAllEventsInIdeEventQueue()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
         } catch (_: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
-                editor.document.text
+              File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
+              editor.document.text
             )
         }
 
@@ -454,7 +448,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected fun loadInspectionSettings(testFile: File): Element? {
-        val customSettings = testFile.withExtension("settings.xml")
+        val customSettings = testFile.parentFile.resolve("${testFile.nameWithoutExtension}.settings.xml")
         val commonSettings = testFile.resolveSibling("settings.xml")
 
         return listOf(customSettings, commonSettings)

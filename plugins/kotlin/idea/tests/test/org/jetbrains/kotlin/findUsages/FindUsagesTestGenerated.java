@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
+public abstract class FindUsagesTestGenerated extends AbstractK1FindUsagesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/kotlin")
-    public abstract static class Kotlin extends AbstractFindUsagesTest {
+    public abstract static class Kotlin extends AbstractK1FindUsagesTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/companionObject")
-        public static class CompanionObject extends AbstractFindUsagesTest {
+        public static class CompanionObject extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -83,10 +83,10 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/conventions")
-        public abstract static class Conventions extends AbstractFindUsagesTest {
+        public abstract static class Conventions extends AbstractK1FindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/conventions/components")
-            public static class Components extends AbstractFindUsagesTest {
+            public static class Components extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -205,7 +205,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/conventions/invoke")
-            public static class Invoke extends AbstractFindUsagesTest {
+            public static class Invoke extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -239,7 +239,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/conventions")
-            public static class Uncategorized extends AbstractFindUsagesTest {
+            public static class Uncategorized extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -364,7 +364,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findClassUsages")
-        public static class FindClassUsages extends AbstractFindUsagesTest {
+        public static class FindClassUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -673,7 +673,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findEnumEntryUsages")
-        public static class FindEnumEntryUsages extends AbstractFindUsagesTest {
+        public static class FindEnumEntryUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -692,7 +692,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
-        public static class FindFunctionUsages extends AbstractFindUsagesTest {
+        public static class FindFunctionUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1016,7 +1016,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findJavaPropertyUsages")
-        public static class FindJavaPropertyUsages extends AbstractFindUsagesTest {
+        public static class FindJavaPropertyUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1045,7 +1045,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findObjectUsages")
-        public static class FindObjectUsages extends AbstractFindUsagesTest {
+        public static class FindObjectUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1094,7 +1094,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findPackageUsages")
-        public static class FindPackageUsages extends AbstractFindUsagesTest {
+        public static class FindPackageUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1113,7 +1113,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findParameterUsages")
-        public static class FindParameterUsages extends AbstractFindUsagesTest {
+        public static class FindParameterUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1197,7 +1197,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findPrimaryConstructorUsages")
-        public static class FindPrimaryConstructorUsages extends AbstractFindUsagesTest {
+        public static class FindPrimaryConstructorUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1266,7 +1266,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
-        public static class FindPropertyUsages extends AbstractFindUsagesTest {
+        public static class FindPropertyUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1460,7 +1460,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findSecondaryConstructorUsages")
-        public static class FindSecondaryConstructorUsages extends AbstractFindUsagesTest {
+        public static class FindSecondaryConstructorUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1504,7 +1504,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findTypeAliasUsages")
-        public static class FindTypeAliasUsages extends AbstractFindUsagesTest {
+        public static class FindTypeAliasUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1528,7 +1528,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findTypeParameterUsages")
-        public static class FindTypeParameterUsages extends AbstractFindUsagesTest {
+        public static class FindTypeParameterUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1562,7 +1562,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findWithFilteringImports")
-        public static class FindWithFilteringImports extends AbstractFindUsagesTest {
+        public static class FindWithFilteringImports extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1581,7 +1581,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findWithStructuralGrouping")
-        public static class FindWithStructuralGrouping extends AbstractFindUsagesTest {
+        public static class FindWithStructuralGrouping extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1610,10 +1610,10 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/internal")
-        public abstract static class Internal extends AbstractFindUsagesTest {
+        public abstract static class Internal extends AbstractK1FindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/internal/findFunctionUsages")
-            public static class FindFunctionUsages extends AbstractFindUsagesTest {
+            public static class FindFunctionUsages extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1662,7 +1662,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
-            public static class FindPrimaryConstructorUsages extends AbstractFindUsagesTest {
+            public static class FindPrimaryConstructorUsages extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1686,7 +1686,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/internal/findPropertyUsages")
-            public static class FindPropertyUsages extends AbstractFindUsagesTest {
+            public static class FindPropertyUsages extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1720,7 +1720,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
-            public static class FindSecondaryConstructorUsages extends AbstractFindUsagesTest {
+            public static class FindSecondaryConstructorUsages extends AbstractK1FindUsagesTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1750,7 +1750,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/propertyFiles")
-        public static class PropertyFiles extends AbstractFindUsagesTest {
+        public static class PropertyFiles extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1774,7 +1774,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/unresolvedAnnotation")
-        public static class UnresolvedAnnotation extends AbstractFindUsagesTest {
+        public static class UnresolvedAnnotation extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1793,7 +1793,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/variable")
-        public static class Variable extends AbstractFindUsagesTest {
+        public static class Variable extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1828,10 +1828,10 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/java")
-    public abstract static class Java extends AbstractFindUsagesTest {
+    public abstract static class Java extends AbstractK1FindUsagesTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findConstructorUsages")
-        public static class FindConstructorUsages extends AbstractFindUsagesTest {
+        public static class FindConstructorUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1875,7 +1875,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findJavaClassUsages")
-        public static class FindJavaClassUsages extends AbstractFindUsagesTest {
+        public static class FindJavaClassUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1999,7 +1999,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findJavaFieldUsages")
-        public static class FindJavaFieldUsages extends AbstractFindUsagesTest {
+        public static class FindJavaFieldUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2028,7 +2028,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findJavaMethodUsages")
-        public static class FindJavaMethodUsages extends AbstractFindUsagesTest {
+        public static class FindJavaMethodUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2142,7 +2142,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findJavaPropertyUsages")
-        public static class FindJavaPropertyUsages extends AbstractFindUsagesTest {
+        public static class FindJavaPropertyUsages extends AbstractK1FindUsagesTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -2167,7 +2167,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/propertyFiles")
-    public static class PropertyFiles extends AbstractFindUsagesTest {
+    public static class PropertyFiles extends AbstractK1FindUsagesTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

@@ -31,6 +31,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end

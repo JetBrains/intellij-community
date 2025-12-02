@@ -19,13 +19,13 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/findUsages/libraryUsages")
-public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractKotlinFindUsagesWithLibraryTest {
+public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK1KotlinFindUsagesWithLibraryTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages")
-    public abstract static class FindLibraryFunctionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+    public abstract static class FindLibraryFunctionUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/dataClassComponent")
-        public static class DataClassComponent extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class DataClassComponent extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -44,7 +44,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumFunctionUsages")
-        public static class EnumFunctionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class EnumFunctionUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -63,7 +63,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumValueOf")
-        public static class EnumValueOf extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class EnumValueOf extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -82,7 +82,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/functionUsedInPlainText")
-        public static class FunctionUsedInPlainText extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class FunctionUsedInPlainText extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -101,7 +101,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/highlightingOfSuperUsages")
-        public static class HighlightingOfSuperUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class HighlightingOfSuperUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -120,7 +120,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/interfaceOverrides")
-        public static class InterfaceOverrides extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class InterfaceOverrides extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -139,7 +139,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanion")
-        public static class InvokeFromClassCompanion extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class InvokeFromClassCompanion extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -158,7 +158,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanionExtension")
-        public static class InvokeFromClassCompanionExtension extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class InvokeFromClassCompanionExtension extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -177,7 +177,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromInterfaceCompanion")
-        public static class InvokeFromInterfaceCompanion extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class InvokeFromInterfaceCompanion extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -196,7 +196,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromParentCompanionClass")
-        public static class InvokeFromParentCompanionClass extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class InvokeFromParentCompanionClass extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -215,7 +215,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaAndKotlinOverrides")
-        public static class JavaAndKotlinOverrides extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class JavaAndKotlinOverrides extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -234,7 +234,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaMethodUsages")
-        public static class JavaMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class JavaMethodUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -253,7 +253,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmOverloaded")
-        public static class JvmOverloaded extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class JvmOverloaded extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -272,7 +272,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticFun")
-        public static class JvmStaticFun extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class JvmStaticFun extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -291,7 +291,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticJvmOverloadsFun")
-        public static class JvmStaticJvmOverloadsFun extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class JvmStaticJvmOverloadsFun extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -310,7 +310,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinAliasedMethodUsages")
-        public static class KotlinAliasedMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinAliasedMethodUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -329,7 +329,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceImplThroughDelegate")
-        public static class KotlinInterfaceImplThroughDelegate extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinInterfaceImplThroughDelegate extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -348,7 +348,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceNoImplThroughDelegate")
-        public static class KotlinInterfaceNoImplThroughDelegate extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinInterfaceNoImplThroughDelegate extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -367,7 +367,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodAliasedUsages")
-        public static class KotlinMethodAliasedUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinMethodAliasedUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -386,7 +386,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodUsages")
-        public static class KotlinMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinMethodUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -405,7 +405,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMultiRefInImport")
-        public static class KotlinMultiRefInImport extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinMultiRefInImport extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -424,7 +424,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinNestedClassMethodUsages")
-        public static class KotlinNestedClassMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinNestedClassMethodUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -443,7 +443,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages")
-        public static class KotlinOverloadAndExtensionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinOverloadAndExtensionUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -462,7 +462,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages2")
-        public static class KotlinOverloadAndExtensionUsages2 extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinOverloadAndExtensionUsages2 extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -481,7 +481,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelExternalFunction")
-        public static class KotlinTopLevelExternalFunction extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinTopLevelExternalFunction extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -500,7 +500,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsages")
-        public static class KotlinTopLevelMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinTopLevelMethodUsages extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -519,7 +519,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesMultifile")
-        public static class KotlinTopLevelMethodUsagesMultifile extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinTopLevelMethodUsagesMultifile extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -538,7 +538,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile")
-        public static class KotlinTopLevelMethodUsagesWithRenamedFile extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class KotlinTopLevelMethodUsagesWithRenamedFile extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -557,7 +557,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/labeledReturns")
-        public static class LabeledReturns extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class LabeledReturns extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -576,7 +576,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/nonBaseDeclarationFunctionAsPropName")
-        public static class NonBaseDeclarationFunctionAsPropName extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class NonBaseDeclarationFunctionAsPropName extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -595,7 +595,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/overrides")
-        public static class Overrides extends AbstractKotlinFindUsagesWithLibraryTest {
+        public static class Overrides extends AbstractK1KotlinFindUsagesWithLibraryTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -615,7 +615,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/libraryUsages/javaLibrary")
-    public static class JavaLibrary extends AbstractKotlinFindUsagesWithLibraryTest {
+    public static class JavaLibrary extends AbstractK1KotlinFindUsagesWithLibraryTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -659,7 +659,7 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/libraryUsages/kotlinLibrary")
-    public static class KotlinLibrary extends AbstractKotlinFindUsagesWithLibraryTest {
+    public static class KotlinLibrary extends AbstractK1KotlinFindUsagesWithLibraryTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiModuleFindUsages")
-public class FindUsagesMultiModuleTestGenerated extends AbstractFindUsagesMultiModuleTest {
+public class FindUsagesMultiModuleTestGenerated extends AbstractK1FindUsagesMultiModuleTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/inspectionsLocal")
-public abstract class LocalInspectionTestGenerated extends AbstractLocalInspectionTest {
+public abstract class LocalInspectionTestGenerated extends AbstractK1LocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/addOperatorModifier")
-    public static class AddOperatorModifier extends AbstractLocalInspectionTest {
+    public static class AddOperatorModifier extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -71,7 +71,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/arrayHashCode")
-    public static class ArrayHashCode extends AbstractLocalInspectionTest {
+    public static class ArrayHashCode extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -120,7 +120,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/arrayInDataClass")
-    public static class ArrayInDataClass extends AbstractLocalInspectionTest {
+    public static class ArrayInDataClass extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -194,7 +194,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/arrayToString")
-    public static class ArrayToString extends AbstractLocalInspectionTest {
+    public static class ArrayToString extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -303,7 +303,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/booleanLiteralArgument")
-    public static class BooleanLiteralArgument extends AbstractLocalInspectionTest {
+    public static class BooleanLiteralArgument extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -387,10 +387,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/branched")
-    public abstract static class Branched extends AbstractLocalInspectionTest {
+    public abstract static class Branched extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/branched/ifThenToElvis")
-        public static class IfThenToElvis extends AbstractLocalInspectionTest {
+        public static class IfThenToElvis extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -699,7 +699,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/branched/ifThenToSafeAccess")
-        public static class IfThenToSafeAccess extends AbstractLocalInspectionTest {
+        public static class IfThenToSafeAccess extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1158,7 +1158,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/branched/introduceWhenSubject")
-        public static class IntroduceWhenSubject extends AbstractLocalInspectionTest {
+        public static class IntroduceWhenSubject extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1263,7 +1263,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/canBeParameter")
-    public static class CanBeParameter extends AbstractLocalInspectionTest {
+    public static class CanBeParameter extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1472,7 +1472,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/canBeVal")
-    public static class CanBeVal extends AbstractLocalInspectionTest {
+    public static class CanBeVal extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1491,7 +1491,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/cascadeIf")
-    public static class CascadeIf extends AbstractLocalInspectionTest {
+    public static class CascadeIf extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1565,7 +1565,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/catchIgnoresException")
-    public static class CatchIgnoresException extends AbstractLocalInspectionTest {
+    public static class CatchIgnoresException extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1599,10 +1599,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/collections")
-    public abstract static class Collections extends AbstractLocalInspectionTest {
+    public abstract static class Collections extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collections/redundantAsSequence")
-        public static class RedundantAsSequence extends AbstractLocalInspectionTest {
+        public static class RedundantAsSequence extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1696,7 +1696,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collections/simplifiableCall")
-        public static class SimplifiableCall extends AbstractLocalInspectionTest {
+        public static class SimplifiableCall extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -1825,13 +1825,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-        public abstract static class SimplifiableCallChain extends AbstractLocalInspectionTest {
+        public abstract static class SimplifiableCallChain extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations")
-            public abstract static class CollectionsOperations extends AbstractLocalInspectionTest {
+            public abstract static class CollectionsOperations extends AbstractK1LocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant")
-                public static class MapSumWithConstant extends AbstractLocalInspectionTest {
+                public static class MapSumWithConstant extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -1920,7 +1920,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations")
-                public static class Uncategorized extends AbstractLocalInspectionTest {
+                public static class Uncategorized extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -2465,7 +2465,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/primitiveArray")
-            public static class PrimitiveArray extends AbstractLocalInspectionTest {
+            public static class PrimitiveArray extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2534,10 +2534,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations")
-            public abstract static class SequencesOperations extends AbstractLocalInspectionTest {
+            public abstract static class SequencesOperations extends AbstractK1LocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapSumWithConstant")
-                public static class MapSumWithConstant extends AbstractLocalInspectionTest {
+                public static class MapSumWithConstant extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -2626,7 +2626,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations")
-                public static class Uncategorized extends AbstractLocalInspectionTest {
+                public static class Uncategorized extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -3101,7 +3101,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/text")
-            public static class Text extends AbstractLocalInspectionTest {
+            public static class Text extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3151,7 +3151,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collections/uselessCallOnCollection")
-        public static class UselessCallOnCollection extends AbstractLocalInspectionTest {
+        public static class UselessCallOnCollection extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3385,7 +3385,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/collections/uselessCallOnNotNull")
-        public static class UselessCallOnNotNull extends AbstractLocalInspectionTest {
+        public static class UselessCallOnNotNull extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3470,10 +3470,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/conventionNameCalls")
-    public abstract static class ConventionNameCalls extends AbstractLocalInspectionTest {
+    public abstract static class ConventionNameCalls extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator")
-        public static class ReplaceCallWithBinaryOperator extends AbstractLocalInspectionTest {
+        public static class ReplaceCallWithBinaryOperator extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3702,7 +3702,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
-        public static class ReplaceGetOrSet extends AbstractLocalInspectionTest {
+        public static class ReplaceGetOrSet extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -3872,7 +3872,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/convertNaNEquality")
-    public static class ConvertNaNEquality extends AbstractLocalInspectionTest {
+    public static class ConvertNaNEquality extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -3921,7 +3921,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/convertObjectToDataObject")
-    public static class ConvertObjectToDataObject extends AbstractLocalInspectionTest {
+    public static class ConvertObjectToDataObject extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4110,7 +4110,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/convertPairConstructorToToFunction")
-    public static class ConvertPairConstructorToToFunction extends AbstractLocalInspectionTest {
+    public static class ConvertPairConstructorToToFunction extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4134,7 +4134,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/convertSealedSubClassToObject")
-    public static class ConvertSealedSubClassToObject extends AbstractLocalInspectionTest {
+    public static class ConvertSealedSubClassToObject extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4263,7 +4263,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/copyWithoutNamedArguments")
-    public static class CopyWithoutNamedArguments extends AbstractLocalInspectionTest {
+    public static class CopyWithoutNamedArguments extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4302,10 +4302,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/coroutines")
-    public abstract static class Coroutines extends AbstractLocalInspectionTest {
+    public abstract static class Coroutines extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/redundantRunCatching")
-        public static class RedundantRunCatching extends AbstractLocalInspectionTest {
+        public static class RedundantRunCatching extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4359,7 +4359,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain")
-        public static class SimplifiableFlowCallChain extends AbstractLocalInspectionTest {
+        public static class SimplifiableFlowCallChain extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4393,7 +4393,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/suspendFunctionOnCoroutineScope")
-        public static class SuspendFunctionOnCoroutineScope extends AbstractLocalInspectionTest {
+        public static class SuspendFunctionOnCoroutineScope extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4507,7 +4507,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/unusedFlow")
-        public static class UnusedFlow extends AbstractLocalInspectionTest {
+        public static class UnusedFlow extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -4642,7 +4642,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/covariantEquals")
-    public static class CovariantEquals extends AbstractLocalInspectionTest {
+    public static class CovariantEquals extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4711,7 +4711,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/deprecatedCallableAddReplaceWith")
-    public static class DeprecatedCallableAddReplaceWith extends AbstractLocalInspectionTest {
+    public static class DeprecatedCallableAddReplaceWith extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4850,7 +4850,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/doubleNegation")
-    public static class DoubleNegation extends AbstractLocalInspectionTest {
+    public static class DoubleNegation extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4884,7 +4884,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/emptyRange")
-    public static class EmptyRange extends AbstractLocalInspectionTest {
+    public static class EmptyRange extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -4983,7 +4983,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/enumValuesSoftDeprecate")
-    public static class EnumValuesSoftDeprecate extends AbstractLocalInspectionTest {
+    public static class EnumValuesSoftDeprecate extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5187,7 +5187,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
-    public static class EqualsBetweenInconvertibleTypes extends AbstractLocalInspectionTest {
+    public static class EqualsBetweenInconvertibleTypes extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5311,7 +5311,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/equalsOrHashCode")
-    public static class EqualsOrHashCode extends AbstractLocalInspectionTest {
+    public static class EqualsOrHashCode extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5390,7 +5390,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/explicitThis")
-    public static class ExplicitThis extends AbstractLocalInspectionTest {
+    public static class ExplicitThis extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5554,7 +5554,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/filterIsInstanceAlwaysEmpty")
-    public static class FilterIsInstanceAlwaysEmpty extends AbstractLocalInspectionTest {
+    public static class FilterIsInstanceAlwaysEmpty extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5778,7 +5778,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/floatingPointLiteralPrecision")
-    public static class FloatingPointLiteralPrecision extends AbstractLocalInspectionTest {
+    public static class FloatingPointLiteralPrecision extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -5897,7 +5897,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/foldInitializerAndIfToElvis")
-    public static class FoldInitializerAndIfToElvis extends AbstractLocalInspectionTest {
+    public static class FoldInitializerAndIfToElvis extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6081,10 +6081,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody")
-    public abstract static class FunctionWithLambdaExpressionBody extends AbstractLocalInspectionTest {
+    public abstract static class FunctionWithLambdaExpressionBody extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody/addArrow")
-        public static class AddArrow extends AbstractLocalInspectionTest {
+        public static class AddArrow extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6108,7 +6108,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody/removeBraces")
-        public static class RemoveBraces extends AbstractLocalInspectionTest {
+        public static class RemoveBraces extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6147,7 +6147,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody/specifyType")
-        public static class SpecifyType extends AbstractLocalInspectionTest {
+        public static class SpecifyType extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6171,7 +6171,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6235,7 +6235,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody/wrapRun")
-        public static class WrapRun extends AbstractLocalInspectionTest {
+        public static class WrapRun extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6280,7 +6280,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/implicitThis")
-    public static class ImplicitThis extends AbstractLocalInspectionTest {
+    public static class ImplicitThis extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6364,7 +6364,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/incompleteDestructuringInspection")
-    public static class IncompleteDestructuringInspection extends AbstractLocalInspectionTest {
+    public static class IncompleteDestructuringInspection extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6433,10 +6433,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter")
-    public abstract static class InconsistentCommentForJavaParameter extends AbstractLocalInspectionTest {
+    public abstract static class InconsistentCommentForJavaParameter extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6480,7 +6480,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/inconsistentCommentForJavaParameter/whitespace")
-        public static class Whitespace extends AbstractLocalInspectionTest {
+        public static class Whitespace extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6545,7 +6545,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/javaCollectionsStaticMethod")
-    public static class JavaCollectionsStaticMethod extends AbstractLocalInspectionTest {
+    public static class JavaCollectionsStaticMethod extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6614,7 +6614,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/javaMapForEach")
-    public static class JavaMapForEach extends AbstractLocalInspectionTest {
+    public static class JavaMapForEach extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -6673,13 +6673,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment")
-    public abstract static class JoinDeclarationAndAssignment extends AbstractLocalInspectionTest {
+    public abstract static class JoinDeclarationAndAssignment extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment/reportWithComplexInitializationOfMemberProperties")
-        public abstract static class ReportWithComplexInitializationOfMemberProperties extends AbstractLocalInspectionTest {
+        public abstract static class ReportWithComplexInitializationOfMemberProperties extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment/reportWithComplexInitializationOfMemberProperties/default")
-            public static class Default extends AbstractLocalInspectionTest {
+            public static class Default extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6713,7 +6713,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment/reportWithComplexInitializationOfMemberProperties/false")
-            public static class False extends AbstractLocalInspectionTest {
+            public static class False extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6747,7 +6747,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment/reportWithComplexInitializationOfMemberProperties/true")
-            public static class True extends AbstractLocalInspectionTest {
+            public static class True extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6782,7 +6782,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/joinDeclarationAndAssignment")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -7027,7 +7027,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/kdocMissingDocumentation")
-    public static class KdocMissingDocumentation extends AbstractLocalInspectionTest {
+    public static class KdocMissingDocumentation extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7056,7 +7056,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/kotlinUnreachableCode")
-    public static class KotlinUnreachableCode extends AbstractLocalInspectionTest {
+    public static class KotlinUnreachableCode extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7105,7 +7105,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/lateinitVarOverridesLateinitVar")
-    public static class LateinitVarOverridesLateinitVar extends AbstractLocalInspectionTest {
+    public static class LateinitVarOverridesLateinitVar extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7134,7 +7134,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/leakingThis")
-    public static class LeakingThis extends AbstractLocalInspectionTest {
+    public static class LeakingThis extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7198,16 +7198,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/liftOut")
-    public abstract static class LiftOut extends AbstractLocalInspectionTest {
+    public abstract static class LiftOut extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
-        public abstract static class IfToAssignment extends AbstractLocalInspectionTest {
+        public abstract static class IfToAssignment extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement")
-            public abstract static class OnlySingleStatement extends AbstractLocalInspectionTest {
+            public abstract static class OnlySingleStatement extends AbstractK1LocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/false")
-                public static class False extends AbstractLocalInspectionTest {
+                public static class False extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -7226,7 +7226,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment/onlySingleStatement/true")
-                public static class True extends AbstractLocalInspectionTest {
+                public static class True extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -7251,7 +7251,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
-            public static class Uncategorized extends AbstractLocalInspectionTest {
+            public static class Uncategorized extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -7451,13 +7451,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn")
-        public abstract static class IfToReturn extends AbstractLocalInspectionTest {
+        public abstract static class IfToReturn extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement")
-            public abstract static class OnlySingleStatement extends AbstractLocalInspectionTest {
+            public abstract static class OnlySingleStatement extends AbstractK1LocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/false")
-                public static class False extends AbstractLocalInspectionTest {
+                public static class False extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -7476,7 +7476,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn/onlySingleStatement/true")
-                public static class True extends AbstractLocalInspectionTest {
+                public static class True extends AbstractK1LocalInspectionTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -7501,7 +7501,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToReturn")
-            public static class Uncategorized extends AbstractLocalInspectionTest {
+            public static class Uncategorized extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -7566,7 +7566,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/tryToAssignment")
-        public static class TryToAssignment extends AbstractLocalInspectionTest {
+        public static class TryToAssignment extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -7645,7 +7645,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/tryToReturn")
-        public static class TryToReturn extends AbstractLocalInspectionTest {
+        public static class TryToReturn extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -7704,7 +7704,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/whenToAssignment")
-        public static class WhenToAssignment extends AbstractLocalInspectionTest {
+        public static class WhenToAssignment extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -7793,7 +7793,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/liftOut/whenToReturn")
-        public static class WhenToReturn extends AbstractLocalInspectionTest {
+        public static class WhenToReturn extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -7883,7 +7883,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/localVariableName")
-    public static class LocalVariableName extends AbstractLocalInspectionTest {
+    public static class LocalVariableName extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -7907,13 +7907,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/logging")
-    public abstract static class Logging extends AbstractLocalInspectionTest {
+    public abstract static class Logging extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass")
-        public abstract static class LoggerInitializedWithForeignClass extends AbstractLocalInspectionTest {
+        public abstract static class LoggerInitializedWithForeignClass extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/commons")
-            public static class Commons extends AbstractLocalInspectionTest {
+            public static class Commons extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -7977,7 +7977,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/log4j")
-            public static class Log4j extends AbstractLocalInspectionTest {
+            public static class Log4j extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -7996,7 +7996,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/log4j2")
-            public static class Log4j2 extends AbstractLocalInspectionTest {
+            public static class Log4j2 extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -8015,7 +8015,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/slf4j")
-            public static class Slf4j extends AbstractLocalInspectionTest {
+            public static class Slf4j extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -8034,7 +8034,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util")
-            public static class Util extends AbstractLocalInspectionTest {
+            public static class Util extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -8120,7 +8120,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/mainFunctionReturnUnit")
-    public static class MainFunctionReturnUnit extends AbstractLocalInspectionTest {
+    public static class MainFunctionReturnUnit extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8159,7 +8159,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/mapGetWithNotNullAssertionOperator")
-    public static class MapGetWithNotNullAssertionOperator extends AbstractLocalInspectionTest {
+    public static class MapGetWithNotNullAssertionOperator extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8208,7 +8208,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/mapToForEach")
-    public static class MapToForEach extends AbstractLocalInspectionTest {
+    public static class MapToForEach extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8292,7 +8292,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/mayBeConstant")
-    public static class MayBeConstant extends AbstractLocalInspectionTest {
+    public static class MayBeConstant extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8441,7 +8441,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/memberVisibilityCanBePrivate")
-    public static class MemberVisibilityCanBePrivate extends AbstractLocalInspectionTest {
+    public static class MemberVisibilityCanBePrivate extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8495,7 +8495,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/moveLambdaOutsideParentheses")
-    public static class MoveLambdaOutsideParentheses extends AbstractLocalInspectionTest {
+    public static class MoveLambdaOutsideParentheses extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8659,7 +8659,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
-    public static class NestedLambdaShadowedImplicitParameter extends AbstractLocalInspectionTest {
+    public static class NestedLambdaShadowedImplicitParameter extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8808,7 +8808,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration")
-    public static class NonExhaustiveWhenStatementMigration extends AbstractLocalInspectionTest {
+    public static class NonExhaustiveWhenStatementMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8842,7 +8842,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nonExternalClassifierExtendingStateOrProps")
-    public static class NonExternalClassifierExtendingStateOrProps extends AbstractLocalInspectionTest {
+    public static class NonExternalClassifierExtendingStateOrProps extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8886,7 +8886,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nonNullableBooleanPropertyInExternalInterface")
-    public static class NonNullableBooleanPropertyInExternalInterface extends AbstractLocalInspectionTest {
+    public static class NonNullableBooleanPropertyInExternalInterface extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8920,7 +8920,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nonVarPropertyInExternalInterface")
-    public static class NonVarPropertyInExternalInterface extends AbstractLocalInspectionTest {
+    public static class NonVarPropertyInExternalInterface extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -8954,7 +8954,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nullChecksToSafeCall")
-    public static class NullChecksToSafeCall extends AbstractLocalInspectionTest {
+    public static class NullChecksToSafeCall extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9008,7 +9008,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/nullableBooleanElvis")
-    public static class NullableBooleanElvis extends AbstractLocalInspectionTest {
+    public static class NullableBooleanElvis extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9087,7 +9087,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/overrideDeprecatedMigration")
-    public static class OverrideDeprecatedMigration extends AbstractLocalInspectionTest {
+    public static class OverrideDeprecatedMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9126,7 +9126,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration")
-    public static class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration extends AbstractLocalInspectionTest {
+    public static class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9145,7 +9145,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration1_3")
-    public static class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration1_3 extends AbstractLocalInspectionTest {
+    public static class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration1_3 extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9164,7 +9164,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitRepeatedUseSiteTargetAnnotationsMigration")
-    public static class ProhibitRepeatedUseSiteTargetAnnotationsMigration extends AbstractLocalInspectionTest {
+    public static class ProhibitRepeatedUseSiteTargetAnnotationsMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9213,7 +9213,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitTypeParametersForLocalVariablesMigration")
-    public static class ProhibitTypeParametersForLocalVariablesMigration extends AbstractLocalInspectionTest {
+    public static class ProhibitTypeParametersForLocalVariablesMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9232,7 +9232,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration")
-    public static class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration extends AbstractLocalInspectionTest {
+    public static class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9271,7 +9271,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/prohibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3")
-    public static class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3 extends AbstractLocalInspectionTest {
+    public static class ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3 extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9310,7 +9310,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/recursiveEqualsCall")
-    public static class RecursiveEqualsCall extends AbstractLocalInspectionTest {
+    public static class RecursiveEqualsCall extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9374,7 +9374,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
-    public static class RedundantCompanionReference extends AbstractLocalInspectionTest {
+    public static class RedundantCompanionReference extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9678,7 +9678,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantDiagnosticSuppress")
-    public static class RedundantDiagnosticSuppress extends AbstractLocalInspectionTest {
+    public static class RedundantDiagnosticSuppress extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9782,7 +9782,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantElseInIf")
-    public static class RedundantElseInIf extends AbstractLocalInspectionTest {
+    public static class RedundantElseInIf extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9856,7 +9856,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantElvisReturnNull")
-    public static class RedundantElvisReturnNull extends AbstractLocalInspectionTest {
+    public static class RedundantElvisReturnNull extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9915,7 +9915,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantEnumConstructorInvocation")
-    public static class RedundantEnumConstructorInvocation extends AbstractLocalInspectionTest {
+    public static class RedundantEnumConstructorInvocation extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -9949,7 +9949,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantExplicitType")
-    public static class RedundantExplicitType extends AbstractLocalInspectionTest {
+    public static class RedundantExplicitType extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -10058,10 +10058,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantIf")
-    public abstract static class RedundantIf extends AbstractLocalInspectionTest {
+    public abstract static class RedundantIf extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/comment")
-        public static class Comment extends AbstractLocalInspectionTest {
+        public static class Comment extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10115,7 +10115,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/floatingPoint")
-        public static class FloatingPoint extends AbstractLocalInspectionTest {
+        public static class FloatingPoint extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10154,10 +10154,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChainedIf")
-        public abstract static class IgnoreChainedIf extends AbstractLocalInspectionTest {
+        public abstract static class IgnoreChainedIf extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChainedIf/false")
-            public static class False extends AbstractLocalInspectionTest {
+            public static class False extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -10176,7 +10176,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChainedIf/true")
-            public static class True extends AbstractLocalInspectionTest {
+            public static class True extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -10206,7 +10206,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/invertEmptinessCheck")
-        public static class InvertEmptinessCheck extends AbstractLocalInspectionTest {
+        public static class InvertEmptinessCheck extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10236,7 +10236,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantInnerClassModifier")
-    public static class RedundantInnerClassModifier extends AbstractLocalInspectionTest {
+    public static class RedundantInnerClassModifier extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -10460,7 +10460,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantLabelMigration")
-    public static class RedundantLabelMigration extends AbstractLocalInspectionTest {
+    public static class RedundantLabelMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -10484,7 +10484,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantLambdaArrow")
-    public static class RedundantLambdaArrow extends AbstractLocalInspectionTest {
+    public static class RedundantLambdaArrow extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -10678,10 +10678,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantLambdaOrAnonymousFunction")
-    public abstract static class RedundantLambdaOrAnonymousFunction extends AbstractLocalInspectionTest {
+    public abstract static class RedundantLambdaOrAnonymousFunction extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantLambdaOrAnonymousFunction/anonymousFunction")
-        public static class AnonymousFunction extends AbstractLocalInspectionTest {
+        public static class AnonymousFunction extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10765,7 +10765,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantLambdaOrAnonymousFunction/lambdaExpression")
-        public static class LambdaExpression extends AbstractLocalInspectionTest {
+        public static class LambdaExpression extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10824,7 +10824,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantLambdaOrAnonymousFunction")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10869,10 +10869,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantNullableReturnType")
-    public abstract static class RedundantNullableReturnType extends AbstractLocalInspectionTest {
+    public abstract static class RedundantNullableReturnType extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantNullableReturnType/function")
-        public static class Function extends AbstractLocalInspectionTest {
+        public static class Function extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -10956,7 +10956,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantNullableReturnType/property")
-        public static class Property extends AbstractLocalInspectionTest {
+        public static class Property extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -11016,7 +11016,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantObjectTypeCheck")
-    public static class RedundantObjectTypeCheck extends AbstractLocalInspectionTest {
+    public static class RedundantObjectTypeCheck extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11070,7 +11070,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantRequireNotNullCall")
-    public static class RedundantRequireNotNullCall extends AbstractLocalInspectionTest {
+    public static class RedundantRequireNotNullCall extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11134,7 +11134,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantReturnKeyword")
-    public static class RedundantReturnKeyword extends AbstractLocalInspectionTest {
+    public static class RedundantReturnKeyword extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11288,7 +11288,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantUnitExpression")
-    public static class RedundantUnitExpression extends AbstractLocalInspectionTest {
+    public static class RedundantUnitExpression extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11517,7 +11517,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantUnitReturnType")
-    public static class RedundantUnitReturnType extends AbstractLocalInspectionTest {
+    public static class RedundantUnitReturnType extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11576,7 +11576,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantVisibilityModifier")
-    public static class RedundantVisibilityModifier extends AbstractLocalInspectionTest {
+    public static class RedundantVisibilityModifier extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11675,7 +11675,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantWith")
-    public static class RedundantWith extends AbstractLocalInspectionTest {
+    public static class RedundantWith extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11849,7 +11849,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeEmptyParenthesesFromAnnotationEntry")
-    public static class RemoveEmptyParenthesesFromAnnotationEntry extends AbstractLocalInspectionTest {
+    public static class RemoveEmptyParenthesesFromAnnotationEntry extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -11893,7 +11893,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeExplicitTypeArguments")
-    public static class RemoveExplicitTypeArguments extends AbstractLocalInspectionTest {
+    public static class RemoveExplicitTypeArguments extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12002,7 +12002,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods")
-    public static class RemoveRedundantCallsOfConversionMethods extends AbstractLocalInspectionTest {
+    public static class RemoveRedundantCallsOfConversionMethods extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12116,7 +12116,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-    public static class RemoveRedundantQualifierName extends AbstractLocalInspectionTest {
+    public static class RemoveRedundantQualifierName extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12675,7 +12675,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeRedundantSpreadOperator")
-    public static class RemoveRedundantSpreadOperator extends AbstractLocalInspectionTest {
+    public static class RemoveRedundantSpreadOperator extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12809,7 +12809,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeToStringInStringTemplate")
-    public static class RemoveToStringInStringTemplate extends AbstractLocalInspectionTest {
+    public static class RemoveToStringInStringTemplate extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12853,7 +12853,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceAddAllWithMapTo")
-    public static class ReplaceAddAllWithMapTo extends AbstractLocalInspectionTest {
+    public static class ReplaceAddAllWithMapTo extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12927,7 +12927,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
-    public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractLocalInspectionTest {
+    public static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -12961,7 +12961,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceArrayOfWithLiteral")
-    public static class ReplaceArrayOfWithLiteral extends AbstractLocalInspectionTest {
+    public static class ReplaceArrayOfWithLiteral extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -13030,7 +13030,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceCollectionCountWithSize")
-    public static class ReplaceCollectionCountWithSize extends AbstractLocalInspectionTest {
+    public static class ReplaceCollectionCountWithSize extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -13099,10 +13099,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall")
-    public abstract static class ReplaceGuardClauseWithFunctionCall extends AbstractLocalInspectionTest {
+    public abstract static class ReplaceGuardClauseWithFunctionCall extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/check")
-        public static class Check extends AbstractLocalInspectionTest {
+        public static class Check extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13121,7 +13121,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/checkNotNull")
-        public static class CheckNotNull extends AbstractLocalInspectionTest {
+        public static class CheckNotNull extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13140,7 +13140,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/require")
-        public static class Require extends AbstractLocalInspectionTest {
+        public static class Require extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13199,7 +13199,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/requireNotNull")
-        public static class RequireNotNull extends AbstractLocalInspectionTest {
+        public static class RequireNotNull extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13223,7 +13223,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13253,10 +13253,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty")
-    public abstract static class ReplaceIsEmptyWithIfEmpty extends AbstractLocalInspectionTest {
+    public abstract static class ReplaceIsEmptyWithIfEmpty extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/array")
-        public static class Array extends AbstractLocalInspectionTest {
+        public static class Array extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13280,7 +13280,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection")
-        public static class Collection extends AbstractLocalInspectionTest {
+        public static class Collection extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13304,7 +13304,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments")
-        public static class Comments extends AbstractLocalInspectionTest {
+        public static class Comments extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13358,7 +13358,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/intArray")
-        public static class IntArray extends AbstractLocalInspectionTest {
+        public static class IntArray extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13382,7 +13382,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/list")
-        public static class List extends AbstractLocalInspectionTest {
+        public static class List extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13406,7 +13406,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/map")
-        public static class Map extends AbstractLocalInspectionTest {
+        public static class Map extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13430,7 +13430,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/set")
-        public static class Set extends AbstractLocalInspectionTest {
+        public static class Set extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13454,7 +13454,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/str")
-        public static class Str extends AbstractLocalInspectionTest {
+        public static class Str extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13488,7 +13488,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13583,10 +13583,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog")
-    public abstract static class ReplaceJavaStaticMethodWithKotlinAnalog extends AbstractLocalInspectionTest {
+    public abstract static class ReplaceJavaStaticMethodWithKotlinAnalog extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections")
-        public static class Collections extends AbstractLocalInspectionTest {
+        public static class Collections extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13785,7 +13785,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/compare")
-        public static class Compare extends AbstractLocalInspectionTest {
+        public static class Compare extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13839,7 +13839,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/io")
-        public static class Io extends AbstractLocalInspectionTest {
+        public static class Io extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -13893,7 +13893,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math")
-        public static class Math extends AbstractLocalInspectionTest {
+        public static class Math extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14122,7 +14122,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/system")
-        public static class System extends AbstractLocalInspectionTest {
+        public static class System extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14141,7 +14141,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString")
-        public static class ToString extends AbstractLocalInspectionTest {
+        public static class ToString extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14261,7 +14261,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls")
-    public static class ReplaceManualRangeWithIndicesCalls extends AbstractLocalInspectionTest {
+    public static class ReplaceManualRangeWithIndicesCalls extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14420,7 +14420,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty")
-    public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractLocalInspectionTest {
+    public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14479,7 +14479,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn")
-    public static class ReplaceNotNullAssertionWithElvisReturn extends AbstractLocalInspectionTest {
+    public static class ReplaceNotNullAssertionWithElvisReturn extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14558,7 +14558,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replacePutWithAssignment")
-    public static class ReplacePutWithAssignment extends AbstractLocalInspectionTest {
+    public static class ReplacePutWithAssignment extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14657,7 +14657,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceRangeStartEndInclusiveWithFirstLast")
-    public static class ReplaceRangeStartEndInclusiveWithFirstLast extends AbstractLocalInspectionTest {
+    public static class ReplaceRangeStartEndInclusiveWithFirstLast extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14706,7 +14706,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceStringFormatWithLiteral")
-    public static class ReplaceStringFormatWithLiteral extends AbstractLocalInspectionTest {
+    public static class ReplaceStringFormatWithLiteral extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -14770,10 +14770,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceSubstring")
-    public abstract static class ReplaceSubstring extends AbstractLocalInspectionTest {
+    public abstract static class ReplaceSubstring extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSubstring/withDropLast")
-        public static class WithDropLast extends AbstractLocalInspectionTest {
+        public static class WithDropLast extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14812,7 +14812,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSubstring/withIndexingOperation")
-        public static class WithIndexingOperation extends AbstractLocalInspectionTest {
+        public static class WithIndexingOperation extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14841,7 +14841,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSubstring/withSubstringAfter")
-        public static class WithSubstringAfter extends AbstractLocalInspectionTest {
+        public static class WithSubstringAfter extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14875,7 +14875,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSubstring/withSubstringBefore")
-        public static class WithSubstringBefore extends AbstractLocalInspectionTest {
+        public static class WithSubstringBefore extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14914,7 +14914,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/replaceSubstring/withTake")
-        public static class WithTake extends AbstractLocalInspectionTest {
+        public static class WithTake extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -14974,7 +14974,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceToWithInfixForm")
-    public static class ReplaceToWithInfixForm extends AbstractLocalInspectionTest {
+    public static class ReplaceToWithInfixForm extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15003,7 +15003,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceUntilWithRangeUntil")
-    public static class ReplaceUntilWithRangeUntil extends AbstractLocalInspectionTest {
+    public static class ReplaceUntilWithRangeUntil extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15077,7 +15077,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithEnumMap")
-    public static class ReplaceWithEnumMap extends AbstractLocalInspectionTest {
+    public static class ReplaceWithEnumMap extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15126,7 +15126,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithIgnoreCaseEquals")
-    public static class ReplaceWithIgnoreCaseEquals extends AbstractLocalInspectionTest {
+    public static class ReplaceWithIgnoreCaseEquals extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15205,7 +15205,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithImportAlias")
-    public static class ReplaceWithImportAlias extends AbstractLocalInspectionTest {
+    public static class ReplaceWithImportAlias extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15259,7 +15259,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithOperatorAssignment")
-    public static class ReplaceWithOperatorAssignment extends AbstractLocalInspectionTest {
+    public static class ReplaceWithOperatorAssignment extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15353,7 +15353,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/restrictReturnStatementTargetMigration")
-    public static class RestrictReturnStatementTargetMigration extends AbstractLocalInspectionTest {
+    public static class RestrictReturnStatementTargetMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15377,10 +15377,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/scopeFunctions")
-    public abstract static class ScopeFunctions extends AbstractLocalInspectionTest {
+    public abstract static class ScopeFunctions extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/scopeFunctions/alsoToApply")
-        public static class AlsoToApply extends AbstractLocalInspectionTest {
+        public static class AlsoToApply extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -15399,7 +15399,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/scopeFunctions/applyToAlso")
-        public static class ApplyToAlso extends AbstractLocalInspectionTest {
+        public static class ApplyToAlso extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -15468,7 +15468,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/scopeFunctions/letToRun")
-        public static class LetToRun extends AbstractLocalInspectionTest {
+        public static class LetToRun extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -15522,7 +15522,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/scopeFunctions/runToLet")
-        public static class RunToLet extends AbstractLocalInspectionTest {
+        public static class RunToLet extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -15552,7 +15552,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/scriptExecutable")
-    public static class ScriptExecutable extends AbstractLocalInspectionTest {
+    public static class ScriptExecutable extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15576,7 +15576,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/selfAssignment")
-    public static class SelfAssignment extends AbstractLocalInspectionTest {
+    public static class SelfAssignment extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15795,7 +15795,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/selfReferenceConstructorParameter")
-    public static class SelfReferenceConstructorParameter extends AbstractLocalInspectionTest {
+    public static class SelfReferenceConstructorParameter extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15829,7 +15829,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/simplifyAssertNotNull")
-    public static class SimplifyAssertNotNull extends AbstractLocalInspectionTest {
+    public static class SimplifyAssertNotNull extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -15898,7 +15898,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/simplifyNestedEachInScope")
-    public static class SimplifyNestedEachInScope extends AbstractLocalInspectionTest {
+    public static class SimplifyNestedEachInScope extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16012,7 +16012,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/stringReferentialEquality")
-    public static class StringReferentialEquality extends AbstractLocalInspectionTest {
+    public static class StringReferentialEquality extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16051,7 +16051,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
-    public static class SuspiciousCallOnCollectionToAddOrRemovePath extends AbstractLocalInspectionTest {
+    public static class SuspiciousCallOnCollectionToAddOrRemovePath extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16125,7 +16125,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCallableReferenceInLambda")
-    public static class SuspiciousCallableReferenceInLambda extends AbstractLocalInspectionTest {
+    public static class SuspiciousCallableReferenceInLambda extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16354,7 +16354,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCascadingIf")
-    public static class SuspiciousCascadingIf extends AbstractLocalInspectionTest {
+    public static class SuspiciousCascadingIf extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16463,7 +16463,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCollectionReassignment")
-    public static class SuspiciousCollectionReassignment extends AbstractLocalInspectionTest {
+    public static class SuspiciousCollectionReassignment extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16532,7 +16532,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unlabeledReturnInsideLambda")
-    public static class UnlabeledReturnInsideLambda extends AbstractLocalInspectionTest {
+    public static class UnlabeledReturnInsideLambda extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16566,7 +16566,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unnecessaryOptInAnnotation")
-    public static class UnnecessaryOptInAnnotation extends AbstractLocalInspectionTest {
+    public static class UnnecessaryOptInAnnotation extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -16920,10 +16920,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
-    public abstract static class UnnecessaryVariable extends AbstractLocalInspectionTest {
+    public abstract static class UnnecessaryVariable extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables")
-        public static class ReportImmediatelyReturnedVariables extends AbstractLocalInspectionTest {
+        public static class ReportImmediatelyReturnedVariables extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -16987,7 +16987,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -17112,7 +17112,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unsafeCastFromDynamic")
-    public static class UnsafeCastFromDynamic extends AbstractLocalInspectionTest {
+    public static class UnsafeCastFromDynamic extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -17146,7 +17146,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedEquals")
-    public static class UnusedEquals extends AbstractLocalInspectionTest {
+    public static class UnusedEquals extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -17180,7 +17180,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedLambdaExpressionBody")
-    public static class UnusedLambdaExpressionBody extends AbstractLocalInspectionTest {
+    public static class UnusedLambdaExpressionBody extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -17214,7 +17214,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedMainParameter")
-    public static class UnusedMainParameter extends AbstractLocalInspectionTest {
+    public static class UnusedMainParameter extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -17248,7 +17248,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedReceiverParameter")
-    public static class UnusedReceiverParameter extends AbstractLocalInspectionTest {
+    public static class UnusedReceiverParameter extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -17452,10 +17452,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedSymbol")
-    public abstract static class UnusedSymbol extends AbstractLocalInspectionTest {
+    public abstract static class UnusedSymbol extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedSymbol/multifile")
-        public static class Multifile extends AbstractLocalInspectionTest {
+        public static class Multifile extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -17594,7 +17594,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedSymbol")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -18374,10 +18374,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator")
-    public abstract static class UnusedUnaryOperator extends AbstractLocalInspectionTest {
+    public abstract static class UnusedUnaryOperator extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine")
-        public static class MoveToPrevLine extends AbstractLocalInspectionTest {
+        public static class MoveToPrevLine extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -18416,7 +18416,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedUnaryOperator")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -18521,13 +18521,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/useExpressionBody")
-    public abstract static class UseExpressionBody extends AbstractLocalInspectionTest {
+    public abstract static class UseExpressionBody extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody")
-        public abstract static class ConvertToExpressionBody extends AbstractLocalInspectionTest {
+        public abstract static class ConvertToExpressionBody extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody/keepComments")
-            public static class KeepComments extends AbstractLocalInspectionTest {
+            public static class KeepComments extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -18571,7 +18571,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody")
-            public static class Uncategorized extends AbstractLocalInspectionTest {
+            public static class Uncategorized extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -18791,7 +18791,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/useExpressionBody")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -18846,10 +18846,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax")
-    public abstract static class UsePropertyAccessSyntax extends AbstractLocalInspectionTest {
+    public abstract static class UsePropertyAccessSyntax extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/callableReferenceExpressions")
-        public static class CallableReferenceExpressions extends AbstractLocalInspectionTest {
+        public static class CallableReferenceExpressions extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -18938,7 +18938,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions")
-        public static class DotQualifiedExpressions extends AbstractLocalInspectionTest {
+        public static class DotQualifiedExpressions extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19192,7 +19192,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression")
-        public static class ReferenceExpression extends AbstractLocalInspectionTest {
+        public static class ReferenceExpression extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19331,10 +19331,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors")
-        public abstract static class ReportNonTrivialAccessors extends AbstractLocalInspectionTest {
+        public abstract static class ReportNonTrivialAccessors extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default")
-            public static class Default extends AbstractLocalInspectionTest {
+            public static class Default extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19383,7 +19383,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false")
-            public static class False extends AbstractLocalInspectionTest {
+            public static class False extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19432,7 +19432,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true")
-            public static class True extends AbstractLocalInspectionTest {
+            public static class True extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19488,10 +19488,10 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness")
-    public abstract static class VerboseNullabilityAndEmptiness extends AbstractLocalInspectionTest {
+    public abstract static class VerboseNullabilityAndEmptiness extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/array")
-        public static class Array extends AbstractLocalInspectionTest {
+        public static class Array extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19510,7 +19510,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/arrayList")
-        public static class ArrayList extends AbstractLocalInspectionTest {
+        public static class ArrayList extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19529,7 +19529,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/collection")
-        public static class Collection extends AbstractLocalInspectionTest {
+        public static class Collection extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19553,7 +19553,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/complex")
-        public static class Complex extends AbstractLocalInspectionTest {
+        public static class Complex extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19592,7 +19592,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/hashSet")
-        public static class HashSet extends AbstractLocalInspectionTest {
+        public static class HashSet extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19611,7 +19611,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/intArray")
-        public static class IntArray extends AbstractLocalInspectionTest {
+        public static class IntArray extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19635,7 +19635,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/list")
-        public static class List extends AbstractLocalInspectionTest {
+        public static class List extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19684,7 +19684,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/map")
-        public static class Map extends AbstractLocalInspectionTest {
+        public static class Map extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19703,7 +19703,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/receivers")
-        public static class Receivers extends AbstractLocalInspectionTest {
+        public static class Receivers extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19747,7 +19747,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/set")
-        public static class Set extends AbstractLocalInspectionTest {
+        public static class Set extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19766,7 +19766,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/str")
-        public static class Str extends AbstractLocalInspectionTest {
+        public static class Str extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19800,7 +19800,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/verboseNullabilityAndEmptiness/wrapped")
-        public static class Wrapped extends AbstractLocalInspectionTest {
+        public static class Wrapped extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -19830,7 +19830,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/warningOnMainUnusedParameterMigration")
-    public static class WarningOnMainUnusedParameterMigration extends AbstractLocalInspectionTest {
+    public static class WarningOnMainUnusedParameterMigration extends AbstractK1LocalInspectionTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -19854,13 +19854,13 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse")
-    public abstract static class WhenWithOnlyElse extends AbstractLocalInspectionTest {
+    public abstract static class WhenWithOnlyElse extends AbstractK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
-        public abstract static class SubjectVariable extends AbstractLocalInspectionTest {
+        public abstract static class SubjectVariable extends AbstractK1LocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElse")
-            public static class BlockElse extends AbstractLocalInspectionTest {
+            public static class BlockElse extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19894,7 +19894,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/blockElseUsedAsExpression")
-            public static class BlockElseUsedAsExpression extends AbstractLocalInspectionTest {
+            public static class BlockElseUsedAsExpression extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19928,7 +19928,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse/subjectVariable/singleElse")
-            public static class SingleElse extends AbstractLocalInspectionTest {
+            public static class SingleElse extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -19982,7 +19982,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse/subjectVariable")
-            public static class Uncategorized extends AbstractLocalInspectionTest {
+            public static class Uncategorized extends AbstractK1LocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -20022,7 +20022,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/whenWithOnlyElse")
-        public static class Uncategorized extends AbstractLocalInspectionTest {
+        public static class Uncategorized extends AbstractK1LocalInspectionTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {

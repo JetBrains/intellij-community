@@ -1,16 +1,29 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.findUsages
 
-import com.intellij.find.findUsages.*
+import com.intellij.find.findUsages.FindUsagesOptions
+import com.intellij.find.findUsages.JavaFindUsagesOptions
+import com.intellij.find.findUsages.JavaMethodFindUsagesOptions
+import com.intellij.find.findUsages.JavaPackageFindUsagesOptions
+import com.intellij.find.findUsages.JavaVariableFindUsagesOptions
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightMethodForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeParameter
 
 internal enum class OptionsParser {
     CLASS {

@@ -1,14 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.findUsages
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -22,7 +18,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
 
     protected fun getTestdataFile(): File =
-        File(testDataPath + getTestName(true).removePrefix("test"))
+      File(testDataPath + getTestName(true).removePrefix("test"))
 
     protected val mainFile: KtFile
         get() = project.allKotlinFiles().single { file ->
@@ -33,9 +29,9 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
 
     open fun doTest(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
-            getTestdataFile().toPath().resolve("directives.txt"),
-            IgnoreTests.DIRECTIVES.IGNORE_K1,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+          getTestdataFile().toPath().resolve("directives.txt"),
+          IgnoreTests.DIRECTIVES.IGNORE_K1,
+          directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             doTestInternal(path)
         }
@@ -63,13 +59,10 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
         val caretElement = executeOnPooledThreadInReadAction {
             TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED)
         }
-        UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
+      assertInstanceOf(caretElement!!, caretElementClass)
 
         val options = parser?.parse(mainFileText, project)
-        val testType = when (pluginMode) {
-            KotlinPluginMode.K1 -> FindUsageTestType.DEFAULT
-            KotlinPluginMode.K2 -> FindUsageTestType.FIR
-        }
+        val testType = getTestType()
 
         findUsagesAndCheckResults(
             mainFileText,
@@ -83,4 +76,6 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             ignoreLog = ignoreLog
         )
     }
+
+  protected abstract fun getTestType(): AbstractFindUsagesTest.Companion.FindUsageTestType
 }

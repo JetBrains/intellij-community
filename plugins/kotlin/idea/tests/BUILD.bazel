@@ -194,7 +194,9 @@ jvm_library(
     "//plugins/IntelliLang/backend",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "@lib//:jet_check",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ],
+  exports = ["//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib"],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle",
     "//plugins/kotlin/compiler-plugins/sam-with-receiver/common",

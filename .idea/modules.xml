@@ -660,6 +660,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/scripting/scripting.shared/intellij.kotlin.base.scripting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/scripting/scripting.shared/intellij.kotlin.base.scripting.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/kotlin.base.serialization/intellij.kotlin.base.serialization.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/kotlin.base.serialization/intellij.kotlin.base.serialization.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/statistics/intellij.kotlin.base.statistics.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/statistics/intellij.kotlin.base.statistics.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.base.test/intellij.kotlin.base.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.base.test/intellij.kotlin.base.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/util/intellij.kotlin.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/kotlin.code-insight.k2/intellij.kotlin.codeInsight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/kotlin.code-insight.k2/intellij.kotlin.codeInsight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/code-insight/api/intellij.kotlin.codeInsight.api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/code-insight/api/intellij.kotlin.codeInsight.api.iml" />

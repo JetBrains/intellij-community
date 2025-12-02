@@ -9,10 +9,19 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.findUsages.KotlinFindUsageConfigurator
+import org.jetbrains.kotlin.findUsages.k1DiagnosticProviderForFindUsages
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+
+abstract class AbstractK1FindUsagesWithCompilerReferenceIndexTest : AbstractFindUsagesWithCompilerReferenceIndexTest() {
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> {
+        return k1DiagnosticProviderForFindUsages()
+    }
+}
 
 abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompilerReferenceTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
@@ -25,6 +34,8 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
 
     override fun getTestDataPath(): String = File(TestMetadataUtil.getTestDataPath(javaClass)).path
 
+    abstract fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic>
+
     protected fun doTest(path: String) {
         val isFir = pluginMode == KotlinPluginMode.K2
         val criType = if (isFir) FindUsageTestType.FIR_CRI else FindUsageTestType.CRI
@@ -32,6 +43,9 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
             AbstractFindUsagesTest.doFindUsageTest<PsiElement>(
                 path,
                 configurator = KotlinFindUsageConfigurator.fromFixture(myFixture),
+                testType = criType,
+                ignoreLog = ignoreLog,
+                testPlatform = KMPTestPlatform.Unspecified,
                 executionWrapper = { findUsageTest ->
                     findUsageTest(if (isFir) FindUsageTestType.FIR else FindUsageTestType.DEFAULT)
 
@@ -39,9 +53,7 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
                     rebuildProject()
                     findUsageTest(criType)
                 },
-                ignoreLog = ignoreLog,
-                testPlatform = KMPTestPlatform.Unspecified,
-                testType = criType,
+                diagnosticProvider = getDiagnosticProvider(),
             )
         }.fold(
             onSuccess = {},
@@ -52,4 +64,5 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
             },
         )
     }
+
 }

@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.findUsages
 
 import com.intellij.codeInsight.TargetElementUtil
@@ -40,35 +39,30 @@ import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.base.util.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
+import org.jetbrains.kotlin.idea.base.util.clearDialogsResults
+import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.base.util.setDialogsResult
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.io.File
 import java.io.StringWriter
-
 
 abstract class AbstractFindUsagesWithDisableComponentSearchTest : AbstractFindUsagesTest() {
 
@@ -97,6 +91,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
     protected open fun extraConfig(path: String) {
     }
 
+    protected open fun updateScripts(file: PsiFile) {}
+
     protected open val prefixForResults = ""
 
     protected open val ignoreLog = false
@@ -105,11 +101,15 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         path,
         this::extraConfig,
         KotlinFindUsageConfigurator.fromFixture(myFixture),
-        if (isFirPlugin) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+        if (pluginMode == KotlinPluginMode.K2) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
         prefixForResults,
         ignoreLog,
         testPlatform,
+        diagnosticProvider = getDiagnosticProvider(),
+        scriptsUpdater =  { updateScripts(it) }
     )
+
+    protected abstract fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic>
 
     override val testPlatform: KMPTestPlatform
         get() = KMPTestPlatform.Unspecified
@@ -124,14 +124,16 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         }
 
         fun <T : PsiElement> doFindUsageTest(
-            path: String,
-            extraConfig: (path: String) -> Unit = { },
-            configurator: KotlinFindUsageConfigurator,
-            testType: FindUsageTestType = FindUsageTestType.DEFAULT,
-            prefixForResults: String = "",
-            ignoreLog: Boolean,
-            testPlatform: KMPTestPlatform,
-            executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) }
+          path: String,
+          extraConfig: (path: String) -> Unit = { },
+          configurator: KotlinFindUsageConfigurator,
+          testType: FindUsageTestType = FindUsageTestType.DEFAULT,
+          prefixForResults: String = "",
+          ignoreLog: Boolean,
+          testPlatform: KMPTestPlatform,
+          executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) },
+          diagnosticProvider: (KtFile) -> List<Diagnostic>,
+          scriptsUpdater: (PsiFile) -> Unit = {}
         ) {
             val mainFile = File(path)
 
@@ -202,7 +204,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                 KMPProjectDescriptorTestUtilities.validateTest(configurator.allFiles, testPlatform)
 
                 if ((configurator.file as? KtFile)?.isScript() == true) {
-                    ScriptConfigurationManager.updateScriptDependenciesSynchronously(configurator.file)
+                   scriptsUpdater(configurator.file)
                 }
 
                 val javaNamesMap: Map<String, String> = FileTypeIndex.getFiles(
@@ -219,9 +221,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
 
                 if (testType == FindUsageTestType.DEFAULT) {
                     (configurator.file as? KtFile)?.let { ktFile ->
-                        val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
-                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticProvider)
+                        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticProvider)
                     }
                 }
 
@@ -254,11 +255,11 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                 }
 
                 val expectedPsiElementAsTitle = InTextDirectivesUtils.findStringWithPrefixes(mainFileText, "// PSI_ELEMENT_AS_TITLE:")
-                assertEqualsToFile(
-                  mainFile,
-                  mainFileText.replace("// PSI_ELEMENT_AS_TITLE: \"$expectedPsiElementAsTitle\"\n",
-                                       if (psiElementAsTitle != null) "// PSI_ELEMENT_AS_TITLE: \"$psiElementAsTitle\"\n" else "")
-                )
+               KotlinTestUtils.assertEqualsToFile(
+                mainFile,
+                mainFileText.replace("// PSI_ELEMENT_AS_TITLE: \"$expectedPsiElementAsTitle\"\n",
+                                     if (psiElementAsTitle != null) "// PSI_ELEMENT_AS_TITLE: \"$psiElementAsTitle\"\n" else "")
+              )
 
                 UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
@@ -342,8 +343,6 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
           .onEach { it.updateCachedPresentation() }
           .filter { usageAdapter -> filters.all { it(usageAdapter) } }
 
-        val KtDeclaration.descriptor: DeclarationDescriptor?
-            get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
 
         internal fun getUsageType(element: PsiElement?): UsageType? {
             if (element == null) return null
@@ -380,7 +379,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     project: Project,
     platform: KMPTestPlatform = KMPTestPlatform.Unspecified,
     alwaysAppendFileName: Boolean = false,
-    testType: FindUsageTestType = FindUsageTestType.DEFAULT,
+    testType: AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.DEFAULT,
     javaNamesMap: Map<String, String>? = null,
     ignoreLog: Boolean = false,
     additionalErrorMessage: String = "",
@@ -466,7 +465,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
             results = firResults
         }
     }
-    results = KMPTest.withPlatformExtension(results.toPath(), platform).toFile()
+    results = KMPTest.Companion.withPlatformExtension(results.toPath(), platform).toFile()
 
     KotlinTestUtils.assertEqualsToFile("${testType.name} $additionalErrorMessage", results, finalUsages.joinToString("\n"))
 
@@ -495,13 +494,13 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     }
 }
 
-internal fun findUsages(
-    targetElement: PsiElement,
-    options: FindUsagesOptions?,
-    highlightingMode: Boolean,
-    project: Project,
-    searchSuperDeclaration: Boolean = true,
-    testType: FindUsageTestType = FindUsageTestType.DEFAULT,
+fun findUsages(
+  targetElement: PsiElement,
+  options: FindUsagesOptions?,
+  highlightingMode: Boolean,
+  project: Project,
+  searchSuperDeclaration: Boolean = true,
+  testType: AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.DEFAULT,
 ): Collection<UsageInfo> {
     try {
         val handler: FindUsagesHandler = if (targetElement is PsiMember)

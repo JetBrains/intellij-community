@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/findUsages/kotlin/conventions/components")
-public class FindUsagesWithDisableComponentSearchTestGenerated extends AbstractFindUsagesWithDisableComponentSearchTest {
+public class FindUsagesWithDisableComponentSearchTestGenerated extends AbstractK1FindUsagesWithDisableComponentSearchTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

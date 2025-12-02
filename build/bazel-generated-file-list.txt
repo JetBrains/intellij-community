@@ -1202,6 +1202,7 @@ plugins/kotlin/injection/k2
 plugins/kotlin/injection/k2/tests
 plugins/kotlin/inspections
 plugins/kotlin/inspections-fe10
+plugins/kotlin/intellij.kotlin.base.test
 plugins/kotlin/internal
 plugins/kotlin/j2k/k1.new
 plugins/kotlin/j2k/k1.new.post-processing

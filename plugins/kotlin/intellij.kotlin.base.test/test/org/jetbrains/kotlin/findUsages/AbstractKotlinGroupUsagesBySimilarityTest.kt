@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.findUsages
 
 import com.intellij.openapi.application.ReadAction
@@ -17,14 +17,14 @@ abstract class AbstractKotlinGroupUsagesBySimilarityTest: AbstractFindUsagesTest
         val findUsages = findUsages(myFixture.elementAtCaret, null, false, myFixture.project)
         val session = ClusteringSearchSession()
         ReadAction.nonBlocking(Callable {
-            findUsages.forEach { usage ->
-                val u = UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session)
-                (u as UsageInfo2UsageAdapter).updateCachedPresentation()
-            }
+          findUsages.forEach { usage ->
+            val u = UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session)
+            (u as UsageInfo2UsageAdapter).updateCachedPresentation()
+          }
         }
         ).submit(AppExecutorUtil.getAppExecutorService()).get()
 
         val file = File(testDataDirectory, getTestName(true) + ".results.txt")
-        assertEqualsToFile("", file, session.clusters.toString())
+      assertEqualsToFile("", file, session.clusters.toString())
     }
 }
