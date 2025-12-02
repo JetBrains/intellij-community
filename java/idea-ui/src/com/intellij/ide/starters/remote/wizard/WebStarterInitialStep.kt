@@ -62,6 +62,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
   private val languageLevelProperty: GraphProperty<StarterLanguageLevel> = propertyGraph.lazyProperty {
     starterContext.languageLevel ?: StarterLanguageLevel("unknown", "", "")
   }
+  private val configurationFileFormatProperty: GraphProperty<StarterConfigFileFormat> = propertyGraph.lazyProperty {
+    starterContext.configFileFormat ?: StarterConfigFileFormat("unknown", "")
+  }
 
   private var languageLevel: StarterLanguageLevel by languageLevelProperty
   private var packageName: String by packageNameProperty.trim()
@@ -77,11 +80,13 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
   private lateinit var projectTypesSelector: SegmentedButton<StarterProjectType>
   private lateinit var packagingTypesSelector: SegmentedButton<StarterAppPackaging>
   private lateinit var languagesSelector: SegmentedButton<StarterLanguage>
+  private lateinit var configurationFileFormatSelector: SegmentedButton<StarterConfigFileFormat>
 
   private var languages: List<StarterLanguage> = starterSettings.languages
   private var applicationTypes: List<StarterAppType> = starterSettings.applicationTypes
   private var projectTypes: List<StarterProjectType> = starterSettings.projectTypes
   private var packagingTypes: List<StarterAppPackaging> = starterSettings.packagingTypes
+  private var configurationFileFormatTypes: List<StarterConfigFileFormat> = starterSettings.configurationFileFormats
 
   @Volatile
   private var serverOptions: WebStarterServerOptions? = null
@@ -126,6 +131,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     starterContext.applicationType = applicationTypeProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
     starterContext.gitIntegration = gitProperty.get()
+    starterContext.configFileFormat = configurationFileFormatProperty.get()
 
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
@@ -227,6 +233,13 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
         row(JavaStartersBundle.message("title.project.packaging.label")) {
           packagingTypesSelector = segmentedButton(starterSettings.packagingTypes) { text = it.title }
             .bind(packagingProperty)
+        }.bottomGap(BottomGap.SMALL)
+      }
+
+      if (starterSettings.configurationFileFormats.isNotEmpty()) {
+        row(JavaStartersBundle.message("title.project.config.file.format.label")) {
+          configurationFileFormatSelector = segmentedButton(starterSettings.configurationFileFormats) { text = it.title }
+            .bind(configurationFileFormatProperty)
         }.bottomGap(BottomGap.SMALL)
       }
 
@@ -508,6 +521,14 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
         languageProperty.set(correspondingOption ?: languages.first())
         languagesSelector.items = languages
         this.languages = languages
+      }
+    }
+    serverOptions.extractOption(SERVER_CONFIGURATION_FILE_FORMAT_TYPES) { configurationFileFormatTypes ->
+      if (configurationFileFormatTypes.isNotEmpty() && configurationFileFormatTypes != this.configurationFileFormatTypes &&::configurationFileFormatSelector.isInitialized) {
+        val correspondingOption = configurationFileFormatTypes.find { it.id == configurationFileFormatProperty.get().id }
+        configurationFileFormatProperty.set(correspondingOption ?: configurationFileFormatTypes.first())
+        configurationFileFormatSelector.items = configurationFileFormatTypes
+        this.configurationFileFormatTypes = configurationFileFormatTypes
       }
     }
 
