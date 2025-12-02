@@ -460,6 +460,70 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun testSameKotlinArgWithSameVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
+                    <weak_warning>api(kotlin("stdlib", "2.2.0"))</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testSameKotlinArgWithDifferentVersion(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    api(kotlin("stdlib", "2.1.0"))
+                    api(kotlin("stdlib", "2.2.0"))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testSameKotlinArgWithSameVersionVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    val versionRef1 = "2.2.0"
+                    val versionRef2 = "2.2.0"
+                    <weak_warning>api(kotlin("stdlib", versionRef1))</weak_warning>
+                    <weak_warning>api(kotlin("stdlib", versionRef2))</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testSameKotlinArgWithDifferentVersionVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    val versionRef1 = "2.1.0"
+                    val versionRef2 = "2.2.0"
+                    api(kotlin("stdlib", versionRef1))
+                    api(kotlin("stdlib", versionRef2))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun testIgnoreOtherDependencyBlocks(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
