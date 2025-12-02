@@ -1405,7 +1405,7 @@ private fun showBalloonWithAdvice(e: Throwable) {
     .addAction(NotificationAction.createSimple("Copy exception to clipboard") {
       CopyPasteManager.getInstance().setContents(StringSelection(e.stackTraceToString()))
     })
-    .addAction(NotificationAction.createSimpleExpiring("Repair IDE for five minutes") {
+    .addAction(NotificationAction.createSimpleExpiring("Fix read access errors for five minutes") {
       val currentValue = IdeEventQueue.getInstance().actuallyWrapInputEventsIntoWriteIntentLock
       IdeEventQueue.getInstance().actuallyWrapInputEventsIntoWriteIntentLock = true
       GlobalScope.launch {
@@ -1413,7 +1413,7 @@ private fun showBalloonWithAdvice(e: Throwable) {
         IdeEventQueue.getInstance().actuallyWrapInputEventsIntoWriteIntentLock = currentValue
       }
     })
-    .addAction(NotificationAction.createSimpleExpiring("Repair IDE until restart") {
+    .addAction(NotificationAction.createSimpleExpiring("Fix read access errors until restart") {
       IdeEventQueue.getInstance().actuallyWrapInputEventsIntoWriteIntentLock = true
     })
   notification.setListener { _, event ->
