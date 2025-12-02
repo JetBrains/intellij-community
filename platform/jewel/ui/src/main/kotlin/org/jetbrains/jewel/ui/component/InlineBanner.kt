@@ -33,6 +33,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -100,7 +101,7 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
         ),
 )
 public fun InformationInlineBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
@@ -164,7 +165,7 @@ public fun InformationInlineBanner(
  */
 @Composable
 public fun InlineInformationBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
@@ -244,7 +245,7 @@ public fun InlineInformationBanner(
 )
 public fun InformationInlineBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -307,7 +308,7 @@ public fun InformationInlineBanner(
 @Composable
 public fun InlineInformationBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -381,9 +382,9 @@ public fun InlineInformationBanner(
         ),
 )
 public fun SuccessInlineBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -443,9 +444,9 @@ public fun SuccessInlineBanner(
  */
 @Composable
 public fun InlineSuccessBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -523,7 +524,7 @@ public fun InlineSuccessBanner(
 )
 public fun SuccessInlineBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -588,7 +589,7 @@ public fun SuccessInlineBanner(
 @Composable
 public fun InlineSuccessBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Status.Success, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -664,9 +665,9 @@ public fun InlineSuccessBanner(
         ),
 )
 public fun WarningInlineBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -728,9 +729,9 @@ public fun WarningInlineBanner(
  */
 @Composable
 public fun InlineWarningBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -808,7 +809,7 @@ public fun InlineWarningBanner(
 )
 public fun WarningInlineBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -871,7 +872,7 @@ public fun WarningInlineBanner(
 @Composable
 public fun InlineWarningBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -947,9 +948,9 @@ public fun InlineWarningBanner(
         ),
 )
 public fun ErrorInlineBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -1011,9 +1012,9 @@ public fun ErrorInlineBanner(
  */
 @Composable
 public fun InlineErrorBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -1091,7 +1092,7 @@ public fun InlineErrorBanner(
 )
 public fun ErrorInlineBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
@@ -1154,7 +1155,7 @@ public fun ErrorInlineBanner(
 @Composable
 public fun InlineErrorBanner(
     modifier: Modifier = Modifier,
-    title: String? = null,
+    @Nls title: String? = null,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
     iconActions: (BannerIconActionScope.() -> Unit)? = null,
@@ -1179,7 +1180,7 @@ public fun InlineErrorBanner(
 private fun InlineBannerImpl(
     style: InlineBannerStyle,
     textStyle: TextStyle,
-    title: String?,
+    @Nls title: String?,
     icon: @Composable (() -> Unit)?,
     linkActions: (BannerLinkActionScope.() -> Unit)?,
     iconActions: (BannerIconActionScope.() -> Unit)?,
@@ -1213,7 +1214,7 @@ private fun InlineBannerImpl(
 private fun InlineBannerImpl(
     style: InlineBannerStyle,
     textStyle: TextStyle,
-    title: String?,
+    @Nls title: String?,
     icon: @Composable (() -> Unit)?,
     actions: @Composable (FlowRowScope.() -> Unit)?,
     actionIcons: @Composable (RowScope.() -> Unit)?,

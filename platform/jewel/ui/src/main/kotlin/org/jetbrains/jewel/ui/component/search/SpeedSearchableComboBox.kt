@@ -26,6 +26,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -52,7 +53,7 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
 @ExperimentalJewelApi
 @ApiStatus.Experimental
 public fun SpeedSearchScope.SpeedSearchableComboBox(
-    items: List<String>,
+    @Nls items: List<String>,
     selectedIndex: Int,
     onSelectedItemChange: (Int) -> Unit,
     modifier: Modifier = Modifier,

@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
@@ -133,7 +134,7 @@ public fun RadioButton(
 @Deprecated("Use the variant with overflow, softWrap, and maxLines", level = DeprecationLevel.HIDDEN)
 @Composable
 public fun RadioButtonRow(
-    text: String,
+    @Nls text: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -198,7 +199,7 @@ public fun RadioButtonRow(
  */
 @Composable
 public fun RadioButtonRow(
-    text: String,
+    @Nls text: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
