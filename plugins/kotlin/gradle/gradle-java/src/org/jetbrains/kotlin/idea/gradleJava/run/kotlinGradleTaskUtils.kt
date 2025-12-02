@@ -33,6 +33,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTEN
 
 
 private const val GRADLE_KOTLIN_PROJECT_DELEGATE = "org.gradle.kotlin.dsl.support.delegates.ProjectDelegate"
+private const val GRADLE_KOTLIN_TASK_CONTAINER_SCOPE = "org.gradle.kotlin.dsl.TaskContainerScope"
 
 @ApiStatus.Internal
 fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
@@ -128,9 +129,10 @@ private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): Fq
 }
 
 private val taskContainerMethods = setOf("register", "create", "named", "registering", "creating")
+private val taskContainerFqNames = setOf(FqName(GRADLE_API_TASK_CONTAINER), FqName(GRADLE_KOTLIN_TASK_CONTAINER_SCOPE))
 
 private fun isMethodOfTaskContainer(methodName: String, fqClassName: FqName) =
-    fqClassName == FqName(GRADLE_API_TASK_CONTAINER)
+    fqClassName in taskContainerFqNames
             && methodName in taskContainerMethods
 
 private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
