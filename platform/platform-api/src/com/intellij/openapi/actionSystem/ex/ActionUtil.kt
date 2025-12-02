@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.concurrency.currentThreadContext
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -393,9 +394,11 @@ object ActionUtil {
       return AnActionResult.ignored("action is disabled")
     }
     val actionManager = event.actionManager as ActionManagerEx
-    val result = actionManager.performWithActionCallbacks(action, event) {
-      doPerformActionOrShowPopup(action, event, null)
-    }
+    val result = WriteIntentReadAction.compute(Computable {
+      actionManager.performWithActionCallbacks(action, event) {
+        doPerformActionOrShowPopup(action, event, null)
+      }
+    })
     return result
   }
 
