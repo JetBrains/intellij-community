@@ -24,20 +24,19 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.Collections
 import org.jetbrains.kotlin.idea.imports.addImportFor
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.SimplifiableCallInspection.Context
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
-internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simple<KtExpression, Context>() {
+internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableInspectionBase.Simple<KtExpression, AbstractSimplifiableCallInspection.Context>() {
     class Context(
         val conversionName: String,
         val replacementCall: String,
         val replacementFqName: FqName,
     )
 
-    private abstract class Conversion(
+    protected abstract class Conversion(
         val targetFqName: FqName,
         val replacementFqName: FqName,
     ) {
@@ -50,7 +49,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         open fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = true
     }
 
-    private class FlatMapToFlattenConversion : Conversion(
+    protected class FlatMapToFlattenConversion : Conversion(
         targetFqName = Collections.flatMap,
         replacementFqName = Collections.flatten,
     ) {
@@ -75,10 +74,10 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private class FilterToFilterNotNullConversion : Conversion(
-        targetFqName = Collections.filter,
-        replacementFqName = Collections.filterNotNull,
-    ) {
+    protected class FilterToFilterNotNullConversion(
+        targetFqName: FqName = Collections.filter,
+        replacementFqName: FqName = Collections.filterNotNull,
+    ) : Conversion(targetFqName, replacementFqName) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -105,10 +104,10 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private class FilterToFilterIsInstanceConversion : Conversion(
-        targetFqName = Collections.filter,
-        replacementFqName = Collections.filterIsInstance,
-    ) {
+    protected class FilterToFilterIsInstanceConversion(
+        targetFqName: FqName = Collections.filter,
+        replacementFqName: FqName = Collections.filterIsInstance,
+    ) : Conversion(targetFqName, replacementFqName) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
@@ -142,11 +141,7 @@ internal class SimplifiableCallInspection : KotlinApplicableInspectionBase.Simpl
         }
     }
 
-    private val conversions: List<Conversion> = listOf(
-        FlatMapToFlattenConversion(),
-        FilterToFilterNotNullConversion(),
-        FilterToFilterIsInstanceConversion(),
-    )
+    protected abstract val conversions: List<Conversion>
 
     context(_: KaSession)
     private fun KtCallExpression.findConversionsAndResolvedCall(): Pair<List<Conversion>, KaFunctionCall<*>>? {
