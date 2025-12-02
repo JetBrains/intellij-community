@@ -7155,12 +7155,6 @@ c:com.intellij.ui.components.labels.BoldLabel
 - <init>(javax.swing.Icon):V
 - <init>(javax.swing.Icon,I):V
 - setText(java.lang.String):V
-c:com.intellij.ui.components.labels.DropDownLink
-- com.intellij.ui.components.labels.LinkLabel
-- <init>(java.lang.Object,java.lang.Runnable):V
-- <init>(java.lang.Object,java.util.List,com.intellij.util.Consumer,Z):V
-- <init>(java.lang.Object,java.util.function.Function):V
-- getChosenItem():java.lang.Object
 c:com.intellij.ui.components.labels.LinkLabel
 - javax.swing.JLabel
 - p:myPaintUnderline:Z
