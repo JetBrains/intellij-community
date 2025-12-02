@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
@@ -145,7 +145,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       launch {
         while (true) {
           @Suppress("TestOnlyProblems")
-          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !FUSProjectHotStartUpMeasurer.isHandlingFinished() && !future.isDone) {
             delay(500)
           }
           else {
