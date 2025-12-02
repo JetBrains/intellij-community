@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,20 +54,6 @@ public final class JavadocTypedHandler extends TypedHandlerDelegate {
         }
       }
       return;
-    }
-
-    if (c == '/') {
-      // Insert a single space when adding the initial leading slashes
-      final CaretModel caretModel = editor.getCaretModel();
-      final int caretOffset = caretModel.getOffset();
-      PsiElement currElement = file.findElementAt(caretOffset - 1);
-      if (currElement instanceof PsiWhiteSpace) {
-        PsiElement prev = currElement.getPrevSibling();
-        if (prev != null && prev.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT && prev.getText().equals("//")) {
-          editor.getDocument().insertString(prev.getTextRange().getEndOffset() + 1, " ");
-          caretModel.moveToOffset(caretOffset + 1);
-        }
-      }
     }
   }
 
