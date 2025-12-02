@@ -208,7 +208,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         } else {
           if (cell.verticalAlign == VerticalAlign.FILL) {
             log.error("Vertical align FILL is not supported for cells with right comment or context help, commentRight = " +
-                      "${commentRight?.userText}, contextHelp = ${cell.contextHelpDescription}")
+                      "${commentRight?.userText}, contextHelp = ${cell.contextHelpInfo?.description}")
           }
 
           val subGridBuilder = builder.subGridBuilder(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,

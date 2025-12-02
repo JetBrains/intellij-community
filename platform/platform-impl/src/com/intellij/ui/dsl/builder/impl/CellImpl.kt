@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceIsEmptyWithIfEmpty")
+
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ide.TooltipTitle
@@ -40,6 +42,8 @@ internal class CellImpl<T : JComponent>(
   val viewComponent: JComponent = component,
 ) : CellBaseImpl<Cell<T>>(), Cell<T> {
 
+  data class ContextHelpInfo(val description: @NlsContexts.Tooltip String, val title: @TooltipTitle String?)
+
   override var component: T = component
     private set
 
@@ -52,7 +56,7 @@ internal class CellImpl<T : JComponent>(
   var contextHelpLabel: ContextHelpLabel? = null
     private set
 
-  var contextHelpDescription: @NlsContexts.Tooltip String? = null
+  var contextHelpInfo: ContextHelpInfo? = null
     private set
 
   var label: JLabel? = null
@@ -209,7 +213,7 @@ internal class CellImpl<T : JComponent>(
     // Do not hide the context help button in the disabled state
     contextHelpLabel.disabledIcon = IconUtil.desaturate(contextHelpLabel.icon)
     this.contextHelpLabel = contextHelpLabel
-    contextHelpDescription = description
+    contextHelpInfo = ContextHelpInfo(description, title)
 
     registerCreationStacktrace(contextHelpLabel)
     updateAccessibleContextDescription()
@@ -424,16 +428,30 @@ internal class CellImpl<T : JComponent>(
       return
     }
 
-    lastAutoCalculatedAccessibleDescription = AccessibleContextUtil.combineAccessibleStrings(
-      commentRight?.getPlainText(), "\n", comment?.getPlainText(), "\n", getAccessibleContextHelpDescription())
+    lastAutoCalculatedAccessibleDescription = calculatedAccessibleDescription(listOfNotNull(
+      commentRight?.getPlainText(),
+      comment?.getPlainText(),
+      contextHelpInfo?.title?.stripHtml(),
+      contextHelpInfo?.description?.stripHtml(),
+    ))
+
     component.accessibleContext.accessibleDescription = lastAutoCalculatedAccessibleDescription
   }
 
-  private fun getAccessibleContextHelpDescription(): @Nls String? {
-    val html = contextHelpDescription ?: return null
-
+  private fun String.stripHtml(): @Nls String? {
     @Suppress("HardCodedStringLiteral")
-    return StringUtil.stripHtml(html, " ").trim()
+    val result = StringUtil.stripHtml(this, " ").trim()
+    return if (result.isEmpty()) null else result
+  }
+
+  private fun calculatedAccessibleDescription(list: List<@Nls String>): @Nls String? {
+    var result: String? = null
+
+    for (s in list) {
+      result = AccessibleContextUtil.combineAccessibleStrings(result, "\n", s)
+    }
+
+    return result
   }
 
   /**
