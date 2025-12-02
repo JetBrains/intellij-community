@@ -431,13 +431,13 @@ class GlobalWorkspaceModelRegistry {
   private val environmentToModel = ConcurrentHashMap<EelMachine, GlobalWorkspaceModel>()
 
   fun getGlobalModel(eelMachine: EelMachine): GlobalWorkspaceModel {
-    val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) eelMachine else LocalEelMachine
+    val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) eelMachine else LocalEelMachine
     val internalEnvironmentName = protectedMachine.getInternalEnvironmentNameImpl()
     return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(globalWorkspaceModels, protectedMachine, internalEnvironmentName) }
   }
 
   fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
-    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name else InternalEnvironmentName.Local
+    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) name else InternalEnvironmentName.Local
     val machine = if (protectedName == InternalEnvironmentName.Local) {
       LocalEelMachine
     }
@@ -451,7 +451,7 @@ class GlobalWorkspaceModelRegistry {
   }
 
   fun getGlobalModels(): List<GlobalWorkspaceModel> {
-    return if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    return if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) {
       environmentToModel.values.toList()
     }
     else {
@@ -468,7 +468,7 @@ class GlobalWorkspaceModelRegistry {
 
 @ApiStatus.Internal
 fun EelMachine.getInternalEnvironmentName(): InternalEnvironmentName {
-  val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) this else LocalEelMachine
+  val protectedMachine = if (Registry.`is`("ide.workspace.model.per.environment.model.separation", false)) this else LocalEelMachine
   return protectedMachine.getInternalEnvironmentNameImpl()
 }
 
