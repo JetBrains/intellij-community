@@ -72,10 +72,10 @@ internal fun KtExpression.getReceiverClassFqName(): FqName? = analyze(this) {
  * Find an argument expression by its parameter name and index.
  * Works with any legal mix/order of named and positional arguments since positional arguments have a strict order.
  */
-internal fun findNamedOrPositionalArgument(element: KtValueArgumentList, parameterName: String, expectedIndex: Int): KtExpression? {
-    val argument = element.arguments.find {
+internal fun KtValueArgumentList.findNamedOrPositionalArgument(parameterName: String, expectedIndex: Int): KtExpression? {
+    val argument = this.arguments.find {
         it.getArgumentName()?.asName?.identifier == parameterName
-    } ?: element.arguments.getOrNull(expectedIndex).takeIf { it?.isNamed() == false }
+    } ?: this.arguments.getOrNull(expectedIndex).takeIf { it?.isNamed() == false }
     return argument?.getArgumentExpression()
 }
 

@@ -116,14 +116,14 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
     private fun extractNamedArgumentsKey(dependency: KtCallExpression): String? {
         val argList = dependency.valueArgumentList ?: return null
 
-        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
+        val group = argList.findNamedOrPositionalArgument("group", 0)?.evaluateString()
             ?: return null
 
-        val name = findNamedOrPositionalArgument(argList, "name", 1)?.evaluateString()
+        val name = argList.findNamedOrPositionalArgument("name", 1)?.evaluateString()
             ?: return null
 
         // if the version argument is missing, return a key without a version
-        val versionArg = findNamedOrPositionalArgument(argList, "version", 2)
+        val versionArg = argList.findNamedOrPositionalArgument("version", 2)
             ?: return "$group:$name"
 
         val version = versionArg.evaluateString() ?: return null

@@ -123,9 +123,9 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
         argList: KtValueArgumentList,
         pluginName: String
     ): String? {
-        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString() ?: return null
+        val group = argList.findNamedOrPositionalArgument("group", 0)?.evaluateString() ?: return null
         if (group != pluginName) return null
-        return findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
+        return argList.findNamedOrPositionalArgument("version", 2)?.evaluateString()
     }
 }
 
