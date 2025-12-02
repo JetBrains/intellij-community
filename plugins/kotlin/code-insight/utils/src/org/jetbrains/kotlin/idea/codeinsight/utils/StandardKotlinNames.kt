@@ -22,6 +22,8 @@ object StandardKotlinNames {
     }
     object Collections {
         @JvmField val asSequence: FqName = BASE_COLLECTIONS_PACKAGE + "asSequence"
+        @JvmField val filter: FqName = BASE_COLLECTIONS_PACKAGE + "filter"
+        @JvmField val flatMap: FqName = BASE_COLLECTIONS_PACKAGE + "flatMap"
         @JvmField val map: FqName = BASE_COLLECTIONS_PACKAGE + "map"
         @JvmField val mapIndexed: FqName = BASE_COLLECTIONS_PACKAGE + "mapIndexed"
 
