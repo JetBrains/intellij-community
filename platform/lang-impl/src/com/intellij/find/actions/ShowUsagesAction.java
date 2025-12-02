@@ -1077,7 +1077,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         @Override
         protected boolean onDoubleClick(@NotNull MouseEvent event) {
           if (event.getSource() != table) return false;
-          itemChoseCallback.run();
+          WriteIntentReadAction.run(itemChoseCallback);
           return true;
         }
       }.installOn(table);
