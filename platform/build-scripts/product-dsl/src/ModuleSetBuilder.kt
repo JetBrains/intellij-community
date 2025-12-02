@@ -63,8 +63,8 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String, includeDependencies: Boolean = defaultIncludeDependencies) {
-    modules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED, includeDependencies))
+  fun embeddedModule(name: String) {
+    modules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED, defaultIncludeDependencies))
   }
 
   /**

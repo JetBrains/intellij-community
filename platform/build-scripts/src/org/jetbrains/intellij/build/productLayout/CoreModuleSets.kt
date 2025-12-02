@@ -243,7 +243,7 @@ object CoreModuleSets {
   /**
    * Essential platform modules required by most IDE products.
    */
-  fun essential(): ModuleSet = moduleSet("essential") {
+  fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
     // Include minimal essential modules (core backend/frontend, editor, search)
     moduleSet(essentialMinimal())
 
@@ -303,11 +303,11 @@ object CoreModuleSets {
 
     // Platform language modules (moved from platformLangBase for consolidation)
     // These provide core IDE functionality needed by all full IDE products
-    embeddedModule("intellij.platform.builtInServer.impl", includeDependencies = true)
-    embeddedModule("intellij.platform.smRunner", includeDependencies = true)
-    embeddedModule("intellij.platform.externalSystem.dependencyUpdater", includeDependencies = true)
-    embeddedModule("intellij.platform.externalSystem.impl", includeDependencies = true)
-    embeddedModule("intellij.platform.externalProcessAuthHelper", includeDependencies = true)
+    embeddedModule("intellij.platform.builtInServer.impl")
+    embeddedModule("intellij.platform.smRunner")
+    embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
+    embeddedModule("intellij.platform.externalSystem.impl",)
+    embeddedModule("intellij.platform.externalProcessAuthHelper" )
   }
 
   /**
