@@ -313,14 +313,14 @@ object CoreModuleSets {
   /**
    * Provides the platform for implementing Debugger functionality.
    */
-  fun debugger(): ModuleSet = moduleSet("debugger") {
+  fun debugger(): ModuleSet = moduleSet("debugger", includeDependencies = true) {
     module("intellij.platform.debugger.impl.frontend")
     module("intellij.platform.debugger.impl.backend")
     embeddedModule("intellij.platform.debugger.impl.shared")
     embeddedModule("intellij.platform.debugger.impl.rpc")
     embeddedModule("intellij.platform.debugger.impl.ui")
-    embeddedModule("intellij.platform.debugger", includeDependencies = true)
-    embeddedModule("intellij.platform.debugger.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.debugger")
+    embeddedModule("intellij.platform.debugger.impl")
   }
 
   fun fleet(): ModuleSet = moduleSet("fleet", includeDependencies = true) {
