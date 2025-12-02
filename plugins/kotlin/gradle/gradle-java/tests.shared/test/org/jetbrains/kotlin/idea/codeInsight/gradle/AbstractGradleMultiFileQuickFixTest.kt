@@ -57,12 +57,15 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         val jdk11Home = System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME")
         jdk11Home?.let { roots += it }
 
+        val jdk17Home = System.getenv("JDK_17_0") ?: System.getenv("JAVA17_0_HOME")
+        jdk17Home?.let { roots += it }
+
         val javaHome = System.getenv("JAVA_HOME") ?: error("env JAVA_HOME is not set")
         roots += javaHome
         VfsRootAccess.allowRootAccess(testRootDisposable, *roots.toTypedArray())
 
         val javaSdk = JavaSdk.getInstance()
-        val gradle = javaSdk.createJdk("Gradle JDK", jdk11Home ?: jdk8Home ?: javaHome)
+        val gradle = javaSdk.createJdk("Gradle JDK", jdk11Home ?: jdk8Home ?: jdk17Home ?: javaHome)
 
         populateJdkTable(listOf(gradle))
     }
