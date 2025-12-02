@@ -65,7 +65,6 @@ suspend fun generateModuleDescriptorDependencies(
     allowUnresolvableProducts = setOf(
       // TODO: Fix these products' module dependencies
       "CLion",
-      "DataSpell",
       "RustRover",
       "Rider",
       "WebStorm",
