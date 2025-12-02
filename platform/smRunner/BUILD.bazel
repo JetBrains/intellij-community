@@ -24,7 +24,6 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/testRunner",
-    "//platform/xdebugger-api:debugger",
     "//platform/platform-impl:ide-impl",
     "@lib//:tc_service_messages",
     "//platform/platform-impl/concurrency",
