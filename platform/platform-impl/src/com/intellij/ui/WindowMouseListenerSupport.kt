@@ -319,6 +319,19 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     if (!isRelativeMovementMode()) return
 
     val windowBounds = getValidBoundsForPopup(view) ?: return
+
+    fitPopupBounds(oldBounds, newBounds, windowBounds)
+
+    // If the popup was moved, don't let the initial grab point move away from the owning window.
+    // Because if we let it move away from the owning window, it may also very well move outside the screen.
+    // And that's bad, because it will be impossible to grab it again by the same point (in the worst case, any point).
+    // And because we have no idea where the screen is (thanks, Wayland), this seems to be the only way.
+    if (newBounds.x != oldBounds.x || newBounds.y != oldBounds.y) {
+      fitGrabPoint(newBounds, windowBounds)
+    }
+  }
+
+  private fun fitPopupBounds(oldBounds: Rectangle, newBounds: Rectangle, windowBounds: Rectangle) {
     LOG.debug { "Trying to fit the popup into $windowBounds after change $oldBounds -> $newBounds" }
     val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
 
@@ -347,14 +360,6 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
 
     if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
       LOG.debug { "New bounds after fitting: $newBoundsBeforeFit -> $newBounds" }
-    }
-
-    // If the popup was moved, don't let the initial grab point move away from the owning window.
-    // Because if we let it move away from the owning window, it may also very well move outside the screen.
-    // And that's bad, because it will be impossible to grab it again by the same point (in the worst case, any point).
-    // And because we have no idea where the screen is (thanks, Wayland), this seems to be the only way.
-    if (newBounds.x != oldBounds.x || newBounds.y != oldBounds.y) {
-      fitGrabPoint(newBounds, windowBounds)
     }
   }
 
