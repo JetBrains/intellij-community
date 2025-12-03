@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @ApiStatus.Internal
 class SeAdaptedItem(override val rawObject: Any,
@@ -21,6 +23,7 @@ class SeAdaptedItem(override val rawObject: Any,
 }
 
 @ApiStatus.Internal
+@OptIn(ExperimentalAtomicApi::class)
 class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>,
                              private val presentationProvider: SeLegacyItemPresentationProvider?) : SeItemsProvider {
   override val id: String
@@ -30,15 +33,28 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>,
   val hasPresentationProvider: Boolean get() = presentationProvider != null
 
   private val contributorWrapper = SeAsyncContributorWrapper(contributor)
+  private val isInSeparateTab = contributor.isShownInSeparateTab
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val lastIsEverywhereFilter = AtomicReference<Boolean?>(null)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+    val isEverywhere = SeEverywhereFilter.isEverywhere(params.filter)
+
+    if (isEverywhere != null) {
+      // For adapted providers which are shown in a separate tab,
+      // we should apply isEverywhere filter only if it's changed since the last request from All tab
+      if (!isInSeparateTab || (lastIsEverywhereFilter.load()?.let { it != isEverywhere } ?: false) ) {
+        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+        }?.let {
+          scopeProviderDelegate.applyScope(it, false)
+        }
+      }
+
+      if (isInSeparateTab) {
+        lastIsEverywhereFilter.store(isEverywhere)
       }
     }
-    scopeProviderDelegate.applyScope(scopeToApply, false)
 
     contributorWrapper.fetchElements(params.inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
