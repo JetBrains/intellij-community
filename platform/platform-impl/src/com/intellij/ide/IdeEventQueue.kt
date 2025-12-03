@@ -657,11 +657,11 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (dispatchers.isNotEmpty() || hasOldDispatchers) {
-      val result = WriteIntentReadAction.compute<Boolean, Throwable> {
+      val result = WriteIntentReadAction.computeThrowable<Boolean, Throwable> {
         for (eachDispatcher in dispatchers) {
           try {
             if (eachDispatcher.dispatch(e)) {
-              return@compute true
+              return@computeThrowable true
             }
           }
           catch (t: Throwable) {
@@ -672,7 +672,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
           try {
             if (eachDispatcher !is NonLockedEventDispatcher && eachDispatcher.dispatch(e)) {
-              return@compute true
+              return@computeThrowable true
             }
           }
           catch (t: Throwable) {

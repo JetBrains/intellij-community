@@ -97,7 +97,7 @@ class TestApplicationManager private constructor() {
             }
           },
           { CodeStyle.dropTemporarySettings(project) },
-          { WriteIntentReadAction.run<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
+          { WriteIntentReadAction.runThrowable<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
           { LookupManager.hideActiveLookup(project) },
           {
             if (isLightProject) {

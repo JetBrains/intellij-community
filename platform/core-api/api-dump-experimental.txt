@@ -221,9 +221,9 @@ a:com.intellij.openapi.application.ReadAction
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V
 - *s:compute(com.intellij.openapi.util.Computable):java.lang.Object
-- *s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- *s:run(com.intellij.util.ThrowableRunnable):V
+- *s:computeThrowable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *s:run(java.lang.Runnable):V
+- *s:runThrowable(com.intellij.util.ThrowableRunnable):V
 *f:com.intellij.openapi.client.ClientSystemInfo
 - *sf:Companion:com.intellij.openapi.client.ClientSystemInfo$Companion
 - f:getMacClient():java.lang.Boolean

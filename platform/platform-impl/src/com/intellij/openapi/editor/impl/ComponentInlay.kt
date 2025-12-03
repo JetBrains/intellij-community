@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.idea.AppMode
@@ -225,7 +225,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
     // Step 1.2: Update all inlays in a single batch for performance reasons
     // Do it as a write intent read action, because inlay callbacks may access the document model and acquire write intent read locks
-    WriteIntentReadAction.run<Throwable> {
+    WriteIntentReadAction.runThrowable<Throwable> {
       editor.inlayModel.execute(true) {
         for (inlay in inlays) {
           inlay.renderer.let {

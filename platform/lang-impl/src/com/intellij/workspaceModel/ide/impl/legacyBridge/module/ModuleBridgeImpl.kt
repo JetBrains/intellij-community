@@ -197,7 +197,7 @@ open class ModuleBridgeImpl(
       for ((_, module) in modules) {
         if (!module.isDisposed) {
           facetsInitializationTimeMs.addMeasuredTime {
-            val allFacets = WriteIntentReadAction.compute<_, Throwable> { facetManagerFactory.getFacetManager(module).allFacets }
+            val allFacets = WriteIntentReadAction.computeThrowable<_, Throwable> { facetManagerFactory.getFacetManager(module).allFacets }
             for (facet in allFacets) {
               // this write-intent is needed because deeper in the stack WSM acquires a monitor IJPL-202616.
               // Here we establish the correct order of locks
