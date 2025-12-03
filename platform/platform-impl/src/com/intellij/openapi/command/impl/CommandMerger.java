@@ -265,7 +265,9 @@ public final class CommandMerger {
   }
 
   private void mergeState(@NotNull PerformedCommand performedCommand) {
-    commandIds.add(performedCommand.commandId());
+    if (performedCommand.shouldRecordId()) {
+      commandIds.add(performedCommand.commandId());
+    }
     setEditorStateBefore(performedCommand.editorStateBefore());
     setEditorStateAfter(performedCommand.editorStateAfter());
     if (isTransparent()) { // todo write test
