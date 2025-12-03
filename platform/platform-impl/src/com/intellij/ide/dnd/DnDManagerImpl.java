@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -594,7 +595,7 @@ public final class DnDManagerImpl extends DnDManager {
 
         LOG.debug("Starting dragging for " + action);
         hideCurrentHighlighter();
-        DnDDragStartBean bean = source.startDragging(action, event.getDragOrigin());
+        DnDDragStartBean bean = WriteIntentReadAction.compute(() -> source.startDragging(action, event.getDragOrigin()));
         myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, bean.getAttachedObject(), bean.getPoint());
         myCurrentEvent.setOrgPoint(event.getDragOrigin());
 
