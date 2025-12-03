@@ -84,17 +84,8 @@ public final class StartupActionScriptManager {
    * @see #EARLY_ACTION_SCRIPT_FILE
    */
   @ApiStatus.Internal
-  public static synchronized void addEarlyActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
-    addActionCommands(getEarlyActionScriptFile(), commands, true);
-  }
-
-  /**
-   * Special method for a special use case, do not use unless you know that it is exactly what you need.
-   * @see #EARLY_ACTION_SCRIPT_FILE
-   */
-  @ApiStatus.Internal
-  public static synchronized void addEarlyActionCommandsToBeginning(@NotNull List<? extends ActionCommand> commands) throws IOException {
-    addActionCommands(getEarlyActionScriptFile(), commands, false);
+  public static synchronized void setMarketplacePluginUpdateActionScript(@NotNull List<? extends ActionCommand> commands) throws IOException {
+    saveActionScript(commands, getEarlyActionScriptFile());
   }
 
   private static synchronized void addActionCommands(@NotNull Path scriptFile, @NotNull List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
@@ -154,7 +145,7 @@ public final class StartupActionScriptManager {
   }
 
   @ApiStatus.Internal
-  public static void saveActionScript(@NotNull List<ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
+  public static void saveActionScript(@NotNull List<? extends ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
     Files.createDirectories(scriptFile.getParent());
     try (var oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
       oos.writeObject(commands.toArray(new ActionCommand[0]));

@@ -93,7 +93,7 @@ public final class PluginInstaller {
     // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
     // This way plugin installation always takes place after plugin uninstallation.
     if (pluginDescriptor.getPluginId().equals(PluginManagerCore.MARKETPLACE_PLUGIN_ID)) {
-      addEarlyActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
+      setMarketplacePluginUpdateActionScript(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
     } else {
       addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
     }
@@ -182,7 +182,7 @@ public final class PluginInstaller {
     }
 
     if (descriptor.getPluginId().equals(PluginManagerCore.MARKETPLACE_PLUGIN_ID)) {
-      addEarlyActionCommands(commands);
+      setMarketplacePluginUpdateActionScript(commands);
     } else {
       addActionCommands(commands);
     }
