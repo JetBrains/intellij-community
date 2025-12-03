@@ -11,6 +11,7 @@
     <!-- <editor-fold desc="nested: essential.minimal > core.lang > core.ide > core.platform > libraries.platform"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf" loading="embedded"/>
@@ -70,6 +71,7 @@
     <module name="intellij.libraries.netty.buffer" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>

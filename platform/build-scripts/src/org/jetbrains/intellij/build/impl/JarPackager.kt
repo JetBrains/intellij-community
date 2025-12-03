@@ -78,10 +78,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
 private val libsUsedInJps = setOf(
-  "netty-buffer",
-  "netty-codec-http",
   "netty-codec-protobuf",
-  "netty-handler-proxy",
   "Log4J",
   "slf4j-api",
   "slf4j-jdk14",

@@ -329,6 +329,7 @@ java/remote-servers/api
 java/remote-servers/impl
 java/structuralsearch-java
 java/testFramework
+java/testFramework/backend
 java/testFramework/shared
 java/typeMigration
 java/unscramble
@@ -439,6 +440,7 @@ libraries/kotlinx/coroutines/test
 libraries/kotlinx/datetime
 libraries/kotlinx/document-store-mvstore
 libraries/kotlinx/html
+libraries/kotlinx/serialization/cbor
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/kotlinx/serialization/protobuf
@@ -459,6 +461,7 @@ libraries/mvstore
 libraries/netty/buffer
 libraries/netty/codec-compression
 libraries/netty/codec-http
+libraries/netty/handler-proxy
 libraries/opencsv
 libraries/oro-matcher
 libraries/plexus-utils

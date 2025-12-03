@@ -1,6 +1,6 @@
 - name: dist.all/lib/intellij.libraries.swingx.jar
   modules:
   - name: intellij.libraries.swingx
-  library: swingx
-  files:
-  - name: $MAVEN_REPOSITORY$/org/swinglabs/swingx-core/1/swingx-core-1.jar
+    libraries:
+      swingx:
+      - name: $MAVEN_REPOSITORY$/org/swinglabs/swingx-core/1/swingx-core-1.jar

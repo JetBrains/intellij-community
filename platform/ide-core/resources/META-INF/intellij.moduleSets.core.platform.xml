@@ -67,6 +67,7 @@
     <module name="intellij.libraries.netty.buffer" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
     <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
     <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>

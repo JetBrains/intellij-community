@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":swingx_resources"],
-  exports = ["@lib//:swingx"],
-  runtime_deps = ["@lib//:swingx"]
+  exports = ["@lib//:libraries-swingx-swingx"],
+  runtime_deps = ["@lib//:libraries-swingx-swingx"]
 )
 ### auto-generated section `build intellij.libraries.swingx` end

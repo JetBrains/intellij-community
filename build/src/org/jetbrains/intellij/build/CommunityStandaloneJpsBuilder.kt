@@ -46,7 +46,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.lz4",
     "intellij.libraries.http.client",
     "intellij.libraries.cli.parser",
-    "intellij.libraries.plexus.utils",
     "intellij.libraries.asm",
     "intellij.libraries.jgoodies.forms",
     "intellij.libraries.oro.matcher",

@@ -49,7 +49,7 @@ internal suspend fun generateModuleDescriptorDependencies(
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
   val embeddedModules = embeddedModulesDeferred?.await() ?: emptySet()
-  val modulesToProcess = collectModulesToProcess(allModuleSets, embeddedModules)
+  val modulesToProcess = collectModulesToProcess(allModuleSets)
   if (modulesToProcess.isEmpty()) {
     return@coroutineScope DependencyGenerationResult(emptyList())
   }
@@ -157,11 +157,14 @@ internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOut
  * 1. Modules with includeDependencies=true
  * 2. Library modules (intellij.libraries.*) that are not embedded
  */
-private fun collectModulesToProcess(moduleSets: List<ModuleSet>, embeddedModules: Set<String>): Set<String> {
+private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
   val result = mutableSetOf<String>()
   for (set in moduleSets) {
     visitAllModules(set) { module ->
-      if (module.includeDependencies || module.name.startsWith(LIB_MODULE_PREFIX)) {
+      // todo enable for all on the next stage
+      if (module.includeDependencies ||
+          module.name.startsWith(LIB_MODULE_PREFIX) ||
+          module.name.startsWith("intellij.platform.settings.")) {
         result.add(module.name)
       }
     }
