@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import java.awt.Rectangle
 import javax.swing.JDialog
@@ -35,9 +37,7 @@ fun JDialog.toggleMaximized() {
  * If this function returns `true`, then the dialog can be maximized using [maximize] or [toggleMaximized].
  */
 fun JDialog.canBeMaximized(): Boolean {
-  if (!isShowing || !isResizable) return false
-  val rootPane = getRootPane()
-  if (rootPane == null) return false
+  if (!commonResizingConditionsAreMet()) return false
   return !almostEquals(ScreenUtil.getScreenRectangle(this), bounds)
 }
 
@@ -52,7 +52,7 @@ fun JDialog.canBeMaximized(): Boolean {
  */
 fun JDialog.maximize() {
   if (!canBeMaximized()) return
-  getRootPane().putClientProperty(NORMAL_BOUNDS, bounds)
+  ClientProperty.put(this, NORMAL_BOUNDS, bounds)
   bounds = ScreenUtil.getScreenRectangle(this)
 }
 
@@ -69,12 +69,10 @@ fun JDialog.maximize() {
  * If this function returns `true`, then the dialog can be normalized using [normalize] or [toggleMaximized].
  */
 fun JDialog.canBeNormalized(): Boolean {
-  if (!isShowing || !isResizable) return false
-  val rootPane = getRootPane()
-  if (rootPane == null) return false
+  if (!commonResizingConditionsAreMet()) return false
   val screenRectangle = ScreenUtil.getScreenRectangle(this)
   return almostEquals(bounds, screenRectangle) &&
-         rootPane.getClientProperty(NORMAL_BOUNDS) is Rectangle
+         ClientProperty.get(this, NORMAL_BOUNDS) != null
 }
 
 /**
@@ -89,14 +87,18 @@ fun JDialog.canBeNormalized(): Boolean {
  */
 fun JDialog.normalize() {
   if (!canBeNormalized()) return
-  val rootPane = getRootPane()
-  val value = rootPane.getClientProperty(NORMAL_BOUNDS)
-  if (value is Rectangle) {
-    ScreenUtil.fitToScreen(value)
-    bounds = value
-    rootPane.putClientProperty(NORMAL_BOUNDS, null)
+  val normalBounds = ClientProperty.get(this, NORMAL_BOUNDS)
+  if (normalBounds != null) {
+    ScreenUtil.fitToScreen(normalBounds)
+    bounds = normalBounds
+    ClientProperty.remove(this, NORMAL_BOUNDS)
   }
 }
+
+private fun JDialog.commonResizingConditionsAreMet(): Boolean =
+  isShowing && // needed for getScreenRectangle
+  isResizable && // can't resize if it's not resizable to begin with
+  rootPane != null // needed to store the client property
 
 private fun almostEquals(r1: Rectangle, r2: Rectangle): Boolean {
   val tolerance = Registry.intValue("ide.dialog.maximize.tolerance", 10)
@@ -106,4 +108,4 @@ private fun almostEquals(r1: Rectangle, r2: Rectangle): Boolean {
          abs(r1.height - r2.height) <= tolerance
 }
 
-private const val NORMAL_BOUNDS = "NORMAL_BOUNDS"
+private val NORMAL_BOUNDS = Key.create<Rectangle>("NORMAL_BOUNDS")
