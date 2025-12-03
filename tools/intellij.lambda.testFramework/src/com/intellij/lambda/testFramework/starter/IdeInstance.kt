@@ -13,7 +13,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 
 object IdeInstance {
-  internal lateinit var ideBackgroundRun: BackgroundRunWithLambda
+  internal lateinit var ide: BackgroundRunWithLambda
     private set
   lateinit var currentIdeMode: IdeRunMode
     private set
@@ -23,16 +23,16 @@ object IdeInstance {
    * Returns the current `BackgroundRunWithLambda` if the IDE was started in this process,
    * or `null` otherwise. Useful for JUnit lifecycle callbacks that should tolerate missing IDE.
    */
-  fun backgroundRunOrNull(): BackgroundRunWithLambda? =
-    if (this::ideBackgroundRun.isInitialized) ideBackgroundRun else null
+  fun ideOrNull(): BackgroundRunWithLambda? =
+    if (this::ide.isInitialized) ide else null
 
   fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
     try {
       logOutput("Starting IDE in mode: $runMode")
 
-      if (this::ideBackgroundRun.isInitialized && currentIdeMode == runMode) {
+      if (this::ide.isInitialized && currentIdeMode == runMode) {
         logOutput("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
-        return ideBackgroundRun
+        return ide
       }
 
       stopIde()
@@ -42,9 +42,9 @@ object IdeInstance {
       val testContext = Starter.newContextWithLambda(runMode.name,
                                                      UltimateTestCases.JpsEmptyProject,
                                                      *LambdaTestPluginHolder.additionalPluginIds().toTypedArray())
-      ideBackgroundRun = testContext.runIdeWithLambda(configure = { runContext = this })
+      ide = testContext.runIdeWithLambda(configure = { runContext = this })
 
-      return ideBackgroundRun
+      return ide
     }
     catch (e: Throwable) {
       logError("Problems when starting IDE", e)
@@ -53,10 +53,10 @@ object IdeInstance {
   }
 
   fun stopIde(): Unit = synchronized(this) {
-    if (!this::ideBackgroundRun.isInitialized) return
+    if (!this::ide.isInitialized) return
 
     logOutput("Stopping IDE that is running in mode: $currentIdeMode")
-    catchAll { ideBackgroundRun.forceKill() }
+    catchAll { ide.forceKill() }
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {

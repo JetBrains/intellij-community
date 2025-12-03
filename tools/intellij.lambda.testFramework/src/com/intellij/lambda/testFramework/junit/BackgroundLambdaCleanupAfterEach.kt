@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
  */
 class BackgroundLambdaCleanupAfterEach : AfterEachCallback {
   override fun afterEach(context: ExtensionContext) {
-    val run = IdeInstance.backgroundRunOrNull() ?: return
+    val run = IdeInstance.ideOrNull() ?: return
     runBlocking {
       try {
         logOutput("Cleaning up Lambda test session(s) after test: ${context.displayName}")

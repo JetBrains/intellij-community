@@ -56,8 +56,8 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(perTestSupervisorScope.coroutineContext) {
       // TODO: use serialized lambda invocation
-      IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
-                                                  params = mapOf(
+      IdeInstance.ide.runNamedLambda(InjectedLambda::class,
+                                     params = mapOf(
                                                     "testClass" to (invocationContext.targetClass.name ?: ""),
                                                     "testMethod" to (invocationContext.executable?.name ?: ""),
                                                     "methodArguments" to serializeArguments(fullMethodName, invocationContext.arguments)
