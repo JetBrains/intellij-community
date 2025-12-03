@@ -410,14 +410,19 @@ public final class GradleUtil {
     if (manager instanceof GradleManager gradleManager) {
       String externalProjectPath = gradleManager.getAffectedExternalProjectPath(filePath, project);
       if (externalProjectPath != null) {
-        GradleSettings settings = GradleSettings.getInstance(project);
-        GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
-        if (projectSettings != null) {
-          return projectSettings.resolveGradleVersion();
+        GradleVersion versionByExternalProjectPath = getGradleVersion(externalProjectPath, project);
+        if (versionByExternalProjectPath != null) {
+          return versionByExternalProjectPath;
         }
       }
     }
     return GradleVersion.current();
+  }
+
+  public static @Nullable GradleVersion getGradleVersion(String externalProjectPath, Project project) {
+    GradleSettings settings = GradleSettings.getInstance(project);
+    GradleProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
+    return projectSettings != null ? projectSettings.resolveGradleVersion() : null;
   }
 
   @SuppressWarnings("unused") // used externally

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
 import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
-import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
@@ -20,7 +20,8 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
     private lateinit var foojayPropertyMap: Map<String, String>
     override fun setUp() {
         super.setUp()
-        foojayPropertyMap = mapOf("FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION.text)
+        val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
+        foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
 
     private fun runSimpleTestcase(kotlinVersion: String) {

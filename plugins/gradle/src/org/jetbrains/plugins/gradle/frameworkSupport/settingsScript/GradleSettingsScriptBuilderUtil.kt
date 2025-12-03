@@ -4,8 +4,13 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
 
-fun getFoojayPluginVersion(): String {
-  return "0.8.0"
+fun getFoojayPluginVersion(gradleVersion: GradleVersion): String {
+  return if (gradleVersion < GradleVersion.version("9.0")) {
+    "0.8.0" // Probably needs to be updated to 0.10.0
+  }
+  else {
+    "1.0.0"
+  }
 }
 
 fun isFoojayPluginSupported(gradleVersion: GradleVersion): Boolean {
