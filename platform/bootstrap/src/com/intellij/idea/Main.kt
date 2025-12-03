@@ -125,12 +125,6 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
         // this check must be performed before system directories are locked
         val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
         if (!configImportNeeded) {
-          // Consider following steps:
-          // - user opens settings, and installs some plugins;
-          // - the plugins are downloaded and saved somewhere;
-          // - IDE prompts for restart;
-          // - after restart, the plugins are moved to proper directories ("installed") by the next line.
-          // TODO get rid of this: plugins should be installed before restarting the IDE
           runEarlyActionScript()
         }
       }

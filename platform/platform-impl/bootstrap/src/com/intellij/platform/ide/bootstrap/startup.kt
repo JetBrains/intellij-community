@@ -237,6 +237,12 @@ fun startApplication(
     // command line starters should opt in to apply plugin updates
     if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
       span("run action.script") {
+        // Consider following steps:
+        // - user opens settings, and installs some plugins;
+        // - the plugins are downloaded and saved somewhere;
+        // - IDE prompts for restart;
+        // - after restart, the plugins are moved to proper directories ("installed") by the next line.
+        // TODO get rid of this: plugins should be installed before restarting the IDE
         runActionScript()
       }
       if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
