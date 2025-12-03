@@ -254,6 +254,7 @@ class JBHtmlPaneStyleConfiguration private constructor(builder: Builder) {
      * and syntax highlighting.
      */
     @ApiStatus.ScheduledForRemoval
+    @ApiStatus.Internal
     @Deprecated("Use colorSchemeProvider instead to properly react for global scheme changes", ReplaceWith("colorSchemeProvider { colorScheme }"))
     fun colorScheme(colorScheme: EditorColorsScheme): Builder =
       apply { this.colorSchemeProvider = { colorScheme } }

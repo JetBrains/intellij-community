@@ -4948,7 +4948,6 @@ f:com.intellij.ui.CommonActionsPanel
 - javax.swing.JPanel
 - addNotify():V
 - getAnAction(com.intellij.ui.CommonActionsPanel$Buttons):com.intellij.openapi.actionSystem.AnAction
-- getAnActionButton(com.intellij.ui.CommonActionsPanel$Buttons):com.intellij.ui.AnActionButton
 - s:getCommonShortcut(com.intellij.ui.CommonActionsPanel$Buttons):com.intellij.openapi.actionSystem.ShortcutSet
 - getPosition():com.intellij.openapi.actionSystem.ActionToolbarPosition
 - getPreferredPopupPoint(com.intellij.openapi.actionSystem.AnAction):com.intellij.ui.awt.RelativePoint
@@ -5798,7 +5797,6 @@ a:com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,java.lang.String,java.lang.String):com.intellij.ui.PopupHandler
 - s:installRowSelectionTablePopup(javax.swing.JTable,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installSelectionListPopup(javax.swing.JList,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
-- s:installUnknownPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup):java.awt.event.MouseListener
 - s:installUnknownPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionManager):java.awt.event.MouseListener
 - a:invokePopup(java.awt.Component,I,I):V
 - mouseClicked(java.awt.event.MouseEvent):V
@@ -6466,7 +6464,6 @@ c:com.intellij.ui.components.DropDownLink
 - <init>(java.lang.Object,java.util.List,java.util.function.Consumer,Z):V
 - <init>(java.lang.Object,kotlin.jvm.functions.Function1):V
 - createRenderer():javax.swing.ListCellRenderer
-- f:getPopupState():com.intellij.ui.popup.PopupState
 - f:getSelectedItem():java.lang.Object
 - getSelectedObjects():java.lang.Object[]
 - p:itemToString(java.lang.Object):java.lang.String
@@ -8270,14 +8267,6 @@ f:com.intellij.ui.tabs.UiDecorator$UiDecoration
 - f:getLabelFont():java.awt.Font
 - f:getLabelInsets():java.awt.Insets
 - hashCode():I
-c:com.intellij.ui.tabs.impl.DefaultEditorTabsPainter
-- com.intellij.ui.tabs.impl.JBEditorTabsPainter
-- <init>(com.intellij.ui.tabs.impl.JBEditorTabs):V
-- doPaintBackground(java.awt.Graphics2D,java.awt.Rectangle,Z,java.awt.Rectangle):V
-- doPaintInactive(java.awt.Graphics2D,java.awt.Rectangle,I,I,I,I,java.awt.Color,I,I,Z):V
-- getBackgroundColor():java.awt.Color
-- p:getDefaultTabColor():java.awt.Color
-- p:getInactiveMaskColor():java.awt.Color
 f:com.intellij.ui.tabs.impl.DefaultTabPainterAdapter
 - com.intellij.ui.tabs.impl.TabPainterAdapter
 - <init>(com.intellij.ui.tabs.JBTabPainter):V
@@ -8329,19 +8318,6 @@ c:com.intellij.ui.tabs.impl.JBEditorTabs
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 - useSmallLabels():Z
 f:com.intellij.ui.tabs.impl.JBEditorTabs$Companion
-a:com.intellij.ui.tabs.impl.JBEditorTabsPainter
-- psf:BORDER_COLOR:java.awt.Color
-- psf:DEFAULT_TAB_COLOR:java.awt.Color
-- psf:INACTIVE_MASK_COLOR:java.awt.Color
-- psf:UNDERLINE_COLOR:java.awt.Color
-- p:myDefaultTabColor:java.awt.Color
-- pf:myTabs:com.intellij.ui.tabs.impl.JBEditorTabs
-- <init>(com.intellij.ui.tabs.impl.JBEditorTabs):V
-- a:doPaintBackground(java.awt.Graphics2D,java.awt.Rectangle,Z,java.awt.Rectangle):V
-- a:doPaintInactive(java.awt.Graphics2D,java.awt.Rectangle,I,I,I,I,java.awt.Color,I,I,Z):V
-- a:getBackgroundColor():java.awt.Color
-- getEmptySpaceColor():java.awt.Color
-- setDefaultTabColor(java.awt.Color):V
 a:com.intellij.ui.tabs.impl.ShapeTransform
 - p:myPath:java.awt.geom.GeneralPath
 - p:<init>(java.awt.Rectangle,I,I,Z):V
@@ -8527,15 +8503,6 @@ a:com.intellij.ui.tabs.impl.multiRow.TabsRow
 - f:getInfos():java.util.List
 - f:getWithEntryPointToolbar():Z
 - f:getWithTitle():Z
-f:com.intellij.ui.tabs.impl.table.TablePassInfo
-- f:invisible:java.util.List
-- f:tabRectangle:java.awt.Rectangle
-- f:toFitRec:java.awt.Rectangle
-- getHeaderRectangle():java.awt.Rectangle
-- getRequiredLength():I
-- getRowCount():I
-- getScrollExtent():I
-- isInSelectionRow(com.intellij.ui.tabs.TabInfo):Z
 c:com.intellij.ui.tabs.impl.themes.DefaultTabTheme
 - com.intellij.ui.tabs.impl.themes.TabTheme
 - <init>():V
