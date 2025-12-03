@@ -3,8 +3,9 @@
 
 package com.intellij.mcpserver.toolsets.general
 
-import com.intellij.analysis.problemsView.ProblemsCollector
-import com.intellij.build.BuildViewProblemsService
+import com.intellij.build.BuildProgressListener
+import com.intellij.build.BuildViewManager
+import com.intellij.build.events.*
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
@@ -26,12 +27,14 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
+import com.intellij.util.asDisposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -135,67 +138,92 @@ class AnalysisToolset : McpToolset {
     val callId = currentCoroutineContext().mcpCallInfo.callId
 
     val problems = CopyOnWriteArrayList<ProjectProblem>()
+    val buildFinished = CompletableDeferred<Unit>()
 
     logger.trace { "Starting build task with timeout ${timeout}ms" }
     val buildResult = withTimeoutOrNull(timeout.milliseconds) {
-      return@withTimeoutOrNull coroutineScope {
+      coroutineScope {
+        val buildViewManager = project.serviceAsync<BuildViewManager>()
+        
+        // Listen to build events to collect problems directly
+        buildViewManager.addListener(BuildProgressListener { buildId, event ->
+          logger.trace { "Received build event: ${event.javaClass.simpleName}, buildId=$buildId" }
+          
+          when (event) {
+            is StartBuildEvent -> {
+              logger.trace { "Build started: ${event.buildDescriptor.title}" }
+            }
+            
+            is FileMessageEvent -> {
+              // Collect file-based error/warning messages directly from build events
+              if (event.kind == MessageEvent.Kind.ERROR || event.kind == MessageEvent.Kind.WARNING) {
+                val filePosition = event.filePosition
+                val virtualFile = filePosition.file?.let { 
+                  VirtualFileManager.getInstance().findFileByNioPath(it.toPath()) 
+                }
+                
+                val problem = ProjectProblem(
+                  message = event.message,
+                  kind = event.kind.name,
+                  group = event.group,
+                  description = event.description,
+                  file = virtualFile?.let { projectDirectory.relativizeIfPossible(it) },
+                  line = filePosition.startLine,
+                  column = filePosition.startColumn,
+                )
+                
+                logger.trace { "Collected problem from event: $problem" }
+                problems.add(problem)
+              }
+            }
+            
+            is BuildIssueEvent -> {
+              // Collect build issues (e.g., configuration problems, dependency issues)
+              // BuildIssueEvent extends MessageEvent, so it has kind, group, etc.
+              if (event.kind == MessageEvent.Kind.ERROR || event.kind == MessageEvent.Kind.WARNING) {
+                val issue = event.issue
+                val problem = ProjectProblem(
+                  message = event.message,
+                  kind = event.kind.name,
+                  group = event.group,
+                  description = event.description ?: issue.description,
+                )
+                
+                logger.trace { "Collected build issue from event: $problem" }
+                problems.add(problem)
+              }
+            }
+            
+            is FinishBuildEvent -> {
+              logger.trace { "Build finished: result=${event.result}" }
+              buildFinished.complete(Unit)
+            }
+          }
+        }, this.asDisposable())
+
         logger.trace { "Creating all modules build task, isIncrementalBuild=${!rebuild}" }
         val task = ProjectTaskManager.getInstance(project).createAllModulesBuildTask(!rebuild, project)
         val context = ProjectTaskContext(callId)
         logger.trace { "Running build task with context" }
-        return@coroutineScope ProjectTaskManager.getInstance(project).run(context, task).await()
+        
+        // Run build and wait for FinishBuildEvent
+        val result = ProjectTaskManager.getInstance(project).run(context, task).await()
+
+        logger.trace { "Build task completed, waiting for FinishBuildEvent..." }
+        buildFinished.await()
+
+        logger.trace { "FinishBuildEvent received or timed out" }
+        result
       }
     }
-    logger.trace { "Build task completed: result=$buildResult, hasErrors(may lie)=${buildResult?.hasErrors()}" }
+    logger.trace { "Build completed: result=$buildResult, hasErrors=${buildResult?.hasErrors()}, problemsCount=${problems.size}" }
 
-    logger.trace { "Starting problems collection with timeout ${timeout / 2}ms" }
-    val problemsCollectionTimedOut = withTimeoutOrNull(timeout.milliseconds / 2) {
-      withBackgroundProgress(
-        project,
-        McpServerBundle.message("progress.title.collecting.project.problems"),
-        cancellable = true
-      ) {
-        val collector = project.serviceAsync<ProblemsCollector>()
-        val allProblems = collector.getProblemFiles().asSequence()
-                            .flatMap {
-                              collector.getFileProblems(it)
-                            } + collector.getOtherProblems()
-        logger.trace { "Iterating through collected problems" }
-        for (problem in allProblems) {
-          if (!currentCoroutineContext().isActive) {
-            logger.trace { "Coroutine context is not active, stopping problem collection" }
-            break
-          }
-          val problem = if (problem is com.intellij.analysis.problemsView.FileProblem) {
-            val kind = (problem as? BuildViewProblemsService.FileBuildProblem)?.event?.kind
-            ProjectProblem(
-              message = problem.text,
-              group = problem.group,
-              description = problem.description,
-              kind = kind?.name,
-              file = projectDirectory.relativizeIfPossible(problem.file),
-              line = problem.line,
-              column = problem.column,
-            )
-          }
-          else {
-            ProjectProblem(
-              message = problem.text,
-              group = problem.group,
-              description = problem.description,
-            )
-          }
-          logger.trace { "Collected problem: $problem" }
-          problems.add(problem)
-        }
-        logger.trace { "Problems collection completed, total problems: ${problems.size}" }
-      }
-    } == null
-
-    logger.trace { "build_project completed: buildTimedOut=${buildResult == null}, problemsCollectionTimedOut=$problemsCollectionTimedOut, problemsCount=${problems.size}" }
-    return BuildProjectResult(timedOut = buildResult == null || problemsCollectionTimedOut,
-                              isSuccess = (buildResult != null && !buildResult.hasErrors() && problems.all { it.kind != Kind.ERROR.name }),
-                              problems = problems)
+    logger.trace { "build_project completed: buildTimedOut=${buildResult == null}, problemsCount=${problems.size}" }
+    return BuildProjectResult(
+      timedOut = buildResult == null,
+      isSuccess = buildResult != null && !buildResult.hasErrors() && problems.none { it.kind == Kind.ERROR.name },
+      problems = problems
+    )
   }
 
   @McpTool
