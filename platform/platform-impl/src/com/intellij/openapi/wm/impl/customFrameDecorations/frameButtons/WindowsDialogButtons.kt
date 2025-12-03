@@ -136,7 +136,7 @@ private class WindowsDialogHeaderButton(
     // If the header has its own border, it's not factored in for the "close" button,
     // and therefore we should compensate for that to align the buttons properly.
     baseInsets.top -= headerBorder.top
-    baseInsets.bottom += headerBorder.bottom
+    baseInsets.bottom += headerBorder.top
     return baseInsets
   }
 }
