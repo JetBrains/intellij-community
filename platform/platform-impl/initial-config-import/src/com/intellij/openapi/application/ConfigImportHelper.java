@@ -894,7 +894,8 @@ public final class ConfigImportHelper {
       Files.copy(oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME), newConfigDir.resolve(disabledPluginsFileName));
     }
 
-    var actionCommands = loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir);
+    var actionCommands = new ArrayList<>(loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir, StartupActionScriptManager.EARLY_ACTION_SCRIPT_FILE));
+    actionCommands.addAll(loadStartupActionScript(oldConfigDir, oldIdeHome, oldPluginsDir, StartupActionScriptManager.ACTION_SCRIPT_FILE));
 
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!isEmptyDirectory(newPluginsDir)) {
@@ -923,7 +924,12 @@ public final class ConfigImportHelper {
     Localization242.INSTANCE.enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
-  private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
+  private static List<ActionCommand> loadStartupActionScript(
+    Path oldConfigDir,
+    @Nullable Path oldIdeHome,
+    Path oldPluginsDir,
+    String actionScriptFileName
+  ) throws IOException {
     if (Files.isDirectory(oldPluginsDir)) {
       var oldSystemDir = oldConfigDir.getParent().resolve(SYSTEM);
       if (!Files.isDirectory(oldSystemDir)) {
@@ -935,7 +941,7 @@ public final class ConfigImportHelper {
           oldSystemDir = oldConfigDir.getFileSystem().getPath(defaultSystemPath(getNameWithVersion(oldConfigDir)));
         }
       }
-      var script = oldSystemDir.resolve(PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+      var script = oldSystemDir.resolve(PLUGINS + '/' + actionScriptFileName);  // PathManager#getPluginTempPath
       if (Files.isRegularFile(script)) {
         return StartupActionScriptManager.loadActionScript(script);
       }
