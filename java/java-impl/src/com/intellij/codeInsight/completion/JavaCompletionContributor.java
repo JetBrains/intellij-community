@@ -477,7 +477,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         if (anno != null) {
           PsiClass annoClass = anno.resolveAnnotationType();
           mayCompleteReference = mayCompleteValueExpression(position, annoClass);
-          if (annoClass != null) {
+          if (annoClass != null && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
             completeAnnotationAttributeName(result, position, anno, annoClass);
             JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
           }

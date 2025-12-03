@@ -126,6 +126,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
 
     private void addKeywords() {
       if (!canAddKeywords()) return;
+      if (processAnnotationAttributes()) return;
       if (PsiJavaModule.MODULE_INFO_FILE.equals(myFile.getName()) && PsiUtil.isAvailable(JavaFeature.MODULES, myFile)) {
         addModuleKeywords();
         return;
@@ -172,6 +173,20 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
       addClassLiteral();
       addExtendsImplements();
       addCaseNullToSwitch();
+    }
+
+    private boolean processAnnotationAttributes() {
+      PsiAnnotation annotation = JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition);
+      if (annotation != null) {
+        if (myPosition instanceof PsiIdentifier) {
+            PsiClass annoClass = annotation.resolveAnnotationType();
+            if (annoClass != null) {
+              addPrimitiveTypes();
+            }
+        }
+        return true;
+      }
+      return false;
     }
 
     private void addCaseNullToSwitch() {
@@ -1224,9 +1239,6 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
         return false;
       }
       if (psiElement().afterLeaf("::").accepts(myPosition)) {
-        return false;
-      }
-      if (JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition) != null) {
         return false;
       }
       return true;
