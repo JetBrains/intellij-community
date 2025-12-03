@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
@@ -386,7 +387,7 @@ private class K2ClassifierLookupElementRenderer(
             .commitDocument(document)
 
         return analyze(file) {
-            collectPossibleReferenceShortenings(file, selection = rangeMarker.textRange)
+            collectPossibleReferenceShorteningsForIde(file, selection = rangeMarker.textRange)
         }
     }
 }

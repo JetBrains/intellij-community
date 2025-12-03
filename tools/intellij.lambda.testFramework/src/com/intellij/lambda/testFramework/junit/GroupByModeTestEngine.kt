@@ -65,7 +65,7 @@ class GroupByModeTestEngine : TestEngine {
       filters
     }
     catch (e: Exception) {
-      LOG.info("Could not reflectively access postDiscoveryFilters: ${e.message}")
+      LOG.error("Could not reflectively access postDiscoveryFilters: ${e.message}")
       e.printStackTrace()
       emptyList<PostDiscoveryFilter>()
     }
@@ -167,60 +167,44 @@ class GroupByModeTestEngine : TestEngine {
         return
       }
 
-      // IMPORTANT: Execute by MODE first, not by class
-      // This ensures all MONOLITH tests run, then all SPLIT tests
-      val modes = IdeRunMode.entries.sorted()
-
-      // Start all class descriptors once at the beginning
-      for (classDescriptor in rootDescriptor.children) {
-        listener.executionStarted(classDescriptor)
-      }
-
-      for (mode in modes) {
-        val results = mutableListOf<ModeDescriptorResult>()
-
-        // For each mode, execute ALL classes
+      // IMPORTANT: Group execution by MODE first, not by class
+      for (mode in IdeRunMode.entries.sorted()) {
         for (classDescriptor in rootDescriptor.children) {
+          listener.executionStarted(classDescriptor)
+
           try {
             val modeDescriptor = classDescriptor.children.find {
               it is ModeContainerDescriptor && it.mode == mode
             } as? ModeContainerDescriptor
 
             if (modeDescriptor != null) {
-              results.add(executeMode(modeDescriptor, classSelectors, executionRequest, listener))
+              executeMode(modeDescriptor, classSelectors, executionRequest, listener)
             }
           }
-          catch (e: Exception) {
-            // Don't finish the class descriptor yet on error
+          catch (e: Throwable) {
             LOG.info("Error in $mode mode: ${e.message}")
             e.printStackTrace()
+            listener.executionFinished(classDescriptor, TestExecutionResult.failed(e))
           }
+
+          listener.executionFinished(classDescriptor, TestExecutionResult.successful())
         }
-
-        // Only allow cleanup after the last mode to keep application alive between modes
-        results.forEach { listener.executionFinished(it.descriptor, it.result) }
-      }
-
-      // Finish all class descriptors once at the end
-      for (classDescriptor in rootDescriptor.children) {
-        listener.executionFinished(classDescriptor, TestExecutionResult.successful())
       }
 
       listener.executionFinished(rootDescriptor, TestExecutionResult.successful())
     }
-    catch (e: Exception) {
+    catch (e: Throwable) {
       listener.executionFinished(rootDescriptor, TestExecutionResult.failed(e))
     }
   }
-
 
   private fun executeMode(
     modeDescriptor: ModeContainerDescriptor,
     classSelectors: List<ClassSelector>,
     originalExecutionRequest: ExecutionRequest,
     listener: EngineExecutionListener,
-  ): ModeDescriptorResult {
-    println("=== Executing tests in ${modeDescriptor.mode} mode for ${modeDescriptor.className} ===")
+  ): Unit {
+    LOG.info("=== Executing tests in ${modeDescriptor.mode} mode for ${modeDescriptor.className} ===")
 
     listener.executionStarted(modeDescriptor)
 
@@ -231,7 +215,7 @@ class GroupByModeTestEngine : TestEngine {
 
       val classSelector = classSelectors.find { it.className == modeDescriptor.className }
       if (classSelector == null) {
-        return ModeDescriptorResult(modeDescriptor, TestExecutionResult.successful())
+        return listener.executionFinished(modeDescriptor, TestExecutionResult.successful())
       }
 
       val configMap = mutableMapOf<String, String>()
@@ -250,11 +234,9 @@ class GroupByModeTestEngine : TestEngine {
         .build()
 
       val freshJupiterDescriptor = jupiterEngine.discover(freshRequest, jupiterUniqueId)
-
       LOG.info("Found ${freshJupiterDescriptor.descendants.size} descendants for ${modeDescriptor.mode}")
 
       applyPostDiscoveryFilters(freshJupiterDescriptor, postDiscoveryFilters)
-
       LOG.info("After filtering ${freshJupiterDescriptor.descendants.size} descendants remain: ${freshJupiterDescriptor.descendants.joinToString(separator = ", ") { it.displayName }}")
 
       val translatingListener = TranslatingExecutionListener(
@@ -271,10 +253,10 @@ class GroupByModeTestEngine : TestEngine {
       )
 
       jupiterEngine.execute(executionRequest)
-      return ModeDescriptorResult(modeDescriptor, TestExecutionResult.successful())
+      return listener.executionFinished(modeDescriptor, TestExecutionResult.successful())
     }
     catch (e: Exception) {
-      return ModeDescriptorResult(modeDescriptor, TestExecutionResult.failed(e))
+      return listener.executionFinished(modeDescriptor, TestExecutionResult.failed(e))
     }
   }
 
@@ -317,7 +299,6 @@ class GroupByModeTestEngine : TestEngine {
   }
 }
 
-
 /**
  * Finds a field in an object's class hierarchy, including superclasses.
  */
@@ -337,6 +318,3 @@ private fun findFieldInHierarchy(obj: Any, fieldName: String): Field? {
 
   return null
 }
-
-
-data class ModeDescriptorResult(val descriptor: ModeContainerDescriptor, val result: TestExecutionResult)

@@ -2,18 +2,19 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
+import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.junit5.TestCleanupListener
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import org.junit.platform.engine.TestExecutionResult
-import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 import java.net.URI
 import java.nio.file.Path
 
-class LambdaTestExecutionListener : TestExecutionListener {
+class LambdaTestExecutionListener : TestCleanupListener() {
   companion object {
     init {
       di = DI {
@@ -45,5 +46,6 @@ class LambdaTestExecutionListener : TestExecutionListener {
     if (!testIdentifier.isTest) return
 
     IdeInstance.publishArtifacts()
+    ConfigurationStorage.instance().resetToDefault()
   }
 }

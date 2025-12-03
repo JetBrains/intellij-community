@@ -56,7 +56,7 @@ class LambdaTestModel private constructor(
         
         private val __LambdaRdTestSessionNullableSerializer = LambdaRdTestSession.nullable()
         
-        const val serializationHash = 1924552879928986652L
+        const val serializationHash = 909022801773490680L
         
     }
     override val serializersOwner: ISerializersOwner get() = LambdaTestModel
@@ -197,7 +197,8 @@ data class LambdaRdKeyValueEntry (
 data class LambdaRdSerializedLambda (
     val stepName: String,
     val serializedDataBase64: String,
-    val classPath: List<String>
+    val classPath: List<String>,
+    val parametersBase64: List<String>
 ) : IPrintable {
     //companion
     
@@ -210,13 +211,15 @@ data class LambdaRdSerializedLambda (
             val stepName = buffer.readString()
             val serializedDataBase64 = buffer.readString()
             val classPath = buffer.readList { buffer.readString() }
-            return LambdaRdSerializedLambda(stepName, serializedDataBase64, classPath)
+            val parametersBase64 = buffer.readList { buffer.readString() }
+            return LambdaRdSerializedLambda(stepName, serializedDataBase64, classPath, parametersBase64)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: LambdaRdSerializedLambda)  {
             buffer.writeString(value.stepName)
             buffer.writeString(value.serializedDataBase64)
             buffer.writeList(value.classPath) { v -> buffer.writeString(v) }
+            buffer.writeList(value.parametersBase64) { v -> buffer.writeString(v) }
         }
         
         
@@ -235,6 +238,7 @@ data class LambdaRdSerializedLambda (
         if (stepName != other.stepName) return false
         if (serializedDataBase64 != other.serializedDataBase64) return false
         if (classPath != other.classPath) return false
+        if (parametersBase64 != other.parametersBase64) return false
         
         return true
     }
@@ -244,6 +248,7 @@ data class LambdaRdSerializedLambda (
         __r = __r*31 + stepName.hashCode()
         __r = __r*31 + serializedDataBase64.hashCode()
         __r = __r*31 + classPath.hashCode()
+        __r = __r*31 + parametersBase64.hashCode()
         return __r
     }
     //pretty print
@@ -253,6 +258,7 @@ data class LambdaRdSerializedLambda (
             print("stepName = "); stepName.print(printer); println()
             print("serializedDataBase64 = "); serializedDataBase64.print(printer); println()
             print("classPath = "); classPath.print(printer); println()
+            print("parametersBase64 = "); parametersBase64.print(printer); println()
         }
         printer.print(")")
     }
@@ -336,7 +342,7 @@ class LambdaRdTestSession private constructor(
     private val _sendException: RdSignal<LambdaRdTestSessionException>,
     private val _closeAllOpenedProjects: RdCall<Unit, Boolean>,
     private val _runLambda: RdCall<LambdaRdTestActionParameters, Unit>,
-    private val _runSerializedLambda: RdCall<LambdaRdSerializedLambda, Unit>,
+    private val _runSerializedLambda: RdCall<LambdaRdSerializedLambda, String>,
     private val _cleanUp: RdCall<Unit, Unit>,
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
@@ -357,7 +363,7 @@ class LambdaRdTestSession private constructor(
             val _sendException = RdSignal.read(ctx, buffer, LambdaRdTestSessionException)
             val _closeAllOpenedProjects = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runLambda = RdCall.read(ctx, buffer, LambdaRdTestActionParameters, FrameworkMarshallers.Void)
-            val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerializedLambda, FrameworkMarshallers.Void)
+            val _runSerializedLambda = RdCall.read(ctx, buffer, LambdaRdSerializedLambda, FrameworkMarshallers.String)
             val _cleanUp = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Void)
             val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
@@ -390,7 +396,7 @@ class LambdaRdTestSession private constructor(
     val sendException: IAsyncSignal<LambdaRdTestSessionException> get() = _sendException
     val closeAllOpenedProjects: RdCall<Unit, Boolean> get() = _closeAllOpenedProjects
     val runLambda: RdCall<LambdaRdTestActionParameters, Unit> get() = _runLambda
-    val runSerializedLambda: RdCall<LambdaRdSerializedLambda, Unit> get() = _runSerializedLambda
+    val runSerializedLambda: RdCall<LambdaRdSerializedLambda, String> get() = _runSerializedLambda
     val cleanUp: RdCall<Unit, Unit> get() = _cleanUp
     val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
@@ -436,7 +442,7 @@ class LambdaRdTestSession private constructor(
         RdSignal<LambdaRdTestSessionException>(LambdaRdTestSessionException),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<LambdaRdTestActionParameters, Unit>(LambdaRdTestActionParameters, FrameworkMarshallers.Void),
-        RdCall<LambdaRdSerializedLambda, Unit>(LambdaRdSerializedLambda, FrameworkMarshallers.Void),
+        RdCall<LambdaRdSerializedLambda, String>(LambdaRdSerializedLambda, FrameworkMarshallers.String),
         RdCall<Unit, Unit>(FrameworkMarshallers.Void, FrameworkMarshallers.Void),
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),

@@ -19,29 +19,24 @@ class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
     ide.apply {
-      try {
-        val toType = "//123"
-        val editorName = "Foo.java"
+      val toType = "//123"
+      val editorName = "Foo.java"
 
-        runInBackend("Open project via fixture") {
-          openNewProjectAndEditor("/src/com/example/$editorName")
-        }
+      runInBackend("Open project via fixture") {
+        openNewProjectAndEditor("/src/com/example/$editorName")
+      }
 
-        run("Open File in Project") {
-          waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
-            moveTo(2, 1)
-            typeWithLatency(toType)
-          }
-        }
-
-        runInBackend("Check typed on frontend") {
-          waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
-            assert(document.text.contains(toType))
-          }
+      run("Open File in Project") {
+        waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
+          moveTo(2, 1)
+          typeWithLatency(toType)
         }
       }
-      finally {
-        cleanUp()
+
+      runInBackend("Check typed on frontend") {
+        waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
+          assert(document.text.contains(toType))
+        }
       }
     }
 
@@ -57,7 +52,6 @@ class SampleTest {
       run("get projects") {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
-      cleanUp()
     }
     Unit
   }

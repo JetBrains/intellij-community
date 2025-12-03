@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -74,7 +75,7 @@ internal class ImportAllMembersIntention :
         if (expression.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
         if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
 
-        val shortenCommand = collectPossibleReferenceShortenings(
+        val shortenCommand = collectPossibleReferenceShorteningsForIde(
             element.containingKtFile,
             classShortenStrategy = {
                 if (it.classId?.isNestedClassIn(classId) == true) {
@@ -83,8 +84,8 @@ internal class ImportAllMembersIntention :
                     ShortenStrategy.DO_NOT_SHORTEN
                 }
             },
-            callableShortenStrategy = {
-                if (it.isEnumSyntheticMethodCall(target)) return@collectPossibleReferenceShortenings ShortenStrategy.DO_NOT_SHORTEN
+            callableShortenStrategy = callableShortenStrategy@{
+                if (it.isEnumSyntheticMethodCall(target)) return@callableShortenStrategy ShortenStrategy.DO_NOT_SHORTEN
                 val containingClassId = if (it is KaConstructorSymbol) {
                     it.containingClassId?.outerClassId
                 } else {

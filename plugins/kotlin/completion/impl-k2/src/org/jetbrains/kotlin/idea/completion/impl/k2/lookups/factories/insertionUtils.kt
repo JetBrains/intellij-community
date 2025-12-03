@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
@@ -73,7 +74,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
 
     val defaultReferenceShortening by lazy {
         allowAnalysisFromWriteActionInEdt(file) {
-            collectPossibleReferenceShortenings(
+            collectPossibleReferenceShorteningsForIde(
                 file = file,
                 selection = TextRange(startOffset, fqNameEndOffset),
             )

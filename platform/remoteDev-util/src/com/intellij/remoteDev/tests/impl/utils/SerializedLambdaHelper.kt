@@ -17,7 +17,7 @@ import kotlin.use
  */
 
 fun interface SuspendingSerializableConsumer<T> : Serializable {
-  suspend fun accept(application: T)
+  suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable
 }
 
 data class SerializedLambda(
@@ -31,10 +31,10 @@ data class SerializedLambda(
       System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
     }
 
-    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(name: String?, crossinline code: suspend (T) -> Unit): SerializedLambda {
+    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(name: String?, crossinline code: suspend T.(List<Serializable>) -> Serializable): SerializedLambda {
       val obj = object : SuspendingSerializableConsumer<T>, Serializable {
-        override suspend fun accept(application: T) {
-          code(application)
+        override suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable {
+          return code(lambdaIdeContext, parameters)
         }
       }
 
@@ -70,10 +70,14 @@ class SerializedLambdaLoader {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader, context: T? = null): SuspendingSerializableConsumer<T> {
+  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): SuspendingSerializableConsumer<T> {
+    return loadObject(stringToDecode, classLoader) as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<T : LambdaIdeContext> from the lambda")
+  }
+
+  fun loadObject(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): Serializable {
     val inputStream = Base64.getDecoder().decode(stringToDecode).inputStream()
-    return ClassLoaderObjectInputStream(inputStream, classLoader)
-             .readObject() as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<Application> from the lambda")
+    val obj = ClassLoaderObjectInputStream(inputStream, classLoader).readObject()
+    return obj as? Serializable ?: error("Failed to load Serializable object from Base64 payload; object type is ${obj?.javaClass?.name}")
   }
 }
 

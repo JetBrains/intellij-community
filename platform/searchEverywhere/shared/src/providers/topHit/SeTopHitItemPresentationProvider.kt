@@ -14,11 +14,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeExtendedInfo
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.ui.Changeable
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale
@@ -57,9 +53,7 @@ object SeTopHitItemPresentationProvider {
           val text = TopHitSEContributor.getSettingText(item)
           val isChangedChangeable = item is Changeable && (item as Changeable).hasChanged()
 
-          val textChunk = (if (isChangedChangeable) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES).let {
-            SerializableTextChunk(text, it)
-          }
+          val textChunk = SerializableTextChunk(text, (if (isChangedChangeable) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES))
           val base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES
           val selectedTextChunk =
             (if (isChangedChangeable)
@@ -75,6 +69,8 @@ object SeTopHitItemPresentationProvider {
           else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
                                         textChunk = textChunk,
                                         selectedTextChunk = selectedTextChunk,
+                                        description = null,
+                                        accessibleAdditionToText = null,
                                         extendedInfo = extendedInfo,
                                         isMultiSelectionSupported = isMultiSelectionSupported)
         }

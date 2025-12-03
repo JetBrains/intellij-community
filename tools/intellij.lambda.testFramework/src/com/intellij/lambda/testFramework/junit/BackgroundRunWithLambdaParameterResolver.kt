@@ -11,6 +11,6 @@ class BackgroundRunWithLambdaParameterResolver : ParameterResolver {
     parameterContext.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java)
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
-    return IdeInstance.ideBackgroundRun
+    return IdeInstance.ide
   }
 }

@@ -43,6 +43,7 @@ object SeRunConfigurationsPresentationProvider {
                                     text = item.text,
                                     description = descriptionText.toString(),
                                     extendedInfo = extendedInfo,
+                                    accessibleAdditionToText = null,
                                     isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

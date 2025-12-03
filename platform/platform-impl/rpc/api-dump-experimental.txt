@@ -46,8 +46,6 @@ f:com.intellij.ide.rpc.DocumentIdKt
 *f:com.intellij.ide.ui.SerializableTextChunk
 - *sf:Companion:com.intellij.ide.ui.SerializableTextChunk$Companion
 - <init>(com.intellij.usages.TextChunk):V
-- <init>(java.lang.String,com.intellij.ide.ui.colors.ColorId,I,com.intellij.openapi.editor.markup.EffectType,com.intellij.ide.ui.colors.ColorId,com.intellij.usages.TextChunk):V
-- b:<init>(java.lang.String,com.intellij.ide.ui.colors.ColorId,I,com.intellij.openapi.editor.markup.EffectType,com.intellij.ide.ui.colors.ColorId,com.intellij.usages.TextChunk,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,com.intellij.openapi.editor.markup.TextAttributes):V
 - <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - f:getEffectColor():com.intellij.ide.ui.colors.ColorId

@@ -6,14 +6,20 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShortenings
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -30,8 +36,8 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 fun shortenReferences(
     element: KtElement,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(element),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(element),
 ): KtElement? = shortenReferencesInRange(
     file = element.containingKtFile,
     selection = element.textRange,
@@ -76,8 +82,8 @@ fun deprecatedShortenReferences(
 fun shortenReferences(
     elements: Iterable<KtElement>,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(elements.firstOrNull()),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(elements.firstOrNull()),
 ) {
     val elementPointers = elements.map { it.createSmartPointer() }
 
@@ -117,10 +123,10 @@ fun shortenReferencesInRange(
     file: KtFile,
     selection: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
-    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
-    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(file),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(file),
 ): List<SmartPsiElementPointer<KtElement>> = allowAnalysisFromWriteActionInEdt(file) {
-    collectPossibleReferenceShortenings(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
+    collectPossibleReferenceShorteningsForIde(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }.invokeShortening()
 
 @Suppress("unused")
@@ -208,3 +214,89 @@ private fun KDocName.deleteQualifier() {
 private inline infix fun <A, B, C> ((A) -> B).andThen(
     crossinline function: (B) -> C,
 ): (A) -> C = { function(this(it)) }
+
+/**
+ * Collects possible references to shorten.
+ *
+ * Compared to [collectPossibleReferenceShortenings], uses [defaultClassShortenStrategyForIde] and [defaultCallableShortenStrategyForIde]
+ * strategies for shortening by default, which respect Kotlin Code Style Settings from the IDE.
+ *
+ * In the IDE, this function should be preferred to [collectPossibleReferenceShortenings] due to better defaults.
+ *
+ * Overall, consider using more simple and straighforward [shortenReferences] functions,
+ * or [org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility] if you need to support both K1 and K2 Modes.
+ */
+context(_: KaSession)
+@ApiStatus.Internal
+fun collectPossibleReferenceShorteningsForIde(
+    file: KtFile,
+    selection: TextRange = file.textRange,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategyForIde(file),
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategyForIde(file),
+): ShortenCommand = collectPossibleReferenceShortenings(
+    file,
+    selection,
+    shortenOptions,
+    classShortenStrategy,
+    callableShortenStrategy
+)
+
+
+/**
+ * Mostly a copy of [ShortenStrategy.defaultClassShortenStrategy] which also respects Kotlin Code Style Settings from the IDE
+ * applied at the [context] position.
+ */
+@ApiStatus.Internal
+fun ShortenStrategy.Companion.defaultClassShortenStrategyForIde(context: KtElement?): (KaClassLikeSymbol) -> ShortenStrategy {
+    if (context == null) return defaultClassShortenStrategy
+
+    val codeStyleSettings = context.containingKtFile.kotlinCustomSettings
+    val importNestedClasses = codeStyleSettings.IMPORT_NESTED_CLASSES
+
+    return { classLikeSymbol ->
+        if (classLikeSymbol.classId?.isNestedClass == true && !importNestedClasses) {
+            ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+        } else {
+            ShortenStrategy.SHORTEN_AND_IMPORT
+        }
+    }
+}
+
+/**
+ * Mostly a copy of [ShortenStrategy.defaultCallableShortenStrategy] which also respects Kotlin Code Style Settings from the IDE
+ * applied at the [context] position.
+ */
+@ApiStatus.Internal
+fun ShortenStrategy.Companion.defaultCallableShortenStrategyForIde(context: KtElement?): (KaCallableSymbol) -> ShortenStrategy {
+    if (context == null) return defaultCallableShortenStrategy
+
+    val codeStyleSettings = context.containingKtFile.kotlinCustomSettings
+    val importNestedClasses = codeStyleSettings.IMPORT_NESTED_CLASSES
+
+    return { callableSymbol ->
+        when (callableSymbol) {
+            is KaEnumEntrySymbol -> ShortenStrategy.DO_NOT_SHORTEN
+
+            is KaConstructorSymbol -> {
+                val isNestedClassConstructor = callableSymbol.containingClassId?.isNestedClass == true
+
+                if (isNestedClassConstructor && !importNestedClasses) {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+                } else {
+                    ShortenStrategy.SHORTEN_AND_IMPORT
+                }
+            }
+
+            else -> {
+                val isNotTopLevel = callableSymbol.callableId?.classId != null
+
+                if (isNotTopLevel) {
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
+                } else {
+                    ShortenStrategy.SHORTEN_AND_IMPORT
+                }
+            }
+        }
+    }
+}

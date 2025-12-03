@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
@@ -77,7 +78,7 @@ abstract class KtGenerateMembersHandler(
                 val declarations = block.declarations.mapNotNull { it.element }
                 val first = declarations.firstOrNull() ?: return@mapNotNull null
                 val last = declarations.last()
-                collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+                collectPossibleReferenceShorteningsForIde(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
             }
         }
 

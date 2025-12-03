@@ -20,6 +20,7 @@ import java.lang.annotation.Inherited
   ConfigureCoroutineCancellationTimeout::class,
   MonolithAndSplitModeTestTemplateProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
+  BackgroundLambdaCleanupAfterEach::class,
   BackgroundRunWithLambdaParameterResolver::class,
   RemoteDevRun::class
 )

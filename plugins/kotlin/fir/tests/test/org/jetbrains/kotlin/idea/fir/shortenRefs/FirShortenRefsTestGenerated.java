@@ -99,6 +99,16 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/extenstionFunctionReceiverNotShortened.kt");
             }
 
+            @TestMetadata("functionFromNestedObject.kt")
+            public void testFunctionFromNestedObject() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/functionFromNestedObject.kt");
+            }
+
+            @TestMetadata("functionFromNestedObject_ImportNestedClasses.kt")
+            public void testFunctionFromNestedObject_ImportNestedClasses() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/functionFromNestedObject_ImportNestedClasses.kt");
+            }
+
             @TestMetadata("functionInSameFile.kt")
             public void testFunctionInSameFile() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/functionInSameFile.kt");
@@ -132,6 +142,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("nestedClassConstructor.kt")
             public void testNestedClassConstructor() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/nestedClassConstructor.kt");
+            }
+
+            @TestMetadata("nestedClassConstructor_ImportNestedClasses.kt")
+            public void testNestedClassConstructor_ImportNestedClasses() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/nestedClassConstructor_ImportNestedClasses.kt");
             }
 
             @TestMetadata("nestedClassConstructor_imported.kt")
@@ -270,6 +285,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("NestedTypeInSameFile.kt")
             public void testNestedTypeInSameFile() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/NestedTypeInSameFile.kt");
+            }
+
+            @TestMetadata("NestedTypeInSameFile_ImportNestedClasses.kt")
+            public void testNestedTypeInSameFile_ImportNestedClasses() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/quailfiers/NestedTypeInSameFile_ImportNestedClasses.kt");
             }
 
             @TestMetadata("NotImportedNestedType.kt")
@@ -417,6 +437,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("ParameterTypeNestedTypeWithoutPackageNotShorten.kt")
             public void testParameterTypeNestedTypeWithoutPackageNotShorten() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeNestedTypeWithoutPackageNotShorten.kt");
+            }
+
+            @TestMetadata("ParameterTypeNestedType_ImportNestedClasses.kt")
+            public void testParameterTypeNestedType_ImportNestedClasses() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeNestedType_ImportNestedClasses.kt");
             }
 
             @TestMetadata("ParameterTypeNonImportedClass.kt")

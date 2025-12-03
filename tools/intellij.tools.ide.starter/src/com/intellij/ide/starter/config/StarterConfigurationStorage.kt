@@ -19,6 +19,7 @@ private const val ENV_JBR_DEV_SERVER_VERSION = "JBR_DEV_SERVER_VERSION"
 private const val ENABLE_SCRAMBLING_FOR_DEVSERVER = "ENABLE_SCRAMBLING_FOR_DEVSERVER"
 private const val ENV_MONITORING_DUMPS_INTERVAL_SECONDS = "MONITORING_DUMPS_INTERVAL_SECONDS"
 private const val ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS = "COROUTINE_SCOPES_CANCEL_TIMEOUT_MS"
+private const val ENV_UNIT_TEST_MODE = "UNIT_TEST_MODE"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -108,3 +109,7 @@ fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_S
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
   get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "2000").toLong().milliseconds }
   set(value) = instance().put(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, value.inWholeMilliseconds.toString())
+
+fun ConfigurationStorage.Companion.setUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, true)
+fun ConfigurationStorage.Companion.removeUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, false)
+fun ConfigurationStorage.Companion.getUnitTestMode() = instance().getBoolean(ENV_UNIT_TEST_MODE)

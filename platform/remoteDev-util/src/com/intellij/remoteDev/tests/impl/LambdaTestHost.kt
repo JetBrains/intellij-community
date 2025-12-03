@@ -2,56 +2,52 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspend
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
-import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
-import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import java.awt.Frame
-import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.Serializable
 import java.net.InetAddress
 import java.net.URLClassLoader
 import java.time.LocalTime
 import javax.imageio.ImageIO
-import javax.swing.JFrame
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
@@ -90,15 +86,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
       }
     }
-  }
-
-  open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
-    LOG.info("Setting up test logging factory")
-    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
-  }
-
-  protected open fun assertLoggerFactory() {
-    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
   init {
@@ -176,14 +163,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     val model = protocol.lambdaTestModel
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
-    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
+    model.session.viewNotNull(lifetime) { _, session ->
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
         val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Lambda test session dispatcher")
-
-        setUpTestLoggingFactory(sessionLifetime, session)
-        val app = ApplicationManager.getApplication()
 
         // Needed to enable proper focus behaviour
         if (SystemInfoRt.isWindows) {
@@ -257,9 +241,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               runLogged(parameters.reference, 1.minutes) {
                 ideAction.runLambda(parameters.parameters ?: listOf())
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
@@ -270,29 +251,35 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         // Advice for processing events
         session.runSerializedLambda.setSuspend(sessionBgtDispatcher) { _, serializedLambda ->
+          suspend fun clientIdContextToRunLambda() = if (session.rdIdeType == LambdaRdIdeType.BACKEND && AppMode.isRemoteDevHost()) {
+            waitSuspendingNotNull("Got remote client id", 10.seconds) {
+              ClientSessionsManager.getAppSessions(ClientKind.REMOTE).singleOrNull()?.clientId
+            }.let { ClientIdContextElement(it) }
+          }
+          else {
+            EmptyCoroutineContext
+          }
+
           try {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
-            withContext(Dispatchers.Default + CoroutineName("Lambda task: ${serializedLambda.stepName}")) {
+            return@setSuspend withContext(Dispatchers.Default + CoroutineName("Lambda task: ${serializedLambda.stepName}") + clientIdContextToRunLambda()) {
               runLogged(serializedLambda.stepName, 10.minutes) {
                 val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
-                URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use {
+                URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
                   withContext(ideContext.coroutineContext) {
-                    SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
-                      .accept(ideContext)
+                    val params: List<Serializable> = serializedLambda.parametersBase64.map { SerializedLambdaLoader().loadObject(it, classLoader = cl) }
+                    val result = SerializedLambdaLoader().load<LambdaIdeContext>(serializedLambda.serializedDataBase64, classLoader = cl).accept(ideContext, params)
+                    SerializedLambdaLoader().save(serializedLambda.stepName, result)
                   }
                 }
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
             LOG.warn("${session.rdIdeType}: '${serializedLambda.stepName}' hasn't finished successfully", ex)
             throw ex
           }
-          return@setSuspend
         }
 
         session.isResponding.setSuspend(sessionBgtDispatcher + NonCancellable) { _, _ ->

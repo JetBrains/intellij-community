@@ -22,6 +22,7 @@ class CalculatorItemPresentationProvider : SeLegacyItemPresentationProvider {
     val evaluationResult = item as? EvaluationResult ?: return null
     return SeSimpleItemPresentation(AllIcons.Debugger.EvaluateExpression.rpcId(),
                                     LangBundle.message("search.everywhere.calculator.result.0", evaluationResult.value),
+                                    extendedInfo = null,
                                     isMultiSelectionSupported = false)
   }
 }

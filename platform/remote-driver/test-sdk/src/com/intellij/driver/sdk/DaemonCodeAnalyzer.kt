@@ -25,6 +25,7 @@ interface HighlightInfo {
   fun getText(): String
   fun getHighlighter(): RangeHighlighterEx?
   fun fromRangeHighlighter(rangeHighlighter: RangeHighlighter): HighlightInfo?
+  fun getType(): HighlightInfoType
 }
 
 @Remote("com.intellij.lang.annotation.HighlightSeverity")
@@ -35,6 +36,8 @@ interface HighlightSeverity {
 @Remote("com.intellij.openapi.editor.ex.RangeHighlighterEx")
 interface RangeHighlighterEx {
   fun getTextAttributesKey(): TextAttributesKey
+  fun getStartOffset(): Int
+  fun getEndOffset(): Int
 }
 
 @Remote("com.intellij.codeInsight.daemon.impl.HighlightInfoType")

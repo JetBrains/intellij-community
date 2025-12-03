@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.starterLogger
 import com.intellij.util.containers.orNull
 import org.junit.platform.engine.FilterResult
 import org.junit.platform.engine.TestDescriptor
@@ -11,16 +11,11 @@ import org.junit.platform.launcher.PostDiscoveryFilter
  * These classes will only be executed by [GroupByModeTestEngine].
  */
 class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
-  companion object {
-    private val className = GroupByModePostDiscoveryFilter::class.simpleName
-    private fun log(message: String) = logOutput("[$className]: $message")
-  }
-
   override fun apply(testDescriptor: TestDescriptor): FilterResult {
     val engineId = testDescriptor.uniqueId.engineId.orNull()
 
     if (!isGroupedExecutionEnabled) {
-      log("Test descriptor is included in all JUnit engines because grouped execution is disabled")
+      starterLogger<GroupByModePostDiscoveryFilter>().info("Test descriptor is included in all JUnit engines because grouped execution is disabled")
       return FilterResult.included("No filter is applied")
     }
 

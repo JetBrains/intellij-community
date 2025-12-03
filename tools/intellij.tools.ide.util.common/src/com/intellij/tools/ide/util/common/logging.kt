@@ -7,7 +7,8 @@ import kotlin.reflect.KClass
 class Logger(clazz: KClass<*>) {
   private val className = clazz.simpleName
   fun info(message: String) = logOutput("[$className]: $message")
-  fun error(message: String) = com.intellij.tools.ide.util.common.logError("[$className]: $message")
+  fun error(message: String) = logError("[$className]: $message")
+  fun error(message: String, t: Throwable?) = logError("[$className]: $message", t)
 }
 
 inline fun <reified T> starterLogger() = Logger(T::class)

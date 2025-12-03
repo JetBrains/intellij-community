@@ -85,6 +85,11 @@
 - a:getId():java.lang.String
 - a:getItemsProvider(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.searchEverywhere.SeItemsProviderFactory$Companion
+*:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider$Companion
+- a:getId():java.lang.String
+- a:getPresentation(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider$Companion
 *f:com.intellij.platform.searchEverywhere.SeParams
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeParams$Companion
 - <init>(java.lang.String,com.intellij.platform.searchEverywhere.SeFilterState):V
@@ -117,6 +122,20 @@
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SeProviderId):V
 *f:com.intellij.platform.searchEverywhere.SeProviderId$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeResultAddedEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(com.intellij.platform.searchEverywhere.SeItemData):V
+- f:getItemData():com.intellij.platform.searchEverywhere.SeItemData
+*f:com.intellij.platform.searchEverywhere.SeResultEndEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(com.intellij.platform.searchEverywhere.SeProviderId):V
+- f:getProviderId():com.intellij.platform.searchEverywhere.SeProviderId
+*:com.intellij.platform.searchEverywhere.SeResultEvent
+*f:com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(java.util.List,com.intellij.platform.searchEverywhere.SeItemData):V
+- f:getNewItemData():com.intellij.platform.searchEverywhere.SeItemData
+- f:getUuidsToReplace():java.util.List
 *:com.intellij.platform.searchEverywhere.SeSession
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSession$Companion
 *f:com.intellij.platform.searchEverywhere.SeSession$Companion
@@ -125,9 +144,9 @@
 - com.intellij.platform.searchEverywhere.SeItemPresentation
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSimpleItemPresentation$Companion
 - <init>(com.intellij.ide.ui.icons.IconId,com.intellij.ide.ui.SerializableTextChunk,com.intellij.ide.ui.SerializableTextChunk,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
-- b:<init>(com.intellij.ide.ui.icons.IconId,com.intellij.ide.ui.SerializableTextChunk,com.intellij.ide.ui.SerializableTextChunk,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.ide.ui.icons.IconId,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
 - <init>(com.intellij.ide.ui.icons.IconId,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):V
-- b:<init>(com.intellij.ide.ui.icons.IconId,java.lang.String,java.lang.String,java.lang.String,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,Z):V
 - contentEquals(com.intellij.platform.searchEverywhere.SeItemPresentation):Z
 - f:getAccessibleAdditionToText():java.lang.String
 - f:getDescription():java.lang.String

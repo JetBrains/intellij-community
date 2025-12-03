@@ -15,7 +15,6 @@ fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, vararg
       //backend can't be started in headless mode, would fail
       contextToApplyHeadless.applyVMOptionsPatch {
         inHeadlessMode()
-        //inUnitTestMode()
       }
     }
   }
