@@ -494,7 +494,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 latestStableIndex = index;
             }
 
-            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
+            if (!languageVersion.isStable()) {
                 continue;
             }
 

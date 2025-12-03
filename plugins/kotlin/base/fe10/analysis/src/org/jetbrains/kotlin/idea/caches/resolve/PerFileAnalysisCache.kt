@@ -639,6 +639,7 @@ private object KotlinResolveDataProvider {
                     optimizingOptions = null
                 ).get<LazyTopDownAnalyzer>()
 
+                @Suppress("DEPRECATION_ERROR")
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
             } finally {
                 if (callbackSet) {

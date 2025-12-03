@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -207,7 +208,8 @@ sealed class K2MoveRenameUsageInfo(
                 when (refElem) {
                     is KDocName -> {
                         val reference = refElem.mainReference
-                        val resolved = reference.resolve() as? PsiNamedElement
+                        val resolved =
+                            reference.multiResolve(incompleteCode = false).firstOrNull()?.element as? PsiNamedElement
                         if (resolved != null && !PsiTreeUtil.isAncestor(topLevelMoved, resolved, false)) {
                             refElem.updatableUsageInfo = Source(refElem, reference, resolved, true)
                         }

@@ -18,6 +18,11 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * This is a specific scenario created for AT-739.
+ *
+ * See `KotlinCodeTypingCommandGenerator` (on the driver side) for a more general approach.
+ */
 internal class TypingWithCompletionCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
     companion object {
         const val NAME: @NonNls String = "typingWithCompletion"
