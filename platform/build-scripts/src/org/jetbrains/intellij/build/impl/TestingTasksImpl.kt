@@ -76,7 +76,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   override val coverage: Coverage by lazy {
     CoverageImpl(
       context = this.context,
-      coveredModuleNames = runConfigurations
+      coveredModuleNames = options.coveredModuleNames
+                             ?.splitToSequence(';')
+                             ?.map { it.trim() }
+                             ?.toList()
+                             ?.takeIf { it.any() }
+                           ?: runConfigurations
                              .map { it.moduleName }
                              .takeIf { it.any() }
                            ?: listOfNotNull(options.mainModule),

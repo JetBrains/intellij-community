@@ -115,6 +115,16 @@ open class TestingOptions {
   var coveredClassesPatterns: String? = System.getProperty("intellij.build.test.coverage.include.class.patterns")
 
   /**
+   * Specifies a list of semicolon separated modules names which are used together with their transitive dependencies
+   * to determine source and output paths for a Coverage report.
+   *
+   * If it isn't specified, then either [testConfigurations] or [mainModule] are used.
+   *
+   * Required if [enableCoverage] is set to `true`.
+   */
+  var coveredModuleNames: String? = System.getProperty("intellij.build.test.coverage.report.modules")
+
+  /**
    * Enables capturing traces with IntelliJ test discovery agent.
    * This agent captures lightweight coverage during your testing session
    * and allows to rerun only corresponding tests for a desired method or class in your project.
