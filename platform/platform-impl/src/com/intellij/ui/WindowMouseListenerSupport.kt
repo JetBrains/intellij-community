@@ -277,6 +277,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     dx = 0
     dy = 0
     if (isRelativeMovementMode()) {
+      ClientProperty.put(view as Window, "wlawt.popup_position_unconstrained", true)
       grabPoint = RelativePoint(event).getPoint(view)
       @Suppress("UsePropertyAccessSyntax")
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
