@@ -4151,7 +4151,7 @@ public class Py3TypeTest extends PyTestCase {
   @TestFor(issues="PY-81651")
   public void testEqWithAny() {
     // the actual result is `Any`, but we don't have the technology yet
-    doTest("UnsafeUnion[Any, bool]", """
+    doTest("bool | Any", """
       from typing import Any
       
       class A:
@@ -4281,7 +4281,7 @@ public class Py3TypeTest extends PyTestCase {
   @TestFor(issues="PY-28130")
   public void testLambdaAsNonAnnotatedFunctionReturnValue() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+    doTest("(x: Any) -> int | Any", """
       def f():
           return lambda x: x + 1
       expr = f()
@@ -4291,7 +4291,7 @@ public class Py3TypeTest extends PyTestCase {
   @TestFor(issues="PY-28130")
   public void testLambdaAsNonAnnotatedVariableValue() {
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    doTest("(x: Any) -> UnsafeUnion[int, Any]", """
+    doTest("(x: Any) -> int | Any", """
       t = lambda x: x + 1
       expr = t
       """);
