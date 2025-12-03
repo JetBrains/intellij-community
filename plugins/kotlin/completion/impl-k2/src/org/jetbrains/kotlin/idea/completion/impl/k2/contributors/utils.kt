@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiDocumentManager
-import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -25,16 +22,14 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
-import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.api.serialization.ensureSerializable
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.argList
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.addRequiredTypeArgumentsIfNecessary
 import org.jetbrains.kotlin.idea.completion.impl.k2.hasNoExplicitReceiver
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
@@ -47,7 +42,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.util.KotlinK2CodeFragmentUtil
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 context(_: KaSession, context: K2CompletionSectionContext<*>)
@@ -109,36 +103,8 @@ internal fun createCallableLookupElements(
         }
 
         lookup.applyWeighs(symbolWithOrigin)
-        val newLookup = context.positionContext.position.argList?.let { argList ->
-            lookup.withChainedInsertHandler(InsertRequiredTypeArgumentsInsertHandler( argList.args.text, argList.offset))
-        } ?: lookup
-        newLookup.applyKindToPresentation()
-    }
-}
-
-/**
- * Inserts the [typeArgs] at the [exprOffset] for expressions that require type arguments
- * after a chained dot call.
- */
-@Serializable
-internal class InsertRequiredTypeArgumentsInsertHandler(
-    private val typeArgs: String,
-    private val exprOffset: Int,
-): SerializableInsertHandler {
-    override fun handleInsert(
-        context: InsertionContext,
-        item: LookupElement
-    ) {
-        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
-        val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
-            is KtCallExpression -> beforeCaretExpr
-            is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
-            else -> null
-        } ?: return
-
-        addTypeArguments(callExpr, typeArgs, callExpr.project)
-        // Need to commit the PSI changes to the document for potential following insert handlers that modify the document
-        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+            .addRequiredTypeArgumentsIfNecessary(context.positionContext)
+            .applyKindToPresentation()
     }
 }
 

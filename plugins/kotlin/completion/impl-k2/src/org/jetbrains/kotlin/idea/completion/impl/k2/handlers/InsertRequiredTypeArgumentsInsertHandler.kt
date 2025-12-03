@@ -1,10 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.completion.impl.k2
+package org.jetbrains.kotlin.idea.completion.impl.k2.handlers
 
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
@@ -14,27 +20,74 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Corrected
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.CorrectionType
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.withChainedInsertHandler
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 
-// Note: this file is ported to K2 from `org.jetbrains.kotlin.idea.completion.KotlinInsertTypeArgument.kt`
+/**
+ * Inserts the [typeArgs] at the [exprOffset] for expressions that require type arguments
+ * after a chained dot call.
+ */
+@Serializable
+internal class InsertRequiredTypeArgumentsInsertHandler(
+    private val typeArgs: String,
+    private val exprOffset: Int,
+) : SerializableInsertHandler {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement
+    ) {
+        val beforeCaret = context.file.findElementAt(exprOffset) ?: return
+        val callExpr = when (val beforeCaretExpr = beforeCaret.prevSibling) {
+            is KtCallExpression -> beforeCaretExpr
+            is KtDotQualifiedExpression -> beforeCaretExpr.collectDescendantsOfType<KtCallExpression>().lastOrNull()
+            else -> null
+        } ?: return
 
-// Debugging tip: use 'PsiTreeUtilsKt.printTree' to see PSI trees in the runtime. See fun documentation for details.
+        addTypeArguments(callExpr, typeArgs, callExpr.project)
+        // Need to commit the PSI changes to the document for potential following insert handlers that modify the document
+        PsiDocumentManager.getInstance(context.project).doPostponedOperationsAndUnblockDocument(context.document)
+    }
 
-internal data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: Int)
-internal var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
+    companion object {
+        internal fun correctParametersForTypeArgumentInsertion(parameters: CompletionParameters): KotlinFirCompletionParameters? {
+            val parentKtElement = parameters.position.parent as? KtElement ?: return null
+            analyze(parentKtElement) {
+                val fixedPosition = addParamTypesIfNeeded(parameters.position) ?: return null
+                if (fixedPosition == parameters.position) return null
+
+                val offsetInIdentifier = parameters.offset - parameters.position.textOffset
+                val correctedParameters = parameters.withPosition(fixedPosition, fixedPosition.textOffset + offsetInIdentifier)
+                return Corrected.create(
+                    correctedParameters = correctedParameters,
+                    originalParameters = parameters,
+                    correctionType = CorrectionType.INSERTED_TYPE_ARGS
+                )
+            }
+        }
+    }
+}
+
+internal fun LookupElementBuilder.addRequiredTypeArgumentsIfNecessary(positionContext: KotlinRawPositionContext): LookupElementBuilder {
+    val argList = positionContext.position.argList ?: return this
+    return withChainedInsertHandler(InsertRequiredTypeArgumentsInsertHandler(argList.args.text, argList.offset))
+}
+
+private data class TypeArgsWithOffset(val args: KtTypeArgumentList, val offset: Int)
+
+private var UserDataHolder.argList: TypeArgsWithOffset? by UserDataProperty(Key("KotlinInsertTypeArgument.ARG_LIST"))
 
 context(_: KaSession)
-internal fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
+private fun addParamTypesIfNeeded(position: PsiElement): PsiElement? {
     val callBeforeDot = position.getCallBeforeDot() ?: return null
 
     // Type arguments are already specified, no need to add them
@@ -84,7 +137,8 @@ private fun addParamTypes(position: PsiElement): PsiElement {
         val dotExprWithCaretCopy = dotExprWithCaret.copy() as KtQualifiedExpression
 
         val beforeDotExpr = dotExprWithCaret.receiverExpression // smth.call()
-        val dotExpressionWithoutCaret = dotExprWithCaret.replace(beforeDotExpr) as KtExpression // dotExprWithCaret = beforeDotExpr + '.[?]' + caret
+        val dotExpressionWithoutCaret =
+            dotExprWithCaret.replace(beforeDotExpr) as KtExpression // dotExprWithCaret = beforeDotExpr + '.[?]' + caret
         val targetCall = dotExpressionWithoutCaret.findLastCallExpression() ?: return null // call()
 
         return CallAndDiff(targetCall, dotExpressionWithoutCaret, dotExprWithCaretCopy)

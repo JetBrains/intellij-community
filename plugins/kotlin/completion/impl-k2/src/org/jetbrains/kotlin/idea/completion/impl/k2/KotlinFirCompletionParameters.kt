@@ -5,14 +5,12 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.impl.k2.addParamTypesIfNeeded
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion.correctParametersForInStringTemplateCompletion
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 internal sealed class KotlinFirCompletionParameters(
@@ -120,24 +118,8 @@ internal sealed class KotlinFirCompletionParameters(
         val KotlinFirCompletionParameters.languageVersionSettings: LanguageVersionSettings
             get() = originalFile.project.languageVersionSettings
 
-        private fun correctParametersForTypeArgumentInsertion(parameters: CompletionParameters): KotlinFirCompletionParameters? {
-            val parentKtElement = parameters.position.parent as? KtElement ?: return null
-            analyze(parentKtElement) {
-                val fixedPosition = addParamTypesIfNeeded(parameters.position) ?: return null
-                if (fixedPosition == parameters.position) return null
-
-                val offsetInIdentifier = parameters.offset - parameters.position.textOffset
-                val correctedParameters = parameters.withPosition(fixedPosition, fixedPosition.textOffset + offsetInIdentifier)
-                return Corrected.create(
-                    correctedParameters = correctedParameters,
-                    originalParameters = parameters,
-                    correctionType = CorrectionType.INSERTED_TYPE_ARGS
-                )
-            }
-        }
-
         fun create(parameters: CompletionParameters): KotlinFirCompletionParameters? {
-            correctParametersForTypeArgumentInsertion(parameters)?.let { return it }
+            InsertRequiredTypeArgumentsInsertHandler.correctParametersForTypeArgumentInsertion(parameters)?.let { return it }
 
             return when (val correctedParameters = correctParametersForInStringTemplateCompletion(parameters)) {
                 null -> Original.create(parameters)
