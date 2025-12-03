@@ -10,8 +10,10 @@ import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assumptions
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -26,9 +28,10 @@ import kotlin.time.Duration.Companion.seconds
 class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
-    //works in both modes if
-    // headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda
-    // as ProjectManager returns empty projects list in headless
+    Assumptions.assumeThat(ide.rdSession.rdIdeType)
+      .describedAs("works in both modes if headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda" +
+                   "as ProjectManager returns empty projects list in headless IJPL-221229")
+      .isNotIn(LambdaRdIdeType.MONOLITH)
     JpsEmptyProject.projectInfo.projectDir.resolve("src").resolve("FormattingExamplesExpected.java").let {
       if (!it.exists()) {
         it.parent.createDirectories()
@@ -66,11 +69,13 @@ class SampleTest {
   fun `simple parameterized test`(param: Int, str: String, ide: BackgroundRunWithLambda) = runBlocking {
     ide.apply {
       run {
-        Logger.getInstance("test").warn("Param: $param $str Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+        Logger.getInstance("test")
+          .warn("Param: $param $str Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
 
       runInBackend {
-        Logger.getInstance("test").warn("Param: $param $str Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+        Logger.getInstance("test")
+          .warn("Param: $param $str Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
     }
     Unit
@@ -91,11 +96,13 @@ class SampleTest {
   fun `custom parameterized test`(param: CustomParam, ide: BackgroundRunWithLambda) = runBlocking {
     ide.apply {
       run {
-        Logger.getInstance("test").warn("Param: $param Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+        Logger.getInstance("test")
+          .warn("Param: $param Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
 
       runInBackend {
-        Logger.getInstance("test").warn("Param: $param Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
+        Logger.getInstance("test")
+          .warn("Param: $param Backend Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
     }
     Unit
