@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
+import org.junit.Test
 import kotlin.io.path.createDirectories
 
 class ProjectCannotBeOpenedTwiceTest {
@@ -19,7 +20,7 @@ class ProjectCannotBeOpenedTwiceTest {
     val appRule: ApplicationRule = ApplicationRule()
   }
 
-  //@Test todo: uncomment (currently ConditionalModuleLoadingRuleValueTest is failing due to some tests changing test buckets)
+  @Test
   fun `test the same project cannot be opened twice`() {
     runBlocking {
       val name = "project that is opened twice"
