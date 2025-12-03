@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -136,8 +136,13 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @Test
   public void wasClosedProperly_isTrueForNewStorage() throws IOException {
     assertTrue(
-      "New empty storage is always 'closed properly'",
+      "New empty storage is 'closed properly'",
       storage.wasClosedProperly()
+    );
+
+    assertTrue(
+      "New empty storage is 'always closed properly'",
+      storage.wasAlwaysClosedProperly()
     );
   }
 
@@ -146,8 +151,12 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     storage.close();
     storage = openStorage(storagePath);
     assertTrue(
-      "Storage is 'closed properly' if it was closed and opened again",
+      "Storage is 'closed properly' if it was properly closed and opened again",
       storage.wasClosedProperly()
+    );
+    assertTrue(
+      "Storage is 'always closed properly' if it was properly closed and opened again",
+      storage.wasAlwaysClosedProperly()
     );
   }
 

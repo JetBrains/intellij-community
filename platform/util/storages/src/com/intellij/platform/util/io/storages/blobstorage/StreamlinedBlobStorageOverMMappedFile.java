@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
@@ -74,6 +75,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
     headerPage = storage.pageByOffset(0L);
 
+    int fileStatusBitmask;
     if (length == 0) {//new empty file
       putHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET, MAGIC_WORD);
       putHeaderInt(HeaderLayout.STORAGE_VERSION_OFFSET, STORAGE_VERSION_CURRENT);
@@ -81,7 +83,9 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
       updateNextRecordId(offsetToId(recordsStartOffset()));
 
-      this.wasClosedProperly.set(true);
+      wasClosedProperly = true;
+      wasAlwaysClosedProperly = true;
+      fileStatusBitmask = HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK | HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK;
     }
     else {
       int magicWord = readHeaderInt(HeaderLayout.MAGIC_WORD_OFFSET);
@@ -102,8 +106,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
                               " but current storage.pageSize=" + pageSize);
       }
 
-      //No need to copy from the header into field: we read/update header
-      // slot directly:
+      //No need to copy from the header into field: we read/update header slot directly:
       //updateNextRecordId(readHeaderInt(HeaderLayout.NEXT_RECORD_ID_OFFSET));
 
       recordsAllocated.set(readHeaderInt(HeaderLayout.RECORDS_ALLOCATED_OFFSET));
@@ -112,11 +115,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       totalLiveRecordsPayloadBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_PAYLOAD_SIZE_OFFSET));
       totalLiveRecordsCapacityBytes.set(readHeaderLong(HeaderLayout.RECORDS_LIVE_TOTAL_CAPACITY_SIZE_OFFSET));
 
-      boolean wasClosedProperly = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET) == FILE_STATUS_PROPERLY_CLOSED;
-      this.wasClosedProperly.set(wasClosedProperly);
+      fileStatusBitmask = readHeaderInt(HeaderLayout.FILE_STATUS_OFFSET);
+      boolean wasClosedProperlyLastTime = BitUtil.isSet(fileStatusBitmask, HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK);
+      wasClosedProperly = wasClosedProperlyLastTime;
+      wasAlwaysClosedProperly = wasClosedProperlyLastTime
+                                     && BitUtil.isSet(fileStatusBitmask, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK);
+      fileStatusBitmask = BitUtil.set(fileStatusBitmask, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK, wasAlwaysClosedProperly);
     }
 
-    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_OPENED);
+    //set 'closed properly' to false: will set back to true in .close(), but will remain false if not closed properly:
+    fileStatusBitmask = BitUtil.set(fileStatusBitmask, HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK, false);
+    putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, fileStatusBitmask);
     storage.fsync();//ensure status is persisted
 
     openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName(), this);
@@ -412,8 +421,10 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       case RecordLayout.RECORD_TYPE_MOVED -> {
         int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
         if (redirectToId == NULL_ID) {
-          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted, " +
-                                                  "(wasClosedProperly: " + wasClosedProperly() + ")");
+          throw new RecordAlreadyDeletedException(
+            "Can't delete record[" + recordId + "]: it was already deleted, " +
+            "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
+          );
         }
 
         // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
@@ -521,15 +532,17 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
     // but just silently ignore attempts to 'close already closed'. And storage conforms with
     // that. But in .force() we write file status and other header fields, and without .closed
-    // flag we'll do that even on already closed storage, which leads to exception.
+    // flag we'll do that even on already closed storage, which leads to an exception.
     if (!closed.get()) {
       //Class in general doesn't provide thread-safety guarantees, and need external synchronization if used in
       // multithreading. But since it uses mmapped files, concurrency errors in closing/reclaiming may lead to
-      // JVM crash, not just program bugs -- hence, a bit of protection do no harm:
+      // JVM crash, not just program bugs -- hence, a bit of protection does no harm:
       synchronized (this) {//also ensures updateNextRecordId() is finished
         if (!closed.get()) {
-          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, FILE_STATUS_PROPERLY_CLOSED);
-
+          int fileStatusMask = BitUtil.set(
+            HeaderLayout.FILE_STATUS_CLOSED_PROPERLY_MASK, HeaderLayout.FILE_STATUS_ALWAYS_CLOSED_PROPERLY_MASK, wasAlwaysClosedProperly
+          );
+          putHeaderInt(HeaderLayout.FILE_STATUS_OFFSET, fileStatusMask);
           force();
 
           closed.set(true);
