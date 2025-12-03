@@ -49,7 +49,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 20)
+  private val GROUP = EventLogGroup("git.configuration", 21)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -86,7 +86,6 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     reportVersion(project, set)
     val counter = GitCommitterCounter(listOf(Period.ofMonths(1), Period.ofMonths(3), Period.ofYears(1)),
                                       additionalGitParameters = listOf("--all"))
-    val executable = GitExecutableManager.getInstance().getExecutable(null)
 
     for (repository in repositories) {
       val repoStatus = repositoryChecker.checkRepoStatus(repository)
@@ -95,6 +94,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
         REPO_ID with project.getProjectCacheFileName() + repository.root.name,
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
+        TAGS with getTagsSize(repository),
         RECENT_CHECKOUT_BRANCHES with branches.recentCheckoutBranches.size,
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
@@ -141,6 +141,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
     return set
   }
+
+  private fun getTagsSize(repository: GitRepository): Int = GitBranchUtil.getAllTags(repository.project, repository.root).size
 
   private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
     val executableManager = GitExecutableManager.getInstance()
@@ -247,6 +249,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
   private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
+  private val TAGS = EventFields.RoundedInt("tags")
   private val RECENT_CHECKOUT_BRANCHES = EventFields.RoundedInt("recent_checkout_branches")
   private val REMOTES = EventFields.RoundedInt("remotes")
   private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
@@ -264,6 +267,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
                                                      REPO_ID,
                                                      LOCAL_BRANCHES,
                                                      REMOTE_BRANCHES,
+                                                     TAGS,
                                                      RECENT_CHECKOUT_BRANCHES,
                                                      REMOTES,
                                                      IS_WORKTREE_USED,
