@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public interface UndoForeignCommandService {
 
-  void startForeignUndoCommand(@Nullable FileEditor fileEditor, @Nullable DocumentReference originator);
+  void beforeStartForeignCommand(@Nullable FileEditor fileEditor, @Nullable DocumentReference originator);
 
   void startForeignCommand(@NotNull CommandId commandId);
 

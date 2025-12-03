@@ -10,7 +10,7 @@ private class UndoForeignCommandServiceImpl : UndoForeignCommandService {
 
   private val currentForeignRef = AtomicReference<Pair<FileEditor?, DocumentReference?>>()
 
-  override fun startForeignUndoCommand(fileEditor: FileEditor?, originator: DocumentReference?) {
+  override fun beforeStartForeignCommand(fileEditor: FileEditor?, originator: DocumentReference?) {
     currentForeignRef.set(Pair(fileEditor, originator))
   }
 
