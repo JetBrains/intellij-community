@@ -30,7 +30,15 @@ public final class StartupActionScriptManager {
 
   @ApiStatus.Internal
   public static synchronized void executeActionScript() throws IOException {
-    var scriptFile = getActionScriptFile();
+    executeActionScriptImpl(getActionScriptFile());
+  }
+
+  @ApiStatus.Internal
+  public static synchronized void executeEarlyActionScript() throws IOException {
+    executeActionScriptImpl(getEarlyActionScriptFile());
+  }
+
+  private static void executeActionScriptImpl(@NotNull Path scriptFile) throws IOException {
     try {
       var commands = loadActionScript(scriptFile);
       for (var command : commands) {
@@ -69,6 +77,24 @@ public final class StartupActionScriptManager {
   @ApiStatus.Experimental
   public static synchronized void addActionCommandsToBeginning(@NotNull List<? extends ActionCommand> commands) throws IOException {
     addActionCommands(getActionScriptFile(), commands, false);
+  }
+
+  /**
+   * Special method for a special use case, do not use unless you know that it is exactly what you need.
+   * @see #EARLY_ACTION_SCRIPT_FILE
+   */
+  @ApiStatus.Internal
+  public static synchronized void addEarlyActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
+    addActionCommands(getEarlyActionScriptFile(), commands, true);
+  }
+
+  /**
+   * Special method for a special use case, do not use unless you know that it is exactly what you need.
+   * @see #EARLY_ACTION_SCRIPT_FILE
+   */
+  @ApiStatus.Internal
+  public static synchronized void addEarlyActionCommandsToBeginning(@NotNull List<? extends ActionCommand> commands) throws IOException {
+    addActionCommands(getEarlyActionScriptFile(), commands, false);
   }
 
   private static synchronized void addActionCommands(@NotNull Path scriptFile, @NotNull List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
