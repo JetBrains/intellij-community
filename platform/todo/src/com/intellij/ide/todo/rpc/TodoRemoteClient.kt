@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
+import fleet.rpc.client.durable
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,9 +23,11 @@ class TodoRemoteClient {
       file: VirtualFile,
       filter: TodoFilter?
     ) : List<TodoResult> = runBlockingCancellable {
-      val projectId: ProjectId = project.projectId()
-      val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
-      TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
+      durable {
+        val projectId: ProjectId = project.projectId()
+        val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
+        TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
+      }
     }
 
     @JvmStatic
