@@ -13,6 +13,9 @@
     <lang.elementManipulator
             forClass="org.jetbrains.kotlin.psi.KtDotQualifiedExpression"
             implementationClass="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinDotQualifiedExpressionManipulator"/>
+    <completion.contributor language="TOML"
+                            id="KotlinGradleTomlCompletionContributor"
+                            implementationClass="org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.completion.KotlinGradleTomlCompletionContributor"/>
   </extensions>
 
 </idea-plugin>
