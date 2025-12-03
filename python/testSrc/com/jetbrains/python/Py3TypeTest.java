@@ -4150,7 +4150,7 @@ public class Py3TypeTest extends PyTestCase {
   @TestFor(issues="PY-81651")
   public void testEqWithAny() {
     // the actual result is `Any`, but we don't have the technology yet
-    doTest("UnsafeUnion[Any, bool]", """
+    doTest("bool | Any", """
       from typing import Any
       
       class A:
