@@ -4,6 +4,7 @@ import com.jetbrains.lsp.protocol.LSP
 import fleet.util.decodeToStringUtf8
 import fleet.util.encodeToByteArrayUtf8
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -28,7 +29,7 @@ suspend fun withBaseProtocolFraming(
   coroutineScope {
     val (incomingSender, incomingReceiver) = channels<JsonElement>()
     val (outgoingSender, outgoingReceiver) = channels<JsonElement>(Channel.UNLIMITED)
-    val readJob = launch {
+    val readJob = launch(CoroutineName("frame reader")) {
       incomingSender.use {
         while (true) {
           val frame = reader.readFrame()
@@ -40,7 +41,7 @@ suspend fun withBaseProtocolFraming(
         }
       }
     }
-    val writeJob = launch {
+    val writeJob = launch(CoroutineName("frame writer")) {
       outgoingReceiver.consumeEach { frame ->
         val success = writer.writeFrame(frame)
         if (!success) {
@@ -76,7 +77,8 @@ private suspend fun ByteReader.readFrame(): JsonElement? {
     if (!readSomething) return null
     if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
     readByteArray(contentLength)
-  } catch (e: Exception) {
+  }
+  catch (e: Exception) {
     when (e) {
       is IOException -> return null
       else -> throw e
