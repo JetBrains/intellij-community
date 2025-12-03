@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.getValidBoundsForPopup
 import com.jetbrains.JBR
@@ -266,6 +267,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   private var isTruePopup = false
   private var dx = 0
   private var dy = 0
+  private var grabPoint = Point()
 
   override fun beforeUpdate(event: MouseEvent, view: Component) {
     isTruePopup = view is Window && view.type == Window.Type.POPUP
@@ -275,6 +277,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     dx = 0
     dy = 0
     if (isRelativeMovementMode()) {
+      grabPoint = RelativePoint(event).getPoint(view)
       @Suppress("UsePropertyAccessSyntax")
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
     }
@@ -344,6 +347,35 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
 
     if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
       LOG.debug { "New bounds after fitting: $newBoundsBeforeFit -> $newBounds" }
+    }
+
+    // If the popup was moved, don't let the initial grab point move away from the owning window.
+    // Because if we let it move away from the owning window, it may also very well move outside the screen.
+    // And that's bad, because it will be impossible to grab it again by the same point (in the worst case, any point).
+    // And because we have no idea where the screen is (thanks, Wayland), this seems to be the only way.
+    if (newBounds.x != oldBounds.x || newBounds.y != oldBounds.y) {
+      fitGrabPoint(newBounds, windowBounds)
+    }
+  }
+
+  private fun fitGrabPoint(newBounds: Rectangle, validBounds: Rectangle) {
+    LOG.debug { "Trying to fit the grab point $grabPoint (relative to $newBounds) into $validBounds" }
+    val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
+
+    val minX = validBounds.x
+    val maxX = validBounds.x + validBounds.width - 1
+    val grabX = newBounds.x + grabPoint.x
+    val fitGrabX = grabX.coerceIn(minX, maxX)
+    newBounds.x += fitGrabX - grabX
+
+    val minY = validBounds.y
+    val maxY = validBounds.y + validBounds.height - 1
+    val grabY = newBounds.y + grabPoint.y
+    val fitGrabY = grabY.coerceIn(minY, maxY)
+    newBounds.y += fitGrabY - grabY
+
+    if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
+      LOG.debug { "New bounds after fitting the grab point: $newBoundsBeforeFit -> $newBounds" }
     }
   }
 
