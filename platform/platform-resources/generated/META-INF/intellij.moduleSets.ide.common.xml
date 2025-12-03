@@ -14,7 +14,6 @@
     <!-- <editor-fold desc="nested: essential > essential.minimal > core.lang > core.ide > core.platform > libraries.platform"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
-    <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf" loading="embedded"/>
@@ -72,6 +71,7 @@
     <module name="intellij.libraries.markdown" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
+    <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>
     <module name="intellij.libraries.rhino" loading="embedded"/>
     <module name="intellij.libraries.snakeyaml" loading="embedded"/>
@@ -108,6 +108,7 @@
     <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
+    <module name="intellij.platform.locking.impl" loading="embedded"/>
     <module name="intellij.platform.core" loading="embedded"/>
     <module name="intellij.platform.core.ui" loading="embedded"/>
     <module name="intellij.platform.core.impl" loading="embedded"/>
@@ -185,7 +186,8 @@
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.plexus.utils" loading="embedded"/>
+    <module name="intellij.libraries.plexus.utils"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
     <!-- </editor-fold> -->
 
     <!-- <editor-fold desc="direct modules"> -->
@@ -259,6 +261,7 @@
     <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
     <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
     <module name="intellij.platform.externalProcessAuthHelper" loading="embedded"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
     <!-- </editor-fold> -->
     <!-- </editor-fold> -->
 

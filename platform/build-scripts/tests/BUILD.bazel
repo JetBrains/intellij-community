@@ -45,7 +45,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "//libraries/hash4j",
     "//libraries/fastutil",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//libraries/mockito",
     "@lib//:mockito-kotlin",
     "//jps/model-serialization",

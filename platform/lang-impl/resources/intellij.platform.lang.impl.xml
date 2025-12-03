@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>

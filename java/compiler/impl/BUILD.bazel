@@ -56,7 +56,7 @@ jvm_library(
     "//libraries/oro-matcher",
     "//libraries/asm",
     "@lib//:kotlin-stdlib",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "@lib//:netty-codec-http",
     "//libraries/stream",
     "//libraries/fastutil",

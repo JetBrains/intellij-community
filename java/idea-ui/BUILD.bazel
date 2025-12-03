@@ -59,7 +59,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/eel-provider",
     "//platform/util/concurrency",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//java/java-syntax:syntax",
     "@lib//:slf4j-api",
     "//xml/xml-psi-api:psi",

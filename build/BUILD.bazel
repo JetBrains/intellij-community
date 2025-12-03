@@ -75,7 +75,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "//platform/build-scripts/downloader",
     "@community//build:zip",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
   ],
   exports = ["//platform/build-scripts"],
   runtime_deps = ["@lib//:test-discovery-plugin-base"]

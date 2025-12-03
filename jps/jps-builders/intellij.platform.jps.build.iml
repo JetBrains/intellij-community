@@ -35,7 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
-    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
@@ -72,8 +72,8 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
     <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
-    <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.eel" />

@@ -58,6 +58,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.util.ex")
     embeddedModule("intellij.platform.util.ui")
 
+    embeddedModule("intellij.platform.locking.impl")
+
     embeddedModule("intellij.platform.core")
     embeddedModule("intellij.platform.core.ui")
     embeddedModule("intellij.platform.core.impl")
@@ -307,6 +309,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
     embeddedModule("intellij.platform.externalSystem.impl")
     embeddedModule("intellij.platform.externalProcessAuthHelper")
+
+    module("intellij.java.aetherDependencyResolver")
   }
 
   /**

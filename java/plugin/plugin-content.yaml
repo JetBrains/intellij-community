@@ -1,6 +1,3 @@
-- name: lib/aether-dependency-resolver.jar
-  modules:
-  - name: intellij.java.aetherDependencyResolver
 - name: lib/completion-ranking-java.jar
   library: completion-ranking-java
   module: intellij.java.impl
@@ -49,7 +46,6 @@
   - name: intellij.java.debugger.impl
   - name: intellij.java.debugger.memory.agent
   - name: intellij.java.execution.impl
-  - name: intellij.java.ui
   - name: intellij.java.structureView
   - name: intellij.java.manifest
   - name: intellij.java.remoteServers.impl
@@ -73,6 +69,7 @@
   - name: intellij.java.resources.en
     reason: <- intellij.java.plugin
   contentModules:
+  - name: intellij.java.ui
   - name: intellij.java.performancePlugin
   - name: intellij.java.terminal
   - name: intellij.java.debugger.impl.backend
@@ -111,21 +108,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   reason: withProjectLibrary
-- name: lib/maven-resolver-connector-basic.jar
-  library: org.apache.maven.resolver:maven-resolver-connector-basic
-  module: intellij.java.aetherDependencyResolver
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1/maven-resolver-connector-basic-1.jar
-- name: lib/maven-resolver-transport-file.jar
-  library: org.apache.maven.resolver:maven-resolver-transport-file
-  module: intellij.java.aetherDependencyResolver
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1/maven-resolver-transport-file-1.jar
-- name: lib/maven-resolver-transport-http.jar
-  library: org.apache.maven.resolver:maven-resolver-transport-http
-  module: intellij.java.aetherDependencyResolver
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1/maven-resolver-transport-http-1.jar
 - name: lib/modules/intellij.java.debugger.impl.frontend.jar
   contentModules:
   - name: intellij.java.debugger.impl.frontend

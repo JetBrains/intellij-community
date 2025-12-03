@@ -145,5 +145,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="RUNTIME" />
   </component>
 </module>

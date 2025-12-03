@@ -24,15 +24,12 @@
   ]]></description>
 
   <dependencies>
-    <module name="intellij.libraries.lucene.common"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.libraries.grpc"/>
-    <module name="intellij.libraries.commons.text"/>
-    <module name="intellij.libraries.javax.activation"/>
   </dependencies>
 
   <content namespace="jetbrains">
+    <module name="intellij.grazie.core" loading="embedded"/>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>

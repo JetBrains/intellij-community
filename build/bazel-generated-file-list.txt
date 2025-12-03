@@ -329,7 +329,6 @@ java/remote-servers/api
 java/remote-servers/impl
 java/structuralsearch-java
 java/testFramework
-java/testFramework/backend
 java/testFramework/shared
 java/typeMigration
 java/unscramble
@@ -440,7 +439,6 @@ libraries/kotlinx/coroutines/test
 libraries/kotlinx/datetime
 libraries/kotlinx/document-store-mvstore
 libraries/kotlinx/html
-libraries/kotlinx/serialization/cbor
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/kotlinx/serialization/protobuf
@@ -453,6 +451,7 @@ libraries/ktor/utils
 libraries/lucene.common
 libraries/lz4
 libraries/markdown
+libraries/maven-resolver-provider
 libraries/microba
 libraries/miglayout-swing
 libraries/mockito
@@ -460,6 +459,7 @@ libraries/mvstore
 libraries/opencsv
 libraries/oro-matcher
 libraries/plexus-utils
+libraries/protobuf
 libraries/proxy-vole
 libraries/pty4j
 libraries/rd/core

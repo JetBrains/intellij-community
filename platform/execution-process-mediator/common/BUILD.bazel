@@ -18,7 +18,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "//libraries/javax/annotation",
     "//libraries/grpc",
   ]
@@ -34,7 +34,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "//libraries/javax/annotation",
     "@lib//:junit5",
     "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",

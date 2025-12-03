@@ -50,6 +50,9 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.asm",
     "intellij.libraries.jgoodies.forms",
     "intellij.libraries.oro.matcher",
+    "intellij.libraries.plexus.utils",
+    "intellij.libraries.protobuf",
+    "intellij.libraries.maven.resolver.provider",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -96,7 +99,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
 
   for (it in listOf(
     "jna",
-    "protobuf",
     "Log4J",
     "Eclipse",
     "netty-jps",
@@ -105,7 +107,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "jps-javac-extension",
     "kotlin-stdlib",
     "kotlinx-coroutines-core",
-    "maven-resolver-provider",
     "kotlin-metadata",
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)

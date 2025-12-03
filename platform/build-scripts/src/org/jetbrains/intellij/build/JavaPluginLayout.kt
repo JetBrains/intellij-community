@@ -21,7 +21,6 @@ object JavaPluginLayout {
         spec.withModule(moduleName, "jps-builders.jar")
       }
       spec.withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
-      spec.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
 
       for (moduleName in listOf(
         "intellij.java.compiler.antTasks",
@@ -59,7 +58,6 @@ object JavaPluginLayout {
         "intellij.java.execution.impl",
         "intellij.java.execution.impl.backend",
         "intellij.java.execution.impl.frontend",
-        "intellij.java.ui",
         "intellij.java.structureView",
         "intellij.java.manifest",
         "intellij.java.remoteServers.impl",

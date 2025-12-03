@@ -172,7 +172,7 @@ jvm_library(
     "@lib//:org-codehaus-groovy-groovy-json",
     "@lib//:org-codehaus-groovy-groovy-templates",
     "@lib//:org-codehaus-groovy-groovy-xml",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "//libraries/jgoodies/common",
     "//libraries/jgoodies/forms",
     "//libraries/bouncy-castle-provider",

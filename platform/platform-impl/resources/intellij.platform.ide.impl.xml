@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal">
+<idea-plugin visibility="public">
   <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
     <module name="fleet.andel"/>
@@ -35,6 +35,7 @@
     <module name="intellij.libraries.lz4"/>
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.libraries.oro.matcher"/>
+    <module name="intellij.libraries.protobuf"/>
     <module name="intellij.libraries.pty4j"/>
     <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.stream"/>
@@ -53,6 +54,7 @@
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.locking.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ex"/>

@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.UTIL_RT_JAR
 import org.jetbrains.intellij.build.classPath.getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -98,8 +99,6 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
     context = context,
   )
 }
-
-const val LIB_MODULE_PREFIX: String = "intellij.libraries."
 
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
@@ -315,8 +314,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
-  layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
-    val libName = lib.name
+  layout.collectProjectLibrariesFromIncludedModules(context) { libName, module ->
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
     if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
       return@collectProjectLibrariesFromIncludedModules

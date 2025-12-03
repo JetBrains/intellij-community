@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.java.aetherDependencyResolver` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "aether-dependency-resolver_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "aether-dependency-resolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":aether-dependency-resolver_resources"],
   kotlinc_opts = "@community//:k11",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -13,7 +20,7 @@ jvm_library(
     "//libraries/commons/logging",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
@@ -38,7 +45,7 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",

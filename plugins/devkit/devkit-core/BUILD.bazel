@@ -63,7 +63,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//platform/usageView",
     "//jvm/jvm-analysis-api:analysis",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "//aether-dependency-resolver",
     "//platform/service-container",
     "//platform/platform-api:ide",

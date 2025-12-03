@@ -154,7 +154,7 @@ jvm_library(
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
     "//platform/syntax/syntax-psi:psi",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//java/java-syntax:syntax",
     "//platform/lang-impl",
     "//xml/impl",

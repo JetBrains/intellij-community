@@ -87,7 +87,6 @@ private val libsUsedInJps = setOf(
   "slf4j-jdk14",
   // see getBuildProcessApplicationClasspath - used in JPS
   "jna",
-  "maven-resolver-provider",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "kotlin-stdlib",
 )
@@ -102,7 +101,6 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   "groovy.jar" to { it, _ -> it.startsWith("org.codehaus.groovy:") },
   "jsch-agent.jar" to { it, _ -> it.startsWith("jsch-agent") },
   "opentelemetry.jar" to { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
-  "bouncy-castle.jar" to { it, _ -> it.startsWith("bouncy-castle-") },
   PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
   PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
   // see ClassPathUtil.getUtilClassPath
@@ -145,13 +143,13 @@ class JarPackager private constructor(
       packager.computeModuleSources(includedModules = includedModules, layout = null, searchableOptionSet = null, cachedDescriptorWriterProvider = null)
       buildJars(
         assets = packager.assets.values,
-        layout = null,
         cache = if (context is BuildContextImpl) context.jarCacheManager else NonCachingJarCacheManager,
-        context = context,
         isCodesignEnabled = false,
         useCacheAsTargetFile = context.options.isUnpackedDist,
         dryRun = false,
-        helper = packager.helper
+        layout = null,
+        helper = packager.helper,
+        context = context
       )
     }
 
@@ -216,13 +214,13 @@ class JarPackager private constructor(
       val cacheManager = if (dryRun || context !is BuildContextImpl) NonCachingJarCacheManager else context.jarCacheManager
       val buildAssetResult = buildJars(
         assets = packager.assets.values,
-        layout = layout,
         cache = cacheManager,
-        context = context,
         isCodesignEnabled = isCodesignEnabled,
         useCacheAsTargetFile = !dryRun && context.options.isUnpackedDist,
         dryRun = dryRun,
+        layout = layout,
         helper = packager.helper,
+        context = context,
       )
 
       return coroutineScope {
@@ -623,7 +621,7 @@ class JarPackager private constructor(
       val (key, value) = iterator.next()
       if (predicate(key.name, frontendModuleFilter)) {
         iterator.remove()
-        result[key] = value
+        result.put(key, value)
       }
     }
     if (result.isEmpty()) {
@@ -911,12 +909,12 @@ private data class CopiedFor(@JvmField val library: JpsLibrary, @JvmField val ta
 private suspend fun buildJars(
   assets: Collection<AssetDescriptor>,
   cache: JarCacheManager,
-  context: BuildContext,
   isCodesignEnabled: Boolean,
   useCacheAsTargetFile: Boolean,
   dryRun: Boolean,
   layout: BaseLayout?,
   helper: JarPackagerDependencyHelper,
+  context: BuildContext,
 ): BuildAssetResult {
   checkAssetUniqueness(assets)
 

@@ -26,6 +26,8 @@
   <xi:include href="/META-INF/JavaPlugin.xml"/>
 
   <content namespace="jetbrains">
+    <module name="intellij.java.ui" loading="embedded"/>
+
     <module name="intellij.java.structuralSearch"/>
     <module name="intellij.java.featuresTrainer"/>
     <module name="intellij.java.performancePlugin"/>
