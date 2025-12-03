@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -10,7 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -565,7 +565,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
         @Override
         protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           if (!isEnabled()) return;
-          ReadAction.run(() -> {
+          WriteIntentReadAction.run(() -> {
             myHandler.handlePanelActionClick(EditorNotificationPanel.this, e);
           });
         }
