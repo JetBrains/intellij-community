@@ -2,8 +2,12 @@
 package git4idea.rebase
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.registry.Registry
 import git4idea.i18n.GitBundle
+import git4idea.rebase.interactive.interactivelyRebaseUsingLog
+import git4idea.rebase.interactive.startInteractiveRebase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
@@ -11,8 +15,14 @@ internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
   )
 
   override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: SingleCommitEditingData) {
-    commitEditingData.project.service<GitInteractiveRebaseService>()
-      .launchRebase(commitEditingData.repository, commitEditingData.selectedCommit, commitEditingData.logData)
+    scope.launch {
+      if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
+        interactivelyRebaseUsingLog(commitEditingData.repository, commitEditingData.selectedCommit, commitEditingData.logData)
+      }
+      else {
+        startInteractiveRebase(commitEditingData.repository, commitEditingData.selectedCommit)
+      }
+    }
   }
 
   override fun getFailureTitle(): String = GitBundle.message("rebase.log.interactive.action.failure.title")

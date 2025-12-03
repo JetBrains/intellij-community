@@ -50,7 +50,7 @@ internal class GitExtractSelectedChangesAction : GitSingleCommitEditingAction() 
     val ui = commitEditingData.logUiEx
 
     dialog.show { newMessage ->
-      GitDisposable.getInstance(project).coroutineScope.launch {
+      scope.launch {
         val operationResult = withBackgroundProgress(project, GitBundle.message("in.memory.rebase.log.change.extract.action.progress.indicator.title")) {
           val objectRepo = GitObjectRepository(repository)
           GitExtractSelectedChangesOperation(objectRepo, commit, newMessage, changes).execute()

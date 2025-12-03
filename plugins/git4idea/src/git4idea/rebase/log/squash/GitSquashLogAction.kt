@@ -31,16 +31,17 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     )
 
     dialog.show { newMessage ->
-      squashInBackground(commitEditingData, selectedCommitDetails, newMessage)
+      squashInBackground(scope, commitEditingData, selectedCommitDetails, newMessage)
     }
   }
 
   private fun squashInBackground(
+    scope: CoroutineScope,
     commitEditingData: MultipleCommitEditingData,
     selectedCommitsDetails: List<VcsCommitMetadata>,
     newMessage: String,
   ) {
-    GitDisposable.getInstance(commitEditingData.project).coroutineScope.launch {
+    scope.launch {
       val operationResult = executeSquashOperation(commitEditingData, selectedCommitsDetails, newMessage)
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {

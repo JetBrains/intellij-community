@@ -48,14 +48,20 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
       )
     )
     dialog.show { newMessage ->
-      rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
+      rewordInBackground(scope, commitEditingData.project, commit, commitEditingData.repository, newMessage)
     }
   }
 
   override fun getFailureTitle(): String = GitBundle.message("rebase.log.reword.action.failure.title")
 
-  private fun rewordInBackground(project: Project, commit: VcsCommitMetadata, repository: GitRepository, newMessage: String) {
-    GitDisposable.getInstance(project).coroutineScope.launch {
+  private fun rewordInBackground(
+    scope: CoroutineScope,
+    project: Project,
+    commit: VcsCommitMetadata,
+    repository: GitRepository,
+    newMessage: String
+  ) {
+    scope.launch {
       val operationResult = executeRewordOperation(repository, commit, newMessage)
       if (operationResult is GitCommitEditingOperationResult.Complete) {
         operationResult.notifySuccess(
