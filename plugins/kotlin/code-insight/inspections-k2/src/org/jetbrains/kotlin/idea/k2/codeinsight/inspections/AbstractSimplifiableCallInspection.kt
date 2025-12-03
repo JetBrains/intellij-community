@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.isIterable
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.Collections
 import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -81,7 +82,7 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
             val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
-            val statement = lambdaExpression.singleStatement() ?: return null
+            val statement = lambdaExpression.singleStatementOrNull() ?: return null
 
             if (statement !is KtBinaryExpression) return null
             if (statement.operationToken != KtTokens.EXCLEQ && statement.operationToken != KtTokens.EXCLEQEQEQ) return null
@@ -111,7 +112,7 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
             val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
-            val statement = lambdaExpression.singleStatement() ?: return null
+            val statement = lambdaExpression.singleStatementOrNull() ?: return null
 
             if (statement !is KtIsExpression) return null
 
@@ -212,8 +213,6 @@ private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
     return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
 }
 
-internal fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression?.statements?.singleOrNull()
-
 internal fun KtLambdaExpression.singleLambdaParameterName(): String? {
     val lambdaParameters = valueParameters
     return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
@@ -229,7 +228,7 @@ private fun KtExpression.isNameReferenceTo(name: String): Boolean =
  * [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.singleReturnedExpressionOrNull] function.
  */
 internal fun KtLambdaExpression.isIdentityLambda(): Boolean {
-    val reference = singleStatement() ?: return false
+    val reference = singleStatementOrNull() ?: return false
     val lambdaParameterName = singleLambdaParameterName() ?: return false
     return reference.isNameReferenceTo(lambdaParameterName)
 }
