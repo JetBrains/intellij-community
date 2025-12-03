@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.invoke
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.UiDslException
@@ -21,7 +20,6 @@ import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.IconUtil
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
@@ -207,11 +205,7 @@ internal class CellImpl<T : JComponent>(
       checkDeniedHtmlTags(title)
     }
 
-    val contextHelpLabel = if (title == null) ContextHelpLabel.create(description)
-    else ContextHelpLabel.create(title, description)
-
-    // Do not hide the context help button in the disabled state
-    contextHelpLabel.disabledIcon = IconUtil.desaturate(contextHelpLabel.icon)
+    val contextHelpLabel = createContextHelp(description, title)
     this.contextHelpLabel = contextHelpLabel
     contextHelpInfo = ContextHelpInfo(description, title)
 
@@ -436,12 +430,6 @@ internal class CellImpl<T : JComponent>(
     ))
 
     component.accessibleContext.accessibleDescription = lastAutoCalculatedAccessibleDescription
-  }
-
-  private fun String.stripHtml(): @Nls String? {
-    @Suppress("HardCodedStringLiteral")
-    val result = StringUtil.stripHtml(this, " ").trim()
-    return if (result.isEmpty()) null else result
   }
 
   private fun calculatedAccessibleDescription(list: List<@Nls String>): @Nls String? {
