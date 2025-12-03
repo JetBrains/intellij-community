@@ -517,6 +517,10 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     }
   }
 
+  public boolean containsFile(@NotNull FilePath path) {
+    return findNodeContainingFile(getRoot(), path) != null;
+  }
+
   private static @Nullable TreeNode findNodeContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
     return TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
       if (node instanceof DefaultMutableTreeNode mutableTreeNode) {

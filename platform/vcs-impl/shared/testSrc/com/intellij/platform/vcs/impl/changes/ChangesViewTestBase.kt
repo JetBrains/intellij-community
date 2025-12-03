@@ -23,6 +23,7 @@ abstract class ChangesViewTestBase : LightPlatformTestCase() {
     runInEdtAndWait {
       view.updateTreeModel(model, ChangesTree.ALWAYS_RESET)
       assertEquals(0, view.selectionCount)
+      assertTrue(view.containsFile(toSelect))
       view.selectFile(toSelect)
       assertEquals(1, view.selectionCount)
     }

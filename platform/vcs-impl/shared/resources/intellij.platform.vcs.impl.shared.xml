@@ -98,11 +98,13 @@
                 icon="AllIcons.Actions.ToggleVisibility"/>
       </group>
       <separator/>
-      <reference ref="ExpandAll"/>
-      <reference ref="CollapseAll"/>
-      <separator/>
       <group id="ChangesViewToolbar.Shared.Other"/>
       <separator/>
+      <action id="ChangesView.SelectFile"
+              class="com.intellij.openapi.vcs.changes.actions.SelectInChangesViewAction"
+              icon="AllIcons.General.Locate"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
   </actions>
 </idea-plugin>

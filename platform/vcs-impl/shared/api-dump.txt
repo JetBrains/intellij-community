@@ -439,6 +439,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - addGroupingChangeListener(java.beans.PropertyChangeListener):V
 - addSelectionListener(java.lang.Runnable):V
 - addSelectionListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- containsFile(com.intellij.openapi.vcs.FilePath):Z
 - excludeChange(java.lang.Object):V
 - excludeChanges(java.util.Collection):V
 - expandAll():V
