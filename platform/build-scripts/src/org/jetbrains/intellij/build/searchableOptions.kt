@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -42,15 +40,13 @@ class SearchableOptionSetDescriptor(
   @JvmField val baseDir: Path,
 ) {
   fun createSourceByModule(moduleName: String): List<Source> {
-    val list = index.get(moduleName) ?: return emptyList()
+    val list = index[moduleName] ?: return emptyList()
     return list.map {
       FileSource(relativePath = it.file, size = it.size, hash = it.hash, file = baseDir.resolve(it.file))
     }
   }
 
-  fun createSourceByPlugin(pluginId: String): Collection<Source> {
-    return createSourceByModule(pluginId)
-  }
+  fun createSourceByPlugin(pluginId: String): Collection<Source> = createSourceByModule(pluginId)
 }
 
 internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescriptor {
@@ -62,9 +58,8 @@ internal fun readSearchableOptionIndex(baseDir: Path): SearchableOptionSetDescri
   }
 }
 
-suspend fun buildSearchableOptions(context: BuildContext, systemProperties: VmProperties = VmProperties(emptyMap())): SearchableOptionSetDescriptor? {
-  return buildSearchableOptions(productRunner = context.createProductRunner(), context = context, systemProperties = systemProperties)
-}
+suspend fun buildSearchableOptions(context: BuildContext, systemProperties: VmProperties = VmProperties(emptyMap())): SearchableOptionSetDescriptor? =
+  buildSearchableOptions(context.createProductRunner(), context, systemProperties)
 
 /**
  * Build index which is used to search options in the Settings dialog.

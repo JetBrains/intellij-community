@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
@@ -18,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -92,17 +91,11 @@ internal suspend fun buildDistribution(
       buildSearchableOptions(productRunner, context)
     }
 
-    val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
+    val pluginLayouts = getPluginLayoutsByJpsModuleNames(context.getBundledPluginModules(), context.productProperties.productLayout)
     val moduleOutputPatcher = ModuleOutputPatcher()
-    val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext + CoroutineName("build platform lib")) {
+    val buildPlatformLibJob = async(traceContext + CoroutineName("build platform lib")) {
       spanBuilder("build platform lib").use {
-        buildPlatform(
-          moduleOutputPatcher = moduleOutputPatcher,
-          state = state,
-          searchableOptionSet = searchableOptionSet,
-          context = context,
-          isUpdateFromSources = isUpdateFromSources,
-        )
+        buildPlatform(moduleOutputPatcher, state, searchableOptionSet, isUpdateFromSources, context)
       }
     }
 
@@ -114,17 +107,10 @@ internal suspend fun buildDistribution(
     }
 
     val bundledPluginItems = buildBundledPluginsForAllPlatforms(
-      state = state,
-      pluginLayouts = pluginLayouts,
-      isUpdateFromSources = isUpdateFromSources,
-      buildPlatformJob = buildPlatformJob,
-      searchableOptionSetDescriptor = searchableOptionSet,
-      moduleOutputPatcher = moduleOutputPatcher,
-      descriptorCacheContainer = platformLayout.descriptorCacheContainer,
-      context = context,
+      state, pluginLayouts, isUpdateFromSources, buildPlatformLibJob, searchableOptionSet, moduleOutputPatcher, platformLayout.descriptorCacheContainer, context
     )
 
-    val platformItems = buildPlatformJob.await()
+    val platformItems = buildPlatformLibJob.await()
     context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
 
     ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
@@ -281,7 +267,7 @@ internal const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpa
 
 internal val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
 
-@VisibleForTesting
+@ApiStatus.Internal
 class PluginRepositorySpec(
   @JvmField val pluginZip: Path,
   /**
@@ -299,8 +285,8 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   val layoutsByMainModule = productLayout.pluginLayouts.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val layouts = layoutsByMainModule.get(moduleName) ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
-    if (toPublish && layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
+    val layouts = layoutsByMainModule[moduleName] ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
+    if (toPublish && layouts.size == 2 && layouts[0].bundlingRestrictions != layouts[1].bundlingRestrictions) {
       layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
     for (layout in layouts) {
