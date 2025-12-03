@@ -53,7 +53,7 @@ internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilit
     compatibility = listOf(
         KotlinGradleVersionMapping(
             kotlin = "2.2.0-2.2.30",
-            gradle = "7.6.3-8.15",
+            gradle = "7.6.3-9.3.0",
             maxJvmTarget = 24,
         ),
         KotlinGradleVersionMapping(
