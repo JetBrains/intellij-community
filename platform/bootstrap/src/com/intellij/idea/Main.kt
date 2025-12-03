@@ -131,12 +131,13 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
           // - IDE prompts for restart;
           // - after restart, the plugins are moved to proper directories ("installed") by the next line.
           // TODO get rid of this: plugins should be installed before restarting the IDE
-          installPluginUpdates()
+          runEarlyActionScript()
+          runActionScript()
         }
       }
     }
 
-    // must be after installPluginUpdates
+    // must be after runEarlyActionScript
     span("marketplace init") {
       // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
       if (changeClassPath == null) {  
@@ -321,7 +322,7 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   return otherArgs
 }
 
-private fun installPluginUpdates() {
+private fun runEarlyActionScript() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
     // (referencing a string constant is OK - it is inlined by the compiler)
@@ -329,6 +330,15 @@ private fun installPluginUpdates() {
     if (Files.isRegularFile(earlyScriptFile)) {
       StartupActionScriptManager.executeEarlyActionScript()
     }
+  }
+  catch (e: Throwable) {
+    StartupErrorReporter.pluginInstallationProblem(e)
+  }
+}
+
+/** action script file contains commands for plugin (un-)installation/updates; may contain third-party commands */
+private fun runActionScript() {
+  try {
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
       StartupActionScriptManager.executeActionScript()
