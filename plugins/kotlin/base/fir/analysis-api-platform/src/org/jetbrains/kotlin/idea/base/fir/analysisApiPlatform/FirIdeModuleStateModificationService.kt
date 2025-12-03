@@ -15,7 +15,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
@@ -135,10 +134,6 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 
     internal class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
-        private val fileIndex by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            ProjectRootManager.getInstance(project).fileIndex
-        }
-
         override fun before(events: List<VFileEvent>) {
             if (!project.isInitialized) return
 
@@ -149,23 +144,35 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
             val workspaceModel = project.workspaceModel
 
-            val affectedLibraries = events.flatMapTo(mutableSetOf()) { event ->
+            val affectedJarFiles = events.mapNotNullTo(mutableSetOf()) { event ->
                 val file = when (event) {
-                    //for all other events workspace model should do the job
+                    // For all other events, the workspace model should do the job.
                     is VFileContentChangeEvent -> event.file
-                    else -> return@flatMapTo emptyList()
+                    else -> return@mapNotNullTo null
                 }
 
-                if (!file.extension.equals("jar", ignoreCase = true)) return@flatMapTo emptyList()  //react only on jars
-                val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@flatMapTo emptyList()
-                val url = jarRoot.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
-                workspaceModel.currentSnapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url).filterIsInstance<LibraryEntity>().toList()
+                // React only on jars.
+                file.takeIf { it.extension.equals("jar", ignoreCase = true) }
             }
 
-            if (affectedLibraries.isNotEmpty()) {
+            if (affectedJarFiles.isNotEmpty()) {
                 if (ARE_MODULE_SPECIFIC_EVENTS_ENABLED) {
-                    affectedLibraries.forEach { library ->
-                        library.publishModuleStateModificationEvent(project)
+                    affectedJarFiles.forEach { file ->
+                        // For performance reasons, we only process the JAR files here as we need to get their `KaModule`s for publishing
+                        // module-specific events. Specifically, `StandardFileSystems.jar().findFileByPath` can be slow and cause freezes.
+                        val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR)
+                            ?: return@forEach
+
+                        val url = jarRoot.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+
+                        workspaceModel
+                            .currentSnapshot
+                            .getVirtualFileUrlIndex()
+                            .findEntitiesByUrl(url)
+                            .filterIsInstance<LibraryEntity>()
+                            .forEach { libraryEntity ->
+                                libraryEntity.publishModuleStateModificationEvent(project)
+                            }
                     }
                 } else {
                     project.publishGlobalModuleStateModificationEvent()
