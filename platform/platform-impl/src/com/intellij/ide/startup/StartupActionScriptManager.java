@@ -17,6 +17,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class StartupActionScriptManager {
+  /**
+   * Currently is only used for marketplace plugin installation because it is required very early in the startup flow.
+   * For anything else, use {@link #ACTION_SCRIPT_FILE} instead.
+   */
+  @ApiStatus.Internal
+  public static final String EARLY_ACTION_SCRIPT_FILE = "early.action.script";
   @ApiStatus.Internal
   public static final String ACTION_SCRIPT_FILE = "action.script";
 
@@ -96,6 +102,10 @@ public final class StartupActionScriptManager {
 
   private static Path getActionScriptFile() {
     return PathManager.getStartupScriptDir().resolve(ACTION_SCRIPT_FILE);
+  }
+
+  private static Path getEarlyActionScriptFile() {
+    return PathManager.getStartupScriptDir().resolve(EARLY_ACTION_SCRIPT_FILE);
   }
 
   @ApiStatus.Internal
