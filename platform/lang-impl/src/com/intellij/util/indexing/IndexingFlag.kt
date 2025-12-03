@@ -70,6 +70,9 @@ object IndexingFlag {
   @JvmStatic
   fun cleanProcessingFlag(fileId: Int) {
     // the file might have already been deleted, so there might be no VirtualFile for given fileId
+    //TODO RC: sometimes incorrect fileIds (>maxAllocatedFileId) are coming here. Probably, it is not that incorrect to
+    //         clean incorrect fileId? Maybe we should just ignore incorrect fileId (because they are effectively already
+    //         'cleaned' in some sense) instead of throwing an exception?
     setFileIndexed(fileId, ProjectIndexingDependenciesService.NULL_STAMP)
   }
 
