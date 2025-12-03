@@ -5,7 +5,7 @@ def f(x):
 
 def f(x):
     try:
-        from <error descr="Unresolved reference 'foo'">foo</error> import <weak_warning descr="Module 'StringIO' not found">StringIO</weak_warning>
+        from <error descr="Unresolved reference 'foo'">foo</error> import <warning descr="Module 'StringIO' not found">StringIO</warning>
     except Exception:
         pass
     return x
@@ -28,14 +28,14 @@ def f(x):
 try:
     import foo as bar
 except ImportError:
-    import <weak_warning descr="Module 'bar' not found">bar</weak_warning>
+    import <warning descr="Module 'bar' not found">bar</warning>
 
 # PY-3678
 def f():
     try:
         from foo import bar #pass
     except ImportError:
-        import <weak_warning descr="Module 'bar' not found">bar</weak_warning> #fail
+        import <warning descr="Module 'bar' not found">bar</warning> #fail
     finally:
         pass
 

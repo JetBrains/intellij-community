@@ -8,6 +8,6 @@ class Test:
             y = extracted(c)
             return y
 
-        def extracted(c_new) -> Any:
+        def extracted(c_new) -> int | Any:
             y = self.a + b * c_new
             return y
