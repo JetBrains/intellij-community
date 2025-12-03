@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.drop
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,16 +14,12 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.applyIf
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
-import git4idea.GitDisposable
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
-import git4idea.rebase.log.GitCommitEditingOperationResult
-import git4idea.rebase.log.GitMultipleCommitEditingAction
-import git4idea.rebase.log.executeInMemoryWithFallback
-import git4idea.rebase.log.getOrLoadDetails
-import git4idea.rebase.log.notifySuccess
+import git4idea.rebase.log.*
 import git4idea.ui.branch.GitBranchPopupActions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class GitDropLogAction : GitMultipleCommitEditingAction() {
@@ -31,14 +27,14 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
     e.presentation.text = GitBundle.message("rebase.log.drop.action.custom.text", commitEditingData.selection.size)
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: MultipleCommitEditingData) {
     val project = commitEditingData.project
 
     val canDrop = !service<GitVcsApplicationSettings>().isShowDropCommitDialog || askForConfirmation(project, commitEditingData)
     if (!canDrop) return
 
     val commitDetails = getOrLoadDetails(project, commitEditingData.logData, commitEditingData.selection)
-    GitDisposable.getInstance(project).coroutineScope.launch {
+    scope.launch {
       val operationResult = executeDropOperation(commitEditingData, commitDetails)
 
       if (operationResult is GitCommitEditingOperationResult.Complete) {

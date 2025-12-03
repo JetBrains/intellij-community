@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,6 +11,7 @@ import git4idea.i18n.GitBundle
 import git4idea.inMemory.rebase.log.InMemoryRebaseOperations
 import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.log.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
@@ -20,7 +21,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     }
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: MultipleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: MultipleCommitEditingData) {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,

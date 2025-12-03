@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
 import com.intellij.CommonBundle
@@ -13,11 +13,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogCommitSelection
-import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -36,6 +32,7 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Created
 import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Prohibited
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 
 abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
@@ -126,7 +123,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
 
-  protected abstract fun actionPerformedAfterChecks(commitEditingData: T)
+  protected abstract fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: T)
 
   @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract fun getFailureTitle(): String
@@ -280,7 +277,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       if (!ans) return
     }
 
-    actionPerformedAfterChecks(commitEditingRequirements)
+    actionPerformedAfterChecks(e.coroutineScope, commitEditingRequirements)
   }
 
   @Nls

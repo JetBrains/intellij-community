@@ -20,6 +20,7 @@ import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitSingleCommitEditingAction;
 import git4idea.repo.GitRepository;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   }
 
   @Override
-  public void actionPerformedAfterChecks(@NotNull SingleCommitEditingData commitEditingData) {
+  public void actionPerformedAfterChecks(@NotNull CoroutineScope scope, @NotNull SingleCommitEditingData commitEditingData) {
     Project project = commitEditingData.getProject();
     VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
     LocalChangeList targetList;
