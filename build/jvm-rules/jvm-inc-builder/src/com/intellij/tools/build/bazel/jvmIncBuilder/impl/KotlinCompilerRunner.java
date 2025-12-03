@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.kotlin.com.intellij.openapi.progress.ProcessCanceledException;
+import org.jetbrains.kotlin.com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.kotlin.com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;

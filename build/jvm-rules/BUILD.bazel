@@ -98,15 +98,15 @@ jvm_import(
 
 jvm_import(
     name = "kotlin-compiler_import",
-    jar = "@kotlin-compiler_http//file",
-    source_jar = "@kotlin-compiler_http//file",
+    jar = "@kotlin-compiler-embeddable_http//file",
+    source_jar = "@kotlin-compiler-embeddable_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compose-compiler-plugin_import",
-    jar = "@kotlin-compose-compiler-plugin_http//file",
-    source_jar = "@kotlin-compose-compiler-plugin-sources_http//file",
+    name = "kotlin-compose-compiler-plugin-embeddable_import",
+    jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -125,9 +125,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-serialization-compiler-plugin_import",
-    jar = "@kotlin-serialization-compiler-plugin_http//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-sources_http//file",
+    name = "kotlin-serialization-compiler-plugin-embeddable_import",
+    jar = "@kotlin-serialization-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
