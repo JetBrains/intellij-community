@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
@@ -47,6 +48,8 @@ internal class TerminalCommandCompletionProcess(
   private val parameters: CompletionParameters
 
   private var restartOnPrefixChange = false
+  var restartPending = false
+    private set
 
   init {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: error("Can't find PSI file for ${editor.document}")
@@ -55,11 +58,17 @@ internal class TerminalCommandCompletionProcess(
     parameters = CompletionParameters(element, psiFile, CompletionType.BASIC,
                                       offset, 1, editor, this)
 
-    lookup.addLookupListener(object : LookupListener {
+    lookup.isCalculating = true
+
+    val lookupListener = object : LookupListener {
       override fun lookupCanceled(event: LookupEvent) {
         cancel()
       }
-    })
+    }
+    lookup.addLookupListener(lookupListener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      lookup.removeLookupListener(lookupListener)
+    }
   }
 
   override fun getProject(): Project {
@@ -70,7 +79,7 @@ internal class TerminalCommandCompletionProcess(
     return context.editor
   }
 
-  override fun getLookup(): Lookup {
+  override fun getLookup(): LookupImpl {
     return lookup
   }
 
@@ -89,12 +98,10 @@ internal class TerminalCommandCompletionProcess(
   fun setLookupArranger(arranger: CompletionLookupArrangerImpl) {
     this.arranger = arranger
     lookup.setArranger(arranger)
-    // Refresh to update the presentableArranger in the lookup
-    lookup.refreshUi(true, false)
   }
 
   fun addItems(items: List<CompletionResult>) {
-    if (lookup.isLookupDisposed()) {
+    if (lookup.isLookupDisposed) {
       return
     }
 
@@ -112,6 +119,7 @@ internal class TerminalCommandCompletionProcess(
   /** Returns true if the completion popup was shown to the user */
   @RequiresEdt
   fun tryInsertOrShowPopup(): Boolean {
+    lookup.isCalculating = false
     lookup.refreshUi(true, false)
     val items = lookup.items
     if (items.isEmpty()) {
@@ -139,6 +147,39 @@ internal class TerminalCommandCompletionProcess(
     if (cursorOffset > startOffset && restartOnPrefixChange) {
       scheduleRestart()
     }
+    closeLookupIfMeaningless()
+  }
+
+  /**
+   * Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.hideAutopopupIfMeaningless]
+   * but closes the lookup even if was called manually.
+   */
+  @RequiresEdt
+  private fun closeLookupIfMeaningless() {
+    if (lookup.isLookupDisposed || lookup.isCalculating || restartPending) {
+      return
+    }
+
+    lookup.refreshUi(true, false)
+    if (isPopupMeaningless()) {
+      cancel()
+    }
+  }
+
+  @RequiresEdt
+  fun isPopupMeaningless(): Boolean {
+    val items = lookup.items
+    return items.isEmpty() || items.all {
+      isAlreadyTyped(it)
+    }
+  }
+
+  /** Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.isAlreadyInTheEditor] */
+  private fun isAlreadyTyped(element: LookupElement): Boolean {
+    val model = context.outputModel
+    val startOffset = model.cursorOffset - lookup.itemPattern(element).length.toLong()
+    return startOffset >= model.startOffset
+           && model.getText(startOffset, model.endOffset).startsWith(element.lookupString)
   }
 
   override fun itemSelected(item: LookupElement?, completionChar: Char) {
@@ -146,6 +187,10 @@ internal class TerminalCommandCompletionProcess(
   }
 
   override fun scheduleRestart() {
+    if (restartPending) {
+      return
+    }
+    restartPending = true
     cancel()
 
     TerminalCommandCompletionService.getInstance(project).invokeCompletion(
@@ -164,7 +209,10 @@ internal class TerminalCommandCompletionProcess(
   @RequiresEdt
   fun cancel() {
     coroutineScope.cancel()
-    lookup.hideLookup(false)
+    lookup.isCalculating = false
+    if (!restartPending) {
+      lookup.hideLookup(false)
+    }
   }
 
   override fun addAdvertisement(message: @NlsContexts.PopupAdvertisement String, icon: Icon?) {

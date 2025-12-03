@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -48,12 +49,19 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
       subcommand("branch")
       subcommand("build") {
         argument {
-          val count = MAX_ITEMS_COUNT + 10
-          val items = buildList {
-            repeat(count) { add("ab$it") }
-            repeat(count) { add("ac$it") }
+          suggestions {
+            val count = MAX_ITEMS_COUNT + 10
+            val items = buildList {
+              repeat(count) {
+                add("ab$it")
+                add("ac$it")
+              }
+            }
+
+            val abPriority = ShellCompletionSuggestion("ab", priority = 100)
+            val acPriority = ShellCompletionSuggestion("ac", priority = 100)
+            listOf(abPriority, acPriority) + items.map(::ShellCompletionSuggestion)
           }
-          suggestions(*items.toTypedArray())
         }
       }
     }
@@ -137,10 +145,8 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     val startResult = fixture.getLookupElements().map { it.lookupString }
     assertSameElements(startResult, listOf("start", "status", "stop"))
     fixture.pressKey(VK_LEFT)
-    fixture.awaitNewCompletionPopupOpened()
+    fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
-    assertSameElements(fixture.getLookupElements().map { it.lookupString },
-                       listOf("set", "show", "start", "status", "stop", "sync"))
     fixture.pressKey(VK_RIGHT)
     assertSameElements(fixture.getLookupElements().map { it.lookupString }, startResult)
   }
@@ -164,9 +170,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
                        listOf("start", "status", "stop"))
 
     fixture.pressKey(VK_BACK_SPACE)
-    fixture.awaitNewCompletionPopupOpened()  // it has to restart completion at this moment
-    assertSameElements(fixture.getLookupElements().map { it.lookupString },
-                       listOf("set", "show", "start", "status", "stop", "sync"))
+    fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
   }
 
   @Test
@@ -175,39 +179,39 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
 
     fixture.type("test_cmd build a")
     fixture.callCompletionPopup()
-    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && !items.all { it.startsWith("ab") }
+    }
 
     // Popup should reopen with items for the "ab" prefix
     fixture.type("b")
-    fixture.awaitNewCompletionPopupOpened()
-    assertThat(fixture.getLookupElements())
-      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
-      .allMatch { it.lookupString.startsWith("ab") }
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && items.all { it.startsWith("ab") }
+    }
 
     // Popup should reopen with items for the "a" prefix
     fixture.pressKey(VK_LEFT)
-    fixture.awaitNewCompletionPopupOpened()
-    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && !items.all { it.startsWith("ab") }
+    }
 
     // Popup should reopen with items for the "ab" prefix
     fixture.pressKey(VK_RIGHT)
-    fixture.awaitNewCompletionPopupOpened()
-    assertThat(fixture.getLookupElements())
-      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
-      .allMatch { it.lookupString.startsWith("ab") }
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && items.all { it.startsWith("ab") }
+    }
 
     // Popup should reopen with items for the "a" prefix
     fixture.pressKey(VK_BACK_SPACE)
-    fixture.awaitNewCompletionPopupOpened()
-    assertThat(fixture.getLookupElements()).hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && !items.all { it.startsWith("ab") }
+    }
 
     // Popup should reopen with items for the "ac" prefix
     fixture.type("c")
-    fixture.awaitNewCompletionPopupOpened()
-    assertThat(fixture.getLookupElements())
-      .hasSize(MAX_ITEMS_COUNT_AFTER_TRIM)
-      .allMatch { it.lookupString.startsWith("ac") }
-    Unit
+    fixture.awaitLookupElementsSatisfy { items ->
+      items.size == MAX_ITEMS_COUNT_AFTER_TRIM && items.all { it.startsWith("ac") }
+    }
   }
 
   @Test
@@ -218,9 +222,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.callCompletionPopup()
 
     fixture.pressKey(VK_BACK_SPACE)
-    fixture.awaitNewCompletionPopupOpened()
-    assertSameElements(fixture.getLookupElements().map { it.lookupString },
-                       listOf("set", "show", "start", "status", "stop", "sync"))
+    fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
     fixture.pressKey(VK_BACK_SPACE)
     fixture.awaitPendingRequestsProcessed()
@@ -235,9 +237,7 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
     fixture.callCompletionPopup()
 
     fixture.pressKey(VK_LEFT)
-    fixture.awaitNewCompletionPopupOpened()
-    assertSameElements(fixture.getLookupElements().map { it.lookupString },
-                       listOf("set", "show", "start", "status", "stop", "sync"))
+    fixture.awaitLookupElementsEqual("set", "show", "start", "status", "stop", "sync")
 
     fixture.pressKey(VK_LEFT)
     fixture.awaitPendingRequestsProcessed()

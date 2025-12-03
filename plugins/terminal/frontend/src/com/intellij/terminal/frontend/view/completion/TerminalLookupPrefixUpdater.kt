@@ -1,6 +1,5 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Key
@@ -82,7 +81,6 @@ class TerminalLookupPrefixUpdater private constructor(
 
     if (!lookup.isLookupDisposed && (truncateTimes > 0 || textToAppend.isNotEmpty())) {
       TerminalCommandCompletionService.getInstance(lookup.project).activeProcess?.prefixUpdated()
-      closeLookupIfMeaningless()
     }
   }
 
@@ -129,31 +127,6 @@ class TerminalLookupPrefixUpdater private constructor(
       lookup.fireBeforeAppendPrefix(c)
       lookup.appendPrefix(c)
     }
-  }
-
-  /**
-   * Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.hideAutopopupIfMeaningless]
-   * but closes the lookup even if was called manually.
-   */
-  private fun closeLookupIfMeaningless() {
-    if (lookup.isLookupDisposed || lookup.isCalculating) {
-      return
-    }
-
-    lookup.refreshUi(true, false)
-    val noMeaningfulItems = lookup.items.all {
-      isAlreadyTyped(it)
-    }
-    if (noMeaningfulItems) {
-      lookup.hideLookup(false)
-    }
-  }
-
-  /** Similar to [com.intellij.codeInsight.completion.CompletionProgressIndicator.isAlreadyInTheEditor] */
-  private fun isAlreadyTyped(element: LookupElement): Boolean {
-    val startOffset = model.cursorOffset - lookup.itemPattern(element).length.toLong()
-    return startOffset >= model.startOffset
-           && model.getText(startOffset, model.endOffset).startsWith(element.lookupString)
   }
 
   private fun syncEditorCaretWithOutputModel() {

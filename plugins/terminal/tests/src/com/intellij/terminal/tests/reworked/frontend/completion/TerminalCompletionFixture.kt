@@ -27,6 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
+import org.assertj.core.api.Assertions
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
@@ -104,22 +105,61 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   suspend fun awaitNewCompletionPopupOpened() {
     withTimeout(3.seconds) {
       suspendCancellableCoroutine { continuation ->
+        val connection = project.messageBus.connect()
+        continuation.invokeOnCancellation { connection.disconnect() }
+
         val showingListener = object : LookupListener {
           override fun lookupShown(event: LookupEvent) {
             event.lookup.removeLookupListener(this)
+            connection.disconnect()
             continuation.resume(Unit)
           }
         }
 
-        val connection = project.messageBus.connect()
-        continuation.invokeOnCancellation { connection.disconnect() }
         connection.subscribe(LookupManagerListener.TOPIC, LookupManagerListener { _, newLookup ->
-          if (newLookup != null) {
-            connection.disconnect()
-            newLookup.addLookupListener(showingListener)
-          }
+          newLookup?.addLookupListener(showingListener)
         })
       }
+    }
+  }
+
+  suspend fun awaitLookupElementsEqual(vararg expected: String) {
+    awaitLookupElementsSatisfy {
+      it.toSet() == expected.toSet()
+    }
+  }
+
+  suspend fun awaitLookupElementsSatisfy(condition: (List<String>) -> Boolean) {
+    // Remember the stacktrace of calling code to log it in case of failure,
+    // because at the moment of logging the stacktrace might be irrelevant (coroutines)
+    val callLocationThrowable = Throwable()
+
+    val success = withTimeoutOrNull(3.seconds) {
+      suspendCancellableCoroutine { continuation ->
+        val lookup = getActiveLookup() ?: error("No active lookup")
+        if (condition(lookup.itemStrings)) {
+          continuation.resume(Unit)
+          return@suspendCancellableCoroutine
+        }
+
+        val listener = object : LookupListener {
+          override fun uiRefreshed() {
+            if (condition(lookup.itemStrings)) {
+              lookup.removeLookupListener(this)
+              continuation.resume(Unit)
+            }
+          }
+        }
+        lookup.addLookupListener(listener)
+        continuation.invokeOnCancellation { lookup.removeLookupListener(listener) }
+      }
+    }
+
+    if (success == null) {
+      Assertions.fail<Unit>(
+        "Condition is not satisfied, actual lookup elements: ${getActiveLookup()?.itemStrings}",
+        callLocationThrowable
+      )
     }
   }
 
@@ -208,6 +248,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
         val model = view.activeOutputModel()
         if (condition(model)) {
           continuation.resume(Unit)
+          return@suspendCancellableCoroutine
         }
 
         val disposable = Disposer.newDisposable()
@@ -264,5 +305,10 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     val lookup = LookupManager.getInstance(project).activeLookup as? LookupImpl ?: return
     val prefixUpdater = TerminalLookupPrefixUpdater.get(lookup) ?: return
     prefixUpdater.awaitPrefixUpdated()
+  }
+
+  companion object {
+    val Lookup.itemStrings: List<String>
+      get() = items.map { it.lookupString }
   }
 }

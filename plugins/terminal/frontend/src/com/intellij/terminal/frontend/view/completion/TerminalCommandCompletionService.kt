@@ -109,25 +109,33 @@ class TerminalCommandCompletionService(
   }
 
   private suspend fun processCompletionRequest(context: TerminalCommandCompletionContext) = coroutineScope {
-    val result: TerminalCompletionResult? = withContext(Dispatchers.Default) {
-      val res = getCompletionSuggestions(context)
-      if (res != null && shouldShowCompletion(context, res.suggestions)) res else null
-    }
-    if (result == null) return@coroutineScope
-
     // Pass the current scope to the completion process to link the lifecycles of the process and the current completion request.
-    val processScope = this
-    val process = createCompletionProcess(context, processScope)
-
+    val process = createCompletionProcess(context, coroutineScope = this)
     activeProcess = process
     try {
-      withContext(Dispatchers.Default) {
-        submitSuggestions(process, result)
+      val shouldShow = withContext(Dispatchers.Default) {
+        val result = getCompletionSuggestions(context)
+        if (result != null && shouldShowCompletion(context, result.suggestions)) {
+          submitSuggestions(process, result)
+          true
+        }
+        else false
       }
-      // Show the lookup only if context is still valid
-      if (checkContextValid(context) && process.tryInsertOrShowPopup()) {
-        // If a lookup was shown, leave the process alive until the shown lookup is closed
-        awaitCancellation()
+      if (!shouldShow) {
+        return@coroutineScope
+      }
+
+      if (checkContextValid(context)) {
+        // Show the lookup only if context is still valid
+        if (process.tryInsertOrShowPopup()) {
+          // If a lookup was shown, leave the process alive until the shown lookup is closed
+          awaitCancellation()
+        }
+      }
+      else if (process.lookup.isAvailableToUser && !process.isPopupMeaningless()) {
+        // Restart the process again in case the lookup is already showing and valid,
+        // but the current context became outdated.
+        process.scheduleRestart()
       }
     }
     finally {
