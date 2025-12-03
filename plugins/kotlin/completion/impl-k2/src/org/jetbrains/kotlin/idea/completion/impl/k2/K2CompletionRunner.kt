@@ -184,14 +184,6 @@ private fun createWeighingContext(
                 nameExpression.expectedType != null -> nameExpression.expectedType
                 nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
                 nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
-                // TODO: This can be removed after KT-82534 has been fixed
-                nameExpressionParent is KtPropertyAccessor -> {
-                    if (nameExpressionParent.isGetter) {
-                        nameExpressionParent.property.returnType
-                    } else {
-                        null
-                    }
-                }
                 else -> null
             }
             if (parameters.completionType == CompletionType.SMART
