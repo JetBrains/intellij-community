@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -1228,7 +1229,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       int code = keyStroke.getKeyCode();
       int modifiers = keyStroke.getModifiers();
       try {
-        super.processKeyEvent(e);
+        WriteIntentReadAction.run(() -> {
+          super.processKeyEvent(e);
+        });
       }
       catch (NullPointerException e1) {
         if (!Patches.SUN_BUG_ID_6322854) {
