@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
@@ -13,7 +13,9 @@ import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.*
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
@@ -53,12 +55,14 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
     if (model == null || presentation == null) {
       return CompletableFuture.completedFuture(false)
     }
-    return presentation.handleClick(model, event.fragmentIndex).thenApply { handled ->
-      if (handled) {
-        StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+    return WriteIntentReadAction.compute(Computable {
+      presentation.handleClick(model, event.fragmentIndex).thenApply { handled ->
+        if (handled) {
+          StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+        }
+        handled
       }
-      handled
-    }
+    })
   }
 
   override fun findAcceptableElement(element: PsiElement?): Any? {
