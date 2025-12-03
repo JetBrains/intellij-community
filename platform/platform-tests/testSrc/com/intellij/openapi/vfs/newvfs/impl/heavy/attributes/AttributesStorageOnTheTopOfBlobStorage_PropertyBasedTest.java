@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl.heavy.attributes;
 
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord;
@@ -7,19 +7,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStora
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
-import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
 import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
-import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,32 +64,11 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
     List<Object[]> storages = new ArrayList<>();
 
     storages.add(new Object[]{
-      (StorageFactory<StreamlinedBlobStorageOverPagedStorage>)storagePath -> {
-        return new StreamlinedBlobStorageOverPagedStorage(
-          new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
-          SPACE_ALLOCATION_STRATEGY
-        );
-      }
-    });
-    storages.add(new Object[]{
       MMappedFileStorageFactory.withDefaults()
         .pageSize(PAGE_SIZE)
         .compose(storage -> new StreamlinedBlobStorageOverMMappedFile(storage, SPACE_ALLOCATION_STRATEGY))
     });
-
-    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-      storages.add(new Object[]{
-        (StorageFactory<StreamlinedBlobStorageOverLockFreePagedStorage>)storagePath -> {
-          return new StreamlinedBlobStorageOverLockFreePagedStorage(
-            new PagedFileStorageWithRWLockedPageContent(
-              storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
-            ),
-            SPACE_ALLOCATION_STRATEGY
-          );
-        }
-      });
-    }
-
+    //add other implementations, if needed
 
     return storages;
   }
