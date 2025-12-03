@@ -6,5 +6,3 @@ fun someFunction() {
 }
 @IgnorableReturnValue
 fun someFunctionValue(): Int = 1
-
-// IGNORE_K1
