@@ -6,6 +6,7 @@ import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.testApi.editor.editorImplOrThrow
 import com.intellij.lambda.testFramework.testApi.editor.moveTo
 import com.intellij.lambda.testFramework.testApi.editor.typeWithLatency
+import com.intellij.lambda.testFramework.testApi.editor.waitContains
 import com.intellij.lambda.testFramework.testApi.editor.waitForExpectedSelectedFile
 import com.intellij.lambda.testFramework.testApi.getProjects
 import com.intellij.lambda.testFramework.testApi.waitForProject
@@ -13,6 +14,7 @@ import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
+import kotlin.time.Duration.Companion.seconds
 
 @RunInMonolithAndSplitMode
 class SampleTest {
@@ -35,7 +37,7 @@ class SampleTest {
 
       runInBackend("Check typed on frontend") {
         waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
-          assert(document.text.contains(toType))
+          waitContains(toType, 5.seconds)
         }
       }
     }
