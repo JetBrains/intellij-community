@@ -7,9 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutinesIds
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.AbstractSimplifiableCallInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.isNameReferenceTo
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.singleLambdaParameterName
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.singleStatement
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.isIdentityLambda
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -30,10 +28,7 @@ internal class SimplifiableFlowCallInspection : AbstractSimplifiableCallInspecti
             val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
 
             val transformArgument = functionCall.findArgumentExpressionByParameterName(CoroutinesIds.ParameterNames.transform) as? KtLambdaExpression ?: return null
-
-            val reference = transformArgument.singleStatement() ?: return null
-            val lambdaParameterName = transformArgument.singleLambdaParameterName() ?: return null
-            if (!reference.isNameReferenceTo(lambdaParameterName)) return null
+            if (!transformArgument.isIdentityLambda()) return null
 
             val concurrencyValueArgument = functionCall.findArgumentExpressionByParameterName(CoroutinesIds.ParameterNames.concurrency)?.parent as? KtValueArgument
 

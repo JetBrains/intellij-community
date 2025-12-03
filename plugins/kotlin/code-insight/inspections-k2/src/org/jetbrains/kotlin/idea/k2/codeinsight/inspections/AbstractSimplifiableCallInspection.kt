@@ -56,9 +56,8 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
             val lambdaExpression = callExpression.singleLambdaExpression() ?: return null
-            val reference = lambdaExpression.singleStatement() ?: return null
-            val lambdaParameterName = lambdaExpression.singleLambdaParameterName() ?: return null
-            if (!reference.isNameReferenceTo(lambdaParameterName)) return null
+            if (!lambdaExpression.isIdentityLambda()) return null
+
             val resolvedCallSymbol =
                 callExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol ?: return null
             val receiver = resolvedCallSymbol.dispatchReceiver ?: resolvedCallSymbol.extensionReceiver ?: return null
@@ -220,8 +219,20 @@ internal fun KtLambdaExpression.singleLambdaParameterName(): String? {
     return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 }
 
-internal fun KtExpression.isNameReferenceTo(name: String): Boolean =
+private fun KtExpression.isNameReferenceTo(name: String): Boolean =
     this is KtNameReferenceExpression && this.getReferencedName() == name
+
+/**
+ * Checks if this lambda expression is an identity lambda (e.g., `{ it }` or `{ x -> x }`).
+ *
+ * N.B. In the future, consider merging this with
+ * [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.singleReturnedExpressionOrNull] function.
+ */
+internal fun KtLambdaExpression.isIdentityLambda(): Boolean {
+    val reference = singleStatement() ?: return false
+    val lambdaParameterName = singleLambdaParameterName() ?: return false
+    return reference.isNameReferenceTo(lambdaParameterName)
+}
 
 private fun KtExpression.isNull(): Boolean =
     this is KtConstantExpression && this.node.elementType == KtNodeTypes.NULL
