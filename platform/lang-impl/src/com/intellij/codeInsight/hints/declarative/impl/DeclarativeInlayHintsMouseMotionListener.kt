@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
@@ -110,8 +110,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
 
   private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRendererBase<*>, event: MouseEvent): InlayMouseArea? {
     val bounds = inlay.bounds ?: return null
-    val inlayPoint = Point(bounds.x, bounds.y)
-    val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
+    val translated = Point(event.x - bounds.x, event.y - bounds.y)
 
     return renderer.getMouseArea(translated)
   }

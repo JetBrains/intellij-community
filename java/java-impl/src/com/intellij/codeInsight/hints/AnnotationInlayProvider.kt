@@ -126,8 +126,9 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               if (suffixText != null && Registry.`is`("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")) {
                 if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
                 val suffixOffset = calculateSuffixOffset(element)
-                sink.addPresentation(InlineInlayPosition(suffixOffset, false), TYPE_ANNOTATION_PAYLOADS, hintFormat = HINT_FORMAT) {
-                  text(suffixText)
+                sink.addPresentation(InlineInlayPosition(suffixOffset, false), inlayPayloads, 
+                                     hintFormat = HintFormat.default, tooltip = "@${nameReferenceElement.referenceName}") {
+                  text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
                 }
               }
               else {
@@ -231,8 +232,9 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     val suffixText = getTypeSuffixText(annotation)
     if (suffixText != null && Registry.`is`("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")) {
       val offset = calculateSuffixOffset(anchor)
-      sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS, hintFormat = HINT_FORMAT) {
-        text(suffixText)
+      sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
+                           hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
+        text(suffixText, annotation.nameReferenceElement?.resolve()?.createSmartPointer(project)?.toNavigateInlayAction())
       }
     }
     else {
