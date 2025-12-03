@@ -88,9 +88,24 @@ private fun getUrlAndSha256(jar: MavenFileDescription, jarRepositories: List<Jar
   return entry
 }
 
+internal fun checkLibraryFileWasAlreadyRendered(targetName: String, libVisibility: String?, hasSourceJar: Boolean, labelTracker: MutableMap<String, String>): Boolean {
+  val trackerContent = "library_file has_source_jar:$hasSourceJar lib_visibility:$libVisibility"
+  val olderContent = labelTracker.put(targetName, trackerContent)
+  if (olderContent != null && olderContent != trackerContent) {
+    // was rendered earlier, but the context was different
+    error(
+      "The same library target $targetName was rendered twice with different contexts: '$olderContent' and '$trackerContent'. " +
+      "This is no allowed, please make sure that your library settings (e.g. having sources or visiblity) is consistent across all " +
+      "library usages"
+    )
+  }
+
+  return olderContent != null
+}
+
 internal fun BuildFile.generateMavenLib(
   lib: MavenLibrary,
-  labelTracker: MutableSet<String>,
+  labelTracker: MutableMap<String, String>,
   isLibraryProvided: (Library) -> Boolean,
   libVisibility: String?,
 ) {
@@ -102,11 +117,12 @@ internal fun BuildFile.generateMavenLib(
 
   if (lib.jars.size == 1) {
     val jar = lib.jars.single()
-    if (!labelTracker.add(targetName)) {
+    val sourceJar = lib.sourceJars.firstOrNull { it.mavenCoordinates == jar.mavenCoordinates.copy(classifier = "sources") }
+
+    if (checkLibraryFileWasAlreadyRendered(targetName, libVisibility, sourceJar != null, labelTracker)) {
       return
     }
 
-    val sourceJar = lib.sourceJars.singleOrNull { it.mavenCoordinates == jar.mavenCoordinates.copy(classifier = "sources") }
     target("jvm_import") {
       option("name", targetName)
       option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
@@ -137,11 +153,12 @@ internal fun BuildFile.generateMavenLib(
     for (jar in lib.jars) {
       val bazelLabel = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates)
       val label = "${bazelLabel}_import"
-      if (!labelTracker.add(label)) {
+      val sourceJar = lib.sourceJars.firstOrNull { it.mavenCoordinates == jar.mavenCoordinates.copy(classifier = "sources") }
+
+      if (checkLibraryFileWasAlreadyRendered(label, libVisibility, sourceJar != null, labelTracker)) {
         continue
       }
 
-      val sourceJar = lib.sourceJars.singleOrNull { it.mavenCoordinates == jar.mavenCoordinates.copy(classifier = "sources") }
       target("jvm_import") {
         option("name", label)
         option("jar", "@$bazelLabel//file")
@@ -210,7 +227,7 @@ internal fun generateBazelModuleSectionsForLibs(
   jarRepositories: List<JarRepository>,
   m2Repo: Path,
   urlCache: UrlCache,
-  moduleFileToLabelTracker: MutableMap<Path, MutableSet<String>>,
+  moduleFileToLabelTracker: MutableMap<Path, MutableMap<String, String>>,
   fileToUpdater: MutableMap<Path, BazelFileUpdater>,
 ) {
   val bazelFileUpdater = fileToUpdater.computeIfAbsent(owner.moduleFile) {
@@ -220,12 +237,12 @@ internal fun generateBazelModuleSectionsForLibs(
     updater
   }
 
-  val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
+  val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { mutableMapOf() }
   buildFile(bazelFileUpdater, owner.sectionName) {
     for (lib in list) {
       for (jar in lib.jars) {
         val label = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates)
-        if (!labelTracker.add(label)) {
+        if (labelTracker.put(label, "") != null) {
           continue
         }
 
@@ -244,7 +261,7 @@ internal fun generateBazelModuleSectionsForLibs(
 
       for (jar in lib.sourceJars) {
         val label = mavenCoordinatesToHttpRuleRepoName(jar.mavenCoordinates)
-        if (!labelTracker.add(label)) {
+        if (labelTracker.put(label, "") != null) {
           continue
         }
 

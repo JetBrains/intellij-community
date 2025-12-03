@@ -157,6 +157,20 @@ internal class BazelBuildFileGenerator(
   val mavenLibraries: Object2ObjectOpenHashMap<LibraryKey, MavenLibrary> = Object2ObjectOpenHashMap()
   val localLibraries: Object2ObjectOpenHashMap<LibraryKey, LocalLibrary> = Object2ObjectOpenHashMap()
 
+  val allLibraries: Collection<Library>
+    get() = mavenLibraries.values + localLibraries.values
+
+  val communityOnlyLibraries: Collection<Library>
+    get() {
+      return allLibraries.filter {
+        check(it.target.container == communityLibraries || it.target.container == ultimateLibraries) {
+          "Library container ${it.target.container} of ${it.target} is not community or ultimate"
+        }
+
+        it.target.container == communityLibraries
+      }
+    }
+
   private val providedLibraries: ProvidedLibraries = ProvidedLibraries()
   class ProvidedLibraries {
     private val providedLibraries: MultiMap<Library, LibraryContainer> = MultiMap()
@@ -196,7 +210,7 @@ internal class BazelBuildFileGenerator(
     jarRepositories: List<JarRepository>,
     m2Repo: Path,
   ) {
-    val fileToLabelTracker = LinkedHashMap<Path, MutableSet<String>>()
+    val fileToLabelTracker = LinkedHashMap<Path, MutableMap<String, String>>()
     val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
     for ((libraryContainer, list) in mavenLibraries
       .values
@@ -220,7 +234,7 @@ internal class BazelBuildFileGenerator(
 
       val groupedByTargetName = sortedList.groupBy { it.target.targetName }
 
-      val labelTracker = fileToLabelTracker.computeIfAbsent(libraryContainer.moduleFile) { HashSet() }
+      val labelTracker = fileToLabelTracker.computeIfAbsent(libraryContainer.moduleFile) { mutableMapOf() }
       buildFile(out = bazelFileUpdater, sectionName = libraryContainer.sectionName) {
         load("@rules_jvm//:jvm.bzl", "jvm_import")
 

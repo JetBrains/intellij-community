@@ -432,7 +432,7 @@ private fun String.removeSuffixStrict(suffix: String): String {
   return result
 }
 
-private fun String.removePrefixStrict(prefix: String): String {
+internal fun String.removePrefixStrict(prefix: String): String {
   require(prefix.isNotEmpty()) {
     "prefix must not be empty"
   }
