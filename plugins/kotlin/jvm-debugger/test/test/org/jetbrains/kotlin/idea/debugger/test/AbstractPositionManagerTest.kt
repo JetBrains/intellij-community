@@ -75,7 +75,7 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
             breakpoints.addAll(extractBreakpointsInfo(file, file.text))
         }
 
-        val configuration = KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB, TestJdkKind.MOCK_JDK)
+        val configuration = KotlinTestUtilsImpl.newConfiguration(ConfigurationKind.STDLIB, TestJdkKind.MOCK_JDK)
         // TODO: delete this once IDEVirtualFileFinder supports loading .kotlin_builtins files
         configuration.languageVersionSettings = LanguageVersionSettingsImpl(
             LanguageVersion.LATEST_STABLE,

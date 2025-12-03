@@ -45,7 +45,7 @@ import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtilsImpl
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
@@ -229,7 +229,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
     }
 
     private fun createKotlinCompilerConfiguration(sourceFile: File): CompilerConfiguration {
-        return KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
+        return KotlinTestUtilsImpl.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
             addKotlinSourceRoot(sourceFile.canonicalPath)
 
             messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
