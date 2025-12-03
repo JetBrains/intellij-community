@@ -49,7 +49,7 @@ open class TestCleanupListener : TestExecutionListener {
         scope.coroutineContext.cancelChildren(CancellationException((message)))
         // Wait with timeout - don't hang indefinitely
         val joinResult = withTimeoutOrNull(timeout) {
-          scope.coroutineContext.job.children.forEach { it.join() }
+          scope.coroutineContext.job.children.forEach { it.cancelAndJoin() }
         }
 
         if (joinResult == null) {
@@ -70,12 +70,9 @@ open class TestCleanupListener : TestExecutionListener {
       cancelSupervisorScope(perTestSupervisorScope, "Test `$testIdentifierName` execution is finished")
       ConfigurationStorage.instance().resetToDefault()
     }
-
-    super.executionFinished(testIdentifier, testExecutionResult)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
     cancelSupervisorScope(testSuiteSupervisorScope, "Test plan execution is finished")
-    super.testPlanExecutionFinished(testPlan)
   }
 }
