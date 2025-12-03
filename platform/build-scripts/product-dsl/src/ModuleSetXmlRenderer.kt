@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.xmlValue
 
 /**
  * Determines if a module set needs to be inlined (cannot use xi:include).
