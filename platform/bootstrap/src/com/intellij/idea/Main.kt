@@ -120,9 +120,9 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       isConfigImportNeeded(PathManager.getConfigDir())
     }
 
-    // this check must be performed before system directories are locked
     if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      span("plugin updates installation") {
+      span("run early action script") {
+        // this check must be performed before system directories are locked
         val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
         if (!configImportNeeded) {
           // Consider following steps:
