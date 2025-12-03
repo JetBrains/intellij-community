@@ -17,6 +17,7 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -484,8 +485,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref instanceof PsiLabelReference) {
-        session.registerBatchItems(processLabelReference((PsiLabelReference)ref));
+      if (ref instanceof PsiLabelReference labelRef && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
+        session.registerBatchItems(processLabelReference(labelRef));
         result.stopHere();
       }
 
