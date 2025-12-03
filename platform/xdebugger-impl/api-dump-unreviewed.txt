@@ -1280,7 +1280,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - getName():java.lang.String
 - getRawValue():java.lang.String
 - getValuePresentation():com.intellij.xdebugger.frame.presentation.XValuePresentation
-- getXValue():com.intellij.xdebugger.frame.XValue
 - hasLinks():Z
 - isComputed():Z
 - markChanged():V

@@ -227,6 +227,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull XValue getXValue() {
     return getValueContainer();
