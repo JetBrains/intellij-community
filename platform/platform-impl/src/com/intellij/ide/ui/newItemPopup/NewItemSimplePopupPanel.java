@@ -66,7 +66,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   public void setApplyAction(@NotNull Consumer<? super InputEvent> applyAction) {
     myApplyAction = e -> {
       try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-        WriteIntentReadAction.run((Runnable)() -> applyAction.consume(e));
+        WriteIntentReadAction.run(() -> applyAction.consume(e));
       }
     };
   }

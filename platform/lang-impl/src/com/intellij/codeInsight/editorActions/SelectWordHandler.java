@@ -47,7 +47,7 @@ public final class SelectWordHandler extends EditorActionHandler.ForEachCaret {
 
   @Override
   public void doExecute(@NotNull Editor _editor, @NotNull Caret _caret, DataContext dataContext) {
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       var caret = _caret;
       var editor = _editor;
       if (LOG.isDebugEnabled()) {

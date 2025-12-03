@@ -720,7 +720,7 @@ public class EditorSearchSession implements SearchSession,
 
     @Override
     public final void actionPerformed(ActionEvent e) {
-      WriteIntentReadAction.run((Runnable)() -> {
+      WriteIntentReadAction.run(() -> {
         onClick();
       });
     }

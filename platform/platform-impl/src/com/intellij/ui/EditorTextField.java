@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -329,7 +329,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void setText(final @Nullable String text) {
-    WriteIntentReadAction.run((Runnable)() ->
+    WriteIntentReadAction.run(() ->
       CommandProcessor.getInstance().executeCommand(getProject(), () ->
         ApplicationManager.getApplication().runWriteAction(() -> {
           LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
@@ -516,7 +516,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       });
     }
     Disposer.register(myDisposable, () -> {
-      WriteIntentReadAction.run((Runnable)() -> {
+      WriteIntentReadAction.run(() -> {
         // remove traces of this editor from UndoManager to avoid leaks
         Document document = myDocument;
         if (document != null) {
@@ -716,7 +716,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       editor.getSettings().setCaretRowShown(false);
 
       editor.setOneLineMode(myOneLineMode);

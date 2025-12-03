@@ -263,7 +263,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
   @Override
   public void commitAllDocuments() {
     ThreadingAssertions.assertEventDispatchThread();
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
       if (myUncommittedDocuments.isEmpty()) return;

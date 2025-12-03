@@ -208,7 +208,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       if (myTreeModel == null) {
         return;
       }
-      WriteIntentReadAction.run((Runnable)() -> {
+      WriteIntentReadAction.run(() -> {
         TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
         if (path == null) return;
         DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();

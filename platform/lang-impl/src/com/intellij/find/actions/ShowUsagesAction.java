@@ -195,7 +195,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    WriteIntentReadAction.run((Runnable) () -> {
+    WriteIntentReadAction.run( () -> {
       performShowUsagesAction(e);
     });
   }

@@ -208,7 +208,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
         return setDropHandlerWithResult(e -> {
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             handler.drop(e);
           });
           return true;

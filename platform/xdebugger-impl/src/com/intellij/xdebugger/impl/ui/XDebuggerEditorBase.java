@@ -343,7 +343,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   public static void foldNewLines(EditorEx editor) {
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
       editor.reinitSettings();
       FoldingModelEx foldingModel = editor.getFoldingModel();
@@ -429,7 +429,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
             new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK))))
-      .setCancelCallback(() -> WriteIntentReadAction.compute((Computable<Boolean>)()-> { //maybe readaction
+      .setCancelCallback(() -> WriteIntentReadAction.compute(()-> { //maybe readaction
         setExpression(expressionEditor.getExpression());
         requestFocusInEditor();
         Editor baseEditor = getEditor();

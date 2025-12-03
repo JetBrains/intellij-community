@@ -222,7 +222,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
       EditorImpl.EVENT_LOG.debug(e.toString());
     }
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
       // this would have the side effect of invoking Swing document machinery which relies
       // on creating Document positions etc (and won't update the document in an IntelliJ
@@ -258,7 +258,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public ActionCallback type(String text) {
     ActionCallback result = new ActionCallback();
-    EdtInvocationManager.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)() -> editor.type(text).notify(result)));
+    EdtInvocationManager.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> editor.type(text).notify(result)));
     return result;
   }
 

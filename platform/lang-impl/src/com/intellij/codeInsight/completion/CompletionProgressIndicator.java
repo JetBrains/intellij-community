@@ -102,7 +102,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final Update myUpdate = new Update("update") {
     @Override
     public void run() {
-      WriteIntentReadAction.run((Runnable)() -> updateLookup());
+      WriteIntentReadAction.run(() -> updateLookup());
       queue.setMergingTimeSpan(ourShowPopupGroupingTime);
     }
   };

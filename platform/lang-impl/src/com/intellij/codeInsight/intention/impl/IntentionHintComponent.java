@@ -644,7 +644,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
         logMousePressed(e);
         myLightBulbPanel.onMousePress();
-        WriteIntentReadAction.run((Runnable)() -> {
+        WriteIntentReadAction.run(() -> {
           showPopup(true);
         });
       }

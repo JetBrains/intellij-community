@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -57,7 +57,7 @@ public class RenameElementAction extends AnAction {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    WriteIntentReadAction.run((Runnable) () -> {
+    WriteIntentReadAction.run( () -> {
       DataContext dataContext = e.getDataContext();
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
       if (project == null) {

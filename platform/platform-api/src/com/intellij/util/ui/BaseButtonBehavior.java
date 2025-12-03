@@ -197,7 +197,7 @@ public abstract class BaseButtonBehavior {
 
       repaintComponent();
 
-      WriteIntentReadAction.run((Runnable)() -> BaseButtonBehavior.this.execute(e));
+      WriteIntentReadAction.run(() -> BaseButtonBehavior.this.execute(e));
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myComponent.isShowing()) {
           setHovered(false);

@@ -525,7 +525,7 @@ public abstract class DialogWrapper {
     // Can be called very early when there is no application yet
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && useWriteIntentReadAction) {
       //maybe readAction
-      WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(myDisposable));
+      WriteIntentReadAction.run(() -> Disposer.dispose(myDisposable));
     }
     else {
       Disposer.dispose(myDisposable);
@@ -1819,7 +1819,7 @@ public abstract class DialogWrapper {
     }
 
     if (useWriteIntentReadAction && !isProgressDialog() && ApplicationManager.getApplication() != null) {
-      WriteIntentReadAction.run((Runnable) () -> {
+      WriteIntentReadAction.run( () -> {
         myPeer.show();
       });
     } else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -56,7 +56,7 @@ final class ExternalToolWindowManager implements ExternalSystemSettingsListenerE
       }
       else {
         AppUIExecutor.onUiThread(ModalityState.nonModal()).expireWith(settings).later().execute(() -> {
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             ToolWindowManager.getInstance(settings.getProject()).invokeLater(() -> {
               ToolWindow toolWindow1 = getToolWindow(settings.getProject(), manager.getSystemId());
               if (toolWindow1 != null) {

@@ -132,7 +132,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
-      WriteIntentReadAction.run((Runnable)() -> {
+      WriteIntentReadAction.run(() -> {
         if (!performDefaultPaste(dataContext)) {
           for(PasteProvider provider: EP_NAME.getExtensionList()) {
             if (provider.isPasteEnabled(dataContext)) {

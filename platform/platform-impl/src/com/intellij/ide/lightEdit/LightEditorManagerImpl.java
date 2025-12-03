@@ -80,7 +80,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
         ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(@NotNull Editor editor) {
-            WriteIntentReadAction.run((Runnable)() -> checkUpdate(editor));
+            WriteIntentReadAction.run(() -> checkUpdate(editor));
           }
         }, this);
       }

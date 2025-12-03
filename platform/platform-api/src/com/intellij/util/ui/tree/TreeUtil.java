@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -1572,7 +1572,7 @@ public final class TreeUtil {
           return;
         }
         EdtInvocationManager.invokeLaterIfNeeded(() ->
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             if (promise.isCancelled()) return;
             if (tree.isVisible(path)) {
               if (consumer != null) consumer.accept(path);

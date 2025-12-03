@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.concurrency.ThreadContext;
@@ -502,7 +502,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (!isProgressDialog() &&
             ApplicationManager.getApplication() != null &&
             !ApplicationManager.getApplication().isReadAccessAllowed()) {
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             myDialog.show();
           });
         }

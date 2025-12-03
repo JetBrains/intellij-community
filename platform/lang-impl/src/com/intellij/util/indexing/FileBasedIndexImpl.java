@@ -226,7 +226,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         if (myRegisteredIndexes != null && !myRegisteredIndexes.areIndexesReady()) {
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
