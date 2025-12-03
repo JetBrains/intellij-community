@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -207,7 +208,9 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
       @Override
       public DnDSupportBuilder setDropHandler(DnDDropHandler handler) {
         return setDropHandlerWithResult(e -> {
-          handler.drop(e);
+          WriteIntentReadAction.run((Runnable)() -> {
+            handler.drop(e);
+          });
           return true;
         });
       }
