@@ -320,6 +320,8 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
 
     val windowBounds = getValidBoundsForPopup(view) ?: return
 
+    val newBoundsBeforeFit = Rectangle(newBounds)
+
     fitPopupBounds(oldBounds, newBounds, windowBounds)
 
     // If the popup was moved, don't let the initial grab point move away from the owning window.
@@ -329,6 +331,12 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     if (newBounds.x != oldBounds.x || newBounds.y != oldBounds.y) {
       fitGrabPoint(newBounds, windowBounds)
     }
+
+    // If we limit the popup movement, pretend that the mouse movement was limited too.
+    // Otherwise, moving the mouse in the opposite direction will work with a "delay,"
+    // because it'll have to "catch up" its previous position before starting doing anything useful.
+    dx += newBounds.x - newBoundsBeforeFit.x
+    dy += newBounds.y - newBoundsBeforeFit.y
   }
 
   private fun fitPopupBounds(oldBounds: Rectangle, newBounds: Rectangle, windowBounds: Rectangle) {
