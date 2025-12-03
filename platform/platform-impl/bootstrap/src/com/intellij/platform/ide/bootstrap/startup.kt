@@ -232,14 +232,17 @@ fun startApplication(
     // AppStarter.prepareStart might need to prevent some plugins from loading
     appStartPreparedJob.join()
 
-    span("run action.script") {
-      lockSystemDirsJob.join()
-      runActionScript()
-    }
-
-    if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
-      span("plugin auto update") {
-        PluginAutoUpdater.applyPluginUpdates(logDeferred)
+    // action.script and auto-update data are located in the system directory, it must be first locked before accessing
+    lockSystemDirsJob.join()
+    // command line starters should opt in to apply plugin updates
+    if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
+      span("run action.script") {
+        runActionScript()
+      }
+      if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
+        span("plugin auto update") {
+          PluginAutoUpdater.applyPluginUpdates(logDeferred)
+        }
       }
     }
 
