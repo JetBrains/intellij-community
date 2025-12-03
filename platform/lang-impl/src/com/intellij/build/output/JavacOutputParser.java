@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -80,7 +81,7 @@ public final class JavacOutputParser implements BuildOutputParser {
         int javaFileExtensionIndex = message.indexOf(".java");
         if (javaFileExtensionIndex > 0) {
           File file = new File(message.substring(0, javaFileExtensionIndex + ".java".length()));
-          if (file.isFile()) {
+          if (isFileSafely(file)) {
             message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
             String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
             messageConsumer
@@ -95,7 +96,7 @@ public final class JavacOutputParser implements BuildOutputParser {
       int colonIndex2 = line.indexOf(COLON, colonIndex1 + 1);
       if (colonIndex2 >= 0) {
         File file = new File(part1);
-        if (!file.isFile()) {
+        if (!isFileSafely(file)) {
           // the part one is not a file path.
           return false;
         }
@@ -173,6 +174,16 @@ public final class JavacOutputParser implements BuildOutputParser {
     }
 
     return false;
+  }
+
+  private static boolean isFileSafely(@NotNull File file) {
+    try {
+      return file.isFile();
+    }
+    catch (IOError e) {
+      // e.g. "java.io.IOException: Unable to get working directory of drive 'W'"
+      return false;
+    }
   }
 
   private boolean isRelatedFile(File file) {
