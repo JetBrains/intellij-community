@@ -7,6 +7,6 @@ class Test:
             y = extracted()
             return y
 
-        def extracted() -> Any:
+        def extracted() -> int | Any:
             y = x * 2
             return y

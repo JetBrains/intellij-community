@@ -18,7 +18,6 @@ package com.jetbrains.python;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -248,7 +247,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("UnsafeUnion[str | bytes, Any]",
+    doTest("str | bytes | Any",
            """
              from typing import AnyStr
 
@@ -3614,52 +3613,6 @@ public class PyTypingTest extends PyTestCase {
             expr = receiver.get()""");
   }
 
-  // PY-24834
-  // It works incorrectly due to PY-83119 (the information about unresolved union member attributes
-  // being lost during type inference).
-  public void testGenericUnionMemberMethodCallSomeMembersDoNotOwnIt() {
-    doTest("str",  // Should be `str | Any`
-           """
-            class Box[T]:
-                def get(self) -> T:
-                    pass
-            r: int | Box[str] = ...
-            expr = r.get()
-            """);
-  }
-
-  // PY-24834
-  // This version doesn't work now properly because of lacking constraint solving.
-  // We can't match `Box[T]` for `self` with `Box[int] | Box[str]`.
-  public void testGenericUnionMemberCallAllMembersAreSameClassParameterizations() {
-    doTest("Any",  // Should be `int | str`
-           """
-            class Box[T]:
-                def get(self) -> T:
-                    pass
-
-            r: Box[int] | Box[str] = ...
-            expr = r.get()
-            """);
-  }
-
-  // PY-24834
-  public void testGenericUnionMemberCallAllMembersOwnIt() {
-    doTest("int | str",
-           """
-            class Box1[T]:
-                def get(self) -> T:
-                    pass
-
-            class Box2[T]:
-                def get(self) -> T:
-                    pass
-            
-            r: Box1[int] | Box2[str] = ...
-            expr = r.get()
-            """);
-  }
-
   public void testGenericClassTypeHintedInDocstrings() {
     doTest("int",
            """
@@ -6781,26 +6734,6 @@ public class PyTypingTest extends PyTestCase {
       from typing import Callable, Concatenate
       
       expr: Callable[Concatenate[int, ...], str]
-      """);
-  }
-
-  // See com.jetbrains.python.refactoring.PyExtractMethodTest.testTypedStatements
-  //
-  // This scenario changes depending on whether the strict unions are enabled.
-  // Without them, the inferred type is LiteralString | str | int, because due to special handling
-  // of unions containing literal types in PyTypeChecker, none of the candidate methods fully matches:
-  // `LiteralString | str | int` receiver is compatible with neither `LiteralString`, `str` nor `int` for `self`,
-  // so we infer a union of all possible return types.
-  // With strict unions, due to special handling of self in #processSelfParameter, only
-  // `__add__(self: str, other: str) -> str` overload remains.
-  // PY-24834 PY-83313
-  public void testUnionStrConcat() {
-    //Registry.get("python.typing.strict.unions").setValue(false, myFixture.getTestRootDisposable());
-    doTest("str", """
-      from typing import LiteralString
-      
-      x: LiteralString | str | int
-      expr = x + "foo"
       """);
   }
 
