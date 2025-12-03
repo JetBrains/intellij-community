@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -212,7 +211,6 @@ public class ExpectedHighlightingData {
       Matcher opening = openingTagRx.matcher(text);
       if (!opening.matches()) break;
 
-      int hostOffset = document instanceof DocumentWindow ? ((DocumentWindow)document).injectedToHost(0) : 0;
       int startOffset = opening.start(1);
       String descr = opening.group(3) != null ? opening.group(3) : ANY_TEXT;
       String icon = opening.group(4) != null ? opening.group(4) : ANY_TEXT;
@@ -232,7 +230,7 @@ public class ExpectedHighlightingData {
       document.replaceString(startOffset, endOffset, content);
       endOffset -= endTag.length();
 
-      TextRange range = new TextRange(hostOffset + startOffset, hostOffset + endOffset);
+      TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = StringUtil.unescapeStringCharacters(descr);
       LineMarkerInfo<PsiElement> markerInfo =
         new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon);
@@ -265,20 +263,15 @@ public class ExpectedHighlightingData {
                           "\\s*(?<closed>/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
-    // Imagine the following case: we have a test for an injected regex like
-    // `let a = new RegExp('<warning><caret>\</warning>')`
-    // And since we are inside the injected document, test fixture will use it to set up expected data.
-    // So we need to add a host offset correction for injected documents.
-    int hostOffset = document instanceof DocumentWindow ? ((DocumentWindow)document).injectedToHost(0) : 0;
     Ref<Integer> textOffset = Ref.create(0);
     int pos = 0;
     while (matcher.find(pos)) {
       textOffset.set(textOffset.get() + matcher.start() - pos);
-      pos = extractExpectedHighlight(matcher, text, document, textOffset, hostOffset);
+      pos = extractExpectedHighlight(matcher, text, document, textOffset);
     }
   }
 
-  private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset, int hostOffset) {
+  private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
     document.deleteString(textOffset.get(), textOffset.get() + matcher.end() - matcher.start());
 
     String marker = matcher.group("marker");
@@ -360,7 +353,7 @@ public class ExpectedHighlightingData {
         }
 
         textOffset.set(textOffset.get() + nextTagStart - pos);
-        pos = extractExpectedHighlight(matcher, text, document, textOffset, hostOffset);
+        pos = extractExpectedHighlight(matcher, text, document, textOffset);
       }
     }
 
@@ -368,8 +361,7 @@ public class ExpectedHighlightingData {
     if (expectedHighlightingSet.enabled) {
       TextAttributesKey forcedTextAttributesKey = attrKey == null ? null : TextAttributesKey.createTextAttributesKey(attrKey);
       HighlightInfo.Builder builder =
-        HighlightInfo.newHighlightInfo(type).range(hostOffset + rangeStart, hostOffset + textOffset.get())
-          .severity(expectedHighlightingSet.severity);
+        HighlightInfo.newHighlightInfo(type).range(rangeStart, textOffset.get()).severity(expectedHighlightingSet.severity);
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
