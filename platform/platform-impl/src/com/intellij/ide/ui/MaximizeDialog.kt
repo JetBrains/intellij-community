@@ -7,42 +7,89 @@ import java.awt.Rectangle
 import javax.swing.JDialog
 import kotlin.math.abs
 
-fun doMaximize(dialog: JDialog) {
-  if (canBeMaximized(dialog)) {
-    maximize(dialog)
+/**
+ * Attempts to toggle the maximized state of the dialog.
+ *
+ * If the dialog is currently not maximized, then it's maximized.
+ *
+ * If the dialog was maximized using this function or [maximize], then it's normalized.
+ *
+ * Note that if the dialog was maximized using some other means, it's impossible to normalize it this way,
+ * because the "normal, not maximized" size and location are unknown then,
+ * as they're stored internally.
+ */
+fun JDialog.toggleMaximized() {
+  if (canBeMaximized()) {
+    maximize()
   }
-  else if (canBeNormalized(dialog)) {
-    normalize(dialog)
+  else if (canBeNormalized()) {
+    normalize()
   }
 }
 
-fun canBeMaximized(dialog: JDialog?): Boolean {
-  val rootPane = if (dialog != null && dialog.isResizable) dialog.getRootPane() else null
+/**
+ * Checks if the dialog can be maximized.
+ *
+ * It's possible to maximize a dialog if it's resizable and not currently maximized.
+ *
+ * If this function returns `true`, then the dialog can be maximized using [maximize] or [toggleMaximized].
+ */
+fun JDialog.canBeMaximized(): Boolean {
+  val rootPane = if (isResizable) getRootPane() else null
   if (rootPane == null) return false
-  return !almostEquals(ScreenUtil.getScreenRectangle(dialog!!), dialog.bounds)
+  return !almostEquals(ScreenUtil.getScreenRectangle(this), bounds)
 }
 
-fun maximize(dialog: JDialog) {
-  if (!canBeMaximized(dialog)) return
-  dialog.getRootPane().putClientProperty(NORMAL_BOUNDS, dialog.bounds)
-  dialog.bounds = ScreenUtil.getScreenRectangle(dialog)
+/**
+ * Maximizes the dialog.
+ *
+ * Because Swing dialogs are not normally maximizable, this function imitates maximizing by simply resizing the dialog to fill the screen.
+ *
+ * The dialog will still look as not maximized according to its window decorations, but it's the best that can be done due to technical limitations.
+ *
+ * See [canBeMaximized] for the exact conditions when a dialog can be maximized.
+ */
+fun JDialog.maximize() {
+  if (!canBeMaximized()) return
+  getRootPane().putClientProperty(NORMAL_BOUNDS, bounds)
+  bounds = ScreenUtil.getScreenRectangle(this)
 }
 
-fun canBeNormalized(dialog: JDialog?): Boolean {
-  val rootPane = if (dialog != null && dialog.isResizable) dialog.getRootPane() else null
+/**
+ * Checks if the dialog can be normalized.
+ *
+ * It's possible to normalize a dialog if it's resizable, was previously maximized using [maximize] or [toggleMaximized]
+ * and it's still maximized.
+ *
+ * Note that if the dialog was maximized using some other means, it's impossible to normalize it this way,
+ * because the "normal, not maximized" size and location are unknown then,
+ * as they're stored internally.
+ *
+ * If this function returns `true`, then the dialog can be normalized using [normalize] or [toggleMaximized].
+ */
+fun JDialog.canBeNormalized(): Boolean {
+  val rootPane = if (isResizable) getRootPane() else null
   if (rootPane == null) return false
-  val screenRectangle = ScreenUtil.getScreenRectangle(dialog!!)
-  return almostEquals(dialog.bounds, screenRectangle) &&
+  val screenRectangle = ScreenUtil.getScreenRectangle(this)
+  return almostEquals(bounds, screenRectangle) &&
          rootPane.getClientProperty(NORMAL_BOUNDS) is Rectangle
 }
 
-fun normalize(dialog: JDialog) {
-  if (!canBeNormalized(dialog)) return
-  val rootPane = dialog.getRootPane()
+/**
+ * Normalizes the dialog.
+ *
+ * The dialog's size and position will be restored to the values that were stored when
+ * [maximize] or [toggleMaximized] was called to maximize the dialog.
+ *
+ * See [canBeNormalized] for the exact conditions when it's possible to normalize a dialog.
+ */
+fun JDialog.normalize() {
+  if (!canBeNormalized()) return
+  val rootPane = getRootPane()
   val value = rootPane.getClientProperty(NORMAL_BOUNDS)
   if (value is Rectangle) {
     ScreenUtil.fitToScreen(value)
-    dialog.bounds = value
+    bounds = value
     rootPane.putClientProperty(NORMAL_BOUNDS, null)
   }
 }

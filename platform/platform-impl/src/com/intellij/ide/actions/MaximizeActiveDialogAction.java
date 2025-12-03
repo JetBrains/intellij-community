@@ -30,7 +30,7 @@ public final class MaximizeActiveDialogAction extends WindowAction {
   }
 
   public static void doMaximize(JDialog dialog) {
-    MaximizeDialogKt.doMaximize(dialog);
+    MaximizeDialogKt.toggleMaximized(dialog);
   }
 
   public static boolean canBeMaximized(JDialog dialog) {
