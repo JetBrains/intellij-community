@@ -2,8 +2,11 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -71,6 +74,20 @@ internal fun InputField(
             when (interaction) {
                 is FocusInteraction.Focus -> inputFieldState = inputFieldState.copy(focused = true)
                 is FocusInteraction.Unfocus -> inputFieldState = inputFieldState.copy(focused = false)
+                is PressInteraction.Press -> inputFieldState = inputFieldState.copy(pressed = true)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> inputFieldState = inputFieldState.copy(pressed = false)
+            }
+        }
+    }
+
+    // Note: we need a separate interaction source due to b/466012773 (Jetpack Compose issue)
+    val hoverInteractionSource = remember { MutableInteractionSource() }
+    LaunchedEffect(hoverInteractionSource) {
+        hoverInteractionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is HoverInteraction.Enter -> inputFieldState = inputFieldState.copy(hovered = true)
+                is HoverInteraction.Exit -> inputFieldState = inputFieldState.copy(hovered = false)
             }
         }
     }
@@ -102,6 +119,7 @@ internal fun InputField(
         state = state,
         modifier =
             modifier
+                .hoverable(hoverInteractionSource)
                 .then(backgroundModifier)
                 .thenIf(!undecorated && hasNoOutline) {
                     focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
@@ -144,26 +162,40 @@ internal fun InputField(
     decorationBox: @Composable (innerTextField: @Composable () -> Unit, state: InputFieldState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var inputState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }
-    remember(enabled) { inputState = inputState.copy(enabled = enabled) }
+    var inputFieldState by remember(interactionSource) { mutableStateOf(InputFieldState.of(enabled = enabled)) }
+    remember(enabled) { inputFieldState = inputFieldState.copy(enabled = enabled) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is FocusInteraction.Focus -> inputState = inputState.copy(focused = true)
-                is FocusInteraction.Unfocus -> inputState = inputState.copy(focused = false)
+                is FocusInteraction.Focus -> inputFieldState = inputFieldState.copy(focused = true)
+                is FocusInteraction.Unfocus -> inputFieldState = inputFieldState.copy(focused = false)
+                is PressInteraction.Press -> inputFieldState = inputFieldState.copy(pressed = true)
+                is PressInteraction.Cancel,
+                is PressInteraction.Release -> inputFieldState = inputFieldState.copy(pressed = false)
+            }
+        }
+    }
+
+    // Note: we need a separate interaction source due to b/466012773 (Jetpack Compose issue)
+    val hoverInteractionSource = remember { MutableInteractionSource() }
+    LaunchedEffect(hoverInteractionSource) {
+        hoverInteractionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is HoverInteraction.Enter -> inputFieldState = inputFieldState.copy(hovered = true)
+                is HoverInteraction.Exit -> inputFieldState = inputFieldState.copy(hovered = false)
             }
         }
     }
 
     val colors = style.colors
-    val backgroundColor by colors.backgroundFor(inputState)
+    val backgroundColor by colors.backgroundFor(inputFieldState)
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
     val backgroundModifier =
         Modifier.thenIf(!undecorated && backgroundColor.isSpecified) { background(backgroundColor, shape) }
 
-    val borderColor by style.colors.borderFor(inputState)
+    val borderColor by style.colors.borderFor(inputFieldState)
     val hasNoOutline = outline == Outline.None
     val borderModifier =
         Modifier.thenIf(!undecorated && borderColor.isSpecified && hasNoOutline) {
@@ -175,18 +207,21 @@ internal fun InputField(
             )
         }
 
-    val contentColor by colors.contentFor(inputState)
+    val contentColor by colors.contentFor(inputFieldState)
     val mergedTextStyle = textStyle.copy(color = contentColor)
-    val caretColor by colors.caretFor(inputState)
+    val caretColor by colors.caretFor(inputFieldState)
 
     BasicTextField(
         value = value,
         modifier =
             modifier
+                .hoverable(hoverInteractionSource)
                 .then(backgroundModifier)
+                .thenIf(!undecorated && hasNoOutline) {
+                    focusOutline(state = inputFieldState, outlineShape = shape, alignment = Stroke.Alignment.Center)
+                }
                 .then(borderModifier)
-                .thenIf(!undecorated && hasNoOutline) { focusOutline(inputState, shape) }
-                .outline(inputState, outline, shape, Stroke.Alignment.Center),
+                .outline(inputFieldState, outline, shape, Stroke.Alignment.Center),
         onValueChange = onValueChange,
         enabled = enabled,
         readOnly = readOnly,
@@ -200,7 +235,7 @@ internal fun InputField(
         singleLine = singleLine,
         maxLines = maxLines,
         decorationBox =
-            @Composable { innerTextField: @Composable () -> Unit -> decorationBox(innerTextField, inputState) },
+            @Composable { innerTextField: @Composable () -> Unit -> decorationBox(innerTextField, inputFieldState) },
     )
 }
 
