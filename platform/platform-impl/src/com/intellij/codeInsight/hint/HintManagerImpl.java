@@ -7,6 +7,7 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
@@ -685,7 +687,9 @@ public class HintManagerImpl extends HintManager {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && "action".equals(e.getDescription()) && hint.isVisible()) {
             boolean execute;
             try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-              execute = action.execute();
+              execute = WriteIntentReadAction.compute(() -> {
+                return action.execute();
+              });
             }
             if (execute) {
               hint.hide();
