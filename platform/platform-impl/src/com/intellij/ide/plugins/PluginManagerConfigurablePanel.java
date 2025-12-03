@@ -47,8 +47,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
@@ -921,7 +923,8 @@ public final class PluginManagerConfigurablePanel implements Disposable {
                     result.sortByName();
                     return;
                   }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                   LOG.error("Error while loading internal plugins group", e);
                 }
               }
@@ -1948,6 +1951,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   @Override
   public void dispose() {
     myDisposeStarted = true;
+    if (ComponentUtil.getParentOfType(WelcomeScreen.class, myCardPanel) != null && isModified()) {
+      scheduleApply();
+    }
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     if (myPluginModelFacade.getModel().toBackground()) {
       pluginsState.clearShutdownCallback();
