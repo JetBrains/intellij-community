@@ -17,7 +17,9 @@ interface HotSwapUiExtension {
    * @return true if this EP is applicable for the current IDE
    */
   fun isApplicable(): Boolean = true
-  fun showFloatingToolbar(project: Project): Boolean = true
+  @ApiStatus.Obsolete
+  fun showFloatingToolbar(): Boolean = true
+  fun showFloatingToolbar(project: Project): Boolean = showFloatingToolbar()
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null
   val shouldAddHideButton: Boolean get() = true
