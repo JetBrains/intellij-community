@@ -47,51 +47,51 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
       // lightweight descriptor of a TODO occurrence containing only offsets
       // introduced in order to separate filtering from preview computation to keep read locks as short as possible
-      data class TodoOccurence(val start: Int, val end: Int)
+      data class TodoOccurrence(val start: Int, val end: Int)
 
-      val todoItems: List<TodoOccurence> = readAction {
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
-        if (psiFile == null) {
-          LOG.warn("PsiFile not found for virtualFile path ${virtualFile.path}")
-          return@readAction emptyList()
-        }
+      val psiFile = readAction {
+        PsiManager.getInstance(project).findFile(virtualFile)
+      }
+      if (psiFile == null) {
+        LOG.warn("PsiFile not found for virtualFile path ${virtualFile.path}")
+        return@channelFlow
+      }
 
-        val helper = PsiTodoSearchHelper.getInstance(project)
-        val allTodoItems = helper.findTodoItems(psiFile)
+      val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
+      val filteredTodoItems = if (filter != null) {
+        allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
+      } else allTodoItems.asList()
 
-        val filteredTodoItems = if (filter != null) {
-          allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
-        } else allTodoItems.asList()
-
-        filteredTodoItems.map { todoItem ->
-          TodoOccurence(
-            start = todoItem.textRange.startOffset,
-            end = todoItem.textRange.endOffset,
-          )
-        }
+      val todoItems = filteredTodoItems.map { todoItem ->
+        TodoOccurrence(
+          start = todoItem.textRange.startOffset,
+          end = todoItem.textRange.endOffset,
+        )
       }
 
       val document: Document? = readAction {
         PsiManager.getInstance(project).findFile(virtualFile)?.viewProvider?.document
       }
 
-      for (item in todoItems) {
-        val (line, preview) = readAction {
-          if (document != null) {
+      val results: List<TodoResult> = readAction {
+        todoItems.map { item ->
+          val (line, preview) = if (document != null) {
             val line = document.getLineNumber(item.start)
             val previewChunks = buildPreviewChunks(document, line)
             line to previewChunks
           } else 0 to emptyList()
+
+          TodoResult(
+            presentation = preview,
+            fileId = virtualFile.rpcId(),
+            line = line,
+            navigationOffset = item.start,
+            length = item.end - item.start
+          )
         }
+      }
 
-        val result = TodoResult(
-          presentation = preview,
-          fileId = virtualFile.rpcId(),
-          line = line,
-          navigationOffset = item.start,
-          length = item.end - item.start
-        )
-
+      for (result in results) {
         trySend(result)
       }
     }
