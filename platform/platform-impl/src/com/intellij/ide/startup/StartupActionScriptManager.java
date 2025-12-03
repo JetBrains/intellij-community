@@ -57,17 +57,16 @@ public final class StartupActionScriptManager {
   }
 
   public static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
-    addActionCommands(commands, true);
+    addActionCommands(getActionScriptFile(), commands, true);
   }
 
   @ApiStatus.Experimental
   public static synchronized void addActionCommandsToBeginning(@NotNull List<? extends ActionCommand> commands) throws IOException {
-    addActionCommands(commands, false);
+    addActionCommands(getActionScriptFile(), commands, false);
   }
 
-  private static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
+  private static synchronized void addActionCommands(@NotNull Path scriptFile, @NotNull List<? extends ActionCommand> commands, boolean toEndOfScript) throws IOException {
     List<ActionCommand> script = new ArrayList<>(), originalScript = null;
-    var scriptFile = getActionScriptFile();
     if (Files.exists(scriptFile)) {
       originalScript = loadActionScript(scriptFile);
       script.addAll(originalScript);
