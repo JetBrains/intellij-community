@@ -22,6 +22,9 @@
     <module name="intellij.libraries.hamcrest"/>
 
     <module name="intellij.tools.testsBootstrap"/>
+
+    <module name="intellij.station.comms.common.testFramework"/>
+    <module name="intellij.station.core._test"/>
   </content>
   <dependencies>
     <module name="intellij.lambda.testFramework"/>
