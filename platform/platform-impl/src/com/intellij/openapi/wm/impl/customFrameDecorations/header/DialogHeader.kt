@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
-import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.toggleMaximized
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
@@ -51,7 +51,7 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
       // But on Windows, we receive these events thanks to using a custom header, but the OS doesn't have native maximization.
       // So let's handle it manually.
       if (OS.CURRENT == OS.Windows && window is JDialog && e.id == MouseEvent.MOUSE_CLICKED && e.clickCount == 2) {
-        MaximizeActiveDialogAction.doMaximize(window)
+        window.toggleMaximized()
         e.consume()
       }
       else {

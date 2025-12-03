@@ -18,7 +18,7 @@ public final class MaximizeActiveDialogAction extends WindowAction {
   @Override
   protected @Nullable Icon getIconFor(@Nullable Window window) {
     if (!(window instanceof JDialog dialog)) return null;
-    return canBeMaximized(dialog) ? AllIcons.Windows.Maximize : AllIcons.Windows.Restore;
+    return MaximizeDialogKt.canBeMaximized(dialog) ? AllIcons.Windows.Maximize : AllIcons.Windows.Restore;
   }
 
   @Override
@@ -26,26 +26,6 @@ public final class MaximizeActiveDialogAction extends WindowAction {
     @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Window window = ComponentUtil.getWindow(component);
     if (!(window instanceof JDialog)) return;
-    doMaximize((JDialog)window);
-  }
-
-  public static void doMaximize(JDialog dialog) {
-    MaximizeDialogKt.toggleMaximized(dialog);
-  }
-
-  public static boolean canBeMaximized(JDialog dialog) {
-    return MaximizeDialogKt.canBeMaximized(dialog);
-  }
-
-  public static void maximize(JDialog dialog) {
-    MaximizeDialogKt.maximize(dialog);
-  }
-
-  public static boolean canBeNormalized(JDialog dialog) {
-    return MaximizeDialogKt.canBeNormalized(dialog);
-  }
-
-  public static void normalize(JDialog dialog) {
-    MaximizeDialogKt.normalize(dialog);
+    MaximizeDialogKt.toggleMaximized((JDialog)window);
   }
 }
