@@ -2025,6 +2025,9 @@
     <registryKey key="ide.suppress.low.memory.notifications.when.dumb" defaultValue="false"
                  description="Disables Low Memory notifications during indexing for the sake of less false-positive detection for users" />
     <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>
+
+    <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService"
+                        serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
   </extensions>
 
   <applicationListeners>
