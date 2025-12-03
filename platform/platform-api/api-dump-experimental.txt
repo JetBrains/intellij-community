@@ -574,15 +574,12 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.components.panels.ListLayout$GrowPolicy
 - s:values():com.intellij.ui.components.panels.ListLayout$GrowPolicy[]
-*:com.intellij.ui.dsl.gridLayout.ComponentHelper
-- a:getBaseline(I,I):java.lang.Integer
 *f:com.intellij.ui.dsl.gridLayout.Constraints
-- <init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):V
-- b:<init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String):V
+- b:<init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.ui.dsl.gridLayout.Grid
 - f:component10():com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - f:component11():java.lang.String
-- f:component12():com.intellij.ui.dsl.gridLayout.ComponentHelper
 - f:component2():I
 - f:component3():I
 - f:component4():I
@@ -591,11 +588,10 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:component7():com.intellij.ui.dsl.gridLayout.VerticalAlign
 - f:component8():Z
 - f:component9():com.intellij.ui.dsl.gridLayout.UnscaledGaps
-- f:copy(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.Constraints
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.Constraints,com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Constraints
+- f:copy(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String):com.intellij.ui.dsl.gridLayout.Constraints
+- bs:copy$default(com.intellij.ui.dsl.gridLayout.Constraints,com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Constraints
 - equals(java.lang.Object):Z
 - f:getBaselineAlign():Z
-- *f:getComponentHelper():com.intellij.ui.dsl.gridLayout.ComponentHelper
 - f:getGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - f:getGrid():com.intellij.ui.dsl.gridLayout.Grid
 - f:getHeight():I
@@ -632,31 +628,6 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
 - s:values():com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty[]
-*f:com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- <init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid):V
-- b:<init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:addResizableColumn():V
-- f:cell(javax.swing.JComponent,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- bs:cell$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,javax.swing.JComponent,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:columnsGaps(java.util.List):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:constraints(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.Constraints
-- bs:constraints$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Constraints
-- f:defaultBaselineAlign(Z):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:defaultVerticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:getColumnsCount():I
-- f:getGrid():com.intellij.ui.dsl.gridLayout.Grid
-- f:getResizableColumns():java.util.Set
-- f:getX():I
-- f:resizableRow():com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:row(com.intellij.ui.dsl.gridLayout.UnscaledGapsY,Z):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- bs:row$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,com.intellij.ui.dsl.gridLayout.UnscaledGapsY,Z,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:setRowGaps(com.intellij.ui.dsl.gridLayout.UnscaledGapsY):V
-- f:skip(I):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- bs:skip$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- f:subGrid(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.gridLayout.Grid
-- bs:subGrid$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Grid
-- f:subGridBuilder(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-- bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 *f:com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>():V

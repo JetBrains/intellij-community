@@ -96,7 +96,7 @@ internal class GridImpl : Grid {
     calculatePreferredLayoutData()
     val outsideGaps = layoutData.getOutsideGaps(parentInsets)
 
-    // Recalculate LayoutData for requested size with corrected insets
+    // Recalculate LayoutData for the requested size with corrected insets
     calculateLayoutDataStep2(width - outsideGaps.width)
     calculateLayoutDataStep3()
     calculateLayoutDataStep4(height - outsideGaps.height)
@@ -265,8 +265,7 @@ internal class GridImpl : Grid {
           val componentWidth = layoutData.getPaddedWidth(layoutCellData) + layoutCellData.scaledVisualPaddings.width
           val baseline: Int
           if (componentWidth >= 0) {
-            baseline = cell.constraints.componentHelper?.getBaseline(componentWidth, layoutCellData.preferredSize.height)
-                       ?: cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
+            baseline = cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
             // getBaseline changes preferredSize, at least for JLabel
             layoutCellData.preferredSize.height = cell.component.preferredSize.height
           }
@@ -286,7 +285,7 @@ internal class GridImpl : Grid {
           layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
           if (grid.layoutData.dimension.height == 1 && isSupportedBaseline(constraints)) {
             // Calculate baseline for grid
-            val gridBaselines = VerticalAlign.values()
+            val gridBaselines = VerticalAlign.entries
               .mapNotNull {
                 var result: Pair<VerticalAlign, RowBaselineData>? = null
                 if (it != VerticalAlign.FILL) {
@@ -524,9 +523,9 @@ private class LayoutData {
   /**
    * Extra gaps that guarantee no visual clippings (like focus rings).
    * Calculated for preferred size and this value is used for enlarged container as well.
-   * [GridLayout] takes into account [outsideGaps] for in following cases:
+   * [GridLayout] takes into account [outsideGaps] for in the following cases:
    * 1. Preferred size is increased when needed to avoid clipping
-   * 2. Layout content can be moved a little from left/top corner to avoid clipping
+   * 2. Layout content can be moved a little from the left/top corner to avoid clipping
    * 3. In parents that also use [GridLayout]: aligning by visual padding is corrected according [outsideGaps] together with insets,
    * so components in parent and this container are aligned together
    */

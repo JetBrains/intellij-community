@@ -41,7 +41,7 @@ class GridLayout : LayoutManager2 {
   }
 
   /**
-   * Creates sub grid in the specified cell
+   * Creates a sub grid in the specified cell
    */
   fun addLayoutSubGrid(constraints: Constraints): Grid {
     if (constraints.widthGroup != null) {
