@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.completion
 
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -10,6 +11,7 @@ import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import java.io.IOException
@@ -189,6 +191,21 @@ internal fun callExpressionElementWithLambdaPattern(blockName: String): PsiEleme
 internal fun callExpressionWithName(blockName: String): PsiElementPattern.Capture<KtCallExpression> = psiElement<KtCallExpression>()
     .withFirstChild(psiElement<KtNameReferenceExpression>().withText(blockName))
 
-internal fun useDependencyCompletionService() : Boolean {
+@ApiStatus.Internal
+fun removeDummySuffix(value: String?): String {
+    if (value == null) {
+        return ""
+    }
+    val index = value.indexOf(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
+    val result = if (index >= 0) {
+        value.take(index)
+    } else {
+        value
+    }
+    return result.trim()
+}
+
+@ApiStatus.Internal
+fun useDependencyCompletionService() : Boolean {
     return Registry.`is`("gradle.dependency.completion.service", true)
 }

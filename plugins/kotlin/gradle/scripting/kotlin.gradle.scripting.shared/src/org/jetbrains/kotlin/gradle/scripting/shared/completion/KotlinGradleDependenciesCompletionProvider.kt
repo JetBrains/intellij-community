@@ -6,9 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
@@ -59,7 +56,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
             // dependencies { implementation("juni<caret>") }
             positionElement.isSingleDependencyArgument(configurationNames + dependencyNotations) ->
-                suggestDependencyCompletions(result, parameters, StringInsertHandler, SimpleLookupStringProvider)
+                suggestDependencyCompletions(result, parameters, FullStringInsertHandler, SimpleLookupStringProvider)
 
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) ->
@@ -149,7 +146,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             itemFlow.collect { item ->
                 val lookupElement = LookupElementBuilder.create(item, item)
                     .withPresentableText(item)
-                    .withInsertHandler(StringInsertHandler)
+                    .withInsertHandler(FullStringInsertHandler)
                 lookupElement.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, Any())
                 result.addElement(lookupElement)
             }
@@ -157,19 +154,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     }
 
     private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
-
-    private fun removeDummySuffix(value: String?): String {
-        if (value == null) {
-            return ""
-        }
-        val index = value.indexOf(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
-        val result = if (index >= 0) {
-            value.take(index)
-        } else {
-            value
-        }
-        return result.trim()
-    }
 }
 
 private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
@@ -204,24 +188,6 @@ private object DependencyConfigurationInsertHandler : InsertHandler<LookupElemen
 
         val startOffset = getDependencyCompletionStartOffset(text, context.startOffset)
         context.document.deleteString(startOffset, context.startOffset)
-    }
-}
-
-private object StringInsertHandler : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        val result = item.getObject() as? String ?: return
-        // IDEA was so kind to have replaced part of the initial string for us,
-        // but we would like to replace the whole string
-        context.commitDocument()
-        val docManager = PsiDocumentManager.getInstance(context.project)
-        val psiFile = docManager.getPsiFile(context.document)!!
-        val element = psiFile.findElementAt(context.startOffset)!!
-
-        context.document.replaceString(
-            element.startOffset,
-            element.endOffset,
-            result
-        )
     }
 }
 
