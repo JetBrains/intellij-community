@@ -88,7 +88,11 @@ public class AnActionEvent implements PlaceProvider {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
                                             myModifiers, myActionManager);
-    event.setUpdateSession(myUpdateSession);
+    if (myPerformCoroutineScope != null) {
+      event.installCoroutineScope(myPerformCoroutineScope);
+    } else {
+      event.setUpdateSession(myUpdateSession);
+    }
     return event;
   }
 
