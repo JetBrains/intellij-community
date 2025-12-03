@@ -113,13 +113,8 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     //}
 
     buildNonBundledPlugins(
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = context.options.compressZipFiles,
-      buildPlatformLibJob = null /* buildPlatformLibJob */,
-      state = distState,
-      searchableOptionSet = searchableOptionSet,
-      descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
-      context = context,
+      pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null /* buildPlatformLibJob */, distState, searchableOptionSet, isUpdateFromSources = false,
+      distState.platformLayout.descriptorCacheContainer, context
     )
   }
 
@@ -483,13 +478,8 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         toPublish = true
       )
       buildNonBundledPlugins(
-        pluginsToPublish = pluginsToPublish,
-        compressPluginArchive = context.options.compressZipFiles,
-        buildPlatformLibJob = null,
-        state = distributionState,
-        searchableOptionSet = buildSearchableOptions(context),
-        descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
-        context = context
+        pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), isUpdateFromSources = false,
+        distributionState.platformLayout.descriptorCacheContainer, context
       )
       return@coroutineScope
     }

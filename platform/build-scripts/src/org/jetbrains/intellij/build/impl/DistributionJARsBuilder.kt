@@ -41,7 +41,7 @@ import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPlugins
 import org.jetbrains.intellij.build.impl.plugins.buildBundledPluginsForAllPlatforms
-import org.jetbrains.intellij.build.impl.plugins.doBuildNonBundledPlugins
+import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport
@@ -107,18 +107,10 @@ internal suspend fun buildDistribution(
     }
 
     val buildNonBundledPlugins = async(CoroutineName("build non-bundled plugins")) {
-      context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-        doBuildNonBundledPlugins(
-          isUpdateFromSources = isUpdateFromSources,
-          pluginsToPublish = state.pluginsToPublish,
-          compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
-          buildPlatformLibJob = buildPlatformJob,
-          state = state,
-          searchableOptionSet = searchableOptionSet,
-          descriptorCacheContainer = platformLayout.descriptorCacheContainer,
-          context = context,
-        )
-      } ?: emptyList()
+      val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
+      buildNonBundledPlugins(
+        state.pluginsToPublish, compressPluginArchive, buildPlatformLibJob, state, searchableOptionSet, isUpdateFromSources, platformLayout.descriptorCacheContainer, context
+      )
     }
 
     val bundledPluginItems = buildBundledPluginsForAllPlatforms(
