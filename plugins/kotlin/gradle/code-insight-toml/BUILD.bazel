@@ -27,6 +27,8 @@ jvm_library(
     "//plugins/gradle/java",
     "//plugins/toml",
     "//plugins/toml/core",
+    "//plugins/repository-search",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end
