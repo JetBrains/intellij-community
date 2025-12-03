@@ -132,7 +132,6 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
           // - after restart, the plugins are moved to proper directories ("installed") by the next line.
           // TODO get rid of this: plugins should be installed before restarting the IDE
           runEarlyActionScript()
-          runActionScript()
         }
       }
     }
@@ -329,19 +328,6 @@ private fun runEarlyActionScript() {
     val earlyScriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.EARLY_ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(earlyScriptFile)) {
       StartupActionScriptManager.executeEarlyActionScript()
-    }
-  }
-  catch (e: Throwable) {
-    StartupErrorReporter.pluginInstallationProblem(e)
-  }
-}
-
-/** action script file contains commands for plugin (un-)installation/updates; may contain third-party commands */
-private fun runActionScript() {
-  try {
-    val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
-    if (Files.isRegularFile(scriptFile)) {
-      StartupActionScriptManager.executeActionScript()
     }
   }
   catch (e: Throwable) {
