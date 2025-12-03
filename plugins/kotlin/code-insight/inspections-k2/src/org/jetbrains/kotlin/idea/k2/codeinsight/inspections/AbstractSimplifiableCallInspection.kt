@@ -213,14 +213,14 @@ private fun KtCallExpression.singleLambdaExpression(): KtLambdaExpression? {
     return (argument as? KtLambdaArgument)?.getLambdaExpression() ?: argument.getArgumentExpression() as? KtLambdaExpression
 }
 
-private fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression?.statements?.singleOrNull()
+internal fun KtLambdaExpression.singleStatement(): KtExpression? = bodyExpression?.statements?.singleOrNull()
 
-private fun KtLambdaExpression.singleLambdaParameterName(): String? {
+internal fun KtLambdaExpression.singleLambdaParameterName(): String? {
     val lambdaParameters = valueParameters
     return if (lambdaParameters.isNotEmpty()) lambdaParameters.singleOrNull()?.name else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 }
 
-private fun KtExpression.isNameReferenceTo(name: String): Boolean =
+internal fun KtExpression.isNameReferenceTo(name: String): Boolean =
     this is KtNameReferenceExpression && this.getReferencedName() == name
 
 private fun KtExpression.isNull(): Boolean =
