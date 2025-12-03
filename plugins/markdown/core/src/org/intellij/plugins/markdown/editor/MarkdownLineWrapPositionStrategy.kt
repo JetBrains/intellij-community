@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.GenericLineWrapPositionStrategy
 import com.intellij.openapi.project.Project
@@ -38,7 +39,9 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
                ?: return super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset,
                                                      allowToBeyondMaxPreferredOffset, isSoftWrap)
 
-    if (stopSet.any { PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, it, true) != null }) {
+    if (runReadAction {
+        stopSet.any { PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, it, true) != null }
+      }) {
       return -1
     }
 
