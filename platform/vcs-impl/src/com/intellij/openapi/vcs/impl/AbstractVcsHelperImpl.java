@@ -399,7 +399,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                                     @NotNull MergeProvider provider,
                                                     @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
-    RefreshVFsSynchronously.refreshVirtualFiles(files);
+    ApplicationManager.getApplication().runWriteAction(() -> RefreshVFsSynchronously.refreshVirtualFiles(files));
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     AppIcon.getInstance().requestAttention(myProject, true);
     fileMergeDialog.show();
