@@ -1,9 +1,7 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.starter.IdeInstance
-import com.intellij.tools.ide.util.common.logError
-import com.intellij.tools.ide.util.common.logOutput
-import kotlinx.coroutines.runBlocking
+import com.intellij.tools.ide.util.common.starterLogger
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
@@ -15,15 +13,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
  */
 class BackgroundLambdaCleanupAfterEach : AfterEachCallback {
   override fun afterEach(context: ExtensionContext) {
-    val run = IdeInstance.ideOrNull() ?: return
-    runBlocking {
-      try {
-        logOutput("Cleaning up Lambda test session(s) after test: ${context.displayName}")
-        run.cleanUp()
-      }
-      catch (t: Throwable) {
-        logError("BackgroundRunWithLambda.cleanUp failed after test: ${context.displayName}", t)
-      }
-    }
+    starterLogger<BackgroundLambdaCleanupAfterEach>().info("Cleaning up Lambda test session(s) after test: ${context.displayName}")
+    IdeInstance.cleanup()
   }
 }
