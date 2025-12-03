@@ -141,6 +141,11 @@ internal object SystemHealthMonitor {
 
     LOG.info("${CpuArch.CURRENT} appears to be emulated")
     if (CpuArch.isIntel64()) {
+      // Android Studio (b/464644772, b/457793930): we don't offer ARM builds for Windows/Linux.
+      if (!SystemInfo.isMac) {
+        LOG.warn("Suppressing notification about x86-64 emulation on ARM for Android Studio")
+        return
+      }
       val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
         NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.arch.mismatch.download")) {
           BrowserUtil.browse(downloadPageUrl.toExternalForm())
