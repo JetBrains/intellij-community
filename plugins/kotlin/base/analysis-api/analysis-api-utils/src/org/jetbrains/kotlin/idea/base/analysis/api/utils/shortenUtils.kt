@@ -215,6 +215,17 @@ private inline infix fun <A, B, C> ((A) -> B).andThen(
     crossinline function: (B) -> C,
 ): (A) -> C = { function(this(it)) }
 
+/**
+ * Collects possible references to shorten.
+ *
+ * Compared to [collectPossibleReferenceShortenings], uses [defaultClassShortenStrategyForIde] and [defaultCallableShortenStrategyForIde]
+ * strategies for shortening by default, which respect Kotlin Code Style Settings from the IDE.
+ *
+ * In the IDE, this function should be preferred to [collectPossibleReferenceShortenings] due to better defaults.
+ *
+ * Overall, consider using more simple and straighforward [shortenReferences] functions,
+ * or [org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility] if you need to support both K1 and K2 Modes.
+ */
 context(_: KaSession)
 @ApiStatus.Internal
 fun collectPossibleReferenceShorteningsForIde(
