@@ -325,6 +325,10 @@ private fun installPluginUpdates() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
     // (referencing a string constant is OK - it is inlined by the compiler)
+    val earlyScriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.EARLY_ACTION_SCRIPT_FILE)
+    if (Files.isRegularFile(earlyScriptFile)) {
+      StartupActionScriptManager.executeEarlyActionScript()
+    }
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
       StartupActionScriptManager.executeActionScript()
