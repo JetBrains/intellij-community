@@ -30,12 +30,13 @@ fun JDialog.toggleMaximized() {
 /**
  * Checks if the dialog can be maximized.
  *
- * It's possible to maximize a dialog if it's resizable and not currently maximized.
+ * It's possible to maximize a dialog if it's resizable, showing, has a root pane and is not currently maximized.
  *
  * If this function returns `true`, then the dialog can be maximized using [maximize] or [toggleMaximized].
  */
 fun JDialog.canBeMaximized(): Boolean {
-  val rootPane = if (isResizable) getRootPane() else null
+  if (!isShowing || !isResizable) return false
+  val rootPane = getRootPane()
   if (rootPane == null) return false
   return !almostEquals(ScreenUtil.getScreenRectangle(this), bounds)
 }
@@ -58,7 +59,7 @@ fun JDialog.maximize() {
 /**
  * Checks if the dialog can be normalized.
  *
- * It's possible to normalize a dialog if it's resizable, was previously maximized using [maximize] or [toggleMaximized]
+ * It's possible to normalize a dialog if it's resizable, showing, has a root pane, was previously maximized using [maximize] or [toggleMaximized]
  * and it's still maximized.
  *
  * Note that if the dialog was maximized using some other means, it's impossible to normalize it this way,
@@ -68,7 +69,8 @@ fun JDialog.maximize() {
  * If this function returns `true`, then the dialog can be normalized using [normalize] or [toggleMaximized].
  */
 fun JDialog.canBeNormalized(): Boolean {
-  val rootPane = if (isResizable) getRootPane() else null
+  if (!isShowing || !isResizable) return false
+  val rootPane = getRootPane()
   if (rootPane == null) return false
   val screenRectangle = ScreenUtil.getScreenRectangle(this)
   return almostEquals(bounds, screenRectangle) &&
@@ -80,6 +82,8 @@ fun JDialog.canBeNormalized(): Boolean {
  *
  * The dialog's size and position will be restored to the values that were stored when
  * [maximize] or [toggleMaximized] was called to maximize the dialog.
+ * If those bounds aren't within a screen, they will be made to fit the screen
+ * (in case the screen configuration has changed, for example).
  *
  * See [canBeNormalized] for the exact conditions when it's possible to normalize a dialog.
  */
