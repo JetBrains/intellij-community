@@ -21,8 +21,8 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/http-client",
     "//platform/util",
-    "@lib//:netty-buffer",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
   ]

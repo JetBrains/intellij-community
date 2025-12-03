@@ -15,7 +15,7 @@ jvm_library(
   resources = [":built-in-help_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "@lib//:lucene-codecs",
     "@lib//:lucene-memory",
     "@lib//:lucene-queries",
@@ -36,7 +36,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/built-in-server:builtInServer-impl",
     "//libraries/lucene.common",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "//libraries/jackson/jackson",

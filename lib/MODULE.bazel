@@ -8386,6 +8386,20 @@ http_file(
 )
 
 http_file(
+  name = "io_netty-netty-codec-compression-4_2_0_RC2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2.jar",
+  sha256 = "7251646a8ea8d56a2415311de6040159479ac0e35de36dab70b667ed899ac931",
+  downloaded_file_path = "netty-codec-compression-4.2.0.RC2.jar"
+)
+
+http_file(
+  name = "io_netty-netty-codec-compression-4_2_0_RC2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2-sources.jar",
+  sha256 = "e304b486132cc49a02ac5110d6b6b9a5de30483fbf4cc6ea768ec3690dfc8496",
+  downloaded_file_path = "netty-codec-compression-4.2.0.RC2-sources.jar"
+)
+
+http_file(
   name = "com_opencsv-opencsv-5_10_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/opencsv/opencsv/5.10/opencsv-5.10.jar",
   sha256 = "e7927eb9a6d4f8a348a520907dbb08da6283a4448abb9bd9ef2f950d7bb950b0",
@@ -12072,20 +12086,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/mockito/kotlin/mockito-kotlin/6.0.0/mockito-kotlin-6.0.0-sources.jar",
   sha256 = "766d88d3fb0d2abc707f57ca6e15a5e337eff7e428631cd1c639f1b736b2c78f",
   downloaded_file_path = "mockito-kotlin-6.0.0-sources.jar"
-)
-
-http_file(
-  name = "io_netty-netty-codec-compression-4_2_0_RC2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2.jar",
-  sha256 = "7251646a8ea8d56a2415311de6040159479ac0e35de36dab70b667ed899ac931",
-  downloaded_file_path = "netty-codec-compression-4.2.0.RC2.jar"
-)
-
-http_file(
-  name = "io_netty-netty-codec-compression-4_2_0_RC2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2-sources.jar",
-  sha256 = "e304b486132cc49a02ac5110d6b6b9a5de30483fbf4cc6ea768ec3690dfc8496",
-  downloaded_file_path = "netty-codec-compression-4.2.0.RC2-sources.jar"
 )
 
 http_file(

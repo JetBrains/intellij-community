@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//platform/util-ex",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",

@@ -33,8 +33,8 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.robot.server.core" type="repository">
         <properties maven-id="com.intellij.remoterobot:robot-server-core:0.11.19">

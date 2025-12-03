@@ -5554,6 +5554,13 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "libraries-netty-codec-compression-netty-codec-compression",
+  jar = "@io_netty-netty-codec-compression-4_2_0_RC2_http//file",
+  source_jar = "@io_netty-netty-codec-compression-4_2_0_RC2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "libraries-opencsv-opencsv",
   exports = [
@@ -8102,13 +8109,6 @@ java_library(
     ":io_netty-netty-buffer-4_2_0_RC2_http_import",
     ":io_netty-netty-common-4_2_0_RC2_http_import",
   ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "netty-codec-compression",
-  jar = "@io_netty-netty-codec-compression-4_2_0_RC2_http//file",
-  source_jar = "@io_netty-netty-codec-compression-4_2_0_RC2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

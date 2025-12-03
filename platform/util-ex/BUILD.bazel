@@ -21,7 +21,7 @@ jvm_library(
     "//libraries/jcip",
     "//libraries/kotlinx/coroutines/core",
     "//libraries/fastutil",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//libraries/caffeine",
     "//platform/util/base",
     "//platform/util-class-loader:util-classLoader",

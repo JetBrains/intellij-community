@@ -12,6 +12,7 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
     <module name="intellij.libraries.mvstore"/>
+    <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
   <!-- end editor-fold -->

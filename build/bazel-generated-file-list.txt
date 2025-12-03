@@ -456,6 +456,9 @@ libraries/microba
 libraries/miglayout-swing
 libraries/mockito
 libraries/mvstore
+libraries/netty/buffer
+libraries/netty/codec-compression
+libraries/netty/codec-http
 libraries/opencsv
 libraries/oro-matcher
 libraries/plexus-utils
