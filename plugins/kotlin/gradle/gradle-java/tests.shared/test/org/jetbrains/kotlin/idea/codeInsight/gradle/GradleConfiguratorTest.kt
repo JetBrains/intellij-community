@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigu
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
@@ -50,7 +50,8 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     private lateinit var foojayPropertyMap: Map<String, String>
     override fun setUp() {
         super.setUp()
-        foojayPropertyMap = mapOf("FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION.text)
+        val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
+        foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
 
     @Test

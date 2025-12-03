@@ -11,6 +11,7 @@ import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRend
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.equalsTo
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.COROUTINES_ARTIFACT_ID
@@ -63,6 +65,10 @@ private const val KOTLIN_GRADLE_PLUGIN_ID = "org.jetbrains.kotlin:kotlin-gradle-
 private val MIN_GRADLE_VERSION_BUILD_SRC = GradleVersion.version("8.2")
 
 internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
+
+    companion object {
+        private val LOG = Logger.getInstance(GradleKotlinNewProjectWizard::class.java)
+    }
 
     override val name = GRADLE
 
@@ -312,7 +318,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             setupCommonProjectAssets()
 
             if (parent.shouldGenerateMultipleModules) {
-                setupMultiModuleProjectAssets(project)
+                setupMultiModuleProjectAssets(project, parent.gradleVersionToUse)
             } else {
                 setupSingleModuleProjectAssets(project)
             }
@@ -366,18 +372,25 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
 
         // This is currently only supported for generating new projects!
-        private fun setupMultiModuleProjectAssets(project: Project) {
+        private fun setupMultiModuleProjectAssets(project: Project, gradleVersion: GradleVersion) {
             assert(context.isCreatingNewProject)
             val librariesVersionStore = KotlinLibrariesCompatibilityStore.getInstance()
             val datetimeVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, DATETIME_ARTIFACT_ID) ?: ""
             val coroutinesVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, COROUTINES_ARTIFACT_ID) ?: ""
             val serializationJsonVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, SERIALIZATION_JSON_ARTIFACT_ID) ?: ""
 
+            val gradleToPluginsCompatibilityStore = GradleToPluginsCompatibilityStore.getInstance()
+            val foojayVersion =
+                gradleToPluginsCompatibilityStore.getFoojayVersion(gradleVersion)
+                    ?: GradleToPluginsCompatibilityStore.getDefaultFoojayVersion().also {
+                        LOG.error("Unable to get Foojay version for Gradle $gradleVersion, getting a default one")
+                    }
+
             val templateParameters = mapOf(
                 "PROJECT_NAME" to parent.name,
                 "PACKAGE_NAME" to parent.groupId,
                 "KOTLIN_VERSION" to Versions.KOTLIN,
-                "FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION,
+                "FOOJAY_VERSION" to foojayVersion,
                 "JVM_VERSION" to (parent.selectedJdkJvmTarget?.toString() ?: "21"),
                 "KOTLINX_DATETIME_VERSION" to datetimeVersion,
                 "KOTLINX_SERIALIZATION_JSON_VERSION" to serializationJsonVersion,

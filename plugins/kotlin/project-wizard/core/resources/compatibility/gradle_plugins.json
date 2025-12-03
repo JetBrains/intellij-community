@@ -1,0 +1,20 @@
+[
+    {
+        "ideVersion": "2025.3.1 EAP-INF",
+        "plugins": [
+            {
+                "id": "org.gradle.toolchains.foojay-resolver-convention",
+                "compatibility": [
+                    {
+                        "gradle": "9.0-INF",
+                        "plugin": "1.0.0"
+                    },
+                    {
+                        "gradle": "7.6-9.0",
+                        "plugin": "0.10.0"
+                    }
+                ]
+            }
+        ]
+    }
+]

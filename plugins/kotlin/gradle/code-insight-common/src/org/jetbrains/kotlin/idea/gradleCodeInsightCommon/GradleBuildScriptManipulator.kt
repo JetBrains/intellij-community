@@ -18,9 +18,11 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 
-val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS: Set<String> = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
+val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS: Set<String> =
+    setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
     @ApiStatus.Internal get
 
 val FOOJAY_RESOLVER_NAME: String = "org.gradle.toolchains.foojay-resolver"
@@ -140,8 +142,10 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         containingFile?.let {
             changedFiles.storeOriginalFileContent(it)
         }
+
+        val rawGradleVersion = (gradleVersion as? GradleVersionProvider.OpaqueGradleVersion)?.raw ?: return
         val useToolchain =
-            gradleVersion >= GradleVersionProvider.getVersion(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
+            isFoojayPluginSupported(rawGradleVersion)
                     && kotlinVersion.compare("1.5.30") >= 0 && jvmTargetIsAtLeast(jvmTarget, minimum = 8)
 
         val targetVersion = getJvmTargetVersion(jvmTarget, kotlinVersion, useToolchain)
@@ -155,7 +159,9 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
             } else {
                 addKotlinExtendedDslToolchain(targetVersion)
             }
-            addFoojayPlugin(changedFiles)
+            val gradleToPluginsCompatibilityStore = GradleToPluginsCompatibilityStore.getInstance()
+            val foojayVersion = gradleToPluginsCompatibilityStore.getFoojayVersion(rawGradleVersion) ?: return
+            addFoojayPlugin(changedFiles, foojayVersion)
         } else {
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = false, kotlinVersion)
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = true, kotlinVersion)
@@ -196,9 +202,9 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun addResolutionStrategy(pluginId: String)
 
-    fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles)
+    fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles, foojayVersion: String)
 
-    fun addFoojayPlugin(settingsFile: PsiFile)
+    fun addFoojayPlugin(settingsFile: PsiFile, foojayVersion: String)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {

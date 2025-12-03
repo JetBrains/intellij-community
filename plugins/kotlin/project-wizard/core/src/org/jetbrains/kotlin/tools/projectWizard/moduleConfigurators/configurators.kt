@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 
 interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
     companion object : ModuleConfiguratorSettings() {
@@ -99,10 +99,8 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
                 GradlePlugin.gradleVersion.settingValue.text
             }
         }
-
-        val minGradleFoojayVersion = GradleVersion.version(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
         val currentGradleVersion = GradleVersion.version(currentGradleVersionString)
-        return currentGradleVersion >= minGradleFoojayVersion
+        return isFoojayPluginSupported(currentGradleVersion)
     }
 }
 

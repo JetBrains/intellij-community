@@ -9,8 +9,6 @@
         "gradleAndroidVersion": "8.1.0",
 
         "minKotlinFoojayVersion": "1.5.30",
-        "minGradleFoojayVersion": "7.6",
-        "foojayVersion": "0.8.0",
 
         "failsafeVersion": "2.22.2",
         "surefireVersion": "2.22.2",
