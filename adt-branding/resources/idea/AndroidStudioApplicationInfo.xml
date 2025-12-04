@@ -29,6 +29,7 @@
   <essential-plugin>com.android.tools.design</essential-plugin>
   <!-- Workaround for https://youtrack.jetbrains.com/issue/IJPL-6075: mark all dependencies of essential plugins as essential. -->
   <essential-plugin>com.android.tools.gradle.dcl</essential-plugin>
+  <essential-plugin>com.android.tools.gradle.dsl</essential-plugin>
   <essential-plugin>com.android.tools.idea.smali</essential-plugin>
   <essential-plugin>com.intellij.gradle</essential-plugin>
   <essential-plugin>com.intellij.modules.json</essential-plugin>
