@@ -7,7 +7,6 @@ import com.charleskorn.kaml.YamlConfiguration
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 private val yaml = Yaml(
@@ -36,9 +35,4 @@ fun deserializeModuleList(data: String): List<String> {
   else {
     return yaml.decodeFromString(ListSerializer(String.serializer()), data)
   }
-}
-
-@Internal
-fun serializeModuleList(list: List<String>): String {
-  return yaml.encodeToString(ListSerializer(String.serializer()), list)
 }

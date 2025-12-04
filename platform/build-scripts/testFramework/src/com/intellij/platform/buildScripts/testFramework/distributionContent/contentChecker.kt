@@ -6,9 +6,7 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.ModuleEntry
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
-import com.intellij.platform.distributionContent.testFramework.deserializeModuleList
 import com.intellij.platform.distributionContent.testFramework.serializeContentEntries
-import com.intellij.platform.distributionContent.testFramework.serializeModuleList
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import kotlinx.serialization.SerializationException
 import org.assertj.core.util.diff.DiffUtils
@@ -16,8 +14,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.readText
 
 private const val ADDITIONAL_INSTRUCTIONS = """
 Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.
@@ -105,46 +101,6 @@ fun checkThatContentIsNotChanged(
     actualLines = actualString.lines(),
     suggestedReviewer = suggestedReviewer,
     requiresApproval = isReviewRequired,
-  )
-
-  throw FileComparisonFailedError(resultMessage, expectedString, actualString, expectedFile.toString())
-}
-
-
-@ApiStatus.Internal
-fun checkThatModuleListIsNotChanged(
-  actual: List<String>,
-  expectedFile: Path,
-  projectHome: Path,
-  suggestedReviewer: String? = null,
-) {
-  val expected = try {
-    deserializeModuleList(expectedFile.readText())
-  }
-  catch (_: SerializationException) {
-    emptyList()
-  }
-  catch (_: NoSuchFileException) {
-    expectedFile.createParentDirectories()
-    Files.writeString(expectedFile, serializeModuleList(emptyList()))
-    emptyList()
-  }
-
-  if (actual == expected) {
-    return
-  }
-
-  val expectedString = serializeModuleList(expected)
-  val actualString = serializeModuleList(actual)
-
-  val fileName = projectHome.relativize(expectedFile).toString()
-
-  val resultMessage = buildDistributionChangedMessage(
-    fileName = fileName,
-    expectedLines = expectedString.lines(),
-    actualLines = actualString.lines(),
-    suggestedReviewer = suggestedReviewer,
-    requiresApproval = true,
   )
 
   throw FileComparisonFailedError(resultMessage, expectedString, actualString, expectedFile.toString())
