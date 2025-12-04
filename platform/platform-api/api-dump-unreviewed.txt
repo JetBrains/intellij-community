@@ -7170,7 +7170,6 @@ c:com.intellij.ui.components.labels.LinkLabel
 - isVisited():Z
 - p:onSetActive(Z):V
 - p:paintComponent(java.awt.Graphics):V
-- pressed(java.awt.event.MouseEvent):V
 - removeNotify():V
 - setHoveringIcon(javax.swing.Icon):V
 - setIcon(javax.swing.Icon):V
