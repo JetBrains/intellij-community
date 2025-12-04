@@ -319,8 +319,8 @@ private fun runMarketplaceCommandsInActionScript() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
     // (referencing a string constant is OK - it is inlined by the compiler)
-    val earlyScriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
-    if (Files.isRegularFile(earlyScriptFile)) {
+    val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
+    if (Files.isRegularFile(scriptFile)) {
       StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
     }
   }
