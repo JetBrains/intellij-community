@@ -9,13 +9,15 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
@@ -326,13 +328,28 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     return myVirtualMachine.mirrorOf(s);
   }
 
-  public StringReference mirrorOfStringLiteral(String s, ThrowableComputable<StringReference, EvaluateException> generator)
+  @ApiStatus.Internal
+  public StringReference mirrorOfStringLiteral(String s, EvaluationContextImpl context)
     throws EvaluateException {
     StringReference reference = myStringLiteralCache.get(s);
-    if (reference != null && !reference.isCollected()) {
-      return reference;
+    if (reference != null) {
+      try {
+        context.keep(reference);
+        return reference;
+      }
+      catch (ObjectCollectedException ignored) {
+      }
     }
-    reference = generator.compute();
+
+    reference = DebuggerUtilsEx.mirrorOfString(s, context);
+
+    if (Registry.is("debugger.intern.string.literals") && versionHigher("1.7")) {
+      Method internMethod = DebuggerUtils.findMethod(reference.referenceType(), "intern", "()Ljava/lang/String;");
+      if (internMethod != null) {
+        reference = (StringReference)context.getDebugProcess().invokeMethod(context, reference, internMethod, Collections.emptyList());
+      }
+    }
+
     myStringLiteralCache.put(s, reference);
     return reference;
   }
