@@ -164,7 +164,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
 
-  private static List<Editor> getActiveEditors(@NotNull Document document) {
+  private static @NotNull List<Editor> getActiveEditors(@NotNull Document document) {
     Application application = ApplicationManager.getApplication();
     // ignore caret placing when exiting
     if (application.isDisposed()) {
