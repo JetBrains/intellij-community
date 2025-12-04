@@ -3,7 +3,7 @@ package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.compiler.CompilerTestUtil
+import com.intellij.java.testFramework.backend.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*

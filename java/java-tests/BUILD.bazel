@@ -166,6 +166,7 @@ jvm_library(
     "//platform/execution",
     "@lib//:jet_check",
     "//platform/forms_rt:java-guiForms-rt",
+    "//java/testFramework/backend",
   ],
   exports = [
     "//plugins/java-i18n",

@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.java.testFramework.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.java.testFramework.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "//java/compiler/impl",
+    "//java/java-impl:impl",
+    "//platform/core-api:core",
+    "//platform/eel",
+    "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/testFramework/common",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.java.testFramework.backend` end
