@@ -2,7 +2,7 @@
 {
   generate=[parser-api="syntax"]
   parserClass = 'com.intellij.json.syntax.JsonSyntaxParser'
-  parserUtilClass = "com.intellij.json.psi.JsonParserUtil"
+  parserUtilClass = "com.intellij.json.syntax.JsonSyntaxParserUtil"
   psiPackage = 'com.intellij.json.psi'
   psiImplPackage = 'com.intellij.json.psi.impl'
 
@@ -68,7 +68,7 @@
 // Empty file is also allowed
 json ::= value*
 
-object ::= '{' object_element* '}' {
+object ::= '{' <<consumeObjectContentIfTooDeep>> object_element* '}' {
   pin=1
   methods=[
     findProperty
@@ -101,7 +101,7 @@ property ::= property_name (':' property_value) {
 
 private property_name ::= literal | reference_expression
 
-array ::= '[' array_element* ']' {
+array ::= '[' <<consumeArrayContentIfTooDeep>> array_element* ']' {
   methods=[
     getPresentation
   ]

@@ -198,6 +198,7 @@
 - f:get_UPPER_-4l0SqHU():I
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):V
+- f:getMaxRecursionDepth():I
 - f:getParserUserState():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
 - f:getSyntaxBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - f:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V

@@ -30,7 +30,7 @@ object JsonSyntaxParser {
   )
 
   /* ********************************************************** */
-  // '[' array_element* ']'
+  // '[' <<consumeArrayContentIfTooDeep>> array_element* ']'
   fun array(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "array")) return false
     if (!s.nextTokenIs(JsonSyntaxElementTypes.L_BRACKET)) return false
@@ -39,19 +39,20 @@ object JsonSyntaxParser {
     val m: Marker = s.enter_section_(l, Modifiers._NONE_, JsonSyntaxElementTypes.ARRAY, null)
     r = s.consumeToken(JsonSyntaxElementTypes.L_BRACKET)
     p = r // pin = 1
-    r = r && s.report_error_(array_1(s, l + 1))
+    r = r && s.report_error_(consumeArrayContentIfTooDeep(s, l + 1))
+    r = p && s.report_error_(array_2(s, l + 1)) && r
     r = p && s.consumeToken(JsonSyntaxElementTypes.R_BRACKET) && r
     s.exit_section_(l, m, r, p, null)
     return r || p
   }
 
   // array_element*
-  private fun array_1(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
-    if (!s.recursion_guard_(l, "array_1")) return false
+  private fun array_2(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
+    if (!s.recursion_guard_(l, "array_2")) return false
     while (true) {
       val c: Int = s.current_position_()
       if (!array_element(s, l + 1)) break
-      if (!s.empty_element_parsed_guard_("array_1", c)) break
+      if (!s.empty_element_parsed_guard_("array_2", c)) break
     }
     return true
   }
@@ -195,7 +196,7 @@ object JsonSyntaxParser {
   }
 
   /* ********************************************************** */
-  // '{' object_element* '}'
+  // '{' <<consumeObjectContentIfTooDeep>> object_element* '}'
   fun object__(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "object__")) return false
     if (!s.nextTokenIs(JsonSyntaxElementTypes.L_CURLY)) return false
@@ -204,19 +205,20 @@ object JsonSyntaxParser {
     val m: Marker = s.enter_section_(l, Modifiers._NONE_, JsonSyntaxElementTypes.OBJECT, null)
     r = s.consumeToken(JsonSyntaxElementTypes.L_CURLY)
     p = r // pin = 1
-    r = r && s.report_error_(object_1(s, l + 1))
+    r = r && s.report_error_(consumeObjectContentIfTooDeep(s, l + 1))
+    r = p && s.report_error_(object_2(s, l + 1)) && r
     r = p && s.consumeToken(JsonSyntaxElementTypes.R_CURLY) && r
     s.exit_section_(l, m, r, p, null)
     return r || p
   }
 
   // object_element*
-  private fun object_1(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
-    if (!s.recursion_guard_(l, "object_1")) return false
+  private fun object_2(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
+    if (!s.recursion_guard_(l, "object_2")) return false
     while (true) {
       val c: Int = s.current_position_()
       if (!object_element(s, l + 1)) break
-      if (!s.empty_element_parsed_guard_("object_1", c)) break
+      if (!s.empty_element_parsed_guard_("object_2", c)) break
     }
     return true
   }
