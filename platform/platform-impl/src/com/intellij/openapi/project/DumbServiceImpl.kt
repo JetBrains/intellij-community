@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.InternalThreading
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -36,6 +37,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -603,6 +605,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       catch (_: InterruptedException) {
       }
 
+      if (EDT.isCurrentThreadEdt()) {
+        // this code can be called on EDT in tests during disposa.
+        @Suppress("TestOnlyProblems")
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          UIUtil.dispatchAllInvocationEvents()
+        }
+      }
       ProgressManager.checkCanceled()
       if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) {
         return false

@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -504,7 +505,9 @@ open class ConsoleViewImpl protected constructor(
         }
         catch (_: TimeoutException) {
         }
-        EDT.dispatchAllInvocationEvents()
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+          EDT.dispatchAllInvocationEvents()
+        }
       }
     }
     catch (e: InterruptedException) {
