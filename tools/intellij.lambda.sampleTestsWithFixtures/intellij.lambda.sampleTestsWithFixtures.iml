@@ -28,8 +28,8 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="rd-framework" level="project" />
-    <orderEntry type="library" scope="TEST" name="rd-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />

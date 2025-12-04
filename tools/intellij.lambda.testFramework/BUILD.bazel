@@ -54,8 +54,8 @@ jvm_library(
     "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
-    "@lib//:rd-framework",
-    "@lib//:rd-core",
+    "//libraries/rd/framework",
+    "//libraries/rd/core",
   ]
 )
 ### auto-generated section `build intellij.lambda.testFramework` end

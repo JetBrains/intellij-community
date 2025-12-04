@@ -462,7 +462,10 @@ libraries/oro-matcher
 libraries/plexus-utils
 libraries/proxy-vole
 libraries/pty4j
-libraries/rd-text
+libraries/rd/core
+libraries/rd/framework
+libraries/rd/swing
+libraries/rd/text
 libraries/rhino
 libraries/skiko
 libraries/snakeyaml

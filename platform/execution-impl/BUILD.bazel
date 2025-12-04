@@ -60,7 +60,7 @@ jvm_library(
     "//platform/ijent",
     "//platform/ijent/impl",
     "//platform/forms_rt:java-guiForms-rt",
-    "@lib//:rd-core",
+    "//libraries/rd/core",
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
     "//platform/eel-provider",

@@ -156,6 +156,7 @@ jvm_library(
     "//platform/platform-impl/recentProjects",
     "//platform/runtime/product",
     "//platform/execution",
+    "//libraries/rd/core",
     "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
@@ -326,6 +327,7 @@ jvm_library(
     "//platform/platform-impl/recentProjects",
     "//platform/runtime/product",
     "//platform/execution",
+    "//libraries/rd/core",
     "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [

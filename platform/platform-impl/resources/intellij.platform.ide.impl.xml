@@ -36,6 +36,7 @@
     <module name="intellij.libraries.miglayout.swing"/>
     <module name="intellij.libraries.oro.matcher"/>
     <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.swingx"/>
     <module name="intellij.libraries.winp"/>

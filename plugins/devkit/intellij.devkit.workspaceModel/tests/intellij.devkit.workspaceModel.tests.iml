@@ -35,8 +35,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
-    <orderEntry type="library" name="rd-core" level="project" />
-    <orderEntry type="library" name="rd-framework" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.framework" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
   </component>

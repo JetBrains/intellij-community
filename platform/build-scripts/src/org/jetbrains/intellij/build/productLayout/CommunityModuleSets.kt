@@ -155,6 +155,9 @@ object CommunityModuleSets  {
     embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")
 
+    embeddedModule("intellij.libraries.rd.core")
+    embeddedModule("intellij.libraries.rd.framework")
+    embeddedModule("intellij.libraries.rd.swing")
     embeddedModule("intellij.libraries.rd.text")
   }
 

@@ -124,6 +124,9 @@
     <module name="intellij.libraries.sshj" loading="embedded"/>
     <module name="intellij.libraries.swingx" loading="embedded"/>
     <module name="intellij.libraries.winp" loading="embedded"/>
+    <module name="intellij.libraries.rd.core" loading="embedded"/>
+    <module name="intellij.libraries.rd.framework" loading="embedded"/>
+    <module name="intellij.libraries.rd.swing" loading="embedded"/>
     <module name="intellij.libraries.rd.text" loading="embedded"/>
     <!-- </editor-fold> -->
 

@@ -68,8 +68,8 @@ jvm_library(
     "//libraries/junit5-launcher",
     "//libraries/junit5-params",
     "//libraries/junit5-pioneer",
-    "@lib//:rd-framework",
-    "@lib//:rd-core",
+    "//libraries/rd/framework",
+    "//libraries/rd/core",
   ]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithPlugin` end
