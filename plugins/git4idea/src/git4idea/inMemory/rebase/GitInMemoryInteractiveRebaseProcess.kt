@@ -10,6 +10,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
+import git4idea.config.GitVersionSpecialty
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.MergeConflictException
@@ -166,6 +167,9 @@ internal suspend fun performInMemoryRebase(
   model: GitRebaseTodoModel<out GitRebaseEntryWithDetails>,
   notifySuccess: Boolean = true,
 ): GitCommitEditingOperationResult {
+  if (!isInMemoryRebaseSupported(repository)) {
+    return GitCommitEditingOperationResult.Incomplete
+  }
   val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
 
   val rebaseData = createRebaseData(model, entries, repository, showFailureNotification)
@@ -190,6 +194,10 @@ internal suspend fun performInMemoryRebase(
     GitOperationsCollector.endInMemoryInteractiveRebase(rebaseActivity, InMemoryRebaseResult.ERROR)
   }
   return operationResult
+}
+
+private fun isInMemoryRebaseSupported(repository: GitRepository): Boolean {
+  return GitVersionSpecialty.MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED.existsIn(repository)
 }
 
 private fun createRebaseData(

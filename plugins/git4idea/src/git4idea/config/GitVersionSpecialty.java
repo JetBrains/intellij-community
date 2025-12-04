@@ -335,6 +335,16 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 45, 0, 0));
     }
+  },
+
+  /**
+   * Option "--merge-base=" for git merge-tree command
+   */
+  MERGE_TREE_MERGE_BASE_OPTION_SUPPORTED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 40, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
