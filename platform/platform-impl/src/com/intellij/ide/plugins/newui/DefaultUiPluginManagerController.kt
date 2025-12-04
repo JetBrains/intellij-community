@@ -129,9 +129,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     installSource: FUSEventSource?,
     modalityState: ModalityState?,
     pluginEnabler: PluginEnabler?,
-    customRepoPlugins: List<PluginUiModel>,
+    customRepoPlugins: List<PluginUiModel>?,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
+    val customPlugins = customRepoPlugins ?: CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList()
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
     val context = getContextElement(modalityState)
     return withContext(context) {
@@ -209,8 +210,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                         session.needRestart
         )
 
-        return@withContext performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customRepoPlugins)
-
+        return@withContext performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins)
       }
     }
   }
@@ -223,9 +223,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     pluginEnabler: PluginEnabler?,
     modalityState: ModalityState?,
     parentComponent: JComponent?,
-    customRepoPlugins: List<PluginUiModel>,
+    customRepoPlugins: List<PluginUiModel>?,
   ): InstallPluginResult {
     val session = findSession(sessionId) ?: return InstallPluginResult.FAILED
+    val customPlugins = customRepoPlugins ?: CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList()
     val pluginEnabler = pluginEnabler ?: SessionStatePluginEnabler(session)
     val installDescriptor = session.installsInProgress.remove(pluginId)
     val updateDescriptor = session.updatesInProgress.remove(pluginId)
@@ -247,7 +248,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
                                                     session.needRestart
     )
 
-    return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customRepoPlugins)
+    return performInstallOperation(installPluginRequest, parentComponent, modalityState, pluginEnabler, customPlugins)
   }
 
   private suspend fun loadDetails(descriptor: PluginUiModel): PluginUiModel? {
