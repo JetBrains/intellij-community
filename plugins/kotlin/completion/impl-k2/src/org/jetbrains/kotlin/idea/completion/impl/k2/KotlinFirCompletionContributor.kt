@@ -13,6 +13,8 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionRunner
+import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionRunnerResult
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.Matches
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -102,7 +105,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         completionSetupEvent.commit()
 
-        val addedResults = CompletionEvent().timeEvent {
+        // First run regular completion
+        val completionResult = CompletionEvent().timeEvent {
             Completions.complete(
                 parameters = parameters,
                 positionContext = positionContext,
@@ -110,14 +114,47 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
             )
         }
 
+        val addedElementsThroughChainCompletion = runChainCompletionIfNecessary(
+            completionResult = completionResult,
+            positionContext = positionContext,
+            resultSet = resultSet,
+            parameters = parameters
+        )
+
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.
-        if (!addedResults && parameters.invocationCount == 1) {
+        if (completionResult.addedElements == 0 && !addedElementsThroughChainCompletion && parameters.invocationCount == 1) {
             val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
             CompletionEvent(isRerun = true).timeEvent {
                 Completions.complete(newParameters, positionContext, resultSet)
             }
         }
+    }
+
+    /**
+     * Runs chain completion if
+     * - Chain completion is enabled
+     * - The position is a context where chain completion can yield results (i.e. a [KotlinNameReferencePositionContext])
+     * - The [completionResult] has some contributors that registered a chain completion contributor
+     *
+     * Returns true if any elements were added by chain completion, false otherwise.
+     */
+    private fun runChainCompletionIfNecessary(
+        completionResult: K2CompletionRunnerResult,
+        positionContext: KotlinRawPositionContext,
+        resultSet: CompletionResultSet,
+        parameters: KotlinFirCompletionParameters,
+    ): Boolean {
+        if (completionResult.registeredChainContributors.isEmpty()) return false
+        if (positionContext !is KotlinNameReferencePositionContext) return false
+        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return false
+
+        return K2CompletionRunner.runChainCompletion(
+            originalPositionContext = positionContext,
+            completionResultSet = resultSet,
+            parameters = parameters,
+            chainCompletionContributors = completionResult.registeredChainContributors,
+        )
     }
 
     private fun registerRestartCompletion(

@@ -80,15 +80,19 @@ internal interface K2CompletionRunner {
             }
         }
 
+        /**
+         * Runs chain completion, returning true if any new results were added by chain completion.
+         */
         @OptIn(KaImplementationDetail::class)
         fun runChainCompletion(
             originalPositionContext: KotlinNameReferencePositionContext,
             completionResultSet: CompletionResultSet,
             parameters: KotlinFirCompletionParameters,
             chainCompletionContributors: List<K2ChainCompletionContributor>,
-        ) {
-            val explicitReceiver = originalPositionContext.explicitReceiver ?: return
+        ): Boolean {
+            val explicitReceiver = originalPositionContext.explicitReceiver ?: return false
 
+            var addedAnyElements = false
             completionResultSet.runRemainingContributors(parameters.delegate) { completionResult ->
                 val lookupElement = completionResult.lookupElement
                 if (lookupElement.`object` !is KotlinLookupObject) {
@@ -156,11 +160,14 @@ internal interface K2CompletionRunner {
                             contributor.createChainedLookupElements(receiverExpression, nameToImport)
                                 .forEach { lookupElement ->
                                     completionResultSet.addElement(lookupElement)
+                                    addedAnyElements = true
                                 }
                         }
                     }
                 }
             }
+
+            return addedAnyElements
         }
     }
 }

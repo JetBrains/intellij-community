@@ -58,7 +58,7 @@ internal object Completions {
         parameters: KotlinFirCompletionParameters,
         positionContext: T,
         resultSet: CompletionResultSet,
-    ): Boolean {
+    ): K2CompletionRunnerResult {
         @Suppress("UNCHECKED_CAST")
         val matchingContributors =
             contributors.filter { it.positionContextClass.isInstance(positionContext) } as List<K2CompletionContributor<T>>
@@ -79,43 +79,7 @@ internal object Completions {
         val completionRunner = K2CompletionRunner.getInstance(sections.size)
 
         // We make sure the type parameters match before, so this cast is safe.
-        val completionRunnerResult = completionRunner.runCompletion(completionContext, sections)
-
-        runChainCompletionIfNecessary(
-            completionResult = completionRunnerResult,
-            positionContext = positionContext,
-            resultSet = resultSet,
-            parameters = parameters
-        )
-
-        return completionRunnerResult.addedElements > 0
-    }
-
-    private fun runChainCompletionIfNecessary(
-        completionResult: K2CompletionRunnerResult,
-        positionContext: KotlinRawPositionContext,
-        resultSet: CompletionResultSet,
-        parameters: KotlinFirCompletionParameters,
-    ) {
-        if (completionResult.registeredChainContributors.isEmpty()) return
-        if (positionContext !is KotlinNameReferencePositionContext) return
-        if (!RegistryManager.getInstance().`is`("kotlin.k2.chain.completion.enabled")) return
-
-        (positionContext.explicitReceiver as? KtExpression)?.let { receiver ->
-            analyze(receiver) {
-                if (receiver.resolveExpression() != null) {
-                    // The explicit receiver is already resolved, no point in running chain completion
-                    return@runChainCompletionIfNecessary
-                }
-            }
-        }
-
-        K2CompletionRunner.runChainCompletion(
-            originalPositionContext = positionContext,
-            completionResultSet = resultSet,
-            parameters = parameters,
-            chainCompletionContributors = completionResult.registeredChainContributors,
-        )
+        return completionRunner.runCompletion(completionContext, sections)
     }
 }
 
