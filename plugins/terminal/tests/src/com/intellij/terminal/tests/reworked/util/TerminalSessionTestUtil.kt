@@ -31,13 +31,17 @@ import java.nio.file.Path
 
 internal object TerminalSessionTestUtil {
   /** Starts the same terminal session used in production */
-  suspend fun startTestTerminalSession(
+  fun startTestTerminalSession(
     project: Project,
     shellPath: String,
+    workingDirectory: String?,
     coroutineScope: CoroutineScope,
   ): TerminalSession {
     val shellCommand = createShellCommand(shellPath)
-    val options = ShellStartupOptions.Builder().shellCommand(shellCommand).build()
+    val options = ShellStartupOptions.Builder()
+      .shellCommand(shellCommand)
+      .workingDirectory(workingDirectory)
+      .build()
     return startTestTerminalSession(project, options, isLowLevelSession = false, coroutineScope)
   }
 
@@ -63,7 +67,6 @@ internal object TerminalSessionTestUtil {
 
     val allOptions = options.builder()
       .envVariables(options.envVariables + mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
-      .workingDirectory(options.workingDirectory ?: System.getProperty("user.home"))
       .initialTermSize(options.initialTermSize ?: TermSize(80, 24))
       .build()
 
