@@ -22,7 +22,7 @@ fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): Lis
   val modules = wantedModules.prepareModuleList()
 
   val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
-  val moduleApi = ModuleApi(cs)
+  val projectApi = ProjectApi(cs)
   for (module in modules) {
     val contentRootPath = module.firstContentRoot() ?: continue
     val stableApiDumpPath = contentRootPath.stableApiDumpPath()
@@ -31,11 +31,11 @@ fun performApiCheckTest(cs: CoroutineScope, wantedModules: List<JpsModule>): Lis
       continue
     }
     val experimentalApiDumpPath = contentRootPath.experimentalApiDumpPath() // may not exist
-    moduleApi.discoverModule(module)
+    projectApi.discoverModule(module)
     this += DynamicTest.dynamicTest(module.getTestName()) {
       val moduleName = module.name
       val api = runBlocking {
-        moduleApi.moduleApi(module)
+        projectApi.moduleApi(module)
       }
       val checks = ArrayList<() -> Unit>(7)
       checks.addAll(checkModuleDump(moduleName, stableApiDumpPath, unreviewedApiDumpPath, api.stableApi))

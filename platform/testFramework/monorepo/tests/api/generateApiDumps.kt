@@ -33,9 +33,9 @@ suspend fun generateApiDumps(coroutineScope: CoroutineScope, wantedModules: List
     .filter(JpsModule::hasProductionSources)
     .prepareModuleList()
 
-  val moduleApi = ModuleApi(coroutineScope + Dispatchers.Default)
+  val projectApi = ProjectApi(coroutineScope + Dispatchers.Default)
   for (module in modules) {
-    moduleApi.discoverModule(module)
+    projectApi.discoverModule(module)
   }
   val exposedThirdPartyApiFilter: FileApiClassFilter = globalExposedThirdPartyClasses(modules)
   var reviewedModules = 0
@@ -51,7 +51,7 @@ suspend fun generateApiDumps(coroutineScope: CoroutineScope, wantedModules: List
     }
     var experimentalApiDumpFilePath = contentRootPath / MODULE_API_DUMP_EXPERIMENTAL_FILE_NAME
     println("- [${if (reviewed) "x" else " "}] ${module.name}")
-    val api = moduleApi.moduleApi(module)
+    val api = projectApi.moduleApi(module)
     stableApiDumpFilePath.writeText(dumpApi(api.stableApi))
     if (api.experimentalApi.isEmpty()) {
       experimentalApiDumpFilePath.delete()

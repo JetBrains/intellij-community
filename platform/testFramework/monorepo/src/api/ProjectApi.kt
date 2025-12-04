@@ -18,7 +18,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
-class ModuleApi(private val cs: CoroutineScope) {
+class ProjectApi(private val cs: CoroutineScope) {
 
   private val knownModules = ConcurrentHashMap<String, SuspendingLazy<API>>()
 
