@@ -15,6 +15,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -1178,7 +1179,7 @@ class LineStatusTrackerManager(
     val start = System.currentTimeMillis()
     while (true) {
       if (ApplicationManager.getApplication().isDispatchThread) {
-        UIUtil.dispatchAllInvocationEvents()
+        TestOnlyThreading.dispatchAwtEventsWithoutWriteIntentLock()
       }
       if (semaphore.waitFor(10)) {
         return
