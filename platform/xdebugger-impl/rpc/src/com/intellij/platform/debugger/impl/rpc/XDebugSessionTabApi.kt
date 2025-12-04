@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.rpc
+package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ExecutionEnvironmentProxyDto
 import com.intellij.ide.ui.icons.IconId
-import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab
+import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -23,7 +22,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
-// Should be in the RPC module, but it is kept here because it operates with XDebugSessionTab in XDebuggerSessionTabInfoCallback
 @ApiStatus.Internal
 @Rpc
 interface XDebugSessionTabApi : RemoteApi<Unit> {
@@ -67,7 +65,7 @@ object XDebuggerSessionTabInfoNoInit : XDebuggerSessionTabAbstractInfo
 @ApiStatus.Internal
 @Serializable
 data class XDebuggerSessionTabInfoCallback(
-  @Transient val tab: XDebugSessionTab? = null,
+  @Transient val tab: IXDebuggerSessionTab? = null,
 )
 
 @ApiStatus.Internal

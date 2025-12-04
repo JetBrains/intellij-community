@@ -4,7 +4,6 @@ package com.intellij.platform.debugger.impl.shared.proxy
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataKey
@@ -25,6 +24,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -54,7 +54,7 @@ interface XDebugSessionProxy {
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?
   val sessionTab: IXDebuggerSessionTab?
-  val sessionTabWhenInitialized: Deferred<IXDebuggerSessionTab>
+  val sessionTabWhenInitialized: Deferred<IXDebuggerSessionTab?>
   val isStopped: Boolean
   val isPaused: Boolean
   val isSuspended: Boolean
@@ -134,12 +134,4 @@ fun interface XStackFramesListColorsCache {
 
   @RequiresEdt
   fun get(stackFrame: XStackFrame, project: Project): Color?
-}
-
-@ApiStatus.NonExtendable
-@ApiStatus.Internal
-interface IXDebuggerSessionTab : Disposable {
-  fun select()
-
-  val ui: RunnerLayoutUi
 }

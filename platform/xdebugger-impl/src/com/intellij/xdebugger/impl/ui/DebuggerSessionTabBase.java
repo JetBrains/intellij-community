@@ -24,7 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.platform.debugger.impl.shared.proxy.IXDebuggerSessionTab;
+import com.intellij.xdebugger.ui.IXDebuggerSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

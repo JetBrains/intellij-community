@@ -39,7 +39,8 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -154,7 +155,7 @@ class FrontendXDebuggerSession private constructor(
   override val sessionTab: XDebugSessionTab?
     get() = if (sessionTabDeferred.isCompleted) sessionTabDeferred.getCompleted() else null
 
-  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
+  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab?>
     get() = sessionTabDeferred
 
   override val sessionName: String = sessionDto.sessionName

@@ -41,8 +41,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.platform.debugger.impl.rpc.XDebugSessionDataId
-import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.util.coroutines.childScope
@@ -73,7 +72,6 @@ import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.proxy.FileColorsComputer
 import com.intellij.xdebugger.impl.proxy.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.proxy.asProxy
-import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
@@ -81,6 +79,7 @@ import com.intellij.xdebugger.impl.ui.*
 import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -127,7 +126,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myPaused = MutableStateFlow(false)
   private var myValueMarkers: XValueMarkers<*, *>? = null
   private val mySessionName: @Nls String = sessionName
-  private val mySessionTab = CompletableDeferred<XDebugSessionTab>()
+  private val mySessionTab = CompletableDeferred<XDebugSessionTab?>()
   private var myMockRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
 
@@ -449,7 +448,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getSessionTabInternal(): XDebugSessionTab? = if (mySessionTab.isCompleted) mySessionTab.getCompleted() else null
 
-  val sessionTabDeferred: Deferred<XDebugSessionTab>
+  val sessionTabDeferred: Deferred<XDebugSessionTab?>
     @ApiStatus.Internal
     get() = mySessionTab
 
@@ -592,8 +591,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   @ApiStatus.Internal
-  fun tabInitialized(sessionTab: XDebugSessionTab) {
-    mySessionTab.complete(sessionTab)
+  fun tabInitialized(sessionTab: IXDebuggerSessionTab?) {
+    mySessionTab.complete(sessionTab as? XDebugSessionTab)
   }
 
   private fun disableSlaveBreakpoints() {

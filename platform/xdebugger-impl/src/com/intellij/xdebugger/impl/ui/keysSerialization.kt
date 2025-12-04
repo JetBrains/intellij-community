@@ -4,9 +4,9 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.ide.CustomDataContextSerializer
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.platform.debugger.impl.rpc.ExecutionEnvironmentId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeSelectedValueId
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.ExecutionEnvironmentId
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
 
