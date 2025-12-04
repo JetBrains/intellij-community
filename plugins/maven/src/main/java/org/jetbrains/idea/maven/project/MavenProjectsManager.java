@@ -53,8 +53,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,9 +77,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final MavenEmbeddersManager myEmbeddersManager;
 
   private final @NotNull MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
-  @SuppressWarnings("FieldMayBeFinal") //cannot be, is is accessed via watcherHandle
-  private MavenProjectManagerWatcher myWatcher = null;
-  private static final VarHandle watcherHandle;
+  private final AtomicReference<MavenProjectManagerWatcher> myWatcherRef = new AtomicReference<>(null);
   private volatile Exception myWatcherCreationTrace;
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
@@ -101,16 +97,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public static @Nullable MavenProjectsManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenProjectsManager.class);
-  }
-
-  static {
-    try {
-      watcherHandle = MethodHandles.lookup()
-        .findVarHandle(MavenProjectsManager.class, "myWatcher", MavenProjectManagerWatcher.class);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public MavenProjectsManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
@@ -343,9 +329,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initWorkers() {
     var watcher = new MavenProjectManagerWatcher(myProject);
-    if (watcherHandle.compareAndSet(this, null, watcher)) {
+    if (myWatcherRef.compareAndSet(null, watcher)) {
       myWatcherCreationTrace = new Exception("Created here");
-      if(!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
         watcher.start();
       }
     }
@@ -355,7 +341,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void listenForExternalChanges() {
-    var watcher = (MavenProjectManagerWatcher)watcherHandle.getVolatile(this);
+    var watcher = myWatcherRef.get();
     if (watcher != null) {
       watcher.start();
     }
@@ -368,7 +354,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void enableAutoImportInTests() {
     assert isInitialized();
     listenForExternalChanges();
-    var watcher = (MavenProjectManagerWatcher)watcherHandle.getVolatile(this);
+    var watcher = myWatcherRef.get();
     if (watcher != null) {
       watcher.enableAutoImportInTests();
     }
@@ -383,7 +369,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (!isInitialized.getAndSet(false)) {
         return;
       }
-      var watcher = (MavenProjectManagerWatcher)watcherHandle.getVolatile(this);
+      var watcher = myWatcherRef.get();
       if (watcher != null) {
         watcher.stop();
       }
