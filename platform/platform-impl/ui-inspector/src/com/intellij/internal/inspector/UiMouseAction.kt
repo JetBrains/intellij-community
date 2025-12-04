@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -57,7 +58,9 @@ abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
         if (event.id == MouseEvent.MOUSE_PRESSED) {
           val component = UIUtil.getDeepestComponentAt(event.component, event.x, event.y)
                           ?: event.component
-          handleClick(component, event)
+          WriteIntentReadAction.run {
+            handleClick(component, event)
+          }
         }
         return true
       }
