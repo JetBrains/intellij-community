@@ -759,9 +759,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun setRawPomFile(content: String) {
-    Files.write(projectPom.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
+    Files.write(projectPath.resolve("pom.xml"), content.toByteArray(StandardCharsets.UTF_8))
     projectRoot.refresh(false, false)
     val f = projectRoot.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml in vfs")
+    myProjectPom = f
     refreshFiles(listOf(f))
   }
 
