@@ -63,7 +63,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.*;
 
@@ -380,17 +379,18 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (returnType == null) {
       returnType = PsiTypes.voidType();
     }
-    Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result, targetClass));
-    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, targetClass, false));
+    Project project = targetClass.getProject();
+    FileTemplateManager manager = FileTemplateManager.getInstance(project);
+    Map<String, Object> properties = manager.getDefaultContextMap();
+    properties.put(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
+    properties.put(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
+    properties.put(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result, targetClass));
+    properties.put(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, targetClass, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
-    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
-    if (factory == null) factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
+    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+    if (factory == null) factory = JavaPsiFacade.getElementFactory(project);
     @NonNls String methodText;
-    Project project = result.getProject();
     try {
       methodText = "void foo () {\n" + template.getText(properties) + "\n}";
       methodText = FileTemplateUtil.indent(methodText, project, fileType);

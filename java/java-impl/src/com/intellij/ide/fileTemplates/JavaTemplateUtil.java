@@ -4,6 +4,7 @@ package com.intellij.ide.fileTemplates;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.Properties;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -44,9 +45,13 @@ public final class JavaTemplateUtil {
   private JavaTemplateUtil() { }
 
   public static void setClassAndMethodNameProperties (@NotNull Properties properties, @NotNull PsiClass aClass, @NotNull PsiMethod method) {
-    properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, notNull(aClass.getQualifiedName(), ""));
-    properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, notNull(aClass.getName(), ""));
-    properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, method.getName());
+    setClassAndMethodNameProperties((Map<Object, Object>)properties, aClass, method);
+  }
+
+  public static void setClassAndMethodNameProperties (@NotNull Map<? super String, Object> properties, @NotNull PsiClass aClass, @NotNull PsiMethod method) {
+    properties.put(FileTemplate.ATTRIBUTE_CLASS_NAME, notNull(aClass.getQualifiedName(), ""));
+    properties.put(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, notNull(aClass.getName(), ""));
+    properties.put(FileTemplate.ATTRIBUTE_METHOD_NAME, method.getName());
   }
 
   public static @NotNull String getPackageName(@NotNull PsiDirectory directory) {
