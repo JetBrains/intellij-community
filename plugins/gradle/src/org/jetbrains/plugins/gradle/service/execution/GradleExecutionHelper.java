@@ -294,19 +294,21 @@ public final class GradleExecutionHelper {
 
   public static void prepareForExecution(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionContext context
+    @NotNull GradleExecutionContextImpl context
   ) {
-    var id = context.getTaskId();
-    var settings = context.getSettings();
-    var listener = context.getListener();
-    var buildEnvironment = context.getBuildEnvironment();
+    var effectiveContext = new GradleExecutionContextImpl(context);
+
+    var id = effectiveContext.getTaskId();
+    var settings = effectiveContext.getSettings();
+    var listener = effectiveContext.getListener();
+    var buildEnvironment = effectiveContext.getBuildEnvironment();
 
     applyIdeaParameters(settings);
 
     setupLogging(settings, buildEnvironment);
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
-      proc.configureSettings(settings, context);
+      proc.configureSettings(settings, effectiveContext);
     });
 
     clearSystemProperties(operation);
@@ -323,10 +325,10 @@ public final class GradleExecutionHelper {
 
     setupStandardIO(operation, settings, id, listener);
 
-    operation.withCancellationToken(context.getCancellationToken());
+    operation.withCancellationToken(effectiveContext.getCancellationToken());
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
-      proc.configureOperation(operation, context);
+      proc.configureOperation(operation, effectiveContext);
     });
   }
 

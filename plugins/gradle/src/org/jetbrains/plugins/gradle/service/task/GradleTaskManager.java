@@ -146,7 +146,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   private static void executeTasks(
     @NotNull ProjectConnection connection,
-    @NotNull GradleExecutionContext context
+    @NotNull GradleExecutionContextImpl context
   ) {
     if (Registry.is("gradle.report.recently.saved.paths")) {
       ApplicationManager.getApplication()

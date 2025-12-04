@@ -36,11 +36,17 @@ open class GradleExecutionContextImpl(
   override val gradleVersion: GradleVersion
     get() = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
 
+  constructor(context: GradleExecutionContextImpl) :
+    this(context, context.projectPath, GradleExecutionSettings(context.settings))
+
   constructor(
-    context: GradleExecutionContext,
+    context: GradleExecutionContextImpl,
     projectPath: String,
     settings: GradleExecutionSettings,
   ) : this(
     projectPath, context.taskId, settings, context.listener, context.cancellationToken
-  )
+  ) {
+    context.copyUserDataTo(this)
+    this._buildEnvironment = context._buildEnvironment
+  }
 }
