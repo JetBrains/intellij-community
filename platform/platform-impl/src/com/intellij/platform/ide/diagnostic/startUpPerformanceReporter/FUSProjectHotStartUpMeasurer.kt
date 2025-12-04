@@ -344,7 +344,7 @@ object FUSProjectHotStartUpMeasurer {
       if (ApplicationManagerEx.isInIntegrationTest()) {
         val openProjects = ProjectManager.getInstance().openProjects
         if (openProjects.size == 0) {
-          thisLogger().warn("No open projects, cannot check the editor state")
+          thisLogger().error("No open projects, cannot check the editor state")
           return@withRequiredProjectMarker
         }
         val project = openProjects[0]
