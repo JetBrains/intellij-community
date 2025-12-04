@@ -1,20 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.options
 
-import com.intellij.application.options.editor.EditorOptionsProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
 
 class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
-  ApplicationBundle.message("title.inline.completion"),
-  "reference.settingsdialog.IDE.editor.inline.completion"
-), EditorOptionsProvider, WithEpDependencies {
+  ApplicationBundle.message("title.code.completion.inline"),
+  "reference.settingsdialog.IDE.editor.completion.inline"
+), WithEpDependencies, SearchableConfigurable {
 
   override fun getId(): String = ID
 
@@ -38,6 +38,6 @@ class InlineCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigura
   }
 
   companion object {
-    const val ID: String = "editor.preferences.inline.completion"
+    const val ID: String = "editor.preferences.completion.inline"
   }
 }

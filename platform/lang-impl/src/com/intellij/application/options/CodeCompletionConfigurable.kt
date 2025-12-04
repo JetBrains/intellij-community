@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
-
 import com.intellij.application.options.editor.EditorOptionsProvider
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -36,11 +35,11 @@ import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.selected
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
-  ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
+  ApplicationBundle.message("title.code.completion.popup"), "reference.settingsdialog.IDE.editor.code.completion"),
                               EditorOptionsProvider, WithEpDependencies {
 
   companion object {
-    const val ID: String = "editor.preferences.completion"
+    const val ID: String = "editor.preferences.completion.popup"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
 
