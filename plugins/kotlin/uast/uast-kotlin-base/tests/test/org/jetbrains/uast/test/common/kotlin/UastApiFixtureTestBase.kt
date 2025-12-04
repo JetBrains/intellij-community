@@ -1038,6 +1038,65 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals(5, count)
     }
 
+    fun checkExpressionTypeForContractLambda(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            import kotlin.contracts.ExperimentalContracts
+            import kotlin.contracts.InvocationKind
+            import kotlin.contracts.contract
+
+            interface MyDeferred<T> {
+              suspend fun await(): T
+            }
+
+            abstract class MyException : Exception() {
+              abstract fun isInternal(): Boolean
+            }
+
+            @OptIn(ExperimentalContracts::class)
+            suspend fun <T> MyDeferred<T>.safeAwait(
+              fallbackOnAbort: suspend () -> T,
+              onCancelled: suspend (MyException) -> T = { throw it },
+            ) : T {
+              contract {
+                callsInPlace(fallbackOnAbort, InvocationKind.AT_MOST_ONCE)
+                callsInPlace(onCancelled, InvocationKind.AT_MOST_ONCE)
+              }
+              return try {
+                await()
+              } catch (e: MyException) {
+                if (e.isInternal()) {
+                  fallbackOnAbort()
+                } else {
+                  onCancelled(e)
+                }
+              }
+            }
+            """.trimIndent()
+        )
+        var count = 0
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    // TODO: better to be node.methodName != "contract"
+                    if (node.sourcePsi?.text?.startsWith("contract") != true) {
+                        return super.visitCallExpression(node)
+                    }
+
+                    val contractBody = node.valueArguments.single()
+                    val t = contractBody.getExpressionType()
+                    TestCase.assertEquals(
+                        "kotlin.jvm.functions.Function1<? super kotlin.contracts.ContractBuilder,? extends kotlin.Unit>",
+                        t?.canonicalText
+                    )
+                    count++
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(1, count)
+    }
+
     fun checkFlexibleFunctionalInterfaceType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
