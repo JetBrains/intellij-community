@@ -36,6 +36,7 @@ jvm_library(
     "//fleet/fastutil",
     "//libraries/fastutil",
     "//platform/util/xmlDom",
+    "//platform/lang-api:lang",
   ],
   exports = [
     "//plugins/textmate/core",

@@ -3,12 +3,17 @@ package fleet.preferences
 
 import fleet.util.multiplatform.Actual
 import kotlinx.browser.window
+import org.w3c.dom.Window
 
 @Actual
 fun fleetPropertyWasmJs(name: String, defaultValue: String?): String? = when (name) {
   "fleet.ai.service.configuration.url" -> url("aiconfig")
   "fleet.ai.service.url" -> url("ai")
-  else -> defaultValue
+  else -> getJsConfigProperty(window, name.removePrefix("fleet."))?.toString() ?: defaultValue
+}
+
+private fun getJsConfigProperty(obj: Window, name: String): JsAny? {
+  js("return (obj['__airConfig'] || {})[name];")
 }
 
 @Actual

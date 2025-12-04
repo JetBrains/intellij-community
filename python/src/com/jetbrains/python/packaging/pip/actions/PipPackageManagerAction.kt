@@ -67,7 +67,7 @@ internal class PipUpdateEnvAction() : PipPackageManagerAction() {
       e.presentation.text = PyBundle.message("action.PipUpdateEnvAction.FloatingToolbar.text")
     } else {
       val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE)
-      e.presentation.text = PyBundle.message("action.PipUpdateEnvAction.text", currentFile?.name ?: "requirements.txt")
+      e.presentation.text = PyBundle.message("action.PipUpdateEnvAction.parametrized.text", currentFile?.name ?: "requirements.txt")
     }
   }
 }

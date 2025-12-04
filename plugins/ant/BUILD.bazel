@@ -21,6 +21,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/compiler/impl",
     "//platform/indexing-api:indexing",
     "//platform/core-impl",
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
+    "//platform/execution",
   ]
 )
 
@@ -74,6 +76,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/compiler/impl",
     "//platform/indexing-api:indexing",
     "//platform/core-impl",
@@ -115,6 +118,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/testFramework",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.ant` end

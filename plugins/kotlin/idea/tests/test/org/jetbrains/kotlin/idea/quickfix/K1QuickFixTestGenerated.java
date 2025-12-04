@@ -9683,6 +9683,55 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/destructingShortForm")
+    public static class DestructingShortForm extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("entryUsedInLambda.kt")
+        public void testEntryUsedInLambda() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
+        }
+
+        @TestMetadata("featureDisabled.kt")
+        public void testFeatureDisabled() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/featureDisabled.kt");
+        }
+
+        @TestMetadata("fullForm.kt")
+        public void testFullForm() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/fullForm.kt");
+        }
+
+        @TestMetadata("fullFormLambda.kt")
+        public void testFullFormLambda() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/fullFormLambda.kt");
+        }
+
+        @TestMetadata("multipleEntriesSameOriginalName.kt")
+        public void testMultipleEntriesSameOriginalName() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/multipleEntriesSameOriginalName.kt");
+        }
+
+        @TestMetadata("nestedScopeConflict.kt")
+        public void testNestedScopeConflict() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/nestedScopeConflict.kt");
+        }
+
+        @TestMetadata("nonDataClass.kt")
+        public void testNonDataClass() throws Exception {
+            runTest("testData/quickfix/destructingShortForm/nonDataClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/equalityNotApplicable")
     public abstract static class EqualityNotApplicable extends AbstractK1QuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

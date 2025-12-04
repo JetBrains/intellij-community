@@ -76,16 +76,14 @@ class VariablesPreloadManager(
       xFrameId: XStackFrameId,
     ): VariablesPreloadManager? {
       val rootInfo = treeState?.rootInfo ?: return null
-      if (!rootInfo.isExpanded) return null
-      return VariablesPreloadManager(parentScope, rootInfo.toRpc(), xFrameId)
+      val root = rootInfo.toRpc() ?: return null
+      return VariablesPreloadManager(parentScope, root, xFrameId)
     }
   }
 }
 
-private fun XDebuggerTreeState.NodeInfo.toRpc(): XDebuggerTreeExpandedNode {
-  if (!isExpanded) {
-    return XDebuggerTreeExpandedNode(name, emptyList())
-  }
-  val childrenList = children?.map { it.toRpc() } ?: emptyList()
+private fun XDebuggerTreeState.NodeInfo.toRpc(): XDebuggerTreeExpandedNode? {
+  if (!isExpanded) return null
+  val childrenList = children?.mapNotNull { it.toRpc() } ?: emptyList()
   return XDebuggerTreeExpandedNode(name, childrenList)
 }

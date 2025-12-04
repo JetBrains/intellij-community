@@ -31,6 +31,8 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     @JvmName("branchTrackInfos_") get
   var remoteBranchesWithHashes:Map<GitRemoteBranch, Hash> = emptyMap()
     @JvmName("remoteBranchesWithHashes_") get
+  var workingTreeHolder: GitWorkingTreeHolder? = null
+    @JvmName("workingTreeHolder_") get
 
   override fun getGitDir(): VirtualFile {
     throw UnsupportedOperationException()
@@ -141,6 +143,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
 
   override fun getTagHolder(): GitTagHolder {
     return tagHolder ?: GitTagHolder(this)
+  }
+
+  override fun getWorkingTreeHolder(): GitWorkingTreeHolder {
+    return workingTreeHolder ?: GitWorkingTreeHolder(this)
   }
 
   override fun getRpcId(): RepositoryId {

@@ -61,6 +61,8 @@ jvm_library(
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.repl` end

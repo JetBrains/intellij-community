@@ -55,7 +55,7 @@ public final class PyDescriptorTypeUtil {
     PyExpression qualifier = expression.getQualifier();
     if (qualifier != null && attributeType instanceof PyCallableType receiverType) {
       PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyClassType classType) {
+      if (qualifierType instanceof PyClassLikeType classType) {
         PyType instanceArgumentType;
         PyType instanceTypeArgument;
         final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();

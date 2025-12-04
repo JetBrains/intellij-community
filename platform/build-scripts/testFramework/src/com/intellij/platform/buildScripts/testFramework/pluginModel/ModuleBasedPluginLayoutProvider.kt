@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
+import com.intellij.platform.distributionContent.testFramework.deserializeContentData
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
@@ -14,22 +15,14 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.InputStream
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
+import kotlin.io.path.readText
 
-fun createLayoutProviderForProductWithModuleBasedLoader(
-  project: JpsProject,
-  runtimeModuleRepository: RuntimeModuleRepository,
-  productRootModuleName: String,
-  productMode: ProductMode,
-  corePluginDescriptorPath: String,
-): PluginLayoutProvider {
-  return ModuleBasedPluginLayoutProvider(project, runtimeModuleRepository, productRootModuleName, productMode, corePluginDescriptorPath)
-}
-
-private class ModuleBasedPluginLayoutProvider(
+class ModuleBasedPluginLayoutProvider(
   private val project: JpsProject,
-  private val runtimeModuleRepository: RuntimeModuleRepository,
+  runtimeModuleRepository: RuntimeModuleRepository,
   private val productRootModuleName: String,
   productMode: ProductMode,
   private val corePluginDescriptorPath: String,
@@ -38,9 +31,10 @@ private class ModuleBasedPluginLayoutProvider(
   private val mainModulesOfBundledPlugins: Set<String>
 
   init {
-    val productRootModule = project.findModuleByName(productRootModuleName) ?: error("Cannot find module '$productRootModuleName'")
-    val productModulesPath = productRootModule.findProductionFile("META-INF/$productRootModuleName/product-modules.xml")
-                             ?: error("Cannot find product-modules.xml in '$productRootModuleName' module")
+    val productRootModule = requireNotNull(project.findModuleByName(productRootModuleName)) { "Cannot find module '$productRootModuleName'" }
+    val productModulesPath = requireNotNull(productRootModule.findProductionFile("META-INF/$productRootModuleName/product-modules.xml")) {
+      "Cannot find product-modules.xml in '$productRootModuleName' module"
+    }
     val resourceFileResolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
         val module = project.findModuleByName(moduleId.stringId) ?: return null
@@ -48,7 +42,7 @@ private class ModuleBasedPluginLayoutProvider(
       }
     }
     productModules = ProductModulesSerialization.loadProductModules(
-      productModulesPath.inputStream(), 
+      productModulesPath.inputStream(),
       productModulesPath.pathString,
       productMode,
       runtimeModuleRepository,
@@ -81,9 +75,9 @@ private class ModuleBasedPluginLayoutProvider(
       .mapNotNull { 
         project.findModuleByName(it)
       }
-    val mainModule = mainGroupModules.find { 
-      it.findProductionFile(corePluginDescriptorPath) != null
-    } ?: error("Cannot find '$corePluginDescriptorPath' in the main module group of '$productRootModuleName'")
+    val mainModule = requireNotNull(mainGroupModules.find { it.findProductionFile(corePluginDescriptorPath) != null }) {
+      "Cannot find '$corePluginDescriptorPath' in the main module group of '$productRootModuleName'"
+    }
     
     return PluginLayoutDescription(
       mainJpsModule = mainModule.name,
@@ -101,6 +95,20 @@ private class ModuleBasedPluginLayoutProvider(
       return null
     }
     
+    // Try to load plugin-content.yaml if it exists
+    val contentDataPath = mainModule.findProductionFile("plugin-content.yaml")
+    if (contentDataPath != null && contentDataPath.exists()) {
+      val contentData = deserializeContentData(contentDataPath.readText())
+      return toPluginLayoutDescription(
+        entries = contentData,
+        mainModuleName = mainModule.name,
+        pluginDescriptorPath = "META-INF/plugin.xml",
+        mainLibDir = "lib",
+        jarsToIgnore = emptySet()
+      )
+    }
+    
+    // Fallback: just the main module
     return PluginLayoutDescription(
       mainJpsModule = mainModule.name,
       pluginDescriptorPath = "META-INF/plugin.xml",

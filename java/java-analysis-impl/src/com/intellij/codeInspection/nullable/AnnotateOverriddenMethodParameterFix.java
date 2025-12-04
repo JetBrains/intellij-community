@@ -1,24 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,17 +28,17 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
-  private final String myAnnotation;
   private final Nullability myTargetNullability;
 
-  AnnotateOverriddenMethodParameterFix(@NotNull Nullability targetNullability, String annotation) {
-    myAnnotation = annotation;
+  AnnotateOverriddenMethodParameterFix(@NotNull Nullability targetNullability) {
     myTargetNullability = targetNullability;
   }
 
   @Override
   public @NotNull String getName() {
-    return JavaAnalysisBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
+    return myTargetNullability == Nullability.NOT_NULL ?
+           JavaAnalysisBundle.message("annotate.overridden.methods.parameters.nonnull") :
+           JavaAnalysisBundle.message("annotate.overridden.methods.parameters.nullable");
   }
 
   @Override
@@ -49,38 +51,25 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     List<PsiParameter> toAnnotate = new ArrayList<>();
 
     PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiParameter.class, false);
-    if (parameter == null || !processParameterInheritorsUnderProgress(parameter, param -> {
-      if (AddAnnotationPsiFix.isAvailable(param, myAnnotation)) {
-        toAnnotate.add(param);
-      }
-    })) {
+    if (parameter == null || !processParameterInheritorsUnderProgress(parameter, toAnnotate::add)) {
       return;
     }
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
-    RuntimeException exception = null;
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    String[] annotationsToRemove =
-      ArrayUtil.toStringArray(myTargetNullability == Nullability.NOT_NULL ? manager.getNullables() : manager.getNotNulls());
+    ActionContext actionContext = ActionContext.from(descriptor);
     for (PsiParameter psiParam : toAnnotate) {
       assert psiParam != null : toAnnotate;
-      try {
-        if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
-          NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(psiParam);
-          if (info != null && info.getNullability() == myTargetNullability && !info.isInferred()) continue;
-          AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, annotationsToRemove);
-          PsiFile containingFile = psiParam.getContainingFile();
-          if (psiParam.isValid() && fix.isAvailable(project, containingFile, psiParam, psiParam)) {
-            fix.invoke(project, containingFile, psiParam, psiParam);
-          }
+      ModCommandExecutor.executeInteractively(actionContext, getFamilyName(), null, () -> {
+        NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(project).findEffectiveNullabilityInfo(psiParam);
+        if (info != null && info.getNullability() == myTargetNullability &&
+            info.getInheritedFrom() == null && !info.isInferred()) {
+          return ModCommand.nop();
         }
-      }
-      catch (PsiInvalidElementAccessException|IncorrectOperationException e) {
-        exception = e;
-      }
-      if (exception != null) {
-        throw exception;
-      }
+        ModCommandAction action = myTargetNullability == Nullability.NOT_NULL
+                                  ? AddAnnotationModCommandAction.createAddNotNullFix(psiParam)
+                                  : AddAnnotationModCommandAction.createAddNullableFix(psiParam);
+        return action == null || action.getPresentation(actionContext) == null ? ModCommand.nop() : action.perform(actionContext);
+      });
     }
   }
 

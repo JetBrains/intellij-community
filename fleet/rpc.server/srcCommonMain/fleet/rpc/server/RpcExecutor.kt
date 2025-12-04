@@ -149,9 +149,13 @@ class RpcExecutor private constructor(
         }
         catch (ex: Throwable) {
           logger.trace(ex) { "Failed to build arguments for $message" }
-          send(RpcMessage.CallFailure(message.requestId,
-                                      FailureInfo(requestError = "Invalid arguments for ${message.classMethodDisplayName()}: ${ex}"))
-                 .seal(destination = clientId, origin = route))
+          val msg = RpcMessage.CallFailure(
+            requestId = message.requestId,
+            error = FailureInfo(
+              requestError = "Invalid arguments for ${message.classMethodDisplayName()}: ${ex}"
+            ),
+          ).seal(destination = clientId, origin = route)
+          send(msg)
           return
         }
 
@@ -242,9 +246,11 @@ class RpcExecutor private constructor(
           }
           catch (e: Throwable) {
             logger.trace { "Sending call failure: requestId=${message.requestId}, error=${e.message}" }
-            send(RpcMessage.CallFailure(requestId = message.requestId,
-                                        error = e.toFailureInfo())
-                   .seal(destination = clientId, origin = route))
+            val msg = RpcMessage.CallFailure(
+              requestId = message.requestId,
+              error = e.toFailureInfo(),
+            ).seal(destination = clientId, origin = route)
+            send(msg)
             // todo removeREquest ... completeExceptionally()
           }
 

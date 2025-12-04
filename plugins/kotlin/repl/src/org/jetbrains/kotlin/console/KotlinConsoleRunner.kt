@@ -123,7 +123,7 @@ class KotlinConsoleRunner(
     private var disposableDescriptor by Delegates.notNull<RunContentDescriptor>()
 
     val executor = CommandExecutor(this)
-    var compilerHelper: ConsoleCompilerHelper by Delegates.notNull()
+    internal var compilerHelper: ConsoleCompilerHelper by Delegates.notNull()
 
     val consoleScriptDefinition = object : ScriptDefinition.FromConfigurations(
         defaultJvmScriptingHostConfiguration,

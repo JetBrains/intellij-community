@@ -44,6 +44,7 @@ import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
 import java.io.File
 import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -521,14 +522,8 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
-      override val machine: EelMachine = object : EelMachine {
-        override val name: @NonNls String = "mock"
-        override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
-
-        override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
-          throw UnsupportedOperationException()
-        }
-      }
+      override val name: @NonNls String = "mock"
+      override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
     }
 
   override val archive: EelArchiveApi get() = throw UnsupportedOperationException()

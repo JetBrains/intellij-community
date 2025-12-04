@@ -96,6 +96,7 @@ internal object GitLabShareProjectDialogComponentFactory {
 
             actionButton(iconAction(AllIcons.General.Refresh) { vm.reloadNamespaces() })
               .enabledIf(vm.namespaces.mapState { !it.isInProgress }.asObservableIn(cs))
+              .contextHelp(GitLabBundle.message("share.dialog.namespace.contextHelp"))
               .applyToComponent {
                 ClientProperty.put(this, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
                 cs.launchNow {
@@ -104,8 +105,6 @@ internal object GitLabShareProjectDialogComponentFactory {
                   }
                 }
               }
-
-            contextHelp(GitLabBundle.message("share.dialog.namespace.contextHelp"))
           }
 
           panel {

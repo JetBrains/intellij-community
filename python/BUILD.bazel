@@ -249,6 +249,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",
+    "//platform/lang-api:lang",
     "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -298,7 +299,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/fastutil",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/jcef",
     "@lib//:jna",
     "//plugins/toml",
@@ -358,6 +359,9 @@ jvm_library(
     "//python/python-process-output:processOutput",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = [
     "//python/openapi:community",
@@ -540,8 +544,8 @@ jvm_library(
     "//python/python-grazie:grazie",
     "//platform/util/jdom",
     "//platform/ml-api:ml",
-    "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/test",
     "//python/python-core-impl:community-core-impl",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
@@ -573,6 +577,9 @@ jvm_library(
     "//python/python-syntax:syntax",
     "//python/python-exec-service:community-execService",
     "//python/python-exec-service:community-execService_test_lib",
+    "//platform/execution",
+    "@lib//:jet_check",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = [
     "//python/pluginCore/impl",
@@ -682,6 +689,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/core-impl",
+    "//platform/ide-core",
   ]
 )
 ### auto-generated section `build intellij.python.pydev` end

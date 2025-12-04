@@ -16,8 +16,10 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Key;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +53,8 @@ public final class ControlFlowCache {
   }
 
   public static @NotNull PyControlFlow getControlFlow(@NotNull ScopeOwner element) {
-    return getControlFlow(element, new PyControlFlowBuilder());
+    LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(element.getContainingFile());
+    return getControlFlow(element, new PyControlFlowBuilder(languageLevel));
   }
 
   public static @NotNull Scope getScope(@NotNull ScopeOwner element) {
@@ -66,8 +69,6 @@ public final class ControlFlowCache {
 
   public static @NotNull PyDataFlow getDataFlow(@NotNull ScopeOwner element, @NotNull FlowContext context) {
     // Cache will reset on psi modification, same as TypeEvalContext
-    return PyUtil.getParameterizedCachedValue(element, context, (ctx) -> {
-      return new PyDataFlow(element, getControlFlow(element), ctx);
-    });
+    return PyUtil.getParameterizedCachedValue(element, context, ctx -> new PyDataFlow(getControlFlow(element), ctx));
   }
 }

@@ -31,7 +31,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/test:test_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/workspace/jps",
     "//platform/workspace/jps/tests",
     "//platform/workspace/jps/tests:tests_test_lib",

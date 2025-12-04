@@ -1,8 +1,9 @@
 import java.util.HashMap;
 
-///<caret> test data file  
+///<caret> test data file
+///
 /// another line
-/// ---
+/// ___
 /// `System.out.println()`
 /// [java.util.ArrayList]
 /// [description][java.util.HashMap]
@@ -11,9 +12,9 @@ public class MarkdownDocumentationCommentsMigration {
   /// {@return a hash code value for this object} This method is
   /// supported for the benefit of hash tables such as those provided by
   /// [HashMap].
-  /// 
+  ///
   /// The general contract of `hashCode` is:
-  /// 
+  ///
   ///   - Whenever it is invoked on the same object more than once during
   ///     an execution of a Java application, the `hashCode` method
   ///     must consistently return the same integer, provided no information
@@ -30,7 +31,6 @@ public class MarkdownDocumentationCommentsMigration {
   ///     must produce distinct integer results.  However, the programmer
   ///     should be aware that producing distinct integer results for
   ///     unequal objects may improve the performance of hash tables.
-  ///     
   ///
   /// @implSpec As far as is reasonably practical, the `hashCode` method defined
   /// by class `Object` returns distinct integers for distinct objects.
@@ -45,10 +45,10 @@ public class MarkdownDocumentationCommentsMigration {
   }
 
   /// Indicates whether some other object is "equal to" this one.
-  /// 
+  ///
   /// The `equals` method implements an equivalence relation
   /// on non-null object references:
-  /// 
+  ///
   ///   - It is _reflexive_: for any non-null reference value
   ///     `x`, `x.equals(x)` should return
   ///     `true`.
@@ -69,8 +69,7 @@ public class MarkdownDocumentationCommentsMigration {
   ///     objects is modified.
   ///   - For any non-null reference value `x`,
   ///     `x.equals(null)` should return `false`.
-  ///     
-  /// 
+  ///
   /// An equivalence relation partitions the elements it operates on
   /// into _equivalence classes_; all the members of an
   /// equivalence class are equal to each other. Members of an
@@ -86,14 +85,14 @@ public class MarkdownDocumentationCommentsMigration {
   /// `y`, this method returns `true` if and only
   /// if `x` and `y` refer to the same object
   /// (`x == y` has the value `true`).
-  /// 
+  ///
   /// In other words, under the reference equality equivalence
   /// relation, each equivalence class only has a single element.
   /// @apiNote It is generally necessary to override the [hashCode][#hashCode()]
   /// method whenever this method is overridden, so as to maintain the
   /// general contract for the `hashCode` method, which states
   /// that equal objects must have equal hash codes.
-  /// 
+  ///
   /// The two-argument [Objects.equals][Objects#equals(Object,
   /// Object)] method implements an equivalence relation
   /// on two possibly-null object references.
@@ -107,25 +106,28 @@ public class MarkdownDocumentationCommentsMigration {
   /// Creates and returns a copy of this object.  The precise meaning
   /// of "copy" may depend on the class of the object. The general
   /// intent is that, for any object `x`, the expression:
-  /// <blockquote>
-  /// <pre>
-  /// x.clone() != x</pre></blockquote>
+  /// ```
+  /// x.clone() != x
+  /// ```
+  ///
   /// will be true, and that the expression:
-  /// <blockquote>
-  /// <pre>
-  /// x.clone().getClass() == x.getClass()</pre></blockquote>
+  /// ```
+  /// x.clone().getClass() == x.getClass()
+  /// ```
+  ///
   /// will be `true`, but these are not absolute requirements.
   /// While it is typically the case that:
-  /// <blockquote>
-  /// <pre>
-  /// x.clone().equals(x)</pre></blockquote>
+  /// ```
+  /// x.clone().equals(x)
+  /// ```
+  ///
   /// will be `true`, this is not an absolute requirement.
-  /// 
+  ///
   /// By convention, the returned object should be obtained by calling
   /// `super.clone`.  If a class and all of its superclasses (except
   /// `Object`) obey this convention, it will be the case that
   /// `x.clone().getClass() == x.getClass()`.
-  /// 
+  ///
   /// By convention, the object returned by this method should be independent
   /// of this object (which is being cloned).  To achieve this independence,
   /// it may be necessary to modify one or more fields of the object returned
@@ -155,7 +157,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// the corresponding fields of this object, as if by assignment; the
   /// contents of the fields are not themselves cloned. Thus, this method
   /// performs a "shallow copy" of this object, not a "deep copy" operation.
-  /// 
+  ///
   /// The class `Object` does not itself implement the interface
   /// `Cloneable`, so calling the `clone` method on an object
   /// whose class is `Object` will result in throwing an
@@ -167,7 +169,7 @@ public class MarkdownDocumentationCommentsMigration {
   }
 
   /// {@return a string representation of the object}
-  /// 
+  ///
   /// Satisfying this method's contract implies a non-`null`
   /// result must be returned.
   ///
@@ -181,7 +183,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// JVM invocations.
   /// @implSpec The `toString` method for class `Object`
   /// returns a string consisting of the name of the class of which the
-  /// object is an instance, the at-sign character ``@`', and
+  /// object is an instance, the at-sign character \``@`', and
   /// the unsigned hexadecimal representation of the hash code of the
   /// object. In other words, this method returns a string equal to the
   /// value of:
@@ -201,13 +203,13 @@ public class MarkdownDocumentationCommentsMigration {
   /// determines that there are no more references to the object.
   /// A subclass overrides the `finalize` method to dispose of
   /// system resources or to perform other cleanup.
-  /// 
+  ///
   /// **When running in a Java virtual machine in which finalization has been
   /// disabled or removed, the garbage collector will never call
   /// `finalize()`. In a Java virtual machine in which finalization is
   /// enabled, the garbage collector might call `finalize` only after an
   /// indefinite delay.**
-  /// 
+  ///
   /// The general contract of `finalize` is that it is invoked
   /// if and when the Java virtual
   /// machine has determined that there is no longer any
@@ -221,28 +223,28 @@ public class MarkdownDocumentationCommentsMigration {
   /// for an object that represents an input/output connection might perform
   /// explicit I/O transactions to break the connection before the object is
   /// permanently discarded.
-  /// 
+  ///
   /// The `finalize` method of class `Object` performs no
   /// special action; it simply returns normally. Subclasses of
   /// `Object` may override this definition.
-  /// 
+  ///
   /// The Java programming language does not guarantee which thread will
   /// invoke the `finalize` method for any given object. It is
   /// guaranteed, however, that the thread that invokes finalize will not
   /// be holding any user-visible synchronization locks when finalize is
   /// invoked. If an uncaught exception is thrown by the finalize method,
   /// the exception is ignored and finalization of that object terminates.
-  /// 
+  ///
   /// After the `finalize` method has been invoked for an object, no
   /// further action is taken until the Java virtual machine has again
   /// determined that there is no longer any means by which this object can
   /// be accessed by any thread that has not yet died, including possible
   /// actions by other objects or classes which are ready to be finalized,
   /// at which point the object may be discarded.
-  /// 
+  ///
   /// The `finalize` method is never invoked more than once by a Java
   /// virtual machine for any given object.
-  /// 
+  ///
   /// Any exception thrown by the `finalize` method causes
   /// the finalization of this object to be halted, but is otherwise
   /// ignored.
@@ -253,7 +255,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// lifetime of each instance is longer than that of any resource it embeds.
   /// [Reference#reachabilityFence] can be used to ensure that
   /// objects remain reachable while resources embedded in the object are in use.
-  /// 
+  ///
   /// A subclass should avoid overriding the `finalize` method
   /// unless the subclass embeds non-heap resources that must be cleaned up
   /// before the instance is collected.
@@ -279,9 +281,9 @@ public class MarkdownDocumentationCommentsMigration {
   /// @deprecated Finalization is deprecated and subject to removal in a future
   /// release. The use of finalization can lead to problems with security,
   /// performance, and reliability.
-  /// See <a href="https://openjdk.org/jeps/421">JEP 421</a> for
+  /// See [JEP 421](https://openjdk.org/jeps/421) for
   /// discussion and alternatives.
-  /// 
+  ///
   /// Subclasses that override `finalize` to perform cleanup should use
   /// alternative cleanup mechanisms and remove the `finalize` method.
   /// Use [Cleaner] and
@@ -290,7 +292,7 @@ public class MarkdownDocumentationCommentsMigration {
   /// method to explicitly release resources, and implement
   /// `AutoCloseable` to enable use of the `try`-with-resources
   /// statement.
-  /// 
+  ///
   /// This method will remain in place until finalizers have been removed from
   /// most existing code.
   @Override
@@ -300,9 +302,9 @@ public class MarkdownDocumentationCommentsMigration {
 
 }
 /// Allows an action to retrieve information about the context in which it was invoked.
-/// 
+///
 /// **NOTES:**
-/// 
+///
 ///   - Do not implement, or override platform implementations!
 ///     Things have got more complex since the introduction of asynchronous action update.
 ///     If you need to alter the provided data context or create one from a set of data
@@ -312,7 +314,6 @@ public class MarkdownDocumentationCommentsMigration {
 ///   - Do not to confuse [DataProvider] with [DataContext].
 ///     A [DataContext] is usually provided by the platform with [DataProvider]s as its building blocks.
 ///     For example, a node in a tree view could be a [DataProvider] but not a [DataContext].
-/// 
 ///
 /// @see DataKey
 /// @see DataProvider
@@ -328,30 +329,29 @@ public class MarkdownDocumentationCommentsMigration {
 interface Nothing {}
 /// # Ident formatter
 /// ## What does it do?
-/// 
+///
 /// Creates list of lookup elements with priority and help text and correct indent.
 /// Indent has size of longest element to make it pretty formatted:
+///
 /// <pre>
 ///   command_1         : command help text
 ///   very_long_command : help goes here
 ///   spam              : again here
 /// </pre>
-/// 
+///
 /// ## How to use it?
-/// 
+///
 /// Create it, fill with [#addElement(LookupElementBuilder, String)] or [#addElement(LookupElementBuilder, String, int)]
 /// and obtain result with [#getResult()].
-/// 
+///
 /// ### Priority
-/// 
+///
 /// If **at least** one element has priority, elements would be prioritized. No priority will be used otherwise
 ///
 /// @author Ilya.Kazakevich
 final class LookupWithIndentsBuilder {
 
-  /// #  Returns a hash code value for the object. This method is
-  /// supported for the benefit of hash tables such as those provided by
-  /// [java.util.HashMap].</>
+  /// # Returns a hash code value for the object. This method is supported for the benefit of hash tables such as those provided by [java.util.HashMap].
   public int hashCode() {
     return 1;
   }
@@ -361,6 +361,18 @@ final class LookupWithIndentsBuilder {
   void x() {}
 }
 /// `test<b>`
+/// `One Sheep,
+/// Two Sheeps,
+/// ...zzz`
+///
+/// `Single line code block with html tag`
+///
+/// `
+///   Multi line 
+/// code block with html
+/// tag
+/// `
+///
 /// @param <T> The _M_ type.
 /// @param <B> The B type.
 /// @param <P> The P type.
@@ -368,7 +380,7 @@ final class LookupWithIndentsBuilder {
 interface Foo<T, B, P, I>
 {
 }
-///    <prE>
+/// <pre>
 /// This has some formatted text with blank lines.
 ///
 /// This has some formatted text with blank lines.
@@ -381,10 +393,205 @@ interface Foo<T, B, P, I>
 /// Multiple blank lines above and more below.
 ///
 ///
-/// </Pre>
+/// </pre>
+///
 /// end
 class Preformatted {
 
-  /// <pre>`x`</pre>
+  /// ```
+  /// x
+  /// ```
   protected void beginParsing() {}
+}
+
+class IntendedLists{
+  /// References:
+  ///
+  ///   - First item
+  ///   - Second item
+  ///       - First sub item
+  ///       - Second sub item
+  ///         multi line for some reason
+  ///   - Third item
+  void unorderedList() {}
+  
+   ///   1. first ordered element
+   ///   2. Second ordered element
+   ///       1. Sub item
+   ///
+   /// Text outside of the list.
+   void orderedList() {}
+}
+
+/// [That's JEP 467 ](https://openjdk.org/jeps/467)
+///
+/// [](https://openjdk.org/jeps/467)
+///
+/// ![](https://openjdk.org/images/duke-thinking.png)
+///
+/// ![A joltik plushie]()
+///
+/// [ Personally,
+/// I love writing links
+/// on
+/// multiple
+///  lines.
+///   ](https://openjdk.org/jeps/467)
+///
+/// Link to a type and insert [a line break here][java.time.OffsetDateTime]
+class OhMyLinks {}
+
+/// I like my \*asteriks\* and \_underscores\_.
+///
+/// And let's not forget about my friend the \`backticks\` !
+///
+/// Some fun things include:
+/// \## Title like structs
+///
+/// \- List like structs
+///   \1. Ordered list like structs 
+class EscapeMarkdownLikeStructure {}
+
+class NonProcessed {
+/// Handled _italics_
+/// Unhandled <i style="color:red;">italics</i>
+/// <ul>
+///   <li>item one</li>
+///   <li style="color:red;">item two</li>
+/// </ul>
+void unknownAttributes(){}
+
+  /// <table>
+  ///   <tbody>
+  ///   <tr>
+  ///     <td>col 1</td>
+  ///     <td>col 2</td>
+  ///   </tr>
+  ///   </tbody>
+  /// </table>
+  void unknownTags(){}
+}
+
+class Matcher {
+  /// Implements a non-terminal append-and-replace step.
+  ///
+  /// This method performs the following actions: 
+  ///
+  ///   1. It reads characters from the input sequence, starting at the
+  ///     append position, and appends them to the given string buffer.  It
+  ///     stops after reading the last character preceding the previous match,
+  ///     that is, the character at index 
+  ///     [#start()]&nbsp;`-`&nbsp;`1`.  
+  ///
+  ///   2. It appends the given replacement string to the string buffer.
+  ///
+  ///   3. It sets the append position of this matcher to the index of
+  ///     the last character matched, plus one, that is, to [#end()].
+  ///
+  /// The replacement string may contain references to subsequences
+  /// captured during the previous match: Each occurrence of
+  /// `${`_name_`}` or `$`_g_
+  /// will be replaced by the result of evaluating the corresponding
+  /// [group(name)][#group(String)] or [group(g)][#group(int)]
+  /// respectively. For `$`_g_,
+  /// the first number after the `$` is always treated as part of
+  /// the group reference. Subsequent numbers are incorporated into g if
+  /// they would form a legal group reference. Only the numerals '0'
+  /// through '9' are considered as potential components of the group
+  /// reference. If the second group matched the string `"foo"`, for
+  /// example, then passing the replacement string `"$2bar"` would
+  /// cause `"foobar"` to be appended to the string buffer. A dollar
+  /// sign (`$`) may be included as a literal in the replacement
+  /// string by preceding it with a backslash (`\\$`).
+  ///
+  /// Note that backslashes (`\\`) and dollar signs (`$`) in
+  /// the replacement string may cause the results to be different than if it
+  /// were being treated as a literal replacement string. Dollar signs may be
+  /// treated as references to captured subsequences as described above, and
+  /// backslashes are used to escape literal characters in the replacement
+  /// string.
+  ///
+  /// This method is intended to be used in a loop together with the
+  /// [appendTail][#appendTail(StringBuffer)] and [find][#find()]
+  /// methods.  The following code, for example, writes `one dog two dogs
+  /// in the yard` to the standard-output stream: 
+  ///
+  /// ```
+  /// Pattern p = Pattern.compile("cat");
+  /// Matcher m = p.matcher("one cat two cats in the yard");
+  /// StringBuffer sb = new StringBuffer();
+  /// while (m.find()) {
+  ///     m.appendReplacement(sb, "dog");
+  /// }
+  /// m.appendTail(sb);
+  /// System.out.println(sb.toString());
+  /// ```
+  ///
+  /// @param  sb
+  ///         The target string buffer
+  ///
+  /// @param  replacement
+  ///         The replacement string
+  ///
+  /// @return  This matcher
+  ///
+  /// @throws  IllegalStateException
+  ///          If no match has yet been attempted,
+  ///          or if the previous match operation failed
+  ///
+  /// @throws  IllegalArgumentException
+  ///          If the replacement string refers to a named-capturing
+  ///          group that does not exist in the pattern
+  ///
+  /// @throws  IndexOutOfBoundsException
+  ///          If the replacement string refers to a capturing group
+  ///          that does not exist in the pattern
+  void appendReplacement(){}
+}
+
+class File {
+  /// Finds the definition expression of a given variable or reference expression within the provided context.
+  ///
+  /// Consider the following code:
+  ///
+  /// ```
+  /// class A {
+  ///   void sample() {
+  ///     String[] names = {"charlie", "joe"};
+  ///     Assert.assertEquals(Arrays.asList(names), List.of("charlie", "joe"));
+  ///   }
+  /// }
+  /// ```
+  /// ```
+  /// Single line
+  /// ```
+  /// ```
+  ///     Single line but tags at different lines
+  /// ```
+  /// ```
+  /// Single line but end tags at different lines
+  /// ```
+  /// ```
+  ///    Single line but start tags at different lines
+  /// ```
+  ///
+  /// The usage of `names` in a call to `assertEquals` is a [PsiReferenceExpression].
+  ///
+  /// When this method is called on that [PsiReferenceExpression], it returns [PsiExpression] that defined `names`.
+  /// In our example, it will be an instance of [PsiArrayInitializerExpression].
+  ///
+  /// @param referenceExpression the reference expression whose definition is to be found.
+  /// @param variable the optional variable that is associated with the reference expression.
+  /// @return the definition expression if found, otherwise null.
+  public void find() {}
+}
+
+class indentHandling {
+  
+  /// I have no space before the asterisks.
+  /// It may seem dangerous, but it's not. 
+  void noSpace(){}
+
+  /// hello
+  void weloveSpace(){}
 }

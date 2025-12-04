@@ -5,9 +5,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.vcs.impl.changes.ChangesViewTestBase
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
+import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.platform.vcs.impl.shared.rpc.ContentRevisionDto
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.testFramework.runInEdtAndWait
@@ -23,9 +23,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), listOf(unversioned))
     updateModelAndSelect(view, model, changePath)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, changePath, expectChangeId = true)
     assertNull(selection.previousChange)
@@ -44,9 +42,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList())
     updateModelAndSelect(view, model, p2)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, p2, expectChangeId = true)
     assertTreePath(selection.previousChange!!, p1, expectChangeId = true)
@@ -63,9 +59,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), listOf(u1, u2))
     updateModelAndSelect(view, model, u1)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertTreePath(selection.previousChange!!, c1, expectChangeId = true)
@@ -80,9 +74,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, emptyList(), listOf(u1, u2, u3))
     updateModelAndSelect(view, model, u1)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertNull(selection.previousChange)
@@ -96,9 +88,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, listOf(defaultList), emptyList())
     updateModelAndSelect(view, model, c1)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, c1, expectChangeId = true)
     assertNull(selection.previousChange)
@@ -110,9 +100,7 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val model = buildModel(view, emptyList(), listOf(u1))
     updateModelAndSelect(view, model, u1)
 
-    val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val selection = helper.diffableSelection.value
+    val selection = ChangesViewDiffableSelectionHelper(view).updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, expectChangeId = false)
     assertNull(selection.previousChange)
@@ -158,16 +146,8 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     val previous = helper.diffableSelection.value
 
     // Switch selection to the changelist node
-    runInEdtAndWait {
-      val pathToList = view.findNodePathInTree(defaultList)
-      assertNotNull(pathToList)
-      view.clearSelection()
-      view.addSelectionPath(pathToList)
-      assertEquals(1, view.selectionCount)
-      helper.tryUpdateSelection()
-    }
-
-    val updated = helper.diffableSelection.value
+    findNodeAndSelect(defaultList)
+    val updated = helper.updateSelection()
     assertSame(previous, updated)
   }
 
@@ -179,21 +159,12 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, u1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val previous = helper.diffableSelection.value
+    val previous = helper.updateSelection()
 
     // Switch selection to Unversioned root node
-    runInEdtAndWait {
-      val unvNode = VcsTreeModelData.findTagNode(view, ChangesBrowserNode.UNVERSIONED_FILES_TAG)
-      checkNotNull(unvNode)
-      val pathToUnv = TreeUtil.getPathFromRoot(unvNode)
-      view.clearSelection()
-      view.addSelectionPath(pathToUnv)
-      assertEquals(1, view.selectionCount)
-      helper.tryUpdateSelection()
-    }
+    findNodeAndSelect(ChangesBrowserNode.UNVERSIONED_FILES_TAG)
 
-    val updated = helper.diffableSelection.value
+    val updated = helper.updateSelection()
     assertSame(previous, updated)
   }
 
@@ -206,25 +177,31 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     updateModelAndSelect(view, model, c1)
 
     val helper = ChangesViewDiffableSelectionHelper(view)
-    runInEdtAndWait { helper.tryUpdateSelection() }
-    val previous = helper.diffableSelection.value
+    val previous = helper.updateSelection()
     checkNotNull(previous)
     assertTreePath(previous.selectedChange, c1, true)
 
-    runInEdtAndWait {
-      val pathToU1 = view.findNodePathInTree(u1)
-      assertNotNull(pathToU1)
-      view.clearSelection()
-      view.addSelectionPath(pathToU1)
-      assertEquals(1, view.selectionCount)
-      helper.tryUpdateSelection()
-    }
-
-    val selection = helper.diffableSelection.value
+    findNodeAndSelect(u1)
+    val selection = helper.updateSelection()
     checkNotNull(selection)
     assertTreePath(selection.selectedChange, u1, false)
     assertTreePath(selection.previousChange!!, c1, expectChangeId = true)
     assertNull(selection.nextChange)
+  }
+
+  private fun ChangesViewDiffableSelectionHelper.updateSelection(): ChangesViewDiffableSelection? {
+    runInEdtAndWait { tryUpdateSelection() }
+    return diffableSelection.value
+  }
+
+  private fun findNodeAndSelect(node: Any) {
+    runInEdtAndWait {
+      val amendNodePath = view.root.traverse().find { it.userObject === node }
+      requireNotNull(amendNodePath) { "Node $node not found" }
+      view.clearSelection()
+      view.addSelectionPath(TreeUtil.getPathFromRoot(amendNodePath))
+      assertEquals(1, view.selectionCount)
+    }
   }
 
   private fun defaultChangeList(changePath: FilePath): LocalChangeListImpl = LocalChangeListImpl.Builder(project, "Default")
@@ -232,8 +209,8 @@ internal class ChangesViewDiffableSelectionHelperTest : ChangesViewTestBase() {
     .setChanges(listOf(change(changePath)))
     .build()
 
-  private fun change(path: FilePath): Change {
-    val contentRevisionDto = ContentRevisionDto("0", FilePathDto.toDto(path))
+  private fun change(path: FilePath, revision: String = "default-revision"): Change {
+    val contentRevisionDto = ContentRevisionDto(revision, FilePathDto.toDto(path))
     return Change(null, contentRevisionDto.contentRevision)
   }
 

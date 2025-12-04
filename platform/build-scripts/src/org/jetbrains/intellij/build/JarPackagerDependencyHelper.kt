@@ -7,23 +7,20 @@ import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.intellij.build.productLayout.getProductionModuleDependencies
+import org.jetbrains.intellij.build.productLayout.isProductionRuntimeDependency
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.concurrent.ConcurrentHashMap
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
-internal class JarPackagerDependencyHelper(private val context: CompilationContext) {
-  private val javaExtensionService = JpsJavaExtensionService.getInstance()
-
+internal class JarPackagerDependencyHelper(private val moduleOutputProvider: ModuleOutputProvider) {
   private val libraryCache = ConcurrentHashMap<JpsModule, List<JpsLibraryDependency>>()
 
   fun getModuleDependencies(moduleName: String): Sequence<String> {
-    return getModuleDependencies(context.findRequiredModule(moduleName)).map { it.moduleReference.moduleName }
+    return moduleOutputProvider.findRequiredModule(moduleName).getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }
   }
 
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?, frontendModuleFilter: FrontendModuleFilter): Boolean {
@@ -71,7 +68,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
 
   fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
-    val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, context = context))
+    val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, context = moduleOutputProvider))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }
@@ -87,25 +84,16 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     }
   }
 
-  private fun getModuleDependencies(module: JpsModule): Sequence<JpsModuleDependency> {
-    return sequence {
-      for (element in module.dependenciesList.dependencies) {
-        if (element is JpsModuleDependency && isProductionRuntime(element = element, withTests = false)) {
-          yield(element)
-        }
-      }
-    }
-  }
-
   fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
     //TODO Please write some sane code here, caching is broken, a proper caching crashes dev build
     if (module.name == "intellij.python.pyproject" && withTests) {
       return java.util.List.of()
     }
     return libraryCache.computeIfAbsent(module) {
+      val javaExtensionService = JpsJavaExtensionService.getInstance()
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {
-        if (isProductionRuntime(element = element, withTests = withTests) && element is JpsLibraryDependency) {
+        if (element is JpsLibraryDependency && isProductionRuntimeDependency(element = element, javaExtensionService = javaExtensionService, withTests = withTests)) {
           result.add(element)
         }
       }
@@ -123,7 +111,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
   fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>, withTests: Boolean): Boolean {
     val parentGroup = dependentModule.name.let { it.substring(0, it.lastIndexOf('.')) }
     val prefix = "$parentGroup."
-    for (dependency in getModuleDependencies(dependentModule)) {
+    for (dependency in dependentModule.getProductionModuleDependencies(withTests = false)) {
       val moduleName = dependency.moduleReference.moduleName
       if (moduleName == parentGroup) {
         if (getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
@@ -137,14 +125,6 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
       }
     }
     return false
-  }
-
-  private fun isProductionRuntime(element: JpsDependencyElement, withTests: Boolean): Boolean {
-    val scope = javaExtensionService.getDependencyExtension(element)?.scope ?: return false
-    if (withTests && scope.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME)) {
-      return true
-    }
-    return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
 }
 

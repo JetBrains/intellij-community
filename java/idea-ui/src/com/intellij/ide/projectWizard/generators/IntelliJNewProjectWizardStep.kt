@@ -21,13 +21,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PR
 import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
@@ -217,22 +215,14 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private fun configureSdk(project: Project, builder: ModuleBuilder) {
     if (!context.isCreatingNewProject) {
       // New module in an existing project: set module JDK
-      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent?.name
+      val isSameSdk = ProjectRootManager.getInstance(project).projectSdk?.name == jdkIntent.name
       builder.moduleJdk = if (isSameSdk) null else context.projectJdk
-    }
-  }
-
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = sdkDownloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
     }
   }
 
   fun setupProject(project: Project, builder: ModuleBuilder) {
     configureModuleBuilder(project, builder)
     setupProjectFromBuilder(project, builder)
-      ?.let(::startJdkDownloadIfNeeded)
+    project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
   }
 }

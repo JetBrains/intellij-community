@@ -14,6 +14,78 @@ com.intellij.build.BuildProgressListener
 com.intellij.build.ViewManager
 - a:isBuildContentView():Z
 - a:isConsoleEnabledByDefault():Z
+com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:build():com.intellij.build.events.FileDownloadEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withProgress(java.lang.Long):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withTotal(java.lang.Long):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+- a:withUnit(java.lang.String):com.intellij.build.eventBuilders.FileDownloadEventBuilder
+com.intellij.build.eventBuilders.FileDownloadedEventBuilder
+- a:build():com.intellij.build.events.FileDownloadedEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.FileDownloadedEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.FileDownloadedEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FileDownloadedEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FileDownloadedEventBuilder
+com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:build():com.intellij.build.events.FileMessageEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withGroup(java.lang.String):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withId(java.lang.Object):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FileMessageEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FileMessageEventBuilder
+com.intellij.build.eventBuilders.FinishBuildEventBuilder
+- a:build():com.intellij.build.events.FinishBuildEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.FinishBuildEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.FinishBuildEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FinishBuildEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FinishBuildEventBuilder
+com.intellij.build.eventBuilders.FinishEventBuilder
+- a:build():com.intellij.build.events.FinishEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.FinishEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.FinishEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.FinishEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.FinishEventBuilder
+com.intellij.build.eventBuilders.MessageEventBuilder
+- a:build():com.intellij.build.events.MessageEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withGroup(java.lang.String):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withId(java.lang.Object):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withNavigatable(com.intellij.pom.Navigatable):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.MessageEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.MessageEventBuilder
+com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:build():com.intellij.build.events.OutputBuildEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:withId(java.lang.Object):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:withOutputType(com.intellij.execution.process.ProcessOutputType):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.OutputBuildEventBuilder
+com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:build():com.intellij.build.events.ProgressBuildEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withProgress(java.lang.Long):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withTotal(java.lang.Long):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+- a:withUnit(java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
+com.intellij.build.eventBuilders.StartBuildEventBuilder
+- a:build():com.intellij.build.events.StartBuildEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.StartBuildEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.StartBuildEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.StartBuildEventBuilder
+com.intellij.build.eventBuilders.StartEventBuilder
+- a:build():com.intellij.build.events.StartEvent
+- a:withDescription(java.lang.String):com.intellij.build.eventBuilders.StartEventBuilder
+- a:withHint(java.lang.String):com.intellij.build.eventBuilders.StartEventBuilder
+- a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.StartEventBuilder
+- a:withTime(java.lang.Long):com.intellij.build.eventBuilders.StartEventBuilder
 com.intellij.build.events.BuildEvent
 - a:getDescription():java.lang.String
 - a:getEventTime():J
@@ -34,14 +106,17 @@ com.intellij.build.events.FailureResult
 - a:getFailures():java.util.List
 com.intellij.build.events.FileDownloadEvent
 - com.intellij.build.events.ProgressBuildEvent
+- s:builder(java.lang.Object,java.lang.String,Z,java.lang.String):com.intellij.build.eventBuilders.FileDownloadEventBuilder
 - a:getDownloadPath():java.lang.String
 - a:isFirstInGroup():Z
 com.intellij.build.events.FileDownloadedEvent
 - com.intellij.build.events.BuildEvent
+- s:builder(java.lang.Object,java.lang.String,J,java.lang.String):com.intellij.build.eventBuilders.FileDownloadedEventBuilder
 - a:getDownloadPath():java.lang.String
 - a:getDuration():J
 com.intellij.build.events.FileMessageEvent
 - com.intellij.build.events.MessageEvent
+- s:builder(java.lang.String,com.intellij.build.events.MessageEvent$Kind,com.intellij.build.FilePosition):com.intellij.build.eventBuilders.FileMessageEventBuilder
 - a:getFilePosition():com.intellij.build.FilePosition
 - a:getResult():com.intellij.build.events.FileMessageEventResult
 com.intellij.build.events.FileMessageEventResult
@@ -49,8 +124,12 @@ com.intellij.build.events.FileMessageEventResult
 - a:getFilePosition():com.intellij.build.FilePosition
 com.intellij.build.events.FinishBuildEvent
 - com.intellij.build.events.FinishEvent
+- s:builder(java.lang.Object,java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.eventBuilders.FinishBuildEventBuilder
+com.intellij.build.events.FinishEvent
+- s:builder(java.lang.Object,java.lang.String,com.intellij.build.events.EventResult):com.intellij.build.eventBuilders.FinishEventBuilder
 com.intellij.build.events.MessageEvent
 - com.intellij.build.events.BuildEvent
+- s:builder(java.lang.String,com.intellij.build.events.MessageEvent$Kind):com.intellij.build.eventBuilders.MessageEventBuilder
 - a:getGroup():java.lang.String
 - a:getKind():com.intellij.build.events.MessageEvent$Kind
 - a:getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
@@ -61,16 +140,21 @@ com.intellij.build.events.MessageEventResult
 - a:getKind():com.intellij.build.events.MessageEvent$Kind
 com.intellij.build.events.OutputBuildEvent
 - com.intellij.build.events.BuildEvent
+- s:builder(java.lang.String):com.intellij.build.eventBuilders.OutputBuildEventBuilder
 - a:getMessage():java.lang.String
 - a:getOutputType():com.intellij.execution.process.ProcessOutputType
 - isStdOut():Z
+com.intellij.build.events.ProgressBuildEvent
+- s:builder(java.lang.Object,java.lang.String):com.intellij.build.eventBuilders.ProgressBuildEventBuilder
 com.intellij.build.events.SkippedResult
 - com.intellij.build.events.EventResult
 com.intellij.build.events.StartBuildEvent
 - com.intellij.build.events.StartEvent
+- s:builder(java.lang.String,com.intellij.build.BuildDescriptor):com.intellij.build.eventBuilders.StartBuildEventBuilder
 - a:getBuildDescriptor():com.intellij.build.BuildDescriptor
 com.intellij.build.events.StartEvent
 - com.intellij.build.events.BuildEvent
+- s:builder(java.lang.Object,java.lang.String):com.intellij.build.eventBuilders.StartEventBuilder
 com.intellij.build.events.SuccessResult
 - com.intellij.build.events.EventResult
 - a:getWarnings():java.util.List
@@ -687,6 +771,8 @@ com.intellij.lang.parameterInfo.ParameterInfoUIContextEx
 - com.intellij.lang.parameterInfo.ParameterInfoUIContext
 - a:setEscapeFunction(com.intellij.util.Function):V
 - a:setupUIComponentPresentation(java.lang.String[],java.util.EnumSet[],java.awt.Color):java.lang.String
+f:com.intellij.lang.parameterInfo.ParameterInfoUtils
+- s:findParentOfType(com.intellij.psi.PsiElement,java.lang.Class):com.intellij.psi.PsiElement
 com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 - com.intellij.lang.parameterInfo.ParameterInfoContext
 - a:getCustomContext():com.intellij.openapi.util.UserDataHolderEx

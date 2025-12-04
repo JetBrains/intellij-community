@@ -16,7 +16,26 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.whenExpressionVisitor
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
-class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
+/**
+ * This inspection finds and replaces `when` expressions containing only a single `else` branch by the body of that branch, accounting for
+ * the presence of a subject variable. In general, it rewrites:
+ *
+ * ```kotlin
+ *   when (val x = e1) {
+ *     else -> e2
+ *   }
+ * ```
+ *
+ * into:
+ *
+ * ```
+ *   run {
+ *     val x = e1
+ *     e2
+ *   }
+ * ```
+ */
+internal class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return whenExpressionVisitor { expression ->
             val singleEntry = expression.entries.singleOrNull()
@@ -38,7 +57,7 @@ class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
     ) : LocalQuickFix {
         override fun getFamilyName() = name
 
-        override fun getName() = KotlinBundle.message("simplify.fix.text")
+        override fun getName() = KotlinBundle.message("inspection.when.with.only.else.action.name")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val whenExpression = descriptor.psiElement as? KtWhenExpression ?: return

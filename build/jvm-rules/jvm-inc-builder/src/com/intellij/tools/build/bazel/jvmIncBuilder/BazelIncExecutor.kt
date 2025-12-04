@@ -32,7 +32,7 @@ internal class BazelIncExecutor : WorkRequestExecutor {
       scope.coroutineContext.job.invokeOnCompletion { globalSpan.end() }
 
       // configure logging for the code using IJ Platform logging API
-      com.intellij.openapi.diagnostic.Logger.setFactory { IJPrintStreamLogger(category = it, stream = System.err, span = globalSpan) }
+      org.jetbrains.kotlin.com.intellij.openapi.diagnostic.Logger.setFactory { IJPrintStreamLogger(category = it, stream = System.err, span = globalSpan) }
 
       // configure logging for the code using Java SDK logging API
       val rootLogger = java.util.logging.Logger.getLogger("")

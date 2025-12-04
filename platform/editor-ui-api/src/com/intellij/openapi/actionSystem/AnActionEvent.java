@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
+import kotlinx.coroutines.CoroutineScope;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +36,7 @@ public class AnActionEvent implements PlaceProvider {
   private final int myModifiers;
 
   private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
+  private @Nullable CoroutineScope myPerformCoroutineScope = null;
 
   /** @deprecated Use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} or
    * {@link #AnActionEvent(DataContext, Presentation, String, ActionUiKind, InputEvent, int, ActionManager)} instead. */
@@ -86,7 +88,11 @@ public class AnActionEvent implements PlaceProvider {
     if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(dataContext, myPresentation, myPlace, myUiKind, myInputEvent,
                                             myModifiers, myActionManager);
-    event.setUpdateSession(myUpdateSession);
+    if (myPerformCoroutineScope != null) {
+      event.installCoroutineScope(myPerformCoroutineScope);
+    } else {
+      event.setUpdateSession(myUpdateSession);
+    }
     return event;
   }
 
@@ -319,6 +325,44 @@ public class AnActionEvent implements PlaceProvider {
 
   public final void setUpdateSession(@NotNull UpdateSession updateSession) {
     myUpdateSession = updateSession;
+    myPerformCoroutineScope = null;
+  }
+
+  // used only by implementation of the action subsystem
+  // avoid naming like `setCoroutineScope` to not look like a mutable property in Kotlin
+  @ApiStatus.Internal
+  public final void installCoroutineScope(@NotNull CoroutineScope scope) {
+    myUpdateSession = UpdateSession.EMPTY;
+    myPerformCoroutineScope = scope;
+  }
+
+  /**
+   * Returns a coroutine scope associated with the context of {@link AnAction#actionPerformed}
+   * <p>
+   * This scope gets canceled when {@link AnAction#actionPerformed} is terminated and all its existing child coroutines are terminated.
+   * I.e., the following behavior holds:
+   * <pre>
+   * {@code
+   * override fun actionPerformed(e: AnActionEvent) {
+   *   // the scope is kept alive during `actionPerformed`
+   *   e.coroutineScope.launch(CoroutineName("Coroutine#1")) {
+   *     // the scope is kept alive while this coroutine runs
+   *     application.executeOnPooledThread { // here we break Kotlin's structured concurrency by escaping the launching `Coroutine#1`
+   *       e.coroutineScope.launch(CoroutineName("Coroutine#2")) {} // the scope may be canceled at this point, so this coroutine would not start!
+   *     }
+   *   }
+   * }
+   * }</pre>
+   * <p>
+   * Use this scope to execute suspending computations from {@link AnAction#actionPerformed}.
+   */
+  @ApiStatus.Experimental
+  public final @NotNull CoroutineScope getCoroutineScope() {
+    CoroutineScope scope = myPerformCoroutineScope;
+    if (scope == null) {
+      throw new IllegalStateException("Coroutine scope is supported only for `actionPerformed`");
+    }
+    return scope;
   }
 
   @ApiStatus.Internal

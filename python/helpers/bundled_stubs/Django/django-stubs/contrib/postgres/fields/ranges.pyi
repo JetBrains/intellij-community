@@ -48,8 +48,8 @@ class DecimalRangeField(RangeField[NumericRange]):
     form_field: type[forms.DecimalRangeField]
 
 class DateTimeRangeField(RangeField[DateTimeTZRange]):
-    base_field: type[models.DecimalField]
-    form_field: type[forms.DecimalRangeField]
+    base_field: type[models.DateTimeField]
+    form_field: type[forms.DateTimeRangeField]
 
 class DateRangeField(RangeField[DateRange]):
     base_field: type[models.DateField]
@@ -91,12 +91,12 @@ class UpperInfinite(models.Transform):
     output_field: ClassVar[models.BooleanField]
 
 __all__ = [
-    "RangeField",
-    "IntegerRangeField",
     "BigIntegerRangeField",
-    "DecimalRangeField",
-    "DateTimeRangeField",
     "DateRangeField",
+    "DateTimeRangeField",
+    "DecimalRangeField",
+    "IntegerRangeField",
     "RangeBoundary",
+    "RangeField",
     "RangeOperators",
 ]

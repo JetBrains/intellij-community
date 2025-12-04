@@ -43,6 +43,7 @@ jvm_library(
     "//java/typeMigration",
     "//platform/util/nanoxml",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//spellchecker",
@@ -50,6 +51,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
     "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
   ]
 )
 
@@ -80,6 +82,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//xml/impl",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-indexing-api:indexing",
     "//java/openapi:java",
     "//java/compiler/openapi:java-compiler",
@@ -94,6 +97,7 @@ jvm_library(
     "//platform/util/nanoxml",
     "//java/java-tests:tests_test_lib",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//spellchecker",
@@ -102,6 +106,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
     "//xml/xml-analysis-api:analysis",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.javaFX` end
@@ -138,6 +143,7 @@ jvm_library(
     "//plugins/javaFX",
     "//platform/analysis-api:analysis",
     "//libraries/stream",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.javaFX.properties` end

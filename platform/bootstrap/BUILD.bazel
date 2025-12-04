@@ -11,7 +11,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-class-loader:util-classLoader",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/service-container",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",

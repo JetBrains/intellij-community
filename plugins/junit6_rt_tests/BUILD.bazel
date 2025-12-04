@@ -37,6 +37,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.junit.v6.rt.tests` end

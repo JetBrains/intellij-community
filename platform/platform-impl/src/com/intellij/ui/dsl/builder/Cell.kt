@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
@@ -94,7 +95,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
-   * * The related component uses the comment as the accessible description (if not specified directly)
+   * * The related component uses the comment as part of its accessible description if the accessible description
+   * is not explicitly specified by the [accessibleDescription] method
    *
    * The comment occupies the available width before the next comment (if present) or
    * the whole remaining width. Visibility and enabled state of the cell affect the comment as well.
@@ -117,7 +119,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
    * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
-   * * The related component uses the comment as the accessible description (if not specified directly)
+   * * The related component uses the comment as part of its accessible description if the accessible description
+   * is not explicitly specified by the [accessibleDescription] method
    * * Text is not wrapped and uses only html markup like `<br>`, similar to [MAX_LINE_LENGTH_NO_WRAP]
    *
    * Visibility and enabled state of the cell affect the comment as well.
@@ -126,6 +129,18 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
     @NlsContexts.DetailedDescription comment: String?,
     action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE,
   ): Cell<T>
+
+  /**
+   * Adds a context help button related to the component. [title] and [description] are used for the tooltip.
+   *
+   * * [title] and [description] can contain HTML tags except `<html>`, which is added automatically
+   * * `\n` does not work as new line in html, use `<br>` instead
+   * * The related component uses the [description] as part of its accessible description if the accessible description
+   * is not explicitly specified by the [accessibleDescription] method
+   *
+   * Visibility and enabled state of the cell affect the context button as well.
+   */
+  fun contextHelp(@NlsContexts.Tooltip description: String, @TooltipTitle title: String? = null): Cell<T>
 
   /**
    * Adds the label with optional mnemonic related to the cell component.

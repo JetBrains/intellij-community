@@ -6,14 +6,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.io.*;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.time.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -131,6 +133,16 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     else {
       myHasChanges |= deleteEntry(entryName);
     }
+  }
+
+  @Override
+  public void putEntry(String entryName, @NotNull Path content) {
+    if (isDirectoryName(entryName)) {
+      throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
+    }
+    myEntries.put(entryName, createEntryData(entryName, content));
+    addToPackageIndex(entryName);
+    myHasChanges = true;
   }
 
   @Override
@@ -366,6 +378,53 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         super.cleanup();
         entry = null;
         swap.remove(entryName);
+      }
+    };
+  }
+
+  private EntryData createEntryData(String entryName, Path content) {
+    return new CachingDataEntry(null) {
+      private ZipEntry entry;
+      @Override
+      protected byte[] loadData() {
+        try (InputStream in = Files.newInputStream(content)) {
+          ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+          in.transferTo(bytes);
+          return bytes.toByteArray();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+
+      @Override
+      public ZipEntry getZipEntry() {
+        try {
+          return entry != null? entry : (entry = createZipEntry(entryName, getContent()));
+        }
+        catch (IOException e) {
+          // should not happen, since loadData() in this implementation won't throw anything
+          throw new RuntimeException();
+        }
+      }
+
+      @Override
+      public void transferTo(OutputStream os) throws IOException {
+        byte[] data = getCached();
+        if (data != null) {
+          os.write(data);
+        }
+        else {
+          try (InputStream in = Files.newInputStream(content)) {
+            in.transferTo(os);
+          }
+        }
+      }
+
+      @Override
+      public void cleanup() {
+        super.cleanup();
+        entry = null;
       }
     };
   }

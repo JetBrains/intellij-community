@@ -46,13 +46,17 @@ final class OverrideFileTypeAction extends DumbAwareAction {
     if (files.length == 0) return;
     DefaultActionGroup group = new DefaultActionGroup();
     // although well-behaved types have unique names, file types coming from plugins can be wild
-    Map<String, List<String>> duplicates = Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
+    FileType[] allTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+
+    Map<String, List<String>> duplicates = Arrays.stream(allTypes)
       .map(t -> t.getDisplayName())
       .collect(Collectors.groupingBy(Function.identity()));
 
-    for (FileType type : ContainerUtil.sorted(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()),
-                                              (f1,f2)->f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
-      if (!OverrideFileTypeManager.isOverridable(type)) continue;
+    for (FileType type : ContainerUtil.sorted(Arrays.asList(allTypes),
+                                              (f1, f2) -> f1.getDisplayName().compareToIgnoreCase(f2.getDisplayName()))) {
+      // checking if this file type can override others
+      if (!OverrideFileTypeManager.isAvailableForOverride(type)) continue;
+
       boolean hasDuplicate = duplicates.get(type.getDisplayName()).size() > 1;
       String dupHint = null;
       if (hasDuplicate) {
@@ -117,7 +121,12 @@ final class OverrideFileTypeAction extends DumbAwareAction {
       return file.isValid()
              && !file.isDirectory()
              && (file instanceof VirtualFileWithId)
-             && OverrideFileTypeManager.isOverridable(file.getFileType());
+             && (isOverridden(file) || OverrideFileTypeManager.isOverridable(file.getFileType()));
+    }
+
+    private static boolean isOverridden(@NotNull VirtualFile file) {
+      // if we already assigned a file type some time ago, we must be able to override it again
+      return OverrideFileTypeManager.getInstance().getFileValue(file) != null;
     }
   }
 }

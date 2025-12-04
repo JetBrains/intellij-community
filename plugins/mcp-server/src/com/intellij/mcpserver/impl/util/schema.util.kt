@@ -28,14 +28,14 @@ import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.typeOf
 
 
-fun KCallable<*>.parametersSchema(): McpToolSchema {
+fun KCallable<*>.parametersSchema(vararg additionalImplicitParameters: KParameter): McpToolSchema {
   val parameterSchemas = mutableMapOf<String, JsonElement>()
   val definitions = mutableMapOf<String, JsonElement>()
   val requiredParameters = mutableSetOf<String>()
 
   // probably passthrough something like `additionalImplicitParameters` from outsise
   // but it isn't neccessary right now
-  for (parameter in this.parameters + projectPathParameter) {
+  for (parameter in this.parameters + additionalImplicitParameters) {
     if (parameter.kind != KParameter.Kind.VALUE) continue
 
     val parameterName = parameter.name ?: error("Parameter has no name: ${parameter.name} in $this")
@@ -66,7 +66,7 @@ private fun projectPathParameterStub(
     | In the case you know only the current working directory you can use it as the project path.
     | If you're not aware about the project path you can ask user about it.""")
   projectPath: String? = null) {}
-private val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
+internal val projectPathParameter: KParameter get() = ::projectPathParameterStub.parameters.single()
 val projectPathParameterName: String get() = projectPathParameter.name ?: error("Parameter has no name: ${projectPathParameter.name}")
 
 fun KCallable<*>.returnTypeSchema(): McpToolSchema? {

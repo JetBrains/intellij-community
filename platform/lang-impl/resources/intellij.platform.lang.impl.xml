@@ -1,2 +1,62 @@
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.caffeine"/>
+    <module name="intellij.libraries.cli.parser"/>
+    <module name="intellij.libraries.commons.lang3"/>
+    <module name="intellij.libraries.commons.logging"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.html"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.kotlinx.serialization.protobuf"/>
+    <module name="intellij.libraries.lz4"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.oro.matcher"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.libraries.velocity"/>
+    <module name="intellij.libraries.xstream"/>
+    <module name="intellij.libraries.xz"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+  </dependencies>
+  <!-- end editor-fold -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"
+                    interface="com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.SourceOrLibraryCanBeSelectedInProjectPaneProvider"/>
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.ArchiveCanBeSelectedInProjectPaneProvider"/>
+    <canBeSelectedInProjectPaneProvider
+      implementation="com.intellij.ide.projectView.impl.canBeSelected.ScratchCanBeSelectedInProjectPaneProvider"/>
+  </extensions>
 </idea-plugin>

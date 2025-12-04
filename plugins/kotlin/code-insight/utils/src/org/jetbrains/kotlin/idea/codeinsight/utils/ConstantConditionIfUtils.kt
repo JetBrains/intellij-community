@@ -90,7 +90,6 @@ object ConstantConditionIfUtils {
         return replaced
     }
 
-    // TODO Similar code is located in WhenWithOnlyElseInspection
     private fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
         is KtStringTemplateExpression -> !hasInterpolation()
         is KtConstantExpression -> true

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatRobolectricIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatSpockIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
@@ -59,7 +58,6 @@ abstract class GradleTestExecutionTestCase : GradleTestExecutionBaseTestCase() {
   }
 
   fun testRobolectricProject(gradleVersion: GradleVersion, action: () -> Unit) {
-    assumeThatRobolectricIsSupported(gradleVersion)
     test(gradleVersion, JAVA_ROBOLECTRIC_FIXTURE, action)
   }
 

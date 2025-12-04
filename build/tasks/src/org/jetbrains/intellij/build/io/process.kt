@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.InputStream
@@ -24,16 +24,18 @@ val DEFAULT_TIMEOUT: Duration = 10.minutes
 /**
  * Executes a Java class in a forked JVM.
  */
-suspend fun runJava(mainClass: String,
-                    args: List<String>,
-                    jvmArgs: List<String> = emptyList(),
-                    classPath: Collection<String>,
-                    javaExe: Path,
-                    timeout: Duration = DEFAULT_TIMEOUT,
-                    workingDir: Path? = null,
-                    customOutput: Redirect? = null,
-                    customError: Redirect? = null,
-                    onError: (() -> Unit)? = null) {
+suspend fun runJava(
+  mainClass: String,
+  args: List<String>,
+  jvmArgs: List<String> = emptyList(),
+  classPath: Collection<String>,
+  javaExe: Path,
+  timeout: Duration = DEFAULT_TIMEOUT,
+  workingDir: Path? = null,
+  customOutput: Redirect? = null,
+  customError: Redirect? = null,
+  onError: (() -> Unit)? = null,
+) {
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
   val useJsonOutput = jvmArgs.any { it == "-Dintellij.log.to.json.stdout=true" }
   val commandLine = buildString {
@@ -91,7 +93,8 @@ suspend fun runJava(mainClass: String,
           val errorMessage = StringBuilder(
             "Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
             "\n--- error output ---\n" +
-            "$errorOutput")
+            "$errorOutput"
+          )
           if (!useJsonOutput) {
             errorMessage.append("\n--- output ---\n$output\n")
           }
@@ -126,7 +129,7 @@ suspend fun runJava(mainClass: String,
         }
 
         if (useJsonOutput) {
-          checkOutput(outputFile = outputFile, span = span, errorConsumer = ::javaRunFailed)
+          checkOutput(outputFile, span, errorConsumer = ::javaRunFailed)
         }
       }
       finally {
@@ -175,11 +178,13 @@ private fun checkOutput(outputFile: Path?, span: Span, errorConsumer: (String) -
   span.setAttribute("output", messages.toString())
 }
 
-private fun createProcessArgs(javaExe: Path,
-                              jvmArgs: List<String>,
-                              classpathFile: Path?,
-                              mainClass: String,
-                              args: List<String>): MutableList<String> {
+private fun createProcessArgs(
+  javaExe: Path,
+  jvmArgs: List<String>,
+  classpathFile: Path?,
+  mainClass: String,
+  args: List<String>,
+): MutableList<String> {
   val processArgs = mutableListOf<String>()
   processArgs.add(javaExe.toString())
   processArgs.add("-Djava.awt.headless=true")
@@ -205,7 +210,7 @@ private fun createClassPathFile(classPath: Collection<String>, classpathFile: Pa
 }
 
 @JvmOverloads
-@Obsolete
+@ApiStatus.Obsolete
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
     runProcess(args, workingDir, timeoutMillis.milliseconds)

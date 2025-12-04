@@ -1,6 +1,5 @@
 aliases_explicit.py
 aliases_implicit.py
-aliases_newtype.py
 aliases_recursive.py
 aliases_typealiastype.py
 aliases_variance.py
@@ -17,18 +16,13 @@ dataclasses_order.py
 dataclasses_match_args.py
 dataclasses_transform_converter.py
 dataclasses_transform_field.py
-dataclasses_transform_meta.py
 dataclasses_usage.py
 directives_deprecated.py
-directives_type_checking.py
 directives_version_platform.py
 generics_base_class.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py
-generics_self_advanced.py
 generics_self_attributes.py
-generics_self_basic.py
-generics_self_usage.py
 generics_syntax_infer_variance.py
 generics_typevartuple_basic.py
 generics_typevartuple_overloads.py

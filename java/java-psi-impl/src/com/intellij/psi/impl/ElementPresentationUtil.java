@@ -220,6 +220,7 @@ public final class ElementPresentationUtil {
     iconManager.registerIconLayer(FLAGS_FINAL, iconManager.getPlatformIcon(PlatformIcons.FinalMark));
     iconManager.registerIconLayer(FLAGS_JUNIT_TEST, iconManager.getPlatformIcon(PlatformIcons.JunitTestMark));
     iconManager.registerIconLayer(FLAGS_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.RunnableMark));
+    iconManager.registerIconLayer(ElementBase.FLAGS_LOCKED, null);
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {

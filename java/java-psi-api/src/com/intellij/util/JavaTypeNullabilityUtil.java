@@ -240,35 +240,53 @@ public final class JavaTypeNullabilityUtil {
     Nullability rightNullability = rightTypeNullability.nullability();
 
     if (leftNullability == Nullability.NOT_NULL && rightNullability == Nullability.NULLABLE) {
-      return new NullabilityConflictContext(NullabilityConflict.NULL_TO_NOT_NULL, rightType);
+      return new NullabilityConflictContext(NullabilityConflict.NULL_TO_NOT_NULL, leftType, rightType);
     }
     // It is not possible to have NOT_NULL_TO_NULL conflict when left type is wildcard with upper bound,
     // e.g., this assignment is legal {@code List<? extends @Nullable Object> = List<@NotNull String>}
     else if (leftNullability == Nullability.NULLABLE && rightNullability == Nullability.NOT_NULL && !GenericsUtil.isWildcardWithExtendsBound(leftType)) {
-      return new NullabilityConflictContext(NullabilityConflict.NOT_NULL_TO_NULL, rightType);
+      return new NullabilityConflictContext(NullabilityConflict.NOT_NULL_TO_NULL, leftType, rightType);
     }
     return NullabilityConflictContext.UNKNOWN;
   }
-
 
   /**
    * Holds information about the nullability conflict that might be used to provide more descriptive error messages.
    */
   public static class NullabilityConflictContext {
-    public final @NotNull NullabilityConflict nullabilityConflict;
-    public final @Nullable PsiType type;
+    private final @NotNull NullabilityConflict nullabilityConflict;
+    private final @Nullable PsiType expectedType;
+    private final @Nullable PsiType actualType;
 
-    public static final NullabilityConflictContext UNKNOWN = new NullabilityConflictContext(NullabilityConflict.UNKNOWN, null);
+    public static final NullabilityConflictContext UNKNOWN = new NullabilityConflictContext(NullabilityConflict.UNKNOWN, null, null);
 
-    public NullabilityConflictContext(@NotNull NullabilityConflict nullabilityConflict, @Nullable PsiType type) {
-      this.type = type;
+    public NullabilityConflictContext(@NotNull NullabilityConflict nullabilityConflict, @Nullable PsiType expectedType, @Nullable PsiType actualType) {
       this.nullabilityConflict = nullabilityConflict;
+      this.expectedType = expectedType;
+      this.actualType = actualType;
+    }
+
+    /**
+     * @see NullabilityConflict
+     * @return nullability conflict type
+     */
+    public @NotNull NullabilityConflict nullabilityConflict() {
+      return nullabilityConflict;
+    }
+
+    /**
+     * @return part of the actual {@code PsiType} in which the conflict is occurred.
+     */
+    public PsiType getType(@NotNull Side side) {
+      if (side == Side.EXPECTED) return expectedType;
+      return actualType;
     }
 
     /**
      * @return type argument or array type in which the conflict is occurred.
      */
-    public @Nullable PsiElement getPlace() {
+    public @Nullable PsiElement getPlace(@NotNull Side side) {
+      PsiType type = getType(side);
       return getPlace(type);
     }
 
@@ -276,7 +294,8 @@ public final class JavaTypeNullabilityUtil {
     /**
      * @return nullability annotation that produces the conflict.
      */
-    public @Nullable PsiAnnotation getAnnotation() {
+    public @Nullable PsiAnnotation getAnnotation(@NotNull Side side) {
+      PsiType type = getType(side);
       if (type == null) return null;
       TypeNullability nullability = type.getNullability();
       NullabilityAnnotationInfo info = nullability.toNullabilityAnnotationInfo();
@@ -299,6 +318,15 @@ public final class JavaTypeNullabilityUtil {
       }
       return null;
     }
+  }
+
+  /**
+   * Represents the side of nullability conflict.
+   * @see NullabilityConflictContext
+   */
+  public enum Side {
+    EXPECTED,
+    ACTUAL,
   }
 
   /**

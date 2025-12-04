@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProviderTestCase;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 /**
@@ -20,6 +21,7 @@ import org.junit.Test;
 public class GradleApplicationEnvironmentProviderTest extends GradleApplicationEnvironmentProviderTestCase {
 
   @Test
+  @TargetVersions("4.6+") // org.gradle.api.tasks.TaskContainer.create introduced only in Gradle 4.6
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -84,6 +86,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("6.4+") // initial JPMS support added by Gradle starting from Gradle 6.4
   public void testJavaModuleRunConfigurationWithResources() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -147,6 +150,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("7.0+") // full JPMS support added by Gradle starting from Gradle 7.0
   public void testJavaModuleRunConfigurationWithProvider() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java") String appClass = """
@@ -205,6 +209,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  @TargetVersions("4.6+") // org.gradle.api.tasks.TaskContainer.create introduced only in Gradle 4.6
   public void testRunApplicationInnerStaticClass() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -247,6 +252,9 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
+  // A task could be executed via included task fqdn like :root:something:something only starting from Gradle 6.8
+  // This behavior for older Gradle version is broken due to IDEA-382710
+  @TargetVersions("6.8+")
   public void testRunApplicationInNestedComposite() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")

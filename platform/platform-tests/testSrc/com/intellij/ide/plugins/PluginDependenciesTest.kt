@@ -18,6 +18,7 @@ import java.nio.file.FileVisitResult
 internal class PluginDependenciesTest {
   init {
     Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
   }
 
   @RegisterExtension

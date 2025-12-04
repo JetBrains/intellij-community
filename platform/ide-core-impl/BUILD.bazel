@@ -30,7 +30,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//jps/model-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/diagnostic",

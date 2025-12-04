@@ -72,7 +72,7 @@ jvm_library(
     "//build/tasks",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/build-scripts/downloader",
     "@community//build:zip",
     "@lib//:maven-resolver-provider",

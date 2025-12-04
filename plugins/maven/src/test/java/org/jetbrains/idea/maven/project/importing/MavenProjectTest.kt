@@ -684,7 +684,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     val repositories = projectsManager.getRemoteRepositories()
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     val repos = mavenEmbedderWrappers.use {
-      val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom).toString())
+      val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom))
       mavenEmbedderWrapper.resolveRepositories(repositories).toSet()
     }
 

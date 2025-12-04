@@ -1,10 +1,7 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
 import com.intellij.ui.ExperimentalUI
@@ -31,7 +28,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       askForFeedbackIfReworkedTerminalDisabled(project, TerminalOptionsProvider.instance.terminalEngine, engine)
       TerminalOptionsProvider.instance.terminalEngine = engine
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
-      saveSettingsForRemoteDevelopment(application)
+      saveSettingsForRemoteDevelopment(e.coroutineScope, application)
 
       createTerminalTab(
         project,

@@ -16,11 +16,15 @@
 
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit5"/>
-    <module name="intellij.libraries.junit5.vintage"/>
+    <module name="intellij.libraries.junit5.jupiter"/>
     <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit5.vintage"/>
     <module name="intellij.libraries.hamcrest"/>
 
     <module name="intellij.tools.testsBootstrap"/>
+
+    <module name="intellij.station.comms.common.testFramework"/>
+    <module name="intellij.station.core._test"/>
   </content>
   <dependencies>
     <module name="intellij.lambda.testFramework"/>

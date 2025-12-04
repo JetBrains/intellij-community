@@ -289,6 +289,7 @@
   - name: kotlin.gradle.scripting.shared
   - name: intellij.kotlin.gradle.codeInsight.groovy
   - name: intellij.kotlin.gradle.codeInsight.toml
+  - name: intellij.kotlin.gradle.codeInsight.toml.k2
   - name: intellij.kotlin.native
   - name: intellij.kotlin.grazie
   - name: intellij.kotlin.runConfigurations.jvm

@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -91,24 +89,29 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String>) {
     checkProductProperties(context)
-    checkPluginModules(pluginModules = mainPluginModules, fieldName = "mainPluginModules", context = context)
+    checkPluginModules(mainPluginModules, fieldName = "mainPluginModules", context)
     copyDependenciesFile(context)
     context.compileProductionModules()
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
+    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
     val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
     filterPluginsToPublish(pluginsToPublishEffective, context)
     val platformLayout = createPlatformLayout(context)
-    val distState = DistributionBuilderState(platformLayout = platformLayout, pluginsToPublish = pluginsToPublishEffective, context = context)
-
+    val distState = DistributionBuilderState(platformLayout, pluginsToPublishEffective, context)
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+
+    // build required dist/lib components for scrambling of plugins such as Marketplace
+    //val traceContext = Context.current().asContextElement()
+    //val buildPlatformLibJob = coroutineScope {
+    //  async(traceContext + CoroutineName("build platform lib")) {
+    //    buildPlatform(
+    //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
+    //    )
+    //  }
+    //}
+
     buildNonBundledPlugins(
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = context.options.compressZipFiles,
-      buildPlatformLibJob = null,
-      state = distState,
-      searchableOptionSet = searchableOptionSet,
-      descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
-      context = context,
+      pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null /* buildPlatformLibJob */, distState, searchableOptionSet, isUpdateFromSources = false,
+      distState.platformLayout.descriptorCacheContainer, context
     )
   }
 
@@ -140,11 +143,11 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(os = currentOs, arch = arch, libc = targetLibcImpl, destinationDir = targetDirectory.resolve("jbr"))
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch, targetLibcImpl).keys)
-      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch, libc = targetLibcImpl)
+      builder.checkExecutablePermissions(distribution = targetDirectory, root = "", includeRuntime = true, arch = arch, libc = targetLibcImpl, context = context)
       builder.writeProductInfoFile(targetDirectory, arch)
     }
     else {
-      copyDistFiles(context = context, newDir = targetDirectory, os = currentOs, arch = arch, libcImpl = targetLibcImpl)
+      copyDistFiles(newDir = targetDirectory, os = currentOs, arch = arch, libcImpl = targetLibcImpl, context = context)
     }
   }
 }
@@ -472,13 +475,8 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         toPublish = true
       )
       buildNonBundledPlugins(
-        pluginsToPublish = pluginsToPublish,
-        compressPluginArchive = context.options.compressZipFiles,
-        buildPlatformLibJob = null,
-        state = distributionState,
-        searchableOptionSet = buildSearchableOptions(context),
-        descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
-        context = context
+        pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), isUpdateFromSources = false,
+        distributionState.platformLayout.descriptorCacheContainer, context
       )
       return@coroutineScope
     }
@@ -495,7 +493,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     val distDirs = buildOsSpecificDistributions(context)
 
-    lookForJunkFiles(context = context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
+    lookForJunkFiles(context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
 
     launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
@@ -616,7 +614,9 @@ private suspend fun checkProductProperties(context: BuildContext) {
   }
 
   context.macDistributionCustomizer?.let { macCustomizer ->
-    checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+    checkNotNull(macCustomizer.bundleIdentifier) {
+      "Mandatory property '${"productProperties.macCustomizer.bundleIdentifier"}' is not specified"
+    }
     checkPaths(listOf(macCustomizer.icnsPath), "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
@@ -785,17 +785,6 @@ private fun checkPaths2(paths: Collection<Path>, propertyName: String) {
   }
 }
 
-private fun checkMandatoryField(value: String?, fieldName: String) {
-  checkNotNull(value) {
-    "Mandatory property '$fieldName' is not specified"
-  }
-}
-
-private fun checkMandatoryPath(path: String, fieldName: String) {
-  checkMandatoryField(path, fieldName)
-  checkPaths(listOf(Path.of(path)), fieldName)
-}
-
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   if (context.options.printFreeSpace) {
     logFreeDiskSpace(context.paths.buildOutputDir, phase)
@@ -865,7 +854,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     "dependencies.txt" to copyDependenciesFile(context),
   )
   runtimeModuleRepositoryDirPath?.listDirectoryEntries()?.forEach { file ->
-    extraFiles.put("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}", file)
+    extraFiles["$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}"] = file
   }
   crossPlatformZip(
     distResults = distResults.filter { it.libc != LinuxLibcImpl.MUSL },
@@ -1165,7 +1154,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
   }
 }
 
-internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl) {
+internal fun copyDistFiles(newDir: Path, os: OsFamily, arch: JvmArchitecture, libcImpl: LibcImpl, context: BuildContext) {
   for (item in context.getDistFiles(os, arch, libcImpl)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
@@ -1178,7 +1167,7 @@ internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, ar
   }
 }
 
-internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
+internal fun generateBuildTxt(targetDirectory: Path, context: BuildContext) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
 }
 

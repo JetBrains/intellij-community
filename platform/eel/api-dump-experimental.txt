@@ -27,9 +27,8 @@
 - <init>(java.lang.String):V
 - getMessage():java.lang.String
 *:com.intellij.platform.eel.EelDescriptor
-- a:getMachine():com.intellij.platform.eel.EelMachine
-- *:getOsFamily():com.intellij.platform.eel.EelOsFamily
-- *:toEelApi(kotlin.coroutines.Continuation):java.lang.Object
+- *a:getName():java.lang.String
+- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
 *:com.intellij.platform.eel.EelError
 *f:com.intellij.platform.eel.EelError$Unknown
 - com.intellij.platform.eel.EelError
@@ -175,8 +174,7 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - s:valueOf(java.lang.String):com.intellij.platform.eel.EelIpPreference
 - s:values():com.intellij.platform.eel.EelIpPreference[]
 *:com.intellij.platform.eel.EelMachine
-- *a:getName():java.lang.String
-- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
+- a:ownsPath(java.nio.file.Path):Z
 - *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelNetworkError
 - com.intellij.platform.eel.EelError
@@ -445,12 +443,28 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - s:valueOf(java.lang.String):com.intellij.platform.eel.ReadResult
 - s:values():com.intellij.platform.eel.ReadResult[]
 *f:com.intellij.platform.eel.ReadResult$Companion
+*a:com.intellij.platform.eel.channels.EelChannelException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
 *:com.intellij.platform.eel.channels.EelReceiveChannel
+- a:available():I
 - a:closeForReceive(kotlin.coroutines.Continuation):java.lang.Object
 - a:receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.channels.EelReceiveChannelException
+- com.intellij.platform.eel.channels.EelChannelException
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.String):V
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.String,java.lang.Throwable):V
+- <init>(com.intellij.platform.eel.channels.EelReceiveChannel,java.lang.Throwable):V
+- f:getChannel():com.intellij.platform.eel.channels.EelReceiveChannel
 *:com.intellij.platform.eel.channels.EelSendChannel
-- *a:close(kotlin.coroutines.Continuation):java.lang.Object
+- *a:close(java.lang.Throwable,kotlin.coroutines.Continuation):java.lang.Object
 - *a:isClosed():Z
+*f:com.intellij.platform.eel.channels.EelSendChannelException
+- com.intellij.platform.eel.channels.EelChannelException
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.String):V
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.String,java.lang.Throwable):V
+- <init>(com.intellij.platform.eel.channels.EelSendChannel,java.lang.Throwable):V
+- f:getChannel():com.intellij.platform.eel.channels.EelSendChannel
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.fs.EelFileUtils

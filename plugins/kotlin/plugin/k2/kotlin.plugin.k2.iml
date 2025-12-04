@@ -47,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="RUNTIME" />

@@ -11,7 +11,7 @@
 10(11) element: PyTargetExpression: _
 11(12) WRITE ACCESS: _
 12(10,19) element: PyPrintStatement
-13(14) ASSERTTYPE ACCESS: null
+13(14) Unreachable
 14(15) element: PyStatementList
 15(16) element: PyRaiseStatement
 16(17) READ ACCESS: Exception

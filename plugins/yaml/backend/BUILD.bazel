@@ -98,6 +98,7 @@ jvm_library(
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/backend",
     "//plugins/IntelliLang/backend",
+    "@lib//:jet_check",
   ]
 )
 ### auto-generated section `build intellij.yaml.backend` end

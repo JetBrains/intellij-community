@@ -4,7 +4,6 @@ package com.intellij.platform.eel.tcp
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.ijent.tcp.TcpEndpoint
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -13,18 +12,22 @@ internal class TcpEelRegistry {
     fun getInstance(): TcpEelRegistry = service()
     private val LOG = logger<TcpEelRegistry>()
   }
-  private val registry = ConcurrentHashMap<TcpEndpoint, TcpEelDescriptor>()
-  fun register(endpoint: TcpEndpoint) {
-    registry.compute(endpoint) { _, oldValue ->
+
+  private val registry = ConcurrentHashMap<String, TcpEelDescriptor>()
+  fun register(internalName: String): TcpEelDescriptor? {
+    return registry.compute(internalName) { _, oldValue ->
       if (oldValue == null) {
-          LOG.info("Creating TCP descriptor for $endpoint")
-        TcpEelDescriptor(endpoint)
+        LOG.info("Creating TCP descriptor for $internalName")
+        tryRegister(internalName)
       } else {
         oldValue
       }
     }
   }
-  fun get(endpoint: TcpEndpoint): TcpEelDescriptor? {
-    return registry[endpoint]
+
+  private fun tryRegister(internalName: String): TcpEelDescriptor? = TcpEelPathParser.toDescriptor(internalName)
+
+  fun get(internalName: String): TcpEelDescriptor? {
+    return registry[internalName] ?: register(internalName)
   }
 }

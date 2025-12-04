@@ -15,19 +15,19 @@ from django.contrib.gis.gdal.srs import CoordTransform as CoordTransform
 from django.contrib.gis.gdal.srs import SpatialReference as SpatialReference
 
 __all__ = (
+    "GDAL_VERSION",
     "AxisOrder",
-    "Driver",
-    "DataSource",
     "CoordTransform",
+    "DataSource",
+    "Driver",
     "Envelope",
     "GDALException",
     "GDALRaster",
-    "GDAL_VERSION",
-    "OGRGeometry",
     "OGRGeomType",
-    "SpatialReference",
+    "OGRGeometry",
     "SRSException",
+    "SpatialReference",
     "check_err",
-    "gdal_version",
     "gdal_full_version",
+    "gdal_version",
 )

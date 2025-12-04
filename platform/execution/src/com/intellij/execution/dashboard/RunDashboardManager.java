@@ -14,10 +14,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Set;
 
-
-/**
- * @author konstantin.aleev
- */
 public interface RunDashboardManager {
 
   @ApiStatus.Internal
@@ -31,10 +27,10 @@ public interface RunDashboardManager {
   }
 
   // Sorry for that, but it's unbearable to move the api classes from the actual dashboard module to lang or execution
-  // only to be able to add them into an interface which in turn can not be moved to the dashboard module because of existing external dependencies
+  // only to be able to add them into an interface which in turn cannot be moved to the dashboard module because of existing external dependencies
   // AND the fact that it solves cyclic dependencies issue between debugger, execution and lang modules
   @ApiStatus.Internal
-  @Nullable default Object findService(@NotNull RunContentDescriptorId descriptorId) { return null; };
+  @Nullable default Object findService(@NotNull RunContentDescriptorId descriptorId) { return null; }
 
   void updateDashboard(boolean withStructure);
 
@@ -76,5 +72,5 @@ public interface RunDashboardManager {
   Set<String> getEnableByDefaultTypes();
 
   @ApiStatus.Internal
-  void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus);
+  void navigateToServiceOnRun(@NotNull RunContentDescriptorId descriptorId, Boolean focus);
 }

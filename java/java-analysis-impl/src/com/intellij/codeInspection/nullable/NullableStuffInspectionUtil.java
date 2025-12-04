@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,38 +16,46 @@ import java.util.Collections;
 import java.util.List;
 
 final class NullableStuffInspectionUtil {
-  static @NotNull @NlsSafe String getTypePresentationInNullabilityConflict(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
-    PsiElement place = context.getPlace();
-    if (place == null) return "";
-    int dimensionsInArray = (context.type instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
+  static @NotNull @NlsSafe HtmlChunk getNullabilityConflictPresentation(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
+    HtmlChunk expectedChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.EXPECTED);
+    HtmlChunk actualChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.ACTUAL);
+    if (expectedChunk.isEmpty() || actualChunk.isEmpty()) return HtmlChunk.empty();
+    return HtmlChunk.tag("table")
+      .children(expectedChunk, actualChunk);
+  }
+
+  private static @NotNull HtmlChunk getSideChunk(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context,
+                                                  @NotNull JavaTypeNullabilityUtil.Side side) {
+    PsiElement place = context.getPlace(side);
+    if (place == null) return HtmlChunk.empty();
+    int dimensionsInArray = (context.getType(side) instanceof PsiArrayType type) ? type.getArrayDimensions() : 0;
 
     PsiTypeElement topmostType = PsiTreeUtil.getTopmostParentOfType(place, PsiTypeElement.class);
-    if (topmostType == null) return "";
+    if (topmostType == null) return HtmlChunk.empty();
 
     PsiTypeElement target = PsiTreeUtil.getParentOfType(place, PsiTypeElement.class, false);
-    if (target == null) return "";
+    if (target == null) return HtmlChunk.empty();
 
     PsiType outerType = topmostType.getType();
     if (target == topmostType) {
       // Presentation is not handling with the whole type
-      return "";
+      return HtmlChunk.empty();
     }
 
     List<Integer> path = computeTypeArgumentPath(topmostType, target, dimensionsInArray);
-    if (path == null) return "";
+    if (path == null) return HtmlChunk.empty();
 
     Context presentationContext = getPresentationContext(outerType, path, outerType instanceof PsiArrayType);
 
     String typeText = presentationContext.sb.toString();
-    String annotationText = getAnnotationText(context);
-    if (presentationContext.position == null || annotationText == null) return "";
-    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, presentationContext.position);
-
-    return result.toString();
+    String annotationText = getAnnotationText(context, side);
+    if (presentationContext.position == null || annotationText == null) return HtmlChunk.empty();
+    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, side, presentationContext.position);
+    return result;
   }
-  
-  private static @Nullable String getAnnotationText(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context) {
-    PsiAnnotation annotation = context.getAnnotation();
+
+  private static @Nullable String getAnnotationText(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context, @NotNull JavaTypeNullabilityUtil.Side side) {
+    PsiAnnotation annotation = context.getAnnotation(side);
     if (annotation == null) return null;
     PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
     if (ref == null) return null;
@@ -55,18 +64,24 @@ final class NullableStuffInspectionUtil {
 
   private static @NotNull HtmlChunk generateHtmlChunk(@NlsSafe String text,
                                                       @NlsSafe String annotationText,
+                                                      @NotNull JavaTypeNullabilityUtil.Side side,
                                                       int position) {
-    HtmlChunk result = HtmlChunk.p().child(
-      HtmlChunk.fragment(
-        HtmlChunk.text(JavaAnalysisBundle.message("returning.a.type.nullability.conflict.message")),
-        HtmlChunk.text(" "),
-        HtmlChunk.text(text.substring(0, position)),
-        HtmlChunk.tag("b").children(HtmlChunk.text(annotationText)),
-        HtmlChunk.text(" "),
-        HtmlChunk.text(text.substring(position))
-      )
-    );
-    return result;
+    return HtmlChunk.tag("tr")
+      .children(
+        HtmlChunk.tag("td")
+          .addText(
+            JavaAnalysisBundle.message(
+              side == JavaTypeNullabilityUtil.Side.EXPECTED ? "expected.type.nullability.conflict.message"
+                                                            : "actual.type.nullability.conflict.message"
+            )
+          ),
+        HtmlChunk.tag("td").children(
+          HtmlChunk.text(text.substring(0, position)),
+          HtmlChunk.tag("b").addText(annotationText),
+          HtmlChunk.text(" "),
+          HtmlChunk.text(text.substring(position))
+        )
+      );
   }
 
   private static @Nullable List<@NotNull Integer> computeTypeArgumentPath(@NotNull PsiTypeElement top, @NotNull PsiTypeElement target, int firstArrayDepth) {
@@ -83,13 +98,7 @@ final class NullableStuffInspectionUtil {
         PsiReferenceParameterList params = ref.getParameterList();
         if (params == null) return null;
         PsiTypeElement[] args = params.getTypeParameterElements();
-        int found = -1;
-        for (int i = 0; i < args.length; i++) {
-          if (args[i] == current) {
-            found = i;
-            break;
-          }
-        }
+        int found = ArrayUtil.indexOf(args, current);
         if (found < 0) return null;
         indices.add(found);
       }
@@ -127,7 +136,7 @@ final class NullableStuffInspectionUtil {
   /**
    * Constructs the simplified presentable view of the type and detects the place in which the nullability annotation should be inserted.
    * The result of this method is stored in the {@link Context#sb} member.
-   * @param isInsideArray - Corresponds to the state whether the method is called within the array dimension. It is used to distinguish
+   * @param isInsideArray corresponds to the state whether the method is called within the array dimension. It is used to distinguish
    *                      cases {@code @Nullable String[]} and {@code String @Nullable [][]}.
    */
   private static void buildTextRepresentation(@NotNull PsiType type,

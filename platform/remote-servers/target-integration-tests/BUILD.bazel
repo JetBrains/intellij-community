@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:assert_j",
     "@lib//:junit4",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/junit",
     "//java/java-tests:tests_test_lib",
     "//platform/util/jdom",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` end

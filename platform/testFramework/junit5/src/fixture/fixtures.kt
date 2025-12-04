@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.project.stateStore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -98,7 +99,7 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
 fun TestFixture<Project>.pathInProjectFixture(path: Path): TestFixture<Path> {
   return testFixture {
     val project = init()
-    val subpath = project.baseDir.toNioPath().resolve(path)
+    val subpath = project.stateStore.projectBasePath.resolve(path)
     initialized(subpath) {
       // will be removed with project directory
     }

@@ -10,7 +10,6 @@ import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Text
@@ -36,7 +34,7 @@ internal class JewelWizardDialogAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = checkNotNull(event.project) { "Project not available" }
 
-    currentThreadCoroutineScope().launch(Dispatchers.EDT) {
+    event.coroutineScope.launch(Dispatchers.EDT) {
       WizardDialogWrapper(
         project = project,
         title = DevkitComposeBundle.message("jewel.demo.wizard.title"),

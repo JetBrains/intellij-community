@@ -43,7 +43,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
     "@lib//:junit5",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:hamcrest",

@@ -134,7 +134,7 @@ internal class ApplicationInfoPropertiesImpl(
   }
 }
 
-internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoProperties): String {
+internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: BuildContext): String {
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
   val snapshotBuildNumber = SnapshotBuildNumber.VALUE.takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
@@ -238,7 +238,8 @@ private fun withAppInfoOverride(
   }
 
   if (branchName != null) {
-    val build = element.getChildren("build", namespace).singleOrNull()
+    val build = element.getChildren("build", namespace).singleOrNull() // for <component xmlns="http://jetbrains.org/intellij/schema/application-info">
+                ?: element.getChildren("build").singleOrNull() // for <component>
                 ?: error("Could not find child element 'build' under root of '$appInfoXmlPath'")
     replaceAttribute(build, "branchName", branchName)
   }

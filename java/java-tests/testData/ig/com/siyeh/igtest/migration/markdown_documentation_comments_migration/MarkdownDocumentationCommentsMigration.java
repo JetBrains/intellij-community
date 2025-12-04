@@ -383,6 +383,21 @@ final class LookupWithIndentsBuilder {
 }
 <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
  * {@code test<b>}
+ * {@code One Sheep,
+ * 
+ * Two Sheeps,
+ * ...zzz}
+ * <p>
+ * <code>Single line code block with html tag</code>
+ * <p>
+ * <code>
+ *   
+ *   Multi line 
+ * 
+ * code block with html
+ * tag
+ * </code>
+ * 
  * @param <T> The <em>M</em> type.
  * @param <B> The B type.
  * @param <P> The P type.
@@ -414,4 +429,229 @@ class Preformatted {
    * <pre>{@code x}</pre>
    */
   protected void beginParsing() {}
+}
+
+class IntendedLists{
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * References:
+   * <ul>
+   *   <li>First item</li>
+   *   <li>Second item</li>
+   *   <ul>
+   *     <li>First sub item</li>
+   *     <li>
+   *       Second sub item
+   *     
+   *     multi line for some reason
+   *     </li>
+   *   </ul>
+   *   <li>Third item</li>
+   * </ul>
+   */
+  void unorderedList() {}
+  
+   <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <ol><li>first ordered element</li><li>Second ordered element</li><ol><li>Sub item</li></ol></ol> Text outside of the list.
+   */
+  void orderedList() {}
+}
+
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * <a href="https://openjdk.org/jeps/467">That's JEP 467 </a>
+ * <br>
+ * <a href="https://openjdk.org/jeps/467"></a>
+ * <br>
+ * <img src='https://openjdk.org/images/duke-thinking.png'/>
+ * <br>
+ * <img alt="A joltik plushie" />
+ * <br>
+ * <a href="https://openjdk.org/jeps/467"> Personally,
+ * 
+ * I love writing links
+ * 
+ * on
+ * multiple
+ *  lines.
+ *   
+ *   </a>
+ * <br>
+ * Link to a type and insert {@link java.time.OffsetDateTime a line break
+ * here}
+ */
+class OhMyLinks {}
+
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * I like my *asteriks* and _underscores_.
+ * <p>
+ * And let's not forget about my friend the `backticks` !
+ * <br>
+ * Some fun things include:
+ * ## Title like structs
+ * <br>
+ *   - List like structs
+ *   
+ *   
+ *   1. Ordered list like structs 
+ * 
+ */
+class EscapeMarkdownLikeStructure {}
+
+class NonProcessed {
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning> 
+   * Handled <i>italics</i>
+   * Unhandled <i style="color:red;">italics</i>
+   * 
+   * <ul>
+   *   <li>item one</li>
+   *   <li style="color:red;">item two</li>
+   * </ul>
+   */
+  void unknownAttributes(){}
+
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <table>
+   *   <tbody>
+   *   <tr>
+   *     <td>col 1</td>
+   *     <td>col 2</td>
+   *   </tr>
+   *   </tbody>
+   * </table>
+   */ 
+  void unknownTags(){}
+}
+
+class Matcher {
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * Implements a non-terminal append-and-replace step.
+   *
+   * <p> This method performs the following actions: </p>
+   *
+   * <ol>
+   *
+   *   <li><p> It reads characters from the input sequence, starting at the
+   *   append position, and appends them to the given string buffer.  It
+   *   stops after reading the last character preceding the previous match,
+   *   that is, the character at index {@link
+   *   #start()}&nbsp;{@code -}&nbsp;{@code 1}.  </p></li>
+   *
+   *   <li><p> It appends the given replacement string to the string buffer.
+   *   </p></li>
+   *
+   *   <li><p> It sets the append position of this matcher to the index of
+   *   the last character matched, plus one, that is, to {@link #end()}.
+   *   </p></li>
+   *
+   * </ol>
+   *
+   * <p> The replacement string may contain references to subsequences
+   * captured during the previous match: Each occurrence of
+   * <code>${</code><i>name</i><code>}</code> or {@code $}<i>g</i>
+   * will be replaced by the result of evaluating the corresponding
+   * {@link #group(String) group(name)} or {@link #group(int) group(g)}
+   * respectively. For {@code $}<i>g</i>,
+   * the first number after the {@code $} is always treated as part of
+   * the group reference. Subsequent numbers are incorporated into g if
+   * they would form a legal group reference. Only the numerals '0'
+   * through '9' are considered as potential components of the group
+   * reference. If the second group matched the string {@code "foo"}, for
+   * example, then passing the replacement string {@code "$2bar"} would
+   * cause {@code "foobar"} to be appended to the string buffer. A dollar
+   * sign ({@code $}) may be included as a literal in the replacement
+   * string by preceding it with a backslash ({@code \$}).
+   *
+   * <p> Note that backslashes ({@code \}) and dollar signs ({@code $}) in
+   * the replacement string may cause the results to be different than if it
+   * were being treated as a literal replacement string. Dollar signs may be
+   * treated as references to captured subsequences as described above, and
+   * backslashes are used to escape literal characters in the replacement
+   * string.
+   *
+   * <p> This method is intended to be used in a loop together with the
+   * {@link #appendTail(StringBuffer) appendTail} and {@link #find() find}
+   * methods.  The following code, for example, writes {@code one dog two dogs
+   * in the yard} to the standard-output stream: </p>
+   *
+   * <blockquote><pre>
+   * Pattern p = Pattern.compile("cat");
+   * Matcher m = p.matcher("one cat two cats in the yard");
+   * StringBuffer sb = new StringBuffer();
+   * while (m.find()) {
+   *     m.appendReplacement(sb, "dog");
+   * }
+   * m.appendTail(sb);
+   * System.out.println(sb.toString());</pre></blockquote>
+   *
+   * @param  sb
+   *         The target string buffer
+   *
+   * @param  replacement
+   *         The replacement string
+   *
+   * @return  This matcher
+   *
+   * @throws  IllegalStateException
+   *          If no match has yet been attempted,
+   *          or if the previous match operation failed
+   *
+   * @throws  IllegalArgumentException
+   *          If the replacement string refers to a named-capturing
+   *          group that does not exist in the pattern
+   *
+   * @throws  IndexOutOfBoundsException
+   *          If the replacement string refers to a capturing group
+   *          that does not exist in the pattern
+   */
+  void appendReplacement(){}
+}
+
+class File {
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * Finds the definition expression of a given variable or reference expression within the provided context.
+   * <p>
+   * Consider the following code:
+   * <pre>{@code
+   * class A {
+   *   void sample() {
+   *     String[] names = {"charlie", "joe"};
+   *     Assert.assertEquals(Arrays.asList(names), List.of("charlie", "joe"));
+   *   }
+   * }
+   * }</pre>
+   *
+   * <pre><code>Single line</code></pre>
+   * <pre><code>
+   *     Single line but tags at different lines
+   *  </code></pre>
+   *
+   *  <pre><code>Single line but end tags at different lines
+   *  </code></pre>
+   *
+   *  <pre><code>
+   *    Single line but start tags at different lines</code></pre>
+   *
+   * The usage of {@code names} in a call to {@code assertEquals} is a {@link PsiReferenceExpression}.
+   * <p>
+   * When this method is called on that {@link PsiReferenceExpression}, it returns {@link PsiExpression} that defined {@code names}.
+   * In our example, it will be an instance of {@link PsiArrayInitializerExpression}.
+   *
+   * @param referenceExpression the reference expression whose definition is to be found.
+   * @param variable the optional variable that is associated with the reference expression.
+   * @return the definition expression if found, otherwise null.
+   */
+  public void find() {}
+}
+
+class indentHandling {
+  
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   *I have no space before the asterisks.
+   *It may seem dangerous, but it's not. 
+   */
+  void noSpace(){}
+
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+                                 hello
+   */
+  void weloveSpace(){}
 }

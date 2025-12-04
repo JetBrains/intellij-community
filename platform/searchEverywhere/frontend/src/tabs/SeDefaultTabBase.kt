@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
  * Default implementation of [SeTab] that delegates most of the API-specific calls to [SeTabDelegate]
  */
 @ApiStatus.Experimental
-@ApiStatus.Internal
 abstract class SeDefaultTabBase(
   protected val delegate: SeTabDelegate
 ): SeTab {

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
@@ -56,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -857,18 +859,18 @@ class SePopupContentPane(
 
     val vm = vmState.value ?: return
     val emptyResultInfo = vm.currentTab.getEmptyResultInfo(DataManager.getInstance().getDataContext(this@SePopupContentPane))
-    emptyResultInfo?.chunks?.forEach { (text, newLine, attrs, listener) ->
-      if (newLine) {
-        resultList.emptyText.appendLine(text, attrs, listener)
+    emptyResultInfo?.chunks?.forEach { chunk ->
+      if (chunk.onNewLine) {
+        resultList.emptyText.appendLine(chunk.text, chunk.attrs, chunk.listener)
       }
       else {
-        resultList.emptyText.appendText(text, attrs, listener)
+        resultList.emptyText.appendText(chunk.text, chunk.attrs, chunk.listener)
       }
     }
   }
 
   private fun updateViewMode() {
-    if (textField.text.isEmpty() && resultList.isEmpty) {
+    if (textField.text.isEmpty() && resultList.isEmpty && !(ScreenReader.isActive() && SystemInfoRt.isMac)) {
       updateViewMode(true)
     }
     else {

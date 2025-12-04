@@ -11,24 +11,15 @@ import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.asyncDependenciesResolver
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import org.jetbrains.kotlin.scripting.resolve.LegacyResolverWrapper
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
-import kotlin.script.experimental.api.ResultWithDiagnostics
-import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.asDiagnostics
-import kotlin.script.experimental.api.valueOrNull
-import kotlin.script.experimental.dependencies.AsyncDependenciesResolver
+import kotlin.script.experimental.api.*
 
 open class DefaultScriptConfigurationLoader(val project: Project) : ScriptConfigurationLoader {
     override fun shouldRunInBackground(scriptDefinition: ScriptDefinition): Boolean =
-        scriptDefinition
-            .asLegacyOrNull<KotlinScriptDefinition>()
-            ?.dependencyResolver
-            ?.let { it is AsyncDependenciesResolver || it is LegacyResolverWrapper }
-            ?: false
+        scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.asyncDependenciesResolver] ?: false
 
     override fun loadDependencies(
         isFirstLoad: Boolean,

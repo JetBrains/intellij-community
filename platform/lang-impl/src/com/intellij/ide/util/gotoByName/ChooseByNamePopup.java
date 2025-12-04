@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -9,6 +9,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -29,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import kotlin.Unit;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -493,7 +495,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     });
     long start = System.currentTimeMillis();
     while (!semaphore.waitFor(10) && System.currentTimeMillis() - start < 20_000) {
-      UIUtil.dispatchAllInvocationEvents();
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        UIUtil.dispatchAllInvocationEvents();
+        return Unit.INSTANCE;
+      });
     }
     if (!semaphore.waitFor(10)) {
       PerformanceWatcher.dumpThreadsToConsole("Thread dump:");

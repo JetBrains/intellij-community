@@ -81,6 +81,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
+import static com.intellij.util.ui.WaylandUtilKt.getNearestTopLevelAncestor;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
@@ -1243,7 +1244,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
-    if (myLocateWithinScreen) {
+    if (StartupUiUtil.isWaylandToolkit()) {
+      var hadToFit = fitSizeToScreen(targetBounds, screen);
+      if (hadToFit && LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after resizing to fit the screen: " + targetBounds);
+      }
+    }
+    else if (myLocateWithinScreen) {
       ScreenUtil.moveToFit(targetBounds, screen, null);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
@@ -1427,7 +1434,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (myLocateWithinScreen) {
+    if (StartupUiUtil.isWaylandToolkit()) {
+      var hadToFit = fitSizeToScreen(bounds, screen);
+      if (hadToFit && LOG.isDebugEnabled()) {
+        LOG.debug("Popup shown larger than the screen, adjusted: " + targetBounds);
+      }
+      window.setBounds(bounds);
+    }
+    else if (myLocateWithinScreen) {
       if (
         bounds.x < screen.x ||
         bounds.y < screen.y ||
@@ -1532,7 +1546,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private static Point getLocationRelativeToParent(Rectangle bounds, Window popupParent) {
     Rectangle newBounds = new Rectangle(bounds);
     // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
-    var toplevelParent = ComponentUtil.findUltimateParent(popupParent);
+    var toplevelParent = getNearestTopLevelAncestor(popupParent);
+    if (toplevelParent == null) {
+      LOG.warn("The popup parent " + popupParent + " has no top-level ancestor");
+      return bounds.getLocation();
+    }
     var toplevelParentLocation = toplevelParent.getLocationOnScreen();
     if (LOG.isDebugEnabled()) {
       LOG.debug(
@@ -1691,6 +1709,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                                                 : ScreenUtil.getMainScreenBounds();
       ScreenUtil.moveToFit(targetBounds, mostAppropriateScreenRectangle, null);
     }
+  }
+  
+  private static boolean fitSizeToScreen(@NotNull Rectangle targetBounds, @NotNull Rectangle screen) {
+    // On Wayland, we have no idea about where we are relative to the screen.
+    // But we still can't show a popup that's bigger than the screen, regardless of its location.
+    var fit = false;
+    if (targetBounds.width > screen.width) {
+      targetBounds.width = screen.width;
+      fit = true;
+    }
+    if (targetBounds.height > screen.height) {
+      targetBounds.height = screen.height;
+      fit = true;
+    }
+    return fit;
   }
 
   public void focusPreferredComponent() {

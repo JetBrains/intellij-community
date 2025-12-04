@@ -29,12 +29,13 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
 
   private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
 
-  private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(RunDashboardCoroutineScopeProvider.getInstance(project)
-                                                                          .cs.childScope("Backend run dashboard shared state updates"))
+  private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(
+    RunDashboardCoroutineScopeProvider.getInstance(project).createChildNamedScope("Backend run dashboard shared state updates"),
+    OverlappingTasksStrategy.SCHEDULE_FOR_LATER)
 
   private val navigateToServiceEvents = MutableSharedFlow<NavigateToServiceEvent>(1, 100, BufferOverflow.DROP_OLDEST)
 
-  private fun scheduleSharedStateUpdate(update: SequentialComputationRequest) {
+  private fun scheduleSharedStateUpdate(update: Runnable) {
     sharedStateUpdatesQueue.submit(update)
   }
 
@@ -143,6 +144,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
       val project = configuration.project
       val contentIdImpl = backendServiceModel.descriptor?.id as? RunContentDescriptorIdImpl
 
+      val hasSettings = RunManager.getInstance(project).hasSettings(settings)
       if (backendServiceModel is RunDashboardManagerImpl.RunDashboardServiceImpl) {
         return RunDashboardMainServiceDto(
           uuid = backendServiceModel.uuid,
@@ -153,9 +155,9 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
           contentId = contentIdImpl,
-          isRemovable = RunManager.getInstance(project).hasSettings(settings),
+          isRemovable = hasSettings,
           serviceViewId = backendServiceModel.serviceViewId,
-          isStored = RunManager.getInstance(project).hasSettings(settings),
+          isStored = hasSettings,
           isActivateToolWindowBeforeRun = settings.isActivateToolWindowBeforeRun,
           isFocusToolWindowBeforeRun = settings.isFocusToolWindowBeforeRun
         )
@@ -170,9 +172,9 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
           contentId = contentIdImpl,
-          isRemovable = RunManager.getInstance(project).hasSettings(settings),
+          isRemovable = hasSettings,
           serviceViewId = backendServiceModel.serviceViewId,
-          isStored = RunManager.getInstance(project).hasSettings(settings),
+          isStored = hasSettings,
           isActivateToolWindowBeforeRun = settings.isActivateToolWindowBeforeRun,
           isFocusToolWindowBeforeRun = settings.isFocusToolWindowBeforeRun
         )

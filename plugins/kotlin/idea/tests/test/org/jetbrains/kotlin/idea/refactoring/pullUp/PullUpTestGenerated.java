@@ -42,6 +42,26 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
             runTest("testData/refactoring/pullUp/k2k/accidentalOverrides.kt");
         }
 
+        @TestMetadata("alreadyBrokenFunInterface.kt")
+        public void testAlreadyBrokenFunInterface() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/alreadyBrokenFunInterface.kt");
+        }
+
+        @TestMetadata("breakFunInterfaceWithAbstractFunction.kt")
+        public void testBreakFunInterfaceWithAbstractFunction() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/breakFunInterfaceWithAbstractFunction.kt");
+        }
+
+        @TestMetadata("breakFunInterfaceWithAbstractProperty.kt")
+        public void testBreakFunInterfaceWithAbstractProperty() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/breakFunInterfaceWithAbstractProperty.kt");
+        }
+
+        @TestMetadata("breakFunInterfaceWithToAbstractFunction.kt")
+        public void testBreakFunInterfaceWithToAbstractFunction() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/breakFunInterfaceWithToAbstractFunction.kt");
+        }
+
         @TestMetadata("clashWithSuper.kt")
         public void testClashWithSuper() throws Exception {
             runTest("testData/refactoring/pullUp/k2k/clashWithSuper.kt");
@@ -117,6 +137,11 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
             runTest("testData/refactoring/pullUp/k2k/dropModifierWhenMovingSideOverrideWithSuperEntryAndAbstract.kt");
         }
 
+        @TestMetadata("fixFunInterface.kt")
+        public void testFixFunInterface() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/fixFunInterface.kt");
+        }
+
         @TestMetadata("fromClassToClass.kt")
         public void testFromClassToClass() throws Exception {
             runTest("testData/refactoring/pullUp/k2k/fromClassToClass.kt");
@@ -150,6 +175,11 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
         @TestMetadata("fromClassToInterfaceMakeAbstract.kt")
         public void testFromClassToInterfaceMakeAbstract() throws Exception {
             runTest("testData/refactoring/pullUp/k2k/fromClassToInterfaceMakeAbstract.kt");
+        }
+
+        @TestMetadata("fromFunInterfaceToRegularInterface.kt")
+        public void testFromFunInterfaceToRegularInterface() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/fromFunInterfaceToRegularInterface.kt");
         }
 
         @TestMetadata("implicitCompanionUsages.kt")
@@ -190,6 +220,16 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
         @TestMetadata("moveAllSuperInterfacesWithGenerics.kt")
         public void testMoveAllSuperInterfacesWithGenerics() throws Exception {
             runTest("testData/refactoring/pullUp/k2k/moveAllSuperInterfacesWithGenerics.kt");
+        }
+
+        @TestMetadata("moveNonAbstractFunctionToFunInterface.kt")
+        public void testMoveNonAbstractFunctionToFunInterface() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/moveNonAbstractFunctionToFunInterface.kt");
+        }
+
+        @TestMetadata("moveNonAbstractPropertyToFunInterface.kt")
+        public void testMoveNonAbstractPropertyToFunInterface() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/moveNonAbstractPropertyToFunInterface.kt");
         }
 
         @TestMetadata("moveSuperInterfaceToItSelf.kt")
@@ -280,6 +320,16 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
         @TestMetadata("publicToInterface.kt")
         public void testPublicToInterface() throws Exception {
             runTest("testData/refactoring/pullUp/k2k/publicToInterface.kt");
+        }
+
+        @TestMetadata("pullUpOverrideFromDeepHierarchy.kt")
+        public void testPullUpOverrideFromDeepHierarchy() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/pullUpOverrideFromDeepHierarchy.kt");
+        }
+
+        @TestMetadata("pullUpOverrideFromDeepHierarchyMakeAbstract.kt")
+        public void testPullUpOverrideFromDeepHierarchyMakeAbstract() throws Exception {
+            runTest("testData/refactoring/pullUp/k2k/pullUpOverrideFromDeepHierarchyMakeAbstract.kt");
         }
 
         @TestMetadata("reformatModifierList.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -83,12 +84,12 @@ public final class TestDiffRequestProcessor {
 
       DiffContent content1 = null;
       if (file1 == null && testProxy != null) {
-        TestDiffProvider provider = ReadAction.compute(() -> getTestDiffProvider(testProxy));
+        TestDiffProvider provider = getTestDiffProvider(testProxy);
         if (provider != null) {
-          PsiElement expected = ReadAction.compute(() -> getExpected(provider, testProxy));
+          PsiElement expected = getExpected(provider, testProxy);
           if (expected != null) {
             file1 = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(expected));
-            content1 = ReadAction.compute(() -> createPsiDiffContent(expected, text1));
+            content1 = createPsiDiffContent(expected, text1);
           }
         }
       }
@@ -108,7 +109,10 @@ public final class TestDiffRequestProcessor {
     private @Nullable TestDiffProvider getTestDiffProvider(@NotNull AbstractTestProxy testProxy) {
       TestProxyRoot testRoot = AbstractTestProxy.getTestRoot(testProxy);
       if (testRoot == null) return null;
-      Location<?> loc = testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
+      Location<?> loc = ReadAction.compute(() -> {
+        ProgressManager.checkCanceled();
+        return testProxy.getLocation(myProject, testRoot.getTestConsoleProperties().getScope());
+      });
       if (loc == null) return null;
       return TestDiffProvider.getProviderByLanguage(loc.getPsiElement().getLanguage());
     }
@@ -120,7 +124,7 @@ public final class TestDiffRequestProcessor {
     }
 
     private @Nullable DiffContent createPsiDiffContent(@NotNull PsiElement element, @NotNull String text) {
-      SmartPsiElementPointer<PsiElement> elemPtr = SmartPointerManager.createPointer(element);
+      SmartPsiElementPointer<PsiElement> elemPtr = ReadAction.compute(() -> SmartPointerManager.createPointer(element));
       return TestDiffContent.Companion.create(myProject, text, elemPtr);
     }
 

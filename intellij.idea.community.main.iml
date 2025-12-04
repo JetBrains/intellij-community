@@ -138,7 +138,7 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.debugger.streams.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jgoodies.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.tests" scope="TEST" />
@@ -259,5 +259,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
   </component>
 </module>

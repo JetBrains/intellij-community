@@ -12,15 +12,18 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.contentModules
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.Iconable.ICON_FLAG_FAST_ONLY
 import com.intellij.openapi.util.findIconUsingDeprecatedImplementation
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.ElementBase
 import com.intellij.ui.*
 import com.intellij.ui.RowIcon
 import com.intellij.ui.mac.foundation.MacUtil
@@ -131,13 +134,8 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     return IconDeferrer.getInstance().defer(base = base, param = param, evaluator = iconProducer)
   }
 
-  override fun registerIconLayer(flagMask: Int, icon: Icon) {
-    for (iconLayer in iconLayers) {
-      if (iconLayer.flagMask == flagMask) {
-        return
-      }
-    }
-    iconLayers.add(IconLayer(flagMask, icon))
+  override fun registerIconLayer(flagMask: Int, icon: Icon?) {
+    staticRegisterIconLayer(flagMask, icon)
   }
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = IconWrapperWithToolTipComposite(icon)
@@ -151,7 +149,10 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val layersFromProviders = ArrayList<Icon>()
     for (provider in IconLayerProvider.EP_NAME.extensionList) {
-      provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED))?.let {
+      if (BitUtil.isSet(flags, ICON_FLAG_FAST_ONLY)) {
+        continue
+      }
+      provider.getLayerIcon(instance, BitUtil.isSet(flags, ElementBase.FLAGS_LOCKED))?.let {
         layersFromProviders.add(it)
       }
     }
@@ -160,7 +161,7 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     if (flags != 0 || !layersFromProviders.isEmpty()) {
       val result = ArrayList<Icon>()
       for (l in iconLayers) {
-        if (BitUtil.isSet(flags, l.flagMask)) {
+        if (BitUtil.isSet(flags, l.flagMask) && l.icon != null) {
           result.add(l.icon)
         }
       }
@@ -265,9 +266,35 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     val plugin = PluginManagerCore.getPlugin(pluginId)
     return plugin?.classLoader
   }
+
+  companion object {
+    private val iconLayers = CopyOnWriteArrayList<IconLayer>()
+
+    init {
+      // the CoreIconManager.<init> may be called multiple times in tests
+      staticRegisterIconLayer(Iconable.ICON_FLAG_VISIBILITY, null)
+      staticRegisterIconLayer(Iconable.ICON_FLAG_READ_STATUS, null)
+      staticRegisterIconLayer(Iconable.ICON_FLAG_FAST_ONLY, null)
+    }
+
+    private fun staticRegisterIconLayer(flagMask: Int, icon: Icon?) {
+      for (iconLayer in iconLayers) {
+        if (iconLayer.flagMask == flagMask) {
+          val application = ApplicationManager.getApplication()
+          if (application != null && application.isUnitTestMode) {
+            logger<CoreIconManager>().info("Icon layer with flagMask=$flagMask already registered: ${iconLayer.icon}")
+            return // com.intellij.testFramework.UsefulTestCase.isIconRequired can't properly handle IconManager hotswap
+          }
+          logger<CoreIconManager>().error("Icon layer with flagMask=$flagMask already registered: ${iconLayer.icon}")
+          return
+        }
+      }
+      iconLayers.add(IconLayer(flagMask, icon))
+    }
+  }
 }
 
-private class IconLayer(@JvmField val flagMask: Int, @JvmField val icon: Icon) {
+private class IconLayer(@JvmField val flagMask: Int, @JvmField val icon: Icon?) {
   init {
     BitUtil.assertOneBitMask(flagMask)
   }
@@ -285,9 +312,6 @@ private class IconDescriptionLoader(private val path: String) : Supplier<String?
     return result
   }
 }
-
-private val iconLayers = CopyOnWriteArrayList<IconLayer>()
-private const val FLAGS_LOCKED = 0x800
 
 private fun findIconDescription(path: String): String? {
   val pathWithoutExt = path.removeSuffix(".svg")

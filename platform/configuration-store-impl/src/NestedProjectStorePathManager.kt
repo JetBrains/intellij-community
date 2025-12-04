@@ -61,9 +61,26 @@ private class NestedProjectStorePathManager : ProjectStorePathManager {
       return IprProjectStoreDescriptor(userBaseDir, projectRoot)
     }
 
-    val useParent = System.getProperty("store.basedir.parent.detection", "true").toBoolean() &&
-                    (projectRoot.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)
-    return DotIdeaProjectStoreDescriptor(projectRoot = projectRoot, historicalProjectBasePath = if (useParent) projectRoot.parent.parent else projectRoot)
+    return if (Files.isRegularFile(projectRoot)) {
+      DotIdeaProjectStoreDescriptor(
+        projectIdentityFile = projectRoot.parent,
+        historicalProjectBasePath = projectRoot.parent,
+      )
+    }
+    else if (Files.isDirectory(projectRoot)
+             && System.getProperty("store.basedir.parent.detection", "true").toBoolean()
+             && (projectRoot.fileName?.toString()?.startsWith("${Project.DIRECTORY_STORE_FOLDER}.") == true)) {
+      DotIdeaProjectStoreDescriptor(
+        projectIdentityFile = projectRoot,
+        historicalProjectBasePath = projectRoot.parent.parent,
+      )
+    }
+    else {
+      DotIdeaProjectStoreDescriptor(
+        projectIdentityFile = projectRoot,
+        historicalProjectBasePath = projectRoot,
+      )
+    }
   }
 
   override fun getStoreDirectory(projectRoot: VirtualFile): VirtualFile? {
@@ -72,13 +89,13 @@ private class NestedProjectStorePathManager : ProjectStorePathManager {
 }
 
 private class DotIdeaProjectStoreDescriptor(
-  projectRoot: Path,
+  override val projectIdentityFile: Path,
   override val historicalProjectBasePath: Path,
 ) : ProjectStoreDescriptor {
   private var lastSavedProjectName: String? = null
 
-  override val projectIdentityFile = projectRoot
-  override val dotIdea: Path = projectRoot.resolve(Project.DIRECTORY_STORE_FOLDER)
+
+  override val dotIdea: Path = projectIdentityFile.resolve(Project.DIRECTORY_STORE_FOLDER)
 
   override fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage {
     return doGetJpsBridgeAwareStorageSpec(filePath, project)

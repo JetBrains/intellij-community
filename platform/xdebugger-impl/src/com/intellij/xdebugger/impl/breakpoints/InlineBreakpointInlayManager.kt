@@ -33,7 +33,7 @@ import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

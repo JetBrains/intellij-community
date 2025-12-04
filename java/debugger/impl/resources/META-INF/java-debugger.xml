@@ -202,14 +202,56 @@
                  description="Provide evaluatable context on Pause"/>
     <registryKey key="debugger.evaluate.on.pause.timeout.ms" defaultValue="500"
                  description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
+    <registryKey key="debugger.enable.breakpoints.during.evaluation" defaultValue="false"
+                 description="Allow breakpoints to be hit while evaluating expressions"/>
     <registryKey key="debugger.navigation.from.console.prototype" defaultValue="false"
                  description="Alpha version of navigation from the printed lines in console to the printing source code"/>
     <registryKey key="debugger.collectible.value.retries.error" defaultValue="true"
                  description="Drop an error if there were too many debugger collectible value retries"/>
+    <registryKey key="debugger.run.suspend.helper" defaultValue="true"
+                 description="Run suspend helper by debug agent"/>
+    <registryKey key="debugger.new.suspend.state.tracking" defaultValue="true"
+                 description="Instead of making symmetrical suspend/resume operation, the end of operation returns the thread into the required state"/>
+    <registryKey key="debugger.filter.breakpoints.by.coroutine.id" defaultValue="true"
+                 description="When enabled uses unique coroutine id to filter stepping"/>
+    <registryKey key="debugger.how.to.switch.to.suspend.all" defaultValue="[IMMEDIATE_PAUSE*|PAUSE_WAITING_EVALUATION|METHOD_BREAKPOINT|DISABLE]"
+                 description="It is a way how the debugger engine will switch from suspend-thread context to suspend-all context"/>
+    <registryKey key="coroutine.panel.live.update" defaultValue="false"
+                 description="When enabled, Coroutine View will update its contents after every step. By default, the Coroutine View is collapsed after every step in favor of stepping performance."/>
+    <registryKey key="coroutine.panel.show.jobs.hierarchy" defaultValue="true"
+                 description="When enabled, Coroutine View displays the hierarchy of coroutine jobs; otherwise, it shows coroutines grouped by dispatchers."/>
     <registryKey key="debugger.compiling.evaluator" defaultValue="true"
                  description="Allow to compile the code before evaluation if needed"/>
     <registryKey key="debugger.compiling.evaluator.force" defaultValue="false"
                  description="Always compile the code before evaluation"/>
+    <registryKey key="debugger.compiling.evaluator.magic.accessor" defaultValue="false"
+                 description="Allow access to private members via generated accessor methods in the compiling evaluator"/>
+    <registryKey key="debugger.compiling.evaluator.reflection.access.with.java8" defaultValue="true"
+                 description="Allow reflective access in the compiling evaluator compatible with Java 8 rules"/>
+    <registryKey key="debugger.compiling.evaluator.extract.generated.class" defaultValue="true"
+                 description="Extract the generated class to a separate file (only for java versions lower than 11)"/>
+    <registryKey key="debugger.auto.fetch.icons" defaultValue="true"
+                 description="Automatically request icons for objects shown in debugger views when available"/>
+    <registryKey key="debugger.async.stacks.flows" defaultValue="true"
+                 description="Enable async stack traces for MutableSharedFlow"/>
+    <registryKey key="debugger.async.stacks.state.flows" defaultValue="true"
+                 description="Enable async stack traces for MutableStateFlow"/>
+    <registryKey key="debugger.async.stack.trace.for.exceptions.printing" defaultValue="true"
+                 description="Include async stack trace in exceptions' printed stack trace"/>
+    <registryKey key="debugger.keep.step.requests" defaultValue="false"
+                 description="Keep step requests active after a step completes (for advanced troubleshooting)"/>
+    <registryKey key="debugger.enable.memory.view" defaultValue="true"
+                 description="Enable the Memory view/tool window in the debugger"/>
+    <registryKey key="debugger.enable.overhead.monitor" defaultValue="true"
+                 description="Enable the debugger overhead monitor to track evaluation cost"/>
+    <registryKey key="debugger.memory.agent.debug" defaultValue="false"
+                 description="Enable debug logging to stdout from a memory agent"/>
+    <registryKey key="debugger.memory.agent.debug.path" defaultValue=""
+                 description="Force the debugger to use the specified memory agent library instead of the bundled one (only for debugging purposes). Will be used only if debugger.memory.agent.debug checked"/>
+    <registryKey key="debugger.memory.agent.action.timeout" defaultValue="-1"
+                 description="Set debugger memory agent action timeout in millis"/>
+    <registryKey key="debugger.memory.agent.use.in.memory.view" defaultValue="true"
+                 description="Use memory agent to estimate retained sizes in the Instances Window"/>
     <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
                  description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
     <registryKey key="debugger.stepping.current.thread.check.timeout.ms" defaultValue="100"
@@ -222,6 +264,95 @@
                  description="How many of threads allow to wait on the hit run-to-cursor breakpoint for the desired hit"/>"/>
     <registryKey key="debugger.log.jdi.in.unit.tests" defaultValue="false"
                  description="Enable full JDI logging under DebugProcessImpl.LOG.debug for unit tests"/>
+
+    <registryKey key="debugger.track.instrumentation" defaultValue="true"
+                 description="Track class instrumentation events during debugging"/>
+    <registryKey key="debugger.attach.to.process.action" defaultValue="false"
+                 description="Show the &quot;Attach to Process&quot; action in the run/debug tool window"/>
+    <registryKey key="debugger.sa.jdwp.debug" defaultValue="false"
+                 description="Enable additional JDWP debug logging for the shared agent"/>
+    <registryKey key="debugger.add.rt.jar" defaultValue="true"
+                 description="Add rt.jar to the classpath"/>
+    <registryKey key="debugger.evaluate.load.helper.in.separate.classloader" defaultValue="false"
+                 description="Always load helper classes in a new classloader"/>
+    <registryKey key="debugger.new.invocation.watcher" defaultValue="true"
+                 description="When resuming all, take into account the debugger model state of contexts and their resumed threads"/>
+    <registryKey key="debugger.retry.conditional.breakpoints" defaultValue="true"
+                 description="Retry to evaluate a condition in conditional breakpoints in the case of ObjectCollectedException"/>
+    <registryKey key="debugger.filter.breakpoints.during.stepping.using.debugger.engine" defaultValue="false"
+                 description="When enabled, uses the old mechanism to disable all events in other threads during stepping via applying JDI thread filter"/>
+    <registryKey key="debugger.call.tracing.arguments" defaultValue="true"
+                 description="Include method arguments in call tracing"/>
+    <registryKey key="debugger.renderers.annotations" defaultValue="true"
+                 description="Enable rendering values using annotations when available"/>
+    <registryKey key="debugger.jb.jdi" defaultValue="true"
+                 description="Use the new forked JDI implementation"/>
+    <registryKey key="debugger.async.jdi" defaultValue="true"
+                 description="Use async JDI to speed up JDWP communication"/>
+    <registryKey key="debugger.async.frames" defaultValue="true"
+                 description="Collect and show asynchronous call frames in stack traces"/>
+    <registryKey key="debugger.preload.event.info" defaultValue="true"
+                 description="Preload frequently used JDWP event info to reduce latency"/>
+    <registryKey key="debugger.preload.types.async" defaultValue="true"
+                 description="Preload the list of loaded classes asynchronously to reduce latency"/>
+    <registryKey key="debugger.preload.types.hierarchy" defaultValue="true"
+                 description="Request superclass and interfaces for each loaded class in advance to speed up further operations"/>
+    <registryKey key="debugger.evaluate.single.threaded.timeout" defaultValue="1000"
+                 description="Number of milliseconds to evaluate resuming only the current thread, then resume all threads"/>
+    <registryKey key="debugger.renderers.file" defaultValue="true"
+                 description="Enable file object renderer"/>
+    <registryKey key="debugger.renderers.arrays" defaultValue="true"
+                 description="Show the first elements for primitive and string arrays"/>
+    <registryKey key="debugger.renderers.arrays.max.primitives" defaultValue="100"
+                 description="Number of primitive values to show"/>
+    <registryKey key="debugger.renderers.arrays.max.strings" defaultValue="5"
+                 description="Number of string values to show"/>
+    <registryKey key="debugger.sync.commands.max.retries" defaultValue="5"
+                 description="Maximum number of times a synchronous debugger command may be rescheduled"/>
+    <registryKey key="debugger.sync.commands.reschedule.delay" defaultValue="50"
+                 description="Delay in milliseconds before rescheduling synchronous debugger commands to allow async tasks to finish; negative disables rescheduling"/>
+    <registryKey key="debugger.auto.attach.from.any.console" defaultValue="false"
+                 description="Auto-attach to all processes from any console output"/>
+    <registryKey key="debugger.auto.attach.from.console" defaultValue="false"
+                 description="Auto-attach to all processes available for debug from the console output"/>
+    <registryKey key="debugger.show.offsets.in.frames" defaultValue="false"
+                 description="Show instruction offset in the frames view"/>
+    <registryKey key="debugger.stop.on.graceful.exit" defaultValue="true"
+                 description="Immediately detach the debugger when a process is about to terminate"/>
+    <registryKey key="debugger.stack.frame.show.code.index" defaultValue="false"
+                 description="Show the bytecode index next to the line number for stack frames"/>
+    <registryKey key="debugger.method.breakpoints.entry.default" defaultValue="true"
+                 description="Stop only on method entry by default"/>
+    <registryKey key="debugger.emulate.method.breakpoints" defaultValue="true"
+                 description="Emulate method breakpoints with line breakpoints by default"/>
+    <registryKey key="debugger.intern.string.literals" defaultValue="false"
+                 description="Make string literal refer to the same instance of class String"/>
+    <registryKey key="debugger.capture.points.agent.debug" defaultValue="false"
+                 description="Enable debug logging for capture points agent"/>
+    <registryKey key="debugger.collection.breakpoint.agent.debug" defaultValue="false"
+                 description="Enable debug logging for collection breakpoints agent"/>
+    <registryKey key="debugger.capture.points.agent.annotations" defaultValue="true"
+                 description="Enable reading capture points from annotations"/>
+    <registryKey key="debugger.collection.watchpoints.enabled" defaultValue="false"
+                 description="Enable collection watchpoints support"/>
+    <registryKey key="debugger.async.stacks.coroutines" defaultValue="true"
+                 description="Enable async stack traces for coroutines"/>
+    <registryKey key="debugger.async.stacks.max.depth" defaultValue="500"
+                 description="Maximum depth of captured async stacks"/>
+    <registryKey key="debugger.log.async.stacks" defaultValue="false"
+                 description="Log async stack trace when log stack trace is checked in breakpoint properties"/>
+    <registryKey key="debugger.batch.evaluation" defaultValue="true"
+                 description="Evaluate multiple values in a single batch request to the debuggee"/>
+    <registryKey key="debugger.batch.evaluation.force" defaultValue="false"
+                 description="Force batch evaluation even when individual evaluation is possible"/>
+    <registryKey key="debugger.compiling.evaluator.method.refs" defaultValue="false"
+                 description="Use the compiling evaluator for the code with method references"/>
+    <registryKey key="debugger.async.smart.step.into" defaultValue="true"
+                 description="Smart step into anonymous class methods in any thread"/>
+    <registryKey key="debugger.monitor.blocked.threads" defaultValue="true"
+                 description="Watch if a thread we do stepping in is blocked by another suspended thread"/>
+    <registryKey key="debugger.check.source" defaultValue="true"
+                 description="Check that the source code matches the bytecode"/>
   </extensions>
 
   <actions>

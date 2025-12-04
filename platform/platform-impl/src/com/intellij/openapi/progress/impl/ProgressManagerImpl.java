@@ -104,35 +104,32 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   protected void fireNonCancellableEvent() {
-    commitCheckCanceledJfrEvent(true, false, false, false, false, false);
+    commitCheckCanceledJfrEvent(true, false, HasContextJob.NO, false, false, false);
   }
 
   @Override
   protected void fireCanceledByJobEvent() {
-    commitCheckCanceledJfrEvent(false, false, true, false, false, true);
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.YES, false, false, true);
   }
 
   @Override
   protected void fireCanceledByIndicatorEvent(@Nullable ProgressIndicator indicator) {
-    //noinspection TestOnlyProblems
     commitCheckCanceledJfrEvent(false,
-                              indicator != null,
-                              Cancellation.currentJob() != null,
+                                indicator != null,
+                                HasContextJob.INFER,
                                 false,
                                 false,
-                              indicator != null && indicator.isCanceled());
+                                indicator != null && indicator.isCanceled());
   }
 
   @Override
   protected void fireCheckCanceledNone() {
-    //noinspection TestOnlyProblems
-    commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, true, false, false);
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, true, false, false);
   }
 
   @Override
   protected void fireCheckCanceledOnlyHooks() {
-    //noinspection TestOnlyProblems
-    commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, false, true, false);
+    commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, false, true, false);
   }
 
   private static void systemNotify(@NotNull Task.NotificationInfo info) {
@@ -146,7 +143,7 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   private static void commitCheckCanceledJfrEvent(boolean nonCancellable,
                                                   boolean hasProgressIndicator,
-                                                  boolean hasContextJob,
+                                                  @NotNull HasContextJob hasContextJob,
                                                   boolean hasNoneBehavior,
                                                   boolean hasOnlyHooksBehavior,
                                                   boolean cancelled) {
@@ -154,18 +151,31 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
       return;
     }
 
+    boolean hasContextJobValue = hasContextJob.value();
     THROTTLED_LOGGER.info(() -> {
       return "checkCancelled is invoked while write-action is pending." +
-              " nonCancellable: " + nonCancellable +
+             " nonCancellable: " + nonCancellable +
              ", hasProgressIndicator: " + hasProgressIndicator +
-             ", hasContextJob: " + hasContextJob +
+             ", hasContextJob: " + hasContextJobValue +
              ", hasNoneBehavior: " + hasNoneBehavior +
              ", hasOnlyHooksBehavior: " + hasOnlyHooksBehavior +
              ", cancelled: " + cancelled;
     });
-    CheckCanceledEvent.commit(nonCancellable, hasProgressIndicator, hasContextJob, hasNoneBehavior, hasOnlyHooksBehavior, cancelled);
+    CheckCanceledEvent.commit(nonCancellable, hasProgressIndicator, hasContextJobValue, hasNoneBehavior, hasOnlyHooksBehavior, cancelled);
   }
 
+  private enum HasContextJob {
+    YES, NO, INFER;
+
+    boolean value() {
+      return switch (this) {
+        case YES -> true;
+        case NO -> false;
+        case INFER -> //noinspection TestOnlyProblems
+          Cancellation.currentJob() != null;
+      };
+    }
+  }
 
   @Override
   protected void startTask(@NotNull Task task,
@@ -340,14 +350,12 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
     @Override
     public void nonCanceledSectionInvoked() {
-      //noinspection TestOnlyProblems
-      commitCheckCanceledJfrEvent(true, false, Cancellation.currentJob() != null, false, false, false);
+      commitCheckCanceledJfrEvent(true, false, HasContextJob.INFER, false, false, false);
     }
 
     @Override
     public void cancellableSectionInvoked(boolean wasCanceled) {
-      //noinspection TestOnlyProblems
-      commitCheckCanceledJfrEvent(false, false, Cancellation.currentJob() != null, false, false, wasCanceled);
+      commitCheckCanceledJfrEvent(false, false, HasContextJob.INFER, false, false, wasCanceled);
     }
   }
 }

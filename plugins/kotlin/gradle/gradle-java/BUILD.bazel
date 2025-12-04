@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "@lib//:gradle",
     "//jps/model-api:model",
@@ -90,6 +90,8 @@ jvm_library(
     "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/diagnostic/telemetry",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 
@@ -114,7 +116,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/guava",
     "@lib//:gradle",
     "//jps/model-api:model",
@@ -158,6 +160,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/idea-ui:ui",
     "//java/execution/impl",
     "//java/compiler/impl",
@@ -176,6 +179,8 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build kotlin.gradle.gradle-java` end

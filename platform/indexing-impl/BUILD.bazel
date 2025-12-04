@@ -14,7 +14,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/stream",
     "//libraries/fastutil",
     "//platform/util/jdom",
@@ -32,6 +32,7 @@ jvm_library(
     "//platform/util/xmlDom",
     "//platform/workspace/storage",
     "//platform/util/storages",
+    "//platform/util",
   ]
 )
 ### auto-generated section `build intellij.platform.indexing.impl` end

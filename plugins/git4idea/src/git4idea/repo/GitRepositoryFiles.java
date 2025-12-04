@@ -178,7 +178,7 @@ public final class GitRepositoryFiles {
   @NotNull
   Collection<String> getPathsToWatch() {
     return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myReftablePath, myInfoDirPath, myHooksDirPath,
-                         myStashReflogPath);
+                         myStashReflogPath, myWorktreesDirPath);
   }
 
   @NotNull
@@ -409,6 +409,13 @@ public final class GitRepositoryFiles {
    */
   public boolean isStashReflogFile(@NotNull String path) {
     return path.equals(myStashReflogPath);
+  }
+
+  /**
+   * .git/worktrees/*
+   */
+  public boolean isWorktreeDirectory(@NotNull String path) {
+    return path.startsWith(myWorktreesDirPath);
   }
 
   /**

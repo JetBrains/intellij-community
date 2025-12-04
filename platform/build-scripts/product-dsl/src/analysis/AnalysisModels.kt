@@ -6,32 +6,121 @@ import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 
 /**
+ * Operation type for module set merge/move/inline analysis.
+ * Using enum instead of String for type safety.
+ */
+enum class MergeOperation {
+  /** Combine source modules into target module set */
+  MERGE,
+  /** Move source module set to a different location */
+  MOVE,
+  /** Remove module set and add modules directly to products */
+  INLINE;
+  
+  companion object {
+    fun fromString(value: String): MergeOperation = when (value.lowercase()) {
+      "merge" -> MERGE
+      "move" -> MOVE
+      "inline" -> INLINE
+      else -> error("Unknown merge operation: '$value'. Valid values: merge, move, inline")
+    }
+  }
+}
+
+/**
+ * Result type for operations that can fail with partial data.
+ * Use instead of exceptions for recoverable errors or when partial results are useful.
+ */
+sealed class ParseResult<out T> {
+  /** Successful parse with complete data */
+  data class Success<T>(val value: T) : ParseResult<T>()
+  
+  /** Failed parse, optionally with partial data */
+  data class Failure<T>(
+    val error: String,
+    val partial: T? = null
+  ) : ParseResult<T>()
+  
+  fun isSuccess(): Boolean = this is Success
+  fun isFailure(): Boolean = this is Failure
+  
+  fun getOrNull(): T? = when (this) {
+    is Success -> value
+    is Failure -> partial
+  }
+  
+  fun getOrThrow(): T = when (this) {
+    is Success -> value
+    is Failure -> error(error)
+  }
+  
+  inline fun <R> map(transform: (T) -> R): ParseResult<R> = when (this) {
+    is Success -> Success(transform(value))
+    is Failure -> Failure(error, partial?.let(transform))
+  }
+}
+
+/**
+ * Dependency resolution error for a single module.
+ * Used by validation functions to report missing dependencies.
+ */
+@Serializable
+data class DependencyError(
+  val dependency: String,
+  val existsGlobally: Boolean,
+  val affectedModules: List<String>,
+  val suggestedModuleSets: List<String>,
+  val isTransitive: Boolean = false,
+  val transitiveChains: List<String> = emptyList()
+)
+
+/**
  * Metadata about a module set including its location and source file.
  *
  * @param moduleSet The module set instance
  * @param location The location category ("community" or "ultimate")
  * @param sourceFile The Kotlin source file path relative to project root where this module set is defined
+ * @param directNestedSets Names of directly nested module sets (immediate children only, not transitive)
  */
 data class ModuleSetMetadata(
   val moduleSet: ModuleSet,
   val location: String,
-  val sourceFile: String
+  val sourceFile: String,
+  val directNestedSets: List<String> = emptyList()
 )
 
 /**
  * JSON filter for selective analysis output.
- * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths, or specific items.
+ * Supports various filter types: products, moduleSets, composition, duplicates, mergeImpact, modulePaths, 
+ * moduleDependencies, moduleReachability, dependencyPath, productUsage, or specific items.
  */
 @Serializable
 data class JsonFilter(
-  val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet"
+  val filter: String,  // "products", "moduleSets", "composition", "duplicates", "mergeImpact", "modulePaths", "product", "moduleSet", "moduleDependencies", "moduleReachability", "dependencyPath", "productUsage"
   val value: String? = null,  // Product/module set name when filter is "product" or "moduleSet"
-  val module: String? = null,  // Module name for "modulePaths" filter
+  val module: String? = null,  // Module name for "modulePaths", "moduleDependencies" filters
+  val moduleSet: String? = null,  // Module set name for "moduleReachability" or "productUsage" filter
+  val fromModule: String? = null,  // Starting module for "dependencyPath" filter
+  val toModule: String? = null,  // Target module for "dependencyPath" filter
   val source: String? = null,  // Source module set name for "mergeImpact" filter
   val target: String? = null,  // Target module set name for "mergeImpact" filter (null for inline operation)
   val operation: String? = null,  // Operation type for "mergeImpact": "merge", "move", or "inline" (default: "merge")
-  val includeDuplicates: Boolean = false  // Include duplicate xi:include detection in output (for future unification)
+  val includeDuplicates: Boolean = false,  // Include duplicate xi:include detection in output (for future unification)
+  val includeTransitive: Boolean = false  // Include ALL transitive dependencies in moduleDependencies filter (BFS traversal)
 )
+
+/**
+ * Product category based on architecture and module sets.
+ */
+@Serializable
+enum class ProductCategory {
+  /** Ultimate IDE products (uses ide.ultimate module set) */
+  ULTIMATE,
+  /** Community IDE products (uses ide.common module set) */
+  COMMUNITY,
+  /** Backend/specialized products (neither ultimate nor community) */
+  BACKEND
+}
 
 /**
  * Product specification for JSON output.
@@ -45,6 +134,7 @@ data class ProductSpec(
   val pluginXmlPath: String?,
   val contentSpec: ProductModulesContentSpec?,
   val buildModules: List<String>,
+  val category: ProductCategory = ProductCategory.BACKEND,  // Product architecture category
   val totalModuleCount: Int = 0,      // All modules including from module sets
   val directModuleCount: Int = 0,     // Just additionalModules count
   val moduleSetCount: Int = 0,        // Number of module sets included
@@ -95,7 +185,8 @@ data class ModuleSetLocationViolation(
  * Similarity between two products based on module set overlap.
  * Used for identifying merge candidates and refactoring opportunities.
  */
-data class ProductSimilarityPair(
+@Serializable
+internal data class ProductSimilarityPair(
   val product1: String,
   val product2: String,
   val similarity: Double,
@@ -110,7 +201,8 @@ data class ProductSimilarityPair(
  * Correctly identifies intentional nested set inclusions vs actual duplications.
  * Intentional nesting (e.g., libraries includes libraries.core) is filtered out.
  */
-data class ModuleSetOverlap(
+@Serializable
+internal data class ModuleSetOverlap(
   val moduleSet1: String,
   val moduleSet2: String,
   val location1: String,
@@ -124,10 +216,25 @@ data class ModuleSetOverlap(
 )
 
 /**
+ * Impact metrics for unification suggestions.
+ * Contains various metrics depending on the strategy type.
+ */
+@Serializable
+internal data class UnificationImpact(
+  val moduleSetsSaved: Int? = null,
+  val overlapPercent: Int? = null,
+  val moduleCount: Int? = null,
+  val affectedProducts: List<String>? = null,
+  val similarity: Double? = null,
+  val sharedModuleSets: Int? = null
+)
+
+/**
  * Suggestion for module set unification (merge, inline, factor, split).
  * Generated by analyzing overlap, product similarity, and module set usage patterns.
  */
-data class UnificationSuggestion(
+@Serializable
+internal data class UnificationSuggestion(
   val priority: String,  // "high", "medium", "low"
   val strategy: String,  // "merge", "inline", "factor", "split"
   val type: String?,  // For merge: "subset", "superset", "high-overlap"
@@ -137,14 +244,15 @@ data class UnificationSuggestion(
   val products: List<String>?,  // For factor: products with shared sets
   val sharedModuleSets: List<String>?,  // For factor: shared module sets
   val reason: String,
-  val impact: Map<String, Any>
+  val impact: UnificationImpact
 )
 
 /**
  * File reference in a module path trace.
  * Points to either a module set file or a product file that includes a module.
  */
-data class PathFileReference(
+@Serializable
+internal data class PathFileReference(
   val type: String,  // "module-set" or "product"
   val path: String?,  // Absolute file path
   val name: String,  // Name of the module set or product
@@ -155,7 +263,8 @@ data class PathFileReference(
  * A single path showing how a module reaches a product.
  * Either directly or through module set(s).
  */
-data class ModulePath(
+@Serializable
+internal data class ModulePath(
   val type: String,  // "direct" or "module-set"
   val path: String,  // Human-readable path string like "module → set → product"
   val files: List<PathFileReference>  // File references involved in this path
@@ -164,7 +273,8 @@ data class ModulePath(
 /**
  * Complete tracing result for a module showing all paths to products.
  */
-data class ModulePathsResult(
+@Serializable
+internal data class ModulePathsResult(
   val module: String,
   val paths: List<ModulePath>,
   val moduleSets: List<String>,  // Module sets that contain this module
@@ -172,20 +282,69 @@ data class ModulePathsResult(
 )
 
 /**
+ * Validation violation during merge impact analysis.
+ * Indicates issues that would be introduced by the operation.
+ */
+@Serializable
+internal data class MergeViolation(
+  val type: String,  // "location", "community-uses-ultimate", "notFound", "validation"
+  val severity: String,  // "error", "warning"
+  val message: String,
+  val affectedProducts: List<String>? = null,
+  val fix: String? = null
+)
+
+/**
+ * Size impact metrics for merge operations.
+ * Shows how module counts change as a result of the operation.
+ */
+@Serializable
+internal data class SizeImpact(
+  val sourceModuleCount: Int,
+  val targetModuleCount: Int,
+  val newModulesToTarget: Int,
+  val duplicateModules: Int,
+  val resultingModuleCount: Int
+)
+
+/**
  * Impact analysis result for merging, moving, or inlining module sets.
  * Used to assess safety and predict consequences before refactoring.
  */
-data class MergeImpactResult(
+@Serializable
+internal data class MergeImpactResult(
   val operation: String,  // "merge", "move", "inline"
   val sourceSet: String,
   val targetSet: String?,
   val productsUsingSource: List<String>,
   val productsUsingTarget: List<String>,
   val productsThatWouldChange: List<String>,
-  val sizeImpact: Map<String, Int>,
-  val violations: List<Map<String, Any>>,
+  val sizeImpact: SizeImpact,
+  val violations: List<MergeViolation>,
   val recommendation: String,
   val safe: Boolean
+)
+
+/**
+ * Product usage information showing how a product uses a module set.
+ */
+@Serializable
+internal data class ProductUsageEntry(
+  val product: String,
+  val usageType: String,  // "direct" or "indirect"
+  val inclusionChain: List<String>?  // For indirect: chain of module sets from product to target
+)
+
+/**
+ * Analysis of which products use a specific module set.
+ * Distinguishes direct usage (top-level reference) from indirect usage (nested within other module sets).
+ */
+@Serializable
+internal data class ProductUsageAnalysis(
+  val moduleSet: String,
+  val directUsage: List<ProductUsageEntry>,  // Products that directly reference this module set
+  val indirectUsage: List<ProductUsageEntry>,  // Products that use it transitively through other sets
+  val totalProducts: Int
 )
 
 // Private helper data classes for internal analysis

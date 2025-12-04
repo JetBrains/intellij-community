@@ -864,6 +864,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @TestOnly
+  public static void dropTestTasks() {
+    ourTasksForTestMode.clear();
+  }
+
+  @TestOnly
   @RequiresEdt
   private static void waitForTask(@NotNull Submission<?> task) {
     ThreadingAssertions.assertEventDispatchThread();

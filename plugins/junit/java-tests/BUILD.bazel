@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:assert_j",
     "//java/compiler/openapi:java-compiler",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.junit.java.tests` end

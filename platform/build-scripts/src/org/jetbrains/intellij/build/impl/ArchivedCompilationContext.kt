@@ -54,8 +54,8 @@ class ArchivedCompilationContext(
     return delegate.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
   }
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { Path.of(it) }, resultMapper = { it.toString() })
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
+    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { it }, resultMapper = { it })
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
@@ -108,7 +108,7 @@ class ArchivedCompilationContext(
   }
 
   private suspend inline fun <I : Any, R : Any> doReplace(
-    files: List<I>,
+    files: Collection<I>,
     crossinline inputMapper: (I) -> Path,
     crossinline resultMapper: (Path) -> R,
   ): List<R> {

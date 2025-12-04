@@ -7,6 +7,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -22,6 +23,7 @@ import javax.swing.ListCellRenderer
 open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
   @Deprecated("Do not use popupState")
+  @ApiStatus.Internal
   val popupState: PopupState<JBPopup> = PopupState.forPopup()
   var selectedItem: T = item
     set(newItem) {

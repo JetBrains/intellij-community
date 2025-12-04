@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
@@ -64,14 +63,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-            val xDebugSession = debugProcess.xdebugProcess?.session as? XDebugSessionImpl
-            val sessionId = xDebugSession?.id
-            if (sessionId != null) {
-                val sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(debugProcess.project, sessionId)
-                if (sessionProxy != null) {
-                    showOrHideCoroutinePanel(sessionProxy, true)
-                }
-            }
+            showOrHideCoroutinePanel(debugProcess, true)
         }
 
         if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {

@@ -26,7 +26,7 @@ public class StaticCollectionInspection {
   private static final List<String> s_list16 = Collections.singletonList("only");
   private static final Set<String> s_set17 = Collections.singleton("only");
   private static final Map<String, String> s_map18 = Collections.singletonMap("key", "value");
-  private static final List<String> s_list19 = Arrays.asList("a", "b", "c");
+  //private static final List<String> s_list19 = Arrays.asList("a", "b", "c");
   private static final Map<String, String> s_map20 = Map.ofEntries(
     Map.entry("key1", "value1"),
     Map.entry("key2", "value2")

@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/kernel/shared:kernel",
@@ -27,12 +28,16 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/xdebugger-impl/rpc",
     "//platform/platform-impl:ide-impl",
     "//platform/util/coroutines",
+    "//platform/util/jdom",
     "//platform/projectModel-api:projectModel",
     "//platform/execution-impl",
+    "//platform/lang-api:lang",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -151,7 +152,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         }
         if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
           List<? extends Class<? extends HighlightVisitor>> liveVisitorClasses = ContainerUtil.map(filteredVisitors, v -> v.getClass());
-          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
+          BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || toolId instanceof Class && liveVisitorClasses.contains(toolId);
           impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
         }
         boolean success;
@@ -185,7 +186,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           }
         }
         else {
-          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false");
+          boolean writeActionPending = ApplicationManagerEx.getApplicationEx().isWriteActionPending();
+          cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false (writeActionPending="+writeActionPending+")");
         }
       };
       if (myHighlightInfoUpdater instanceof HighlightInfoUpdaterImpl impl) {
@@ -256,22 +258,14 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress, @NotNull Project project, @NotNull String reason) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      RESTART_REQUESTS.decrementAndGet();
+    int delay = ApplicationManager.getApplication().isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      RESTART_REQUESTS.set(0);
       if (!project.isDisposed()) {
         DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
       }
-    }
-    else {
-      int delay = RESTART_DAEMON_RANDOM.nextInt(100);
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-        RESTART_REQUESTS.decrementAndGet();
-        if (!project.isDisposed()) {
-          DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason);
-        }
-      }, delay, TimeUnit.MILLISECONDS);
-    }
-    throw new ProcessCanceledException();
+    }, delay, TimeUnit.MILLISECONDS);
+    progress.checkCanceled();
   }
 
   private boolean forceHighlightParents() {

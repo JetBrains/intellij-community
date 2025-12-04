@@ -12,6 +12,8 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//libraries/asm",
     "//platform/core-api:core",
+    "//platform/util",
+    "//platform/platform-api:ide",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
@@ -26,6 +28,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//java/java-psi-api:psi",
     "//java/debugger/impl",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.base.util` end

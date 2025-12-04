@@ -43,4 +43,9 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
   public @NotNull ExtensionMode getExtensionMode() {
     return ExtensionMode.Selected;
   }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
+  }
 }

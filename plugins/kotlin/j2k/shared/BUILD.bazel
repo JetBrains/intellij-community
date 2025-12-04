@@ -47,6 +47,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/util",
+    "//platform/forms_rt:java-guiForms-rt",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/code-insight/utils",
     "//platform/core-api:core",
@@ -54,6 +55,7 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/base/statistics",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

@@ -980,24 +980,18 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
       // RunConfigurationInArbitraryFileScanner has finished its initial scanning, all RCs are loaded.
       // Now we can set the right RC as 'selected' in the RC combo box.
       // EDT is needed to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
-      updateConfigurationAfterScanning(currentSelectedConfigId, runConfigIdToSelect)
-    }
-  }
-
-  @VisibleForTesting
-  @ApiStatus.Internal
-  suspend fun updateConfigurationAfterScanning(currentSelectedConfigId: String?, runConfigIdToSelect: String?) {
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      val runConfigToSelect = lock.read {
-        // don't change the selected RC if it has been already changed and is not null
-        if (currentSelectedConfigId != selectedConfigurationId && selectedConfigurationId != null) return@read null
-        // select the 'correct' RC if it is available
-        runConfigIdToSelect?.let { idToSettings[runConfigIdToSelect] }?.let { return@read it }
-        // select any RC if none is selected
-        if (selectedConfiguration == null) return@read allSettings.firstOrNull { it.type.isManaged }
-        return@read null
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val runConfigToSelect = lock.read {
+          // don't change the selected RC if it has been already changed and is not null
+          if (currentSelectedConfigId != selectedConfigurationId && selectedConfigurationId != null) return@read null
+          // select the 'correct' RC if it is available
+          runConfigIdToSelect?.let { idToSettings[runConfigIdToSelect] }?.let { return@read it }
+          // select any RC if none is selected
+          if (selectedConfiguration == null) return@read allSettings.firstOrNull { it.type.isManaged }
+          return@read null
+        }
+        runConfigToSelect?.let { selectedConfiguration = it }
       }
-      runConfigToSelect?.let { selectedConfiguration = it }
     }
   }
 

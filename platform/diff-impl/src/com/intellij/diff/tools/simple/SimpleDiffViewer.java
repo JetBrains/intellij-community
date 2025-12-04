@@ -277,7 +277,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       //maybe readaction
-      WriteIntentReadAction.run((Runnable)() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
+      WriteIntentReadAction.run(() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
 
       myInitialScrollHelper.onRediff();
 

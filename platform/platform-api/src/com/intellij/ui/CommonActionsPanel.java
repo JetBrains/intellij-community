@@ -173,7 +173,8 @@ public final class CommonActionsPanel extends JPanel {
    * @param button one of the standard buttons
    * @return the {@code AnActionButton} if the corresponding action exists and is an instance of {@code AnActionButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public @Nullable AnActionButton getAnActionButton(@NotNull Buttons button) {
     return ObjectUtils.tryCast(myButtons.get(button), AnActionButton.class);
   }

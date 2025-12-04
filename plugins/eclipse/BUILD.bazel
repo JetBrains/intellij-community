@@ -41,6 +41,8 @@ jvm_library(
     "//libraries/kotlin/reflect",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -72,6 +74,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/eclipse/jps-plugin:jps",
     "//plugins/eclipse/common-eclipse-util:common",
     "//platform/testFramework/extensions:testExtensions",
@@ -79,7 +82,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:junit5",
@@ -88,6 +91,8 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.eclipse` end

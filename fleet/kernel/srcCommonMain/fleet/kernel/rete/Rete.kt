@@ -98,7 +98,7 @@ suspend fun <T> withRete(
     kernel.subscribe(Channel.UNLIMITED) { db, changes ->
       val lastKnownDb = MutableStateFlow<ReteState>(ReteState.Db(db))
       coroutineScope {
-        launch {
+        launch(CoroutineName("rete event loop")) {
           spannedScope("rete event loop") {
             // todo: implement a proper reconnect, this could still fail because of thread starvation
             changes.consumeAsFlow()

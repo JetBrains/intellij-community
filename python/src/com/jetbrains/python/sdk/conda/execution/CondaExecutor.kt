@@ -133,7 +133,7 @@ object CondaExecutor {
   ): PyResult<T> {
     val envs = getFixedEnvs(binaryToExec).getOr { return it }
     val runArgs = prepareCondaRunArgs(args, emptyList(), condaEnvIdentity).toTypedArray()
-    return runExecutableWithProgress(binaryToExec, timeout, env = envs, *runArgs, transformer = transformer)
+    return runExecutableWithProgress(binaryToExec, timeout, env = envs, *runArgs, transformer = transformer, processWeight = ConcurrentProcessWeight.HEAVY)
   }
 
   private fun getFixedEnvs(binaryToExec: BinaryToExec): PyResult<Map<String, String>> {

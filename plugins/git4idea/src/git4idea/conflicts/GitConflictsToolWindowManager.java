@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.conflicts;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
@@ -35,7 +35,7 @@ public final class GitConflictsToolWindowManager {
     }
   }
 
-  static class ContentPreloader implements ChangesViewContentProvider.Preloader {
+  static final class ContentPreloader implements ChangesViewContentProvider.Preloader {
     @Override
     public void preloadTabContent(@NotNull Content content) {
       content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
@@ -43,7 +43,7 @@ public final class GitConflictsToolWindowManager {
     }
   }
 
-  static class ContentProvider implements ChangesViewContentProvider {
+  static final class ContentProvider implements ChangesViewContentProvider {
     private final Project myProject;
 
     ContentProvider(@NotNull Project project) {
@@ -60,7 +60,7 @@ public final class GitConflictsToolWindowManager {
     }
   }
 
-  public static class DisplayNameSupplier implements Supplier<String> {
+  static final class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
       return GitBundle.message("tab.title.conflicts");
@@ -68,7 +68,7 @@ public final class GitConflictsToolWindowManager {
   }
 
 
-  public static class MyStagingAreaListener implements GitStagingAreaHolder.StagingAreaListener {
+  static final class MyStagingAreaListener implements GitStagingAreaHolder.StagingAreaListener {
     @Override
     public void stagingAreaChanged(@NotNull GitRepository repository) {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
@@ -80,10 +80,10 @@ public final class GitConflictsToolWindowManager {
     }
   }
 
-  public static class MyRepositoryListener implements VcsRepositoryMappingListener {
+  static final class MyRepositoryListener implements VcsRepositoryMappingListener {
     private final Project myProject;
 
-    public MyRepositoryListener(@NotNull Project project) {
+    MyRepositoryListener(@NotNull Project project) {
       myProject = project;
     }
 

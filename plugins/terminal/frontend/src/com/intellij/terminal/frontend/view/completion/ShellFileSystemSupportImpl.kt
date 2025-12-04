@@ -7,6 +7,7 @@ import com.intellij.platform.eel.fs.listDirectoryWithAttrs
 import com.intellij.platform.eel.getOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus

@@ -6,6 +6,7 @@ package com.intellij.lang.documentation.ide.ui
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.lookupDocPopupWidth
 import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
@@ -260,7 +261,7 @@ internal class DocumentationUI(
     val visible = switcher.elements.count() > 1
     switcherToolbarComponent.isVisible = visible
     editorPane.border =
-      if (forceTopMarginDisabled) JBUI.Borders.empty(0, 0, 2, JBUI.scale(20))
+      if (forceTopMarginDisabled) JBUI.Borders.emptyTop(DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph)
       else JBUI.Borders.emptyTop(
         if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph
       )
@@ -394,6 +395,13 @@ internal class DocumentationUI(
       updateSwitcherVisibility()
     }
     customStyleFlow.value = CustomStyle(decoratedStyle?.backgroundColor, decoratedStyle?.customEnabled == true)
+
+    if (decoratedStyle?.customEnabled == true && isPopup) {
+      editorPane.setForcedMinWidth(JBUIScale.scale(lookupDocPopupWidth))
+    }
+    else {
+      editorPane.setForcedMinWidth(0)
+    }
 
     if (isPopup && (decoratedStyle != null &&
                     decoratedStyle.backgroundColor != editorPane.background ||

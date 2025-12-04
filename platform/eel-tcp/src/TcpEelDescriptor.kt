@@ -2,26 +2,24 @@
 package com.intellij.platform.eel.tcp
 
 import com.intellij.platform.eel.EelDescriptorWithoutNativeFileChooserSupport
-import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
-import com.intellij.platform.ijent.tcp.TcpEndpoint
 import java.nio.file.Path
 
-class TcpEelDescriptor internal constructor (tcpEndpoint: TcpEndpoint) : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor {
-  override val machine: EelMachine = TcpEelMachine(tcpEndpoint)
-  internal val rootPathString = "/tcp-${tcpEndpoint.toPath()}"
+abstract class TcpEelDescriptor : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor {
+  abstract val rootPathString: String
   override val rootPath: Path
     get() = Path.of(rootPathString)
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as TcpEelDescriptor
-
-    return machine == other.machine
+    return rootPathString == other.rootPathString
   }
 
-  override fun hashCode(): Int {
-    return machine.hashCode()
-  }
+  override fun hashCode(): Int = rootPathString.hashCode()
+
+  override val osFamily: EelOsFamily = EelOsFamily.Posix // FIXME
 }

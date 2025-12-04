@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.junit5
 
 import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.coroutineScopesCancellationTimeout
 import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
@@ -12,7 +13,6 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * The listener do the following:
@@ -41,7 +41,7 @@ open class TestCleanupListener : TestExecutionListener {
 
   private fun cancelSupervisorScope(scope: CoroutineScope, message: String) {
     logOutput("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message")
-    val timeout = 3.seconds
+    val timeout = ConfigurationStorage.coroutineScopesCancellationTimeout
 
     @Suppress("SSBasedInspection")
     runBlocking {
@@ -49,7 +49,7 @@ open class TestCleanupListener : TestExecutionListener {
         scope.coroutineContext.cancelChildren(CancellationException((message)))
         // Wait with timeout - don't hang indefinitely
         val joinResult = withTimeoutOrNull(timeout) {
-          scope.coroutineContext.job.children.forEach { it.join() }
+          scope.coroutineContext.job.children.forEach { it.cancelAndJoin() }
         }
 
         if (joinResult == null) {
@@ -70,12 +70,9 @@ open class TestCleanupListener : TestExecutionListener {
       cancelSupervisorScope(perTestSupervisorScope, "Test `$testIdentifierName` execution is finished")
       ConfigurationStorage.instance().resetToDefault()
     }
-
-    super.executionFinished(testIdentifier, testExecutionResult)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
     cancelSupervisorScope(testSuiteSupervisorScope, "Test plan execution is finished")
-    super.testPlanExecutionFinished(testPlan)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -542,6 +542,7 @@ public final class CheckRegExpForm {
         return RegExpMatchResult.MATCHES;
       }
       final boolean hitEnd = matcher.hitEnd();
+      matcher.reset();
       if (matcher.find()) {
         setMatches(regExpFile, collectMatches(matcher));
         return RegExpMatchResult.FOUND;

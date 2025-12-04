@@ -1,5 +1,5 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("//:jvm.bzl", "jvm_resources", "resourcegroup")
+load("//:jvm.bzl", "resourcegroup")
 
 filegroup(
     name = "dependency-graph_resources_sources",
@@ -18,20 +18,15 @@ filegroup(
     visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
 )
 
-jvm_resources(
-    name = "dependency-graph_resources_rules_jvm_bootstrap",
-    files = [":dependency-graph_resources_sources"],
-    strip_prefix = "resources",
-)
-
 kt_jvm_library(
     name = "dependency-graph",
     srcs = [":dependency-graph_sources"],
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    resource_strip_prefix = "resources",
+    resources = [":dependency-graph_resources_sources"],
     visibility = [
         "//jvm-inc-builder:__pkg__",
     ],
-    runtime_deps = [":dependency-graph_resources_rules_jvm_bootstrap"],
     deps = [
         "//:annotations_import",
         "//:asm-all_import",

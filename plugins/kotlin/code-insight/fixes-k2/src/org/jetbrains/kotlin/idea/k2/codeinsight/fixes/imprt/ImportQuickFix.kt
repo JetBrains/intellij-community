@@ -15,12 +15,15 @@ import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
@@ -30,10 +33,8 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 
 @ApiStatus.Internal
 class ImportQuickFix(
@@ -138,11 +139,44 @@ class ImportQuickFix(
         ) {
             return false
         }
+
+        if (isTypeAliasedInnerClassUsedInCall(element, restoredCandidate)) {
+            return false
+        }
         
         // callable references cannot be fully qualified
         if (element.parent is KtCallableReferenceExpression) return false
         
         return true
+    }
+
+    /**
+     * Checks if [candidate] is a type alias that references an inner class and is used in a call context at the [element].
+     * 
+     * For example:
+     * ```
+     * class Outer {
+     *     inner class Inner
+     * }
+     * typealias InnerAlias = Outer.Inner
+     * 
+     * fun usage(outer: Outer) {
+     *     outer.InnerAlias() // equivalent to `outer.Inner()`
+     * }
+     * ```
+     * 
+     * In such cases, it's impossible to insert a fully qualified reference of the type alias
+     * because it will break resolve, and reference shortener would not be able to shorten it.
+     */
+    context(_: KaSession)
+    private fun isTypeAliasedInnerClassUsedInCall(element: KtSimpleNameExpression, candidate: ImportCandidate): Boolean {
+        val typeAliasSymbol = candidate.symbol as? KaTypeAliasSymbol ?: return false
+        val expandedClassSymbol = typeAliasSymbol.expandedType.expandedSymbol as? KaNamedClassSymbol ?: return false
+        
+        val potentialCall = element.getQualifiedElement()
+
+        return expandedClassSymbol.isInner &&
+                (potentialCall is KtQualifiedExpression || potentialCall is KtCallExpression)
     }
 
     override fun isClassDefinitelyPositivelyImportedAlready(containingFile: KtFile, classFqName: FqName): Boolean {

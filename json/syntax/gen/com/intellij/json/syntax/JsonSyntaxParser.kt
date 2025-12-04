@@ -131,7 +131,7 @@ object JsonSyntaxParser {
   }
 
   /* ********************************************************** */
-  // !('}'|value)
+  // !( '}' | value_start )
   internal fun not_brace_or_next_value(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "not_brace_or_next_value")) return false
     var r: Boolean
@@ -141,17 +141,17 @@ object JsonSyntaxParser {
     return r
   }
 
-  // '}'|value
+  // '}' | value_start
   private fun not_brace_or_next_value_0(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "not_brace_or_next_value_0")) return false
     var r: Boolean
     r = s.consumeToken(JsonSyntaxElementTypes.R_CURLY)
-    if (!r) r = value__(s, l + 1)
+    if (!r) r = value_start(s, l + 1)
     return r
   }
 
   /* ********************************************************** */
-  // !(']'|value)
+  // !( ']' | value_start )
   internal fun not_bracket_or_next_value(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "not_bracket_or_next_value")) return false
     var r: Boolean
@@ -161,12 +161,12 @@ object JsonSyntaxParser {
     return r
   }
 
-  // ']'|value
+  // ']' | value_start
   private fun not_bracket_or_next_value_0(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
     if (!s.recursion_guard_(l, "not_bracket_or_next_value_0")) return false
     var r: Boolean
     r = s.consumeToken(JsonSyntaxElementTypes.R_BRACKET)
-    if (!r) r = value__(s, l + 1)
+    if (!r) r = value_start(s, l + 1)
     return r
   }
 
@@ -335,6 +335,23 @@ object JsonSyntaxParser {
     if (!r) r = literal(s, l + 1)
     if (!r) r = reference_expression(s, l + 1)
     s.exit_section_(l, m, r, false, null)
+    return r
+  }
+
+  /* ********************************************************** */
+  // '{' | '[' | SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING | NUMBER | TRUE | FALSE | NULL | IDENTIFIER
+  internal fun value_start(s: SyntaxGeneratedParserRuntime, l: Int): Boolean {
+    if (!s.recursion_guard_(l, "value_start")) return false
+    var r: Boolean
+    r = s.consumeToken(JsonSyntaxElementTypes.L_CURLY)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.L_BRACKET)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.SINGLE_QUOTED_STRING)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.DOUBLE_QUOTED_STRING)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.NUMBER)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.TRUE)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.FALSE)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.NULL)
+    if (!r) r = s.consumeToken(JsonSyntaxElementTypes.IDENTIFIER)
     return r
   }
 

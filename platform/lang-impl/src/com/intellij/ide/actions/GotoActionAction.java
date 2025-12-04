@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -31,7 +31,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
     var event = e;
     String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       showInSearchEverywherePopup(tabID, event, false, true);
     });
   }

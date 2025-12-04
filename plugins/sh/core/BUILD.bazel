@@ -25,6 +25,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/statistics",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
@@ -35,6 +36,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/core-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.sh.core` end
@@ -68,6 +70,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",
+    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/eel",
     "//platform/eel-provider",

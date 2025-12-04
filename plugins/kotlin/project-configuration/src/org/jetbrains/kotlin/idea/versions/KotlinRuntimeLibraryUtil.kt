@@ -61,7 +61,7 @@ private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
     )
 
     val allVersions = FileBasedIndex.getInstance().getAllKeys(indexId, module.project)
-    val badVersions = allVersions.filterNot(BinaryVersion::isCompatible).toHashSet()
+    val badVersions = allVersions.filterNot(BinaryVersion::isCompatibleWithCurrentCompilerVersion).toHashSet()
     val badRoots = hashSetOf<BinaryVersionedFile<T>>()
     val fileIndex = ProjectFileIndex.getInstance(module.project)
 

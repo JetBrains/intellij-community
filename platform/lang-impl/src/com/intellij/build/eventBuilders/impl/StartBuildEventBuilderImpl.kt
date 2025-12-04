@@ -11,21 +11,19 @@ import com.intellij.build.events.impl.StartBuildEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class StartBuildEventBuilderImpl : StartBuildEventBuilder {
+class StartBuildEventBuilderImpl(
+  private val message: @Message String,
+  private val buildDescriptor: BuildDescriptor
+) : StartBuildEventBuilder {
 
   private var parentId: Any? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
-  private var buildDescriptor: BuildDescriptor? = null
   private var buildViewSettings: BuildViewSettingsProvider? = null
 
   override fun withParentId(parentId: Any?): StartBuildEventBuilderImpl =
     apply { this.parentId = parentId }
-
-  override fun withMessage(message: @Message String): StartBuildEventBuilderImpl =
-    apply { this.message = message }
 
   override fun withHint(hint: @Hint String?): StartBuildEventBuilderImpl =
     apply { this.hint = hint }
@@ -33,19 +31,9 @@ class StartBuildEventBuilderImpl : StartBuildEventBuilder {
   override fun withDescription(description: @Description String?): StartBuildEventBuilderImpl =
     apply { this.description = description }
 
-  override fun withBuildDescriptor(buildDescriptor: BuildDescriptor): StartBuildEventBuilderImpl =
-    apply { this.buildDescriptor = buildDescriptor }
-
   override fun withBuildViewSettings(buildViewSettings: BuildViewSettingsProvider?): StartBuildEventBuilderImpl =
     apply { this.buildViewSettings = buildViewSettings }
 
   override fun build(): StartBuildEventImpl =
-    StartBuildEventImpl(
-      parentId,
-      message ?: throw IllegalStateException("The StartBuildEvent's 'message' property should be defined"),
-      hint,
-      description,
-      buildDescriptor ?: throw IllegalStateException("The StartBuildEvent's 'buildDescriptor' property should be defined"),
-      buildViewSettings
-    )
+    StartBuildEventImpl(parentId, message, hint, description, buildDescriptor, buildViewSettings)
 }

@@ -17,6 +17,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.idea.completion.util.logWarn
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean

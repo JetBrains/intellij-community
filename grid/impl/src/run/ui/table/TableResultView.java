@@ -29,6 +29,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -1312,7 +1313,7 @@ public final class TableResultView extends JBTableWithResizableCells
       return false;
     }
     try {
-      return super.editCellAt(row, column, e);
+      return WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
     }
     finally {
       ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, null);

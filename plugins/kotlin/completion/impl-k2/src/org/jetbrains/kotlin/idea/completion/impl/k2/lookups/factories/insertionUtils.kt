@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
 import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectPossibleReferenceShorteningsForIde
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
@@ -73,7 +74,7 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
 
     val defaultReferenceShortening by lazy {
         allowAnalysisFromWriteActionInEdt(file) {
-            collectPossibleReferenceShortenings(
+            collectPossibleReferenceShorteningsForIde(
                 file = file,
                 selection = TextRange(startOffset, fqNameEndOffset),
             )
@@ -119,10 +120,10 @@ private fun InsertionContext.caretInTheMiddleOfElement(): Boolean {
 
 private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()
-    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+    val contextParameterList = contextReceiver?.parent as? KtContextParameterList
         ?: return false
 
-    val modifierList = contextReceiverList.parent
+    val modifierList = contextParameterList.parent
     if (modifierList is KtDeclarationModifierList) {
         // dangling modifier list
         return false
@@ -136,10 +137,10 @@ private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
 
 private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()
-    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+    val contextParameterList = contextReceiver?.parent as? KtContextParameterList
         ?: return false
 
-    return contextReceiverList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
+    return contextParameterList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
 }
 
 @OptIn(KaImplementationDetail::class)

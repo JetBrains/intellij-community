@@ -1287,7 +1287,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (event.isConsumed()) {
           return;
         }
-        if (processKeyTyped(event)) {
+        if (WriteIntentReadAction.compute(() -> processKeyTyped(event))) {
           event.consume();
         }
       }
@@ -1498,7 +1498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
     EditorActionManager.getInstance();
-    WriteIntentReadAction.run((Runnable) () -> {
+    WriteIntentReadAction.run( () -> {
       TypedAction.getInstance().actionPerformed(this, c, dataContext);
     });
   }
@@ -1523,7 +1523,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     assertIsDispatchThread();
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       Document document = getDocument();
       Disposer.dispose(myHighlighterDisposable);
 
@@ -2797,8 +2797,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myCommandProcessor == null || e.isConsumed() || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
       return;
     }
-    myCommandProcessor.executeCommand(myProject, () -> mouseDragHandler.mouseDragged(e), "", MOUSE_DRAGGED_COMMAND_GROUP,
-                                      UndoConfirmationPolicy.DEFAULT, getDocument());
+    WriteIntentReadAction.run(() -> {
+      myCommandProcessor.executeCommand(myProject, () -> mouseDragHandler.mouseDragged(e), "",
+                                        MOUSE_DRAGGED_COMMAND_GROUP,
+                                        UndoConfirmationPolicy.DEFAULT, getDocument());
+    });
   }
 
   private void processMouseDragged(@NotNull MouseEvent e) {
@@ -3477,7 +3480,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             mySelectionModel.setSelection(oldSelectionStart, getCaretModel().getOffset());
           }
         };
-        WriteIntentReadAction.run((Runnable)() ->
+        WriteIntentReadAction.run(() ->
           myCommandProcessor.executeCommand(myProject, command, EditorBundle.message("move.cursor.command.name"),
                                             DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT, getDocument())
         );
@@ -3772,7 +3775,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mouseSelectionStateAlarm.cancel();
     if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE) {
       if (mouseSelectionStateResetRunnable == null) {
-        mouseSelectionStateResetRunnable = () -> WriteIntentReadAction.run((Runnable)() -> resetMouseSelectionState(null, null));
+        mouseSelectionStateResetRunnable = () -> WriteIntentReadAction.run(() -> resetMouseSelectionState(null, null));
       }
       mouseSelectionStateAlarm.request(Registry.intValue("editor.mouseSelectionStateResetTimeout"),
                                        ModalityState.stateForComponent(myEditorComponent),
@@ -4290,7 +4293,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         EVENT_LOG.debug(e.toString());
       }
       requestFocus();
-      runMousePressedCommand(e);
+      WriteIntentReadAction.run(() -> runMousePressedCommand(e));
       myInitialMouseEvent = e.isConsumed() ? e : null;
     }
 
@@ -4301,7 +4304,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myMousePressArea = null;
       myLastMousePressedLocation = null;
-      WriteIntentReadAction.run((Runnable) () -> {
+      WriteIntentReadAction.run( () -> {
         runMouseReleasedCommand(e);
         if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
             Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&

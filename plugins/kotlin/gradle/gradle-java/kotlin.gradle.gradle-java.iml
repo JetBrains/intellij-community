@@ -39,7 +39,7 @@
     <orderEntry type="library" name="kotlin-tooling-core" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea-proto" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
@@ -92,5 +92,7 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
   </component>
 </module>

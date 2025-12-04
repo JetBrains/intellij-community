@@ -234,9 +234,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyType qualifierType = context.getType(qualifier);
 
-    final PyType dunderClassType = getDunderClassType(qualifierType, attrName);
-    if (dunderClassType != null) return Ref.create(dunderClassType);
-
     final Ref<PyType> typeOfProperty = getTypeOfProperty(qualifierType, attrName, context);
     if (typeOfProperty != null) {
       return typeOfProperty;
@@ -272,10 +269,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyExpression qualifier = getQualifier();
     assert qualifier != null;
 
-    final PyType qType = context.getType(qualifier);
-    if (qType instanceof PyClassType classType) {
+    if (context.getType(qualifier) instanceof PyClassLikeType classLikeType) {
       final ResolveResult getattr = ContainerUtil.getFirstItem(
-        classType.resolveMember(PyNames.GETATTR, qualifier, AccessDirection.READ, PyResolveContext.defaultContext(context)));
+        classLikeType.resolveMember(PyNames.GETATTR, qualifier, AccessDirection.READ, PyResolveContext.defaultContext(context)));
       if (getattr != null && getattr.getElement() instanceof PyCallable method) {
         return context.getReturnType(method);
       }
@@ -357,14 +353,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
 
-    return null;
-  }
-
-  private static @Nullable PyType getDunderClassType(@Nullable PyType qualifierType, @NotNull String attrName) {
-    if (qualifierType instanceof PyClassType classType && PyNames.__CLASS__.equals(attrName)) {
-      // PyInstantiableType#toClass() does not work here, as we also need to remove generic parameters
-      return new PyClassTypeImpl(classType.getPyClass(), true);
-    }
     return null;
   }
 
@@ -489,8 +477,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                              @NotNull TypeEvalContext context,
                                                              @NotNull PyReferenceExpression anchor) {
     if (type instanceof PyFunctionType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
-      PyType qualifierType = context.getType(anchor.getQualifier());
-      if (qualifierType instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
+      if (context.getType(anchor.getQualifier()) instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
           functionType.getModifier() != PyAstFunction.Modifier.CLASSMETHOD) {
         return type;
       }

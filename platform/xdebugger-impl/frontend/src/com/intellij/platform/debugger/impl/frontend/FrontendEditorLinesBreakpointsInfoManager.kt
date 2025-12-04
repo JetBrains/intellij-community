@@ -16,11 +16,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.FrontendViewportDataCache.ViewportInfo
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -132,11 +133,11 @@ private class EditorBreakpointLinesInfoMap(
     }
     cs.launch {
       mapUpdateRequest.collectLatest {
-        val (currentStamp, editorLinesCount) = readAction {
-          editor.document.modificationStamp to editor.document.lineCount
+        val (viewportInfo, currentStamp, editorLinesCount) = withContext(Dispatchers.EDT) {
+          val (firstViewportIndex, lastViewportIndex) = editor.viewportIndicesInclusive()
+          Triple(ViewportInfo(firstViewportIndex, lastViewportIndex), editor.document.modificationStamp, editor.document.lineCount)
         }
-        val (firstViewportIndex, lastViewportIndex) = editor.viewportIndicesInclusive()
-        breakpointsMap.update(ViewportInfo(firstViewportIndex, lastViewportIndex), editorLinesCount - 1, currentStamp)
+        breakpointsMap.update(viewportInfo, editorLinesCount - 1, currentStamp)
       }
     }
 
@@ -169,18 +170,15 @@ private class EditorBreakpointLinesInfoMap(
     cs.cancel()
   }
 
-  private suspend fun Editor.viewportIndicesInclusive(): Pair<Int, Int> {
-    return withContext(Dispatchers.EDT) {
-      if (isDisposed) {
-        cancel()
-      }
-      val visibleRange = calculateVisibleRange()
-      readAction {
-        val firstVisibleLine = document.getLineNumber(visibleRange.startOffset)
-        val lastVisibleLine = document.getLineNumber(visibleRange.endOffset)
-        firstVisibleLine to lastVisibleLine
-      }
+  @RequiresEdt
+  private fun Editor.viewportIndicesInclusive(): Pair<Int, Int> {
+    if (isDisposed) {
+      throw CancellationException()
     }
+    val visibleRange = calculateVisibleRange()
+    val firstVisibleLine = document.getLineNumber(visibleRange.startOffset)
+    val lastVisibleLine = document.getLineNumber(visibleRange.endOffset)
+    return firstVisibleLine to lastVisibleLine
   }
 }
 

@@ -46,7 +46,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
     final PyType type = expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneType();
 
     if (isDelegating()) {
-      return PyTargetExpressionImpl.getIterationType(type, expr, this, context);
+      return PyTargetExpressionImpl.getIterationType(type, expr, this, false, context);
     }
     return type;
   }

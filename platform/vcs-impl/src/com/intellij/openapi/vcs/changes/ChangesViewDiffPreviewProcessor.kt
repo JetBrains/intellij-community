@@ -139,7 +139,7 @@ private class AmendChangeWrapper(override val userObject: EditedCommitDetails) :
   override fun hashCode(): Int = userObject.commitHash.hashCode()
 }
 
-private class ChangeListWrapper(override val userObject: ChangeList) : ChangesViewUserObjectTag {
+internal class ChangeListWrapper(override val userObject: ChangeList) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

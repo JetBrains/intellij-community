@@ -1,31 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.platformLangBase
-
 /**
  * Registry of reusable product content fragments for community products.
  * These fragments bundle commonly repeated patterns into reusable units.
  */
 object CommunityProductFragments {
   /**
-   * Platform Lang base fragment: includes PlatformLangPlugin.xml.
-   * 
-   * PlatformLangPlugin.xml provides core platform language support including:
-   * - Platform language components and extensions
-   * - Core actions, refactoring, and editor support
-   * 
-   * Use this fragment instead of manually calling deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml").
-   */
-  fun platformLangBaseFragment(): ProductModulesContentSpec = productModules {
-    deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    moduleSet(platformLangBase())
-  }
-
-  /**
    * Java IDE base fragment: provides Java IDE module aliases and optional plugin includes.
    *
    * Includes:
+   * - PlatformLangPlugin.xml for platform language support
    * - Module aliases for Java IDE capability detection
    * - Optional remote servers support
    * - Optional UI Designer support
@@ -34,7 +19,7 @@ object CommunityProductFragments {
    * Use this fragment for products that include Java IDE functionality.
    */
   fun javaIdeBaseFragment(): ProductModulesContentSpec = productModules {
-    include(platformLangBaseFragment())
+    deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
 
     // Module capability aliases
     alias("com.intellij.modules.all")
@@ -52,7 +37,7 @@ object CommunityProductFragments {
      * PyCharm Core fragment: provides PyCharm-specific platform extensions.
      *
      * Includes:
-     * - Platform language support (via platformLangBaseFragment)
+     * - PlatformLangPlugin.xml for platform language support
      * - Module capability alias for PyCharm
      * - Optional remote servers support
      * - PyCharm-specific extensions and actions (via pycharm-core.xml)
@@ -62,7 +47,7 @@ object CommunityProductFragments {
      */
   fun pycharmCoreFragment(): ProductModulesContentSpec = productModules {
     // Include platform lang base (PyCharm requires platform language support)
-    include(platformLangBaseFragment())
+    deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
 
     // Module capability alias
     alias("com.intellij.modules.pycharm")

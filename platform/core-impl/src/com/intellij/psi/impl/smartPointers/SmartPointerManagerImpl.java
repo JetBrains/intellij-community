@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-public final class SmartPointerManagerImpl extends SmartPointerManagerEx implements Disposable {
+public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
   private final PsiDocumentManagerEx myPsiDocManager;

@@ -14,6 +14,16 @@ object SplitDebuggerMode {
   fun showSplitWarnings(): Boolean = isSplitDebugger() && Registry.`is`("xdebugger.toolwindow.split.warnings")
 
   const val SPLIT_DEBUGGER_KEY: String = "xdebugger.toolwindow.split"
+
+  fun setEnabled(enabled: Boolean) {
+    Registry.get(SPLIT_DEBUGGER_KEY).setValue(enabled)
+
+    val remDevKey = "xdebugger.toolwindow.split.remdev"
+    // disable the remdev key if it is enabled
+    if (Registry.`is`(remDevKey, false) && !enabled) {
+      Registry.get(remDevKey).setValue(false)
+    }
+  }
 }
 
 private val isSplitDebuggerCachedValue by lazy {

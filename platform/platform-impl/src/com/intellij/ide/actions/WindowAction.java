@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +25,18 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     if (root != null) root.putClientProperty(NO_WINDOW_ACTIONS, !enabled);
   }
 
-  {
+  @ApiStatus.Internal
+  protected WindowAction() {
     setEnabledInModalContext(true);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
   }
 
+  @ApiStatus.Internal
   @Override
   public final void update(@NotNull AnActionEvent event) {
     @Nullable Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
@@ -43,6 +47,12 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
       enabled = editor == null || !editor.getContentComponent().hasFocus();
     }
     event.getPresentation().setEnabled(enabled);
+    event.getPresentation().setIcon(getIconFor(window));
+  }
+
+  @ApiStatus.Internal
+  protected @Nullable Icon getIconFor(@Nullable Window window) {
+    return null;
   }
 
   private static boolean isEnabledFor(@Nullable Window window) {
@@ -90,6 +100,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     return ourSizeHelper.getPreferredSize();
   }
 
+  @ApiStatus.Internal
   public static final class IncrementWidth extends WindowAction {
 
     @Override
@@ -98,6 +109,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class DecrementWidth extends WindowAction {
 
     @Override
@@ -106,6 +118,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class IncrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -113,6 +126,7 @@ public abstract class WindowAction extends AnAction implements ActionRemoteBehav
     }
   }
 
+  @ApiStatus.Internal
   public static final class DecrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

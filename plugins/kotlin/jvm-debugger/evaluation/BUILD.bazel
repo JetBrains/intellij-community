@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/util",
     "//platform/core-api:core",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/xdebugger-impl/rpc",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/j2k/shared",
+    "//platform/platform-api:ide",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.evaluation` end

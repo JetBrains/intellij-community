@@ -15,7 +15,7 @@ jvm_library(
   resources = [":execution-process-elevation_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/execution-process-mediator/client",
     "//platform/execution-process-mediator/daemon",
     "//platform/execution-process-mediator/common",

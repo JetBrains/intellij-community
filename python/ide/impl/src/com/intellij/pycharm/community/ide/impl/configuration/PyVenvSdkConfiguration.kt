@@ -19,10 +19,8 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
+private class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 

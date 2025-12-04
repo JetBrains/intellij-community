@@ -57,18 +57,21 @@ extremely unpractical.
    > [!IMPORTANT]
    > Do not make any changes in the _Transitive dependencies_ dialog — click _Cancel_ when you've found the Skiko
    version to use.
-7. Navigate to the _intellij.platform.jewel.ui_ module
-8. Update the _org.jetbrains.compose.components.components.resources_ and
-   _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
-   procedure as above
-9. Navigate to _intellij.libraries.compose.runtime.desktop_ module and update the _compose-runtime-desktop_ library the same way like with _compose-foundation-desktop_
-10. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
-11. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
+7. Navigate to the _intellij.libraries.compose.foundation.desktop.junit_ module and update the
+   _org.jetbrains.compose.ui.ui.test.junit4.desktop_ library to the same version
+8. Navigate to the _intellij.libraries.compose.runtime.desktop_ module and update the various libraries the same way as you did in
+   _compose-foundation-desktop_
+9. Navigate to the _intellij.platform.jewel.ui_ module
+10. Update the _org.jetbrains.compose.components.components.resources_ and
+    _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
+    procedure as above
+11. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
+12. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
     follow the same procedure as above to upgrade Skiko to the required version. Note that the required Skiko version
     may not be the latest one.
     * **Important:** `skiko-awt-runtime-all` is a custom-built package hosted in the
       [IntelliJ Dependencies](https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/)
-      repo. If the required version is not available, you'll need to ask Kuba to build it and publish it.
+      repo. If the required version is not available, you'll need to ask Kuba/Nebojsa to build it and publish it.
 
 You should now be able to see the changes in `.iml` files that correspond to the upgrades. If they do not immediately
 show up, you can use the _Save all_ action to force the IDE to write changes to disk.
@@ -80,7 +83,7 @@ The Bazel build is generated from the JPS one; updating this is just a matter of
 number of `BUILD.bazel` and `MODULE.bazel` files.
 
 Double-check manually that the script only makes changes that match the JPS changes. Revert any spurious change there
-may be.
+may be. Double-check against IJP changes if you spot something suspicious — it may have slipped in to JPS as well.
 
 ### 5. Post-update cleanup & verification
 

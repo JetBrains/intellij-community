@@ -95,6 +95,7 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//java/java-runtime:rt",
+    "//platform/execution",
   ],
   exports = ["@lib//:kotlin-gradle-plugin-idea"]
 )

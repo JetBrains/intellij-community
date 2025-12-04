@@ -36,6 +36,7 @@ internal class GitBranchesTreeUpdatesService(project: Project, cs: CoroutineScop
         GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitBranchesTreeUpdate.REFRESH
         GitRepositoriesHolder.UpdateType.TAGS_LOADED -> GitBranchesTreeUpdate.REFRESH_TAGS
         GitRepositoriesHolder.UpdateType.TAGS_HIDDEN -> GitBranchesTreeUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.WORKING_TREES_LOADED -> GitBranchesTreeUpdate.REFRESH
         GitRepositoriesHolder.UpdateType.RELOAD_STATE -> GitBranchesTreeUpdate.REFRESH
       }
 

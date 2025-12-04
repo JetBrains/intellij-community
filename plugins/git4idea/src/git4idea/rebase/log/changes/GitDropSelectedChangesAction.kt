@@ -3,12 +3,12 @@ package git4idea.rebase.log.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.rebase.log.focusCommitWhenReady
 import git4idea.rebase.log.notifySuccess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class GitDropSelectedChangesAction : GitSingleCommitEditingAction() {
@@ -31,12 +31,12 @@ internal class GitDropSelectedChangesAction : GitSingleCommitEditingAction() {
     }
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: SingleCommitEditingData) {
     val project = commitEditingData.project
     val repository = commitEditingData.repository
     val ui = commitEditingData.logUiEx
 
-    GitDisposable.getInstance(project).coroutineScope.launch {
+    scope.launch {
       withBackgroundProgress(project, GitBundle.message("rebase.log.changes.drop.action.progress.indicator.title"), false) {
         val operationResult = GitDropSelectedChangesOperation(repository, commitEditingData.selectedCommit, commitEditingData.selectedChanges).execute()
         if (operationResult is GitCommitEditingOperationResult.Complete) {

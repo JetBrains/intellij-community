@@ -54,7 +54,7 @@ class PyNewTypeInspection : PyInspection() {
       override fun visitPyClass(node: PyClass) {
         for (superClassExpression in PyClassImpl.getUnfoldedSuperClassExpressions(node)) {
           val superClassType = myTypeEvalContext.getType(superClassExpression)
-          if (superClassType is PyTypingNewType) {
+          if (superClassType is PyTypingNewTypeFactoryType) {
             registerProblem(superClassExpression,
                             PyPsiBundle.message("INSP.NAME.new.type.cannot.be.subclassed", superClassType.name),
                             ProblemHighlightType.GENERIC_ERROR)

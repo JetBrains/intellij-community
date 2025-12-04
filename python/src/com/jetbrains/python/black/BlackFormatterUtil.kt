@@ -18,6 +18,7 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.pyi.PyiFileType
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 
@@ -34,7 +35,11 @@ class BlackFormatterUtil {
     }
 
     fun isBlackFormatterInstalledOnProjectSdk(project: Project, sdk: Sdk?): Boolean {
-      val packageManager = sdk?.let { PythonPackageManager.forSdk(project, sdk) }
+      val packageManager = sdk?.let {
+        runWithModalBlockingOrInBackground(project, "Updating packages info…") {
+          PythonPackageManager.forSdk(project, sdk)
+        }
+      }
       return packageManager?.hasInstalledPackageSnapshot(PACKAGE_NAME) ?: false
     }
 

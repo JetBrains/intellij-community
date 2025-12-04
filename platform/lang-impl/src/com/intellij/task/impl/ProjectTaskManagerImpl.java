@@ -186,8 +186,17 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       }
     });
 
+    Class<?> buildOriginatorFromProjectUserData = BUILD_ORIGINATOR_KEY.get(myProject);
+    if (buildOriginatorFromProjectUserData != null) {
+      myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
+    }
 
-    Pair<StructuredIdeActivity, List<EventPair<?>>> activity = reportBuildStart(projectTask, toRun);
+    if (context.getBuildOriginatorClass() == null) {
+      context.setBuildOriginatorClass(buildOriginatorFromProjectUserData);
+    }
+
+    Pair<StructuredIdeActivity, List<EventPair<?>>> activity = reportBuildStart(
+      projectTask, context.getBuildOriginatorClass(), toRun);
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -255,6 +264,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private Pair<StructuredIdeActivity, List<EventPair<?>>> reportBuildStart(@NotNull ProjectTask projectTask,
+                                                                           Class<?> buildOriginator,
                                                                            List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
     Ref<Boolean> incremental = new Ref<>(null);
     AtomicInteger modules = new AtomicInteger(0);
@@ -285,9 +295,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     if (modules.get() > 0) {
       fields.add(MODULES.with(modules.get()));
     }
-    Class<?> buildOriginator = BUILD_ORIGINATOR_KEY.get(myProject);
     if (buildOriginator != null) {
-      myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
       fields.add(BUILD_ORIGINATOR.with(buildOriginator));
     }
     return Pair.create(BUILD_ACTIVITY.started(myProject, () -> fields), fields);

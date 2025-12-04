@@ -142,7 +142,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   /** To avoid write file header to already closed storage */
   protected final AtomicBoolean closed = new AtomicBoolean(false);
 
+  //TODO RC: don't need atomic boolean, regular value is enough since it is set in ctor only
+  /** This property should be assigned in subclass ctors, if the ctor detects that the storage was improperly closed */
   protected final AtomicBoolean wasClosedProperly = new AtomicBoolean(true);
+  //TODO RC: introduce wasAlwaysClosedProperly too?
 
   protected final @NotNull SpaceAllocationStrategy allocationStrategy;
 
@@ -185,9 +188,9 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     this.pageSize = pageSize;
     this.allocationStrategy = allocationStrategy;
 
-    final int defaultCapacity = allocationStrategy.defaultCapacity();
+    int defaultCapacity = allocationStrategy.defaultCapacity();
     threadLocalBuffer = ThreadLocal.withInitial(() -> {
-      final ByteBuffer buffer = ByteBuffer.allocate(defaultCapacity);
+      ByteBuffer buffer = ByteBuffer.allocate(defaultCapacity);
       buffer.order(byteOrder);
       return buffer;
     });
@@ -430,10 +433,10 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   protected long nextRecordOffset(long recordOffset,
                                   @NotNull RecordLayout recordLayout,
                                   int recordCapacity) {
-    final int headerSize = recordLayout.headerSize();
-    final long nextOffset = recordOffset + headerSize + recordCapacity;
+    int headerSize = recordLayout.headerSize();
+    long nextOffset = recordOffset + headerSize + recordCapacity;
 
-    final int offsetOnPage = toOffsetOnPage(nextOffset);
+    int offsetOnPage = toOffsetOnPage(nextOffset);
     if (pageSize - offsetOnPage < headerSize) {
       //Previously, I _fix_ the mismatch here -- by moving offset to the next page:
       //  nextOffset = (nextOffset / pageSize + 1) * pageSize;
@@ -454,8 +457,8 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     if (recordSizeRoundedUp % OFFSET_BUCKET != 0) {
       recordSizeRoundedUp = ((recordSizeRoundedUp / OFFSET_BUCKET + 1) * OFFSET_BUCKET);
     }
-    final int occupiedOnPage = offset + recordSizeRoundedUp;
-    final int remainedOnPage = pageSize - occupiedOnPage;
+    int occupiedOnPage = offset + recordSizeRoundedUp;
+    int remainedOnPage = pageSize - occupiedOnPage;
     if (0 < remainedOnPage && remainedOnPage < OFFSET_BUCKET) {
       //we can't squeeze even the smallest record into remaining space, so just merge it into current record
       recordSizeRoundedUp += remainedOnPage;
@@ -496,19 +499,24 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   }
 
 
-  protected @NotNull ByteBuffer acquireTemporaryBuffer(int expectedRecordSizeHint) {
+  /**
+   * @return buffer with [capacity >= minCapacity, position=0, limit=0, byteOrder=this.byteOrder]
+   *         Buffer is NOT guaranteed to be zeroed.
+   */
+  protected @NotNull ByteBuffer acquireTemporaryBuffer(int minCapacity) {
     ByteBuffer temp = threadLocalBuffer.get();
-    if (temp != null && temp.capacity() >= expectedRecordSizeHint) {
+    if (temp != null && temp.capacity() >= minCapacity) {
       threadLocalBuffer.remove();
       return temp.position(0)
+        .order(byteOrder)//to be sure: maybe someone has changed it during some uses before?
         .limit(0);
     }
     else {
       int defaultCapacity = allocationStrategy.defaultCapacity();
-      int capacity = Math.max(defaultCapacity, expectedRecordSizeHint);
-      ByteBuffer buffer = ByteBuffer.allocate(capacity);
-      buffer.order(byteOrder);
-      return buffer;
+      int capacity = Math.max(defaultCapacity, minCapacity);
+      return ByteBuffer.allocate(capacity)
+        .order(byteOrder)
+        .limit(0);
     }
   }
 

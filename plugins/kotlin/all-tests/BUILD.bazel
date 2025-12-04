@@ -78,6 +78,7 @@ jvm_library(
     "//jvm/jvm-analysis-kotlin-tests-k1:analysis-kotlin-tests-k1",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/tests",
     "//plugins/kotlin/uast/uast-kotlin-idea-base/tests",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test",
   ]
 )
 ### auto-generated section `build kotlin.all-tests` end

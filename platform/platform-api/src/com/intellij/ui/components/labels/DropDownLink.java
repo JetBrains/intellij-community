@@ -9,6 +9,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.function.Function;
  * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
  */
 @SuppressWarnings("HardCodedStringLiteral")
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class DropDownLink<T> extends LinkLabel<Object> {
   private T chosenItem;

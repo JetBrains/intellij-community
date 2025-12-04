@@ -4,23 +4,33 @@ package org.jetbrains.intellij.build.productLayout
 import com.fasterxml.jackson.core.JsonEncoding
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
+import org.jetbrains.intellij.build.productLayout.analysis.MergeOperation
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ParseResult
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import org.jetbrains.intellij.build.productLayout.analysis.analyzeMergeImpact
 import org.jetbrains.intellij.build.productLayout.analysis.analyzeProductSimilarity
+import org.jetbrains.intellij.build.productLayout.analysis.analyzeProductUsage
+import org.jetbrains.intellij.build.productLayout.analysis.checkModuleReachability
 import org.jetbrains.intellij.build.productLayout.analysis.detectModuleSetOverlap
+import org.jetbrains.intellij.build.productLayout.analysis.findDependencyPath
 import org.jetbrains.intellij.build.productLayout.analysis.findModulePaths
+import org.jetbrains.intellij.build.productLayout.analysis.getModuleDependencies
 import org.jetbrains.intellij.build.productLayout.analysis.parseModulesXml
 import org.jetbrains.intellij.build.productLayout.analysis.suggestModuleSetUnification
 import org.jetbrains.intellij.build.productLayout.analysis.validateCommunityProducts
 import org.jetbrains.intellij.build.productLayout.analysis.validateModuleSetLocations
 import org.jetbrains.intellij.build.productLayout.json.enrichProductsWithMetrics
 import org.jetbrains.intellij.build.productLayout.json.writeCommunityProductViolations
+import org.jetbrains.intellij.build.productLayout.json.writeDependencyPathResult
 import org.jetbrains.intellij.build.productLayout.json.writeDuplicateAnalysis
 import org.jetbrains.intellij.build.productLayout.json.writeMergeImpactAnalysis
+import org.jetbrains.intellij.build.productLayout.json.writeModuleDependenciesResult
 import org.jetbrains.intellij.build.productLayout.json.writeModuleDistribution
 import org.jetbrains.intellij.build.productLayout.json.writeModulePathsResult
+import org.jetbrains.intellij.build.productLayout.json.writeModuleReachabilityResult
 import org.jetbrains.intellij.build.productLayout.json.writeModuleSet
 import org.jetbrains.intellij.build.productLayout.json.writeModuleSetHierarchy
 import org.jetbrains.intellij.build.productLayout.json.writeModuleSetLocationViolations
@@ -29,6 +39,7 @@ import org.jetbrains.intellij.build.productLayout.json.writeModuleUsageIndex
 import org.jetbrains.intellij.build.productLayout.json.writeProduct
 import org.jetbrains.intellij.build.productLayout.json.writeProductCompositionAnalysis
 import org.jetbrains.intellij.build.productLayout.json.writeProductSimilarityAnalysis
+import org.jetbrains.intellij.build.productLayout.json.writeProductUsageAnalysis
 import org.jetbrains.intellij.build.productLayout.json.writeUnificationSuggestions
 import java.nio.file.Path
 import java.time.Instant
@@ -61,12 +72,14 @@ import java.time.Instant
  * @param products List of ProductSpec instances
  * @param projectRoot Project root path for resolving .idea/modules.xml
  * @param filter Optional filter: null (full), or JsonFilter object with filter type and optional value
+ * @param moduleOutputProvider Optional provider for accessing JPS modules (required for dependency analysis filters)
  */
 fun streamModuleAnalysisJson(
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
   projectRoot: Path,
-  filter: JsonFilter? = null
+  filter: JsonFilter? = null,
+  moduleOutputProvider: ModuleOutputProvider? = null
 ) {
   // Validate product specifications using shared validation (always validate, even when filtering)
   val moduleSets = allModuleSets.map { it.moduleSet }
@@ -86,111 +99,193 @@ fun streamModuleAnalysisJson(
     gen.writeStartObject()
     gen.writeStringField("timestamp", Instant.now().toString())
 
-    // Apply filter
-    when {
-      filter == null -> {
-        // Full JSON (no filter)
-        writeAllSections(gen, allModuleSets, enrichedProducts, projectRoot)
-      }
-      filter.filter == "products" -> {
-        gen.writeArrayFieldStart("products")
-        for (product in enrichedProducts) {
-          writeProduct(gen, product)
-        }
-        gen.writeEndArray()
-      }
-      filter.filter == "moduleSets" -> {
-        gen.writeArrayFieldStart("moduleSets")
-        for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-          writeModuleSet(gen, moduleSet, location, sourceFilePath, moduleSets)
-        }
-        gen.writeEndArray()
-      }
-      filter.filter == "composition" -> {
-        gen.writeObjectFieldStart("productCompositionAnalysis")
-        writeProductCompositionAnalysis(gen, enrichedProducts)
-        gen.writeEndObject()
-      }
-      filter.filter == "duplicates" -> {
-        gen.writeObjectFieldStart("duplicateAnalysis")
-        writeDuplicateAnalysis(gen, allModuleSets, enrichedProducts, projectRoot)
-        gen.writeEndObject()
-      }
-      filter.filter == "product" && filter.value != null -> {
-        val productName = filter.value
-        val product = enrichedProducts.firstOrNull { it.name == productName }
-        if (product != null) {
-          gen.writeFieldName("product")
-          gen.writeStartObject()
-          // Copy writeProduct logic inline but without outer object wrapper
-          gen.writeStringField("name", product.name)
-          gen.writeStringField("className", product.className)
-          gen.writeStringField("sourceFile", product.sourceFile)
-          if (product.pluginXmlPath != null) {
-            gen.writeStringField("pluginXmlPath", product.pluginXmlPath)
-          }
-          if (product.contentSpec != null) {
-            val contentSpecJson = org.jetbrains.intellij.build.productLayout.json.kotlinxJson.encodeToString(product.contentSpec)
-            gen.writeFieldName("contentSpec")
-            gen.writeRawValue(contentSpecJson)
-          }
-          gen.writeArrayFieldStart("buildModules")
-          for (buildModule in product.buildModules) {
-            gen.writeString(buildModule)
-          }
-          gen.writeEndArray()
-          gen.writeEndObject()
-        } else {
-          gen.writeStringField("error", "Product '$productName' not found")
-        }
-      }
-      filter.filter == "moduleSet" && filter.value != null -> {
-        val moduleSetName = filter.value
-        val moduleSetEntry = allModuleSets.firstOrNull { it.moduleSet.name == moduleSetName }
-        if (moduleSetEntry != null) {
-          gen.writeFieldName("moduleSet")
-          gen.writeStartObject()
-          gen.writeStringField("name", moduleSetEntry.moduleSet.name)
-          gen.writeStringField("location", moduleSetEntry.location)
-          gen.writeStringField("sourceFile", moduleSetEntry.sourceFile)
-          val moduleSetJson = org.jetbrains.intellij.build.productLayout.json.kotlinxJson.encodeToString(moduleSetEntry.moduleSet)
-          gen.writeFieldName("moduleSet")
-          gen.writeRawValue(moduleSetJson)
-          gen.writeEndObject()
-        } else {
-          gen.writeStringField("error", "Module set '$moduleSetName' not found")
-        }
-      }
-      filter.filter == "mergeImpact" && filter.source != null -> {
-        val sourceSet = filter.source
-        val targetSet = filter.target
-        val operation = filter.operation ?: "merge"
-
-        val impact = analyzeMergeImpact(sourceSet, targetSet, operation, allModuleSets, enrichedProducts)
-        gen.writeFieldName("mergeImpact")
-        gen.writeStartObject()
-        writeMergeImpactAnalysis(gen, impact)
-        gen.writeEndObject()
-      }
-      filter.filter == "modulePaths" && filter.module != null -> {
-        val moduleName = filter.module
-
-        val pathsResult = findModulePaths(moduleName, allModuleSets, enrichedProducts, projectRoot)
-        gen.writeFieldName("modulePaths")
-        gen.writeStartObject()
-        writeModulePathsResult(gen, pathsResult)
-        gen.writeEndObject()
-      }
-      else -> {
-        gen.writeStringField("error", "Unknown filter: ${filter.filter}")
-      }
-    }
+    // Apply filter (dispatches to handler functions)
+    applyFilter(gen, filter, allModuleSets, enrichedProducts, moduleSets, projectRoot, moduleOutputProvider)
 
     gen.writeEndObject()
   }
 
   // Flush stdout to ensure all data is written
   System.out.flush()
+}
+
+/**
+ * Dispatches filter handling to appropriate handler functions.
+ */
+private fun applyFilter(
+  gen: JsonGenerator,
+  filter: JsonFilter?,
+  allModuleSets: List<ModuleSetMetadata>,
+  products: List<ProductSpec>,
+  moduleSets: List<ModuleSet>,
+  projectRoot: Path,
+  moduleOutputProvider: ModuleOutputProvider?
+) {
+  when (filter?.filter) {
+    null -> writeAllSections(gen, allModuleSets, products, projectRoot)
+    "products" -> handleProductsFilter(gen, products)
+    "moduleSets" -> handleModuleSetsFilter(gen, allModuleSets, moduleSets)
+    "composition" -> handleCompositionFilter(gen, products)
+    "duplicates" -> handleDuplicatesFilter(gen, allModuleSets, products, projectRoot)
+    "product" -> handleSingleProductFilter(gen, filter.value, products)
+    "moduleSet" -> handleSingleModuleSetFilter(gen, filter.value, allModuleSets)
+    "mergeImpact" -> handleMergeImpactFilter(gen, filter, allModuleSets, products)
+    "modulePaths" -> handleModulePathsFilter(gen, filter.module, allModuleSets, products, projectRoot)
+    "moduleDependencies" -> handleModuleDependenciesFilter(gen, filter, moduleOutputProvider)
+    "moduleReachability" -> handleModuleReachabilityFilter(gen, filter, allModuleSets, moduleOutputProvider)
+    "dependencyPath" -> handleDependencyPathFilter(gen, filter, moduleOutputProvider)
+    "productUsage" -> handleProductUsageFilter(gen, filter.moduleSet, allModuleSets, products)
+    else -> gen.writeStringField("error", "Unknown filter: ${filter.filter}")
+  }
+}
+
+private fun handleProductsFilter(gen: JsonGenerator, products: List<ProductSpec>) {
+  gen.writeArrayFieldStart("products")
+  for (product in products) {
+    writeProduct(gen, product)
+  }
+  gen.writeEndArray()
+}
+
+private fun handleModuleSetsFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, moduleSets: List<ModuleSet>) {
+  gen.writeArrayFieldStart("moduleSets")
+  for ((moduleSet, location, sourceFilePath) in allModuleSets) {
+    writeModuleSet(gen, moduleSet, location, sourceFilePath, moduleSets)
+  }
+  gen.writeEndArray()
+}
+
+private fun handleCompositionFilter(gen: JsonGenerator, products: List<ProductSpec>) {
+  gen.writeObjectFieldStart("productCompositionAnalysis")
+  writeProductCompositionAnalysis(gen, products)
+  gen.writeEndObject()
+}
+
+private fun handleDuplicatesFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, projectRoot: Path) {
+  gen.writeObjectFieldStart("duplicateAnalysis")
+  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot)
+  gen.writeEndObject()
+}
+
+private fun handleSingleProductFilter(gen: JsonGenerator, productName: String?, products: List<ProductSpec>) {
+  if (productName == null) {
+    gen.writeStringField("error", "Product name required for 'product' filter")
+    return
+  }
+  val product = products.firstOrNull { it.name == productName }
+  if (product != null) {
+    gen.writeFieldName("product")
+    writeProduct(gen, product)
+  }
+  else {
+    gen.writeStringField("error", "Product '$productName' not found")
+  }
+}
+
+private fun handleSingleModuleSetFilter(gen: JsonGenerator, moduleSetName: String?, allModuleSets: List<ModuleSetMetadata>) {
+  if (moduleSetName == null) {
+    gen.writeStringField("error", "Module set name required for 'moduleSet' filter")
+    return
+  }
+  val moduleSetEntry = allModuleSets.firstOrNull { it.moduleSet.name == moduleSetName }
+  if (moduleSetEntry != null) {
+    gen.writeFieldName("moduleSet")
+    gen.writeStartObject()
+    gen.writeStringField("name", moduleSetEntry.moduleSet.name)
+    gen.writeStringField("location", moduleSetEntry.location)
+    gen.writeStringField("sourceFile", moduleSetEntry.sourceFile)
+    gen.writeArrayFieldStart("directNestedSets")
+    for (nestedSet in moduleSetEntry.directNestedSets) {
+      gen.writeString(nestedSet)
+    }
+    gen.writeEndArray()
+    val moduleSetJson = org.jetbrains.intellij.build.productLayout.json.kotlinxJson.encodeToString(moduleSetEntry.moduleSet)
+    gen.writeFieldName("moduleSet")
+    gen.writeRawValue(moduleSetJson)
+    gen.writeEndObject()
+  }
+  else {
+    gen.writeStringField("error", "Module set '$moduleSetName' not found")
+  }
+}
+
+private fun handleMergeImpactFilter(gen: JsonGenerator, filter: JsonFilter, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>) {
+  val sourceSet = filter.source
+  if (sourceSet == null) {
+    gen.writeStringField("error", "Source module set required for 'mergeImpact' filter")
+    return
+  }
+  val operation = MergeOperation.fromString(filter.operation ?: "merge")
+  val impact = analyzeMergeImpact(sourceSet, filter.target, operation, allModuleSets, products)
+  gen.writeFieldName("mergeImpact")
+  writeMergeImpactAnalysis(gen, impact)
+}
+
+private fun handleModulePathsFilter(gen: JsonGenerator, moduleName: String?, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, projectRoot: Path) {
+  if (moduleName == null) {
+    gen.writeStringField("error", "Module name required for 'modulePaths' filter")
+    return
+  }
+  val pathsResult = findModulePaths(moduleName, allModuleSets, products, projectRoot)
+  gen.writeFieldName("modulePaths")
+  writeModulePathsResult(gen, pathsResult)
+}
+
+private fun handleModuleDependenciesFilter(gen: JsonGenerator, filter: JsonFilter, moduleOutputProvider: ModuleOutputProvider?) {
+  val moduleName = filter.module
+  if (moduleName == null) {
+    gen.writeStringField("error", "Module name required for 'moduleDependencies' filter")
+    return
+  }
+  if (moduleOutputProvider == null) {
+    gen.writeStringField("error", "ModuleOutputProvider required for moduleDependencies filter")
+    return
+  }
+  val result = getModuleDependencies(moduleName, moduleOutputProvider, filter.includeTransitive)
+  gen.writeFieldName("moduleDependencies")
+  writeModuleDependenciesResult(gen, result)
+}
+
+private fun handleModuleReachabilityFilter(gen: JsonGenerator, filter: JsonFilter, allModuleSets: List<ModuleSetMetadata>, moduleOutputProvider: ModuleOutputProvider?) {
+  val moduleName = filter.module
+  val moduleSetName = filter.moduleSet
+  if (moduleName == null || moduleSetName == null) {
+    gen.writeStringField("error", "Module name and module set name required for 'moduleReachability' filter")
+    return
+  }
+  if (moduleOutputProvider == null) {
+    gen.writeStringField("error", "ModuleOutputProvider required for moduleReachability filter")
+    return
+  }
+  val result = checkModuleReachability(moduleName, moduleSetName, allModuleSets, moduleOutputProvider)
+  gen.writeFieldName("moduleReachability")
+  writeModuleReachabilityResult(gen, result)
+}
+
+private fun handleDependencyPathFilter(gen: JsonGenerator, filter: JsonFilter, moduleOutputProvider: ModuleOutputProvider?) {
+  val fromModule = filter.fromModule
+  val toModule = filter.toModule
+  if (fromModule == null || toModule == null) {
+    gen.writeStringField("error", "Both fromModule and toModule required for 'dependencyPath' filter")
+    return
+  }
+  if (moduleOutputProvider == null) {
+    gen.writeStringField("error", "ModuleOutputProvider required for dependencyPath filter")
+    return
+  }
+  val result = findDependencyPath(fromModule, toModule, moduleOutputProvider)
+  gen.writeFieldName("dependencyPath")
+  writeDependencyPathResult(gen, result)
+}
+
+private fun handleProductUsageFilter(gen: JsonGenerator, moduleSetName: String?, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>) {
+  if (moduleSetName == null) {
+    gen.writeStringField("error", "Module set name required for 'productUsage' filter")
+    return
+  }
+  val usage = analyzeProductUsage(moduleSetName, products, allModuleSets)
+  gen.writeFieldName("productUsage")
+  writeProductUsageAnalysis(gen, usage)
 }
 
 /**
@@ -206,7 +301,7 @@ private fun writeAllSections(
   val moduleSets = allModuleSets.map { it.moduleSet }
   gen.writeArrayFieldStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-    writeModuleSet(gen, moduleSet, location, sourceFilePath, moduleSets)
+    writeModuleSet(gen = gen, moduleSet = moduleSet, location = location, sourceFilePath = sourceFilePath, allModuleSets = moduleSets)
   }
   gen.writeEndArray()
 
@@ -228,7 +323,14 @@ private fun writeAllSections(
   gen.writeEndObject()
 
   // Write module distribution analysis
-  val moduleLocations = parseModulesXml(projectRoot)
+  val moduleLocationsResult = parseModulesXml(projectRoot)
+  val moduleLocations = when (moduleLocationsResult) {
+    is ParseResult.Success -> moduleLocationsResult.value
+    is ParseResult.Failure -> {
+      gen.writeStringField("moduleLocationsWarning", moduleLocationsResult.error)
+      moduleLocationsResult.partial ?: emptyMap()
+    }
+  }
   gen.writeObjectFieldStart("moduleDistribution")
   writeModuleDistribution(gen, allModuleSets, products, moduleLocations)
   gen.writeEndObject()
@@ -257,15 +359,13 @@ private fun writeAllSections(
 
   // Analyze product similarity for refactoring recommendations
   val similarityPairs = analyzeProductSimilarity(products, similarityThreshold = 0.7)
-  gen.writeObjectFieldStart("productSimilarity")
+  gen.writeFieldName("productSimilarity")
   writeProductSimilarityAnalysis(gen, similarityPairs, 0.7)
-  gen.writeEndObject()
 
   // Detect module set overlaps (with nested set filtering to avoid false positives)
   val moduleSetOverlaps = detectModuleSetOverlap(allModuleSets, minOverlapPercent = 50)
-  gen.writeObjectFieldStart("moduleSetOverlap")
+  gen.writeFieldName("moduleSetOverlap")
   writeModuleSetOverlapAnalysis(gen, moduleSetOverlaps, 50)
-  gen.writeEndObject()
 
   // Generate unification suggestions based on overlaps and similarity
   val unificationSuggestions = suggestModuleSetUnification(
@@ -276,7 +376,6 @@ private fun writeAllSections(
     maxSuggestions = 10,
     strategy = "all"
   )
-  gen.writeObjectFieldStart("unificationSuggestions")
+  gen.writeFieldName("unificationSuggestions")
   writeUnificationSuggestions(gen, unificationSuggestions)
-  gen.writeEndObject()
 }

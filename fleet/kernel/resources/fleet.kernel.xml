@@ -1,12 +1,14 @@
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
-    <module name="fleet.util.core"/>
-    <module name="fleet.rpc"/>
-    <module name="fleet.reporting.api"/>
-    <module name="fleet.reporting.shared"/>
-    <module name="fleet.multiplatform.shims"/>
     <module name="fleet.bifurcan"/>
     <module name="fleet.fastutil"/>
+    <module name="fleet.multiplatform.shims"/>
+    <module name="fleet.reporting.api"/>
+    <module name="fleet.reporting.shared"/>
+    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
+    <module name="fleet.util.core"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

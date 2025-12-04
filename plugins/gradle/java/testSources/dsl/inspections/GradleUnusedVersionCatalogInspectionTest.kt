@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.dsl.inspections
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.toml.UnusedVersionCatalogEntryInspection
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.params.ParameterizedTest
@@ -10,7 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
 
   private fun runTest(gradleVersion: GradleVersion, buildGradleText: String, versionCatalogText: String) {
-    testEmptyProject(gradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       codeInsightFixture.enableInspections(UnusedVersionCatalogEntryInspection::class.java)
       writeTextAndCommit("build.gradle", buildGradleText)
       testHighlighting("gradle/libs.versions.toml", versionCatalogText)

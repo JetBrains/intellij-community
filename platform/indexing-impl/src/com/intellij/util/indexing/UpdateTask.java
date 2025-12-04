@@ -6,33 +6,38 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class UpdateTask<Type> {
+  private static final boolean DEBUG_TO_STDOUT = false;
+
   private final Semaphore myUpdateSemaphore = new Semaphore();
   private final Set<Type> myItemsBeingIndexed = ConcurrentCollectionFactory.createConcurrentSet();
-  private static final boolean DEBUG = false;
 
-  public final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
-    if (DEBUG) trace("enter processAll");
+  /** @param project must be !=null, but marked nullable for backward compatibility -- please, remove all the usages there project is null */
+  public final boolean processAll(@NotNull Collection<? extends Type> itemsToProcess,
+                                  @Nullable Project project) {
+    if (DEBUG_TO_STDOUT) trace("enter processAll");
     try {
       boolean hasMoreToProcess;
       boolean allItemsProcessed = true;
 
       do {
         hasMoreToProcess = false;
-        if (DEBUG) trace("observing " + itemsToProcess.size());
+        if (DEBUG_TO_STDOUT) trace("observing " + itemsToProcess.size());
         // todo we can decrease itemsToProcess
         for (Type item : itemsToProcess) {
           myUpdateSemaphore.down();
 
           try {
-            if (DEBUG) trace("about to process");
+            if (DEBUG_TO_STDOUT) trace("about to process");
             boolean processed = process(item, project);
-            if (DEBUG) trace(processed ? "processed " : "skipped");
+            if (DEBUG_TO_STDOUT) trace(processed ? "processed " : "skipped");
 
             if (!processed) {
               hasMoreToProcess = true;
@@ -49,17 +54,18 @@ public abstract class UpdateTask<Type> {
           ProgressManager.checkCanceled();
         }
         while (!myUpdateSemaphore.waitFor(100));
-        if (DEBUG) if (hasMoreToProcess) trace("reiterating");
+        if (DEBUG_TO_STDOUT) if (hasMoreToProcess) trace("reiterating");
       }
       while (hasMoreToProcess);
 
       return allItemsProcessed;
     } finally {
-      if (DEBUG) trace("exits processAll");
+      if (DEBUG_TO_STDOUT) trace("exits processAll");
     }
   }
 
-  private boolean process(Type item, Project project) {
+  private boolean process(Type item,
+                          @Nullable Project project) {
     if (myItemsBeingIndexed.add(item)) {
       try {
         doProcess(item, project);
@@ -72,7 +78,7 @@ public abstract class UpdateTask<Type> {
   }
 
   @ApiStatus.Internal
-  protected abstract void doProcess(Type item, Project project);
+  protected abstract void doProcess(Type item, @Nullable Project project);
 
   protected static void trace(String s) {
     System.out.println(Thread.currentThread() + " " + s);

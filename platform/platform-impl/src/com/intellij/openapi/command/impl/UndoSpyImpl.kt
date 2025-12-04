@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 open class UndoSpyImpl : UndoSpy {
 
-  override fun undoCommandStarted(undoProject: Project?, editor: FileEditor?, originator: DocumentReference?) {
+  override fun commandBeforeStarted(undoProject: Project?, editor: FileEditor?, originator: DocumentReference?) {
   }
 
   override fun commandStarted(cmdEvent: CmdEvent) {

@@ -35,7 +35,9 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -66,6 +68,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/debugger/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end

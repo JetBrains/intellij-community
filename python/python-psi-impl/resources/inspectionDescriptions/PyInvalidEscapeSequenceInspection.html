@@ -1,0 +1,22 @@
+<html>
+<body>
+Reports invalid escape sequences in string and bytes literals.
+
+<p>
+  Starting from Python 3.6, escape sequences that are not recognized (such as <code>\.</code>) produce a <code>SyntaxWarning</code>.
+  In future Python versions, they will become a <code>SyntaxError</code>.
+</p>
+<p>
+  To fix this, you can either escape the backslash (e.g., <code>\\.</code>) or use a raw string (e.g., <code>r'\.'</code>).
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+# Warning: Invalid escape sequence '\.'
+print('\.')
+
+# Correct
+print(r'\.')
+print('\\.')
+</code></pre>
+</body>
+</html>

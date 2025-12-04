@@ -790,7 +790,10 @@
     "TitlePane": {
       "background": "panel",
       "Button.preferredSize": "47,28",
-      "Button.preferredSize.compact": "44,32"
+      "Button.preferredSize.compact": "44,32",
+      "Dialog.Button.preferredWidth": "32",
+      "Dialog.Button.insets": "12,0,12,0",
+      "Dialog.Button.insets.compact": "8,0,8,0"
     },
 
     "activeCaption": "#434E60",
@@ -1185,6 +1188,7 @@
       "cardBackground": "#2B2B2B",
       "cardBorderColor": "#2B2B2B",
       "cardHeaderTitle": "#D3D3D3",
+      "cardHeaderLinkBackground": "#3D3F41",
       "cardHeaderSubtitle": "#B4B8BF",
       "cardFooterForeground": "#CED0D6",
       "chroniclesBackground": "#3D3F41",

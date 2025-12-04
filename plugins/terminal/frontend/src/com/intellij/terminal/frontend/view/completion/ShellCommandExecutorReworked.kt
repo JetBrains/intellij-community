@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelExecApi.RedirectStdErr
 import com.intellij.platform.eel.EelExecApi.RedirectTo
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess

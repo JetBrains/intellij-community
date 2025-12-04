@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -46,7 +47,7 @@ internal data class ToolCommandExecutor(
 
   suspend fun <T> runTool(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
     val executable = getToolExecutable(dirPath?.getEelDescriptor()?.toEelApi() ?: localEel)
-                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, localEel.descriptor.machine.name))
+                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, localEel.descriptor.name))
     return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
   }
 }

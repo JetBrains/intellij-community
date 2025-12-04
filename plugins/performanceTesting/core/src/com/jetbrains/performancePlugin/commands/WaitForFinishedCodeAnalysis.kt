@@ -26,7 +26,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -130,20 +131,19 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   /**
    * @throws TimeoutException when stopped due to provided [timeout]
    */
-  suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
+  @RequiresBackgroundThread
+  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
     }
     LOG.info("Waiting for code analysis to finish in $timeout")
     val future = CompletableFuture<Unit>()
-    if (timeout != null) {
-      future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-    }
+    future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     coroutineScope {
       launch {
         while (true) {
           @Suppress("TestOnlyProblems")
-          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !FUSProjectHotStartUpMeasurer.isHandlingFinished() && !future.isDone) {
             delay(500)
           }
           else {

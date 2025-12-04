@@ -3555,9 +3555,7 @@ public class PyTypingTest extends PyTestCase {
   public void testIterResultOnIterable() {
     doTest("Iterator[int]",
            """
-             from typing import Iterable, TypeVar
-
-             T = TypeVar('T')
+             from typing import Iterable
 
              xs: Iterable[int]
              expr = iter(xs)
@@ -3567,9 +3565,7 @@ public class PyTypingTest extends PyTestCase {
   public void testNextResultOnIterator() {
     doTest("int",
            """
-             from typing import Iterable, TypeVar
-
-             T = TypeVar('T')
+             from typing import Iterable
 
              xs: Iterable[int]
              expr = iter(xs).__next__()

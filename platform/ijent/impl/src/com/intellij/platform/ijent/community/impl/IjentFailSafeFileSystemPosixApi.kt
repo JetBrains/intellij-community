@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentUnavailableException

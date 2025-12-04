@@ -14,10 +14,10 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.toggleMaximized
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
@@ -2171,7 +2171,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun setMaximized(window: ToolWindow, maximized: Boolean) {
     if (window.type == ToolWindowType.FLOATING && window is ToolWindowImpl) {
-      MaximizeActiveDialogAction.doMaximize(idToEntry.get(window.id)?.floatingDecorator)
+      idToEntry.get(window.id)?.floatingDecorator?.toggleMaximized()
       return
     }
 

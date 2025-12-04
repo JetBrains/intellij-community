@@ -284,7 +284,7 @@ private class ContextParametersSaver(function: KtNamedFunction) {
     }
 
     init {
-        function.contextReceiverList?.contextParameters()?.forEach { param ->
+        function.contextParameters.forEach { param ->
             val paramType = allowAnalysisFromWriteActionInEdt(param) {
                 param.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.IN_VARIANCE)
             }

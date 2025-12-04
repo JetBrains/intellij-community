@@ -5,32 +5,25 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.getEelMachine
 import java.nio.file.Path
-import kotlin.io.path.pathString
 
 class TcpEelProvider : EelProvider {
-  override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String) {
-    val endpoint = path.extractTcpEndpoint() ?: return
-    TcpEelRegistry.getInstance().register(endpoint)
+  override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
+    val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return null
+    val descriptor = TcpEelRegistry.getInstance().register(internalName) ?: return null
+    val tcpMachine = descriptor.getEelMachine() as? TcpEelMachine ?: return null
+    tcpMachine.deploy()
+    tcpMachine.waitForDeployment()
+    return tcpMachine
   }
 
   override fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor? {
-    val endpoint = path.pathString.extractTcpEndpoint() ?: return null
-    return TcpEelRegistry.getInstance().get(endpoint)
+    val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return null
+    return TcpEelRegistry.getInstance().get(internalName)
   }
 
   override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? {
     return if (eelDescriptor is TcpEelDescriptor) listOf(eelDescriptor.rootPathString) else null
-  }
-
-  override fun getInternalName(eelMachine: EelMachine): String? {
-    if (eelMachine !is TcpEelMachine) return null
-    return "tcp-${eelMachine.tcpEndpoint.toPath()}"
-  }
-
-  override fun getEelMachineByInternalName(internalName: String): EelMachine? {
-    if (!internalName.startsWith("tcp-")) return null
-    val tcpDescriptor = internalName.extractTcpEndpoint() ?: return null
-    return TcpEelMachine(tcpDescriptor)
   }
 }

@@ -56,6 +56,6 @@ public final class ProjectSettingsPage implements SearchableConfigurable, Config
 
   @Override
   public @NotNull String getId() {
-    return getDisplayName();
+    return "lombok";
   }
 }

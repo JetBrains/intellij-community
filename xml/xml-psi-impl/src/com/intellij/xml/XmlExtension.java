@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
@@ -27,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.impl.XmlNsDescriptorUtil;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.JspFileTypeUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,7 +237,7 @@ public abstract class XmlExtension {
         }
       }
       final FileType ft = file.getFileType();
-      final String namespace = ft == XHtmlFileType.INSTANCE || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
+      final String namespace = ft == XHtmlFileType.INSTANCE || JspFileTypeUtil.isJspX(ft) ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
       final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
       if (nsDescriptor != null) {
         return ContainerUtil.packNullables(nsDescriptor.getDescriptorFile());

@@ -536,13 +536,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         JavaTypeNullabilityUtil.NullabilityConflictContext
           context = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
                                                                                REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
-        if (context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
-        String messageKey = context.nullabilityConflict == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
+        if (context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
+        String messageKey = context.nullabilityConflict() == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
                             "returning.a.class.with.notnull.arguments" : "returning.a.class.with.nullable.arguments";
 
         reportProblem(holder, returnValue, LocalQuickFix.EMPTY_ARRAY,
                       messageKey, new Object[]{""},
-                      messageKey, new Object[]{NullableStuffInspectionUtil.getTypePresentationInNullabilityConflict(context)});
+                      messageKey, new Object[]{NullableStuffInspectionUtil.getNullabilityConflictPresentation(context)});
       }
 
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
@@ -1249,7 +1249,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   if (psiElement == null) continue;
                 }
                 LocalQuickFix fix = isAnnotatingApplicable(parameter, defaultNotNull)
-                                    ? new AnnotateOverriddenMethodParameterFix(Nullability.NOT_NULL, defaultNotNull)
+                                    ? new AnnotateOverriddenMethodParameterFix(Nullability.NOT_NULL)
                                     : null;
                 reportProblem(holder, psiElement, fix,
                               "nullable.stuff.problems.overridden.method.parameters.are.not.annotated");

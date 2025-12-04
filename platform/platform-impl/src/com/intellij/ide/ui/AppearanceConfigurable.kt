@@ -417,8 +417,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             yield { checkBox(cdDnDWithAlt) }
             yield {
               checkBox(cdSmoothScrolling)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.smooth.scrolling.description"))
+                .contextHelp(message("checkbox.smooth.scrolling.description"))
             }
           }
           if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
@@ -441,8 +440,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             yield { checkBox(cdDnDWithAlt) }
             yield {
               checkBox(cdSmoothScrolling)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.smooth.scrolling.description"))
+                .contextHelp(message("checkbox.smooth.scrolling.description"))
             }
           }
           yield { checkBox(cdEnableControlsMnemonics) }
@@ -540,8 +538,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             twoColumnsRow(
               {
                 checkBox(cdWidescreenToolWindowLayout)
-                  .gap(RightGap.SMALL)
-                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                  .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
               { checkBox(cdRememberSizeForEachToolWindowNewUI) },
             )
@@ -550,8 +547,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             twoColumnsRow(
               {
                 checkBox(cdWidescreenToolWindowLayout)
-                  .gap(RightGap.SMALL)
-                contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                  .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
               { checkBox(cdRightToolWindowLayout) },
             )
@@ -564,8 +560,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           twoColumnsRow(
             {
               checkBox(cdWidescreenToolWindowLayout)
-                .gap(RightGap.SMALL)
-              contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
+                .contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
             },
             { checkBox(cdRightToolWindowLayout) },
           )

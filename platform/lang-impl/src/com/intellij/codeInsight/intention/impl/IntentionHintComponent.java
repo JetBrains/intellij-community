@@ -4,11 +4,13 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
-import com.intellij.codeInsight.intention.*;
-import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
 import com.intellij.codeInsight.intention.impl.preview.PreviewHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
@@ -27,6 +29,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -643,7 +646,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
         logMousePressed(e);
         myLightBulbPanel.onMousePress();
-        showPopup(true);
+        WriteIntentReadAction.run(() -> {
+          showPopup(true);
+        });
       }
     }
 
@@ -865,8 +870,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       return new PreviewHandler<>(
         myProject, myListPopup,
         IntentionActionWithTextCaching.class,
-        action -> new IntentionPreviewComputable(
-          myProject, action.getAction(), myPsiFile, myEditor, action.getFixOffset()).call());
+        action -> getPreviewInfo(action));
+    }
+
+    private @NotNull IntentionPreviewInfo getPreviewInfo(IntentionActionWithTextCaching action) {
+      ListPopupStep step = myListPopup.getListStep();
+      if (step instanceof IntentionListStep previewListStep) {
+        return previewListStep.calculateIntentionPreview(action.getAction(), action.getFixOffset());
+      }
+      return IntentionPreviewInfo.EMPTY;
     }
 
     /**

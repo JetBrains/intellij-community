@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.ijent.tcp.TcpEndpoint
+import com.intellij.platform.ijent.tcp.TcpDeployInfo
 
 /**
  * Strategy for establishing connection with a running IJent process.
@@ -17,7 +17,7 @@ interface IjentConnectionStrategy {
     }
   }
 
-  data class Tcp(val connectionInfo: TcpEndpoint) : IjentConnectionStrategy {
+  data class Tcp(val connectionInfo: TcpDeployInfo.FixedPort) : IjentConnectionStrategy {
     override suspend fun canUseVirtualSockets(): Boolean {
       return false
     }

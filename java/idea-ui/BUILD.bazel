@@ -23,6 +23,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
     "//platform/ide-core-impl",
+    "//platform/execution",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/indexing-api:indexing",
     "//platform/platform-impl/concurrency",
@@ -42,7 +43,7 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
     "//libraries/stream",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/statistics",
     "//libraries/fastutil",
     "//platform/core-ui",
@@ -65,6 +66,7 @@ jvm_library(
     "//libraries/asm",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.java.ui` end
@@ -104,7 +106,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/ide-core-impl",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/jps",
@@ -121,6 +123,8 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//libraries/io",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.java.ui.tests` end

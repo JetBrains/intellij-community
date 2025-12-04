@@ -226,7 +226,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         if (myRegisteredIndexes != null && !myRegisteredIndexes.areIndexesReady()) {
-          WriteIntentReadAction.run((Runnable)() -> {
+          WriteIntentReadAction.run(() -> {
             new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
@@ -812,7 +812,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                     @Nullable Project project,
-                                    @Nullable GlobalSearchScope filter,
+                                    @Nullable GlobalSearchScope scope,
                                     @Nullable VirtualFile restrictedFile) {
     String shutdownReason = myShutdownReason;
     if (shutdownReason != null) {
@@ -832,8 +832,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!needsFileContentLoading(indexId)) {
       return true; //indexed eagerly in foreground while building an unindexed file list
     }
-    if (filter == GlobalSearchScope.EMPTY_SCOPE ||
-        filter instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)filter).unwrap() == GlobalSearchScope.EMPTY_SCOPE) {
+    if (scope == GlobalSearchScope.EMPTY_SCOPE ||
+        scope instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)scope).unwrap() == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
     if (project == null) {
@@ -1795,7 +1795,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final class VirtualFileUpdateTask extends UpdateTask<FileIndexingRequest> {
     @Override
-    public void doProcess(FileIndexingRequest item, Project project) {
+    public void doProcess(FileIndexingRequest item, @Nullable Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
@@ -1917,7 +1917,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                          @NotNull @Unmodifiable Set<Project> containingProjects,
                                          @NotNull List<Project> dirtyQueueProjects) {
     myIndexableFilesFilterHolder.removeFile(fileId);
-    if (containingProjects.isEmpty() && canBeIndexed(file)) {
+    if (containingProjects.isEmpty() && file.isValid()) {
       myDirtyFiles.addFile(Collections.emptyList(), fileId); // can be indexed by project which is currently closed
     }
     IndexingFlag.cleanProcessedFlagRecursively(file);

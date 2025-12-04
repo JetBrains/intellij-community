@@ -131,12 +131,14 @@ object CustomWindowHeaderUtil {
   }
 
   fun getPreferredWindowHeaderHeight(isCompactHeader: Boolean): Int = JBUI.scale(
-    when {
-      isCompactHeader -> HEADER_HEIGHT_DFM
-      UISettings.shadowInstance.compactMode -> HEADER_HEIGHT_COMPACT
-      else -> HEADER_HEIGHT_NORMAL
-    }
+    getPreferredWindowHeaderHeightUnscaled(isCompactHeader)
   )
+
+  fun getPreferredWindowHeaderHeightUnscaled(isCompactHeader: Boolean): Int = when {
+    isCompactHeader -> HEADER_HEIGHT_DFM
+    UISettings.shadowInstance.compactMode -> HEADER_HEIGHT_COMPACT
+    else -> HEADER_HEIGHT_NORMAL
+  }
 
   fun configureCustomTitleBar(isCompactHeader: Boolean, customTitleBar: CustomTitleBar, frame: JFrame) {
     customTitleBar.height = getPreferredWindowHeaderHeight(isCompactHeader).toFloat()

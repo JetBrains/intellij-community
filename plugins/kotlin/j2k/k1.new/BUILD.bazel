@@ -20,6 +20,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",

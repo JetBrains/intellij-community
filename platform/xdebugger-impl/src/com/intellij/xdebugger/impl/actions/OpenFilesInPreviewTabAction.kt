@@ -23,6 +23,6 @@ class OpenFilesInPreviewTabAction : ToggleAction(), DumbAware, SplitDebuggerActi
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     UISettings.getInstance().openInPreviewTabIfPossible = state
-    saveSettingsForRemoteDevelopment(application)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, application)
   }
 }

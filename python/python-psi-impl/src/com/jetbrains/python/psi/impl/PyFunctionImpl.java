@@ -247,6 +247,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         type = null;
       }
     }
+    // TODO Is it still needed if we infer Self as a return type?
     else if (receiver != null) {
       type = replaceSelf(type, receiver, context);
     }
@@ -402,7 +403,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       boolean collectImplicitReturn = true;
 
       ControlFlowUtil.Operation checkInstruction(@NotNull Instruction instruction) {
-        if (dataFlow.isUnreachable(instruction)) {
+        if (dataFlow.getReachability(instruction) != Reachability.REACHABLE) {
           return ControlFlowUtil.Operation.CONTINUE;
         }
         if (instruction instanceof PyFinallyFailExitInstruction exitInstruction) {

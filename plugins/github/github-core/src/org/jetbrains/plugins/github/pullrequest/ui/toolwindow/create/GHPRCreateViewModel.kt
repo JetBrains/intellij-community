@@ -79,6 +79,7 @@ interface GHPRCreateViewModel : CodeReviewTitleDescriptionViewModel {
   fun setBaseBranch(branch: GitRemoteBranch?)
 
   fun create(isDraft: Boolean)
+  fun refreshBranchesState()
 
   data class BranchesState(
     val baseRepo: GHGitRepositoryMapping,
@@ -254,6 +255,13 @@ internal class GHPRCreateViewModelImpl(
         val changeListVm = commitChangesVm?.changeListVm?.value?.getOrNull()
         changeListVm?.selectChange(change)
       }
+    }
+  }
+
+  override fun refreshBranchesState() {
+    branchesWithProgress.update {
+      it.cancel()
+      BranchesStateWithProgress(it.branches)
     }
   }
 

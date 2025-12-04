@@ -44,6 +44,7 @@ jvm_library(
     "//plugins/kotlin/project-wizard/core:core_test_lib",
     "//plugins/kotlin/project-wizard/idea",
     "//plugins/kotlin/gradle/gradle",
+    "//platform/execution",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
     "//plugins/kotlin/gradle/gradle-java/k1",

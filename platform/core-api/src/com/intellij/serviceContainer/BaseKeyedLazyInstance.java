@@ -40,8 +40,6 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
 
   // todo get rid of it - pluginDescriptor must be not null
   public @NotNull ClassLoader getLoaderForClass() {
-    return pluginDescriptor != null ?
-           pluginDescriptor.getClassLoader() :
-           getClass().getClassLoader();
+    return pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getClassLoader();
   }
 }

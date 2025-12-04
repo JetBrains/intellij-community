@@ -35,7 +35,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-script-runtime",
@@ -81,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/facet",
     "//platform/util/jdom",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.gradle` end

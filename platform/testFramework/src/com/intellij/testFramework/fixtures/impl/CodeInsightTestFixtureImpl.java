@@ -201,7 +201,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private Editor editor;
   private EditorTestFixture myEditorTestFixture;
   private String myTestDataPath;
-  private VirtualFileFilter myVirtualFileFilter = new FileTreeAccessFilter();
+  private VirtualFileFilter myVirtualFileFilter = VirtualFileFilter.NONE;
   private boolean myAllowDirt;
   private boolean caresAboutInjection = true;
   private boolean myReadEditorMarkupModel;
@@ -1821,6 +1821,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * <p>
    * Files loaded with <b>configure*</b> methods (which are called, e.g., from {@link #testHighlighting(String...)}) won't be checked
    * because their AST will be loaded before setting filter. Use {@link #copyFileToProject(String)} and similar methods.
+   * <p>
+   *   Use {@link #allowTreeAccessForAllFiles()} to restore default behaviour.
+   * </p>
    */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
     myVirtualFileFilter = filter;
@@ -1872,13 +1875,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
-    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForFile(file);
-  }
-
-  @Override
   public void allowTreeAccessForAllFiles() {
-    ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
+    myVirtualFileFilter = VirtualFileFilter.NONE;
   }
 
   private void checkResultByFile(@NotNull String expectedFile, @NotNull PsiFile originalFile, boolean stripTrailingSpaces) {

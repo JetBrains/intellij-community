@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.platform.PlatformUtilKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformUtil;
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind;
-import org.jetbrains.kotlin.platform.impl.JvmIdePlatformUtil;
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform;
 
 import javax.swing.*;
@@ -107,8 +106,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private JCheckBox enableIncrementalCompilationForJvmCheckBox;
     private JCheckBox enableIncrementalCompilationForJsCheckBox;
     private JComboBox<String> moduleKindComboBox;
-    private JTextField scriptTemplatesField;
-    private JTextField scriptTemplatesClasspathField;
     private JPanel k2jvmPanel;
     private JPanel k2jsPanel;
     private JComboBox<String> jvmVersionComboBox;
@@ -118,7 +115,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private JpsVersionItem defaultJpsVersionItem;
     private JComboBox<VersionView> languageVersionComboBox;
     private JComboBox<VersionView> apiVersionComboBox;
-    private JPanel scriptPanel;
     private JLabel warningLabel;
     private JTextField sourceMapPrefix;
     private JComboBox<String> sourceMapEmbedSources;
@@ -498,7 +494,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 latestStableIndex = index;
             }
 
-            if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
+            if (!languageVersion.isStable()) {
                 continue;
             }
 
@@ -545,7 +541,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
     public void setTargetPlatform(@Nullable IdePlatformKind targetPlatform) {
         k2jsPanel.setVisible(JsIdePlatformUtil.isJavaScript(targetPlatform));
-        scriptPanel.setVisible(JvmIdePlatformUtil.isJvm(targetPlatform));
     }
 
     private void fillModuleKindList() {
@@ -590,8 +585,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                jpsPluginSettings != null &&
                !getSelectedKotlinJpsPluginVersion().equals(KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)) ||
                !additionalArgsOptionsField.getText().equals(compilerSettings.getAdditionalArguments()) ||
-               isFieldModified(scriptTemplatesField, compilerSettings.getScriptTemplates()) ||
-               isFieldModified(scriptTemplatesClasspathField, compilerSettings.getScriptTemplatesClasspath()) ||
                isCheckboxModified(copyRuntimeFilesCheckBox, compilerSettings.getCopyJsLibraryFiles()) ||
                isBrowseFieldModified(outputDirectory, compilerSettings.getOutputDirectoryForJsLibraryFiles()) ||
 
@@ -689,8 +682,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         KotlinFacetSettingsKt.setApiVersionView(commonCompilerArguments, getSelectedAPIVersionView());
 
         compilerSettings.setAdditionalArguments(additionalArgsOptionsField.getText());
-        compilerSettings.setScriptTemplates(scriptTemplatesField.getText());
-        compilerSettings.setScriptTemplatesClasspath(scriptTemplatesClasspathField.getText());
         compilerSettings.setCopyJsLibraryFiles(copyRuntimeFilesCheckBox.isSelected());
         compilerSettings.setOutputDirectoryForJsLibraryFiles(outputDirectory.getText());
 
@@ -763,8 +754,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             setSelectedItem(apiVersionComboBox, getLatestStableVersion());
         }
         additionalArgsOptionsField.setText(compilerSettings.getAdditionalArguments());
-        scriptTemplatesField.setText(compilerSettings.getScriptTemplates());
-        scriptTemplatesClasspathField.setText(compilerSettings.getScriptTemplatesClasspath());
         copyRuntimeFilesCheckBox.setSelected(compilerSettings.getCopyJsLibraryFiles());
         outputDirectory.setText(compilerSettings.getOutputDirectoryForJsLibraryFiles());
 
@@ -846,14 +835,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
     public JComboBox<String> getModuleKindComboBox() {
         return moduleKindComboBox;
-    }
-
-    public JTextField getScriptTemplatesField() {
-        return scriptTemplatesField;
-    }
-
-    public JTextField getScriptTemplatesClasspathField() {
-        return scriptTemplatesClasspathField;
     }
 
     public JComboBox<VersionView> getLanguageVersionComboBox() {

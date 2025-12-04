@@ -2,6 +2,8 @@ package com.intellij.ide.starter.config
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.models.SystemBind
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val SPLIT_MODE_ENABLED = "SPLIT_MODE_ENABLED"
 private const val ENV_ENABLE_CLASS_FILE_VERIFICATION = "ENABLE_CLASS_FILE_VERIFICATION"
@@ -16,6 +18,8 @@ private const val AFTER_EACH_MESSAGE_BUS_CLEANUP = "AFTER_EACH_MESSAGE_BUS_CLEAN
 private const val ENV_JBR_DEV_SERVER_VERSION = "JBR_DEV_SERVER_VERSION"
 private const val ENABLE_SCRAMBLING_FOR_DEVSERVER = "ENABLE_SCRAMBLING_FOR_DEVSERVER"
 private const val ENV_MONITORING_DUMPS_INTERVAL_SECONDS = "MONITORING_DUMPS_INTERVAL_SECONDS"
+private const val ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS = "COROUTINE_SCOPES_CANCEL_TIMEOUT_MS"
+private const val ENV_UNIT_TEST_MODE = "UNIT_TEST_MODE"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -30,7 +34,8 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_JBR_DEV_SERVER_VERSION to System.getenv(ENV_JBR_DEV_SERVER_VERSION),
   ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false"),
   ENV_MONITORING_DUMPS_INTERVAL_SECONDS to System.getenv().getOrDefault(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, "60"),
-  ).filter { entry ->
+  ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS to System.getenv().getOrDefault(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, "2000"),
+).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
 }
@@ -43,7 +48,9 @@ fun ConfigurationStorage.Companion.useInstaller(value: Boolean) = instance().put
 fun ConfigurationStorage.Companion.useDockerContainer(): Boolean = instance().getBoolean(ENV_USE_DOCKER_CONTAINER)
 fun ConfigurationStorage.Companion.useDockerContainer(value: Boolean) = instance().put(ENV_USE_DOCKER_CONTAINER, value)
 fun ConfigurationStorage.Companion.setAdditionDockerBinds(value: Set<SystemBind>) = instance().put(ENV_USE_DOCKER_ADDITIONAL_BINDS, SystemBind.string(value))
-fun ConfigurationStorage.Companion.additionDockerBinds(): Set<SystemBind> = SystemBind.setFromString(instance().get(ENV_USE_DOCKER_ADDITIONAL_BINDS)?:"")
+fun ConfigurationStorage.Companion.additionDockerBinds(): Set<SystemBind> = SystemBind.setFromString(instance().get(ENV_USE_DOCKER_ADDITIONAL_BINDS)
+                                                                                                     ?: "")
+
 /**
  *  Is it necessary to include [runtime module repository](psi_element://com.intellij.platform.runtime.repository) in the installed IDE?
  */
@@ -73,7 +80,8 @@ fun ConfigurationStorage.Companion.ignoredTestFailuresPattern(pattern: String) =
 fun ConfigurationStorage.Companion.ignoredTestFailuresPattern(): String? = instance().get(IGNORED_TEST_FAILURE_PATTERN)
 
 fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(value: Int) = instance().put(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, value.toString())
-fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(): Int = instance().get(ENV_MONITORING_DUMPS_INTERVAL_SECONDS)?.toIntOrNull() ?: error("No value for $ENV_MONITORING_DUMPS_INTERVAL_SECONDS")
+fun ConfigurationStorage.Companion.monitoringDumpsIntervalSeconds(): Int = instance().get(ENV_MONITORING_DUMPS_INTERVAL_SECONDS)?.toIntOrNull()
+                                                                           ?: error("No value for $ENV_MONITORING_DUMPS_INTERVAL_SECONDS")
 
 /**
  * By default, Message bus cleanup is performed after each test container run. This is needed to prevent side effects when once IDE run is used among several tests methods.
@@ -97,3 +105,11 @@ fun ConfigurationStorage.Companion.isScramblingEnabled(): Boolean = instance().g
  */
 fun ConfigurationStorage.Companion.enableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, true)
 fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_SCRAMBLING_FOR_DEVSERVER, false)
+
+var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
+  get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "2000").toLong().milliseconds }
+  set(value) = instance().put(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, value.inWholeMilliseconds.toString())
+
+fun ConfigurationStorage.Companion.setUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, true)
+fun ConfigurationStorage.Companion.removeUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, false)
+fun ConfigurationStorage.Companion.getUnitTestMode() = instance().getBoolean(ENV_UNIT_TEST_MODE)

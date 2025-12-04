@@ -72,8 +72,7 @@ class HgProjectConfigurable(val project: Project)
           checkBox(DvcsBundle.message("sync.setting"))
             .bindSelected({ projectSettings.syncSetting == DvcsSyncSettings.Value.SYNC },
                           { isSelected -> projectSettings.syncSetting = if (isSelected) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC })
-            .gap(RightGap.SMALL)
-          contextHelp(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
+            .contextHelp(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
         }
       }
     }

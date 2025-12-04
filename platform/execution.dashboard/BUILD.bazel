@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/projectModel-impl",
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -41,6 +41,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/execution",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

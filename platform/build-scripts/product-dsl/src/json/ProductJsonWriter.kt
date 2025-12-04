@@ -36,6 +36,9 @@ fun writeProduct(
     gen.writeString(buildModule)
   }
   gen.writeEndArray()
+  
+  // Product category (ULTIMATE, COMMUNITY, BACKEND)
+  gen.writeStringField("category", product.category.name)
 
   // Metrics
   gen.writeNumberField("totalModuleCount", product.totalModuleCount)

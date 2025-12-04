@@ -12,6 +12,7 @@ import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.radioButton
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.ui
+import javax.swing.JButton
 import javax.swing.JTextArea
 
 fun Finder.licenseDialog() = x(LicenseDialogUi::class.java) {
@@ -28,18 +29,17 @@ class LicenseDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val activationCodeRadioButton = radioButton { byAccessibleName("Activation code") }
   val subscriptionRadioButton = radioButton { byAccessibleName("Subscription") or byAccessibleName("JetBrains Account") }
   val activationCodeTextField = textField { byType(JTextArea::class.java) }
-  val activateButton = button { byAccessibleName("Activate") and (byClass("SlowActionButton") or byClass("LicenseDialogButton")) }
+  val activateButton = button { byAccessibleName("Activate") and byType(JButton::class.java) }
   val activateAnotherLicenseButton = x { contains(byAccessibleName("Activate Another License")) or contains(byAccessibleName("Activate Another Subscription")) }
-  val loginWithJbaLinkButton = x { byClass("ActionLink") and contains(byAccessibleName("Log in")) }
-  val loginWithJbaButton = x { contains(byAccessibleName("Log In")) }
+  val loginWithJbaLinkButton = button { byClass("ActionLink") and byAccessibleName("Log in…") }
+  val loginWithJbaButton = button { byAccessibleName("Log In to JetBrains Account") and byType(JButton::class.java) }
   val loginTroublesButton = x { contains(byAccessibleName("Troubles")) or contains(byAccessibleName("Log in with token")) }
-  val startTrialTab = x { byClass("SegmentedButton") and byAccessibleName("Start trial") }
-  val startTrialButton = x { byAccessibleName("Start Free 30-Day Trial") and byClass("SlowActionButton") }
+  val startTrialTab = x { byAccessibleName("Start trial") and byClass("SegmentedButton") }
+  val startTrialButton = x { byAccessibleName("Start Free 30-Day Trial") }
   val continueButton = x { byAccessibleName("Continue") }
   val removeLicenseButton: UiComponent = x { contains(byAccessibleName("Remove License")) or contains(byAccessibleName("Deactivate Subscription")) }
-  val closeButton = x { byAccessibleName("Close") and byClass("JButton") }
+  val closeButton = x { byVisibleText("Close") }
   val optionsButton = x { byAccessibleName("Options") }
-  val closeErrorBannerButton = x { byAccessibleName("Close") and contains(byClass("InplaceButton")) }
 
   val exitButton: UiComponent = x { byAccessibleName("Quit ${driver.fullProductName}") }
 }

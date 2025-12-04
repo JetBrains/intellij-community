@@ -2,10 +2,13 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.toggleMaximized
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.WindowsDialogButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
+import com.intellij.util.system.OS
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
@@ -13,6 +16,7 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
+import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.UIManager
 
@@ -41,8 +45,18 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
       customTitleBar?.forceHitTest(false)
     }
 
-    override fun mouseClicked(e: MouseEvent?) {
-      customTitleBar?.forceHitTest(false)
+    override fun mouseClicked(e: MouseEvent) {
+      // On macOS, the OS handles maximizing on header double-click.
+      // On Linux, we don't receive mouse events for the header, so we can't do anything easily about it.
+      // But on Windows, we receive these events thanks to using a custom header, but the OS doesn't have native maximization.
+      // So let's handle it manually.
+      if (OS.CURRENT == OS.Windows && window is JDialog && e.id == MouseEvent.MOUSE_CLICKED && e.clickCount == 2) {
+        window.toggleMaximized()
+        e.consume()
+      }
+      else {
+        customTitleBar?.forceHitTest(false)
+      }
     }
 
     override fun mouseMoved(e: MouseEvent?) {
@@ -92,6 +106,10 @@ internal class DialogHeader(window: Window) : CustomHeader(window) {
   }
 
   private fun createButtonsPane(): CustomFrameButtons? {
-    return if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
+    return when (OS.CURRENT) {
+      OS.Windows -> WindowsDialogButtons()
+      OS.Linux -> if (hideNativeLinuxTitle(UISettings.shadowInstance)) LinuxCustomFrameButtons.create(createCloseAction(this)) else null
+      else -> null
+    }
   }
 }

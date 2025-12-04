@@ -29,7 +29,11 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
         taskName : 'val task<caret>Name by tasks.registering(Task::class) {}',
         taskName : 'var task<caret>Name by tasks.creating',
         taskName : 'var task<caret>Name by tasks.creating {}',
-        taskName : 'var task<caret>Name by tasks.creating(Task::class) {}'
+        taskName : 'var task<caret>Name by tasks.creating(Task::class) {}',
+        
+        taskName : 'tasks { register("task<caret>Name") }',
+        taskName : 'tasks { var task<caret>Name by registering }',
+        taskName : 'tasks { var task<caret>Name by creating }'
     """)
     fun testTaskHasConfiguration(gradleVersion: GradleVersion, taskName: String, taskDefinition: String) {
         assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)

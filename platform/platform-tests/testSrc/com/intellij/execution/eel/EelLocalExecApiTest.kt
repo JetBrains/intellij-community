@@ -2,15 +2,18 @@
 package com.intellij.execution.eel
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.eel.EelLocalExecApiTest.PTYManagement.*
+import com.intellij.execution.eel.processOutputReader.OutStream.STDERR
+import com.intellij.execution.eel.processOutputReader.OutStream.STDOUT
+import com.intellij.execution.eel.processOutputReader.OutputType
+import com.intellij.execution.eel.processOutputReader.ProcessOutputReader
 import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
-import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.impl.local.getShellFromPasswdRecords
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.readAllBytes
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
 import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
@@ -21,15 +24,12 @@ import io.mockk.coEvery
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.*
-import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.nio.ByteBuffer
-import java.nio.charset.CodingErrorAction
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.time.Duration.Companion.minutes
@@ -52,12 +52,12 @@ class EelLocalExecApiTest {
   }
 
 
-  enum class ExitType() {
+  enum class ExitType {
     KILL, TERMINATE, INTERRUPT, EXIT_WITH_COMMAND
   }
 
-  enum class PTYManagement {
-    NO_PTY, PTY_SIZE_FROM_START, PTY_RESIZE_LATER
+  enum class PTYManagement(val hasTTY: Boolean) {
+    NO_PTY(false), PTY_SIZE_FROM_START(true), PTY_RESIZE_LATER(true)
   }
 
   @Test
@@ -104,9 +104,9 @@ class EelLocalExecApiTest {
   private suspend fun testOutputImpl(ptyManagement: PTYManagement, exitType: ExitType): Unit = coroutineScope {
     val builder = executor.createBuilderToExecuteMain(localEel.exec)
     builder.interactionOptions(when (ptyManagement) {
-                                 PTYManagement.NO_PTY -> null
-                                 PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
-                                 PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
+                                 NO_PTY -> null
+                                 PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
+                                 PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
                                })
     val process = builder.eelIt()
     launch {
@@ -122,7 +122,7 @@ class EelLocalExecApiTest {
 
     // Resize tty
     when (ptyManagement) {
-      PTYManagement.NO_PTY -> {
+      NO_PTY -> {
         try {
           process.resizePty(PTY_COLS, PTY_ROWS)
           Assertions.fail("Exception should have been thrown: process doesn't have pty")
@@ -130,91 +130,84 @@ class EelLocalExecApiTest {
         catch (_: EelProcess.ResizePtyError.NoPty) {
         }
       }
-      PTYManagement.PTY_SIZE_FROM_START -> Unit
-      PTYManagement.PTY_RESIZE_LATER -> {
+      PTY_SIZE_FROM_START -> Unit
+      PTY_RESIZE_LATER -> {
         process.resizePty(PTY_COLS, PTY_ROWS)
         delay(1.seconds) // Resize might take some time
       }
     }
-    val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT) // Not to ignore malformed input
-      .onUnmappableCharacter(CodingErrorAction.REPORT)
-    val dirtyBuffer = ByteBuffer.allocate(8192)
-    val cleanBuffer = CleanBuffer('J')
-    withContext(Dispatchers.Default) {
-      withTimeoutOrNull(10.seconds) {
-        val helloStream = if (ptyManagement == PTYManagement.NO_PTY) {
-          process.stderr
-        }
-        else {
-          process.stdout // stderr is redirected to stdout when launched with PTY
-        }
-        logger.warn("Waiting for $HELLO")
-        while (helloStream.receive(dirtyBuffer) != ReadResult.EOF) {
-          val line = decoder.decode(dirtyBuffer.flip()).toString()
-          logger.warn("Adding raw line '$line'")
-          cleanBuffer.add(line)
-          dirtyBuffer.clear()
-          val fullLine = cleanBuffer.getString()
-          if (HELLO in fullLine) {
+
+    val outputType =
+      if (ptyManagement.hasTTY) {
+        OutputType.TTY(PTY_COLS, PTY_ROWS)
+      }
+      else {
+        OutputType.NoTTY(process.stderr)
+      }
+    ProcessOutputReader(process.stdout, outputType).use { output ->
+
+      withTimeout(30.seconds) {
+        while (true) {
+          val line = output.get(STDERR)
+          if (HELLO in line) {
             break
           }
           else {
-            logger.warn("No $HELLO in $fullLine")
+            logger.warn("No $HELLO in $line")
+            delay(3.seconds)
           }
         }
       }
-      assertThat("No ${HELLO} reported in stderr", cleanBuffer.getString(), CoreMatchers.containsString(HELLO))
-    }
 
 
-    // Test tty api
-    logger.warn("Test tty api")
-    var ttyState: TTYState?
-    cleanBuffer.setPosEnd(HELLO)
-    while (true) {
-
-      ttyState = TTYState.deserializeIfValid(cleanBuffer.getString(), logger::warn)
-      if (ttyState != null) {
-        break
-      }
-      process.stdout.receive(dirtyBuffer)
-      val line = decoder.decode(dirtyBuffer.flip()).toString()
-      logger.warn("Line read $line")
-      cleanBuffer.add(line)
-      dirtyBuffer.clear()
-    }
-    logger.warn("TTY check finished")
-    when (ptyManagement) {
-      PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-        Assertions.assertNotNull(ttyState.size)
-        Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), ttyState.size, "size must be set for tty")
-        val expectedTerm = System.getenv("TERM") ?: "xterm"
-        Assertions.assertEquals(expectedTerm, ttyState.termName, "Wrong term type")
-      }
-      PTYManagement.NO_PTY -> {
-        Assertions.assertNull(ttyState.size, "size must not be set if no tty")
-      }
-    }
-
-    if (ptyManagement == PTYManagement.PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
-      delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
-    }
-
-    // Test kill api
-    when (exitType) {
-      ExitType.KILL -> process.kill()
-      ExitType.TERMINATE -> {
-        when (process) {
-          is EelPosixProcess -> process.terminate()
-          is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
+      var ttyState: TTYState?
+      withTimeout(30.seconds) {
+        while (true) {
+          val fullLine = output.get(STDOUT)
+          val line = fullLine.replace(DROP_HELLO, "")
+          ttyState = TTYState.deserializeIfValid(line, logger::warn) ?: TTYState.deserializeIfValid(fullLine, logger::warn)
+          if (ttyState != null) {
+            break
+          }
+          else {
+            logger.warn("No tty in $line (before cut we had $fullLine)")
+            delay(3.seconds)
+          }
+        }
+        logger.warn("TTY check finished")
+        when (ptyManagement) {
+          PTY_SIZE_FROM_START, PTY_RESIZE_LATER -> {
+            Assertions.assertNotNull(ttyState.size)
+            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), ttyState.size, "size must be set for tty")
+            val expectedTerm = System.getenv("TERM") ?: "xterm"
+            Assertions.assertEquals(expectedTerm, ttyState.termName, "Wrong term type")
+          }
+          NO_PTY -> {
+            Assertions.assertNull(ttyState.size, "size must not be set if no tty")
+          }
         }
       }
-      ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
-        process.sendCommand(Command.SLEEP)
-        process.interrupt()
+
+      if (ptyManagement == PTY_RESIZE_LATER && (exitType == ExitType.INTERRUPT || exitType == ExitType.EXIT_WITH_COMMAND) && process.isWinConPtyProcess) {
+        delay(10.seconds) // workaround: wait a bit to let ConPTY apply the resize
       }
-      ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
-        process.sendCommand(Command.EXIT)
+
+      // Test kill api
+      when (exitType) {
+        ExitType.KILL -> process.kill()
+        ExitType.TERMINATE -> {
+          when (process) {
+            is EelPosixProcess -> process.terminate()
+            is EelWindowsProcess -> error("No SIGTERM analog for Windows processes")
+          }
+        }
+        ExitType.INTERRUPT -> { // Terminate sleep with interrupt/CTRL+C signal
+          process.sendCommand(Command.SLEEP)
+          process.interrupt()
+        }
+        ExitType.EXIT_WITH_COMMAND -> { // Just command to ask script return gracefully
+          process.sendCommand(Command.EXIT)
+        }
       }
     }
 
@@ -229,13 +222,15 @@ class EelLocalExecApiTest {
         }
         else {
           val sigCode = UnixSignal.SIGTERM.getSignalNumber(SystemInfoRt.isMac)
-          assertThat("Exit code must be signal code or +128 (if run using shell)", exitCode, anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
+          assertThat("Exit code must be signal code or +128 (if run using shell)",
+                     exitCode,
+                     anyOf(`is`(sigCode), `is`(sigCode + UnixSignal.EXIT_CODE_OFFSET)))
         }
       }
       ExitType.INTERRUPT -> {
         when (ptyManagement) {
-          PTYManagement.NO_PTY -> Unit // SIGINT is doubtful without PTY especially without console on Windows
-          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> { // CTRL+C/SIGINT handler returns 42, see script
+          NO_PTY -> Unit // SIGINT is doubtful without PTY especially without console on Windows
+          PTY_SIZE_FROM_START, PTY_RESIZE_LATER -> { // CTRL+C/SIGINT handler returns 42, see script
             assertEquals(INTERRUPT_EXIT_CODE, exitCode)
           }
         }
@@ -310,18 +305,6 @@ class EelLocalExecApiTest {
   }
 
   /**
-   * Reads all bytes from the channel asynchronously. Otherwise, a PTY process
-   * launched with `unixOpenTtyToPreserveOutputAfterTermination=true` won't exit.
-   *
-   * @see `com.pty4j.PtyProcessBuilder.setUnixOpenTtyToPreserveOutputAfterTermination`
-   */
-  private fun EelReceiveChannel.readAllBytesAsync(coroutineScope: CoroutineScope) {
-    coroutineScope.launch {
-      readAllBytes()
-    }
-  }
-
-  /**
    * Sends [command] to the helper and flush
    */
   private suspend fun EelProcess.sendCommand(command: Command) {
@@ -331,3 +314,5 @@ class EelLocalExecApiTest {
   private val EelProcess.isWinConPtyProcess: Boolean
     get() = this is EelWindowsProcess && convertToJavaProcess()::class.java.name == "com.pty4j.windows.conpty.WinConPtyProcess"
 }
+
+private val DROP_HELLO = Regex("^.*$HELLO")

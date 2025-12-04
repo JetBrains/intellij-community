@@ -2254,6 +2254,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - sf:SHELF:java.lang.String
 - sf:TOOLWINDOW_ID:java.lang.String
 - sf:VCS_LOG:java.lang.String
+- sf:WORKING_TREES:java.lang.String
 - addContent(com.intellij.ui.content.Content):V
 - attachToolWindow(com.intellij.openapi.wm.ToolWindow):V
 - dispose():V
@@ -2292,6 +2293,7 @@ e:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - sf:REPOSITORY:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - sf:SHELF:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - sf:VCS_LOG:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
+- sf:WORKING_TREES:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - s:getEntries():kotlin.enums.EnumEntries
 - f:getTabName():java.lang.String
 - f:getWeight():I
@@ -3083,6 +3085,7 @@ f:com.intellij.openapi.vcs.impl.PartialChangesUtil
 - sf:getPartialTracker(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change):com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 - sf:getPartialTracker(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 - sf:getVirtualFile(com.intellij.openapi.vcs.changes.Change):com.intellij.openapi.vfs.VirtualFile
+- sf:isPartialChange(com.intellij.openapi.vcs.changes.Change):Z
 - sf:processPartialChanges(com.intellij.openapi.project.Project,java.util.Collection,Z,com.intellij.util.PairFunction):java.util.List
 - sf:runUnderChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.LocalChangeList,java.lang.Runnable):V
 - f:underChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.LocalChangeList,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object

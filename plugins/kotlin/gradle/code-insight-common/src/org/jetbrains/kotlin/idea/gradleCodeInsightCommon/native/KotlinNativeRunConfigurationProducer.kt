@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
@@ -19,11 +19,12 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 
-class KotlinNativeRunConfigurationProducer :
+private class KotlinNativeRunConfigurationProducer :
     LazyRunConfigurationProducer<GradleRunConfiguration>(),
     KotlinNativeRunConfigurationProvider {
 
-    override val isForTests = false
+    override val isForTests: Boolean
+        get() = false
 
     override fun getConfigurationFactory(): ConfigurationFactory =
         GradleExternalTaskConfigurationType.getInstance().factory

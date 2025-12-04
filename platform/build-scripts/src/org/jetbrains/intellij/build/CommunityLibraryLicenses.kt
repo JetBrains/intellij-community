@@ -860,7 +860,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("Kryo5", libraryName = "Kryo5", url = "https://github.com/EsotericSoftware/kryo")
+    LibraryLicense("kryo", libraryName = "kryo", url = "https://github.com/EsotericSoftware/kryo")
       .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md")
       .suppliedByPersons("Nathan Sweet"),
 

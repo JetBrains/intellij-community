@@ -80,17 +80,16 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction(), ActionRe
         }
         panel {
           row {
-            checkBox(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer")).also {
-              val checkbox = it.component
-              checkbox.addItemListener {
-                JBAnimatorHelper.setAvailable(checkbox.isSelected)
+            checkBox(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer")).applyToComponent {
+              addItemListener {
+                JBAnimatorHelper.setAvailable(isSelected)
                 if (JBAnimatorHelper.isAvailable() && isPlaying.get()) {
                   JBAnimatorHelper.requestHighPrecisionTimer(myBezierPainter.animator)
                 }
               }
             }.bindSelected(JBAnimatorHelper::isAvailable, JBAnimatorHelper::setAvailable)
-            contextHelp(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.help"))
-            rowComment(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.comments"))
+              .contextHelp(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.help"))
+              .comment(IdeBundle.message("checkbox.smooth.scrolling.enable.high.precision.timer.comments"))
           }
         }.visible(SystemInfoRt.isWindows)
       }

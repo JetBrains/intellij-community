@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class McpJsonGenerationTest {
@@ -63,7 +64,7 @@ class McpJsonGenerationTest {
 
     // Verify the JSON structure
     assertEquals("sse", jsonConfig["type"]!!.jsonPrimitive.content)
-    val expectedUrl = "http://localhost:$port/sse"
-    assertEquals(expectedUrl, jsonConfig["url"]!!.jsonPrimitive.content)
+    val expectedUrls = setOf("http://127.0.0.1:$port/sse", "http://localhost:$port/sse", "http://[localhost]:$port/sse")
+    assertContains(expectedUrls, jsonConfig["url"]!!.jsonPrimitive.content)
   }
 }

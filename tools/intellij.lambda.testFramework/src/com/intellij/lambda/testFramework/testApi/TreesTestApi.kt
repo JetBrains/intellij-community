@@ -1,6 +1,6 @@
 package com.intellij.lambda.testFramework.testApi
 
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.openapi.concurrency.awaitPromise
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.tree.TreeUtil

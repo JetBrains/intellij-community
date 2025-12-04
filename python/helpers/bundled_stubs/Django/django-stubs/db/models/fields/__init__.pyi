@@ -263,7 +263,7 @@ class FloatField(Field[_ST, _GT]):
 class DecimalField(Field[_ST, _GT]):
     _pyi_private_set_type: str | float | decimal.Decimal | Combinable
     _pyi_private_get_type: decimal.Decimal
-    _pyi_lookup_exact_type: str | decimal.Decimal
+    _pyi_lookup_exact_type: str | int | decimal.Decimal
     # attributes
     max_digits: int
     decimal_places: int
@@ -635,8 +635,9 @@ class BigAutoField(AutoFieldMixin, BigIntegerField[_ST, _GT]): ...  # type: igno
 class SmallAutoField(AutoFieldMixin, SmallIntegerField[_ST, _GT]): ...  # type: ignore[misc]
 
 __all__ = [
-    "AutoField",
     "BLANK_CHOICE_DASH",
+    "NOT_PROVIDED",
+    "AutoField",
     "BigAutoField",
     "BigIntegerField",
     "BinaryField",
@@ -655,7 +656,6 @@ __all__ = [
     "GenericIPAddressField",
     "IPAddressField",
     "IntegerField",
-    "NOT_PROVIDED",
     "NullBooleanField",
     "PositiveBigIntegerField",
     "PositiveIntegerField",

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.toEelApi
 import org.gradle.internal.FileUtils
 import org.jetbrains.plugins.gradle.util.GradleConstants.*
 import java.io.File

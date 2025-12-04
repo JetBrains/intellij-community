@@ -88,11 +88,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
   reason: withProjectLibrary
-- name: lib/jgoodies-common.jar
-  library: jgoodies-common
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jgoodies/jgoodies-common/1/jgoodies-common-1.jar
-  reason: withProjectLibrary
 - name: lib/jps-builders-6.jar
   modules:
   - name: intellij.platform.jps.build.javac.rt

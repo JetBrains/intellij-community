@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/findUsages/similarity/features")
-public class KotlinGroupUsagesBySimilarityFeaturesTestGenerated extends AbstractKotlinGroupUsagesBySimilarityFeaturesTest {
+public class KotlinGroupUsagesBySimilarityFeaturesTestGenerated extends AbstractK1KotlinGroupUsagesBySimilarityFeaturesTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

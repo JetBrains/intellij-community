@@ -11,13 +11,16 @@ import java.nio.file.Path
  * This information is used by validation functions to ensure architectural constraints.
  * 
  * @param projectRoot Absolute path to the project root directory
- * @return Map of module name to ModuleLocationInfo
+ * @return ParseResult containing map of module name to ModuleLocationInfo, or failure with error details
  */
-fun parseModulesXml(projectRoot: Path): Map<String, ModuleLocationInfo> {
+internal fun parseModulesXml(projectRoot: Path): ParseResult<Map<String, ModuleLocationInfo>> {
   val modulesXmlPath = projectRoot.resolve(".idea/modules.xml")
   
   if (!Files.exists(modulesXmlPath)) {
-    return emptyMap()
+    return ParseResult.Failure(
+      error = "File not found: $modulesXmlPath",
+      partial = emptyMap()
+    )
   }
   
   val modules = mutableMapOf<String, ModuleLocationInfo>()
@@ -29,7 +32,13 @@ fun parseModulesXml(projectRoot: Path): Map<String, ModuleLocationInfo> {
     val projectModuleManager = document.getChildren("component")
       .find { it.getAttributeValue("name") == "ProjectModuleManager" }
     
-    val modulesParent = projectModuleManager?.getChild("modules") ?: return emptyMap()
+    val modulesParent = projectModuleManager?.getChild("modules")
+    if (modulesParent == null) {
+      return ParseResult.Failure(
+        error = "No <modules> element found in .idea/modules.xml",
+        partial = emptyMap()
+      )
+    }
     
     for (moduleElement in modulesParent.getChildren("module")) {
       var filepath = moduleElement.getAttributeValue("filepath") ?: continue
@@ -49,13 +58,16 @@ fun parseModulesXml(projectRoot: Path): Map<String, ModuleLocationInfo> {
       
       modules[moduleName] = ModuleLocationInfo(location, filepath)
     }
+    
+    return ParseResult.Success(modules)
   }
   catch (e: Exception) {
-    // If parsing fails, return empty map (validation will report as unknown)
     System.err.println("Warning: Failed to parse .idea/modules.xml: ${e.message}")
+    return ParseResult.Failure(
+      error = "Failed to parse .idea/modules.xml: ${e.message}",
+      partial = modules  // Return any modules parsed before failure
+    )
   }
-  
-  return modules
 }
 
 /**
@@ -68,7 +80,7 @@ fun parseModulesXml(projectRoot: Path): Map<String, ModuleLocationInfo> {
  * @param projectRoot Project root path for constructing file paths
  * @return List of violations
  */
-fun validateCommunityProducts(
+internal fun validateCommunityProducts(
   products: List<ProductSpec>,
   allModuleSets: List<ModuleSetMetadata>,
   moduleLocations: Map<String, ModuleLocationInfo>,
@@ -136,7 +148,7 @@ fun validateCommunityProducts(
  * @param projectRoot Project root path for constructing file paths
  * @return List of violations
  */
-fun validateModuleSetLocations(
+internal fun validateModuleSetLocations(
   allModuleSets: List<ModuleSetMetadata>,
   moduleLocations: Map<String, ModuleLocationInfo>,
   projectRoot: Path

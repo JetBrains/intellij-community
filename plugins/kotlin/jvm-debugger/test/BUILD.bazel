@@ -113,6 +113,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
+    "//platform/execution",
   ],
   runtime_deps = [
     "//platform/core-api:core",

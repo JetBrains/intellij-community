@@ -24,11 +24,6 @@ fun demoGaps(): DialogPanel {
         textField()
           .enabledIf(checkBox.selected)
       }.rowComment("Gaps after check boxes/radio buttons when they are intended to serve as labels")
-      row {
-        checkBox("Option")
-          .gap(RightGap.SMALL)
-        contextHelp("Option description")
-      }.rowComment("Gaps before context help")
       row("Width:") {
         textField()
           .gap(RightGap.SMALL)

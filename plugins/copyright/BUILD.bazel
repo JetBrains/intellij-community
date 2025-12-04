@@ -28,12 +28,13 @@ jvm_library(
     "//xml/impl",
     "//platform/ide-core-impl",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/external-system-api:externalSystem",
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
     "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -58,7 +59,7 @@ jvm_library(
     "//xml/impl",
     "//platform/ide-core-impl",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -74,6 +75,7 @@ jvm_library(
     "//platform/testFramework/junit5.jimfs",
     "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
     "//platform/core-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.copyright` end

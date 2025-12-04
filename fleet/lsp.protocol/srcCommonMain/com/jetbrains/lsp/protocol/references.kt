@@ -9,6 +9,12 @@ import kotlinx.serialization.builtins.serializer
 interface ReferenceOptions : WorkDoneProgressOptions
 
 @Serializable
+data class ReferenceRegistrationOptions(
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : ReferenceOptions, TextDocumentRegistrationOptions
+
+@Serializable
 data class ReferenceParams(
     override val textDocument: TextDocumentIdentifier,
     override val position: Position,

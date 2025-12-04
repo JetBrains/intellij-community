@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,9 +112,18 @@ public final class PythonRegexpInjector implements MultiHostInjector {
   private @Nullable RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
     if (element == null ||
         !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
-        !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi", "regex.py", "regex.pyi") ||
         !(element instanceof PyFunction)) {
       return null;
+    }
+
+    final var containingFile = element.getContainingFile();
+    final String fileName = containingFile.getName();
+    if (!ArrayUtil.contains(fileName, "re.py", "re.pyi")) {
+      final var qName = QualifiedNameFinder.findCanonicalImportPath(containingFile, null);
+      final String moduleName = qName != null ? qName.toString() : null;
+      if (!"regex._main".equals(moduleName)) {
+        return null;
+      }
     }
 
     final String functionName = ((PyFunction)element).getName();

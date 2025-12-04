@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ModalityState;
@@ -127,7 +127,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       if (!addElementToMyData(element)) return true;
     }
 
-    myAlarm.addRequest(() -> WriteIntentReadAction.run((Runnable)() -> {
+    myAlarm.addRequest(() -> WriteIntentReadAction.run(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
     }), 200, ModalityState.stateForComponent(myPopup.getContent()));

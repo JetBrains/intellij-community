@@ -21,7 +21,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/execution",
     "//platform/util",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//python/python-exec-service:community-execService",
   ]
 )

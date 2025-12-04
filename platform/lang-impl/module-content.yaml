@@ -10,7 +10,6 @@
   - name: intellij.platform.ide.initialConfigImport
   - name: intellij.platform.ide.internal
   - name: intellij.platform.ide.updateChecker
-  - name: intellij.platform.indexing.impl
   - name: intellij.platform.lang.impl
   - name: intellij.platform.wsl.impl
   library: googlecode.plist.dd

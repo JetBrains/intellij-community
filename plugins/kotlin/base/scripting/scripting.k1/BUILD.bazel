@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/workspace/storage",
@@ -63,6 +63,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/refactoring",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -83,7 +85,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:junit5",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -116,6 +118,7 @@ jvm_library(
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/workspace",
     "//plugins/kotlin/code-insight/utils",
     "//platform/workspace/jps",
@@ -126,6 +129,8 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/refactoring",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build kotlin.base.scripting.k1` end

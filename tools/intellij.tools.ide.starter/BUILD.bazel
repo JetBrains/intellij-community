@@ -21,7 +21,7 @@ jvm_library(
   resources = [":ide-starter_resources"],
   kotlinc_opts = ":custom_ide-starter",
   deps = [
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "//libraries/jackson/jackson",

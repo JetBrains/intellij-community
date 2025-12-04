@@ -7,12 +7,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.application
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -34,23 +34,23 @@ internal abstract class SimulateFreezeBase : DumbAwareAction() {
         override fun checkInput(inputString: String?): Boolean = StringUtil.parseInt(inputString, -1) > 0
         override fun canClose(inputString: String?): Boolean = StringUtil.parseInt(inputString, -1) > 0
       }) ?: return
-    simulatedFreeze(durationString.toLong())
+    simulatedFreeze(e.coroutineScope, durationString.toLong())
   }
 
-  protected abstract fun simulatedFreeze(ms: Long)
+  protected abstract fun simulatedFreeze(scope: CoroutineScope, ms: Long)
 }
 
 internal class SimulateFreeze : SimulateFreezeBase() {
-  override fun simulatedFreeze(ms: Long) {
+  override fun simulatedFreeze(scope: CoroutineScope, ms: Long) {
     Thread.sleep(ms)
   }
 }
 
 internal class SimulateRWFreeze : SimulateFreezeBase() {
-  override fun simulatedFreeze(ms: Long) {
+  override fun simulatedFreeze(scope: CoroutineScope, ms: Long) {
     val semaphore = Semaphore(1, 1)
 
-    currentThreadCoroutineScope().launch {
+    scope.launch {
       val counter = AtomicInteger(0)
       readAction {
         semaphore.release()
@@ -70,7 +70,7 @@ internal class SimulateRWFreeze : SimulateFreezeBase() {
       }
     }
 
-    currentThreadCoroutineScope().launch {
+    scope.launch {
       semaphore.acquire()
       logger<SimulateRWFreeze>().info("start write-action")
       withContext(Dispatchers.EDT) {

@@ -13,7 +13,6 @@ import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.ModuleBuilderListener
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
@@ -22,13 +21,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -142,27 +138,15 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
-        this,
+        wizardContext,
         locationProperty.toEelDescriptorProperty(),
         jdkIntentProperty,
-        wizardContext.disposable,
-        wizardContext.projectJdk,
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
       )
 
-      moduleBuilder.addListener(object : ModuleBuilderListener {
-        override fun moduleCreated(module: Module) {
-          val downloadTask = jdkIntentProperty.get().downloadTask ?: return
-          val downloadService = module.project.service<JdkDownloadService>()
-          val jdk = downloadService.setupInstallableSdk(downloadTask)
-          if (wizardContext.isCreatingNewProject) {
-            ProjectRootManager.getInstance(module.project).projectSdk = jdk
-          } else {
-            ModuleRootModificationUtil.setModuleSdk(module, jdk)
-          }
-          downloadService.downloadSdk(jdk)
-        }
-      })
+      moduleBuilder.addListener { module ->
+        module.project.service<JdkDownloadService>().scheduleDownloadSdk(wizardContext.projectJdk)
+      }
     }.bottomGap(BottomGap.SMALL)
   }
 

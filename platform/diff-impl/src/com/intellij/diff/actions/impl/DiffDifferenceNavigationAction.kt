@@ -9,9 +9,11 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.PrevNextFileIterable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 
-internal abstract class DiffDifferenceNavigationAction : AnAction(), DumbAware, ActionPromoter {
+internal abstract class DiffDifferenceNavigationAction : AnAction(), DumbAware, ActionPromoter, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
     isEnabledInModalContext = true
   }
@@ -28,11 +30,15 @@ internal abstract class DiffDifferenceNavigationAction : AnAction(), DumbAware, 
 
     val available = isAvailable(iterable, fileIterable, crossFileIterable)
 
+    e.presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, null)
     e.presentation.isVisible = available
     e.presentation.isEnabled = false
     if (!available) {
       return
     }
+
+    // Prevents the action button from being hidden when the action is disabled
+    e.presentation.putClientProperty(ActionRemoteBehavior.SKIP_FALLBACK_UPDATE, true)
 
     if (iterable != null && iterable.canNavigate()) {
       e.presentation.isEnabled = true

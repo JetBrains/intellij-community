@@ -4,8 +4,8 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,10 +27,10 @@ public final class MethodParameterTypesMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){
-      if (place instanceof PsiMethod){
+      if (place instanceof PsiParameterListOwner owner){
         List<Result> result = new ArrayList<>();
         Project project = place.getProject();
-        for (PsiParameter parameter : ((PsiMethod)place).getParameterList().getParameters()) {
+        for (PsiParameter parameter : owner.getParameterList().getParameters()) {
           result.add(new PsiTypeResult(parameter.getType(), project));
         }
         return new ListResult(result);

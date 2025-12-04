@@ -3,12 +3,17 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.toLambdaParams
+import com.intellij.remoteDev.tests.impl.LambdaTestHost
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
+import kotlin.reflect.KClass
 
 /**
  * Wrap test method invocations in lambda that later called on the IDE side.
@@ -51,11 +56,11 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(perTestSupervisorScope.coroutineContext) {
       // TODO: use serialized lambda invocation
-      IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
-                                                  params = mapOf(
+      IdeInstance.ide.runNamedLambda(InjectedLambda::class,
+                                     params = mapOf(
                                                     "testClass" to (invocationContext.targetClass.name ?: ""),
                                                     "testMethod" to (invocationContext.executable?.name ?: ""),
-                                                    "methodArguments" to serializeArguments(invocationContext.arguments)
+                                                    "methodArguments" to serializeArguments(fullMethodName, invocationContext.arguments)
                                                   ))
     }
 
@@ -65,6 +70,20 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   }
 }
 
+internal suspend fun BackgroundRunWithLambda.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  return rdSession.runNamedLambda(namedLambdaClass, params)
+}
+
+internal suspend fun BackgroundRunWithLambda.runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
+}
+
+internal suspend fun LambdaRdTestSession.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+  val protocol = this.protocol
+                 ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
+  runLambda.startSuspending(protocol.lifetime,
+                            LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
+}
 
 internal const val ARGUMENTS_SEPARATOR = "], ["
 

@@ -5,39 +5,22 @@ import com.intellij.openapi.components.service
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitRepositoryApi
 import com.intellij.vcs.git.rpc.GitUiSettingsApi
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchesCollection
-import git4idea.test.GitSingleRepoTest
 import git4idea.test.checkoutNew
 import git4idea.test.createSubRepository
 import git4idea.test.git
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
-  private val updatesChanel = Channel<GitRepositoriesHolder.UpdateType>(capacity = 1000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-  override fun getDebugLogCategories() = super.getDebugLogCategories().plus(GitRepositoriesHolder::class.java.name)
-
-  override fun setUp() {
-    super.setUp()
-
-    project.messageBus.connect().subscribe(GitRepositoriesHolder.UPDATES,
-                                           GitRepositoriesHolder.UpdatesListener { updateType -> updatesChanel.trySend(updateType) })
-  }
+class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase() {
 
   fun `test single repository data is available`() {
     val holder = GitRepositoriesHolder.getInstance(project)
@@ -209,35 +192,10 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     holder.getTestRepo()
   }
 
-  private fun GitRepositoriesHolder.getTestRepo(): GitRepositoryModel {
-    val holderRepo = checkNotNull(get(repo.rpcId))
-    assertEquals(holderRepo.root, repo.root)
-    return holderRepo
-  }
-
-  private fun executeAndExpectEvent(
-    operation: suspend () -> Unit,
-    condition: (currentEvent: GitRepositoriesHolder.UpdateType, previousEvents: List<GitRepositoriesHolder.UpdateType>) -> Boolean,
-  ) {
-    runBlocking {
-      skipEvents()
-      operation()
-      val collected = mutableListOf<GitRepositoriesHolder.UpdateType>()
-      withTimeout(5.seconds) {
-        updatesChanel.consumeAsFlow().first {
-          LOG.info("Received update: $it")
-          collected.add(it)
-          condition(it, collected)
-        }
-      }
-    }
-  }
-
-  private suspend fun skipEvents() {
-    withTimeout(1.seconds) {
-      while (!updatesChanel.isEmpty) {
-        updatesChanel.tryReceive()
-      }
-    }
+  fun `test creating a worktree on a main repo`() {
+    doTestWorkingTreeCreation(
+      projectNioRoot,
+      GitWorkingTree(repo.root.path, repo.currentBranch!!.fullName, true, true)
+    )
   }
 }

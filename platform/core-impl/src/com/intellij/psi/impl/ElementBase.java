@@ -4,6 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
@@ -87,8 +88,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         return null;
       }
-      return IconManager.getInstance().createDeferredIcon(
-        baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
+      ElementIconRequest param = ReadAction.compute(() -> new ElementIconRequest(psiElement, psiElement.getProject(), flags));
+      return IconManager.getInstance().createDeferredIcon(baseIcon, param, ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);

@@ -139,6 +139,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",

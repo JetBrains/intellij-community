@@ -64,9 +64,9 @@ class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>
 @ApiStatus.Internal
 class SeAdaptedTabFilter: SeFilter {
   override fun toState(): SeFilterState =
-    SeFilterState.Data(mapOf(IS_ADAPTED_FILTER to SeFilterValue.One("true"),
+    SeFilterState.Data(mapOf(IS_ADAPTED_FILTER to listOf("true"),
                              // Generate a random value so that the filter change would restart the search
-                             RANDOM_VALUE to SeFilterValue.One(UUID.randomUUID().toString())))
+                             RANDOM_VALUE to listOf(UUID.randomUUID().toString())))
 
   companion object {
     private const val IS_ADAPTED_FILTER = "IS_ADAPTED_FILTER"
@@ -75,7 +75,7 @@ class SeAdaptedTabFilter: SeFilter {
     fun from(state: SeFilterState): SeAdaptedTabFilter? {
       return when (state) {
         is SeFilterState.Data -> {
-          if (state.map[IS_ADAPTED_FILTER]?.let { it as? SeFilterValue.One }?.value?.toBoolean() ?: false)
+          if (state.getBoolean(IS_ADAPTED_FILTER) ?: false)
             SeAdaptedTabFilter()
           else null
         }

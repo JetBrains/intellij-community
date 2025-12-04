@@ -292,7 +292,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public void markDirty() {
-    if (!isDirty()) {
+    if (!isDirty()) {//TODO RC: [isDirty() -> markDirtyInternal()] are non-atomic!
       markDirtyInternal();
       VirtualFileSystemEntry parent = getParent();
       if (parent != null) parent.markDirty();

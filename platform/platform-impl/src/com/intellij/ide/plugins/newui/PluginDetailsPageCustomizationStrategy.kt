@@ -20,7 +20,7 @@ object DefaultPluginDetailsPageCustomizationStrategy : PluginDetailsPageCustomiz
   }
 
   override fun isAdditionalTextVisible(pluginModel: PluginUiModel, isMarketPlace: Boolean): Boolean {
-    return !isMarketPlace
+    return true
   }
 }
 

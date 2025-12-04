@@ -2,19 +2,15 @@
 package com.intellij.devkit.compose.threadingModelHelper
 
 import com.intellij.devkit.compose.DevkitComposeBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.psi.PsiMethod
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,7 +24,7 @@ class LockReqAction : AnAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+    e.coroutineScope.launch(Dispatchers.Default) {
       val project = e.project ?: return@launch
       val editor = e.getData(CommonDataKeys.EDITOR) ?: return@launch
 

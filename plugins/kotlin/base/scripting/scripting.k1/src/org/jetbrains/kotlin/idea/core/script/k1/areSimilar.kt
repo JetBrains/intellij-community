@@ -2,14 +2,10 @@
 package org.jetbrains.kotlin.idea.core.script.k1
 
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.defaultImports
-import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.dependenciesSources
-import kotlin.script.experimental.api.ide
-import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.util.toClassPathOrEmpty
 
 /**
  * For using in DefaultScriptConfigurationManager and in tests only

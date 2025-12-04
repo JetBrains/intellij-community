@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.util.TextRange
@@ -28,7 +28,7 @@ abstract class KotlinSuggestedRefactoringSupportBase : SuggestedRefactoringSuppo
                     return anchor.nameIdentifier?.textRange
                 }
 
-                val start = anchor.modifierList?.contextReceiverList?.textRange?.startOffset
+                val start = anchor.modifierList?.contextParameterList?.textRange?.startOffset
                     ?: anchor.receiverTypeReference?.textRange?.startOffset
                     ?: anchor.nameIdentifier?.textRange?.startOffset
                     ?: return null

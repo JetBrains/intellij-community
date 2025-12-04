@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -14,7 +14,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -52,8 +51,7 @@ import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationEr
 import org.jetbrains.kotlin.psi.*
 import kotlin.coroutines.cancellation.CancellationException
 
-
-class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtension {
+internal class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtension {
     /**
      * map [PsiElement] -> list of highlighting builders for this element, built in [analyzeFile]
      * This map is required to extract diagnostics exactly when the current element is being visited, to avoid flickers

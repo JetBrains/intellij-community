@@ -6,7 +6,6 @@ import com.intellij.concurrency.captureThreadContext
 import com.intellij.find.impl.FindKey
 import com.intellij.ide.SelectInEditorManager
 import com.intellij.ide.ui.icons.icon
-import com.intellij.ide.ui.textChunk
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
@@ -322,7 +321,7 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   private class UsageInfoModelPresentation(val model: FindInFilesResult) : UsagePresentation {
     override fun getIcon(): Icon? = model.iconId?.icon()
 
-    override fun getText(): Array<out TextChunk> = model.presentation.map { it.textChunk() }.toTypedArray()
+    override fun getText(): Array<out TextChunk> = model.presentation.map { it.toTextChunk() }.toTypedArray()
 
     override fun getPlainText(): String = model.presentation.joinToString("") { it.text }
 

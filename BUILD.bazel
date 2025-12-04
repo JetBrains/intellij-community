@@ -220,7 +220,7 @@ jvm_library(
     "//plugins/completion-ml-ranking",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger:java-debugger-streams",
-    "@lib//:jgoodies-common",
+    "//libraries/jgoodies/common",
     "//plugins/editorconfig:editorconfig-plugin-main",
     "//plugins/sh/plugin:plugin-main",
     "//plugins/terminal/sh",
@@ -286,6 +286,7 @@ jvm_library(
     "//plugins/maven/maven36-server-impl:server-m36-impl",
     "//plugins/maven/maven40-server-impl:server-m40",
     "//plugins/mcp-server:mcpserver",
+    "//python/pluginCore:community-plugin",
   ]
 )
 
@@ -423,7 +424,7 @@ jvm_library(
     "//plugins/completion-ml-ranking:completionMlRanking-tests_test_lib",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger:java-debugger-streams",
-    "@lib//:jgoodies-common",
+    "//libraries/jgoodies/common",
     "//plugins/testng_rt/tests:tests_test_lib",
     "//plugins/editorconfig:editorconfig-plugin-main",
     "//platform/workspace/storage/tests:tests_test_lib",
@@ -564,6 +565,7 @@ jvm_library(
     "//plugins/terminal/tests:tests_test_lib",
     "//plugins/git4idea/terminal",
     "//plugins/git4idea/terminal:terminal_test_lib",
+    "//python/pluginCore:community-plugin",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

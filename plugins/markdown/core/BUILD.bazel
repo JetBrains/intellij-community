@@ -54,7 +54,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "//libraries/caffeine",
@@ -65,6 +65,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",
+    "//platform/execution",
+    "//platform/lang-api:lang",
   ],
   exports = ["//platform/ui.jcef"]
 )

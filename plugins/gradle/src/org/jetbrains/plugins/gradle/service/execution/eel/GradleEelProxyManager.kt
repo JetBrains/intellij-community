@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import com.intellij.platform.util.coroutines.childScope

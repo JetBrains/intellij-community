@@ -74,8 +74,21 @@ public interface PositionManager {
    * Return file types this position manager accepts
    *
    * @return set of accepted file types, or null if it accepts all
+   * @deprecated use and override {@link #isAcceptedFileType(FileType)} instead.
    */
+  @Deprecated
   default @Nullable Set<? extends FileType> getAcceptedFileTypes() {
     return null;
+  }
+
+  /**
+   * @param fileType file type to check
+   * @return true if this position manager accepts the supplied file type
+   * @implSpec default implementation delegates to {@link #getAcceptedFileTypes()}. 
+   * It should be overwritten in the subclasses.
+   */
+  default boolean isAcceptedFileType(@NotNull FileType fileType) {
+    Set<? extends FileType> types = getAcceptedFileTypes();
+    return types == null || types.contains(fileType);
   }
 }

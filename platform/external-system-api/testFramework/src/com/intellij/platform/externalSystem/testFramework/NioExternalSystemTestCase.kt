@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework
 
-import com.intellij.UtilBundle
-import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -71,11 +68,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
       projectRoot = value
     }
 
-  private var allConfigs: MutableList<VirtualFile?> = ArrayList<VirtualFile?>()
-
-  private var wslDistribution: WSLDistribution? = null
-  val myWSLDistribution: WSLDistribution?
-    get() = wslDistribution
+  private var allConfigs: MutableList<VirtualFile?> = ArrayList()
 
   private var testDir: Path? = null
   val myTestDir: Path
@@ -88,20 +81,12 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
       testFixture = value
     }
 
-  private var ourTempDir: Path? = null
-
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
     setUpFixtures()
     project = myTestFixture.getProject()
-
-    setupWsl()
-    ensureTempDirCreated()
-
-    val testDirName = "testDir" + System.currentTimeMillis()
-    testDir = ourTempDir!!.resolve(testDirName)
-    testDir!!.ensureExists()
+    testDir = Path.of(myProject.basePath!!)
 
     EdtTestUtil.runInEdtAndWait<RuntimeException?>(ThrowableRunnable {
       ApplicationManager.getApplication().runWriteAction(Runnable {
@@ -127,30 +112,7 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun setupWsl() {
-    val wslMsId = System.getProperty("wsl.distribution.name") ?: return
-    val distributions = WslDistributionManager.getInstance().getInstalledDistributions()
-    check(!distributions.isEmpty()) { "no WSL distributions configured!" }
-    wslDistribution = distributions.first { it: WSLDistribution? -> wslMsId == it!!.msId }
-                        ?: throw IllegalStateException("Distribution $wslMsId was not found")
-  }
-
   protected open fun collectAllowedRoots(roots: MutableList<String>): Unit = Unit
-
-  @Throws(IOException::class)
-  private fun ensureTempDirCreated() {
-    if (ourTempDir != null) return
-
-    if (wslDistribution == null) {
-      ourTempDir = Path.of(FileUtil.getTempDirectory()).resolve(getTestsTempDir())
-    }
-    else {
-      ourTempDir = Path.of(wslDistribution!!.getWindowsPath("/tmp")).resolve(getTestsTempDir())
-    }
-
-    ourTempDir!!.delete()
-    ourTempDir!!.ensureExists()
-  }
 
   protected abstract fun getTestsTempDir(): String?
 
@@ -167,9 +129,11 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
 
   @Throws(Exception::class)
   protected fun setUpProjectRoot() {
-    val projectDir = testDir!!.resolve("project")
-    projectDir.ensureExists()
-    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
+    val projectRootPath = Path.of(myProject.basePath!!).resolve("project")
+    if (!projectRootPath.exists()) {
+      projectRootPath.createDirectories()
+    }
+    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectRootPath)
   }
 
   @Throws(Exception::class)
@@ -404,17 +368,6 @@ abstract class NioExternalSystemTestCase : UsefulTestCase() {
           }
         }
       return roots
-    }
-  }
-
-  private fun Path.ensureExists() {
-    if (!exists()) {
-      try {
-        createDirectories()
-      }
-      catch (e: Exception) {
-        throw IOException(UtilBundle.message("exception.directory.can.not.create", this), e)
-      }
     }
   }
 }

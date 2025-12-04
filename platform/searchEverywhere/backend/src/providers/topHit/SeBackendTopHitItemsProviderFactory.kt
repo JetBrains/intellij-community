@@ -3,11 +3,11 @@ package com.intellij.platform.searchEverywhere.backend.providers.topHit
 
 import com.intellij.ide.IdeBundle
 import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProviderFactory
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Internal
-class SeBackendTopHitItemsProviderFactory : SeTopHitItemsProviderFactory() {
-  override val isHost: Boolean get() = true
-  override val displayName: @Nls String get() = IdeBundle.message("search.everywhere.group.name.top.hit")
+private class SeBackendTopHitItemsProviderFactory : SeTopHitItemsProviderFactory() {
+  override val isHost: Boolean
+    get() = true
+  override val displayName: @Nls String
+    get() = IdeBundle.message("search.everywhere.group.name.top.hit")
 }

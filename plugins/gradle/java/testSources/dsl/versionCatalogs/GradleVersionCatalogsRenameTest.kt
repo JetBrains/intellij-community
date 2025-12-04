@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.BASE_VERSION_CATALOG_FIXTURE
 import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -16,8 +17,8 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test renaming a library in a TOML, that was not synced`(gradleVersion: GradleVersion) {
-    testEmptyProject(gradleVersion) {
+  fun `test renaming a library in a TOML`(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       writeTextAndCommit("build.gradle", "libs.aaa.bbb.ccc")
       writeTextAndCommit("gradle/libs.versions.toml", """
         [libraries]
@@ -35,8 +36,8 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun `test renaming a version ref in a TOML, that was not synced`(gradleVersion: GradleVersion) {
-    testEmptyProject(gradleVersion) {
+  fun `test renaming a version ref in a TOML`(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       writeTextAndCommit("build.gradle", "")
       writeTextAndCommit("gradle/libs.versions.toml", """
         [versions]

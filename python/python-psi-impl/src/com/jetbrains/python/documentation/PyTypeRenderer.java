@@ -197,6 +197,12 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       // There is no way to represent weak unions through type hints
       return visitUnknownType();
     }
+
+    @Override
+    public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
+      HtmlChunk selfTypeRender = className(isRenderingFqn() ? "typing.Self" : "Self"); //NON-NLS
+      return selfType.isDefinition() ? wrapInTypingType(selfTypeRender) : selfTypeRender;
+    }
   }
 
   protected boolean maxDepthExceeded() {
@@ -526,7 +532,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   @Override
   public @NotNull HtmlChunk visitPySelfType(@NotNull PySelfType selfType) {
     // Don't render Self as a type parameter
-    return className(selfType.getName());
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(className(isRenderingFqn() ? "typing.Self" : "Self")); //NON-NLS
+    builder.append("@");
+    builder.append(render(selfType.getScopeClassType().toInstance()));
+    return selfType.isDefinition() ? wrapInTypingType(builder.toFragment()) : builder.toFragment();
   }
 
   @Override

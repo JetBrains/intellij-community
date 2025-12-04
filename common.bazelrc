@@ -152,5 +152,4 @@ test --test_output=streamed
 test --test_timeout=60,300,900,14400
 
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
-common --action_env=ANDROID_HOME=
-common --action_env=ANDROID_SDK_HOME=
+common --repo_env=ANDROID_HOME=

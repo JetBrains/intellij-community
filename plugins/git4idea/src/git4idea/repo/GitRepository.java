@@ -131,4 +131,7 @@ public interface GitRepository extends Repository {
 
   @NotNull
   RepositoryId getRpcId();
+
+  @NotNull
+  GitWorkingTreeHolder getWorkingTreeHolder();
 }

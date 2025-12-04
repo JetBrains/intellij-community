@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner.Compan
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.findScratchFileEditorWithPreview
 
-class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFileAutoRunner, Disposable {
+private class ScratchFileAutoRunnerK1(private val project: Project) : ScratchFileAutoRunner, Disposable {
     private val myAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
     override fun documentChanged(event: DocumentEvent) {

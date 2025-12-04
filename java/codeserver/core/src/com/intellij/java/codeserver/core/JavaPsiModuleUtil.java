@@ -502,12 +502,20 @@ public final class JavaPsiModuleUtil {
       source = getPhysicalModule(source);
       destination = getPhysicalModule(destination);
       Collection<PsiJavaModule> nodes = myGraph.getNodes();
-      if (nodes.contains(destination) && nodes.contains(source)) {
+      if (!nodes.contains(destination) || !nodes.contains(source)) {
+        return false;
+      }
+
+      UniqueBuffer<PsiJavaModule> buffer = new UniqueBuffer<>();
+      buffer.add(destination);
+      while (!buffer.isEmpty()) {
+        destination = buffer.poll();
         Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
         while (directReaders.hasNext()) {
           PsiJavaModule next = directReaders.next();
-          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && !next.equals(destination) && reads(source, next)) {
-            return true;
+          if (source.equals(next)) return true;
+          if (myTransitiveEdges.contains(key(destination, next)) && !next.equals(destination)) {
+            buffer.add(next);
           }
         }
       }
@@ -590,6 +598,29 @@ public final class JavaPsiModuleUtil {
       if (!(file.getOriginalFile() instanceof PsiJavaFile origin)) return from;
       if (origin.getModuleDeclaration() instanceof PsiJavaModule result) return result;
       return from;
+    }
+
+    /**
+     * FIFO queue that prevents duplicate additions.
+     * Once added, an element cannot be added again even after being polled.
+     */
+    private static class UniqueBuffer<T> {
+      private final Set<T> myUnique = new HashSet<>();
+      private final Queue<T> myBuffer = new ArrayDeque<>();
+
+      public void add(T value) {
+        if (myUnique.add(value)) {
+          myBuffer.add(value);
+        }
+      }
+
+      public T poll() {
+        return myBuffer.poll();
+      }
+
+      public boolean isEmpty() {
+        return myBuffer.isEmpty();
+      }
     }
   }
 

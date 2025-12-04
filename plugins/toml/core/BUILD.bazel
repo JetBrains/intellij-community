@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.toml.core` end

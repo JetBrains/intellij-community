@@ -743,7 +743,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //   it's return value) then re-try findChildById():
       if (Boolean.FALSE.equals(wasInPersistentChildren)) {
         for (int i = 0; i < 3; i++) {
-          try { directoryData.wait(0, 1); } catch (InterruptedException ignored) {}
+          try {
+            directoryData.wait(0, 1);
+          }
+          catch (InterruptedException ignored) {
+          }
           boolean isInPersistentChildren = isInPersistentChildren(pFS, getId(), childId);
           if (isInPersistentChildren) {
             return findChildById(childId);
@@ -1039,10 +1043,31 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimization: do not travel up unnecessarily
   private void markDirtyRecursivelyInternal() {
+    //TODO RC: cachedChildren() or iterInDbChildren() or getChildren()? Normally, it is enough to mark dirty only the
+    //         cachedChildren() (=in-memory children) -- because when VFS loads a VirtualFile entry into memory it marks
+    //         it dirty anyway, see .initializeChildData().
+    //         But .dirty is just a flag meaning 'probably, out-of-sync', it doesn't _force_ syncing itself -- someone
+    //         needs to call .refresh() to trigger the actual sync. And .refresh() may be called significantly later
+    //         (or not called at all), which creates a time-window for using unsynced file data. IJPL-219404 is the example
+    //         of how it could play out.
+    //         This time-window could be reduced by using iterInDbChildren() here: this makes more VFS files to be marked
+    //         dirty initially, and hence synced during initial refresh -- thus, less chance someone steps on unsynced file
+    //         later on.
+    //         But this is only a partial workaround, not a solution -- and it also costs an overhead because _all_ VFS
+    //         files are always refreshed -- which is significant if the current project is small, but VFS contains many
+    //         files from e.g. other larger project(s), which will be refreshed uselessly.
+    //         Which is why we rolled back this workaround.
+    //         Logically, the root cause of IJPL-219404 is not the cachedChildren() vs iterInDbChildren() at all -- the
+    //         root cause is that we regularly use VirtualFiles without checking .isDirty()/.refresh(). If a VirtualFile
+    //         could be out-of-sync (=dirty) then _each_ sound access to VirtualFile's data should be prepended by
+    //         `if file.isDirty() -> file.refresh(synchronous: true)`. But this is not how it is done in the codebase now,
+    //         and unlikely will be done this way soon: `refresh(synchronous: true)` is not instant, and also can't be
+    //         called under RA -- so update all the callsites is untrivial.
+    //         This is where we are today
     for (VirtualFileSystemEntry child : cachedChildren()) {
       child.markDirtyInternal();
-      if (child instanceof VirtualDirectoryImpl) {
-        ((VirtualDirectoryImpl)child).markDirtyRecursivelyInternal();
+      if ((child instanceof VirtualDirectoryImpl childDir) && !child.isRecursiveOrCircularSymlink()) {
+        childDir.markDirtyRecursivelyInternal();
       }
     }
   }

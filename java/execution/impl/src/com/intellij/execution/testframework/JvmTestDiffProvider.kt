@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework
 
 import com.intellij.execution.filters.ExceptionInfoCache
 import com.intellij.execution.filters.ExceptionLineParserFactory
 import com.intellij.execution.testframework.actions.TestDiffProvider
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
@@ -44,29 +46,50 @@ class JvmTestDiffProvider : TestDiffProvider {
     val lineParser = ExceptionLineParserFactory.getInstance().create(exceptionCache)
     val expectedArgCandidates = mutableListOf<PsiElement>()
     searchStacktrace.lines().forEach { line ->
-      lineParser.execute(line, line.length) ?: return@findExpected null
+      runReadAction {
+        ProgressManager.checkCanceled()
+        lineParser.execute(line, line.length)
+      } ?: return@findExpected null
       val file = lineParser.file ?: return@findExpected null
       val diffProvider = TestDiffProvider.getProviderByLanguage(file.language).asSafely<JvmTestDiffProvider>()
                          ?: return@findExpected null
-      val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@findExpected null
-      expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })
-      if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
-        val containingMethod = expectedParam?.getContainingUMethod() ?: return@findExpected null
 
-        val expectedArg = failedCall.getArgumentForParameter(containingMethod.uastParameters.indexOf(expectedParam))
-                          ?: return@findExpected null
-        diffProvider.getExpectedElement(expectedArg, expected)?.let { return it }
-        if (expectedArg is UReferenceExpression) {
-          val resolved = expectedArg.resolveToUElement()
-          if (resolved is UVariable) {
-            resolved.uastInitializer?.let { initializer -> diffProvider.getExpectedElement(initializer, expected)?.let { return it } }
+      val iterationResult: IterationResult<PsiElement> = runReadAction {
+        ProgressManager.checkCanceled()
+        val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@runReadAction IterationResult.Found(null)
+        if (failedCall.sourcePsi?.isValid != true) return@runReadAction IterationResult.Skip()
+        expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })
+        if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
+          val containingMethod = expectedParam?.getContainingUMethod() ?: return@runReadAction IterationResult.Found(null)
+          val paramIndex = containingMethod.uastParameters.indexOf(expectedParam)
+          if (paramIndex < 0) return@runReadAction IterationResult.Found(null)
+          val expectedArg = failedCall.getArgumentForParameter(paramIndex)
+                            ?: return@runReadAction IterationResult.Found(null)
+          diffProvider.getExpectedElement(expectedArg, expected)?.let { return@runReadAction IterationResult.Found(it) }
+          if (expectedArg is UReferenceExpression) {
+            if (expectedArg.sourcePsi?.isValid == true) {
+              val resolved = expectedArg.resolveToUElement()
+              if (resolved is UVariable) {
+                resolved.uastInitializer?.let { initializer -> diffProvider.getExpectedElement(initializer, expected)?.let { return@runReadAction IterationResult.Found(it) } }
+              }
+              expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
+                val method = resolved.uastParent?.asSafely<UMethod>()
+                if (method != null && !method.isConstructor) resolved else null
+              }
+              else null
+            }
+            else {
+              expectedParam = null
+            }
           }
-          expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
-            val method = resolved.uastParent?.asSafely<UMethod>()
-            if (method != null && !method.isConstructor) resolved else null
-          }
-          else null
         }
+        return@runReadAction IterationResult.Continue(expectedParam)
+      }
+
+      when (iterationResult) {
+        is IterationResult.Found -> return iterationResult.element
+        is IterationResult.Continue -> expectedParam = iterationResult.newExpectedParam
+        is IterationResult.Skip -> return@forEach
       }
     }
     if (expectedArgCandidates.size == 1) return expectedArgCandidates.first()
@@ -78,18 +101,28 @@ class JvmTestDiffProvider : TestDiffProvider {
   private fun findExpectedEntryPoint(stackTrace: String, exceptionCache: ExceptionInfoCache): ExpectedEntryPoint? {
     val lineParser = ExceptionLineParserFactory.getInstance().create(exceptionCache)
     stackTrace.lineSequence().forEach { line ->
-      lineParser.execute(line, line.length) ?: return@forEach
-      val file = lineParser.file ?: return@findExpectedEntryPoint null
-      val failedCall = findFailedCall(file, lineParser.info.lineNumber, null) ?: return@forEach
-      val entryParam = findExpectedEntryPointParam(failedCall) ?: return@forEach
-      return ExpectedEntryPoint(line + stackTrace.substringAfter(line), entryParam)
+      val iterationResult: IterationResult<ExpectedEntryPoint> = runReadAction {
+        ProgressManager.checkCanceled()
+        lineParser.execute(line, line.length) ?: return@runReadAction IterationResult.Skip()
+        val file = lineParser.file ?: return@runReadAction IterationResult.Found(null)
+        val failedCall = findFailedCall(file, lineParser.info.lineNumber, null) ?: return@runReadAction IterationResult.Skip()
+        val entryParam = findExpectedEntryPointParam(failedCall) ?: return@runReadAction IterationResult.Skip()
+        return@runReadAction IterationResult.Found(ExpectedEntryPoint(line + stackTrace.substringAfter(line), entryParam))
+      }
+
+      when (iterationResult) {
+        is IterationResult.Found -> return iterationResult.element
+        is IterationResult.Continue -> {}
+        is IterationResult.Skip -> return@forEach
+      }
     }
     return null
   }
 
   private fun findExpectedEntryPointParam(call: UCallExpression): UParameter? {
-    val assertHint = UAssertHint.createAssertEqualsHint(call) ?: return null
     val srcCall = call.sourcePsi ?: return null
+    if (!srcCall.isValid) return null
+    val assertHint = UAssertHint.createAssertEqualsHint(call) ?: return null
     val stringType = PsiType.getJavaLangString(srcCall.manager, srcCall.resolveScope)
     if (assertHint.expected.getExpressionType() != stringType || assertHint.actual.getExpressionType() != stringType) return null
     val method = call.resolveToUElementOfType<UMethod>() ?: return null
@@ -133,4 +166,10 @@ class JvmTestDiffProvider : TestDiffProvider {
   }
 
   private fun String.withoutLineEndings() = replace("\n", "").replace("\r", "")
+
+  private sealed interface IterationResult<T> {
+    data class Found<T>(val element: T?) : IterationResult<T>
+    data class Continue<T>(val newExpectedParam: UParameter?) : IterationResult<T>
+    class Skip<T> : IterationResult<T>
+  }
 }

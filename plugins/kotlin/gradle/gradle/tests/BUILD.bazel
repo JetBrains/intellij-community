@@ -70,7 +70,7 @@ jvm_library(
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/kotlin/native",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-tooling-core",
     "//plugins/kotlin/run-configurations/jvm",
     "//plugins/groovy",

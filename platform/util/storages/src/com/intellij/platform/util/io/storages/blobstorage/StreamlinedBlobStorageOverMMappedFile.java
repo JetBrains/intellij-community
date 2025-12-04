@@ -235,26 +235,28 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
   }
 
   /**
-   * Writer is called with writeable ByteBuffer represented current record content (payload).
-   * Buffer is prepared for read: position=0, limit=payload.length, capacity=[current record capacity].
+   * Writer is called with a writeable {@link ByteBuffer} representing current record content (payload).
+   * The buffer is prepared for reading: position=0, limit=payload.length, capacity=[current record capacity].
    * <br> <br>
    * Writer is free to read and/or modify the buffer, and return it in an 'after puts' state, i.e.
    * position=[#last byte of payload], new payload content = buffer[0..position].
    * <br> <br>
-   * NOTE: this implies that even if the writer writes nothing, only reads -- it is still required to
-   * set buffer.position=limit, because otherwise storage will treat the buffer state as if record
-   * should be set length=0. This is a bit unnatural, so there is a shortcut: if the writer changes
-   * nothing, it could just return null.
+   * NOTE: this implies that even if the writer makes no changes, only reads the buffer -- it is still required
+   * to set buffer.position=limit, because otherwise storage will treat the buffer state as if the new payload
+   * length is 0.
+   * This is a bit unnatural, so there is a shortcut: if the writer changes nothing, it could just return null.
    * <br> <br>
-   * Capacity: if new payload fits into buffer passed in -> it could be written right into it. If new
-   * payload requires more space, writer should allocate its own buffer with enough capacity, write
-   * new payload into it, and return that buffer (in an 'after puts' state), instead of buffer passed
-   * in. Storage will re-allocate space for the record with capacity >= returned buffer capacity.
+   * Capacity: if a new payload fits into the buffer passed in -> it could be written right into it.
+   * If the new payload requires more space, a writer should allocate its own buffer with enough capacity,
+   * write the new payload into it, and return that buffer (in the same 'after puts' state mentioned above),
+   * instead of the buffer passed in.
+   * Storage will then re-allocate space for the record with capacity >= returned buffer capacity.
    *
-   * @param expectedRecordSizeHint          hint to a storage about how big data writer intend to write. May be used for allocating buffer
-   *                                        of that size. <=0 means 'no hints, use default buffer allocation strategy'
-   * @param leaveRedirectOnRecordRelocation if current record is relocated during writing, old record could be either removed right now,
-   *                                        or remain as 'redirect-to' record, so new content could still be accesses by old recordId.
+   * @param expectedRecordSizeHint          hint to a storage about how big data a writer intends to write. May be used for allocating
+   *                                        buffer of that size. <=0 means 'no hints, use default buffer allocation strategy'
+   * @param leaveRedirectOnRecordRelocation if the current record is relocated during writing, the old record could be either removed right
+   *                                        now (false) or remain as a 'redirect-to' record, so new content could still be accessed by old
+   *                                        recordId (true)
    */
   @Override
   public int writeToRecord(int recordId,
@@ -410,7 +412,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       case RecordLayout.RECORD_TYPE_MOVED -> {
         int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
         if (redirectToId == NULL_ID) {
-          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted, "+
+          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted, " +
                                                   "(wasClosedProperly: " + wasClosedProperly() + ")");
         }
 
@@ -463,11 +465,11 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
           int recordActualLength = isActual ? recordLayout.length(buffer, offsetOnPage) : -1;
           ByteBuffer slice = isActual ?
                              buffer.slice(offsetOnPage + headerSize, recordActualLength)
-                               .asReadOnlyBuffer()
-                               .order(buffer.order()) :
+                             .asReadOnlyBuffer()
+                             .order(buffer.order()) :
                              buffer.slice(offsetOnPage + headerSize, 0)
-                               .asReadOnlyBuffer()
-                               .order(buffer.order());
+                             .asReadOnlyBuffer()
+                             .order(buffer.order());
           boolean ok = processor.processRecord(currentId, recordCapacity, recordActualLength, slice);
           if (!ok) {
             return recordNo + 1;

@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -201,10 +202,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       pane.setViewportBorder(null);
     }
 
-    showPopup.accept(popup);
     if (gotoData.listUpdaterTask != null) {
+      Alarm alarm = new Alarm(popup);
+      alarm.addRequest(() -> showPopup.accept(popup), IdeProductMode.isBackend() ? 300 : 17);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
+    }
+    else {
+      showPopup.accept(popup);
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       popup.closeOk(null);

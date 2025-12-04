@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -60,7 +59,6 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
@@ -715,10 +713,6 @@ internal fun updateFrontendSettingsAndSync(coroutineScope: CoroutineScope, doUpd
   }
   finally {
     // Trigger sending the updated values to the backend
-    coroutineScope.launch {
-      withCurrentThreadCoroutineScope {
-        saveSettingsForRemoteDevelopment(application)
-      }
-    }
+    saveSettingsForRemoteDevelopment(coroutineScope, application)
   }
 }

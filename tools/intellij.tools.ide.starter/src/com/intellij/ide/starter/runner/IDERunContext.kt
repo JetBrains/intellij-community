@@ -237,8 +237,10 @@ data class IDERunContext(
     snapshotsDir: Path,
     runContext: IDERunContext,
   ) {
-    catchAll {
-      takeScreenshot(logsDir)
+    if (!runContext.calculateVmOptions().hasHeadlessMode()) {
+      catchAll {
+        takeScreenshot(logsDir)
+      }
     }
     if (expectedKill) return
 
@@ -358,7 +360,7 @@ data class IDERunContext(
   }
 
   fun withScreenRecording() {
-    if (testContext is IDERemDevTestContext && testContext != testContext.frontendIDEContext) {
+    if (testContext is IDERemDevTestContext && testContext != testContext.frontendIDEContext && !calculateVmOptions().hasHeadlessMode()) {
       logOutput("Will not record screen for a backend of remote dev")
       return
     }

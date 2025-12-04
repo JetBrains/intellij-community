@@ -11,13 +11,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.JspFileTypeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
 
   private static boolean isTrueXml(FileType type) {
-    return type == XHtmlFileType.INSTANCE || type == StdFileTypes.JSPX || type == XmlFileType.INSTANCE;
+    return type == XHtmlFileType.INSTANCE || JspFileTypeUtil.isJspX(type) || type == XmlFileType.INSTANCE;
   }
 
   @Override

@@ -189,12 +189,7 @@ internal object JewelMavenArtifacts {
       .flatMap { it.modulesTree() }
       .distinct().forEach { module ->
         val artifact = mavenArtifacts.singleOrNull { (it) -> it.name == module.name }
-        if (module.isLibraryModule()) {
-          check(artifact == null) {
-            "Maven artifact for the library module ${module.name} is not supposed to be created: $artifact"
-          }
-        }
-        else {
+        if (!module.isLibraryModule()) {
           checkNotNull(artifact) {
             "No maven artifact is created for the module ${module.name}:\n$mavenArtifacts"
           }

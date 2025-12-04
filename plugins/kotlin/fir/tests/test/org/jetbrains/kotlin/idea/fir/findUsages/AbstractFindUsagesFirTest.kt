@@ -3,13 +3,26 @@
 package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest(), KMPTest {
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> {
+        return k2DiagnosticProviderForFindUsages()
+    }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KMPProjectDescriptorTestUtilities.createKMPProjectDescriptor(testPlatform)
@@ -24,5 +37,30 @@ abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest(), KMPTest {
             { project.invalidateCaches() },
             { super.tearDown() },
         )
+    }
+}
+
+@OptIn(KaAllowAnalysisOnEdt::class)
+fun k2DiagnosticProviderForFindUsages(): (KtFile) -> List<Diagnostic> {
+    return { file ->
+        allowAnalysisOnEdt {
+            analyze(file) {
+                val diagnostics =
+                // filter level has to be consistent with
+                    // [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor#analyzeFile]
+                    file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                diagnostics
+                    .map {
+                        Diagnostic(
+                            it.defaultMessage.replace("\n", "<br>"),
+                            when (it.severity) {
+                                KaSeverity.ERROR -> Severity.ERROR
+                                KaSeverity.WARNING -> Severity.WARNING
+                                KaSeverity.INFO -> Severity.INFO
+                            }
+                        )
+                    }
+            }
+        }
     }
 }

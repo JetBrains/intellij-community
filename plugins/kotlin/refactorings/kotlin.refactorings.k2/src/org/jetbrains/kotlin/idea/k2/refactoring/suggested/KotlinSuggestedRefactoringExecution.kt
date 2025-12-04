@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.suggested
 
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
@@ -8,19 +8,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.suggested.defaultValue
 import org.jetbrains.kotlin.idea.refactoring.suggested.isContextParameter
 import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
 import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -48,7 +43,7 @@ class KotlinSuggestedRefactoringExecution(
             }
 
             val valueParameters = (descriptorWithNewSignature as? KaFunctionSymbol)?.valueParameters
-            val contextParameters = declaration.modifierList?.contextReceiverList?.contextParameters()?.map { it.symbol }
+            val contextParameters = declaration.modifierList?.contextParameterList?.contextParameters?.map { it.symbol }
             require(((valueParameters?.size ?:0) + (contextParameters?.size ?: 0)) == newSignature.parameters.size) {
                 "Number of parameters of newSignature is ${newSignature.parameters.size} and of the descriptor is ${valueParameters?.size ?: 0}"
             }

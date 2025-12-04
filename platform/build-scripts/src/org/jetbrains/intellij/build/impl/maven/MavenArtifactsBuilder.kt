@@ -318,9 +318,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     }
 
     val artifactData = MavenArtifactData(module, generateMavenCoordinatesForModule(module), patchedDependencies)
-    if (!module.isLibraryModule()) {
-      results[module] = artifactData
-    }
+    results[module] = artifactData
     return artifactData
   }
 

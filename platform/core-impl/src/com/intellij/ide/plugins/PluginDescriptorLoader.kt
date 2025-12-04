@@ -413,6 +413,7 @@ suspend fun loadDescriptors(
 ): Pair<PluginDescriptorLoadingContext, PluginDescriptorLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
+  val isInDevServerMode = AppMode.isRunningFromDevBuild()
   val loadingContext = PluginDescriptorLoadingContext(
     isMissingIncludeIgnored = isUnitTestMode,
     isMissingSubDescriptorIgnored = true,
@@ -422,6 +423,7 @@ suspend fun loadDescriptors(
     loadDescriptors(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
+      isInDevServerMode = isInDevServerMode,
       isRunningFromSources = isRunningFromSources,
       zipPoolDeferred = zipPoolDeferred,
       mainClassLoaderDeferred = mainClassLoaderDeferred,
@@ -525,6 +527,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
 private suspend fun loadDescriptors(
   loadingContext: PluginDescriptorLoadingContext,
   isUnitTestMode: Boolean,
+  isInDevServerMode: Boolean,
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
@@ -538,6 +541,7 @@ private suspend fun loadDescriptors(
       customPluginDir = PathManager.getPluginsDir(),
       bundledPluginDir = null,
       isUnitTestMode = isUnitTestMode,
+      isInDevServerMode = isInDevServerMode,
       isRunningFromSources = isRunningFromSources,
       zipPool = zipPool,
       mainClassLoader = mainClassLoader,
@@ -552,6 +556,7 @@ private suspend fun loadDescriptors(
 internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
   loadingContext: PluginDescriptorLoadingContext,
   isUnitTestMode: Boolean,
+  isInDevServerMode: Boolean,
   isRunningFromSources: Boolean,
   mainClassLoader: ClassLoader,
   zipPool: ZipEntryResolverPool,
@@ -561,7 +566,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
   val platformPrefix = PlatformUtils.getPlatformPrefix()
   val jarFileForModule: (PluginModuleId, Path) -> Path? = { moduleId, moduleDir -> moduleDir.resolve("$moduleId.jar") }
 
-  if (isUnitTestMode) {
+  if (isUnitTestMode && !isInDevServerMode) {
     return loadPluginDescriptorsInDeprecatedUnitTestMode(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
@@ -847,6 +852,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
          platformPrefix == PlatformUtils.DBE_PREFIX ||
          platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
          platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
+         platformPrefix == "CodeServer" ||
          platformPrefix == PlatformUtils.GIT_CLIENT_PREFIX
 }
 
@@ -1069,6 +1075,7 @@ fun loadDescriptorsFromOtherIde(
       loadPluginDescriptorsForPathBasedLoader(
         loadingContext = loadingContext,
         isUnitTestMode = PluginManagerCore.isUnitTestMode,
+        isInDevServerMode = AppMode.isRunningFromDevBuild(),
         isRunningFromSources = PluginManagerCore.isRunningFromSources(),
         mainClassLoader = classLoader,
         zipPool = pool,

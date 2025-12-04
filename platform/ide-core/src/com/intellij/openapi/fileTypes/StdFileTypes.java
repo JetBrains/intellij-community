@@ -24,13 +24,15 @@ public final class StdFileTypes extends FileTypes {
   public static volatile FileType CLASS = FileTypeManager.getInstance().getStdFileType("CLASS");
 
   /**
-   * @deprecated use {@link com.intellij.jsp.highlighter.NewJspFileType#INSTANCE} instead.
+   * @deprecated use {@link com.intellij.jsp.highlighter.NewJspFileType#INSTANCE} or 
+   * {@link com.intellij.xml.util.JspFileTypeUtil} instead (the latter can be used if direct dependency on JSP module is undesired).
    */
   @Deprecated(forRemoval = true)
   public static volatile LanguageFileType JSP = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSP");
 
   /**
-   * @deprecated use {@link com.intellij.jsp.highlighter.JspxFileType#INSTANCE} instead.
+   * @deprecated use {@link com.intellij.jsp.highlighter.JspxFileType#INSTANCE} or
+   * {@link com.intellij.xml.util.JspFileTypeUtil} instead (the latter can be used if direct dependency on JSP module is undesired).
    */
   @Deprecated(forRemoval = true)
   public static volatile LanguageFileType JSPX = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSPX");

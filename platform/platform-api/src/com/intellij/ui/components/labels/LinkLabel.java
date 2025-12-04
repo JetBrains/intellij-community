@@ -3,6 +3,7 @@ package com.intellij.ui.components.labels;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -353,10 +355,6 @@ public class LinkLabel<T> extends JLabel {
     disableUnderline();
   }
 
-  public void pressed(MouseEvent e) {
-    doClick(e);
-  }
-
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
     @Override
     public void mousePressed(MouseEvent e) {
@@ -369,8 +367,12 @@ public class LinkLabel<T> extends JLabel {
     @Override
     public void mouseReleased(MouseEvent e) {
       if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
-        doClick(e);
-        e.consume();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          doClick(e);
+        }
+        finally {
+          e.consume();
+        }
       }
       setActive(false);
     }

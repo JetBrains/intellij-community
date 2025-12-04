@@ -59,7 +59,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//libraries/mockito",
     "//platform/util/progress",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
   ]
 )
 ### auto-generated section `build intellij.settingsSync` end

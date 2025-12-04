@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.Service;
@@ -57,7 +58,8 @@ public final class InjectionCache {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
 
     // todo use allScope once Kotlin support becomes fast enough (https://youtrack.jetbrains.com/issue/KT-13734)
-    GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE);
+    GlobalSearchScope usageScope = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, JavaFileType.INSTANCE,
+                                                                                   JavaClassFileType.INSTANCE);
 
     Set<String> result = new HashSet<>();
     List<PsiClass> annoClasses = new ArrayList<>(List.of(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope)));

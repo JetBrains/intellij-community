@@ -53,7 +53,7 @@ jvm_library(
     "@lib//:zstd-jni",
     "//platform/util/rt-java8",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:opentelemetry-extension-kotlin",
     "//libraries/blockmap",
     "//libraries/commons/io",

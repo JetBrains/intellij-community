@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -37,6 +38,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.ActionLink
@@ -236,7 +238,9 @@ class GrazieStatusBarWidget(private val project: Project) : CustomStatusBarWidge
       button(text = GrazieBundle.message("grazie.connect.to.cloud.button.text")) {
         if (!GrazieCloudConnector.askUserConsentForCloud()) return@button
         logger.debug { "Connect to Grazie Cloud button started from widget" }
-        GrazieCloudConnector.connect(project)
+        ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable {
+          GrazieCloudConnector.connect(project)
+        })
       }.apply {
         applyToComponent {
           defaultButton()

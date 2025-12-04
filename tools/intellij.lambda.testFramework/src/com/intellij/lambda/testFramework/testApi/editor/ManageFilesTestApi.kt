@@ -3,11 +3,8 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.executeAction
 import com.intellij.lambda.testFramework.testApi.getProject
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
@@ -20,8 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 import java.nio.file.Path

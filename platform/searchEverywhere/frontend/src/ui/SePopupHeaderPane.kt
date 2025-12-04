@@ -6,10 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -24,6 +21,8 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
@@ -115,7 +114,7 @@ class SePopupHeaderPane(
 
   private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
     withContext(Dispatchers.EDT) {
-      val prevSelectedTabId = old.tabs.getOrNull(old.selectedIndexFlow.value)?.id
+      val prevSelectedTabId = old.tabs.getOrNull(tabbedPane.selectedIndex)?.id
       tabbedPane.removeAll()
 
       if (new.tabs.isEmpty()) {
@@ -128,21 +127,23 @@ class SePopupHeaderPane(
       }
 
       new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(prevSelectedTabId)
+      setSelectedIndexSafe(new.selectedIndexFlow.value)
     }
 
     bindSelectedTab(new)
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   private suspend fun bindSelectedTab(configuration: Configuration) = coroutineScope {
-    tabbedPane.selectedIndex = configuration.selectedIndexFlow.value
-
     val changeListener = javax.swing.event.ChangeListener {
       configuration.selectedIndexFlow.value = tabbedPane.selectedIndex
     }
 
-    tabbedPane.addChangeListener(changeListener)
+    withContext(Dispatchers.UI) {
+      tabbedPane.addChangeListener(changeListener)
+    }
 
-    val job = launch {
+    launch {
       configuration.selectedIndexFlow.collectLatest { tabIndex ->
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (tabbedPane.selectedIndex != tabIndex && tabIndex >= 0 && tabIndex < tabbedPane.tabCount) {
@@ -154,7 +155,7 @@ class SePopupHeaderPane(
       }
     }
 
-    job.invokeOnCompletion {
+    awaitCancellationAndInvoke(Dispatchers.UI) {
       tabbedPane.removeChangeListener(changeListener)
     }
   }
@@ -176,6 +177,7 @@ class SePopupHeaderPane(
   fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?) {
     toolbarListenerDisposable?.let { Disposer.dispose(it) }
     val toolbarListenerDisposable = Disposer.newDisposable()
+    project?.let { Disposer.register(it, toolbarListenerDisposable) }
     this.toolbarListenerDisposable = toolbarListenerDisposable
 
     val actionGroup = DefaultActionGroup(actions)

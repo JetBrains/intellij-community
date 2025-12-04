@@ -37,7 +37,7 @@ internal abstract class GitBranchesPopupSettingsToggleAction(
   protected fun changeSetting(e: AnActionEvent, operation: (GitVcsSettings) -> Unit) {
     val project = e.project ?: return
     operation(GitVcsSettings.getInstance(project))
-    saveSettingsForRemoteDevelopment(project)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, project)
     GitBranchesTreeUpdatesService.getInstance(project).refresh()
   }
 

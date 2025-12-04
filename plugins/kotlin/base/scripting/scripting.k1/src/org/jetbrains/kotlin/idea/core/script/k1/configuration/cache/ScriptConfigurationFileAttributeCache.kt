@@ -6,9 +6,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.loader.ScriptConfigurationLoadingContext
+import org.jetbrains.kotlin.idea.core.script.shared.CachedConfigurationInputs
 import org.jetbrains.kotlin.idea.core.script.v1.AbstractFileGistService
 import org.jetbrains.kotlin.idea.core.script.v1.readObject
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.v1.writeObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.Serializable
@@ -24,7 +24,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.withDefaultsFrom
-import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
+import kotlin.script.experimental.jvm.util.toClassPathOrEmpty
 
 internal class ScriptConfigurationFileAttributeCache(
     val project: Project
@@ -48,7 +48,7 @@ internal class ScriptConfigurationFileAttributeCache(
             ScriptConfigurationSnapshot(
                 fromFs.inputs,
                 fromFs.reports,
-                FromCompilationConfiguration(
+                ScriptCompilationConfigurationWrapper(
                     KtFileScriptSource(ktFile),
                     fromFs.configuration.with {
                         // should be updated from definition because host configuration is transient

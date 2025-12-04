@@ -2,6 +2,7 @@
 
 package com.intellij.platform.ijent.spi
 
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.Cancellation
@@ -11,6 +12,9 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
@@ -18,6 +22,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
 @ApiStatus.Internal
@@ -202,6 +207,86 @@ object IjentSessionMediatorUtils {
         }
         append(message)
       })
+    }
+  }
+
+  suspend fun ijentProcessExitAwaiter(
+    ijentLabel: String,
+    lastStderrMessages: MutableSharedFlow<String?>,
+    logger: Logger,
+    isExitExpected: suspend (exitCode: Int) -> Boolean = { it == 0 },
+    waitFunction: suspend () -> Int,
+  ): Nothing {
+    val exitCode = waitFunction()
+    logger.debug { "IJent process $ijentLabel exited with code $exitCode" }
+
+    val isExitExpected = isExitExpected(exitCode)
+
+    val error = if (isExitExpected) {
+      IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
+    }
+    else {
+      val stderr = StringBuilder()
+      // This code blocks the whole coroutine scope, so it should
+      withContext(NonCancellable) {
+        val timeoutResult: Unit? = withTimeoutOrNull(1.seconds) {
+          collectLines(lastStderrMessages, stderr)
+        }
+        if (timeoutResult == null) {
+          stderr.append("\n<didn't collect the whole stderr>")
+        }
+      }
+      IjentUnavailableException.CommunicationFailure(
+        "The process $ijentLabel suddenly exited with the code $exitCode",
+        Attachment("stderr", stderr.toString()),
+      )
+    }
+
+    // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
+    if (isExitExpected) {
+      logger.info(error)
+    }
+    else {
+      logger.warn(error)
+    }
+    throw error
+  }
+
+  private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr: StringBuilder) {
+    lastStderrMessages
+      .takeWhile { it != null }
+      .filterNotNull()
+      .collect { msg ->
+        stderr.append(msg)
+        stderr.append("\n")
+      }
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  suspend fun ijentProcessFinalizer(
+    ijentLabel: String,
+    mediatorFinalizer: () -> Unit,
+  ): Nothing {
+    try {
+      awaitCancellation()
+    }
+    catch (err: Exception) {
+      val actualErrors = generateSequence(err, Throwable::cause).filterTo(mutableListOf()) { it !is CancellationException }
+
+      val existingIjentUnavailableException = actualErrors.filterIsInstance<IjentUnavailableException>().firstOrNull()
+      if (existingIjentUnavailableException != null) {
+        throw existingIjentUnavailableException
+      }
+
+      val cause = actualErrors.firstOrNull() ?: err
+      val message =
+        if (cause is CancellationException) "The coroutine scope of $ijentLabel was cancelled"
+        else "IJent communication terminated due to an error"
+      throw IjentUnavailableException.ClosedByApplication(message, cause)
+    }
+    finally {
+      mediatorFinalizer()
+
     }
   }
 }

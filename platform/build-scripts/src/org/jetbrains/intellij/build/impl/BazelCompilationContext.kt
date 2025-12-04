@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
+import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -18,7 +19,10 @@ import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleReposito
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
@@ -77,15 +81,31 @@ class BazelCompilationContext(
     return moduleOutputProvider.getModuleOutputRoots(module, forTests)
   }
 
-  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
-    return delegate.getModuleRuntimeClasspath(module, forTests).map(Path::of).flatMap {
-      if (it.startsWith(classesOutputDirectory)) {
-        getModuleOutputRoots(findRequiredModule(it.name), it.parent.name == "test").map { it.toString() }
+  override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+    val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
+      .also {
+        if (forTests) {
+          it.withoutSdk()
+        }
       }
-      else {
-        listOf(it.toString())
+      .includedIn(JpsJavaClasspathKind.runtime(forTests))
+
+    val result = LinkedHashSet<Path>()
+    enumerator.processModuleAndLibraries(
+      { depModule ->
+        result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = forTests))
+        if (forTests) {  // incl. production
+          result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = false))
+        }
+      },
+      { library ->
+        val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+        for (path in moduleOutputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
+          result.add(path)
+        }
       }
-    }
+    )
+    return result
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)
@@ -193,8 +213,7 @@ internal val bazelOutputRoot: Path? by lazy {
   }
 
   val outputRoot = realPath.root.resolve(realPath.subpath(0, execRootIndex))
-  println("Bazel output root: $outputRoot")
-
+  Span.current().addEvent("Bazel output root: $outputRoot")
   return@lazy outputRoot
 }
 

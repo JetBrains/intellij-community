@@ -16,9 +16,11 @@ import org.jetbrains.kotlin.idea.completion.handlers.KeywordConstructorInsertion
 import org.jetbrains.kotlin.idea.completion.handlers.LineAdjusterInsertionHandler
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.AdaptToExplicitReceiverInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.BracketOperatorInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.TrailingLambdaInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WithImportInsertionHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.WrapSingleStringTemplateEntryWithBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentWithValueInsertionHandler
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeInsertHandler
@@ -79,7 +81,7 @@ val serializableInsertionHandlerSerializersModule: SerializersModule = Serialize
         subclass(TailTextInsertHandler::class, TailTextInsertHandler.serializer())
         subclass(CompoundInsertionHandler::class, CompoundInsertionHandler.serializer())
         subclass(UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler::class, UpdateLookupElementBuilderToInsertTypeQualifierOnSuperInsertionHandler.serializer())
-        subclass(FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler::class, FirCompletionContributorBase.AdaptToExplicitReceiverInsertionHandler.serializer())
+        subclass(AdaptToExplicitReceiverInsertionHandler::class, AdaptToExplicitReceiverInsertionHandler.serializer())
         subclass(WithImportInsertionHandler::class, WithImportInsertionHandler.serializer())
         subclass(NameWithTypeLookupElementDecoratorInsertHandler::class, NameWithTypeLookupElementDecoratorInsertHandler.serializer())
         subclass(NamedArgumentWithValueInsertionHandler::class, NamedArgumentWithValueInsertionHandler.serializer())

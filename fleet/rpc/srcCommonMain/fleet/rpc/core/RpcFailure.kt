@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.core
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.serialization.Serializable
@@ -21,8 +22,7 @@ data class FailureInfo(
 fun Throwable.toFailureInfo(): FailureInfo {
   return when (this) {
     is AssumptionsViolatedException -> FailureInfo(conflict = stackTraceToString())
-
-    // TODO : All kinds of exception: Auth, Security, Validation, Transport
+    is CancellationException -> FailureInfo(producerCancelled = toString())
     else -> FailureInfo(requestError = stackTraceToString())
   }
 }
@@ -52,10 +52,12 @@ internal fun rpcStreamFailureMessage(displayName: String, message: String): Stri
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class RpcException(message: String,
-                   val failure: FailureInfo,
-                   cause: Throwable?) : RuntimeException(message, cause),
-                                        CopyableThrowable<RpcException> {
+class RpcException(
+  message: String,
+  val failure: FailureInfo,
+  cause: Throwable?,
+) : RuntimeException(message, cause),
+    CopyableThrowable<RpcException> {
 
   // https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md#stacktrace-recovery-machinery
 

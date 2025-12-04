@@ -57,6 +57,7 @@ jvm_library(
     "//platform/core-ui",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.code-insight` end

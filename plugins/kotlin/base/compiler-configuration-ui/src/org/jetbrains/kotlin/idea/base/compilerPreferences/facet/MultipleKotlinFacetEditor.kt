@@ -37,8 +37,6 @@ class MultipleKotlinFacetEditor(
                 helper.bind(copyRuntimeFilesCheckBox, editors) { it.compilerConfigurable.copyRuntimeFilesCheckBox }
                 helper.bind(keepAliveCheckBox, editors) { it.compilerConfigurable.keepAliveCheckBox }
                 helper.bind(moduleKindComboBox, editors) { it.compilerConfigurable.moduleKindComboBox }
-                helper.bind(scriptTemplatesField, editors) { it.compilerConfigurable.scriptTemplatesField }
-                helper.bind(scriptTemplatesClasspathField, editors) { it.compilerConfigurable.scriptTemplatesClasspathField }
                 helper.bind(languageVersionComboBox, editors) { it.compilerConfigurable.languageVersionComboBox }
                 helper.bind(apiVersionComboBox, editors) { it.compilerConfigurable.apiVersionComboBox }
             }

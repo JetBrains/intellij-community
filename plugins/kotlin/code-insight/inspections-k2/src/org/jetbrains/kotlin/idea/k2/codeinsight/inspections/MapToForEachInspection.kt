@@ -51,6 +51,9 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
         ApplicabilityRanges.calleeExpression(element)
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
+        // Skip in debugger's Evaluate Expression where the expression result is shown.
+        if (element.containingKtFile is KtCodeFragment) return false
+
         val calleeText = element.calleeExpression?.text ?: return false
         val mapFqName = StandardKotlinNames.Collections.map
         if (calleeText != mapFqName.shortName().asString() && element.containingKtFile.importDirectives.none {

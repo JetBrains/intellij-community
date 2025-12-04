@@ -10,6 +10,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -207,34 +208,36 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       if (myTreeModel == null) {
         return;
       }
+      WriteIntentReadAction.run(() -> {
+        TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
+        if (path == null) return;
+        DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+        if (component == null) return;
+        Object item = component.getUserObject();
 
-      TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
-      if (path == null) return;
-      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
-      if (component == null) return;
-      Object item = component.getUserObject();
+        if (!(item instanceof BlockTreeNode descriptor)) return;
 
-      if (!(item instanceof BlockTreeNode descriptor)) return;
+        int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
+        PsiFile file = myRootElement.getContainingFile();
+        PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
+        if (currentPsiEl == null) currentPsiEl = file;
+        int blockLength = descriptor.getBlock().getTextRange().getLength();
+        while (currentPsiEl.getParent() != null &&
+               currentPsiEl.getTextRange().getStartOffset() == blockStart &&
+               currentPsiEl.getTextLength() != blockLength) {
+          currentPsiEl = currentPsiEl.getParent();
+        }
+        BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
+        int baseOffset = 0;
+        if (rootBlockNode != null) {
+          baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
+        }
 
-      int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiFile file = myRootElement.getContainingFile();
-      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
-      if (currentPsiEl == null) currentPsiEl = file;
-      int blockLength = descriptor.getBlock().getTextRange().getLength();
-      while (currentPsiEl.getParent() != null &&
-             currentPsiEl.getTextRange().getStartOffset() == blockStart &&
-             currentPsiEl.getTextLength() != blockLength) {
-        currentPsiEl = currentPsiEl.getParent();
-      }
-      BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
-      int baseOffset = 0;
-      if (rootBlockNode != null) {
-        baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
-      }
+        TextRange range = descriptor.getBlock().getTextRange();
+        range = range.shiftRight(-baseOffset);
+        myUpdater.updatePsiTree(currentPsiEl, myBlockTree.hasFocus() ? range : null);
+      });
 
-      TextRange range = descriptor.getBlock().getTextRange();
-      range = range.shiftRight(-baseOffset);
-      myUpdater.updatePsiTree(currentPsiEl, myBlockTree.hasFocus() ? range : null);
     }
   }
 

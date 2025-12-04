@@ -3,8 +3,9 @@ package com.intellij.ui
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.getPopupParentBounds
+import com.intellij.util.ui.getValidBoundsForPopup
 import com.jetbrains.JBR
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
@@ -65,6 +66,14 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       return
     }
 
+    if (isBusy && start) {
+      LOG.debug {
+        "Received a mouse pressed event while in a drag session. " +
+        "This means that the release event was missed, cleaning up the previous session"
+      }
+      stop()
+    }
+
     if (!isBusy) {
       val content = source.getContent(event)
       val view = source.getView(content)
@@ -92,6 +101,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       view.bounds,
       event.getButton(),
     )
+    LOG.debug { "Starting a new move/resize session: $currentSession" }
     onStarted(event, view)
   }
 
@@ -147,6 +157,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val view = source.getView(content)
     // Enter in move mode only after mouse move, so double click is supported
     if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
+      LOG.debug("Entering the move-with-the-mouse mode")
       enterJbrMoveMode(session, view)
       return
     }
@@ -168,6 +179,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
         val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
         val reallyMoveWindow = !moveAfterMouseRelease() || !mouseMove
         if ((moved && reallyMoveWindow) || resized) {
+          LOG.debug { "Applying the new bounds: $bounds" }
           setViewBounds(view, bounds, moved, resized)
         }
       }
@@ -183,7 +195,9 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val location = session.location
     val dx: Int = event.xOnScreen - location.x
     val dy: Int = event.yOnScreen - location.y
-    return Point(dx, dy)
+    val offset = Point(dx, dy)
+    LOG.debug { "Relative mouse movement computed: ${event.locationOnScreen} - $location = $offset" }
+    return offset
   }
 
   private fun setViewBounds(view: Component, bounds: Rectangle, moved: Boolean, resized: Boolean) {
@@ -219,6 +233,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   }
 
   private fun stop() {
+    LOG.debug { "The move/resize session has finished: $currentSession" }
     currentSession = null
   }
 
@@ -252,6 +267,7 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   private var isTruePopup = false
   private var dx = 0
   private var dy = 0
+  private var grabPoint = Point()
 
   override fun beforeUpdate(event: MouseEvent, view: Component) {
     isTruePopup = view is Window && view.type == Window.Type.POPUP
@@ -261,6 +277,8 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     dx = 0
     dy = 0
     if (isRelativeMovementMode()) {
+      ClientProperty.put(view as Window, "wlawt.popup_position_unconstrained", true)
+      grabPoint = RelativePoint(event).getPoint(view)
       @Suppress("UsePropertyAccessSyntax")
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
     }
@@ -289,7 +307,9 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
       val delta = JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
       dx += delta.x
       dy += delta.y
-      return Point(dx, dy)
+      val offset = Point(dx, dy)
+      LOG.debug { "Relative mouse movement from the protocol: $delta, new offset is $offset" }
+      return offset
     }
     else {
       return super.computeOffsetFromInitialLocation(session, event)
@@ -299,7 +319,28 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   override fun makeChangeValid(oldBounds: Rectangle, newBounds: Rectangle, view: Component) {
     if (!isRelativeMovementMode()) return
 
-    val windowBounds = getPopupParentBounds(view) ?: return
+    val windowBounds = getValidBoundsForPopup(view) ?: return
+
+    val newBoundsBeforeFit = Rectangle(newBounds)
+
+    fitPopupBounds(oldBounds, newBounds, windowBounds)
+
+    // If the popup was moved, don't let the initial grab point move away from the owning window.
+    // Because if we let it move away from the owning window, it may also very well move outside the screen.
+    // And that's bad, because it will be impossible to grab it again by the same point (in the worst case, any point).
+    // And because we have no idea where the screen is (thanks, Wayland), this seems to be the only way.
+    if (newBounds.x != oldBounds.x || newBounds.y != oldBounds.y) {
+      fitGrabPoint(newBounds, windowBounds)
+    }
+
+    // If we limit the popup movement, pretend that the mouse movement was limited too.
+    // Otherwise, moving the mouse in the opposite direction will work with a "delay,"
+    // because it'll have to "catch up" its previous position before starting doing anything useful.
+    dx += newBounds.x - newBoundsBeforeFit.x
+    dy += newBounds.y - newBoundsBeforeFit.y
+  }
+
+  private fun fitPopupBounds(oldBounds: Rectangle, newBounds: Rectangle, windowBounds: Rectangle) {
     LOG.debug { "Trying to fit the popup into $windowBounds after change $oldBounds -> $newBounds" }
     val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
 
@@ -328,6 +369,27 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
 
     if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
       LOG.debug { "New bounds after fitting: $newBoundsBeforeFit -> $newBounds" }
+    }
+  }
+
+  private fun fitGrabPoint(newBounds: Rectangle, validBounds: Rectangle) {
+    LOG.debug { "Trying to fit the grab point $grabPoint (relative to $newBounds) into $validBounds" }
+    val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
+
+    val minX = validBounds.x
+    val maxX = validBounds.x + validBounds.width - 1
+    val grabX = newBounds.x + grabPoint.x
+    val fitGrabX = grabX.coerceIn(minX, maxX)
+    newBounds.x += fitGrabX - grabX
+
+    val minY = validBounds.y
+    val maxY = validBounds.y + validBounds.height - 1
+    val grabY = newBounds.y + grabPoint.y
+    val fitGrabY = grabY.coerceIn(minY, maxY)
+    newBounds.y += fitGrabY - grabY
+
+    if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
+      LOG.debug { "New bounds after fitting the grab point: $newBoundsBeforeFit -> $newBounds" }
     }
   }
 

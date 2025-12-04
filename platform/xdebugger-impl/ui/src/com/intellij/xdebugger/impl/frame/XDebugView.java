@@ -1,0 +1,111 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.frame;
+
+import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.SingleAlarm;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.EventObject;
+
+/**
+ * The implementations should override {@link XDebugView#processSessionEvent(SessionEvent, XDebugSessionProxy)}
+ */
+@ApiStatus.Internal
+public abstract class XDebugView implements Disposable {
+  public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
+
+  private final SingleAlarm clearAlarm = SingleAlarm.Companion.singleEdtAlarm(100, this, () -> clear());
+
+  protected final void requestClear() {
+    // no delay in tests
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!clearAlarm.isDisposed()) {
+        clear();
+      }
+    }
+    else {
+      clearAlarm.cancelAndRequest();
+    }
+  }
+
+  public @Nullable JComponent getMainComponent() {
+    return null;
+  }
+
+  protected final void cancelClear() {
+    clearAlarm.cancel();
+  }
+
+  protected abstract void clear();
+
+  @ApiStatus.Internal
+  protected void sessionStopped() {
+  }
+
+  @ApiStatus.OverrideOnly
+  @ApiStatus.Internal
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
+    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
+    if (xDebugSession != null) {
+      processSessionEvent(event, xDebugSession);
+    }
+  }
+
+  /**
+   * Use {@link XDebugView#processSessionEvent(SessionEvent, XDebugSessionProxy)} instead
+   */
+  @ApiStatus.Obsolete
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+    throw new AbstractMethodError("Please override XDebugView.processSessionEvent(XDebugView.SessionEvent, XDebugSessionProxy)");
+  }
+
+  protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
+    Component component = e.getSource() instanceof Component ? (Component)e.getSource() : null;
+    return component == null ? null : getSession(component);
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable XDebugSessionProxy getSessionProxy(@NotNull EventObject e) {
+    Component component = e.getSource() instanceof Component ? (Component)e.getSource() : null;
+    return component == null ? null : getSessionProxy(component);
+  }
+
+  /**
+   * Use {@link #getSessionProxy} instead.
+   */
+  @ApiStatus.Obsolete
+  public static @Nullable XDebugSession getSession(@NotNull Component component) {
+    return getData(XDebugSession.DATA_KEY, component);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy getSessionProxy(@NotNull Component component) {
+    return getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, component);
+  }
+
+  public static @Nullable <T> T getData(DataKey<T> key, @NotNull Component component) {
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+    ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
+    ContentManager contentManager = viewContext == null ? null : viewContext.getContentManager();
+    if (contentManager != null && !contentManager.isDisposed()) {
+      T data = key.getData(DataManager.getInstance().getDataContext(contentManager.getComponent()));
+      if (data != null) {
+        return data;
+      }
+    }
+    return key.getData(dataContext);
+  }
+}

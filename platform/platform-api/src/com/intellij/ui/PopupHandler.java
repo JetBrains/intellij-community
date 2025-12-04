@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,6 +190,7 @@ public abstract class PopupHandler extends MouseAdapter {
 
   /** @deprecated Use {@link #installPopupMenu(JComponent, ActionGroup, String)} */
   @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public static MouseListener installUnknownPopupHandler(JComponent component, ActionGroup group) {
     return installPopupMenu(component, ActionPlaces.UNKNOWN, null, null, __ -> group);
   }

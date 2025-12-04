@@ -121,4 +121,4 @@ class OpClass(Func):
         name: str,
     ) -> None: ...
 
-__all__ = ["BloomIndex", "BrinIndex", "BTreeIndex", "GinIndex", "GistIndex", "HashIndex", "SpGistIndex"]
+__all__ = ["BTreeIndex", "BloomIndex", "BrinIndex", "GinIndex", "GistIndex", "HashIndex", "SpGistIndex"]

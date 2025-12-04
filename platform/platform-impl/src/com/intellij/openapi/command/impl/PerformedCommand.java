@@ -33,4 +33,8 @@ record PerformedCommand(
   boolean shouldClearRedoStack() {
     return !isTransparent() && hasActions();
   }
+
+  boolean shouldRecordId() {
+    return hasActions() || affectedDocuments.size() > 0 || additionalAffectedDocuments.size() > 0;
+  }
 }

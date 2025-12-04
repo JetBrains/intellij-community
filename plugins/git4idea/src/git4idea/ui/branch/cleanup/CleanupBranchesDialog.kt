@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -49,6 +50,9 @@ import java.awt.GridBagLayout
 import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorCompletionService
+import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.TableModelEvent
 import javax.swing.table.DefaultTableCellRenderer
@@ -94,6 +98,8 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
     (rowSorter as? TableRowSorter<*>)?.setSortable(0, false) // For the Last Commit Date column (model index 2), sort by timestamp and keep unknowns (Long.MIN_VALUE) last in ascending order
     (rowSorter as? TableRowSorter<*>)?.setSortable(2, true) // Help define initial dialog size via viewport preferred size
     preferredScrollableViewportSize = JBUI.size(900, 300)
+    // Allow selecting multiple rows to toggle by Space
+    selectionModel.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
   }
 
   /** Ensure the Last Commit Date column renders human-readable strings even if default renderer is overridden elsewhere. */
@@ -135,6 +141,7 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
     tableModel.addTableModelListener { _ -> updateDeleteButtonEnabled() }
     installHeaderCheckbox()
     installLastCommitDateColumnRenderer()
+    installSpaceToggleForSelectedRows()
     refreshBranches()
   }
 
@@ -352,8 +359,9 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
           val rows = tableModel.items.filter { it.mergedStatus.isBlank() }.toList()
           val total = rows.size
           var processed = 0
+          val completion = ExecutorCompletionService<Boolean>(pool)
           val tasks = rows.map { row ->
-            pool.submit<Boolean> {
+            completion.submit(Callable {
               indicator.checkCanceled()
               val comparator = DeepComparator(project, dataProvider, dataProvider.dataPack, reposWithTarget, row.branch.name)
               val result = comparator.compare()
@@ -364,9 +372,27 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
               indicator.text = GitBundle.message("find.merged.local.branches.progress.processed", processed, total)
               indicator.fraction = processed.toDouble() / total
               merged
+            })
+          } // wait for completion off-EDT, but be responsive to cancellation
+          try {
+            var completed = 0
+            while (completed < tasks.size) {
+              // Throw PCE as soon as user cancels
+              indicator.checkCanceled()
+              val finished = completion.poll(100, TimeUnit.MILLISECONDS)
+              if (finished != null) {
+                // Propagate possible exceptions for parity with Future#get
+                finished.get()
+                completed++
+              }
             }
-          } // wait for completion off-EDT
-          tasks.forEach { it.get() }
+          }
+          catch (e: ProcessCanceledException) {
+            // Cancel all running tasks and interrupt compare() to stop ASAP
+            tasks.forEach { it.cancel(true) }
+            pool.shutdownNow()
+            throw e
+          }
         }
         finally {
           pool.shutdown()
@@ -496,6 +522,63 @@ internal class CleanupBranchesDialog(private val project: Project) : DialogWrapp
       total -> ThreeStateCheckBox.State.SELECTED
       else -> ThreeStateCheckBox.State.DONT_CARE
     }
+  }
+
+  /**
+   * Bind Space key to toggle the "Selected" state for all selected rows.
+   * If the selection contains mixed states, Space will check them all; if all are checked, Space will uncheck them.
+   */
+  private fun installSpaceToggleForSelectedRows() {
+    val im = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+    val am = table.actionMap
+    val actionKey = "toggle-selected-rows"
+    im.put(KeyStroke.getKeyStroke("SPACE"), actionKey)
+    am.put(actionKey, object : AbstractAction() {
+      override fun actionPerformed(e: java.awt.event.ActionEvent?) {
+        // Finish editing to avoid conflicts with editor toggling a single cell
+        if (table.isEditing) {
+          val editor = table.cellEditor
+          if (editor != null && !editor.stopCellEditing()) editor.cancelCellEditing()
+        }
+
+        val selectedViewRows = table.selectedRows
+        val rowsToAffect: IntArray = if (selectedViewRows.isNotEmpty()) selectedViewRows else intArrayOf(table.selectionModel.leadSelectionIndex).filter { it >= 0 }.toIntArray()
+        if (rowsToAffect.isEmpty()) return
+
+        // Determine the target state: if all selected are checked -> uncheck; otherwise -> check
+        val allChecked = rowsToAffect.all { viewRow ->
+          val modelRow = table.convertRowIndexToModel(viewRow)
+          modelRow in 0 until tableModel.rowCount && tableModel.items[modelRow].selected
+        }
+        val target = !allChecked
+
+        var minChanged = Int.MAX_VALUE
+        var maxChanged = Int.MIN_VALUE
+        for (viewRow in rowsToAffect) {
+          val modelRow = table.convertRowIndexToModel(viewRow)
+          if (modelRow !in 0 until tableModel.rowCount) continue
+          val item = tableModel.items[modelRow]
+          if (item.selected != target) {
+            item.selected = target
+            minChanged = minOf(minChanged, modelRow)
+            maxChanged = maxOf(maxChanged, modelRow)
+          }
+        }
+
+        if (minChanged != Int.MAX_VALUE) {
+          tableModel.fireTableRowsUpdated(minChanged, maxChanged)
+        }
+
+        // Sync header checkbox state and repaint header cell for the Selected column
+        updateHeaderCheckboxState()
+        val viewIndex = getSelectedColumnViewIndex()
+        if (viewIndex >= 0) {
+          table.tableHeader.repaint(table.tableHeader.getHeaderRect(viewIndex))
+        } else {
+          table.tableHeader.repaint()
+        }
+      }
+    })
   }
 
   private fun Project.getDefaultTargetBranchSuggestion(): String? {

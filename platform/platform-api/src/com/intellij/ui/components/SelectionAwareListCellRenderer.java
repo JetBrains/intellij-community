@@ -20,6 +20,7 @@ public class SelectionAwareListCellRenderer<T> implements ListCellRenderer<T> {
 
   /** @deprecated use {@link #SelectionAwareListCellRenderer(Function)} instead */
   @Deprecated
+  @ApiStatus.Internal
   @SuppressWarnings({"LambdaUnfriendlyMethodOverload", "UnnecessaryFullyQualifiedName", "UsagesOfObsoleteApi"})
   public SelectionAwareListCellRenderer(com.intellij.util.NotNullFunction<? super T, ? extends JComponent> fun) {
     myFun = fun;

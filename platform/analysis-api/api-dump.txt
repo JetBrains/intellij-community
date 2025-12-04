@@ -606,6 +606,8 @@ com.intellij.lang.documentation.ExternalDocumentationProvider
 - fetchExternalDocumentation(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.util.List,Z):java.lang.String
 - a:hasDocumentationFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - a:promptToConfigureDocumentation(com.intellij.psi.PsiElement):V
+f:com.intellij.lang.parameterInfo.ParameterInfoUtilsBase
+- s:findParentOfTypeWithStopElements(com.intellij.psi.PsiElement,java.lang.Class,java.lang.Class[]):com.intellij.psi.PsiElement
 com.intellij.lang.refactoring.NamesValidator
 - a:isIdentifier(java.lang.String,com.intellij.openapi.project.Project):Z
 - a:isKeyword(java.lang.String,com.intellij.openapi.project.Project):Z

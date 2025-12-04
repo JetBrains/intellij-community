@@ -127,7 +127,7 @@ private class UnixInfoDialog(val project: Project?, dialogTitle: String) :
           }
           row("isTileWM:") {
             label(X11UiUtil.isTileWM().toString())
-            contextHelp(X11UiUtil.TILE_WM.sorted().joinToString("<br>"), "Known Tile WMs")
+              .contextHelp(X11UiUtil.TILE_WM.sorted().joinToString("<br>"), "Known Tile WMs")
           }
           row("isWSL:") {
             label(X11UiUtil.isWSL().toString())

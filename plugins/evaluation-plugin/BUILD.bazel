@@ -25,6 +25,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -41,7 +42,7 @@ jvm_library(
     "//libraries/gson",
     "//libraries/commons/text",
     "//platform/warmup",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
   ]
 )

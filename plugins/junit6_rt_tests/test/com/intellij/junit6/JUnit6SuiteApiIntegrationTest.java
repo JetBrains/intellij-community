@@ -71,8 +71,7 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     assertEquals(tests.keySet(), getTestIds(messages, TestFinished.class));
   }
 
-  @NotNull
-  private RunConfiguration createRunClassConfiguration(final String className) {
+  private @NotNull RunConfiguration createRunClassConfiguration(final String className) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.projectScope(myProject));
     assertNotNull(aClass);
 
@@ -81,8 +80,7 @@ public class JUnit6SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
     return configuration;
   }
 
-  @NotNull
-  private RunConfiguration createRunPackageConfiguration(final String packageName) {
+  private @NotNull RunConfiguration createRunPackageConfiguration(final String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
     assertNotNull(aPackage);
 

@@ -36,6 +36,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/java-runtime:rt",
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
@@ -71,9 +72,11 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 
@@ -102,10 +105,12 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
+    "//platform/forms_rt:java-guiForms-rt",
     "//java/java-runtime:rt",
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-core",
@@ -139,10 +144,12 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
     "//fleet/rpc",
     "//platform/kernel/rpc",
     "//platform/testFramework/common",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end

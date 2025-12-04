@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.suggested
 
 import com.intellij.openapi.util.Key
@@ -8,11 +8,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -217,7 +213,12 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         }
 
         return detectAvailableRefactoring(
-            oldSignature, newSignature, updateUsagesData, updateOverridesData, declaration, declaration.modifierList?.contextReceiverList?.contextParameters().orEmpty() + declaration.valueParameters
+            oldSignature,
+            newSignature,
+            updateUsagesData,
+            updateOverridesData,
+            declaration,
+            declaration.contextParameters + declaration.valueParameters,
         )
     }
 

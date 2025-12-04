@@ -6,9 +6,6 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
-import com.intellij.driver.sdk.ui.components.elements.accessibleList
-import com.intellij.driver.sdk.ui.components.elements.popup
 
 open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
   fun stripeButton(locator: QueryBuilder.() -> String): StripeButtonUi = x(StripeButtonUi::class.java, locator)
@@ -33,10 +30,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val jpaButton: StripeButtonUi = stripeButton("JPA Console")
   val persistenceButton: StripeButtonUi = stripeButton("Persistence")
 
-  fun IdeaFrameUI.openMoreToolWindow(name: String) {
-    moreButton.click()
-    popup().accessibleList().clickItem(name, false)
-  }
+  fun openMoreToolWindow() { moreButton.click() }
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {

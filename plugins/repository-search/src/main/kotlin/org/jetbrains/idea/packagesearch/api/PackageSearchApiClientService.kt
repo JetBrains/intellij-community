@@ -21,12 +21,12 @@ import kotlinx.coroutines.launch
 import kotlinx.document.database.DataStore
 import kotlinx.document.database.mvstore.MVDataStore
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.idea.completion.util.logTrace
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.PluginEnvironment
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
-import org.jetbrains.idea.reposearch.logTrace
 import org.jetbrains.packagesearch.api.PackageSearchApiClientObject
 import org.jetbrains.packagesearch.api.v3.ApiMavenPackage
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchApiClient

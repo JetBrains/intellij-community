@@ -83,6 +83,24 @@ f:git4idea.GitTag
 - getFullName():java.lang.String
 f:git4idea.GitTag$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+f:git4idea.GitWorkingTree
+- sf:Companion:git4idea.GitWorkingTree$Companion
+- <init>(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z):V
+- <init>(java.lang.String,java.lang.String,Z,Z):V
+- f:component1():com.intellij.openapi.vcs.FilePath
+- f:component2():git4idea.GitStandardLocalBranch
+- f:component3():Z
+- f:component4():Z
+- f:copy(com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z):git4idea.GitWorkingTree
+- bs:copy$default(git4idea.GitWorkingTree,com.intellij.openapi.vcs.FilePath,git4idea.GitStandardLocalBranch,Z,Z,I,java.lang.Object):git4idea.GitWorkingTree
+- equals(java.lang.Object):Z
+- f:getCurrentBranch():git4idea.GitStandardLocalBranch
+- f:getPath():com.intellij.openapi.vcs.FilePath
+- hashCode():I
+- f:isCurrent():Z
+- f:isMain():Z
+f:git4idea.GitWorkingTree$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 e:git4idea.branch.GitBranchType
 - java.lang.Enum
 - git4idea.branch.GitRefType

@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:lucene-highlighter",
     "@lib//:lucene-queryparser",
     "@lib//:lucene-suggest",
+    "//platform/forms_rt:java-guiForms-rt",
     "//libraries/jsoup",
     "@lib//:jaxb-api",
     "//platform/core-api:core",

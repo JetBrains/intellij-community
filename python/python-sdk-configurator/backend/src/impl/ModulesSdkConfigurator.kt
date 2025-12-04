@@ -6,10 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.common.tools.ToolId
@@ -32,8 +30,6 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 /**
@@ -107,14 +103,11 @@ internal class ModulesSdkConfigurator private constructor(
 
     private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> = withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
       val tools = PyProjectSdkConfigurationExtension.createMap()
-      val limit = Semaphore(permits = Registry.intValue("intellij.python.sdkConfigurator.backend.sdk.parallel"))
       val now = System.currentTimeMillis()
       val resultDef = project.modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.map { module ->
-        limit.withPermit {
-          async {
-            val moduleInfo = getModuleInfo(module, tools) ?: return@async null
-            Pair(module, moduleInfo)
-          }
+        async {
+          val moduleInfo = getModuleInfo(module, tools) ?: return@async null
+          Pair(module, moduleInfo)
         }
       }
       val result = resultDef.awaitAll().filterNotNull()

@@ -57,4 +57,9 @@ public final class GuiFormFileType implements /*UIBased*/FileType {
   public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
+  }
 }

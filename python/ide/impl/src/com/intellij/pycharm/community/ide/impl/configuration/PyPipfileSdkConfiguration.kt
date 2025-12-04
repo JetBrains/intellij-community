@@ -25,7 +25,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
@@ -39,7 +38,6 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -49,8 +47,7 @@ import kotlin.io.path.pathString
 
 private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-@ApiStatus.Internal
-class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
+internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   override val toolId: ToolId = PIPENV_TOOL_ID
 

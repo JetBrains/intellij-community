@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.lang.core.jar
+  modules:
+  - name: intellij.platform.lang.core

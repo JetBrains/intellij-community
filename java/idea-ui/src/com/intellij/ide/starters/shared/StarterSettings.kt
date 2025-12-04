@@ -2,7 +2,6 @@
 
 package com.intellij.ide.starters.shared
 
-import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.NlsSafe
@@ -39,6 +38,11 @@ data class StarterAppPackaging(
   @NlsSafe val description: String? = null,
 )
 
+data class StarterConfigFileFormat(
+  val id: String,
+  @NlsSafe val title: String,
+)
+
 data class StarterLanguageLevel(
   val id: String,
   @NlsSafe val title: String,
@@ -57,19 +61,38 @@ class CustomizedMessages {
   var frameworkVersionLabel: @Label String? = null
 }
 
-class StarterWizardSettings(
-  val projectTypes: List<StarterProjectType>,
-  val languages: List<StarterLanguage>,
-  val isExampleCodeProvided: Boolean,
-  val isPackageNameEditable: Boolean,
-  val languageLevels: List<StarterLanguageLevel>,
-  val defaultLanguageLevel: StarterLanguageLevel?,
-  val packagingTypes: List<StarterAppPackaging>,
-  val applicationTypes: List<StarterAppType>,
-  val testFrameworks: List<StarterTestRunner>,
-  val customizedMessages: CustomizedMessages?,
-  val showProjectTypes: Boolean,
-)
+class StarterWizardSettings {
+  val projectTypes: List<StarterProjectType>
+  val languages: List<StarterLanguage>
+  val isExampleCodeProvided: Boolean
+  val isPackageNameEditable: Boolean
+  val languageLevels: List<StarterLanguageLevel>
+  val defaultLanguageLevel: StarterLanguageLevel?
+  val packagingTypes: List<StarterAppPackaging>
+  val applicationTypes: List<StarterAppType>
+  val testFrameworks: List<StarterTestRunner>
+  val customizedMessages: CustomizedMessages?
+  val showProjectTypes: Boolean
+  val configurationFileFormats: List<StarterConfigFileFormat>
+
+  constructor(projectTypes: List<StarterProjectType>, languages: List<StarterLanguage>, isExampleCodeProvided: Boolean, isPackageNameEditable: Boolean, languageLevels: List<StarterLanguageLevel>, defaultLanguageLevel: StarterLanguageLevel?, packagingTypes: List<StarterAppPackaging>, applicationTypes: List<StarterAppType>, testFrameworks: List<StarterTestRunner>, customizedMessages: CustomizedMessages?, showProjectTypes: Boolean) :
+    this(projectTypes, languages, isExampleCodeProvided, isPackageNameEditable, languageLevels, defaultLanguageLevel, packagingTypes, applicationTypes, testFrameworks, customizedMessages, showProjectTypes, emptyList())
+
+  constructor(projectTypes: List<StarterProjectType>, languages: List<StarterLanguage>, isExampleCodeProvided: Boolean, isPackageNameEditable: Boolean, languageLevels: List<StarterLanguageLevel>, defaultLanguageLevel: StarterLanguageLevel?, packagingTypes: List<StarterAppPackaging>, applicationTypes: List<StarterAppType>, testFrameworks: List<StarterTestRunner>, customizedMessages: CustomizedMessages?, showProjectTypes: Boolean, configurationFileFormats: List<StarterConfigFileFormat>) {
+    this.projectTypes = projectTypes
+    this.languages = languages
+    this.isExampleCodeProvided = isExampleCodeProvided
+    this.isPackageNameEditable = isPackageNameEditable
+    this.languageLevels = languageLevels
+    this.defaultLanguageLevel = defaultLanguageLevel
+    this.packagingTypes = packagingTypes
+    this.applicationTypes = applicationTypes
+    this.testFrameworks = testFrameworks
+    this.customizedMessages = customizedMessages
+    this.showProjectTypes = showProjectTypes
+    this.configurationFileFormats = configurationFileFormats
+  }
+}
 
 class PluginRecommendation(
   val pluginId: String,

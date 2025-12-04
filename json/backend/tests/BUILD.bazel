@@ -23,6 +23,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
@@ -40,7 +41,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/IntelliLang:langInjection",
     "//libraries/jsonpath",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:assert_j",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
@@ -52,6 +53,7 @@ jvm_library(
     "//json/syntax",
     "//platform/syntax/syntax-util:util",
     "//platform/core-impl",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.json.tests` end

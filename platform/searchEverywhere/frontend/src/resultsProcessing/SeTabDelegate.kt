@@ -24,11 +24,14 @@ import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+/**
+ * Delegate for managing the Search Everywhere tab's functionality and results processing.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-@Internal
+@ApiStatus.Experimental
 class SeTabDelegate(
   val project: Project?,
   private val session: SeSession,
@@ -346,8 +349,8 @@ class SeTabDelegate(
       val isAllTab = providerIds.any { it.isWildcard }
 
       val adaptedAndAvailableToRenderRemoteProviderIds =
-        (if (isAllTab) availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyAllTabContributors.keys)?.allTab
-        else availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacySeparateTabContributors.keys)?.separateTab?.map { it.providerId })
+        (if (isAllTab) availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyContributors.allTab.keys)?.allTab
+        else availableRemoteProviders?.adaptedWithPresentationOrFetchable(localProvidersHolder.legacyContributors.separateTab.keys)?.separateTab?.map { it.providerId })
           ?.filter {
             !frontendOnlyIds.contains(it)
           }

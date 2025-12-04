@@ -246,7 +246,7 @@ public final class PsiClassImplUtil {
       if (baseSymbolIcon == null) {
         baseSymbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, 0);
+      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, Iconable.ICON_FLAG_FAST_ONLY);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 

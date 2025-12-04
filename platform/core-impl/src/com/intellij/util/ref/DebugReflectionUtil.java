@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -97,13 +97,16 @@ public final class DebugReflectionUtil {
   }
 
   private static boolean isTrivial(@NotNull Class<?> type) {
-    return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
+    return type.isPrimitive() || type == String.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
   public static boolean isInitialized(ClassLoader classLoader, @NotNull String rootName) {
     boolean isInitialized = false;
+    if (classLoader == null) {
+      return false;
+    }
     try {
       isInitialized = ClassLoader_findLoadedClass.invoke(classLoader, rootName) != null;
     }
@@ -113,8 +116,6 @@ public final class DebugReflectionUtil {
     }
     return isInitialized;
   }
-
-  private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
 
   public static <V> boolean walkObjects(int maxDepth,
                                         @NotNull Map<Object, String> startRoots,
@@ -131,6 +132,7 @@ public final class DebugReflectionUtil {
                                         @NotNull PairProcessor<? super V, ? super BackLink<?>> leakProcessor) {
     IntSet visited = new IntOpenHashSet(1000);
     Deque<BackLink<?>> toVisit = new ArrayDeque<>(1000);
+    Map<Object, String> alreadyReported = new IdentityHashMap<>();
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
@@ -155,7 +157,7 @@ public final class DebugReflectionUtil {
       }
       Object value = backLink.value;
       //noinspection unchecked
-      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process((V)value, backLink)) {
+      if (lookFor.isAssignableFrom(value.getClass()) && alreadyReported.put(value, "") == null && !leakProcessor.process((V)value, backLink)) {
         return false;
       }
 
@@ -230,10 +232,6 @@ public final class DebugReflectionUtil {
     if (shouldExamineValue.test(value) && queue.size() < maxQueueSize) {
       queue.addLast(new BackLink<>(value, field, arrayIndex, backLink));
     }
-  }
-
-  private static boolean markLeaked(Object leaked) {
-    return !(leaked instanceof UserDataHolderEx) || ((UserDataHolderEx)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE);
   }
 
   public static class BackLink<V> {

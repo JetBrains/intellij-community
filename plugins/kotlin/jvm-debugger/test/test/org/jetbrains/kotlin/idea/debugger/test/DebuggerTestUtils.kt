@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.testFramework.common.BazelTestUtil
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.isStableOrReadyForPreview
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import kotlin.io.path.pathString
@@ -22,7 +21,7 @@ val DEBUGGER_TESTDATA_PATH_BASE: String =
 
 internal fun chooseLanguageVersionForCompilation(useK2: Boolean): LanguageVersion {
     return if (useK2) {
-        LanguageVersion.values().last { it.usesK2 && it.isStableOrReadyForPreview() }
+        LanguageVersion.values().last { it.usesK2 && it.isStable }
     } else {
         LanguageVersion.KOTLIN_1_9 // the latest K1 LV
     }

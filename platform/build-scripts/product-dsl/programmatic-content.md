@@ -134,6 +134,142 @@ This will generate a complete plugin.xml file like:
 </idea-plugin>
 ```
 
+## Best Practices
+
+### Module Sets vs. deprecatedInclude() vs. direct modules
+
+Choose the appropriate mechanism based on your needs:
+
+**Use `moduleSet()` when:**
+- You need a cohesive group of modules (e.g., `essentialMinimal`, `vcs`, `ssh`)
+- You want to reuse a common set across multiple products
+- You need the full module functionality, not just XML extension points
+- The module set provides platform infrastructure (e.g., `corePlatform` for core platform modules)
+
+**Use `deprecatedInclude()` when:**
+- You only need XML extension points/components from a specific module
+- The module is not part of any module set yet
+- You need to reference product-specific customization XML files
+- The XML file doesn't define content modules (just extensions/listeners)
+
+**Use `module()` or `embeddedModule()` when:**
+- You need a single content module not in any module set
+- The module is specific to your product
+- You want explicit control over loading mode
+
+**Key principle**: Prefer module sets for core platform functionality, use `deprecatedInclude()` only for XML-only includes.
+
+### Migrating from PLATFORM_CORE_MODULES
+
+The `PLATFORM_CORE_MODULES` constant in `PlatformModules.kt` is **deprecated**. It was a hard-coded list of modules that are included in lib/app.jar in all IntelliJ-based IDEs.
+
+**Why it's deprecated:**
+- Hard-coded list, not composable or reusable
+- No clear hierarchy or structure
+- String-based, error-prone
+- Cannot be customized per product
+
+**Migration path:**
+
+Replace `PLATFORM_CORE_MODULES` references with module sets:
+
+```kotlin
+// OLD (deprecated)
+for (module in PLATFORM_CORE_MODULES) {
+  embeddedModule(module)
+}
+
+// NEW (recommended)
+moduleSet(CommunityModuleSets.essentialMinimal())
+// or for minimal products:
+moduleSet(CommunityModuleSets.corePlatform())  // when public
+```
+
+**What module set to use:**
+- **`essentialMinimal()`**: For lightweight IDE products (includes coreLang, backend/frontend split, editor, search)
+- **`essential()`**: For full IDE products with language support
+- **`ide.common`**: For IDE products with VCS, XML, and common IDE features
+- **`corePlatform()`** (when public): For minimal products that need core platform without lang/ide.impl
+
+### Choosing the Right Module Set for Your Product
+
+Use this decision tree to select the appropriate module set:
+
+```
+┌─────────────────────────────────────────────────┐
+│ What type of product are you building?         │
+└───────────────────┬─────────────────────────────┘
+                    │
+        ┌───────────┴───────────────────┬─────────────────────┐
+        │                               │                     │
+   Minimal tool                  Lightweight IDE         Full-featured IDE
+   (analysis/inspection)         (basic editing)         (all features)
+        │                               │                     │
+        ▼                               ▼                     ▼
+   corePlatform                   essentialMinimal        ide.common
+   (when public)                  + specific sets         or ide.ultimate
+```
+
+**Example products:**
+- **CodeServer** (analysis/inspection tool without editing): Uses `corePlatform`
+- **GitClient** (lightweight IDE with editing): Uses `essentialMinimal` + `vcs()`
+- **WebStorm** (full IDE): Uses `ide.common` + web-specific modules
+- **IntelliJ IDEA Ultimate**: Uses `ide.ultimate` + all language plugins
+
+### Example: Migrating CodeServer
+
+**Current approach** (not recommended):
+```kotlin
+override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+  alias("com.intellij.codeServer")
+  
+  // Only XML includes - modules not available at runtime
+  deprecatedInclude("intellij.platform.analysis", "META-INF/Analysis.xml")
+  deprecatedInclude("intellij.platform.core", "META-INF/Core.xml")
+  deprecatedInclude("intellij.platform.projectModel", "META-INF/ProjectModel.xml")
+  // ... 11 more deprecatedInclude calls
+  
+  // Only 5 modules total
+  module("intellij.grid")
+  module("intellij.libraries.jettison")
+}
+```
+
+**Recommended approach** (for analysis tools without editing):
+```kotlin
+override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+  alias("com.intellij.codeServer")
+  
+  // Use corePlatform for analysis tools (core platform without language editing)
+  moduleSet(CommunityModuleSets.corePlatform())
+  
+  // Keep deprecatedInclude only for modules NOT in corePlatform
+  deprecatedInclude("intellij.platform.indexing", "META-INF/Indexing.xml")
+  deprecatedInclude("intellij.platform.codeStyle.impl", "META-INF/CodeStyle.xml")
+  deprecatedInclude("intellij.platform.refactoring", "META-INF/RefactoringExtensionPoints.xml")
+  deprecatedInclude("intellij.codeServer.core", "META-INF/codeserver-customization.xml")
+  
+  // Product-specific modules
+  module("intellij.grid")
+  module("intellij.grid.types")
+  module("intellij.grid.csv.core.impl")
+  module("intellij.grid.core.impl")
+  module("intellij.libraries.jettison")
+}
+```
+
+**Why corePlatform (not essentialMinimal)?**
+CodeServer is an analysis/inspection tool that doesn't provide language editing capabilities:
+- ✅ Needs: Core platform, analysis APIs, IDE extension points
+- ❌ Doesn't need: Language support (lang.*), IDE editing (ide.impl), editor UI, search
+- **corePlatform provides exactly what's needed** without unnecessary dependencies
+
+**Benefits of using module sets:**
+- Modules are actually available at runtime (not just XML extension points)
+- Clear separation: analysis tools use corePlatform, editing IDEs use essentialMinimal
+- Easier to maintain (fewer deprecatedInclude calls)
+- Automatic updates when core platform evolves
+
 ## How It Works
 
 ### File Generation Strategy
@@ -449,6 +585,176 @@ The JSON generation is implemented in:
 - `ModuleSetRunner.kt` - Orchestration and CLI parsing
 - `ModuleSetJsonExport.kt` - JSON generation logic
 - `ModuleSetDiscovery.kt` - Module set discovery via reflection
+
+## Migrating from productImplementationModules
+
+### Understanding the Difference
+
+**`productImplementationModules` (deprecated):**
+- Lists implementation modules (no XML descriptors) to bundle into product JARs
+- Just loads classes into classloader
+- Modules are NOT content modules (no plugin descriptors processed)
+- Being phased out in favor of programmatic content descriptors
+
+**`getProductContentDescriptor()` (modern):**
+- Declares content modules via module sets and `module()`/`embeddedModule()`
+- Content modules = have XML descriptors with extensions/services
+- Implementation dependencies come via `includeDependencies = true`
+
+### Migration Steps
+
+**1. Identify content vs implementation modules**
+
+Content modules (have .xml descriptors):
+```bash
+# Check if module has a descriptor
+find_files_by_glob("**/moduleName.xml")
+
+# Or look in resources directory
+ls community/modulePath/resources/*.xml
+```
+
+Implementation modules (no descriptors):
+- Just provide classes/resources
+- Examples: `fleet.util.multiplatform`, `intellij.platform.webide.impl`
+
+**2. Move content modules to programmatic descriptor**
+
+If a module in `productImplementationModules` has a descriptor, it's incorrectly placed:
+
+```kotlin
+// ❌ WRONG - content module in productImplementationModules
+productLayout.productImplementationModules = listOf(
+  "fleet.andel"  // Has fleet.andel.xml descriptor!
+)
+
+// ✅ CORRECT - content module in programmatic descriptor
+override fun getProductContentDescriptor() = productModules {
+  module("fleet.andel")
+  // Or better: use module set that already includes it
+  moduleSet(CoreModuleSets.essential())
+}
+```
+
+**3. Keep implementation-only modules in productImplementationModules**
+
+Implementation modules without descriptors can stay:
+
+```kotlin
+// ✅ OK - implementation modules without descriptors
+productLayout.productImplementationModules = listOf(
+  "intellij.platform.webide.impl",  // No descriptor
+  "fleet.backend",  // No descriptor
+  "fleet.util.network"  // No descriptor
+)
+```
+
+**4. Use includeDependencies for transitive implementation deps**
+
+Instead of listing all implementation dependencies explicitly:
+
+```kotlin
+// ❌ OLD - manually list all transitive implementation modules
+productLayout.productImplementationModules = listOf(
+  "fleet.andel",  // Content module (has descriptor)
+  "fleet.util.multiplatform",  // Implementation dep of fleet.andel
+  "fleet.backend"
+)
+
+// ✅ NEW - let includeDependencies handle transitive implementation modules
+override fun getProductContentDescriptor() = productModules {
+  embeddedModule("fleet.andel", includeDependencies = true)
+  // This automatically includes fleet.util.multiplatform and other implementation deps
+}
+
+productLayout.productImplementationModules = listOf(
+  "fleet.backend"  // Only product-specific implementation module
+)
+```
+
+### Common Pitfalls
+
+**Pitfall 1: Mixing content modules in productImplementationModules**
+
+```kotlin
+// ❌ BAD - fleet.rpc has descriptor, causes duplicates
+productLayout.productImplementationModules = listOf(
+  "fleet.rpc"  // Also comes from essential() → fleetMinimal()
+)
+
+override fun getProductContentDescriptor() = productModules {
+  moduleSet(CoreModuleSets.essential())  // Includes fleet.rpc
+}
+// Result: Duplicate content module declaration!
+```
+
+**Fix:** Remove content modules from `productImplementationModules`.
+
+**Pitfall 2: Not checking transitive dependencies**
+
+```kotlin
+// ❌ BAD - assuming no duplicates without checking
+productLayout.productImplementationModules = listOf(
+  "fleet.util.multiplatform"  // Might come via includeDependencies!
+)
+
+override fun getProductContentDescriptor() = productModules {
+  embeddedModule("fleet.andel", includeDependencies = true)
+  // fleet.andel → fleet.util.core → fleet.util.multiplatform
+}
+```
+
+**Fix:** Use Plugin Model Analyzer MCP to check transitive deps:
+
+```kotlin
+// Check ALL transitive dependencies
+get_module_dependencies(
+  moduleName = "fleet.andel",
+  includeTransitive = true
+)
+```
+
+**Pitfall 3: Forgetting includeDependencies only gets implementation modules**
+
+```kotlin
+// ❓ QUESTION - will this include fleet.util.core?
+embeddedModule("fleet.andel", includeDependencies = true)
+
+// ✅ ANSWER - NO! 
+// fleet.util.core has a descriptor, so it's filtered out
+// Only implementation modules (no descriptors) are included
+```
+
+### Verification Checklist
+
+Before committing changes:
+
+1. **Run Generate Product Layouts**
+   ```bash
+   # Via JetBrains MCP
+   execute_run_configuration(name="Generate Product Layouts")
+   
+   # Or directly
+   bazel run //platform/buildScripts:product-model-tool
+   ```
+
+2. **Check for duplicate content modules**
+   - The generator will error if content modules are declared twice
+   - Look for: "Plugin 'X' has duplicated content modules declarations"
+
+3. **Verify tests pass**
+   ```bash
+   bazel test //platform/build-scripts/tests/testSrc/org/jetbrains/intellij/build:UltimatePluginModelTest
+   ```
+
+4. **Use MCP to analyze transitive dependencies**
+   ```kotlin
+   // Check what includeDependencies will include
+   get_module_dependencies(
+     moduleName = "your.module",
+     includeTransitive = true
+   )
+   ```
 
 ## Benefits
 

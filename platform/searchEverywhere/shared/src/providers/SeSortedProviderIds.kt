@@ -13,9 +13,11 @@ class SeSortedProviderIds(
   val adaptedWithPresentation: SeSortedAdaptedProviderIds,
   val nonEssentialNonAdapted: Set<SeProviderId>,
   private val fetchTestItemData: SeItemData?,
+  private val originalBackendLegacyContributorsRef: SeLegacyContributorsRef?
 ) {
   val nonEssential: Set<SeProviderId> get() = nonEssentialNonAdapted + adapted.allTab + adaptedWithPresentation.allTab
   val isFetchable: Boolean get() = fetchTestItemData?.fetchItemIfExists() != null
+  val originalBackendLegacyContributors: SeLegacyContributors? get() = originalBackendLegacyContributorsRef?.findContributorsOrNull()
 
   fun adaptedWithPresentationOrFetchable(localLegacyContributors: Set<SeProviderId>): SeSortedAdaptedProviderIds = SeSortedAdaptedProviderIds(
     ((adapted.allTab.takeIf { isFetchable }?.filter { localLegacyContributors.contains(it) } ?: emptySet()) + adaptedWithPresentation.allTab).toSet(),
@@ -36,7 +38,9 @@ class SeSortedProviderIds(
       val item = SeFetchTestItem()
       val itemData = SeItemData.createItemData(session, "", item, "".toProviderId(), item.weight(), item.presentation(), emptyMap(), emptyList())
 
-      return SeSortedProviderIds(essential, adapted, adaptedWithPresentation, nonEssentialNonAdapted, itemData)
+      val legacyContributorsRef = SeLegacyContributorsRefImpl.create(session, providersHolder.legacyContributors)
+
+      return SeSortedProviderIds(essential, adapted, adaptedWithPresentation, nonEssentialNonAdapted, itemData, legacyContributorsRef)
     }
   }
 }

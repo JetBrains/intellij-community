@@ -33,6 +33,7 @@ jvm_library(
     "//plugins/testng",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/plugin",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.kotlin.runConfigurations.testng` end

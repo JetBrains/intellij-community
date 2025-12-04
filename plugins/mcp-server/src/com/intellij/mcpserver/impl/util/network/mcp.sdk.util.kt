@@ -221,21 +221,17 @@ private suspend fun createStreamableSession(
   block: suspend (ApplicationCall, Transport) -> ServerSession,
 ): StreamableSession {
   val transport = StreamableHttpServerTransport()
-  val serverSession = block(applicationCall, transport)
 
   transport.onError {
     logger.error("Error in Streamable HTTP transport", it)
   }
-  transport.onClose {
-    logger.trace { "Streamable HTTP transport closed for session ${transport.sessionId}" }
-    sessions.remove(transport.sessionId)
-  }
+
+  val serverSession = block(applicationCall, transport)
+
   serverSession.onClose {
     logger.trace { "Server closed for Streamable HTTP session ${transport.sessionId}" }
     sessions.remove(transport.sessionId)
   }
-
-  serverSession.connect(transport)
 
   val session = StreamableSession(transport, serverSession)
   sessions[transport.sessionId] = session

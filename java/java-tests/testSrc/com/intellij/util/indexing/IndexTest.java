@@ -807,6 +807,19 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(testFile);
   }
 
+  //TODO RC: Test fails, even though .ensureUpToDate() allows null project, and it is indeed called with project=null
+  public void ignore_test_ensureUpToDateWithNullProject() throws Throwable {
+    final GlobalSearchScope allScope = new EverythingGlobalScope();
+    // create file to be indexed
+    final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile();
+
+    UsefulTestCase.assertNoException(IllegalArgumentException.class, (ThrowableRunnable<Throwable>)() -> {
+      //force to index new file with null project scope
+      FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, /*project: */null, allScope);
+    });
+    assertNotNull(testFile);
+  }
+
   public static class RecordingVfsListener extends IndexedFilesListener {
     @Override
     protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {

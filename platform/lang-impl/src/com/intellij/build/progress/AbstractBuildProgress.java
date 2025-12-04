@@ -18,14 +18,9 @@ import org.jetbrains.annotations.Nullable;
 @Internal
 public abstract class AbstractBuildProgress implements BuildProgress<BuildProgressDescriptor> {
 
-  protected final @NotNull BuildEvents myBuildEvents;
   private final @NotNull BuildProgressListener myListener;
 
-  AbstractBuildProgress(
-    @NotNull BuildEvents buildEvents,
-    @NotNull BuildProgressListener listener
-  ) {
-    myBuildEvents = buildEvents;
+  AbstractBuildProgress(@NotNull BuildProgressListener listener) {
     myListener = listener;
   }
 
@@ -115,17 +110,15 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
   @Override
   public final @NotNull BuildProgress<BuildProgressDescriptor> startChildProgress(@NotNull String title) {
     var childBuildProgressDescriptor = new BuildProgressDescriptorImpl(title, getDescriptor().getBuildDescriptor());
-    var childBuildProgress = new ChildBuildProgressImpl(myBuildEvents, myListener, childBuildProgressDescriptor, this);
+    var childBuildProgress = new ChildBuildProgressImpl(myListener, childBuildProgressDescriptor, this);
     return childBuildProgress.start(childBuildProgressDescriptor);
   }
 
   @Override
   public final @NotNull BuildProgress<BuildProgressDescriptor> progress(@NotNull String title) {
     return event(
-      myBuildEvents.progress()
-        .withStartId(getStartId())
+      ProgressBuildEvent.builder(getStartId(), title)
         .withParentId(getParentId())
-        .withMessage(title)
         .build()
     );
   }
@@ -133,10 +126,8 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
   @Override
   public final @NotNull BuildProgress<BuildProgressDescriptor> progress(@NotNull String title, long total, long progress, String unit) {
     return event(
-      myBuildEvents.progress()
-        .withStartId(getStartId())
+      ProgressBuildEvent.builder(getStartId(), title)
         .withParentId(getParentId())
-        .withMessage(title)
         .withTotal(total)
         .withProgress(progress)
         .withUnit(unit)
@@ -150,10 +141,8 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
     @NotNull BuildEventPresentationData presentationData
   ) {
     return event(
-      myBuildEvents.presentable()
+      PresentableBuildEvent.builder(title, presentationData)
         .withParentId(getStartId())
-        .withMessage(title)
-        .withPresentationData(presentationData)
         .build()
     );
   }
@@ -161,9 +150,8 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
   @Override
   public final @NotNull BuildProgress<BuildProgressDescriptor> output(@NotNull String text, @NotNull ProcessOutputType processOutputType) {
     return event(
-      myBuildEvents.output()
+      OutputBuildEvent.builder(text)
         .withParentId(getStartId())
-        .withMessage(text)
         .withOutputType(processOutputType)
         .build()
     );
@@ -177,11 +165,9 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
     @Nullable Navigatable navigatable
   ) {
     return event(
-      myBuildEvents.message()
+      MessageEvent.builder(title, kind)
         .withParentId(getStartId())
-        .withMessage(title)
         .withDescription(message)
-        .withKind(kind)
         .withNavigatable(navigatable)
         .build()
     );
@@ -195,12 +181,9 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
     @NotNull FilePosition filePosition
   ) {
     return event(
-      myBuildEvents.fileMessage()
+      FileMessageEvent.builder(title, kind, filePosition)
         .withParentId(getStartId())
-        .withMessage(title)
         .withDescription(message)
-        .withKind(kind)
-        .withFilePosition(filePosition)
         .build()
     );
   }
@@ -211,10 +194,8 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
     @NotNull MessageEvent.Kind kind
   ) {
     return event(
-      myBuildEvents.buildIssue()
+      BuildIssueEvent.builder(issue, kind)
         .withParentId(getStartId())
-        .withIssue(issue)
-        .withKind(kind)
         .build()
     );
   }

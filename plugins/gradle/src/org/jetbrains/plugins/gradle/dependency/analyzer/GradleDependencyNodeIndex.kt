@@ -19,6 +19,7 @@ import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.psi.util.CachedValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async

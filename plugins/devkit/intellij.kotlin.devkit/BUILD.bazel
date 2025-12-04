@@ -55,6 +55,7 @@ jvm_library(
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/uast/uast-kotlin-base",
     "//platform/lang-impl",
+    "//platform/lang-api:lang",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/eel",
     "//java/java-indexing-api:indexing",

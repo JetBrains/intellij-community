@@ -157,7 +157,7 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
       }
     }
   }
-  channelToIJent.close()
+  channelToIJent.close(null)
 }
 
 private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: EelReceiveChannel) = launch(CoroutineName("Writer for connection $connectionId")) {

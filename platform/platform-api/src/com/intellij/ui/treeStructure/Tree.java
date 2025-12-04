@@ -462,7 +462,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       super.processKeyEvent(e);
     });
   }

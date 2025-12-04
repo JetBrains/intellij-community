@@ -1071,6 +1071,58 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-41061
+  public void testForIterationOverObjectWithIterAndAiter() {
+    doTest("int",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             for expr in MyIterable(): ...""");
+
+    doTest("int",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             _ = [expr for expr in MyIterable()]""");
+  }
+
+  // PY-41061
+  public void testAsyncForIterationOverObjectWithIterAndAiter() {
+    doTest("str",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             async def foo():
+                 async for expr in MyIterable(): ...""");
+
+    doTest("str",
+           """
+             from collections.abc import Iterator, AsyncIterator
+             
+             class MyIterable:
+                 def __iter__(self) -> Iterator[int]: ...
+             
+                 def __aiter__(self) -> AsyncIterator[str]: ...
+             
+             async def foo():
+                 _ = [expr async for expr in MyIterable()]""");
+  }
+
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
@@ -1671,6 +1723,36 @@ public class Py3TypeTest extends PyTestCase {
 
     doTest("int", "expr = round(True)");
     doTest("int", "expr = round(True, 1)");
+  }
+
+  public void testReplaceDefinitionInMethod() {
+    doTest("type[Derived]",
+           """
+             class Base:
+                 def cls(self):
+                     return self.__class__
+             class Derived(Base):
+                 pass
+             expr = Derived.cls(Derived())""");
+
+    doTest("type[Derived]",
+           """
+             class Base:
+                 def cls(self):
+                     return self.__class__
+             class Derived(Base):
+                 pass
+             expr = Derived().cls()""");
+  }
+
+  public void testDunderClassOnClassObject() {
+    // In Typeshed it's declared as a property, maybe it should be special-cased
+    doTest("property",
+           """
+             class C:
+                 pass
+             expr = C.__class__
+             """);
   }
 
   // PY-29665
@@ -2465,7 +2547,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testObjectDunderNewResult() {
-    doTest("C",
+    doTest("Self@C",
            """
              class C(object):
                  def __new__(cls):
@@ -3305,6 +3387,49 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // PY-50642
+  public void testTypeChecking() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      if not not TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      expr = v
+      """);
+  }
+
+  // PY-50642
+  public void testTypeCheckingInClassBody() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      class A:
+          if not not TYPE_CHECKING:
+              def foo(self) -> int: ...
+          else:
+              def foo(self) -> str: ...
+      expr = A().foo()
+      """);
+  }
+
+  // PY-50642
+  public void testTypeCheckingMultiFile() {
+    myFixture.addFileToProject("mod.py", """
+      import typing
+
+      if not not typing.TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      """);
+
+    doTest("int", """
+      from mod import v
+      expr = v
+      """);
+  }
 
   // PY-73958
   public void testNoStackOverflow() {
@@ -4026,7 +4151,7 @@ public class Py3TypeTest extends PyTestCase {
              a = []
 
              def fun():
-                 if True:
+                 if input():
                      a = True
                  else:
                      a = 5
@@ -4335,6 +4460,30 @@ public class Py3TypeTest extends PyTestCase {
       UserId = NewType('UserId', int)
       expr = UserId
       """);
+  }
+
+  // PY-82945
+  public void testTypeSelf() {
+    doTest("type[Test]", """
+      from typing import Self, classmethod
+      class Test:
+          @classmethod
+          def foo(cls) -> type[Self]:
+              return cls
+      
+      expr = Test.foo()
+      """);
+  }
+
+  public void testNewTypeBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
+      doTest("(int) -> UserId", """
+        from typing import NewType
+        UserId = NewType('UserId', int)
+        expr = UserId
+        """
+      );
+    });
   }
 
   private void doTest(final String expectedType, final String text) {

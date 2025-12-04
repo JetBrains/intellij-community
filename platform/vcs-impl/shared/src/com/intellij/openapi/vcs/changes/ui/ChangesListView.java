@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.platform.vcs.VcsSharedDataKeys;
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges;
 import com.intellij.platform.vcs.impl.shared.actions.VcsTransferableDataKeys;
@@ -143,7 +144,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       .toList().toArray(ChangeList[]::new));
     JBIterable<FilePath> filePaths = VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
     sink.set(VcsSharedDataKeys.FILE_PATHS, filePaths);
-    if (filePaths.isNotEmpty()) {
+    if (!IdeProductMode.isFrontend() && filePaths.isNotEmpty()) {
       sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
     }
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());

@@ -38,6 +38,5 @@
    get(Int): E
    list: AbstractList<E>
    size: Int
-  ()
    subList(Int, Int): List<E>
   subList(Int, Int): List<E>

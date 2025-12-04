@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:assert_j",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kaml",

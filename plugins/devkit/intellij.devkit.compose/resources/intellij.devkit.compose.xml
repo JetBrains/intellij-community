@@ -53,6 +53,9 @@
 
       <action id="ComposePerformanceDemo" class="com.intellij.devkit.compose.showcase.ComposePerformanceDemoAction"
               internal="true"/> <!-- only needed for the JetBrains team -->
+      <action id="JewelCustomPopupRenderer"
+              class="com.intellij.devkit.compose.JewelCustomPopupRendererAction"
+              internal="true"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" relative-to-action="Dev.PsiViewerActions" anchor="after"/>

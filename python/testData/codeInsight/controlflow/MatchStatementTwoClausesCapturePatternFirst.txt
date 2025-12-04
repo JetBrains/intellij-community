@@ -6,7 +6,7 @@
 5(13) READ ACCESS: y
 6(7,12) refutable pattern: 42
 7(8) matched pattern: 42
-8(9) ASSERTTYPE ACCESS: null
+8(9) Unreachable
 9(10) element: PyStatementList
 10(11) element: PyExpressionStatement
 11(13) READ ACCESS: y

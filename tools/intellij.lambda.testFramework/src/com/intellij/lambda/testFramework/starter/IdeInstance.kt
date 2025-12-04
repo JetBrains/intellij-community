@@ -2,6 +2,7 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
+import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
@@ -9,23 +10,31 @@ import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
-import com.intellij.tools.ide.util.common.logError
-import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.starterLogger
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
+
+private val LOG = starterLogger<IdeInstance>()
 
 object IdeInstance {
-  internal lateinit var ideBackgroundRun: BackgroundRunWithLambda
-    private set
+  private var _ide: BackgroundRunWithLambda? = null
+  val ide: BackgroundRunWithLambda
+    get() = _ide ?: throw IllegalStateException("IDE is not started yet")
+
   lateinit var currentIdeMode: IdeRunMode
     private set
   private lateinit var runContext: IDERunContext
 
+  fun isStarted(): Boolean = _ide != null
+
   fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
     try {
-      logOutput("Starting IDE in mode: $runMode")
+      LOG.info("Starting IDE in mode: $runMode")
 
-      if (this::ideBackgroundRun.isInitialized && currentIdeMode == runMode) {
-        logOutput("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
-        return ideBackgroundRun
+      if (isStarted() && currentIdeMode == runMode) {
+        LOG.info("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
+        return ide
       }
 
       stopIde()
@@ -35,24 +44,35 @@ object IdeInstance {
       val testContext = Starter.newContextWithLambda(runMode.name,
                                                      UltimateTestCases.JpsEmptyProject,
                                                      *LambdaTestPluginHolder.additionalPluginIds().toTypedArray())
-      ideBackgroundRun = testContext.runIdeWithLambda(configure = { runContext = this })
-
-      return ideBackgroundRun
+      _ide = testContext.runIdeWithLambda(configure = { runContext = this })
+      return ide
     }
     catch (e: Throwable) {
-      logError("Problems when starting IDE", e)
+      LOG.error("Problems when starting IDE", e)
       throw e
     }
   }
 
   fun stopIde(): Unit = synchronized(this) {
-    if (!this::ideBackgroundRun.isInitialized) return
+    if (!isStarted()) return
 
-    logOutput("Stopping IDE that is running in mode: $currentIdeMode")
-    catchAll { ideBackgroundRun.forceKill() }
+    LOG.info("Stopping IDE that is running in mode: $currentIdeMode")
+    catchAll { _ide?.forceKill() }
+    _ide = null
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
     runContext.publishArtifacts()
+  }
+
+  fun cleanup() = synchronized(this) {
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking(testSuiteSupervisorScope.coroutineContext) {
+      withTimeout(5.seconds) {
+        catchAll("IDE instance cleanup") {
+          ide.cleanUp()
+        }
+      }
+    }
   }
 }

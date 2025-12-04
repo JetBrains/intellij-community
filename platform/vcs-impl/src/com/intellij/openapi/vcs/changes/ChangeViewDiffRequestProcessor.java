@@ -294,7 +294,8 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return true;
   }
 
-  private @Nullable PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
+  @ApiStatus.Internal
+  protected @Nullable PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
 
     List<? extends Wrapper> selectedChanges = toListIfNotMany(iterateSelectedChanges(), fromUpdate);

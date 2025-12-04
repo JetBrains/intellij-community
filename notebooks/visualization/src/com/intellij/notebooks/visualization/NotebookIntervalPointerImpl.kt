@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.visualization.NotebookIntervalPointerFactory.Companion.compareIntervals
@@ -16,7 +17,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 
-class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
+private class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
     val provider = NotebookCellLinesProvider.getOrInstall(project, document)
     val notebookCellLines = provider.create(document)

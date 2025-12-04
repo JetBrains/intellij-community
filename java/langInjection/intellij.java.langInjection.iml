@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
   <component name="copyright">
     <Base>

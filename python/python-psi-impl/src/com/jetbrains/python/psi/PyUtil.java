@@ -1158,6 +1158,50 @@ public final class PyUtil {
     }
   }
 
+  @ApiStatus.Internal
+  public static @Nullable PyClassType selectCallableTypeRuntimeClass(@NotNull PyCallableType callableType,
+                                                                     @Nullable PyExpression location,
+                                                                     @NotNull TypeEvalContext context) {
+    String className;
+    if (location instanceof PyReferenceExpression re && isBoundMethodReference(callableType, re, context)) {
+      className = PyNames.TYPES_METHOD_TYPE;
+    }
+    else {
+      className = PyNames.TYPES_FUNCTION_TYPE;
+    }
+    PyCallable callable = callableType.getCallable();
+    PyClass cls = callable != null ? PyPsiFacade.getInstance(callable.getProject()).createClassByQName(className, callable) : null;
+    return cls != null ? new PyClassTypeImpl(cls, false) : null;
+  }
+
+  private static boolean isBoundMethodReference(@NotNull PyCallableType callableType,
+                                                @NotNull PyReferenceExpression location,
+                                                @NotNull TypeEvalContext context) {
+    final PyFunction function = as(callableType.getCallable(), PyFunction.class);
+    final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
+    if (isNonStaticMethod) {
+      // In Python 2 unbound methods have __method fake type
+      if (LanguageLevel.forElement(location).isPython2()) {
+        return true;
+      }
+      final PyExpression qualifier;
+      if (location.isQualified()) {
+        qualifier = location.getQualifier();
+      }
+      else {
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
+        qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
+      }
+      if (qualifier != null) {
+        final PyType qualifierType = context.getType(qualifier);
+        if (PyTypeUtil.toStream(qualifierType).select(PyClassType.class).anyMatch(it -> !it.isDefinition())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static final class MethodFlags {
 
     private final boolean myIsStaticMethod;

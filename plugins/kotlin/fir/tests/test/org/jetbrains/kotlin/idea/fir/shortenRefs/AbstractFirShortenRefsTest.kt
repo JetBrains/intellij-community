@@ -13,8 +13,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
@@ -38,7 +37,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override fun doTest(file: KtFile): String? = allowAnalysisOnEdt {
         val strategyName = InTextDirectivesUtils.findStringWithPrefixes(file.text, STRATEGY_DIRECTIVE)
         val (classShortenStrategy, callableShortenStrategy) = if (strategyName == null) {
-            ShortenStrategy.defaultClassShortenStrategy to ShortenStrategy.defaultCallableShortenStrategy
+            ShortenStrategy.defaultClassShortenStrategyForIde(file) to ShortenStrategy.defaultCallableShortenStrategyForIde(file)
         } else {
             { _: KaClassLikeSymbol -> ShortenStrategy.valueOf(strategyName) } to { _: KaCallableSymbol -> ShortenStrategy.valueOf(strategyName) }
         }
@@ -61,7 +60,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
                 val selection = TextRange(selectionModel.selectionStart, selectionModel.selectionEnd)
                 if (!selectionModel.hasSelection()) error("No selection in input file")
                 analyze(file) {
-                    collectPossibleReferenceShortenings(
+                    collectPossibleReferenceShorteningsForIde(
                         file,
                         selection,
                         ShortenOptions.ALL_ENABLED,

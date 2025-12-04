@@ -48,7 +48,7 @@ internal object SurroundWithNullCheckFixFactory {
     }
 
     val nullabilityMismatchBasedOnJavaAnnotationsFactory =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullabilityMismatchBasedOnJavaAnnotations ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.TypeMismatchBasedOnJavaAnnotations ->
             createQuickFixIfApplicableToTypeMismatch(diagnostic.psi)
         }
 

@@ -295,7 +295,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     assertThrows(UnsupportedOperationException::class.java) {
       runBlockingMaybeCancellable {
         val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-        mavenEmbedderWrappers.getEmbedder(projectRoot.path).getEmbedder()
+        mavenEmbedderWrappers.getEmbedder(projectRoot.toNioPath()).getEmbedder()
       }
     }
     assertNotNull(settingsRef.get())

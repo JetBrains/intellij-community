@@ -29,7 +29,7 @@ import java.util.function.BiConsumer;
  */
 public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSettingsProvider implements LanguageCodeStyleProvider {
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
+    new ExtensionPointName<>("com.intellij.langCodeStyleSettingsProvider");
 
   public enum SettingsType {
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC

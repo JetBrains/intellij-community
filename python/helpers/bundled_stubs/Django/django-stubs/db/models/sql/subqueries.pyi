@@ -41,4 +41,4 @@ class AggregateQuery(Query):
     where: WhereNode
     where_class: type[WhereNode]
 
-__all__ = ["DeleteQuery", "UpdateQuery", "InsertQuery", "AggregateQuery"]
+__all__ = ["AggregateQuery", "DeleteQuery", "InsertQuery", "UpdateQuery"]

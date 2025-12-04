@@ -1995,7 +1995,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {
     var lombok = "org.projectlombok:lombok:1.16.2";
     importProject(script(it -> {

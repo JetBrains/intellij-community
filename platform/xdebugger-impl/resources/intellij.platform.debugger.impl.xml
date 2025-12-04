@@ -1,4 +1,33 @@
 <idea-plugin visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- end editor-fold -->
   <applicationListeners>
     <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
@@ -25,9 +54,6 @@
 
     <extensionPoint name="xdebugger.customMuteBreakpointHandler"
                     interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
-
-    <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.xdebugger.impl.frame.XDebugManagerProxy"
-                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -151,7 +177,7 @@
                  description="Enables remove/disable all but this breakpoint actions"
                  key="debugger.remove.disable.actions"/>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Debugger implementation for split mode. Enable it in monolith as well to have the same experience as in RD."
                  key="xdebugger.toolwindow.split"
                  restartRequired="true"/>

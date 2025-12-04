@@ -1,6 +1,6 @@
 - name: dist.all/lib/intellij.libraries.kryo5.jar
   modules:
   - name: intellij.libraries.kryo5
-  library: Kryo5
-  files:
-  - name: $MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5/kryo5-5.jar
+    libraries:
+      kryo:
+      - name: $MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5/kryo5-5.jar

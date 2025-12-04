@@ -14,6 +14,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
+import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -27,10 +31,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.XSmartStepIntoHandlerEntry
-import com.intellij.xdebugger.impl.frame.XStackFramesListColorsCache
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -81,7 +81,7 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     get() = sessionImplIfAvailable?.valueMarkers
   override val sessionTab: XDebugSessionTab?
     get() = sessionImplIfAvailable?.sessionTab
-  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
+  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab?>
     get() = sessionImpl.sessionTabDeferred
   override val isPaused: Boolean
     get() = session.isPaused

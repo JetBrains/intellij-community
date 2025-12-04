@@ -442,7 +442,11 @@ public final class AsyncTreeModel extends AbstractTreeModel
       return emptyList();
     }
     if (node.isLoadingRequired()) {
-      promiseChildren(node);
+      if (object instanceof CachedTreePresentationNode) {
+        node.setLoading(new Node(new LoadingNode(), LeafState.ALWAYS));
+      } else {
+        promiseChildren(node);
+      }
     }
     return node.getChildren();
   }

@@ -10,10 +10,28 @@ import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
 import org.jetbrains.intellij.build.impl.bazelOutputRoot
 import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ProductCategory
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Path
+
+/**
+ * Determines product category based on module sets included in the content spec.
+ * 
+ * @param contentSpec Product's module content specification
+ * @return ProductCategory based on which core module sets are used
+ */
+private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): ProductCategory {
+  if (contentSpec == null) return ProductCategory.BACKEND
+  
+  val moduleSetNames = contentSpec.moduleSets.map { it.moduleSet.name }
+  return when {
+    "ide.ultimate" in moduleSetNames -> ProductCategory.ULTIMATE
+    "ide.common" in moduleSetNames -> ProductCategory.COMMUNITY
+    else -> ProductCategory.BACKEND
+  }
+}
 
 /**
  * Parses JSON argument from command line in the format `--json` or `--json='{"filter":"...","value":"..."}'`.
@@ -100,14 +118,24 @@ private suspend fun jsonResponse(
 ) {
   // Prepare all module sets with metadata
   val communityModuleSetsWithMeta = communityModuleSets.map {
-    ModuleSetMetadata(it, "community", communitySourceFile)
+    ModuleSetMetadata(
+      moduleSet = it,
+      location = "community",
+      sourceFile = communitySourceFile,
+      directNestedSets = it.nestedSets.map { nested -> nested.name }
+    )
   }
   val ultimateModuleSetsWithMeta = if (ultimateSourceFile == null) {
     emptyList()
   }
   else {
     ultimateModuleSets.map {
-      ModuleSetMetadata(moduleSet = it, location = "ultimate", sourceFile = ultimateSourceFile)
+      ModuleSetMetadata(
+        moduleSet = it,
+        location = "ultimate",
+        sourceFile = ultimateSourceFile,
+        directNestedSets = it.nestedSets.map { nested -> nested.name }
+      )
     }
   }
   val allModuleSets = communityModuleSetsWithMeta + ultimateModuleSetsWithMeta
@@ -115,14 +143,15 @@ private suspend fun jsonResponse(
   // Discover regular products and add passed test products
   val regularProducts = discoverAllProducts(projectRoot, moduleOutputProvider).asSequence().map {
     // For test products (properties = null), use "test-product" as source file
-    val sourceFile = if (it.properties == null) {
+    val props = it.properties // Store in local val to enable smart cast
+    val sourceFile = if (props == null) {
       "test-product"
     }
     else {
       // Use JPS-based lookup to find actual source file in module source roots
       findProductPropertiesSourceFile(
         buildModules = it.config.modules,
-        productPropertiesClass = it.properties.javaClass,
+        productPropertiesClass = props.javaClass,
         moduleOutputProvider = moduleOutputProvider,
         projectRoot = projectRoot
       )
@@ -134,6 +163,7 @@ private suspend fun jsonResponse(
       pluginXmlPath = it.pluginXmlPath,
       contentSpec = it.spec,  // Pass full ProductModulesContentSpec for complete DSL serialization
       buildModules = it.config.modules,
+      category = determineProductCategory(it.spec),
     )
   }
   val testProductSpecs = testProducts.asSequence().map { (name, spec) ->
@@ -147,10 +177,16 @@ private suspend fun jsonResponse(
     )
   }
 
-  streamModuleAnalysisJson(allModuleSets = allModuleSets, products = (regularProducts + testProductSpecs).toList(), projectRoot = projectRoot, filter = parseJsonArgument(jsonArg))
+  streamModuleAnalysisJson(
+    allModuleSets = allModuleSets,
+    products = (regularProducts + testProductSpecs).toList(),
+    projectRoot = projectRoot,
+    filter = parseJsonArgument(jsonArg),
+    moduleOutputProvider = moduleOutputProvider
+  )
 }
 
-internal fun createModuleOutputProvider(projectRoot: Path): ModuleOutputProvider {
+fun createModuleOutputProvider(projectRoot: Path): ModuleOutputProvider {
   val project = JpsSerializationManager.getInstance().loadProject(
     projectRoot.toString(),
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),

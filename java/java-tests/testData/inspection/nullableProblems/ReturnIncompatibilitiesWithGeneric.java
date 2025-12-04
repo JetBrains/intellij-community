@@ -7,15 +7,15 @@ import java.util.Collection;
 
 class B<T> {
   B<@NotNull String> simpleNullableToNotNull(B<@Nullable String> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String></p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<<b>@NotNull</b> String></td></tr><tr><td>Actual type:</td><td>B<<b>@Nullable</b> String></td></tr></table>">arg</warning>;
   }
 
   B<@Nullable String> simpleNotNullToNullable(B<@NotNull String> arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: B<<b>@NotNull</b> String></p>">arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<table><tr><td>Expected type:</td><td>B<<b>@Nullable</b> String></td></tr><tr><td>Actual type:</td><td>B<<b>@NotNull</b> String></td></tr></table>">arg</warning>;
   }
 
   B<B<@NotNull String>> nested(B<B<@Nullable String>> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<B<<b>@Nullable</b> String>></p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<B<<b>@NotNull</b> String>></td></tr><tr><td>Actual type:</td><td>B<B<<b>@Nullable</b> String>></td></tr></table>">arg</warning>;
   }
 
   B<? extends @Nullable Object> extendsWildcardNullable(B<@NotNull Object> arg) {
@@ -23,7 +23,7 @@ class B<T> {
   }
 
   B<? extends @NotNull Object> extendsWildcardNotNull(B<@Nullable String> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String></p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<? extends <b>@NotNull</b> Object></td></tr><tr><td>Actual type:</td><td>B<<b>@Nullable</b> String></td></tr></table>">arg</warning>;
   }
 
   B<? super @NotNull String> SupperWildcard(B<@Nullable Object> arg) {
@@ -31,7 +31,7 @@ class B<T> {
   }
 
   B<? extends @NotNull Object> extendsWildcardBothNotNull(B<? extends @Nullable Object> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<? extends <b>@Nullable</b> Object></p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<? extends <b>@NotNull</b> Object></td></tr><tr><td>Actual type:</td><td>B<? extends <b>@Nullable</b> Object></td></tr></table>">arg</warning>;
   }
 
   B<? extends @Nullable Object> extendsWildcardBothNullable(B<? extends @NotNull Object> arg) {
@@ -43,28 +43,28 @@ class B<T> {
   }
 
   B<? extends B<@NotNull Object>> nestedWithWildcard(B<B<@Nullable Object>> arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<B<<b>@Nullable</b> Object>></p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<? extends B<<b>@NotNull</b> Object>></td></tr><tr><td>Actual type:</td><td>B<B<<b>@Nullable</b> Object>></td></tr></table>">arg</warning>;
   }
 
   Map<List<String>, List<@Nullable String>> checkIsPerformedIfSecondTypeArgumentIsTheSame(Map<List<String>, List<@NotNull String>> arg) {
-    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: Map<List<String>, List<<b>@NotNull</b> String>></p>">arg</warning>;
+    return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<table><tr><td>Expected type:</td><td>Map<List<String>, List<<b>@Nullable</b> String>></td></tr><tr><td>Actual type:</td><td>Map<List<String>, List<<b>@NotNull</b> String>></td></tr></table>">arg</warning>;
   }
 
   B<@NotNull String>[] array(B<@Nullable String>[] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String>[]</p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<<b>@NotNull</b> String>[]</td></tr><tr><td>Actual type:</td><td>B<<b>@Nullable</b> String>[]</td></tr></table>">arg</warning>;
   }
 
   Object[] @NotNull [] nullabilityInNestedArray(Object[] @Nullable [] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: Object[] <b>@Nullable</b> []</p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>Object[] <b>@NotNull</b> []</td></tr><tr><td>Actual type:</td><td>Object[] <b>@Nullable</b> []</td></tr></table>">arg</warning>;
   }
 
   B<@NotNull String>[][] multiDimensionalArray(B<@Nullable String>[][] arg) {
-    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: B<<b>@Nullable</b> String>[][]</p>">arg</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>B<<b>@NotNull</b> String>[][]</td></tr><tr><td>Actual type:</td><td>B<<b>@Nullable</b> String>[][]</td></tr></table>">arg</warning>;
   }
 
   static class C<T, V> {
     C<Object, @NotNull String> secondArgument(C<Object, @Nullable String> arg) {
-      return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<p>Return type: C<Object, <b>@Nullable</b> String></p>">arg</warning>;
+      return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected" tooltip="Returning a class with nullable type arguments when a class with not-null type arguments is expected<table><tr><td>Expected type:</td><td>C<Object, <b>@NotNull</b> String></td></tr><tr><td>Actual type:</td><td>C<Object, <b>@Nullable</b> String></td></tr></table>">arg</warning>;
     }
   }
 
@@ -101,7 +101,7 @@ class B<T> {
   @NullMarked
   static class ReturnWithNullMarked {
     static List<@Nullable String> f(List<String> arg) {
-      return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<p>Return type: List<<b>@NullMarked</b> String></p>">arg</warning>;
+      return <warning descr="Returning a class with not-null type arguments when a class with nullable type arguments is expected" tooltip="Returning a class with not-null type arguments when a class with nullable type arguments is expected<table><tr><td>Expected type:</td><td>List<<b>@Nullable</b> String></td></tr><tr><td>Actual type:</td><td>List<<b>@NullMarked</b> String></td></tr></table>">arg</warning>;
     }
   }
 }

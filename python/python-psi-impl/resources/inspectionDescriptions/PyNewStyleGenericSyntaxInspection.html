@@ -15,22 +15,22 @@
   Examples:
 </p>
 <pre><code>
-  from typing import Generic
+from typing import Generic
 
-  class Example[T](Generic[T]): ... # Classes with type parameter list should not extend 'Generic'
+class Example[T](Generic[T]): ... # Classes with type parameter list should not extend 'Generic'
 </code></pre>
 
 <pre><code>
-  class Example[T: (list[S], str)]: ... # Generic types are not allowed inside constraints and bounds of type parameters
+class Example[T: (list[S], str)]: ... # Generic types are not allowed inside constraints and bounds of type parameters
 </code></pre>
 
 <pre><code>
-  from typing import TypeVar
+from typing import TypeVar
 
-  K = TypeVar("K")
+K = TypeVar("K")
 
-  class ClassC[V]:
-      def method2[M](self, a: M, b: K) -> M | K: ... # Mixing traditional and new-style TypeVars is not allowed
+class ClassC[V]:
+    def method2[M](self, a: M, b: K) -> M | K: ... # Mixing traditional and new-style TypeVars is not allowed
 </code></pre>
 </body>
 </html>

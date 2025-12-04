@@ -12,18 +12,14 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
 
-/**
- * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionOptions">codeActionOptions (LSP spec)</a>
- */
-@Serializable
-data class CodeActionOptions(
+interface CodeActionOptions : WorkDoneProgressOptions {
     /**
      * CodeActionKinds that this server may return.
      *
      * The list of kinds may be generic, such as `CodeActionKind.Refactor`,
      * or the server may list out every specific kind they provide.
      */
-    val codeActionKinds: List<CodeActionKind>,
+    val codeActionKinds: List<CodeActionKind>
 
     /**
      * The server provides support to resolve additional
@@ -31,9 +27,32 @@ data class CodeActionOptions(
      *
      * @since 3.16.0
      */
-    val resolveProvider: Boolean?,
-    override val workDoneProgress: Boolean?,
-) : WorkDoneProgressOptions
+    val resolveProvider: Boolean?
+}
+
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionOptions">codeActionOptions (LSP spec)</a>
+ */
+@Serializable
+data class CodeActionRegistrationOptions(
+    /**
+     * CodeActionKinds that this server may return.
+     *
+     * The list of kinds may be generic, such as `CodeActionKind.Refactor`,
+     * or the server may list out every specific kind they provide.
+     */
+    override val codeActionKinds: List<CodeActionKind>,
+
+    /**
+     * The server provides support to resolve additional
+     * information for a code action.
+     *
+     * @since 3.16.0
+     */
+    override val resolveProvider: Boolean?,
+    override val workDoneProgress: Boolean? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : CodeActionOptions, TextDocumentRegistrationOptions
 
 /**
  * The kind of code action.
@@ -328,9 +347,23 @@ sealed interface CommandOrCodeAction {
 }
 
 object CodeActions {
-    val CodeActionRequest: RequestType<CodeActionParams, List<CommandOrCodeAction>?, Unit> =
-        RequestType("textDocument/codeAction", CodeActionParams.serializer(), ListSerializer(CommandOrCodeAction.serializer()).nullable, Unit.serializer())
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction">textDocument/codeAction (LSP spec)</a>
+   */
+  val CodeActionRequest: RequestType<CodeActionParams, List<CommandOrCodeAction>?, Unit> = RequestType(
+    method = "textDocument/codeAction",
+    paramsSerializer = CodeActionParams.serializer(),
+    resultSerializer = ListSerializer(elementSerializer = CommandOrCodeAction.serializer()).nullable,
+    errorSerializer = Unit.serializer(),
+  )
 
-    val ResolveCodeAction: RequestType<CodeAction, CodeAction, Unit> =
-        RequestType("codeAction/resolve", CodeAction.serializer(), CodeAction.serializer(), Unit.serializer())
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction">textDocument/codeAction (LSP spec)</a>
+   */
+  val ResolveCodeAction: RequestType<CodeAction, CodeAction, Unit> = RequestType(
+    method = "codeAction/resolve",
+    paramsSerializer = CodeAction.serializer(),
+    resultSerializer = CodeAction.serializer(),
+    errorSerializer = Unit.serializer(),
+  )
 }

@@ -18,11 +18,6 @@ private class GradleDslVersionCatalogHandler : GradleVersionCatalogHandler {
     return ProjectBuildModel.get(project).context.versionCatalogFiles.associate { it.catalogName to it.file }
   }
 
-  override fun getVersionCatalogFiles(module: Module): Map<String, VirtualFile> {
-    val buildModel = getBuildModel(module) ?: return emptyMap()
-    return buildModel.context.versionCatalogFiles.associate { it.catalogName to it.file }
-  }
-
   override fun getAccessorClass(context: PsiElement, catalogName: String): PsiClass? {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return null
     val versionCatalogsModel = getBuildModel(module)?.versionCatalogsModel ?: return null

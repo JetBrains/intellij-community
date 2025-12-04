@@ -13,7 +13,7 @@ import java.nio.file.Path
  * @param projectRoot Project root path for constructing file paths
  * @return Module paths result with all discovered paths
  */
-fun findModulePaths(
+internal fun findModulePaths(
   moduleName: String,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,

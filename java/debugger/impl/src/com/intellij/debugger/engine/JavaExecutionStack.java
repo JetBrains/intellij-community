@@ -256,6 +256,11 @@ public class JavaExecutionStack extends XExecutionStack {
           container.errorOccurred(JavaDebuggerBundle.message("frame.panel.frames.not.available"));
         }
       }
+
+      @Override
+      protected void commandCancelled() {
+        container.errorOccurred(JavaDebuggerBundle.message("frame.panel.frames.not.available"));
+      }
     });
   }
 

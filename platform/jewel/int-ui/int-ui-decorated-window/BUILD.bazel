@@ -27,7 +27,7 @@ jvm_library(
   resources = [":jewel-intUi-decoratedWindow_resources"],
   runtime_deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//platform/jewel/decorated-window",
     "//platform/jewel/ui",

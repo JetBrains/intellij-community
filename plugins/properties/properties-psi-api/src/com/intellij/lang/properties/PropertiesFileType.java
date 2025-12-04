@@ -93,4 +93,9 @@ public class PropertiesFileType extends LanguageFileType {
       return StandardCharsets.UTF_8;
     }
   }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
+  }
 }

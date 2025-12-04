@@ -25,12 +25,13 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
   override val suspendContext: SuspendContextImpl? by lazy {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     val context = super.suspendContext
+    val thread = if (customThread != null && customThread.isSuspended) customThread else null
     when {
-      customThread == null -> context
-      context == null || context.isResumed || !context.suspends(customThread) -> {
+      thread == null -> context
+      context == null || context.isResumed || !context.suspends(thread) -> {
         // first check paused contexts
-        SuspendManagerUtil.getPausedSuspendingContext(debuggerContext.debugProcess!!.suspendManager, customThread)
-        ?: SuspendManagerUtil.findContextByThread(debuggerContext.debugProcess!!.suspendManager, customThread)
+        SuspendManagerUtil.getPausedSuspendingContext(debuggerContext.debugProcess!!.suspendManager, thread)
+        ?: SuspendManagerUtil.findContextByThread(debuggerContext.debugProcess!!.suspendManager, thread)
       }
       else -> context
     }

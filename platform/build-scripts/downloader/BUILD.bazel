@@ -14,7 +14,7 @@ jvm_library(
     "@lib//:zstd-jni",
     "//libraries/commons/io",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:opentelemetry-extension-kotlin",

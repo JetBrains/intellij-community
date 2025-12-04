@@ -1,37 +1,83 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events
 
+import com.intellij.build.BuildDescriptor
+import com.intellij.build.FilePosition
 import com.intellij.build.eventBuilders.*
+import com.intellij.build.events.BuildEventsNls.Message
+import com.intellij.build.issue.BuildIssue
 import com.intellij.openapi.components.service
 import com.intellij.util.application
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@Experimental
+@Internal
 interface BuildEvents {
 
-  fun startBuild(): StartBuildEventBuilder
+  fun startBuild(
+    message: @Message String,
+    buildDescriptor: BuildDescriptor,
+  ): StartBuildEventBuilder
 
-  fun finishBuild(): FinishBuildEventBuilder
+  fun finishBuild(
+    startBuildId: Any,
+    message: @Message String,
+    result: EventResult,
+  ): FinishBuildEventBuilder
 
-  fun start(): StartEventBuilder
+  fun start(
+    id: Any,
+    message: @Message String,
+  ): StartEventBuilder
 
-  fun finish(): FinishEventBuilder
+  fun finish(
+    startId: Any,
+    message: @Message String,
+    result: EventResult,
+  ): FinishEventBuilder
 
-  fun output(): OutputBuildEventBuilder
+  fun output(
+    message: @Message String,
+  ): OutputBuildEventBuilder
 
-  fun progress(): ProgressBuildEventBuilder
+  fun progress(
+    startId: Any,
+    message: @Message String,
+  ): ProgressBuildEventBuilder
 
-  fun message(): MessageEventBuilder
+  fun message(
+    message: @Message String,
+    kind: MessageEvent.Kind,
+  ): MessageEventBuilder
 
-  fun fileMessage(): FileMessageEventBuilder
+  fun fileMessage(
+    message: @Message String,
+    kind: MessageEvent.Kind,
+    filePosition: FilePosition,
+  ): FileMessageEventBuilder
 
-  fun buildIssue(): BuildIssueEventBuilder
+  fun buildIssue(
+    issue: BuildIssue,
+    kind: MessageEvent.Kind,
+  ): BuildIssueEventBuilder
 
-  fun fileDownload(): FileDownloadEventBuilder
+  fun fileDownload(
+    startId: Any,
+    message: @Message String,
+    isFirstInGroup: Boolean,
+    downloadPath: String,
+  ): FileDownloadEventBuilder
 
-  fun fileDownloaded(): FileDownloadedEventBuilder
+  fun fileDownloaded(
+    startId: Any,
+    message: @Message String,
+    duration: Long,
+    downloadPath: String,
+  ): FileDownloadedEventBuilder
 
-  fun presentable(): PresentableBuildEventBuilder
+  fun presentable(
+    message: @Message String,
+    presentationData: BuildEventPresentationData,
+  ): PresentableBuildEventBuilder
 
   companion object {
 

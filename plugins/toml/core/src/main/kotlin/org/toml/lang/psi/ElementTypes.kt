@@ -27,19 +27,21 @@ object TomlFileType : LanguageFileType(TomlLanguage), FileTypeIdentifiableByVirt
     override fun getIcon(): Icon = TomlIcons.TomlFile
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
+    override fun isAvailableForOverride(): Boolean = true
+
     override fun isMyFileType(file: VirtualFile): Boolean {
         return StringUtil.equal(file.nameSequence, "config", true) && file.parent?.name == ".cargo"
     }
 }
 
-val TOML_COMMENTS = TokenSet.create(COMMENT)
+val TOML_COMMENTS: TokenSet = TokenSet.create(COMMENT)
 
-val TOML_BASIC_STRINGS = TokenSet.create(BASIC_STRING, MULTILINE_BASIC_STRING)
-val TOML_LITERAL_STRINGS = TokenSet.create(LITERAL_STRING, MULTILINE_LITERAL_STRING)
-val TOML_SINGLE_LINE_STRINGS = TokenSet.create(BASIC_STRING, LITERAL_STRING)
-val TOML_MULTILINE_STRINGS = TokenSet.create(MULTILINE_BASIC_STRING, MULTILINE_LITERAL_STRING)
-val TOML_STRING_LITERALS = TokenSet.orSet(TOML_BASIC_STRINGS, TOML_LITERAL_STRINGS)
-val TOML_LITERALS = TokenSet.orSet(
+val TOML_BASIC_STRINGS: TokenSet = TokenSet.create(BASIC_STRING, MULTILINE_BASIC_STRING)
+val TOML_LITERAL_STRINGS: TokenSet = TokenSet.create(LITERAL_STRING, MULTILINE_LITERAL_STRING)
+val TOML_SINGLE_LINE_STRINGS: TokenSet = TokenSet.create(BASIC_STRING, LITERAL_STRING)
+val TOML_MULTILINE_STRINGS: TokenSet = TokenSet.create(MULTILINE_BASIC_STRING, MULTILINE_LITERAL_STRING)
+val TOML_STRING_LITERALS: TokenSet = TokenSet.orSet(TOML_BASIC_STRINGS, TOML_LITERAL_STRINGS)
+val TOML_LITERALS: TokenSet = TokenSet.orSet(
     TOML_STRING_LITERALS,
     TokenSet.create(
         BOOLEAN,

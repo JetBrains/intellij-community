@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
@@ -13,12 +13,9 @@ import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
 import git4idea.inMemory.GitObjectRepository
 import git4idea.inMemory.rebase.log.reword.GitInMemoryRewordOperation
-import git4idea.rebase.log.GitCommitEditingOperationResult
-import git4idea.rebase.log.GitNewCommitMessageActionDialog
-import git4idea.rebase.log.executeInMemoryWithFallback
-import git4idea.rebase.log.getOrLoadDetails
-import git4idea.rebase.log.notifySuccess
+import git4idea.rebase.log.*
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 internal class GitRewordAction : GitSingleCommitEditingAction() {
@@ -37,7 +34,7 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
     return super.checkNotMergeCommit(commitEditingData)
   }
 
-  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+  override fun actionPerformedAfterChecks(scope: CoroutineScope, commitEditingData: SingleCommitEditingData) {
     val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val commit = details.first()
     val dialog = GitNewCommitMessageActionDialog(
@@ -51,14 +48,20 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
       )
     )
     dialog.show { newMessage ->
-      rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
+      rewordInBackground(scope, commitEditingData.project, commit, commitEditingData.repository, newMessage)
     }
   }
 
   override fun getFailureTitle(): String = GitBundle.message("rebase.log.reword.action.failure.title")
 
-  private fun rewordInBackground(project: Project, commit: VcsCommitMetadata, repository: GitRepository, newMessage: String) {
-    GitDisposable.getInstance(project).coroutineScope.launch {
+  private fun rewordInBackground(
+    scope: CoroutineScope,
+    project: Project,
+    commit: VcsCommitMetadata,
+    repository: GitRepository,
+    newMessage: String
+  ) {
+    scope.launch {
       val operationResult = executeRewordOperation(repository, commit, newMessage)
       if (operationResult is GitCommitEditingOperationResult.Complete) {
         operationResult.notifySuccess(

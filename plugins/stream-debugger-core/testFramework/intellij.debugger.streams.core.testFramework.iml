@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.debugger.streams.core" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

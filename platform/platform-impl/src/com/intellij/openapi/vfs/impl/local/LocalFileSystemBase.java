@@ -333,12 +333,14 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
   @ApiStatus.Internal
   public @NotNull CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
-    if (Registry.is("vfs.fetch.case.sensitivity.using.eel")) {
+    // Both registry keys have the fallback value `false`. If this code is executed before `Registry` initialization,
+    // it means that there can be no connections to remote machines anyway.
+    if (Registry.is("vfs.fetch.case.sensitivity.using.eel", false)) {
       EelPath eelPath = LocalFileSystemEelUtil.toEelPath(parent, childName);
       if (
         eelPath != null && (
           !(eelPath.getDescriptor() instanceof LocalEelDescriptor)
-          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local")  // TODO IJPL-204344
+          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local", false)  // TODO IJPL-204344
         )
       ) {
         return LocalFileSystemEelUtil.fetchCaseSensitivityUsingEel(eelPath);

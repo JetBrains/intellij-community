@@ -2,6 +2,8 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.graph.DFSTBuilder
+import com.intellij.util.graph.OutboundSemiGraph
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
@@ -11,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
@@ -22,6 +25,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
 
@@ -35,26 +39,18 @@ import java.util.SortedSet
  */
 @Suppress("RemoveRedundantQualifierName")
 internal val PLATFORM_CORE_MODULES = java.util.List.of(
-  "intellij.platform.builtInServer",
-  "intellij.platform.diff",
   "intellij.platform.editor.ui",
-  "intellij.platform.externalSystem",
-  "intellij.platform.externalSystem.dependencyUpdater",
   "intellij.platform.codeStyle",
-  "intellij.platform.lang.core",
   "intellij.platform.ml",
   "intellij.platform.remote.core",
   "intellij.platform.remoteServers.agent.rt",
   "intellij.platform.usageView",
   "intellij.platform.execution",
 
-  "intellij.platform.analysis.impl",
   "intellij.platform.editor.ex",
-  "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.remoteServers.impl",
-  "intellij.platform.smRunner",
   "intellij.platform.structureView.impl",
   "intellij.platform.testRunner",
   "intellij.platform.rd.community",
@@ -68,9 +64,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
-
-  "intellij.platform.externalSystem.impl",
-  "intellij.platform.credentialStore.ui",
 
   // do we need it?
   "intellij.platform.sqlite",
@@ -86,7 +79,7 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 )
 
 @Suppress("RemoveRedundantQualifierName")
-internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
+private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 )
 
@@ -145,7 +138,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.diagnostic.telemetry.rt",
     "intellij.platform.util",
     "intellij.platform.util.multiplatform",
-    "intellij.platform.core",
     // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
     // to ensure that package index will not report one more JAR in a search path
     "intellij.platform.bootstrap.coroutine",
@@ -397,7 +389,7 @@ fun collectExportedLibrariesFromLibraryModules(
   context: BuildContext,
 ): Map<String, String> {
   val javaExtensionService = JpsJavaExtensionService.getInstance()
-  val result = mutableMapOf<String, String>()
+  val result = LinkedHashMap<String, String>()
   val includedModuleNames = layout.includedModules.map { it.moduleName }
   val corePluginsContentModuleNames = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
@@ -473,6 +465,38 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
 }
 
 /**
+ * Sorts embedded modules topologically so dependencies are processed before dependents.
+ * This ensures that when computing transitive dependencies, modules don't incorrectly
+ * include dependencies that should belong to their own dependencies.
+ */
+private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleItem>, moduleOutputProvider: ModuleOutputProvider): List<ModuleItem> {
+  val graph = EmbeddedModuleGraph(embeddedModules, moduleOutputProvider)
+  val builder = DFSTBuilder(graph)
+  builder.circularDependency?.let { (from, to) ->
+    throw IllegalStateException("Circular dependency detected: ${from.moduleName} -> ${to.moduleName}")
+  }
+  return builder.sortedNodes
+}
+
+private class EmbeddedModuleGraph(
+  private val modules: Collection<ModuleItem>,
+  private val moduleOutputProvider: ModuleOutputProvider,
+) : OutboundSemiGraph<ModuleItem> {
+  private val moduleByName = modules.associateBy { it.moduleName }
+
+  override fun getNodes(): Collection<ModuleItem> = modules
+
+  override fun getOut(node: ModuleItem): Iterator<ModuleItem> {
+    val jpsModule = moduleOutputProvider.findRequiredModule(node.moduleName)
+    return jpsModule.dependenciesList.dependencies
+      .asSequence()
+      .filterIsInstance<JpsModuleDependency>()
+      .mapNotNull { moduleByName.get(it.moduleReference.moduleName) }
+      .iterator()
+  }
+}
+
+/**
  * Computes transitive dependencies for embedded modules that have `includeDependencies=true`.
  * Dependencies are packaged into the same JAR as their parent embedded module.
  *
@@ -490,8 +514,7 @@ private fun computeEmbeddedModuleDependencies(
   val result = LinkedHashSet<ModuleItem>()
   val rootChain = persistentListOf<String>()
 
-  // For each embedded module, compute its transitive dependencies
-  for (embeddedModule in embeddedModules) {
+  for (embeddedModule in sortEmbeddedModulesTopologically(embeddedModules, context).asReversed()) {
     val moduleName = embeddedModule.moduleName
     val relativeOutputFile = embeddedModule.relativeOutputFile
     val moduleSet = embeddedModule.moduleSet
@@ -630,8 +653,9 @@ internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
   const val PRODUCT_EMBEDDED_MODULES: String = "productEmbeddedModule"
 
-  fun isProductModule(reason: String?): Boolean =
-    reason == PRODUCT_MODULES ||
-    reason == PRODUCT_EMBEDDED_MODULES ||
-    reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
+  fun isProductModule(reason: String?): Boolean {
+    return reason == PRODUCT_MODULES ||
+           reason == PRODUCT_EMBEDDED_MODULES ||
+           reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
+  }
 }

@@ -3,7 +3,6 @@ package com.intellij.lambda.testFramework.testApi.editor
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.lambda.testFramework.testApi.callActionByShortcut
 import com.intellij.lambda.testFramework.testApi.utils.defaultTestLatency
-import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import kotlinx.coroutines.delay
 import kotlin.test.assertTrue
 import kotlin.time.Duration

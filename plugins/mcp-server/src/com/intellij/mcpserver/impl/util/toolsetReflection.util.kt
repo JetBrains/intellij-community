@@ -100,7 +100,7 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = Json, thisRef: T? = null
     return this.functions.filter { m ->
         m.getPreferredToolAnnotation() != null
     }.map {
-        it.asTool(json = json, thisRef = thisRef)
+        it.asTool(json = json, thisRef = thisRef, additionalImplicitParameters = arrayOf(projectPathParameter))
     }.apply {
         require(isNotEmpty()) { "No tools found in ${this@asTools}" }
     }
@@ -157,19 +157,19 @@ fun <T : McpToolset> KClass<out T>.asTools(json: Json = Json, thisRef: T? = null
  * val tool = MyTools::my_best_tool.asTool(json = Json, thisRef = myTools)
  * ```
  */
-fun KFunction<*>.asTool(json: Json = Json, thisRef: Any? = null, name: String? = null, description: String? = null): ReflectionCallableMcpTool {
-    val toolDescriptor = this.asToolDescriptor(name = name, description = description)
-    if (instanceParameter != null && thisRef == null) error("Instance parameter is not null, but no 'this' object is provided")
+fun KFunction<*>.asTool(json: Json = Json, thisRef: Any? = null, name: String? = null, description: String? = null, vararg additionalImplicitParameters: KParameter): ReflectionCallableMcpTool {
+  val toolDescriptor = this.asToolDescriptor(name = name, description = description, *additionalImplicitParameters)
+  if (instanceParameter != null && thisRef == null) error("Instance parameter is not null, but no 'this' object is provided")
   val callableBridge = CallableBridge(callable = this, thisRef = thisRef, json = json)
   return ReflectionCallableMcpTool(descriptor = toolDescriptor, callableBridge = callableBridge)
 }
 
 
-fun KFunction<*>.asToolDescriptor(name: String? = null, description: String? = null): McpToolDescriptor {
+fun KFunction<*>.asToolDescriptor(name: String? = null, description: String? = null, vararg additionalImplicitParameters: KParameter): McpToolDescriptor {
     val toolName = name ?: this.getPreferredToolAnnotation()?.name?.ifBlank { this.name } ?: this.name
     val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description?.trimMargin() ?: this.name
 
-  val parametersSchema = this.parametersSchema()
+  val parametersSchema = this.parametersSchema(*additionalImplicitParameters)
   val returnTypeSchema = this.returnTypeSchema()
   return McpToolDescriptor(
         name = toolName,

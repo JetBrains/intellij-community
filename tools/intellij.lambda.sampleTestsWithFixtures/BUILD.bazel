@@ -72,6 +72,7 @@ jvm_library(
     "//libraries/junit5-pioneer",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithFixtures` end

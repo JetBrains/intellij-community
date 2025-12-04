@@ -346,6 +346,9 @@ data class DiagnosticServerCancellationData(
     val retriggerRequest: Boolean,
 )
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticWorkspaceClientCapabilities">DiagnosticWorkspaceClientCapabilities (LSP spec)</a>
+ */
 @Serializable
 data class DiagnosticWorkspaceClientCapabilities(
     /**
@@ -361,28 +364,41 @@ data class DiagnosticWorkspaceClientCapabilities(
 )
 
 object Diagnostics {
-    /**
-     * Diagnostics notifications are sent from the server to the client to signal results of validation runs.
-     *
-     * Diagnostics are “owned” by the server so it is the server’s responsibility to clear them if necessary. The following rule is used for VS Code servers that generate diagnostics:
-     * if a language is single file only (for example HTML) then diagnostics are cleared by the server when the file is closed. Please note that open / close events don’t necessarily reflect what the user sees in the user interface.
-     * These events are ownership events. So with the current version of the specification it is possible that problems are not cleared although the file is not visible in the user interface since the client has not closed the file yet.
-     * if a language has a project system (for example C#) diagnostics are not cleared when a file closes. When a project is opened all diagnostics for all files are recomputed (or read from a cache).
-     * When a file changes it is the server’s responsibility to re-compute diagnostics and push them to the client. If the computed set is empty it has to push the empty array to clear former diagnostics.
-     * Newly pushed diagnostics always replace previously pushed diagnostics.
-     * There is no merging that happens on the client side.
-     *
-     * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics">TextDocument.publishDiagnostics (LSP spec)</a>
-     */
-    val PublishDiagnosticsNotificationType: NotificationType<PublishDiagnosticsParams> =
-        NotificationType("textDocument/publishDiagnostics", PublishDiagnosticsParams.serializer())
+  /**
+   * Diagnostics notifications are sent from the server to the client to signal results of validation runs.
+   *
+   * Diagnostics are “owned” by the server so it is the server’s responsibility to clear them if necessary. The following rule is used for VS Code servers that generate diagnostics:
+   * if a language is single file only (for example HTML) then diagnostics are cleared by the server when the file is closed. Please note that open / close events don’t necessarily reflect what the user sees in the user interface.
+   * These events are ownership events. So with the current version of the specification it is possible that problems are not cleared although the file is not visible in the user interface since the client has not closed the file yet.
+   * if a language has a project system (for example C#) diagnostics are not cleared when a file closes. When a project is opened all diagnostics for all files are recomputed (or read from a cache).
+   * When a file changes it is the server’s responsibility to re-compute diagnostics and push them to the client. If the computed set is empty it has to push the empty array to clear former diagnostics.
+   * Newly pushed diagnostics always replace previously pushed diagnostics.
+   * There is no merging that happens on the client side.
+   *
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics">textDocument/publishDiagnostics (LSP spec)</a>
+   */
+  val PublishDiagnosticsNotificationType: NotificationType<PublishDiagnosticsParams> = NotificationType(
+    method = "textDocument/publishDiagnostics",
+    paramsSerializer = PublishDiagnosticsParams.serializer(),
+  )
 
-    val DocumentDiagnosticRequestType: RequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DiagnosticServerCancellationData?> =
-        RequestType(
-            "textDocument/diagnostic", DocumentDiagnosticParams.serializer(), DocumentDiagnosticReport.serializer(),
-            DiagnosticServerCancellationData.serializer().nullable
-        )
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_diagnostic">textDocument/diagnostic (LSP spec)</a>
+   */
+  val DocumentDiagnosticRequestType: RequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DiagnosticServerCancellationData?> = RequestType(
+    method = "textDocument/diagnostic",
+    paramsSerializer = DocumentDiagnosticParams.serializer(),
+    resultSerializer = DocumentDiagnosticReport.serializer(),
+    errorSerializer = DiagnosticServerCancellationData.serializer().nullable,
+  )
 
-    val Refresh: RequestType<Unit, Unit, Unit> =
-        RequestType("workspace/diagnostic/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh">workspace/diagnostic/refresh (LSP spec)</a>
+   */
+  val Refresh: RequestType<Unit, Unit, Unit> = RequestType(
+    method = "workspace/diagnostic/refresh",
+    paramsSerializer = Unit.serializer(),
+    resultSerializer = Unit.serializer(),
+    errorSerializer = Unit.serializer(),
+  )
 }

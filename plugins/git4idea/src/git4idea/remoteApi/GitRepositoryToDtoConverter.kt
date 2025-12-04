@@ -40,6 +40,7 @@ internal object GitRepositoryToDtoConverter {
       localBranches = repoInfo.localBranchesWithHashes.keys,
       remoteBranches = repoInfo.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
       tags = repository.tagHolder.getTags().keys,
+      workingTrees = repository.workingTreeHolder.getWorkingTrees(),
       recentBranches = repository.branches.recentCheckoutBranches,
       operationState = convertOperationState(repository),
       trackingInfo = convertTrackingInfo(repoInfo.branchTrackInfosMap)

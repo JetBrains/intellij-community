@@ -128,17 +128,23 @@ private class RpcClient(
   }
 
   private suspend fun <T> ChannelResult<T>.receiveSuccess(f: suspend (T) -> Unit): Boolean {
-    return when {
-      this.isSuccess -> {
-        f(this.getOrThrow())
-        true
+    return if (isSuccess) {
+      f(this.getOrThrow())
+      true
+    }
+    else {
+      // the operation has failed
+      if (isClosed) {
+        when (val ex = this.exceptionOrNull()) {
+          null -> false // closed normally
+          else -> throw ex // closed exceptionally
+        }
       }
-      this.isClosed -> false
-      this.isFailure -> {
-        throw this.exceptionOrNull() ?: error("receive is a failure without exception")
-      }
-      else -> {
-        error("unreachable")
+      else {
+        // this branch should never trigger
+        // * It is guaranteed that the only way this function can return a [failed][ChannelResult.isFailure] result is when
+        //  * the channel is [closed for `receive`][isClosedForReceive], so [ChannelResult.isClosed] is also true.
+        throw (this.exceptionOrNull() ?: error("receive is a failure without exception"))
       }
     }
   }
@@ -454,6 +460,7 @@ private class RpcClient(
         error.conflict != null -> AssumptionsViolatedException(error.conflict)
         error.serviceNotReady != null -> RpcServiceNotReady(rpc.call)
         error.unresolvedService != null -> UnresolvedServiceException(rpc.call.service)
+        error.producerCancelled != null -> RemoteIsCancelledException(error.producerCancelled, null)
         else -> RpcException.callFailed(rpc.call, error)
       }
 
@@ -500,7 +507,7 @@ private class RpcClient(
       is InternalStreamDescriptor.FromRemote -> {
         val producerCancelled = error?.producerCancelled
         val causePrime = if (producerCancelled != null) {
-          ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
+          RemoteIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
         }
         else {
           cause as Throwable? // without `as Throwable?` wasm compiles but throws on wasm compilation in the browser (same as in FL-32234)

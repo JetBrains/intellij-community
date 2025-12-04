@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate.Companion.getError
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -42,8 +43,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.java.LanguageLevel
@@ -82,37 +86,29 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  return projectWizardJdkComboBox(
-    row,
+  return row.projectWizardJdkComboBox(
+    context,
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
     }.pathProperty.toEelDescriptorProperty(),
     intentProperty,
-    context.disposable,
-    context.projectJdk,
     sdkFilter,
     jdkPredicate,
   )
-    .onApply {
-      context.projectJdk = intentProperty.get().prepareJdk()
-    }
 }
 
 /**
- * @param projectJdk Existing JDK in case we are creating a module ("Project JDK" will be selected by default)
  * @param sdkFilter Filter for registered SDKs
  * @param jdkPredicate Predicate to show an error based on the JDK intent version/name
  */
-fun projectWizardJdkComboBox(
-  row: Row,
+fun Row.projectWizardJdkComboBox(
+  context: WizardContext,
   eelDescriptorProperty: ObservableProperty<EelDescriptor>,
   intentProperty: ObservableMutableProperty<ProjectWizardJdkIntent>,
-  disposable: Disposable,
-  projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val comboBox = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
+  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter)
 
   val intentValue = intentProperty.get()
   require(intentValue == NoJdk) {
@@ -124,7 +120,7 @@ fun projectWizardJdkComboBox(
   }
   intentProperty.set(comboBox.item)
 
-  return row.cell(comboBox)
+  return cell(comboBox)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
@@ -165,6 +161,9 @@ fun projectWizardJdkComboBox(
       }
       PropertiesComponent.getInstance().setValue(selectedJdkProperty, intent.name)
     }
+    .onApply {
+      context.projectJdk = intentProperty.get().prepareJdk()
+    }
 }
 
 private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): ValidationInfo? {
@@ -182,10 +181,9 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     else -> null
   } ?: return null
 
-  val jdkRelatedMachine = Path.of(path).getEelDescriptor().machine
-  val projectRelatedMachine = eelDescriptor.machine
-  if (jdkRelatedMachine != projectRelatedMachine) {
-    return error(JavaUiBundle.message("jdk.incompatible.location.error", jdkRelatedMachine.name, projectRelatedMachine.name))
+  val projectRelatedMachine = eelDescriptor.getResolvedEelMachine() ?: LocalEelMachine
+  if (!projectRelatedMachine.ownsPath(Path.of(path))) {
+    return error(JavaUiBundle.message("jdk.incompatible.location.error", Path.of(path).getEelDescriptor().name, eelDescriptor.name))
   }
 
   return null
@@ -513,7 +511,7 @@ private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
     .filter { jdk ->
       jdk.sdkType is JavaSdkType &&
       jdk.sdkType !is DependentSdkType &&
-      (key == null || ProjectSdksModel.sdkMatchesEel(key, jdk))
+      (key == null || ProjectSdksModel.sdkMatchesEel(key.getResolvedEelMachine() ?: LocalEelMachine, jdk))
     }
     .map { ExistingJdk(it) }
 }

@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.test.Diagnostic
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -40,6 +42,8 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
     override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
         AddFullQualifierIntention.Holder.addQualifiersRecursively(fragment)
     }
+
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()

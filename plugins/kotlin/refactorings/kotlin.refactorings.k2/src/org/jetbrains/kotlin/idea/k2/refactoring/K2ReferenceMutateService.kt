@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.psi.PsiElement
@@ -56,16 +56,20 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 is KtInvokeFunctionReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.INVOKE)
                 is KtArrayAccessReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.GET)
                 is KtForLoopInReference -> bindUnnamedReference(ktReference, element, OperatorNameConventions.ITERATOR)
-                is KtDestructuringDeclarationReference -> bindUnnamedReference(ktReference, element, ktReference.resolvesByNames.singleOrNull() ?: return ktReference.element)
+                is KtDestructuringDeclarationReference -> bindUnnamedReference(ktReference, element, ktReference.resolvesByNames)
                 else -> throw IncorrectOperationException("Unsupported reference type: $ktReference")
             }
         }
     }
 
     private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Name): PsiElement {
+        return bindUnnamedReference(reference, targetElement, listOf(resolvedName))
+    }
+
+    private fun bindUnnamedReference(reference: KtReference, targetElement: PsiElement?, resolvedName: Collection<Name>): PsiElement {
         val expression = reference.element
         if (targetElement !is KtNamedFunction) return expression
-        if (targetElement.nameAsName != resolvedName) return expression
+        if (targetElement.nameAsName !in resolvedName) return expression
         val fqName = targetElement.kotlinFqName ?: return targetElement
         return expression.containingKtFile.addImport(fqName)
     }

@@ -229,7 +229,7 @@ class PyDataclassInspection : PyInspection() {
       if (StreamEx
           .of(cls).append(cls.getAncestorClasses(myTypeEvalContext))
           .mapNotNull { parseDataclassParameters(it, myTypeEvalContext) }
-          .any { it.frozen }) {
+          .any { it.frozen == true }) {
         registerProblem(expression,
                         PyPsiBundle.message("INSP.dataclasses.object.attribute.read.only", cls.name, expression.name),
                         ProblemHighlightType.GENERIC_ERROR)
@@ -320,7 +320,7 @@ class PyDataclassInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
-      if (dataclassParameters.frozen && mutatingMethodsExist) {
+      if (dataclassParameters.frozen == true && mutatingMethodsExist) {
         registerProblem(dataclassParameters.frozenArgument,
                         PyPsiBundle.message("INSP.dataclasses.frozen.attribute.should.be.false.if.class.defines.setattr.or.delattr"),
                         ProblemHighlightType.GENERIC_ERROR)
@@ -389,7 +389,7 @@ class PyDataclassInspection : PyInspection() {
         cmpMethods.forEach { problems.add(it to "cmp/order") }
       }
 
-      if (dataclassParameters.frozen && mutatingMethods.isNotEmpty()) {
+      if (dataclassParameters.frozen == true && mutatingMethods.isNotEmpty()) {
         mutatingMethods.forEach { problems.add(it to "frozen") }
       }
 
@@ -405,7 +405,7 @@ class PyDataclassInspection : PyInspection() {
         }
       }
 
-      if (dataclassParameters.order && dataclassParameters.frozen && hashMethod != null) {
+      if (dataclassParameters.order && dataclassParameters.frozen == true && hashMethod != null) {
         registerProblem(hashMethod?.nameIdentifier,
                         PyPsiBundle.message("INSP.dataclasses.hash.ignored.if.class.already.defines.cmp.or.order.or.frozen.parameters"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)

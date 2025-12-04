@@ -313,11 +313,11 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       withContext(Dispatchers.IO) {
         copyDistFiles(
-          context = context,
           newDir = runDir,
           os = request.os,
           arch = JvmArchitecture.currentJvmArch,
           libcImpl = LibcImpl.current(OsFamily.currentOs),
+          context = context,
         )
       }
     }

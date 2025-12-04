@@ -35,6 +35,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/execution",
   ],
   exports = ["//platform/favoritesTreeView"]
 )

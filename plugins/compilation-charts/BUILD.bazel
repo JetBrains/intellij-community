@@ -30,7 +30,7 @@ jvm_library(
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:rd-core",
     "@lib//:rd-swing",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/projectModel-api:projectModel",
     "//platform/rd-platform-community:rd-community",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.compilation.charts` end

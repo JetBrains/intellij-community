@@ -22,11 +22,11 @@ caches: CacheHandler
 cache: BaseCache
 
 __all__ = [
+    "DEFAULT_CACHE_ALIAS",
+    "BaseCache",
+    "CacheKeyWarning",
+    "InvalidCacheBackendError",
+    "InvalidCacheKey",
     "cache",
     "caches",
-    "DEFAULT_CACHE_ALIAS",
-    "InvalidCacheBackendError",
-    "CacheKeyWarning",
-    "BaseCache",
-    "InvalidCacheKey",
 ]

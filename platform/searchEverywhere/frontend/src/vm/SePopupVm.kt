@@ -24,6 +24,7 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
+import com.intellij.platform.searchEverywhere.providers.SeLegacyContributors
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.psi.PsiManager
@@ -47,8 +48,7 @@ class SePopupVm(
   initialSearchPattern: String?,
   initialTabId: String,
   private val historyList: SearchHistoryList,
-  private val availableLegacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  private val availableLegacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val availableLegacyContributors: SeLegacyContributors,
   private val onShowFindToolWindow: (SePopupVm) -> Unit,
   private val closePopupHandler: () -> Unit,
 ) {
@@ -62,7 +62,7 @@ class SePopupVm(
     val customizer = SeTabsCustomizer.getInstance()
     val tabsVms = tabs.mapNotNull {
       val tabInfo = customizer.customizeTabInfo(it.id, SeTabInfo(it.priority, it.name)) ?: return@mapNotNull null
-      SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyAllTabContributors)
+      SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyContributors.allTab)
     }
 
     initialModel.newModelWithReplacedTab(tabsVms, initialTabId)
@@ -136,7 +136,7 @@ class SePopupVm(
       coroutineScope.launch {
         it.getValue()?.let { tab ->
           val newInfo = tabsCustomizer.customizeTabInfo(tab.id, SeTabInfo(tab.priority, tab.name)) ?: return@launch
-          val tabVm = SeTabVmImpl(project, coroutineScope, tab, newInfo, searchPattern, availableLegacyAllTabContributors)
+          val tabVm = SeTabVmImpl(project, coroutineScope, tab, newInfo, searchPattern, availableLegacyContributors.allTab)
           _deferredTabVms.emit(SeTabInitEvent(listOf(tabVm)))
         }
       }
@@ -148,7 +148,7 @@ class SePopupVm(
       val adaptedTabs = adaptedTabs.getValue()
       val adaptedCustomized = adaptedTabs.mapNotNull { tab ->
         val providerId = tab.id.toProviderId()
-        val availableLegacyContributor = availableLegacySeparateTabContributors[providerId] ?: return@mapNotNull null
+        val availableLegacyContributor = availableLegacyContributors.separateTab[providerId] ?: return@mapNotNull null
 
         tabsCustomizer.customizeTabInfo(tab.id, SeTabInfo(tab.priority, tab.name))?.let { tabInfo ->
           SeTabVmImpl(project, coroutineScope, tab, tabInfo, searchPattern, mapOf(providerId to availableLegacyContributor))

@@ -53,6 +53,7 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("stepName", string)
     field("serializedDataBase64", string)
     field("classPath", immutableList(string))
+    field("parametersBase64", immutableList(string))
   }
 
   private val LambdaRdTestSession = classdef {
@@ -61,10 +62,8 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     signal("sendException", LambdaRdTestSessionException).async
     call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
-    call("runSerializedLambda", LambdaRdSerializedLambda, void).async
-    call("requestFocus", bool, bool).async
-    call("isFocused", void, bool).async
-    call("visibleFrameNames", void, immutableList(string)).async
+    call("runSerializedLambda", LambdaRdSerializedLambda, string).async
+    call("cleanUp", void, void).async
     call("projectsNames", void, immutableList(string)).async
     call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async

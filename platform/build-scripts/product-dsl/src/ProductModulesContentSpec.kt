@@ -1,4 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+/**
+ * Programmatic content DSL for defining product module content in Kotlin instead of static XML.
+ *
+ * This file contains the core types for the programmatic content system, which allows products
+ * to define their module composition, XML includes, and module sets using type-safe Kotlin code.
+ *
+ * For comprehensive documentation on how to use this system:
+ * @see <a href="../programmatic-content.md">Programmatic Content Documentation</a> - Complete guide with examples
+ * @see <a href="../module-sets.md">Module Sets Documentation</a> - How module sets work and best practices
+ */
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout

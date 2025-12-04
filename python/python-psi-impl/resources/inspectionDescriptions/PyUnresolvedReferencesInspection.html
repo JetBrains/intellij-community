@@ -5,7 +5,7 @@
 <p>If a reference type is unknown, then its attributes are not highlighted as unresolved even if you know that they should be:</p>
 <pre><code>
 def print_string(s):
-  print(s.abc())
+    print(s.abc())
 </code></pre>
 <p>In this code fragment <code>s</code> is always a string and <code>abc</code> should be highlighted as unresolved. However, <code>s</code>
   type is inferred as <code>Any</code> and no warning is reported.</p>

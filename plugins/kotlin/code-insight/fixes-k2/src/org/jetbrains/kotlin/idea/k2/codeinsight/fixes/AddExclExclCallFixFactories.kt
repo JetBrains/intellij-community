@@ -27,6 +27,10 @@ object AddExclExclCallFixFactories {
         getFixForUnsafeCall(diagnostic.psi)
     }
 
+    val unsafeCallableReferenceFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UnsafeCallableReference> = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnsafeCallableReference ->
+        getFixForUnsafeCall(diagnostic.psi)
+    }
+
     private fun KaSession.getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
         val (target, hasImplicitReceiver) = when (val unwrapped = psi.unwrapParenthesesLabelsAndAnnotations()) {
             // `foo.bar` -> `foo!!.bar`

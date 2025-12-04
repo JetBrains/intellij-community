@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.21-RC2-0.1/expects-compiler-plugin-2.2.21-RC2-0.1.jar</args>
+              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.2.21-0.1/expects-compiler-plugin-2.2.21-0.1.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -31,8 +31,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-debug" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.debug" />
     <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
   </component>
 </module>

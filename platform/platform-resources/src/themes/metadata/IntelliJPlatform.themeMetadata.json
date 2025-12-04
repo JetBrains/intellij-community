@@ -1908,6 +1908,16 @@
       "since": "2023.1"
     },
     {
+      "key": "TitlePane.Dialog.Button.preferredWidth",
+      "description": "Dialog additional title pane actions (maximize, restore) width",
+      "since": "2026.1"
+    },
+    {
+      "key": "TitlePane.Dialog.Button.insets",
+      "description": "Dialog additional title pane actions (maximize, restore) insets",
+      "since": "2026.1"
+    },
+    {
       "key": "TitlePane.inactiveBackground",
       "description": "Borderless mode. Header background when the window is not in focus",
       "since": "2019.3"
@@ -2792,6 +2802,61 @@
     {
       "key": "OpenTelemetry.Span.selectedFillEnd",
       "description": "Selected Span’s fill end color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardBackground",
+      "description": "Recap card's background color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardBorderColor",
+      "description": "Recap card's 1px border color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardHeaderTitle",
+      "description": "Recap card's title color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardHeaderLinkBackground",
+      "description": "",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardHeaderSubtitle",
+      "description": "Recap card's description color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.cardFooterForeground",
+      "description": "Recap card's description footer text color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.chroniclesBackground",
+      "description": "Recap card's history element's background color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.chroniclesBorderColor",
+      "description": "Recap card's history element's border color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.chroniclesBackgroundHovered",
+      "description": "Recap card's history element's background color while hovered.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.chroniclesForeground",
+      "description": "Recap card's history element's text color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "Recap.chroniclesForegroundGreyed",
+      "description": "Recap card's history element's muted text color.",
       "since": "2025.3"
     }
   ]

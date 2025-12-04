@@ -13,10 +13,14 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.*
+import com.intellij.openapi.util.io.FileUtil.sanitizeFileName
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.Ksuid
@@ -27,6 +31,7 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -35,6 +40,8 @@ import kotlin.io.path.invariantSeparatorsPathString
 internal const val VERSION_OPTION: String = "version"
 
 internal const val PROJECT_CONFIG_DIR: String = $$"$PROJECT_CONFIG_DIR$"
+
+private const val CONFIG_WORKSPACE_DIR = "workspace"
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
@@ -95,6 +102,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     val iprFile: Path?
     val storeDescriptor = ProjectStorePathManager.getInstance().getStoreDescriptor(file)
     this.storeDescriptor = storeDescriptor
+    val machineWorkspacePath = getMachineWorkspacePath(storeDescriptor)
+
     if (storeDescriptor is IprProjectStoreDescriptor) {
       iprFile = file
 
@@ -102,7 +111,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
       val userBaseDir = file.parent
       val workspacePath = userBaseDir.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
-      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
+      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, machineWorkspacePath ?: workspacePath))
 
       if (isUnitTestMode) {
         // we don't load the default state in tests as the app store does, because:
@@ -122,7 +131,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       // PROJECT_CONFIG_DIR must be the first macro
       val dotIdea = storeDescriptor.dotIdea!!
       macros.add(Macro(PROJECT_CONFIG_DIR, dotIdea))
-      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, dotIdea.resolve("workspace.xml")))
+      macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, machineWorkspacePath ?: dotIdea.resolve("workspace.xml")))
       macros.add(Macro(StoragePathMacros.PROJECT_FILE, dotIdea.resolve("misc.xml")))
 
       if (isUnitTestMode) {
@@ -170,9 +179,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       else {
         PathManager.getConfigDir()
       }
-      val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
+      val productWorkspaceFile = basePath.resolve("$CONFIG_WORKSPACE_DIR/$projectWorkspaceId.xml")
       // storageManager.setMacros(macros) was called before, because we need to read a `ProjectIdManager` state to get projectWorkspaceId
-      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, machineWorkspacePath ?: productWorkspaceFile))
     }
     isStoreInitialized = true
     LOG.info("Project store initialized with paths: $macros")
@@ -279,6 +288,15 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     if (storeDescriptor.dotIdea != null) {
       super.commitObsoleteComponents(session = session, isProjectLevel = true)
     }
+  }
+
+  private fun getMachineWorkspacePath(storeDescriptor: ProjectStoreDescriptor): Path? {
+    val projectPath = storeDescriptor.historicalProjectBasePath
+    if (projectPath.fileSystem != FileSystems.getDefault()) return null
+    val descriptor = projectPath.asEelPath().descriptor
+    if (descriptor === LocalEelDescriptor) return null
+    val pathHash = FileUtilRt.pathHashCode(projectBasePath.invariantSeparatorsPathString)
+    return PathManager.getOriginalConfigDir().resolve("$CONFIG_WORKSPACE_DIR/${sanitizeFileName(descriptor.name)}.${pathHash.toHexString()}.xml")
   }
 }
 

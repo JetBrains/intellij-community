@@ -34,9 +34,7 @@ class DefaultKotlinScriptEntityProvider(
         virtualFile: VirtualFile,
         definition: ScriptDefinition
     ) {
-        val definitionJdk = definition.compilationConfiguration[ScriptCompilationConfiguration.jvm.jdkHome]
-        val configuration = getInitialConfiguration(definitionJdk, definition)
-
+        val configuration = definition.getInitialConfiguration()
         val scriptSource = VirtualFileScriptSource(virtualFile)
 
         val result = smartReadAction(project) {
@@ -83,15 +81,16 @@ class DefaultKotlinScriptEntityProvider(
         project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)
     }
 
-    private fun getInitialConfiguration(
-        definitionJdk: File?,
-        definition: ScriptDefinition
-    ): ScriptCompilationConfiguration = if (definitionJdk != null) definition.compilationConfiguration
-    else {
-        val projectSdk = ProjectRootManager.getInstance(project).projectSdk?.homePath
-        definition.compilationConfiguration.with {
-            projectSdk?.let {
-                jvm.jdkHome(File(it))
+    private fun ScriptDefinition.getInitialConfiguration(): ScriptCompilationConfiguration {
+        val definitionJdk = compilationConfiguration[ScriptCompilationConfiguration.jvm.jdkHome]
+
+        return if (definitionJdk != null) compilationConfiguration
+        else {
+            val projectSdk = ProjectRootManager.getInstance(project).projectSdk?.homePath
+            compilationConfiguration.with {
+                projectSdk?.let {
+                    jvm.jdkHome(File(it))
+                }
             }
         }
     }

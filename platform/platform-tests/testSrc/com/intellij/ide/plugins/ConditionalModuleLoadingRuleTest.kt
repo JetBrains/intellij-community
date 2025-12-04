@@ -18,6 +18,7 @@ class ConditionalModuleLoadingRuleValueTest {
   init {
     Logger.setFactory(TestLoggerFactory::class.java)
     Logger.setUnitTestMode() // due to warnInProduction use in IdeaPluginDescriptorImpl
+    PluginManagerCore.isUnitTestMode = true // FIXME git rid of this IJPL-220869
   }
 
   @RegisterExtension

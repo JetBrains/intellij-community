@@ -1,10 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.Attribute
-import com.jetbrains.rhizomedb.DbContext
-import com.jetbrains.rhizomedb.Instruction
-import com.jetbrains.rhizomedb.Q
+import com.jetbrains.rhizomedb.*
 import fleet.util.UID
 import fleet.util.openmap.SerializedValue
 import kotlinx.serialization.KSerializer
@@ -96,3 +93,15 @@ private fun <T, K> Iterable<T>.associateByUnique(keySelector: (T) -> K): Map<K, 
     }
   }
 
+val DefaultInstructionSet: InstructionSet = InstructionSet(listOf(
+  AddCoder,
+  CompositeCoder,
+  RemoveCoder,
+  RetractAttributeCoder,
+  RetractEntityCoder,
+  LocalInstructionCoder(EffectInstruction::class),
+  LocalInstructionCoder(MapAttribute::class),
+  LocalInstructionCoder(ReifyEntities::class),
+  ValidateCoder,
+  CreateEntityCoder,
+))

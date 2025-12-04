@@ -91,14 +91,7 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
     assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
     assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
   }
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
-  }
 }
-
 
 class TestRunConfigurationImporter implements RunConfigurationImporter {
 

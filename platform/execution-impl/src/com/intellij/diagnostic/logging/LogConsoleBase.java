@@ -470,7 +470,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
           if (EDT.isCurrentThreadEdt()) {
-            WriteIntentReadAction.run((Runnable)() -> stopRunning(true));
+            WriteIntentReadAction.run(() -> stopRunning(true));
           }
           else {
             ApplicationManager.getApplication().invokeAndWait(() -> {

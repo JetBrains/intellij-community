@@ -41,7 +41,7 @@ def some_union_members_match_no_any(x: A | B | None):
 
 def all_union_members_dont_match_no_any(x: C | None):
     print(<weak_warning descr="Member 'C' of 'C | None' does not have attribute '__pos__'">+</weak_warning>x)
-    print(x <weak_warning descr="Member 'C' of 'C | None' does not have attribute '__add__'">+</weak_warning> 1)
+    print(x+1) # integer has `__radd__`. The error will be reported by the TypeCheckerInspection
     print(x<weak_warning descr="Member 'C' of 'C | None' does not have attribute '__getitem__'">[</weak_warning>42])
 
 
@@ -59,5 +59,5 @@ def some_union_members_match_with_any(x: A | B | None | Any):
 
 def all_union_members_dont_match_with_any(x: C | None | Any):
     print(<weak_warning descr="Member 'C' of 'C | None | Any' does not have attribute '__pos__'">+</weak_warning>x)
-    print(x <weak_warning descr="Member 'C' of 'C | None | Any' does not have attribute '__add__'">+</weak_warning> 1)
+    print(x+1) # integer has `__radd__`. The error will be reported by the TypeCheckerInspection
     print(x<weak_warning descr="Member 'C' of 'C | None | Any' does not have attribute '__getitem__'">[</weak_warning>42])

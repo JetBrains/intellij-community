@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
 import org.jetbrains.kotlin.j2k.copyPaste.*
 import org.jetbrains.kotlin.psi.KtFile
 
-class OldJ2kConverterExtension : J2kConverterExtension() {
+private class OldJ2kConverterExtension : J2kConverterExtension() {
     override val kind: Kind = K1_OLD
 
     override fun createJavaToKotlinConverter(

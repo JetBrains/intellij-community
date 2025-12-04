@@ -33,5 +33,5 @@ class FromTextTemplateProvider(val environment: Environment) : ScriptDefinitions
             baseHostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                 getEnvironment { environment }
             }
-        ).asSequence()
+        )
 }

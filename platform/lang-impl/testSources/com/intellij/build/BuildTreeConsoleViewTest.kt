@@ -2,7 +2,6 @@
 package com.intellij.build
 
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.BuildEventsImpl
 import com.intellij.build.events.impl.DerivedResultImpl
 import com.intellij.build.events.impl.FailureResultImpl
 import com.intellij.build.events.impl.SuccessResultImpl
@@ -46,7 +45,7 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   fun `test tree console handles event`() {
     val tree = treeConsoleView.tree
     val message = "build Started"
-    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+    BuildRootProgressImpl(treeConsoleView)
       .start(message, BuildProgressDescriptorImpl(buildDescriptor))
 
     waitUntilAssertSucceedsBlocking {
@@ -67,7 +66,7 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
     val tree = treeConsoleView.tree
     showAllNodes(treeConsoleView)
     // @formatter:off
-    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+    BuildRootProgressImpl(treeConsoleView)
       .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
         .startChildProgress("build event")
           .startChildProgress("build nested event")
@@ -95,7 +94,7 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
     val tree = treeConsoleView.tree
     showAllNodes(treeConsoleView)
     // @formatter:off
-    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+    BuildRootProgressImpl(treeConsoleView)
       .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
         .startChildProgress("build event 1")
           .fileMessage("file message", "file detailed message", MessageEvent.Kind.WARNING, FilePosition(File("a.file"), 0, 0))
@@ -139,7 +138,7 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   fun `test derived result depend on child result - fail case`() {
     showAllNodes(treeConsoleView)
     // @formatter:off
-    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+    BuildRootProgressImpl(treeConsoleView)
       .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
         .startChildProgress("build event")
           .startChildProgress( "build nested event")
@@ -173,7 +172,7 @@ class BuildTreeConsoleViewTest : LightPlatformTestCase() {
   fun `test derived result depend on child result - success case`() {
     showAllNodes(treeConsoleView)
     // @formatter:off
-    BuildRootProgressImpl(BuildEventsImpl(), treeConsoleView)
+    BuildRootProgressImpl(treeConsoleView)
       .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
         .startChildProgress("build event")
           .startChildProgress("build nested event")

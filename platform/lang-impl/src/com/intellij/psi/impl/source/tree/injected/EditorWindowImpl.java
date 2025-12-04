@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.CopyProvider;
@@ -492,14 +492,16 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   private @NotNull EditorMouseEvent convertEvent(@NotNull EditorMouseEvent originalEvent) {
-    LogicalPosition logicalPosition = hostToInjected(originalEvent.getLogicalPosition());
-    int offset = logicalPositionToOffset(logicalPosition);
-    VisualPosition visualPosition = logicalToVisualPosition(logicalPosition);
-    FoldRegion hostFoldRegion = originalEvent.getCollapsedFoldRegion();
-    return new EditorMouseEvent(this, originalEvent.getMouseEvent(), originalEvent.getArea(),
-                                offset, logicalPosition, visualPosition, true,
-                                hostFoldRegion == null ? null : FoldingRegionWindow.getInjectedRegion(hostFoldRegion), null, null);
-  }
+    return ReadAction.compute(() -> {
+      LogicalPosition logicalPosition = hostToInjected(originalEvent.getLogicalPosition());
+      int offset = logicalPositionToOffset(logicalPosition);
+      VisualPosition visualPosition = logicalToVisualPosition(logicalPosition);
+      FoldRegion hostFoldRegion = originalEvent.getCollapsedFoldRegion();
+      return new EditorMouseEvent(this, originalEvent.getMouseEvent(), originalEvent.getArea(),
+                                  offset, logicalPosition, visualPosition, true,
+                                  hostFoldRegion == null ? null : FoldingRegionWindow.getInjectedRegion(hostFoldRegion), null, null);
+    });
+    }
 
   @Override
   public boolean isDisposed() {

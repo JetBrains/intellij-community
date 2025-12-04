@@ -299,8 +299,7 @@ internal class VcsDirectoryConfigurationPanel(private val project: Project) : Di
       row {
         checkBox(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically"))
           .bindSelected(sharedProjectSettings::isDetectVcsMappingsAutomatically)
-          .gap(RightGap.SMALL)
-        contextHelp(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically.hint"))
+          .contextHelp(VcsBundle.message("directory.mapping.checkbox.detect.vcs.mappings.automatically.hint"))
       }
 
       if (!AbstractCommonUpdateAction.showsCustomNotification(vcsManager.getAllActiveVcss().asList())) {

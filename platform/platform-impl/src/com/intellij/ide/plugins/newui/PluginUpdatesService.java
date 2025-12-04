@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.PluginUpdateActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -277,7 +278,8 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      final InternalPluginResults updates = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getInternalPluginUpdates(null, null, null);
+      UpdateCheckerFacade updateCheckerFacade = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class);
+      InternalPluginResults updates = updateCheckerFacade.getInternalPluginUpdates(null, null, null, PluginUpdateActivity.INSTALLED_VERSIONS);
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
           ourPreparing = false;

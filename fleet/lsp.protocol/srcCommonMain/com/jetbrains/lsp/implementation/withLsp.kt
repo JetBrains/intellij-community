@@ -102,7 +102,7 @@ suspend fun withLsp(
 
         val lspHandlerContext = LspHandlerContext(lspClient)
 
-        launch(createCoroutineContext(lspClient)) {
+        launch(CoroutineName("incoming requests accepter") + createCoroutineContext(lspClient)) {
             withSupervisor { supervisor ->
                 val incomingRequestsJobs = MultiplatformConcurrentHashMap<StringOrInt, Job>()
                 incoming.consumeEach { jsonMessage ->
@@ -113,7 +113,7 @@ suspend fun withLsp(
 
                         isRequest(jsonMessage) -> {
                             val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
-                            supervisor.launch(start = CoroutineStart.ATOMIC) {
+                            supervisor.launch(context = CoroutineName("handler for ${request.method}"), start = CoroutineStart.ATOMIC) {
                                 val maybeHandler = handlers.requestHandler(request.method)
                                     ?.let { handler -> middleware.requestHandler(handler) }
                                 runCatching {

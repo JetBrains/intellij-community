@@ -99,21 +99,20 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       buttonsGroup {
         row {
           customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
-            .gap(RightGap.SMALL)
+            .contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
             .selected(initialGroup.useCustomRules)
             .applyToComponent {
               addChangeListener { updateRulesOption() }
             }.component
-          contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
         }
         row {
           allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .contextHelp(StatisticsBundle.message("stats.allow.all.events.help"))
             .selected(!initialGroup.useCustomRules)
             .applyToComponent {
               icon(AllIcons.General.BalloonWarning12)
               addChangeListener { updateRulesOption() }
             }.component
-          contextHelp(StatisticsBundle.message("stats.allow.all.events.help"))
         }
       }
       row {

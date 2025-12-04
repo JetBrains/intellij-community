@@ -7,8 +7,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PyTypingNewType(
-  @ApiStatus.Internal val classType: PyClassType,
+  val classType: PyClassType,
   private val name: String,
   private val declaration: PyTargetExpression?,
 ) : PyClassType by classType {
@@ -16,29 +17,15 @@ class PyTypingNewType(
   override fun getName(): String = name
 
   override fun getCallType(context: TypeEvalContext, callSite: PyCallSiteExpression): PyType? {
-    val instance = classType.toInstance()
-    return if (instance is PyClassType) {
-      PyTypingNewType(instance, name, declaration)
-    }
-    else {
-      classType.getCallType(context, callSite)
-    }
+    return PyTypingNewType(classType.toInstance(), name, declaration)
   }
 
-  override fun toClass(): PyClassLikeType {
-    return if (isDefinition) this
-    else {
-      val definition = classType.toClass()
-      if (definition is PyClassType) PyTypingNewType(definition, name, declaration) else definition
-    }
+  override fun toClass(): PyTypingNewType {
+    return if (isDefinition) this else PyTypingNewType(classType.toClass(), name, declaration)
   }
 
-  override fun toInstance(): PyClassLikeType {
-    return if (isDefinition) {
-      val instance = classType.toInstance()
-      if (instance is PyClassType) PyTypingNewType(instance, name, declaration) else instance
-    }
-    else this
+  override fun toInstance(): PyTypingNewType {
+    return if (isDefinition) PyTypingNewType(classType.toInstance(), name, declaration) else this
   }
 
   override fun isBuiltin(): Boolean = false
@@ -109,4 +96,14 @@ class PyTypingNewType(
     }
     return visitor.visitPyClassType(this)
   }
+}
+
+/**
+ * Represents a type of callable object returned in runtime by `typing.NewType()`.
+ * For type annotations {@link com.jetbrains.python.psi.types.PyTypingNewType} is used.
+ */
+@ApiStatus.Internal
+class PyTypingNewTypeFactoryType(private val type: PyTypingNewType)
+  : PyCallableTypeImpl(listOf(PyCallableParameterImpl.nonPsi(type.classType.toInstance())), type.toInstance()) {
+  override fun getName(): String = type.name
 }

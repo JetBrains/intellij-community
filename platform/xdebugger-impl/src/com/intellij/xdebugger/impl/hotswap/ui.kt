@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.ide.HelpTooltip
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -15,10 +17,14 @@ interface HotSwapUiExtension {
    * @return true if this EP is applicable for the current IDE
    */
   fun isApplicable(): Boolean = true
+  @ApiStatus.Obsolete
   fun showFloatingToolbar(): Boolean = true
+  fun showFloatingToolbar(project: Project): Boolean = showFloatingToolbar()
   val hotSwapIcon: Icon
   fun createTooltip(): HelpTooltip? = null
   val shouldAddHideButton: Boolean get() = true
+  val shouldAddText: Boolean get() = true
+  fun moreAction(): AnAction? = null
   fun popupMenuActions(): DefaultActionGroup? = null
 
   companion object {

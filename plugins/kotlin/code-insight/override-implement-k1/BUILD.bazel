@@ -27,6 +27,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.override-implement.k1` end

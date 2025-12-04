@@ -1,8 +1,13 @@
 <idea-plugin visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <module name="intellij.platform.rpc"/>
     <module name="fleet.kernel"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.rpc"/>
   </dependencies>
+  <!-- end editor-fold -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.entityTypes" dynamic="true"
                     interface="com.intellij.platform.kernel.EntityTypeProvider"/>

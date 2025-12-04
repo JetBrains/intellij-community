@@ -146,18 +146,7 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
                 withKotlinDsl()
                 withMavenCentral()
             }
-            withFile("gradle/libs.versions.toml", /* language=TOML */ """
-                [libraries]
-                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
-                [plugins]
-                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
-                [versions]
-                test_library-version = "1.0"
-                kotlin = "1.9.24"
-                [bundles]
-                some_test-bundle = [ "some_test-library" ]
-                """.trimIndent()
-            )
+            withFile("gradle/libs.versions.toml", "")
             // subprojects files
             withBuildFile(gradleVersion, "subprojectsDir/subproject1", gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinDsl()
@@ -169,23 +158,10 @@ abstract class AbstractGradleCodeInsightTest : AbstractKotlinGradleCodeInsightBa
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
-            withFile("includedBuild1/gradle/libs.versions.toml", /* language=TOML */ """
-                [libraries]
-                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
-                [plugins]
-                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
-                [versions]
-                test_library-version = "1.0"
-                kotlin = "1.9.24"
-                """.trimIndent()
-            )
+            withFile("includedBuild1/gradle/libs.versions.toml", "")
             // included build without settings
             withBuildFile(gradleVersion, "includedBuildWithoutSettings", gradleDsl = GradleDsl.KOTLIN) {}
-            withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", /* language=TOML */ """
-                [libraries]
-                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
-                """.trimIndent()
-            )
+            withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", "")
         }
     }
 }

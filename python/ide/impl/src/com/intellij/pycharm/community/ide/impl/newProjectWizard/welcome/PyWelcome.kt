@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome
 
 import com.intellij.execution.RunManager
@@ -53,7 +53,7 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.concurrency.CancellablePromise
 import java.util.concurrent.Callable
 
-internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
+private class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   override val isEdtRequired: Boolean
     get() = false
 

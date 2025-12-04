@@ -125,10 +125,10 @@ public final class LocalOptionsConfigurer {
       envs.putAll(TerminalStartupKt.fetchMinimalEnvironmentVariablesBlocking(eelDescriptor));
       EnvironmentRestorer.restoreOverriddenVars(envs);
       if (envs.isEmpty()) {
-        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")");
+        LOG.warn("Empty parent environment for " + shellCommand + " on (" + eelDescriptor.getName() + ")");
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getMachine().getName() + ")" + ": " + envs);
+        LOG.debug("Parent environment for " + shellCommand + " on (" + eelDescriptor.getName() + ")" + ": " + envs);
       }
     }
     else {

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -35,8 +36,7 @@ internal class FrameworkDetectorQueue(
 ) {
   lateinit var detectedFrameworksData: DetectedFrameworksData
 
-  @Volatile
-  private var isSuspended: Boolean = false
+  private var isSuspended: AtomicBoolean = AtomicBoolean(false)
 
   @Volatile
   var notificationListener: Consumer<Collection<String>>? = null
@@ -58,22 +58,22 @@ internal class FrameworkDetectorQueue(
   }
 
   fun queueDetection(detectors: Set<String>) {
-    if (isSuspended) return
+    if (isSuspended.get()) return
 
     frameworkRequests.tryEmit(LinkedHashSet(detectors))
   }
 
   fun suspend() {
-    isSuspended = true
-
-    coroutineScope.coroutineContext.cancelChildren()
+    if (isSuspended.compareAndSet(false, true)) {
+      coroutineScope.coroutineContext.cancelChildren()
+    }
   }
 
   fun resume(detectors: Set<String>) {
-    isSuspended = false
-
-    scheduleFlow()
-    queueDetection(detectors)
+    if (isSuspended.compareAndSet(true, false)) {
+      scheduleFlow()
+      queueDetection(detectors)
+    }
   }
 
   @RequiresReadLock

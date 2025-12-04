@@ -38,7 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 @ApiStatus.Experimental
-fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(this)
+fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(this) { 0 }
 
 @ApiStatus.Experimental
 fun WritableByteChannel.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(this)
@@ -48,7 +48,7 @@ fun WritableByteChannel.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(th
 fun OutputStream.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(Channels.newChannel(this), this)
 
 @ApiStatus.Experimental
-fun InputStream.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(Channels.newChannel(this))
+fun InputStream.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(Channels.newChannel(this), this::available)
 
 @ApiStatus.Experimental
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
@@ -109,11 +109,11 @@ fun Socket.asEelChannel(): EelSendChannel = asEelChannelImpl()
 interface EelPipe {
   val sink: EelSendChannel
   val source: EelReceiveChannel
-  fun closePipe(error: Throwable? = null)
+  suspend fun closePipe(error: Throwable?)
 }
 
 @ApiStatus.Internal
-fun EelPipe(): EelPipe = EelPipeImpl()
+fun EelPipe(debugLabel: String = ""): EelPipe = EelPipeImpl(debugLabel)
 
 
 /**

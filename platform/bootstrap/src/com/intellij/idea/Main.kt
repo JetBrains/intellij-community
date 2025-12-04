@@ -120,23 +120,17 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       isConfigImportNeeded(PathManager.getConfigDir())
     }
 
-    // this check must be performed before system directories are locked
     if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      span("plugin updates installation") {
+      span("update marketplace plugin") {
+        // this check must be performed before system directories are locked
         val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
         if (!configImportNeeded) {
-          // Consider following steps:
-          // - user opens settings, and installs some plugins;
-          // - the plugins are downloaded and saved somewhere;
-          // - IDE prompts for restart;
-          // - after restart, the plugins are moved to proper directories ("installed") by the next line.
-          // TODO get rid of this: plugins should be installed before restarting the IDE
-          installPluginUpdates()
+          runMarketplaceCommandsInActionScript()
         }
       }
     }
 
-    // must be after installPluginUpdates
+    // must be after runMarketplaceCommandsInActionScript
     span("marketplace init") {
       // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
       if (changeClassPath == null) {  
@@ -321,13 +315,13 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   return otherArgs
 }
 
-private fun installPluginUpdates() {
+private fun runMarketplaceCommandsInActionScript() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
     // (referencing a string constant is OK - it is inlined by the compiler)
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      StartupActionScriptManager.executeActionScript()
+      StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
     }
   }
   catch (e: Throwable) {

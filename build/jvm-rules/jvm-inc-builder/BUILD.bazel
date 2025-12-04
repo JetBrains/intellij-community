@@ -16,8 +16,8 @@ java_library(
     name = "patched-kotlin-compiler-for-bazel",
     visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
     exports = [
-        ":jvm-abi-gen_import",
-        ":kotlin-compiler_import",
+        ":jvm-abi-gen-embeddable_import",
+        ":kotlin-compiler-embeddable_import",
         ":kotlin-reflect_import",
         ":kotlin-script-runtime_import",
         ":kotlin-stdlib-jdk7_import",
@@ -37,13 +37,13 @@ jvm_import(
 )
 
 jvm_import(
-    name = "jvm-abi-gen_import",
-    jar = "@jvm-abi-gen_http//file",
+    name = "jvm-abi-gen-embeddable_import",
+    jar = "@jvm-abi-gen-embeddable_http//file",
 )
 
 jvm_import(
-    name = "kotlin-compiler_import",
-    jar = "@kotlin-compiler_http//file",
+    name = "kotlin-compiler-embeddable_import",
+    jar = "@kotlin-compiler-embeddable_http//file",
 )
 
 jvm_import(
@@ -92,9 +92,9 @@ kt_jvm_library(
         "//:hash4j_import",
         "//:intellij-deps-fastutil_import",
         "//:jps-javac-extension_import",
-        "//:kotlin-compose-compiler-plugin_import",
+        "//:kotlin-compose-compiler-plugin-embeddable_import",
         "//:kotlin-metadata-jvm_import",
-        "//:kotlin-serialization-compiler-plugin_import",
+        "//:kotlin-serialization-compiler-plugin-embeddable_import",
         "//:qdox_import",
         "//dependency-graph",
         "//jps-builders-6:build-javac-rt",

@@ -64,6 +64,14 @@ open class IDETestContext(
 ) {
   companion object {
     const val OPENTELEMETRY_FILE: String = "opentelemetry.json"
+
+    private val SEARCH_EVERYWHERE_REGISTRY_KEYS: List<String> get() = listOf(
+      "search.everywhere.new.enabled",
+      "search.everywhere.new.internal.enabled",
+      "search.everywhere.new.rider.enabled",
+      "search.everywhere.new.clion.enabled",
+      "search.everywhere.new.cwm.client.enabled"
+    )
   }
 
   fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null): IDETestContext {
@@ -314,16 +322,14 @@ open class IDETestContext(
     addSystemProperty("llm.show.ai.promotion.window.on.start", false)
   }
 
+  @Suppress("TestOnlyProblems")
   fun disableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    addSystemProperty("search.everywhere.new.enabled", false)
-    addSystemProperty("search.everywhere.new.rider.enabled", false)
-    addSystemProperty("search.everywhere.new.cwm.client.enabled", false)
+    SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, false) }
   }
 
+  @Suppress("TestOnlyProblems")
   fun enableSplitSearchEverywhere(): IDETestContext = applyVMOptionsPatch {
-    addSystemProperty("search.everywhere.new.enabled", true)
-    addSystemProperty("search.everywhere.new.rider.enabled", true)
-    addSystemProperty("search.everywhere.new.cwm.client.enabled", true)
+    SEARCH_EVERYWHERE_REGISTRY_KEYS.forEach { addSystemProperty(it, true) }
   }
 
   fun withKotlinPluginK2(): IDETestContext = applyVMOptionsPatch {

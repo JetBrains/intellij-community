@@ -25,6 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
+import com.jetbrains.python.codeInsight.controlflow.Reachability;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
@@ -41,7 +42,8 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -53,7 +55,6 @@ import java.util.*;
 
 import static com.jetbrains.python.PyNames.END_WILDCARD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   private final ImmutableSet<String> myIgnoredIdentifiers;
@@ -79,13 +80,18 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final PyExpression qualifier = node.getQualifier();
     final String attrName = node.getReferencedName();
     if (qualifier != null && attrName != null) {
-      final PyType type = myTypeEvalContext.getType(qualifier);
-      if (type instanceof PyClassType && !((PyClassType)type).isAttributeWritable(attrName, myTypeEvalContext)) {
+      final PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
+      if (type instanceof PyClassType classType &&
+          !classType.isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
         registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.getName(), attrName));
       }
     }
+  }
+
+  private static @Nullable PyType replaceSelfWithItsScopeClass(@Nullable PyType type) {
+    return type instanceof PySelfType selfType ? selfType.getScopeClassType() : type;
   }
 
   @Override
@@ -133,7 +139,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       unresolved = (target == null);
     }
     if (unresolved) {
-      boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
+      boolean ignoreUnresolved = ignoreUnresolved(node, reference) ||
+                                 PyDataFlowKt.getReachabilityForInspection(node, myTypeEvalContext) != Reachability.REACHABLE;
       if (!ignoreUnresolved) {
         HighlightSeverity severity = reference instanceof PsiReferenceEx
                                      ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
@@ -155,7 +162,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
     else if (PyUnionType.isStrictSemanticsEnabled() && node instanceof PyQualifiedExpression qualifiedExpression) {
       String referencedName = qualifiedExpression.getReferencedName();
-      PyExpression qualifier = qualifiedExpression.getQualifier();
+      PyExpression qualifier;
+      if (qualifiedExpression instanceof PyCallSiteExpression callSiteExpression && target instanceof PyCallable callable) {
+        qualifier = callSiteExpression.getReceiver(callable);
+      }
+      else {
+        qualifier = qualifiedExpression.getQualifier();
+      }
       if (referencedName != null && qualifier != null) {
         PyType qualifierType = myTypeEvalContext.getType(qualifier);
         if (qualifierType instanceof PyUnionType unionType) {
@@ -243,7 +256,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return;
       }
       if (!expr.isQualified()) {
-        if (PyDataFlowKt.isUnreachableForInspection(expr, myTypeEvalContext)) {
+        if (PyDataFlowKt.getReachabilityForInspection(expr, myTypeEvalContext) != Reachability.REACHABLE) {
           return;
         }
         ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));
@@ -285,7 +298,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       }
       final PyExpression qualifier = getReferenceQualifier(reference);
       if (qualifier != null) {
-        final PyType type = myTypeEvalContext.getType(qualifier);
+        PyType type = replaceSelfWithItsScopeClass(myTypeEvalContext.getType(qualifier));
         if (type != null) {
           if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) {
             return;
@@ -305,6 +318,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                                                 ((PyOperatorReference)reference).getReadableOperatorName());
             }
             else {
+              // TODO use proper type rendering here
               description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", refText, type.getName());
             }
           }
@@ -791,8 +805,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                                                                      @NotNull String refText) {
     List<LocalQuickFix> result = new ArrayList<>();
     PsiElement element = reference.getElement();
-    if (type instanceof PyClassTypeImpl) {
-      PyClass cls = ((PyClassType)type).getPyClass();
+    if (type instanceof PyClassType pyClassType) {
+      PyClass cls = pyClassType.getPyClass();
       if (!PyBuiltinCache.getInstance(element).isBuiltin(cls)) {
         if (element.getParent() instanceof PyCallExpression) {
           result.add(new AddMethodQuickFix(refText, cls.getName(), true));

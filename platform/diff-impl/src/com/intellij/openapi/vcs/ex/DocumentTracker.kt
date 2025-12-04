@@ -1368,7 +1368,7 @@ sealed class RangeExclusionState {
       override val descriptor: SerialDescriptor = String.serializer().descriptor
 
       override fun serialize(encoder: Encoder, value: BitSet) {
-        base64.encode(value.toByteArray())
+        encoder.encodeString(base64.encode(value.toByteArray()))
       }
 
       override fun deserialize(decoder: Decoder): BitSet =

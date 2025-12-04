@@ -48,12 +48,13 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/jdom",
     "//platform/statistics",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:ec4j-core",
     "//platform/settings",
     "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
     "//platform/backend",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -93,7 +94,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:ec4j-core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
@@ -101,6 +102,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//plugins/editorconfig/common",
     "//platform/backend",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.editorconfig.backend` end

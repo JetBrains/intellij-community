@@ -6,6 +6,8 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.getShell
@@ -33,7 +35,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Default service implementation
  */
-fun ExecService(): ExecService = ExecServiceImpl
+fun ExecService(): ExecService = ApplicationManager.getApplication().service<ExecServiceImpl>()
 
 
 /**
@@ -104,7 +106,7 @@ suspend fun ExecService.execGetStdout(
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
   val binary = eelApi.exec.findExeFilesInPath(binaryName).firstOrNull()?.asNioPath()
-               ?: return PyResult.localizedError(message("py.exec.fileNotFound", binaryName, eelApi.descriptor.machine.name))
+               ?: return PyResult.localizedError(message("py.exec.fileNotFound", binaryName, eelApi.descriptor.name))
   return execGetStdout(BinOnEel(binary), args, options, procListener)
 }
 
@@ -219,18 +221,29 @@ open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Resu
   }
 }
 
+/**
+ * Each process launched with [ExecOptions] belongs to one of these categories. The lighter proces is, the more processes system can run.
+ * Limits are set via Registry.
+ */
+enum class ConcurrentProcessWeight {
+  LIGHT,
+  MEDIUM,
+  HEAVY
+}
 
 /**
  * @property[env] Environment variables to be applied with the process run
  * @property[timeout] Process gets killed after this timeout
  * @property[processDescription] optional description to be displayed to user
  * @property[tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
+ * @property[weight] use it to limit the number of concurrent processes not to exhaust user resources, see [ConcurrentProcessWeight]
  */
 data class ExecOptions(
   override val env: Map<String, String> = emptyMap(),
   override val processDescription: @Nls String? = null,
   val timeout: Duration = 5.minutes,
   override val tty: TtySize? = null,
+  val weight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT,
 ) : ExecOptionsBase
 
 

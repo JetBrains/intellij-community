@@ -26,9 +26,9 @@ internal class CleanupBranchesAction : DumbAwareAction() {
 
     // Try to show a one-time Got It tooltip when this action is present on the Git Log branches toolbar.
     // We identify the context via VcsLog data keys and the toolbar place used in Branches UI.
-    if (project != null && hasEnoughBranches) {
+    /*if (project != null && hasEnoughBranches) {
       maybeShowGotItTooltip(e)
-    }
+    }*/
   }
 
   override fun actionPerformed(e: AnActionEvent) {

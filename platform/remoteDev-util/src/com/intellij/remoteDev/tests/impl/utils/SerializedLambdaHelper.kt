@@ -17,7 +17,7 @@ import kotlin.use
  */
 
 fun interface SuspendingSerializableConsumer<T> : Serializable {
-  suspend fun accept(application: T)
+  suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable
 }
 
 data class SerializedLambda(
@@ -31,14 +31,14 @@ data class SerializedLambda(
       System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
     }
 
-    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(crossinline code: suspend (T) -> Unit): SerializedLambda {
+    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(name: String?, crossinline code: suspend T.(List<Serializable>) -> Serializable): SerializedLambda {
       val obj = object : SuspendingSerializableConsumer<T>, Serializable {
-        override suspend fun accept(application: T) {
-          code(application)
+        override suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable {
+          return code(lambdaIdeContext, parameters)
         }
       }
 
-      return wrapLambda(obj)
+      return wrapLambda(name, obj)
     }
   }
 }
@@ -46,14 +46,14 @@ data class SerializedLambda(
 
 //this class is used from IntelliJ process
 class SerializedLambdaLoader {
-  fun save(obj: Any): String = try {
+  fun save(name: String?, obj: Any): String = try {
     ByteArrayOutputStream().use {
       ObjectOutputStream(it).writeObject(obj)
       Base64.getEncoder().encodeToString(it.toByteArray())
     }
   }
   catch (t: Throwable) {
-    throw Error("Failed to save/load the lambda. Most likely, " +
+    throw Error("Failed to save/load the lambda${name?.let { " '$it'" }}. Most likely, " +
                 "the current lambda was more complex and so Kotlin compiler decided " +
                 "to generate a more complicated constructor for a wrapper class. " +
                 "Try to add java.io.Serializable, simplify the code, cleanup variables from the closure, copy parameters to the local scope. ${t.message}", t)
@@ -70,25 +70,24 @@ class SerializedLambdaLoader {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader, context: T? = null): SuspendingSerializableConsumer<T> {
+  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): SuspendingSerializableConsumer<T> {
+    return loadObject(stringToDecode, classLoader) as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<T : LambdaIdeContext> from the lambda")
+  }
+
+  fun loadObject(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): Serializable {
     val inputStream = Base64.getDecoder().decode(stringToDecode).inputStream()
-    return ClassLoaderObjectInputStream(inputStream, classLoader)
-             .readObject() as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<Application> from the lambda")
+    val obj = ClassLoaderObjectInputStream(inputStream, classLoader).readObject()
+    return obj as? Serializable ?: error("Failed to load Serializable object from Base64 payload; object type is ${obj?.javaClass?.name}")
   }
 }
 
-private fun normalizeLambdaClassName(name: String): String {
-  val slash = name.indexOf('/')
-  return if (slash >= 0) name.substring(0, slash) else name
-}
-
-fun <T : LambdaIdeContext> wrapLambda(obj: SuspendingSerializableConsumer<T>): SerializedLambda {
+fun <T : LambdaIdeContext> wrapLambda(name: String?, obj: SuspendingSerializableConsumer<T>): SerializedLambda {
   val clazzPath = setOf(SerializedLambdaLoader::class.java, obj.javaClass, Application::class.java)
     .mapNotNull { PathManager.getJarPathForClass(it) }
     .map { File(it) }
     .toSet()
 
-  val persistedLambda = SerializedLambdaLoader().save(obj)
+  val persistedLambda = SerializedLambdaLoader().save(name, obj)
   val reloadedLambda = SerializedLambdaLoader().load<T>(persistedLambda)
   require(reloadedLambda.javaClass == obj.javaClass) {
     "The reloaded lambda should have the same type as the original one. " +

@@ -152,12 +152,13 @@ open class ProjectLibraryTableBridgeImpl(
         ))
       }
       .toList()
-    LOG.debug("Initial load of project-level libraries")
+    LOG.info("Initial load of project-level (project=${project.name}) libraries. There are ${libraries.size} libraries to load.")
     if (libraries.isEmpty()) {
       return
     }
 
     if (targetBuilder == null) {
+      LOG.info("Applying project-level (project=${project.name}) libraries directly to project WSM.")
       withContext(Dispatchers.EDT) {
         workspaceModel.updateProjectModelSilent("Add project library mapping") {
           for ((entity, library) in libraries) {
@@ -172,6 +173,7 @@ open class ProjectLibraryTableBridgeImpl(
       }
     }
     else {
+      LOG.info("Applying project-level (project=${project.name}) libraries to the provided builder.")
       for ((entity, library) in libraries) {
         targetBuilder.mutableLibraryMap.addIfAbsent(entity, library)
       }

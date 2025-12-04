@@ -59,8 +59,11 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/java-syntax:syntax",
     "//platform/eel",
+    "//platform/execution",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5/codeInsight",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/xdebugger-impl/shared",
   ],
   exports = [
     "//java/testFramework/shared",

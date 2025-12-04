@@ -28,6 +28,7 @@ jvm_library(
     "//xml/impl",
     "//RegExpSupport:regexp",
     "//xml/xml-psi-api:psi",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/platform-api:ide",
     "//libraries/jaxen",
     "//plugins/IntelliLang:langInjection",

@@ -4,7 +4,7 @@ Reports a problem when instance attribute
 definition is outside <code>__init__</code> method.
 <p><b>Example:</b></p>
 <pre><code>
-    class Book:
+class Book:
     def __init__(self):
         self.author = 'Mark Twain'
 
@@ -15,7 +15,7 @@ definition is outside <code>__init__</code> method.
   When the quick-fix is applied, the code sample changes to:
 </p>
 <pre><code>
-    class Book:
+class Book:
     def __init__(self):
         self.year = '1889'
         self.author = 'Mark Twain'

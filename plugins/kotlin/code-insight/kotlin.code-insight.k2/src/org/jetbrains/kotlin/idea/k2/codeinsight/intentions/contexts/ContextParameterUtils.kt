@@ -22,7 +22,7 @@ object ContextParameterUtils {
      */
     fun isConvertibleContextParameter(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
-        val contextParameterList = ktParameter.parent as? KtContextReceiverList ?: return false
+        val contextParameterList = ktParameter.parent as? KtContextParameterList ?: return false
         val contextParameterListOwner = contextParameterList.ownerDeclaration
         return contextParameterListOwner is KtCallableDeclaration
     }
@@ -84,11 +84,7 @@ object ContextParameterUtils {
      * The utility mitigates the awkward declaration of context parameters in the Kotlin PSI hierarchy.
      */
     fun KtCallableDeclaration.getContextParameters(): List<KtParameter>? {
-        return when (this) {
-            is KtNamedFunction -> contextReceiverList?.contextParameters()
-            is KtProperty -> contextReceiverList?.contextParameters()
-            else -> null
-        }
+        return takeIf { this is KtNamedFunction || this is KtProperty }?.contextParameters
     }
 
     /**

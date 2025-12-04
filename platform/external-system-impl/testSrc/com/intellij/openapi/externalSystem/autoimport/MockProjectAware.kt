@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -18,15 +17,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.ActivityKey
-import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.backend.observation.trackActivityBlocking
+import com.intellij.testFramework.TestObservation
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration.Companion.seconds
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
@@ -174,17 +171,11 @@ class MockProjectAware(
     this.isDisabledAutoReload.set(isDisabledAutoReload)
   }
 
-  private val LOG = Logger.getInstance(MockProjectAware::class.java)
-
   fun <R> waitForAllProjectActivities(action: () -> R): R {
     return project.trackActivityBlocking(MockProjectReloadActivityKey, action)
       .also {
         runBlocking {
-          withTimeout(10.seconds) {
-            Observation.awaitConfiguration(project) { message ->
-              LOG.debug(message)
-            }
-          }
+          TestObservation.awaitConfiguration(project)
         }
       }
   }

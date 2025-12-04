@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.productLayout
 
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversal
+
 /**
  * Shared utilities for generating plugin.xml content for both products and module sets.
  * Both products and module sets are "content containers" that:
@@ -56,6 +58,7 @@ internal fun buildModuleAliasesXml(aliases: List<String>): String {
 
 /**
  * Wraps content with editor-fold comments for collapsible sections in IDE.
+ * Uses try-finally to ensure the closing tag is always written, even if block throws.
  *
  * @param sb StringBuilder to append to
  * @param indent Indentation string (e.g., "    ")
@@ -64,33 +67,12 @@ internal fun buildModuleAliasesXml(aliases: List<String>): String {
  */
 internal inline fun withEditorFold(sb: StringBuilder, indent: String, description: String, block: () -> Unit) {
   sb.append("$indent<!-- <editor-fold desc=\"$description\"> -->\n")
-  block()
-  sb.append("$indent<!-- </editor-fold> -->\n")
-}
-
-/**
- * Recursively collects all module names from a module set and its nested sets.
- *
- * @param moduleSet The module set to collect modules from
- * @param excludedModules Set of module names to exclude
- * @return Set of all module names found in the module set hierarchy
- */
-internal fun collectAllModuleNames(moduleSet: ModuleSet, excludedModules: Set<String> = emptySet()): Set<String> {
-  val result = HashSet<String>()
-  
-  fun collect(set: ModuleSet) {
-    for (module in set.modules) {
-      if (module.name !in excludedModules) {
-        result.add(module.name)
-      }
-    }
-    for (nestedSet in set.nestedSets) {
-      collect(nestedSet)
-    }
+  try {
+    block()
   }
-  
-  collect(moduleSet)
-  return result
+  finally {
+    sb.append("$indent<!-- </editor-fold> -->\n")
+  }
 }
 
 /**
@@ -110,32 +92,19 @@ internal fun visitAllModules(moduleSet: ModuleSet, visitor: (ContentModule) -> U
 }
 
 /**
- * Recursively collects all module names from a module set and its nested sets.
- * Helper function for module distribution and usage analysis.
+ * Finds a module set by name and collects all module names from it and its nested sets.
+ * Delegates to [ModuleSetTraversal.collectAllModuleNames] for the actual traversal.
  *
  * @param moduleSets List of all module sets to search in
  * @param setName Name of the module set to start collecting from
- * @param visited Set of already visited module set names to prevent infinite recursion
- * @return Set of all module names found in the module set hierarchy
+ * @return Set of all module names found in the module set hierarchy, or empty set if not found
  */
-fun collectAllModuleNamesFromSet(
+internal fun collectAllModuleNamesFromSet(
   moduleSets: List<ModuleSet>,
   setName: String,
-  visited: MutableSet<String> = mutableSetOf()
 ): Set<String> {
-  if (setName in visited) return emptySet()
-  visited.add(setName)
-
   val moduleSet = moduleSets.firstOrNull { it.name == setName } ?: return emptySet()
-
-  val allModules = moduleSet.modules.map { it.name }.toMutableSet()
-
-  // Recursively collect from nested sets
-  for (nestedSet in moduleSet.nestedSets) {
-    allModules.addAll(collectAllModuleNamesFromSet(moduleSets, nestedSet.name, visited))
-  }
-
-  return allModules
+  return ModuleSetTraversal.collectAllModuleNames(moduleSet)
 }
 
 /**

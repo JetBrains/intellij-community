@@ -50,7 +50,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/core-impl",
   ],
   runtime_deps = ["//platform/backend"]
@@ -90,7 +90,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/relaxng",

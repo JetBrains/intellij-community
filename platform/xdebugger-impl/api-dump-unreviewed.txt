@@ -104,11 +104,6 @@ a:com.intellij.xdebugger.impl.XSourcePositionImpl
 - s:createByOffset(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.impl.XSourcePositionImpl
 - createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
 - getFile():com.intellij.openapi.vfs.VirtualFile
-com.intellij.xdebugger.impl.XWatch
-- a:getCanBePaused():Z
-- a:getExpression():com.intellij.xdebugger.XExpression
-- a:isPaused():Z
-- a:setPaused(Z):V
 c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -412,36 +407,6 @@ f:com.intellij.xdebugger.impl.frame.StackInfo$Companion
 - f:error(java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
 - f:from(com.intellij.xdebugger.frame.XExecutionStack):com.intellij.xdebugger.impl.frame.StackInfo
 - f:getLOADING():com.intellij.xdebugger.impl.frame.StackInfo
-a:com.intellij.xdebugger.impl.frame.XDebugView
-- com.intellij.openapi.Disposable
-- <init>():V
-- pf:cancelClear():V
-- pa:clear():V
-- s:getData(com.intellij.openapi.actionSystem.DataKey,java.awt.Component):java.lang.Object
-- getMainComponent():javax.swing.JComponent
-- s:getSession(java.awt.Component):com.intellij.xdebugger.XDebugSession
-- ps:getSession(java.util.EventObject):com.intellij.xdebugger.XDebugSession
-- processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
-- pf:requestClear():V
-e:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- java.lang.Enum
-- sf:BEFORE_RESUME:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- sf:FRAME_CHANGED:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- sf:PAUSED:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- sf:RESUMED:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- sf:SETTINGS_CHANGED:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- sf:STOPPED:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
-- s:values():com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent[]
-f:com.intellij.xdebugger.impl.frame.XDebugViewSessionListener
-- com.intellij.xdebugger.XDebugSessionListener
-- s:attach(com.intellij.xdebugger.impl.frame.XDebugView,com.intellij.xdebugger.XDebugSession):V
-- beforeSessionResume():V
-- sessionPaused():V
-- sessionResumed():V
-- sessionStopped():V
-- settingsChanged():V
-- stackFrameChanged():V
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -485,7 +450,6 @@ c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.frame.XStackFrame):V
 - rebuildView():V
 a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
-- com.intellij.xdebugger.impl.frame.XDebugView
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.impl.frame.XValueMarkers):V
 - p:buildTreeAndRestoreState(com.intellij.xdebugger.frame.XStackFrame):V
 - p:clear():V
@@ -536,21 +500,10 @@ com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
 - showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
-f:com.intellij.xdebugger.impl.inline.InlineWatch
-- <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
-- f:getExpression():com.intellij.xdebugger.XExpression
-- f:getLine():I
-- f:getPosition():com.intellij.xdebugger.XSourcePosition
-- f:setMarker():Z
-- f:updatePosition():Z
 c:com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup
 - com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup
 - p:getToolbarActions():com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:showTreePopup(com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator,java.lang.Object,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XDebugSession,java.lang.Runnable):V
-com.intellij.xdebugger.impl.inline.XInlineWatchesView
-- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- a:addInlineWatchExpression(com.intellij.xdebugger.impl.inline.InlineWatch,I,Z):V
-- a:removeInlineWatches(java.util.Collection):V
 f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 - sf:Companion:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
 - <init>():V
@@ -1296,7 +1249,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - getName():java.lang.String
 - getRawValue():java.lang.String
 - getValuePresentation():com.intellij.xdebugger.frame.presentation.XValuePresentation
-- getXValue():com.intellij.xdebugger.frame.XValue
 - hasLinks():Z
 - isComputed():Z
 - markChanged():V

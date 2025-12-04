@@ -12,7 +12,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -31,10 +34,11 @@ import java.util.List;
  * <p>
  * In order to start the debugger by a 'Debug' action for a specific run configuration,
  * implement {@link com.intellij.execution.runners.ProgramRunner}
- * and call {@link XDebuggerManager#newSessionBuilder} and {@link XSessionBuilder#startSession()} without setting {@link XSessionBuilder#showTab}
+ * and call {@link XDebuggerManager#newSessionBuilder} and {@link XDebugSessionBuilder#startSession()} without setting {@link XDebugSessionBuilder#showTab}
  * from the {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method.
  * <p>
- * Otherwise, show tab with {@link XSessionBuilder#showTab} to start a new debugging session.
+ * Otherwise, use {@link XDebuggerManager#newSessionBuilder} with {@link XDebugSessionBuilder#showTab}
+ * and {@link XDebugSessionBuilder#startSession()} to start a new debugging session.
  */
 public abstract class XDebugProcess {
   private final @NotNull XDebugSession mySession;

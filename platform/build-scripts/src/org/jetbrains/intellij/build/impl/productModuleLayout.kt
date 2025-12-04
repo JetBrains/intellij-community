@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.xmlValue
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
@@ -193,6 +194,11 @@ private fun processProductModule(
 
 private fun isModuleCloseSource(moduleName: String, context: BuildContext): Boolean {
   if (moduleName.endsWith(".resources") || moduleName.endsWith(".icons") || moduleName.startsWith(LIB_MODULE_PREFIX)) {
+    return false
+  }
+
+  // todo will be removed on the next stage
+  if (moduleName == "fleet.protocol" || moduleName.startsWith("fleet.rpc.")) {
     return false
   }
 

@@ -49,6 +49,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/base/util",
     "//platform/core-ui",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl/shared",
     "//platform/projectModel-impl",
     "//platform/util:util-ui",
     "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
@@ -70,6 +71,8 @@ jvm_library(
     "//platform/util/jdom",
     "//java/java-runtime:rt",
     "@lib//:kotlin-metadata",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.core` end

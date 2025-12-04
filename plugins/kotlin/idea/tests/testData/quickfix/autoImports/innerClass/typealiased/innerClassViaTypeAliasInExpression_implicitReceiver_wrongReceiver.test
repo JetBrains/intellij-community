@@ -1,0 +1,40 @@
+// FILE: first.before.kt
+// "Import type alias 'InnerTypeAlias'" "true"
+// IGNORE_K1
+
+package test
+
+class Outer {
+    inner class Inner
+}
+
+class Unrelated
+
+fun Unrelated.usage() {
+    // We allow to import type alias even if there is no correct receiver for it
+    <caret>InnerTypeAlias()
+}
+
+// FILE: second.kt
+package some
+
+typealias InnerTypeAlias = test.Outer.Inner
+
+// FILE: first.after.kt
+// "Import type alias 'InnerTypeAlias'" "true"
+// IGNORE_K1
+
+package test
+
+import some.InnerTypeAlias
+
+class Outer {
+    inner class Inner
+}
+
+class Unrelated
+
+fun Unrelated.usage() {
+    // We allow to import type alias even if there is no correct receiver for it
+    <caret>InnerTypeAlias()
+}

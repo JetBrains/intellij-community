@@ -13,6 +13,7 @@ interface ExternalSystemProjectTracker {
    * Starts tracking of project settings that will be defined by [projectAware]
    *
    * Auto reloads will be activated after first project refresh
+   * (i.e. after first [ExternalSystemProjectListener.onProjectReloadStart] / [ExternalSystemProjectListener.onProjectReloadFinish])
    * @see [ExternalSystemProjectTracker.activate] for details
    */
   fun register(projectAware: ExternalSystemProjectAware)

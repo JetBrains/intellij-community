@@ -67,6 +67,9 @@ jvm_library(
     "//libraries/microba",
     "//platform/platform-impl/ui",
     "//libraries/kotlinx/html",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.grid.impl` end

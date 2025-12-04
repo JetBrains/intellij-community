@@ -70,7 +70,7 @@ private val CompareDistributionsSemaphore = Semaphore(Integer.getInteger("intell
 internal class WindowsDistributionBuilder(
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: CharSequence?,
-  override val context: BuildContext,
+  private val context: BuildContext,
 ) : OsSpecificDistributionBuilder {
   override val targetOs: OsFamily
     get() = OsFamily.WINDOWS
@@ -85,12 +85,12 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      copyDir(sourceDir = sourceBinDir, targetDir = distBinDir, dirFilter = { it == sourceBinDir })
+      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
 
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
-      generateBuildTxt(context, targetPath)
-      copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch, libcImpl = WindowsLibcImpl.DEFAULT)
+      generateBuildTxt(targetPath, context)
+      copyDistFiles(targetPath, OsFamily.WINDOWS, arch, WindowsLibcImpl.DEFAULT, context)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
@@ -158,18 +158,25 @@ internal class WindowsDistributionBuilder(
       if (customizer.buildZipArchiveWithoutBundledJre && !context.isStepSkipped(BuildOptions.WINDOWS_ZIP_STEP)) {
         val zipNameSuffix = suffix(arch) + customizer.zipArchiveWithoutBundledJreSuffix
         launch(Dispatchers.IO + CoroutineName("build Windows ${zipNameSuffix}.zip distribution")) {
-          createBuildWinZipTask(runtimeDir = null, zipNameSuffix, osAndArchSpecificDistPath, arch, customizer, context)
+          createBuildWinZipTask(runtimeDir = null, zipNameSuffix = zipNameSuffix, winDistPath = osAndArchSpecificDistPath, arch = arch, customizer = customizer, context = context)
         }
       }
 
       context.executeStep(spanBuilder("build Windows installer").setAttribute("arch", arch.dirName), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
         val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
-        val productJsonFile = writeProductJsonFile(productJsonDir, arch, context)
+        val productJsonFile = writeProductJsonFile(productJsonDir, arch, context, withRuntime = true)
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
           exePath = buildNsisInstaller(
-            osAndArchSpecificDistPath, productJsonFile, productJsonDir, suffix(arch), customizer, runtimeDir, context, arch
+            winDistPath = osAndArchSpecificDistPath,
+            productInfoJsonFile = productJsonFile,
+            additionalDirectoryToInclude = productJsonDir,
+            suffix = suffix(arch),
+            customizer = customizer,
+            runtimeDir = runtimeDir,
+            context = context,
+            arch = arch,
           )
         }
       }
@@ -190,9 +197,11 @@ internal class WindowsDistributionBuilder(
     }
   }
 
-  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path = writeProductJsonFile(targetDir, arch, context)
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path {
+    return writeProductJsonFile(targetDir = targetDir, arch = arch, context = context, withRuntime = true)
+  }
 
-  override fun writeVmOptions(distBinDir: Path) : Path = writeWindowsVmOptions(distBinDir, context)
+  override fun writeVmOptions(distBinDir: Path): Path = writeWindowsVmOptions(distBinDir, context)
 
   override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
     val archSuffix = suffix(arch)
@@ -217,9 +226,9 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: Bu
   val vmOptionsFileName = "${baseName}64.exe"
 
   val classPathJars = context.bootClassPathJarNames
-  var classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars[0]}\""
-  for (i in 1 until classPathJars.size) {
-    classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars[i]}\""
+  var classPath = ""
+  for (jar in classPathJars) {
+    classPath += "\nECHO|SET /P=\"\"%IDE_HOME:\\=/%/lib/${jar};\"\" >> \"%ARG_FILE%\""
   }
 
   val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isScript = true)
@@ -285,7 +294,7 @@ private suspend fun createBuildWinZipTask(
   winDistPath: Path,
   arch: JvmArchitecture,
   customizer: WindowsDistributionCustomizer,
-  context: BuildContext
+  context: BuildContext,
 ): Path {
   val baseName = context.productProperties.getBaseArtifactName(context)
   val targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
@@ -302,7 +311,7 @@ private suspend fun createBuildWinZipTask(
       }
 
       val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip${zipNameSuffix}")
-      val productJsonFile = writeProductJsonFile(targetDir = productJsonDir, arch = arch, context = context, withRuntime = runtimeDir != null)
+      val productJsonFile = writeProductJsonFile(productJsonDir, arch, context, withRuntime = runtimeDir != null)
       dirs.add(productJsonDir)
       copyFile(productJsonFile, targetFileProductInfoJson)
 
@@ -360,8 +369,8 @@ private suspend fun buildWinLauncher(winDistPath: Path, arch: JvmArchitecture, c
         outputPath.absolutePathString(),
       ),
       jvmArgs = listOf("-Djava.awt.headless=true"),
-      context.getModuleRuntimeClasspath(generatorModule, forTests = false),
-      context.stableJavaExecutable
+      classPath = context.getModuleRuntimeClasspath(module = generatorModule, forTests = false).map { it.toString() },
+      javaExe = context.stableJavaExecutable,
     )
   }
 }
@@ -455,7 +464,7 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(
         }
     }
     if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      RepairUtilityBuilder.generateManifest(tempExe, OsFamily.WINDOWS, arch, context)
+      RepairUtilityBuilder.generateManifest(unpackedDistribution = tempExe, os = OsFamily.WINDOWS, arch = arch, context = context)
     }
   }
   finally {
@@ -469,17 +478,17 @@ private fun computeIcoPath(context: BuildContext): Path {
   val customizer = context.windowsDistributionCustomizer!!
   val icoPath = (if (context.applicationInfo.isEAP) customizer.icoPathForEAP else null) ?: customizer.icoPath
   requireNotNull(icoPath) { "`WindowsDistributionCustomizer#icoPath` must be set" }
-    return icoPath
+  return icoPath
 }
 
-  private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
-    val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    val vmOptions = VmOptionsGenerator.generate(context).asSequence()
-    VmOptionsGenerator.writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
-    return vmOptionsFile
-  }
+private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
+  val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
+  val vmOptions = VmOptionsGenerator.generate(context).asSequence()
+  VmOptionsGenerator.writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
+  return vmOptionsFile
+}
 
-private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, context: BuildContext, withRuntime: Boolean = true): Path {
+private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, context: BuildContext, withRuntime: Boolean): Path {
   val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
     "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
   }
@@ -501,7 +510,8 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData),
       )
     ),
-    context)
+    context
+  )
   val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
   writeProductInfoJson(file, json, context)
   return file

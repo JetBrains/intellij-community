@@ -3,6 +3,7 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
     <module name="intellij.platform.rpc.topics.frontend"/>
     <module name="intellij.platform.rpc.topics"/>
@@ -31,5 +32,7 @@
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowImagePopupRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.FrameNotificationRemoteTopicListener"/>
     <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.frame.ShowSessionTabRemoteTopicListener"/>
+
+    <notificationGroup id="Split debugger internal" displayType="STICKY_BALLOON" hideFromSettings="true"/>
   </extensions>
 </idea-plugin>

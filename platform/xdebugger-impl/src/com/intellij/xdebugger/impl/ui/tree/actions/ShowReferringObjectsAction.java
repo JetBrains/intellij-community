@@ -6,18 +6,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XReferrersProvider;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase implemen
       XValue referringObjectsRoot = referrersProvider.getReferringObjectsValue();
       DialogWrapper dialog;
       // TODO ReferrersTreeCustomizer is supported only in monolith
-      XDebugSession xDebugSession = XDebugMonolithUtils.findSessionById(session.getId());
+      var xDebugSession = XDebuggerEntityConverter.getSession(session);
       if (xDebugSession != null && referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer) {
         dialog = referrersTreeCustomizer.getDialog(xDebugSession, nodeName, position, markers);
       }

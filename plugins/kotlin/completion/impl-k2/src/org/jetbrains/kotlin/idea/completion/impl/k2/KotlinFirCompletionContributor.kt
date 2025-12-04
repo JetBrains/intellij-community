@@ -13,6 +13,9 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
@@ -80,6 +83,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         context: ProcessingContext,
         result: CompletionResultSet,
     ) {
+        val completionSetupEvent = CompletionSetupEvent()
+        completionSetupEvent.begin()
+
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
             ?: return
         val position = parameters.position
@@ -94,17 +100,23 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
             .withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
 
-        val addedResults = Completions.complete(
-            parameters = parameters,
-            positionContext = positionContext,
-            resultSet = resultSet,
-        )
+        completionSetupEvent.commit()
+
+        val addedResults = CompletionEvent().timeEvent {
+            Completions.complete(
+                parameters = parameters,
+                positionContext = positionContext,
+                resultSet = resultSet,
+            )
+        }
 
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.
         if (!addedResults && parameters.invocationCount == 1) {
             val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
-            Completions.complete(newParameters, positionContext, resultSet)
+            CompletionEvent(isRerun = true).timeEvent {
+                Completions.complete(newParameters, positionContext, resultSet)
+            }
         }
     }
 

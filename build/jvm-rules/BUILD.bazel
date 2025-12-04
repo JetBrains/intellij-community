@@ -18,7 +18,7 @@ bool_flag(
     build_setting_default = False,
 )
 
-# used by _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
+# used by _jvm_builder_launcher attribute in jvm_library rule
 exports_files(
     ["rules/impl/MemoryLauncher.java"],
     visibility = ["//visibility:private"],
@@ -98,15 +98,15 @@ jvm_import(
 
 jvm_import(
     name = "kotlin-compiler_import",
-    jar = "@kotlin-compiler_http//file",
-    source_jar = "@kotlin-compiler_http//file",
+    jar = "@kotlin-compiler-embeddable_http//file",
+    source_jar = "@kotlin-compiler-embeddable_http//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compose-compiler-plugin_import",
-    jar = "@kotlin-compose-compiler-plugin_http//file",
-    source_jar = "@kotlin-compose-compiler-plugin-sources_http//file",
+    name = "kotlin-compose-compiler-plugin-embeddable_import",
+    jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -125,9 +125,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-serialization-compiler-plugin_import",
-    jar = "@kotlin-serialization-compiler-plugin_http//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-sources_http//file",
+    name = "kotlin-serialization-compiler-plugin-embeddable_import",
+    jar = "@kotlin-serialization-compiler-plugin-embeddable_http//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -336,17 +336,5 @@ label_flag(
 label_flag(
     name = "jvm-builder-jvm_flags",
     build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
-    visibility = ["//visibility:public"],
-)
-
-label_flag(
-    name = "resource-packager",
-    build_setting_default = "//src/misc:worker-jvm_deploy.jar",
-    visibility = ["//visibility:public"],
-)
-
-label_flag(
-    name = "resource-packager-jvm_flags",
-    build_setting_default = "//src/misc:worker-jvm-jvm_flags",
     visibility = ["//visibility:public"],
 )

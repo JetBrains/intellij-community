@@ -305,7 +305,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
         { extensionsSettings.extensionsEnabledState[extension.id] = it}
       ).gap(RightGap.SMALL)
       extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
-      contextHelp(extension.description).gap(RightGap.SMALL)
+        .contextHelp(extension.description)
       if ((extension as? MarkdownExtensionWithDownloadableFiles)?.isAvailable == false) {
         lateinit var installLink: Cell<ActionLink>
         installLink = link(MarkdownBundle.message("markdown.settings.extension.install.label")) {

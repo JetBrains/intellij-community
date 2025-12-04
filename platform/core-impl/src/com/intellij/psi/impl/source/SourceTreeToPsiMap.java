@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +19,9 @@ public final class SourceTreeToPsiMap {
   public static @NotNull <T extends PsiElement> T treeToPsiNotNull(@NotNull ASTNode astNode) {
     PsiElement psi = astNode.getPsi();
     if (psi == null) {
-      Logger.getInstance(SourceTreeToPsiMap.class).error("PSI is null for AST " + astNode + " (" + astNode.getClass() + ")");
+      Language language = astNode.getElementType().getLanguage();
+      throw new AssertionError("PSI is null for AST " + astNode + " (" + astNode.getClass() + "); language: " + language);
     }
-    assert psi != null : astNode;
     //noinspection unchecked
     return (T)psi;
   }

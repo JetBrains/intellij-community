@@ -12,6 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.InternalThreading;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -65,6 +67,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.TransferredWriteActionService;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
@@ -82,6 +85,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
@@ -182,6 +186,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @TestOnly
+  @RequiresWriteLock
   public void dropAllUnsavedDocuments() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException("This method is only for test mode!");
@@ -763,25 +768,23 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
-        CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-          ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
-            if (!isBinaryWithoutDecompiler(file)) {
-              LoadTextUtil.clearCharsetAutoDetectionReason(file);
-              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-              file.setCharset(null, null, false);
-              boolean wasWritable = document.isWritable();
-              document.setReadOnly(false);
-              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-              isReloadable[0] = isReloadable(file, document, project);
-              if (isReloadable[0]) {
-                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                setDocumentTooLarge(document, tooLarge);
+        // Special handling for files with decompiler - run decompilation in background with progress
+        if (isBinaryWithDecompiler(file)) {
+          reloadFromDiskWithDecompiler(document, project, file);
+        }
+        else {
+          CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+            ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+              if (!isBinaryWithoutDecompiler(file)) {
+                setNewText(document, project, file, vFile -> {
+                  boolean tooLarge = FileUtilRt.isTooLarge(vFile.getLength());
+                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(vFile, getPreviewCharCount(vFile)) : LoadTextUtil.loadText(vFile);
+                  return reloaded;
+                });
               }
-              document.setReadOnly(!wasWritable);
-            }
-          })
-        ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+            })
+          ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+        }
       }
       if (isReloadable[0]) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
@@ -799,6 +802,52 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       return null;
     });
+  }
+
+  private static void setNewText(@NotNull Document document,
+                                 @Nullable Project project,
+                                 @NotNull VirtualFile file,
+                                 @NotNull Function<@NotNull VirtualFile, @NotNull CharSequence> loader) {
+    LoadTextUtil.clearCharsetAutoDetectionReason(file);
+    file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+    file.setCharset(null, null, false);
+    boolean wasWritable = document.isWritable();
+    document.setReadOnly(false);
+    boolean[] isReloadable = {isReloadable(file, document, project)};
+    if (isReloadable[0]) {
+      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+      CharSequence reloaded = loader.apply(file);
+      ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+      setDocumentTooLarge(document, tooLarge);
+    }
+    document.setReadOnly(!wasWritable);
+  }
+
+  private void reloadFromDiskWithDecompiler(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file) {
+    CharSequence[] decompiledText = {null};
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    boolean finished = app.runWriteActionWithCancellableProgressInDispatchThread(
+      UIBundle.message("progress.decompiling.file", file.getName()),
+      project,
+      null,
+      indicator -> {
+        decompiledText[0] = LoadTextUtil.loadText(file);
+      }
+    );
+
+    if (!finished || decompiledText[0] == null) {
+      unbindFileFromDocument(file, document);
+      closeAllEditorsFor(file);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListenerBackgroundable.TOPIC)
+        .afterDocumentUnbound(file, document);
+      return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
+      ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+        setNewText(document, project, file, vFile -> decompiledText[0]);
+      })
+    ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
@@ -952,12 +1001,19 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
     @Override
     public void connectionOpen() {
-      FileDocumentManagerImpl fileDocumentManager =
-        (FileDocumentManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
-      if (fileDocumentManager != null) {
-        fileDocumentManager.clearDocumentCache();
+      FileDocumentManager fileDocumentManager = ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+      if (fileDocumentManager instanceof FileDocumentManagerImpl impl) {
+        impl.clearDocumentCache();
       }
     }
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  public void prepareForNextTest() {
+    dropAllUnsavedDocuments();
+    clearDocumentCache();
   }
 
   /**

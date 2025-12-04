@@ -34,6 +34,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/workspace/storage",
+    "//platform/ide-core",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.platforms` end

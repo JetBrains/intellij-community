@@ -15,12 +15,9 @@
  */
 package com.siyeh.ig.memory;
 
-import com.intellij.codeInspection.dataFlow.CustomMethodHandlers;
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -73,8 +70,9 @@ public final class StaticCollectionInspection extends BaseInspection {
 
       // Ignore final fields initialized with immutable, fixed-size collections
       if (field.hasModifierProperty(PsiModifier.FINAL) &&
-        PsiUtil.skipParenthesizedExprDown(field.getInitializer()) instanceof PsiMethodCallExpression call &&
-        CustomMethodHandlers.isImmutableCall(call.resolveMethod())){
+          PsiUtil.skipParenthesizedExprDown(field.getInitializer()) instanceof PsiMethodCallExpression call &&
+          call.resolveMethod() instanceof PsiMethod method &&
+          Mutability.getMutability(method).isUnmodifiable()){
         return;
       }
       registerFieldError(field);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -78,7 +78,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    WriteIntentReadAction.run((Runnable)() -> {
+    WriteIntentReadAction.run(() -> {
       final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
       final Project project = event.getData(CommonDataKeys.PROJECT);
       if (view == null || project == null) return;

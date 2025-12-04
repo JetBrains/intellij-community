@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClickListener
 import com.intellij.ui.ComponentUtil
@@ -162,7 +163,9 @@ abstract class HoverChangesTree(val tree: ChangesTree) {
     override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
       val hoverData = getHoverData(event.point) ?: return false
       if (!hoverData.isOverOperationIcon) return false
-      hoverData.hoverIcon.invokeAction(hoverData.node)
+      WriteIntentReadAction.run {
+        hoverData.hoverIcon.invokeAction(hoverData.node)
+      }
       return true
     }
   }

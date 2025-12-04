@@ -3,9 +3,13 @@ package org.jetbrains.kotlin.idea.fir.findUsages
 
 import org.jetbrains.kotlin.findUsages.AbstractKotlinScriptFindUsagesTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractKotlinScriptFindUsagesFirTest : AbstractKotlinScriptFindUsagesTest() {
+
+    override fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic> = k2DiagnosticProviderForFindUsages()
 
     override fun tearDown() {
         runAll(

@@ -6,8 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPoint.Kind
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.registerServiceInstance
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings
-import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings.ScriptDefinitionSetting
+import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent
+import org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionSettingsPersistentStateComponent.DefinitionSetting
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -24,7 +24,7 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
     override val pluginMode = KotlinPluginMode.K2
 
     private lateinit var provider: ScriptDefinitionProvider
-    private lateinit var settings: ScriptDefinitionPersistentSettings
+    private lateinit var settings: ScriptDefinitionSettingsPersistentStateComponent
     private lateinit var definitionsSourcesPoint: ExtensionPoint<ScriptDefinitionsSource>
 
     override fun setUp() = setUpWithKotlinPlugin(testRootDisposable) {
@@ -41,7 +41,7 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
         }
 
         definitionsSourcesPoint = getOrRegisterExtensionPoint(SCRIPT_DEFINITIONS_SOURCES.name, ScriptDefinitionsSource::class.java)
-        settings = ScriptDefinitionPersistentSettings(project)
+        settings = ScriptDefinitionSettingsPersistentStateComponent(project)
 
         project.registerServiceInstance(KotlinScriptingSettings::class.java, settings)
     }
@@ -122,12 +122,14 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
         val definition3 = TestDefinition("C")
         definitionsSourcesPoint.addDefinitionWithSource(definition1, definition2, definition3)
 
-        settings.setSettings(
-            listOf(
-                ScriptDefinitionSetting(name = "Any", definitionId = "A", enabled = false),
-                ScriptDefinitionSetting(name = "Any", definitionId = "C", enabled = false)
+        settings.updateSettings {
+            it.copy(
+                settings = listOf(
+                    DefinitionSetting(name = "Any", definitionId = "A", enabled = false),
+                    DefinitionSetting(name = "Any", definitionId = "C", enabled = false)
+                )
             )
-        )
+        }
 
         val testSource = TestSource("any.kts")
         assertEquals("B", provider.findDefinition(testSource)?.definitionId)
@@ -139,13 +141,15 @@ class ScriptDefinitionProviderImplTest : LightPlatformTestCase(), ExpectedPlugin
         val definition3 = TestDefinition("C")
         definitionsSourcesPoint.addDefinitionWithSource(definition1, definition2, definition3)
 
-        settings.setSettings(
-            listOf(
-                ScriptDefinitionSetting(name = "Any", definitionId = "B", enabled = true),
-                ScriptDefinitionSetting(name = "Any", definitionId = "A", enabled = true),
-                ScriptDefinitionSetting(name = "Any", definitionId = "C", enabled = true)
+        settings.updateSettings {
+            it.copy(
+                settings = listOf(
+                    DefinitionSetting(name = "Any", definitionId = "B", enabled = true),
+                    DefinitionSetting(name = "Any", definitionId = "A", enabled = true),
+                    DefinitionSetting(name = "Any", definitionId = "C", enabled = true)
+                )
             )
-        )
+        }
 
         val testSource = TestSource("any.kts")
         assertEquals("B", provider.findDefinition(testSource)?.definitionId)

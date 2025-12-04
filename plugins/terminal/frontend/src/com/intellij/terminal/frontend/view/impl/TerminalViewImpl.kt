@@ -503,7 +503,7 @@ class TerminalViewImpl(
     if (document.textLength == 0 || document.lineCount == 0) return
 
     val visibleArea = editor.scrollingModel.visibleArea
-    val screenTopLine = editor.xyToLogicalPosition(visibleArea.location).line
+    val screenTopLine = editor.xyToLogicalPosition(visibleArea.location).line.coerceAtMost(document.lineCount - 1)
     val screenBottomPoint = Point(visibleArea.x + visibleArea.width, visibleArea.y + visibleArea.height)
     val screenBottomLine = editor.xyToLogicalPosition(screenBottomPoint).line.coerceAtMost(document.lineCount - 1)
     val screenStartOffset = editor.document.getLineStartOffset(screenTopLine)

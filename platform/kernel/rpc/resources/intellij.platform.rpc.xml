@@ -1,6 +1,9 @@
 <idea-plugin visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <module name="fleet.util.logging.api"/>
     <module name="fleet.rpc"/>
+    <module name="fleet.util.logging.api"/>
+    <module name="intellij.platform.core"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

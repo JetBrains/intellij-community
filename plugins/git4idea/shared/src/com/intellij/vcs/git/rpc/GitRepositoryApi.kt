@@ -18,6 +18,7 @@ import git4idea.GitDisposable
 import git4idea.GitStandardLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.GitWorkingTree
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -100,6 +101,12 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
+  class WorkingTreesLoaded(override val repositoryId: RepositoryId, val workingTrees: Collection<GitWorkingTree>) : SingleRepositoryUpdate {
+    override fun toString(): String = "Working trees loaded in ${repositoryId}"
+  }
+
+  @Serializable
+  @ApiStatus.Internal
   class FavoriteRefsUpdated(
     override val repositoryId: RepositoryId,
     val favoriteRefs: GitFavoriteRefs,
@@ -132,6 +139,7 @@ class GitRepositoryStateDto(
   val localBranches: Set<GitStandardLocalBranch>,
   val remoteBranches: Set<GitStandardRemoteBranch>,
   val tags: Set<GitTag>,
+  val workingTrees: Collection<GitWorkingTree>,
   val recentBranches: List<GitStandardLocalBranch>,
   val operationState: GitOperationState,
   /**

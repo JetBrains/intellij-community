@@ -33,6 +33,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/dom-openapi:dom",
     "//platform/core-ui",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -60,11 +61,13 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/devkit/devkit-core:core",
     "//xml/xml-psi-api:psi",
     "//xml/dom-openapi:dom",
     "//java/testFramework",
     "//platform/core-ui",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.devkit.themes` end

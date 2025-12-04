@@ -7,15 +7,12 @@ import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.repo.RepoStateException
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
@@ -27,25 +24,15 @@ import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitVcsSettings
 import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.util.StringScanner
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.*
-import kotlin.time.Duration.Companion.minutes
 
-class GitTagHolder(val repository: GitRepository) {
-
-  private val cs = repository.coroutineScope.childScope("GitTagHolder")
+class GitTagHolder(repository: GitRepository) : GitRepositoryDataHolder(repository, "GitTagHolder") {
   private val repositoryFiles = repository.repositoryFiles
 
   private var tagsWithHashes: Map<GitTag, Hash> = mapOf()
   private var hashToTagCache: Map<String, GitTag> = mapOf()
 
-  private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var isEnabled: Boolean
 
   init {
@@ -60,14 +47,6 @@ class GitTagHolder(val repository: GitRepository) {
       })
   }
 
-  fun reload() {
-    cs.launch(Dispatchers.IO) {
-      updateSemaphore.withPermit {
-        updateState()
-      }
-    }
-  }
-
   fun getTag(hash: String): GitTag? {
     return hashToTagCache[hash]
   }
@@ -76,7 +55,7 @@ class GitTagHolder(val repository: GitRepository) {
     return tagsWithHashes
   }
 
-  private suspend fun updateState() {
+  override suspend fun updateState() {
     if (isEnabled) {
       val tags = loadTagsForRepo()
       tagsWithHashes = tags.first
@@ -183,19 +162,6 @@ class GitTagHolder(val repository: GitRepository) {
     val gitTag = GitTag(tagName)
     cache[hash] = gitTag
     tags[gitTag] = HashImpl.build(hash)
-  }
-
-  @TestOnly
-  internal fun ensureUpToDateForTests() {
-    runBlockingMaybeCancellable {
-      withContext(Dispatchers.IO) {
-        withTimeout(3.minutes) {
-          updateSemaphore.withPermit {
-            updateState()
-          }
-        }
-      }
-    }
   }
 
   companion object {

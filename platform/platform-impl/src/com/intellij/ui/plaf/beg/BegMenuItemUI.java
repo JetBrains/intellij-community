@@ -519,7 +519,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm.clearSelectedPath();
     }
     ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
-    WriteIntentReadAction.run((Runnable) () -> {
+    WriteIntentReadAction.run( () -> {
       item.fireActionPerformed(event);
     });
     if (keepMenuOpen) {

@@ -1,0 +1,10 @@
+// IMPORT_NESTED_CLASSES: true
+package test
+
+import test.T.TT
+
+class T {
+    class TT
+}
+
+fun foo(t: TT) {}

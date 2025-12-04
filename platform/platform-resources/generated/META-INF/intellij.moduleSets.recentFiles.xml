@@ -1,0 +1,11 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: UltimateModuleSets.main() -->
+<!-- Source: see moduleSet("recentFiles") function in UltimateModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.recentFiles.backend"/>
+  </content>
+</idea-plugin>

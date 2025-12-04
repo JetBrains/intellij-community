@@ -29,7 +29,12 @@ import java.util.concurrent.CompletableFuture
 fun createFrontendProcessHandler(
   project: Project,
   processHandlerDto: ProcessHandlerDto,
-): FrontendSessionProcessHandler {
+): ProcessHandler {
+  val local = processHandlerDto.localProcessHandler
+  // Prefer to have the same instance in monolith, as it may be passed to other services,
+  // which rely on having the exact same instance.
+  if (local != null) return local
+
   val killableProcessInfo = processHandlerDto.killableProcessInfo
   return if (killableProcessInfo != null) {
     FrontendSessionKillableProcessHandler(project, processHandlerDto, killableProcessInfo)

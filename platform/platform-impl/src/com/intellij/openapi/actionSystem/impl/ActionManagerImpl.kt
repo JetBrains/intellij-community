@@ -1158,11 +1158,19 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                              ModalityState.current().asContextElement() +
                              ClientId.coroutineContext() +
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
+      // todo: remove `ThreadScopeCheckpoint` from here once we migrate all usages to `AnActionEvent#coroutineScope`
       val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
-      installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
-        SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
-          runnable.run()
+      val providedScope = cs.childScope("actionPerformed of $actionId", coroutineContext.minusKey(Job.Key))
+      event.installCoroutineScope(providedScope)
+      try {
+        installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
+          SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+            runnable.run()
+          }
         }
+      }
+      finally {
+        providedScope.cancelWhenChildrenAreCompleted()
       }
       AnActionResult.PERFORMED
     }
@@ -2176,6 +2184,24 @@ private fun registerAction(actionId: String,
   }
 
   actionRegistrar.actionRegistered(actionId, action)
+}
+
+/**
+ * We want to avoid leaking scope for `actionPerformed`
+ * So we await until all children coroutines finish and then terminate the scope
+ */
+
+private fun CoroutineScope.cancelWhenChildrenAreCompleted() {
+  val theScope = this
+  launch(CoroutineName("Termination tracker") + Dispatchers.IO) {
+    val thisJob = this@launch.coroutineContext.job
+    theScope.coroutineContext.job.children.forEach {
+      if (it != thisJob) {
+        it.join()
+      }
+    }
+    theScope.cancel()
+  }
 }
 
 private fun getAction(

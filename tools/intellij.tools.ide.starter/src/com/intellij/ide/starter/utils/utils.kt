@@ -15,11 +15,7 @@ import java.io.StringWriter
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.outputStream
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 import kotlin.time.Duration.Companion.seconds
 
 const val beforeKillScreenshotName: String = "screenshotBeforeKill.jpg"
@@ -40,12 +36,12 @@ fun getThrowableText(t: Throwable): String {
  * In case of success - return T
  * In case of error - print error to stderr and return null
  */
-inline fun <T> catchAll(message: String? = null, action: () -> T): T? = try {
-  if (message != null) logOutput("Performing '$message' with catching all exceptions")
+inline fun <T> catchAll(message: String = "", action: () -> T): T? = try {
+  if (message.isNotEmpty()) logOutput("Performing '$message' with catching all exceptions")
   action()
 }
 catch (t: Throwable) {
-  logError("CatchAll ${message?.let { "for '$it' " }}swallowed error: ${t.message}")
+  logError("CatchAll ${if (message.isNotEmpty()) "for '$message' " else ""} swallowed error: ${t.message}")
   logError(getThrowableText(t))
   null
 }

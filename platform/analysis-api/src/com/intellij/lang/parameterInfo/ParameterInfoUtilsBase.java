@@ -15,11 +15,16 @@ public final class ParameterInfoUtilsBase {
                                                                                     Class<T> parentClass,
                                                                                     Class<? extends PsiElement> @NotNull ... stopAt) {
     PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
+    return findParentOfTypeWithStopElements(element, parentClass, stopAt);
+  }
 
-    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass, true, stopAt);
-    if (element instanceof PsiWhiteSpace) {
-      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass, true, stopAt);
+  public static @Nullable <T extends PsiElement> T findParentOfTypeWithStopElements(PsiElement start, Class<T> parentClass,
+                                                                                    Class<? extends PsiElement> @NotNull ... stopAt) {
+    if (start == null) return null;
+
+    T parentOfType = PsiTreeUtil.getParentOfType(start, parentClass, true, stopAt);
+    if (start instanceof PsiWhiteSpace) {
+      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(start), parentClass, true, stopAt);
     }
     return parentOfType;
   }

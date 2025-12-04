@@ -18,14 +18,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource
+import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
-import com.intellij.platform.debugger.impl.rpc.HotSwapSource
-import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
-import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
@@ -47,6 +47,10 @@ private val addHideAction: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddHideButton } != false
 }
 
+private val addText: Boolean by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddText } != false
+}
+
 @Suppress("DialogTitleCapitalization")
 private fun createHelpTooltip(): HelpTooltip =
   HotSwapUiExtension.computeSafeIfAvailable { it.createTooltip() }
@@ -54,7 +58,7 @@ private fun createHelpTooltip(): HelpTooltip =
     .setTitle(XDebuggerBundle.message("xdebugger.hotswap.tooltip.apply"))
     .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
-private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar() } != false
+private fun showFloatingToolbar(project: Project): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar(project) } != false
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
 
@@ -142,8 +146,10 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     }
     presentation.icon = icon
     presentation.disabledIcon = icon
-    @Suppress("DialogTitleCapitalization")
-    presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    if (addText) {
+      @Suppress("DialogTitleCapitalization")
+      presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
+    }
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
   }
 
@@ -153,7 +159,7 @@ private fun updateToolbarVisibility(project: Project) {
   val manager = FrontendHotSwapManager.getInstance(project)
   manager.coroutineScope.launch(Dispatchers.Default) {
     // Hide toolbar after setting disable
-    if (showFloatingToolbar()) return@launch
+    if (showFloatingToolbar(project)) return@launch
     manager.notifyHidden()
   }
 }
@@ -187,6 +193,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
   override val actionGroup: ActionGroup by lazy {
     val group = DefaultActionGroup(hotSwapAction)
+    HotSwapUiExtension.computeSafeIfAvailable { it.moreAction() }?.let {
+      group.add(it)
+    }
     if (addHideAction) {
       group.add(HideAction())
     }
@@ -206,7 +215,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val manager = FrontendHotSwapManager.getInstance(project)
     val job = manager.coroutineScope.launch {
       manager.currentStatusFlow.collectLatest { status ->
-        onStatusChanged(component, status?.status, editorTag)
+        onStatusChanged(component, status?.status, editorTag, project)
       }
     }
     Disposer.register(parentDisposable, Disposable {
@@ -217,7 +226,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     })
   }
 
-  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?) =
+  private suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?, editorTag: String?, project: Project) =
     withContext(Dispatchers.EDT) {
       fun updateActions() {
         if (component is ActionToolbarImpl) {
@@ -225,7 +234,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         }
       }
 
-      if (!showFloatingToolbar()) {
+      if (!showFloatingToolbar(project)) {
         if (logger.isDebugEnabled) {
           logger.debug("Hide button because it is disabled ($editorTag)")
         }

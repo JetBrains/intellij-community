@@ -904,6 +904,32 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
            myFileStatusMap.allDirtyScopesAreNull(document, context);
   }
 
+  @ApiStatus.Internal
+  @VisibleForTesting
+  @RequiresEdt
+  public boolean isAllAnalysisFinished() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (myDisposed) {
+      return false;
+    }
+    boolean updateCompleted;
+    synchronized (this) {
+      updateCompleted = myUpdateRunnableFuture.isDone();
+    }
+    List<Document> documents = ContainerUtil.mapNotNull(getSelectedEditors(), fe -> {
+      Editor editor = fe instanceof TextEditor te ? te.getEditor() : null;
+      VirtualFile virtualFile = getVirtualFile(fe);
+      Document document = editor == null
+                          ? virtualFile == null ? null : FileDocumentManager.getInstance().getCachedDocument(virtualFile)
+                          : editor.getDocument();
+      return document;
+    });
+    return
+      !PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() &&
+      myFileStatusMap.allDirtyScopesAreNullFor(documents) &&
+      updateCompleted;
+  }
+
   @Override
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) {
@@ -1337,6 +1363,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   // return update outcome for debug
+  @RequiresEdt
   private @NotNull @NonNls String runUpdate() {
     ThreadingAssertions.assertEventDispatchThread();
     synchronized (this) {
@@ -1715,6 +1742,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return Map.copyOf(myUpdateProgress);
   }
 
+  @RequiresEdt
   private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
     ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context

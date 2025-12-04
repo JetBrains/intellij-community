@@ -152,14 +152,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    private fun loadLastCompatiblePluginUpdate(
+    fun loadLastCompatiblePluginUpdate(
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
+      activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS,
     ): List<IdeCompatibleUpdate> {
       LOG.info("Looking for the last compatible plugin updates for:\n$allIds\n" +
-               "Is update check: $updateCheck")
+               "Activity: $activity")
 
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
@@ -182,20 +182,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
 
       return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, updateCheck)
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, activity)
       }
-    }
-
-    /**
-     * Must be used only from [com.intellij.openapi.updateSettings.impl.UpdateChecker].
-     */
-    fun checkLastCompatiblePluginUpdate(
-      allIds: Set<PluginId>,
-      buildNumber: BuildNumber? = null,
-      throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
-    ): List<IdeCompatibleUpdate> {
-      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck)
     }
 
     @RequiresBackgroundThread
@@ -214,7 +202,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false,
+      activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS,
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) return emptyList()
@@ -231,7 +219,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           "os" to buildOsParameter(),
           "arch" to CpuArch.CURRENT.name
         ).apply {
-          if (machineId != null && updateCheck) {
+          if (machineId != null && activity == PluginUpdateActivity.INSTALLED_VERSIONS) {
             add("mid" to machineId)
           }
           addAll(ids.map { "pluginXmlId" to it.idString })

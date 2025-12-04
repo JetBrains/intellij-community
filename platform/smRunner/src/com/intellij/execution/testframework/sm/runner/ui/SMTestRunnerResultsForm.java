@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -304,7 +304,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                        myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
     UIUtil.invokeLaterIfNeeded(() -> {
-      WriteIntentReadAction.run((Runnable)() -> {
+      WriteIntentReadAction.run(() -> {
         TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
         addToHistory(testsRoot, myProperties, this);
       });

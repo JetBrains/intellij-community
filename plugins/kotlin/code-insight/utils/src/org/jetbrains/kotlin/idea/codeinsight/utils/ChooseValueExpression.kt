@@ -22,6 +22,7 @@ abstract class ChooseValueExpression<in T : Any>(
 
     @Suppress("LeakingThis")
     private val defaultItemString = getLookupString(defaultItem)
+    private val defaultResult = getResult(defaultItem)
 
     private val lookupItems: Array<LookupElement> = lookupItems.map { suggestion ->
         LookupElementBuilder.create(suggestion, getLookupString(suggestion)).withInsertHandler { context, item ->
@@ -37,7 +38,9 @@ abstract class ChooseValueExpression<in T : Any>(
 
     override fun calculateQuickResult(context: ExpressionContext) = calculateResult(context)
 
-    override fun calculateResult(context: ExpressionContext) = TextResult(defaultItemString)
+    // when a lookup item would be inserted on the template start because no more variants are present,
+    // we need to insert a fully qualified result, otherwise, import would be lost
+    override fun calculateResult(context: ExpressionContext) = if (lookupItems.size > 1) TextResult(defaultItemString) else TextResult(defaultResult)
 
     override fun getAdvertisingText() = advertisementText
 }

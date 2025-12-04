@@ -9,26 +9,21 @@ import com.intellij.build.events.impl.StartEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class StartEventBuilderImpl : StartEventBuilder {
+class StartEventBuilderImpl(
+  private val id: Any,
+  private val message: @Message String
+) : StartEventBuilder {
 
-  private var id: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
-
-  override fun withId(id: Any): StartEventBuilderImpl =
-    apply { this.id = id }
 
   override fun withParentId(parentId: Any?): StartEventBuilderImpl =
     apply { this.parentId = parentId }
 
   override fun withTime(time: Long?): StartEventBuilderImpl =
     apply { this.time = time }
-
-  override fun withMessage(message: @Message String): StartEventBuilderImpl =
-    apply { this.message = message }
 
   override fun withHint(hint: @Hint String?): StartEventBuilderImpl =
     apply { this.hint = hint }
@@ -37,12 +32,5 @@ class StartEventBuilderImpl : StartEventBuilder {
     apply { this.description = description }
 
   override fun build(): StartEventImpl =
-    StartEventImpl(
-      id ?: throw IllegalStateException("The StartEvent's 'id' property should be defined"),
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The StartEvent's 'buildDescriptor' property should be defined"),
-      hint,
-      description
-    )
+    StartEventImpl(id, parentId, time, message, hint, description)
 }

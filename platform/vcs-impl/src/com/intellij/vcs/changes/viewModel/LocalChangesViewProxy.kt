@@ -2,11 +2,8 @@
 package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
-import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.tree.TreeUtil.*
@@ -42,7 +39,7 @@ internal class LocalChangesViewProxy(
   override fun isModelUpdateInProgress(): Boolean = panel.changesView.isModelUpdateInProgress
 
   override fun scheduleRefreshNow(callback: Runnable?) {
-    panel.scheduleRefreshNow(callback)
+    panel.scheduleRefreshNow(if (callback == null) null else callback::run)
   }
 
   override fun scheduleDelayedRefresh() {
@@ -93,5 +90,12 @@ internal class LocalChangesViewProxy(
     selectPaths(panel.changesView, paths)
   }
 
-  override fun getTree(): ChangesListView = panel.changesView
+  override fun hasContentToDiff(): Boolean =
+    ChangesViewDiffPreviewHandler.iterateSelectedChanges(panel.changesView).isNotEmpty
+
+  override fun getDiffRequestProducers(selectedOnly: Boolean) =
+    ChangesViewDiffPreviewHandler.collectDiffProducers(panel.changesView, selectedOnly)
+
+  override fun createDiffPreviewProcessor(isInEditor: Boolean): ChangesViewDiffPreviewProcessor =
+    ChangesViewDiffPreviewProcessor(panel.changesView, isInEditor).also { it.subscribeOnAllowExcludeFromCommit() }
 }

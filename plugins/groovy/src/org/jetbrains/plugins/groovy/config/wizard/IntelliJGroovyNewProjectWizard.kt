@@ -13,12 +13,10 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
@@ -63,14 +61,7 @@ private class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
         contentEntryPath = contentRoot
         name = moduleName
-        moduleJdk = jdkIntent?.prepareJdk()
-        sdkDownloadTask?.let { task ->
-          val incompleteSdk = project.service<JdkDownloadService>().setupInstallableSdk(task)
-          if (context.isCreatingNewProject) ApplicationManager.getApplication().runWriteAction {
-            ProjectRootManager.getInstance(project).projectSdk = incompleteSdk
-          }
-          moduleJdk = incompleteSdk
-        }
+        moduleJdk = context.projectJdk
         val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
         moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       }
@@ -85,7 +76,7 @@ private class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard
       })
 
       setupProjectFromBuilder(project, groovyModuleBuilder)
-      sdkDownloadTask?.let { project.service<JdkDownloadService>().downloadSdk(groovyModuleBuilder.moduleJdk) }
+      project.service<JdkDownloadService>().scheduleDownloadSdk(context.projectJdk)
     }
 
     private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings? {

@@ -18,15 +18,12 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
+import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
@@ -45,6 +42,7 @@ class TransportTest {
       return arrayOf(
         StdioTransportHolder(project),
         SseTransportHolder(project),
+        HttpTransportHolder(project),
       )
     }
   }
@@ -56,12 +54,8 @@ class TransportTest {
     assert(listTools.tools.isNotEmpty()) { "No tools returned" }
   }
 
-  @Test
-  fun tool_call_has_project_stdio() = tool_call_has_project(StdioTransportHolder(project))
-
-  @Test
-  fun tool_call_has_project_sse() = tool_call_has_project(StdioTransportHolder(project))
-
+  @ParameterizedTest
+  @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
@@ -88,7 +82,12 @@ class TransportTest {
     try {
       McpServerService.getInstance().start()
       val client = Client(Implementation(name = "test client", version = "1.0"))
-      client.connect(transportHolder.transport)
+      try {
+        client.connect(transportHolder.transport)
+      }
+      catch (e: Exception) {
+        fail("Failed to connect to the server: ${e.message}. Additional diagnostics:\r\n${transportHolder.diagnostics}")
+      }
       action(client)
     }
     finally {
@@ -100,6 +99,7 @@ class TransportTest {
 
 abstract class TransportHolder {
   abstract val transport: AbstractTransport
+  open val diagnostics: String = ""
 
   // do not make it AutoCloseable because Junit tries to close it automatically but we want to close it in test method manually
   open fun close() {
@@ -109,17 +109,35 @@ abstract class TransportHolder {
   }
 }
 
+@Suppress("RAW_SCOPE_CREATION")
 class StdioTransportHolder(project: Project) : TransportHolder() {
+
+  private val scope = CoroutineScope(Job())
+  private val diag = StringBuilder()
+
   val process: Process by lazy {
-    createStdioMcpServerCommandLine(McpServerService.getInstance().port, project.basePath).toProcessBuilder().start()
+    val mcpServerCommandLine = createStdioMcpServerCommandLine(McpServerService.getInstance().port, project.basePath)
+    val proc = mcpServerCommandLine.toProcessBuilder().start()
+    scope.launch {
+      proc.errorStream.bufferedReader().use { reader ->
+        reader.forEachLine {
+          diag.appendLine(it)
+        }
+      }
+    }
+    return@lazy proc
   }
 
   override val transport: AbstractTransport by lazy {
     StdioClientTransport(process.inputStream.asSource().buffered(), process.outputStream.asSink().buffered())
   }
 
+  override val diagnostics: String
+    get() = diag.toString()
+
   override fun close() {
     super.close() //sseClientTransport.close()
+    scope.cancel()
     if (!process.waitFor(10, TimeUnit.SECONDS)) process.destroyForcibly()
     if (!process.waitFor(10, TimeUnit.SECONDS)) fail("Process is still alive")
   }
@@ -131,9 +149,8 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
 
 class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
-    val port = McpServerService.getInstance().port
-    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
-    val transportUrl = addressProvider?.httpUrl("/sse", portOverride = port) ?: "http://localhost:$port/sse"
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val transportUrl = addressProvider.serverSseUrl
     SseClientTransport(HttpClient {
       install(SSE)
     }, transportUrl) {
@@ -143,5 +160,21 @@ class SseTransportHolder(project: Project) : TransportHolder() {
 
   override fun toString(): String {
     return "SSE"
+  }
+}
+
+class HttpTransportHolder(project: Project) : TransportHolder() {
+  override val transport: AbstractTransport by lazy {
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull() ?: fail("No address provider")
+    val transportUrl = addressProvider.serverStreamUrl
+    StreamableHttpClientTransport(HttpClient {
+      install(SSE)
+    }, transportUrl) {
+      project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+    }
+  }
+
+  override fun toString(): String {
+    return "Http Stream"
   }
 }

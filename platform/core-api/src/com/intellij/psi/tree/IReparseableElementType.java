@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
  * that all the document's changes are inside an AST node with reparseable type,
  * {@link #isReparseable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
  * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
+ * <p>
+ * Remember to implement {@link #createNode(CharSequence)}, otherwise reparsing infrastructure won't work.
  */
 public class IReparseableElementType extends ILazyParseableElementType implements IReparseableElementTypeBase {
   public IReparseableElementType(@NotNull @NonNls String debugName) {
@@ -53,19 +56,19 @@ public class IReparseableElementType extends ILazyParseableElementType implement
   /**
    * The same as {@link this#isParsable(CharSequence, Language, Project)}
    * but with parent ASTNode of the old node.
-   *
+   * <p>
    * Override this method only if you really understand what are doing.
    * In other cases override {@link this#isParsable(CharSequence, Language, Project)}
-   *
+   * <p>
    * Known valid use-case:
-   *  Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
-   *  Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
-   *  So it cannot be reparsed and whole file or parent block should be reparsed.
+   * Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
+   * Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
+   * So it cannot be reparsed and whole file or parent block should be reparsed.
    *
-   * @param parent parent node of old (or collapsed) reparseable node.
-   * @param buffer the content to parse.
+   * @param parent       parent node of old (or collapsed) reparseable node.
+   * @param buffer       the content to parse.
    * @param fileLanguage language of the file
-   * @param project the project containing the content.
+   * @param project      the project containing the content.
    * @return true if the content is valid, false if not
    */
   @Override
@@ -74,6 +77,14 @@ public class IReparseableElementType extends ILazyParseableElementType implement
                             @NotNull Language fileLanguage,
                             @NotNull Project project) {
     return isParsable(buffer, fileLanguage, project);
+  }
+
+  @Override
+  public ASTNode createNode(CharSequence text) {
+    Logger.getInstance(getClass()).error("`createNode` method should be implemented in " + getClass().getName() + ". " +
+                                         "Otherwise, reparsing infrastructure won't work. " +
+                                         "If you don't need reparsing, consider ILazyParseableElementType instead.");
+    return null;
   }
 
   // Please, add no more public methods here. Add them to `IReparseableElementTypeBase` instead.

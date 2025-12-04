@@ -24,7 +24,7 @@ class ExecutionToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       ExecutionToolset::execute_run_configuration.name,
       buildJsonObject {
-        put("configName", JsonPrimitive("test-config"))
+        put("configurationName", JsonPrimitive("test-config"))
       },
       "Run configuration with name 'test-config' not found."
     )

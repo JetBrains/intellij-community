@@ -24,7 +24,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XSourceKind;
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
@@ -227,6 +227,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull XValue getXValue() {
     return getValueContainer();

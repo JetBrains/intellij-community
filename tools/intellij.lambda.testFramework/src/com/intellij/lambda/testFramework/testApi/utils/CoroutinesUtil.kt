@@ -1,11 +1,11 @@
 package com.intellij.lambda.testFramework.testApi.utils
 
+import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.remoteDev.tests.LambdaIdeContext
-import com.intellij.lambda.testFramework.testApi.getProject
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.APP)

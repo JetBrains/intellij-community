@@ -38,18 +38,30 @@
     </group>
 
     <group id="TableActions">
-      <action id="Table-selectFirstRow" class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart"/>
+      <action id="Table-selectFirstRow" class="com.intellij.ui.TableActions$CtrlHome" use-shortcut-of="EditorTextStart">
+        <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      </action>
       <action id="Table-selectFirstRowExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftHome"
-              use-shortcut-of="EditorTextStartWithSelection"/>
-      <action id="Table-selectLastRow" class="com.intellij.ui.TableActions$CtrlEnd" use-shortcut-of="EditorTextEnd"/>
+              use-shortcut-of="EditorTextStartWithSelection">
+        <keyboard-shortcut first-keystroke="control shift UP" keymap="$default"/>
+      </action>
+      <action id="Table-selectLastRow" class="com.intellij.ui.TableActions$CtrlEnd" use-shortcut-of="EditorTextEnd">
+        <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+      </action>
       <action id="Table-selectLastRowExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftEnd"
-              use-shortcut-of="EditorTextEndWithSelection"/>
+              use-shortcut-of="EditorTextEndWithSelection">
+        <keyboard-shortcut first-keystroke="control shift DOWN" keymap="$default"/>
+      </action>
       <action id="Table-selectPreviousRow" class="com.intellij.ui.TableActions$Up" use-shortcut-of="EditorUp"/>
       <action id="Table-selectPreviousRowExtendSelection" class="com.intellij.ui.TableActions$ShiftUp"
               use-shortcut-of="EditorUpWithSelection"/>
       <action id="Table-selectNextRow" class="com.intellij.ui.TableActions$Down" use-shortcut-of="EditorDown"/>
       <action id="Table-selectNextRowExtendSelection" class="com.intellij.ui.TableActions$ShiftDown"
               use-shortcut-of="EditorDownWithSelection"/>
+      <action id="Table-selectFirstColumn" class="com.intellij.ui.TableActions$CtrlLeft" use-shortcut-of="EditorPreviousWord"/>
+      <action id="Table-selectLastColumn" class="com.intellij.ui.TableActions$CtrlRight" use-shortcut-of="EditorNextWord"/>
+      <action id="Table-selectFirstColumnExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftLeft" use-shortcut-of="EditorPreviousWordWithSelection"/>
+      <action id="Table-selectLastColumnExtendSelection" class="com.intellij.ui.TableActions$CtrlShiftRight" use-shortcut-of="EditorNextWordWithSelection"/>
       <action id="Table-selectPreviousColumn" class="com.intellij.ui.TableActions$Left" use-shortcut-of="EditorLeft"/>
       <action id="Table-selectPreviousColumnExtendSelection" class="com.intellij.ui.TableActions$ShiftLeft"
               use-shortcut-of="EditorLeftWithSelection"/>
@@ -504,7 +516,7 @@
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
           <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           <separator/>
-          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
+          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.defaults.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
@@ -935,7 +947,6 @@
           <synonym key="action.ShowLog.Explorer.text"/>
         </action>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
-        <action id="DeleteOldAppDirs" class="com.intellij.ide.actions.DeleteOldAppDirectoriesAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
           <action id="Performance.ActivityMonitor" class="com.intellij.ide.actions.ActivityMonitorAction"/>
@@ -952,6 +963,7 @@
         <action id="performancePlugin.ShowMemoryDialogAction" class="com.intellij.diagnostic.ShowMemoryDialogAction"/>
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
+        <action id="DeleteOldAppDirs" class="com.intellij.ide.actions.DeleteOldAppDirectoriesAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction">
           <override-text place="WelcomeScreen"/>

@@ -2595,6 +2595,14 @@ public final class JBUI {
       public static @NotNull String buttonPreferredSizeKey() {
         return "TitlePane.Button.preferredSize";
       }
+
+      public static int dialogButtonPreferredWidth() {
+        return getInt("TitlePane.Dialog.Button.preferredWidth", 40);
+      }
+
+      public static @NotNull Insets dialogButtonInsets() {
+        return insets("TitlePane.Dialog.Button.insets", JBInsets.emptyInsets());
+      }
     }
 
     public static final class TrialWidget {

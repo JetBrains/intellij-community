@@ -1,15 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
-import com.intellij.platform.plugins.testFramework.resolveModuleSet
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.plugins.testFramework.resolveModuleSet
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -86,13 +85,13 @@ private class YamlFileBasedPluginLayoutProvider(
       .distinct()
 
     for (moduleName in (productModuleNames + productEmbeddedModuleNames)) {
-      loadAndMergeModuleContent(moduleName, "dist.all/lib/$moduleName.jar", baseEntries)
+      loadAndMergeModuleContent(moduleName, baseEntries)
     }
 
     return baseEntries
   }
 
-  private fun loadAndMergeModuleContent(moduleName: String, jarName: String, baseEntries: MutableList<FileEntry>) {
+  private fun loadAndMergeModuleContent(moduleName: String, baseEntries: MutableList<FileEntry>) {
     val module = project.findModuleByName(moduleName) ?: return
     val contentRootUrl = module.contentRootsList.urls.firstOrNull() ?: return
     val moduleContentPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve("module-content.yaml")
@@ -106,7 +105,7 @@ private class YamlFileBasedPluginLayoutProvider(
     // replace <file> placeholder with actual jar path
     for (entry in moduleEntries) {
       if (entry.name == "<file>") {
-        baseEntries.add(entry.copy(name = jarName))
+        baseEntries.add(entry.copy(name = "dist.all/lib/$moduleName.jar"))
       }
       else {
         baseEntries.add(entry)
@@ -158,7 +157,7 @@ private class YamlFileBasedPluginLayoutProvider(
     get() = "Note that the test uses the data from *content.yaml files, so if you changed the layouts, run '$nameOfTestWhichGeneratesFiles' to make sure that they are up-to-date."
 }
 
-private fun toPluginLayoutDescription(
+internal fun toPluginLayoutDescription(
   entries: List<FileEntry>,
   mainModuleName: String,
   pluginDescriptorPath: String,

@@ -11,15 +11,15 @@ import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargets
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
-@Internal
-class SeFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
-                                                                                        SeSearchScopesProvider,
-                                                                                        SeTypeVisibilityStateProvider,
-                                                                                        SeItemsPreviewProvider,
-                                                                                        SeExtendedInfoProvider {
+internal class SeFilesProvider(
+  private val contributorWrapper: SeAsyncContributorWrapper<Any>,
+) : SeWrappedLegacyContributorItemsProvider(),
+    SeSearchScopesProvider,
+    SeTypeVisibilityStateProvider,
+    SeItemsPreviewProvider,
+    SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

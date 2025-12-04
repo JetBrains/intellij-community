@@ -20,8 +20,8 @@ jvm_library(
     "//plugins/textmate/core",
     "//platform/util/xmlDom",
     "//platform/util",
-    "@lib//:kotlinx-coroutines-test",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "@lib//:kotlin-test-junit5",
   ]

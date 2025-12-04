@@ -45,13 +45,14 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.merge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.MouseEvent
-import java.lang.Runnable
 import kotlin.time.Duration.Companion.milliseconds
 
 private val REFRESH_DELAY = 100.milliseconds
+private typealias RefreshCallback = suspend () -> Unit
 
 @ApiStatus.Internal
 abstract class CommitChangesViewWithToolbarPanel(
@@ -81,7 +82,10 @@ abstract class CommitChangesViewWithToolbarPanel(
   @RequiresEdt
   open fun initPanel() {
     cs.launch(Dispatchers.UI) {
-      ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
+      merge(
+        ChangeListsViewModel.getInstance(project).changeListManagerState,
+        PartialChangesHolder.getInstance(project).updates,
+      ).collect {
         changesView.repaint()
       }
     }
@@ -89,12 +93,6 @@ abstract class CommitChangesViewWithToolbarPanel(
     cs.launch(Dispatchers.UI) {
       project.serviceAsync<CommitToolWindowViewModel>().canExcludeFromCommit.collectLatest { canExclude ->
         changesView.isShowCheckboxes = canExclude
-      }
-    }
-
-    cs.launch(Dispatchers.UI) {
-      PartialChangesHolder.getInstance(project).updates.collectLatest {
-        changesView.repaint()
       }
     }
 
@@ -119,7 +117,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  fun scheduleRefreshNow(@RequiresBackgroundThread callback: Runnable? = null) {
+  fun scheduleRefreshNow(callback: RefreshCallback? = null) {
     scheduleRefresh(withDelay = false, callback = callback)
   }
 
@@ -130,7 +128,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  protected fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
+  protected fun scheduleRefresh(withDelay: Boolean, callback: RefreshCallback? = null) {
     if (!withDelay && callback == null) {
       refresher.request()
       return
@@ -140,7 +138,7 @@ abstract class CommitChangesViewWithToolbarPanel(
       if (withDelay) delay(REFRESH_DELAY)
       refresher.request()
       refresher.awaitNotBusy()
-      callback?.run()
+      callback?.invoke()
     }
   }
 

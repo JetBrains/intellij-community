@@ -49,6 +49,8 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/core-ui",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   exports = ["//jvm/jvm-analysis-api:analysis"]
 )

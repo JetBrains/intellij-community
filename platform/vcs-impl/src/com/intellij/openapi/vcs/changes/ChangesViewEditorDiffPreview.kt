@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
-import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -39,7 +37,7 @@ internal class ChangesViewEditorDiffPreview(
 
     cs.launch(Dispatchers.UiWithModelAccess) {
       changesView.diffRequests.collectLatest { (diffAction, clientId) ->
-        withClientId(clientId) {
+        withExplicitClientId(clientId) {
           when (diffAction) {
             ChangesViewDiffAction.TRY_SHOW_PREVIEW -> {
               if (!isSplitterPreviewPresent() && !changesView.isModelUpdateInProgress()) {
@@ -54,12 +52,11 @@ internal class ChangesViewEditorDiffPreview(
     }
   }
 
-  override fun hasContent(): Boolean = ChangesViewDiffPreviewHandler.hasContent(changesView.getTree())
+  override fun hasContent(): Boolean = changesView.hasContentToDiff()
 
   override fun createViewer(): DiffEditorViewer = changesView.createDiffPreviewProcessor(true)
 
-  override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer> =
-    ChangesViewDiffPreviewHandler.collectDiffProducers(changesView.getTree(), selectedOnly)
+  override fun collectDiffProducers(selectedOnly: Boolean) = changesView.getDiffRequestProducers(selectedOnly)
 
   override fun handleEscapeKey() {
     closePreview()

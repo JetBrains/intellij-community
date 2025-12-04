@@ -32,7 +32,6 @@ interface OsSpecificDistributionBuilder {
     fun suffix(arch: JvmArchitecture): String = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
   }
 
-  val context: BuildContext
   val targetOs: OsFamily
   val targetLibcImpl: LibcImpl
 
@@ -54,7 +53,7 @@ interface OsSpecificDistributionBuilder {
       }
   }
 
-  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl) {
+  suspend fun checkExecutablePermissions(distribution: Path, root: String, includeRuntime: Boolean = true, arch: JvmArchitecture, libc: LibcImpl, context: BuildContext) {
     spanBuilder("Permissions check for ${distribution.name}").use {
       val patterns = generateExecutableFilesMatchers(includeRuntime, arch, libc)
       val matchedFiles = when {

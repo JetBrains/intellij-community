@@ -7,6 +7,7 @@ import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.util.PropertiesComponent
@@ -101,9 +102,10 @@ private class UpdateCheckerFacadeImpl() : UpdateCheckerFacade {
     buildNumber: BuildNumber?,
     indicator: ProgressIndicator?,
     updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>?,
+    activity: PluginUpdateActivity
   ): InternalPluginResults {
     @Suppress("DEPRECATION")
-    return UpdateChecker.getInternalPluginUpdates(buildNumber, indicator, updateablePluginsMap)
+    return UpdateChecker.getInternalPluginUpdates(buildNumber, indicator, updateablePluginsMap, activity)
   }
 
   override fun saveDisabledToUpdatePlugins() {
@@ -336,6 +338,7 @@ object UpdateChecker {
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
     updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
+    activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
@@ -364,9 +367,7 @@ object UpdateChecker {
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-          // consider it as updateCheck only if we collected plugins here, and they are not passed from outside
-          findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator,
-                                           updateCheck = updateablePluginsMap == null)
+          findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator, activity)
         }
         else {
           RepositoryHelper.loadPluginModels(host, buildNumber, indicator).forEach { model ->
@@ -465,11 +466,11 @@ object UpdateChecker {
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
     indicator: ProgressIndicator?,
-    updateCheck: Boolean = false,
+    activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS,
   ) {
     val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
-    val updates = MarketplaceRequests.checkLastCompatiblePluginUpdate(idsToUpdate, buildNumber, false, updateCheck)
+    val updates = MarketplaceRequests.loadLastCompatiblePluginUpdate(idsToUpdate, buildNumber, false, activity)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
       if (lastUpdate != null &&

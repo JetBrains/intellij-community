@@ -7,12 +7,6 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
-resourcegroup(
-  name = "mcpserver_test_resources",
-  srcs = glob(["testResources/**/*"]),
-  strip_prefix = "testResources"
-)
-
 jvm_library(
   name = "mcpserver",
   module_name = "intellij.mcpserver",
@@ -22,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:io-modelcontextprotocol-kotlin-sdk",
@@ -40,6 +34,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
     "//platform/xdebugger-api:debugger",
     "//platform/refactoring",
     "//platform/lang-impl",
@@ -75,6 +70,7 @@ jvm_library(
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
     "//libraries/ktor/io",
+    "//platform/execution",
   ]
 )
 
@@ -82,12 +78,11 @@ jvm_library(
   name = "mcpserver_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
-  resources = [":mcpserver_test_resources"],
   associates = [":mcpserver"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:io-modelcontextprotocol-kotlin-sdk",
@@ -108,6 +103,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
+    "//platform/lang-api:lang",
     "//platform/xdebugger-api:debugger",
     "//platform/refactoring",
     "//platform/lang-impl",
@@ -140,7 +136,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlin-test",
-    "@lib//:kotlinx-coroutines-test",
+    "//libraries/kotlinx/coroutines/test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlin-test-junit",
     "//platform/testFramework/junit5/projectStructure",
@@ -158,6 +154,7 @@ jvm_library(
     "//libraries/ktor/network-tls:libraries-ktor-network-tls",
     "@lib//:mcpserver-ktor-server-cio-internal",
     "//libraries/ktor/io",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.mcpserver` end

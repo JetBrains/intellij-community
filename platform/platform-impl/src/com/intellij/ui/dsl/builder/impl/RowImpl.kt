@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
@@ -276,9 +275,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {
-    val result = if (title == null) ContextHelpLabel.create(description)
-    else ContextHelpLabel.create(title, description)
-    return cell(result)
+    return cell(createContextHelp(description, title))
   }
 
   override fun textField(): CellImpl<JBTextField> {

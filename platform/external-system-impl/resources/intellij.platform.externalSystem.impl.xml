@@ -1,7 +1,26 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
+    <module name="intellij.libraries.commons.cli"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.externalSystem"/>
+    <module name="intellij.platform.ide.concurrency"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
+  <!-- end editor-fold -->
 
   <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml"/>

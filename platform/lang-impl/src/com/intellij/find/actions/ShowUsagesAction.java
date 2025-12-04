@@ -51,7 +51,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -195,7 +194,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    WriteIntentReadAction.run((Runnable) () -> {
+    WriteIntentReadAction.run( () -> {
       performShowUsagesAction(e);
     });
   }
@@ -1077,13 +1076,13 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         @Override
         protected boolean onDoubleClick(@NotNull MouseEvent event) {
           if (event.getSource() != table) return false;
-          itemChoseCallback.run();
+          WriteIntentReadAction.run(itemChoseCallback);
           return true;
         }
       }.installOn(table);
 
       builder.setAutoselectOnMouseMove(false).setCloseOnEnter(false).
-        registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> itemChoseCallback.run());
+        registerKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), __ -> WriteIntentReadAction.run(itemChoseCallback));
 
       Runnable updatePreviewRunnable = () -> {
         if (popupRef.get().isDisposed()) return;

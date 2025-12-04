@@ -316,7 +316,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     thumbFadeAnimator.reset();
-    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb || Registry.is("ui.no.bangs.and.whistles")) {
+    if (scrollbar != null && scrollbar.getValueIsAdjusting() || myMouseIsOverThumb || Registry.is("ui.simplified")) {
       thumbFadeAnimator.suspend();
       myThumbFadeColorShift = getAnimationColorShift();
     }

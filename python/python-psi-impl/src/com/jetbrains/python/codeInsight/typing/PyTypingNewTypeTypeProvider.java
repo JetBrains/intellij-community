@@ -11,8 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 @ApiStatus.Internal
 public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
 
@@ -46,7 +44,7 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
           final PyClassType type = getClassType(stub, context, callSite);
           if (type != null) {
             PyTypingNewType newType = new PyTypingNewType(type, stub.getName(), getDeclaration(callExpression));
-            return Ref.create(getNewTypeFactory(newType));
+            return Ref.create(new PyTypingNewTypeFactoryType(newType));
           }
         }
       }
@@ -59,7 +57,7 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     if (referenceTarget instanceof PyTargetExpression targetExpression) {
       PyTypingNewType newType = getNewTypeForTarget(targetExpression, context);
       if (newType != null) {
-        return Ref.create(getNewTypeFactory(newType));
+        return Ref.create(new PyTypingNewTypeFactoryType(newType));
       }
     }
     return null;
@@ -90,10 +88,6 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
       return PyUtil.as(result.toClass(), PyClassType.class);
     }
     return null;
-  }
-
-  private static @NotNull PyCallableType getNewTypeFactory(@NotNull PyTypingNewType newType) {
-    return new PyCallableTypeImpl(List.of(PyCallableParameterImpl.nonPsi(newType.getClassType().toInstance())), newType.toInstance());
   }
 
   @Override

@@ -48,6 +48,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.kotlin.runConfigurations.jvm` end

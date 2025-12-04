@@ -65,7 +65,7 @@ internal class MavenArtifactDownloader(
       download(embedder, artifacts, downloadedFiles)
     }
     finally {
-      // We have to refresh parents of downloaded files, because some additional files may have been downloaded
+      // We have to refresh parents of downloaded files because some additional files may have been downloaded
       val filesToRefresh: MutableSet<Path> = HashSet()
       for (file in downloadedFiles) {
         filesToRefresh.add(file)

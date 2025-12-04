@@ -40,7 +40,7 @@ jvm_library(
     "//libraries/commons/lang3",
     "//platform/util/jdom",
     "//platform/workspace/storage/testEntities:testEntities_test_lib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:kotlin-test",
@@ -50,9 +50,11 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/eel-provider",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
+    "@lib//:jet_check",
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps.tests` end

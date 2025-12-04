@@ -12,7 +12,7 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
-import com.intellij.xdebugger.impl.frame.XDebugManagerProxy.Companion.getInstance
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy.Companion.getInstance
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

@@ -182,7 +182,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     // We initialize `adaptedTabs` before `tabsOrDeferredTabs`,
     // because `tabsOrDeferredTabs` are not fully asynchronous and may delay initialization of `adaptedTabs`
-    val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, providersHolder, initEvent, popupScope, session)
+    val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, initEvent, popupScope, session)
 
     val tabsOrDeferredTabs = tabFactories.map {
       it.id to initAsync(popupScope) {
@@ -229,8 +229,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       searchText,
       tabId,
       historyList,
-      providersHolder.legacyAllTabContributors,
-      providersHolder.legacySeparateTabContributors,
+      providersHolder.legacyContributors,
       onShowFindToolWindow = {
         popupScope.launch(NonCancellable) {
           removeSessionRef.set(false)
@@ -257,28 +256,30 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
   private fun createAdaptedTabsIfMonolith(
     supportedTabIds: List<String>,
-    frontendProvidersHolder: SeProvidersHolder,
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession
   ) : SuspendLazyProperty<List<SeTab>> = initAsync(popupScope) {
-    val orphanedRemoteAdaptedTabInfos = initAsync(popupScope) {
+    val (fetchedRemoteLegacyContributors, orphanedRemoteAdaptedTabInfos) = initAsync(popupScope) {
       val dataContextId = readAction { initEvent.dataContext.rpcId() }
       val availableRemoteProviders = project?.let {
         SeRemoteApi.getInstance().getAvailableProviderIds(it.projectId(), session, dataContextId)
       } ?: return@initAsync null
 
-      val adaptedSeparateTabInfos = availableRemoteProviders.adaptedWithPresentationOrFetchable(frontendProvidersHolder.legacySeparateTabContributors.keys).separateTab
+      val fetchedRemoteLegacyContributors = availableRemoteProviders.originalBackendLegacyContributors?.separateTab ?: emptyMap()
+      val adaptedSeparateTabInfos = availableRemoteProviders.adaptedWithPresentationOrFetchable(fetchedRemoteLegacyContributors.keys).separateTab
       if (adaptedSeparateTabInfos.isEmpty()) return@initAsync null
 
-      adaptedSeparateTabInfos
+      val tabInfos = adaptedSeparateTabInfos
         .filter { !supportedTabIds.contains(it.providerId.value) }
         .sortedBy { it.tabSortWeight }
+
+      fetchedRemoteLegacyContributors to tabInfos
     }.getValue() ?: return@initAsync emptyList()
 
     val tabs = orphanedRemoteAdaptedTabInfos.map {
       // This trick is supposed to work only for monolith mode
-      val legacyContributor = frontendProvidersHolder.legacySeparateTabContributors[it.providerId]
+      val legacyContributor = fetchedRemoteLegacyContributors[it.providerId]
       val filterEditor = legacyContributor?.let { contributor -> SeAdaptedTabFilterEditor(contributor) }
       val priority = legacyContributor?.sortWeight?.let { weight -> 1000 - (weight / 2) } ?: 0
 
@@ -362,6 +363,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
         }
         else panel.popupExtendedSize = popup.size
       }, popup)
+    }
+
+    project?.let {
+      Disposer.register(it, popup)
     }
 
     Disposer.register(popup) {

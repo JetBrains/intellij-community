@@ -28,7 +28,11 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ParallelCompletionRunner.Com
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionCommonSectionDataSetupEvent
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSectionEvent
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.getAnnotationLiteralExpectedType
@@ -87,6 +91,12 @@ internal interface K2CompletionRunner {
 
             completionResultSet.runRemainingContributors(parameters.delegate) { completionResult ->
                 val lookupElement = completionResult.lookupElement
+                if (lookupElement.`object` !is KotlinLookupObject) {
+                    // Pass on results from other contributors further down that are not chain completion related
+                    completionResultSet.passResult(completionResult)
+                    return@runRemainingContributors
+                }
+
                 val classifierLookupObject = lookupElement.`object` as? ClassifierLookupObject
                 val nameToImport = when (val importStrategy = classifierLookupObject?.importingStrategy) {
                     is ImportStrategy.AddImport -> importStrategy.nameToImport
@@ -95,7 +105,9 @@ internal interface K2CompletionRunner {
                 }
 
                 if (nameToImport == null) {
-                    completionResultSet.passResult(completionResult)
+                    // We need to filter out (i.e. not pass them on) results from the [KotlinChainCompletionContributor]
+                    // that are only supposed to be added if they can add an import.
+                    // Otherwise, these results would cause unexpected results like KTIJ-35113
                     return@runRemainingContributors
                 }
 
@@ -108,7 +120,6 @@ internal interface K2CompletionRunner {
                 if (receiverExpression == null
                     || nameExpression == null
                 ) {
-                    completionResultSet.passResult(completionResult)
                     return@runRemainingContributors
                 }
 
@@ -173,14 +184,6 @@ private fun createWeighingContext(
                 nameExpression.expectedType != null -> nameExpression.expectedType
                 nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
                 nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
-                // TODO: This can be removed after KT-82534 has been fixed
-                nameExpressionParent is KtPropertyAccessor -> {
-                    if (nameExpressionParent.isGetter) {
-                        nameExpressionParent.property.returnType
-                    } else {
-                        null
-                    }
-                }
                 else -> null
             }
             if (parameters.completionType == CompletionType.SMART
@@ -228,22 +231,24 @@ internal fun createExtensionChecker(
 private fun <P : KotlinRawPositionContext> KaSession.createCommonSectionData(
     completionContext: K2CompletionContext<P>,
 ): K2CompletionSectionCommonData<P>? {
-    val parameters = completionContext.parameters
-    val positionContext = completionContext.positionContext
-    val weighingContext = createWeighingContext(positionContext, parameters) ?: return null
-    val visibilityChecker = CompletionVisibilityChecker(parameters)
-    val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
-    val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
+    CompletionCommonSectionDataSetupEvent().timeEvent {
+        val parameters = completionContext.parameters
+        val positionContext = completionContext.positionContext
+        val weighingContext = createWeighingContext(positionContext, parameters) ?: return null
+        val visibilityChecker = CompletionVisibilityChecker(parameters)
+        val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
+        val importStrategyDetector = ImportStrategyDetector(parameters.originalFile, parameters.originalFile.project)
 
-    return K2CompletionSectionCommonData(
-        completionContext = completionContext,
-        weighingContext = weighingContext,
-        prefixMatcher = completionContext.resultSet.prefixMatcher,
-        visibilityChecker = visibilityChecker,
-        symbolFromIndexProvider = symbolFromIndexProvider,
-        importStrategyDetector = importStrategyDetector,
-        session = this,
-    )
+        return K2CompletionSectionCommonData(
+            completionContext = completionContext,
+            weighingContext = weighingContext,
+            prefixMatcher = completionContext.resultSet.prefixMatcher,
+            visibilityChecker = visibilityChecker,
+            symbolFromIndexProvider = symbolFromIndexProvider,
+            importStrategyDetector = importStrategyDetector,
+            session = this@createCommonSectionData,
+        )
+    }
 }
 
 /**
@@ -309,7 +314,13 @@ private class SharedPriorityQueue<P : Any, C : Comparable<C>>(
 context(_: KaSession, context: K2CompletionSectionContext<P>)
 private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed() {
     if (!contributor.shouldExecute()) return
-    runnable()
+
+    CompletionSectionEvent(
+        contributorName = contributor::class.simpleName ?: "Unknown",
+        sectionName = name.takeIf { it != contributor::class.simpleName }
+    ).timeEvent {
+        runnable()
+    }
 }
 
 /**
@@ -329,7 +340,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
 
         val globalAndLocalQueue = SharedPriorityQueue(remainingSections) { it.priority }.createLocalInstance()
 
-         analyze(parameters.completionFile) {
+        analyze(parameters.completionFile) {
             val commonData = createCommonSectionData(completionContext) ?: return@analyze
 
             while (true) {

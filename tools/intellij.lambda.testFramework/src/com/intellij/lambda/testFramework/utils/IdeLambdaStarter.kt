@@ -23,6 +23,7 @@ import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 object IdeLambdaStarter {
   internal fun Map<String, String>.toLambdaParams(): List<LambdaRdKeyValueEntry> = map { LambdaRdKeyValueEntry(it.key, it.value) }
@@ -42,13 +43,26 @@ object IdeLambdaStarter {
       val frontendRdSession = frontendIDEContext.setUpRdTestSession(FRONTEND)
 
       val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
+      listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
       return BackgroundRunWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
     }
 
     val driverRunner = LocalDriverRunner()
     val monolithRdSession = setUpRdTestSession(MONOLITH)
     val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
+    monolithRdSession.awaitSessionReady()
     return BackgroundRunWithLambda(backgroundRun, monolithRdSession, null)
+  }
+
+  private fun LambdaRdTestSession.awaitSessionReady() {
+    val timeStarted = System.currentTimeMillis()
+    val timeout = 15.seconds
+    while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
+      Thread.sleep(500)
+    }
+    if (ready.value != true) {
+      error("Lambda test session '${this}' is not ready after $timeout")
+    }
   }
 
   private fun IDETestContext.setUpRdTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {

@@ -38,6 +38,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//java/java-syntax:syntax",
     "//platform/syntax/syntax-tree:tree",
+    "@lib//:jet_check",
   ],
   exports = [
     "@lib//:easymock",

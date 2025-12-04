@@ -1,12 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rebase
 
-import com.jetbrains.rhizomedb.*
+import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.withDefaultPart
 import fleet.kernel.*
 import fleet.util.UID
 
 class LeaderTransactorMiddleware(
-  private val instructionEncoder: InstructionEncoder
+  private val instructionEncoder: InstructionEncoder = DefaultInstructionSet.encoder(),
 ) : TransactorMiddleware {
 
   override fun ChangeScope.performChange(next: ChangeScope.() -> Unit) {

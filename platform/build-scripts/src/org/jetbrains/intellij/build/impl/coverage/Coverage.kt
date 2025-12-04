@@ -155,7 +155,7 @@ internal class CoverageImpl(
     context.notifyArtifactBuilt(reportZip)
   }
 
-  private suspend fun outputRoots(): List<Path> {
+  private val outputRoots: List<Path> by lazy {
     val outputRoots = coveredModulesWithTransitiveDependencies.flatMap {
       context.getModuleOutputRoots(it, false)
     }
@@ -167,15 +167,15 @@ internal class CoverageImpl(
         .take(10)
         .joinToString(prefix = "Output roots don't exist:\n", separator = "\n")
     }
-    return outputRoots
+    outputRoots
   }
 
   private val sourceRoots: List<Path> by lazy {
-    val sourceRoots = coveredModulesWithTransitiveDependencies.asSequence().flatMap { module ->
-      module.sourceRoots.asSequence().filter {
-        it.rootType == JavaSourceRootType.SOURCE
-      }
-    }.map { it.path }.toList()
+    val sourceRoots = coveredModulesWithTransitiveDependencies.asSequence()
+      .flatMap { it.sourceRoots }
+      .filter { it.rootType == JavaSourceRootType.SOURCE }
+      .map { it.path }
+      .toList()
     check(sourceRoots.any()) {
       "Source roots for '${coveredModulesWithTransitiveDependencies.map { it.name }}'"
     }
@@ -198,7 +198,7 @@ internal class CoverageImpl(
 
   override suspend fun generateReport() {
     block("Generating a coverage report") {
-      generateReport(outputRoots = outputRoots(), sourceRoots = sourceRoots)
+      generateReport(outputRoots = outputRoots, sourceRoots = sourceRoots)
       publishReport()
     }
   }

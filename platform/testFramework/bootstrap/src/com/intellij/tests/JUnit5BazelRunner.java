@@ -38,6 +38,7 @@ public final class JUnit5BazelRunner {
   private static final int EXIT_CODE_TEST_RUNNER_FAILURE = 2;
   private static final int EXIT_CODE_TEST_FAILURE_OOM = 137;
 
+  private static final String bazelEnvRunfilesManifestOnly = "RUNFILES_MANIFEST_ONLY";
   private static final String bazelEnvSelfLocation = "SELF_LOCATION";
   private static final String bazelEnvTestTmpDir = "TEST_TMPDIR";
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
@@ -422,8 +423,11 @@ public final class JUnit5BazelRunner {
   }
 
   private static Boolean isBazelTestRun() {
-    return Stream.of(bazelEnvSelfLocation, bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
+    return Stream.of(bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
       .allMatch(bazelTestEnv -> {
+        var bazelTestEnvValue = System.getenv(bazelTestEnv);
+        return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
+      }) && Stream.of(bazelEnvSelfLocation, bazelEnvRunfilesManifestOnly).anyMatch(bazelTestEnv -> {
         var bazelTestEnvValue = System.getenv(bazelTestEnv);
         return bazelTestEnvValue != null && !bazelTestEnvValue.isBlank();
       });
@@ -497,6 +501,10 @@ public final class JUnit5BazelRunner {
     List<Path> paths = (List<Path>)getBaseUrls.invoke(classLoader);
 
     String bazelTestSelfLocation = System.getenv(bazelEnvSelfLocation);
+    // the relevant jars are expected to be next to the classloader when no SELF_LOCATION is set (singlejar, windows runs)
+    if (bazelTestSelfLocation == null || bazelTestSelfLocation.isBlank()) {
+      return new HashSet<>(paths);
+    }
     Path bazelTestSelfLocationDir = Path.of(bazelTestSelfLocation).getParent().toAbsolutePath();
     return paths.stream()
       .filter(p -> bazelTestSelfLocationDir.equals(p.toAbsolutePath().getParent()))

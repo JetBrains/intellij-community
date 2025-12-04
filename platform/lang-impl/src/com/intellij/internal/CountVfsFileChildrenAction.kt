@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -37,7 +36,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
     val root = VIRTUAL_FILE.getData(e.dataContext) ?: return
     val project = e.project ?: return
 
-    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+    e.coroutineScope.launch(Dispatchers.Default) {
       withBackgroundProgress(project, "Counting children on disk recursively...") {
         reportRawProgress { reporter ->
           var filesOnDiskCount = 0
@@ -61,7 +60,7 @@ internal class CountVfsFileChildrenAction : AnAction(), DumbAware {
       }
     }
 
-    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+    e.coroutineScope.launch(Dispatchers.Default) {
       val fileIndex = ProjectFileIndex.getInstance(project)
       val workspaceFileIndex = WorkspaceFileIndex.getInstance(project)
       withBackgroundProgress(project, "Counting children in VFS recursively...") {

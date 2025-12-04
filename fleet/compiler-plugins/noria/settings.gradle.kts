@@ -2,7 +2,7 @@ rootProject.name = "noria-compiler-plugin"
 
 pluginManagement {
   // the compiler plugin will be built by this Kotlin compiler
-  val KOTLIN_VERSION = "2.2.21-RC2"
+  val KOTLIN_VERSION = "2.2.21"
 
   plugins {
     kotlin("jvm") version KOTLIN_VERSION

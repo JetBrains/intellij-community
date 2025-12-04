@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.plugins
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.plugins.parser.impl.elements.xmlValue
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile

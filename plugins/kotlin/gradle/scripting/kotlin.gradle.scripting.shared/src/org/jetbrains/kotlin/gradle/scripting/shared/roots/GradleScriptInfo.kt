@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.idea.core.script.shared.LightScriptInfo
 import org.jetbrains.kotlin.idea.core.script.v1.getKtFile
-import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -42,7 +41,7 @@ class GradleScriptInfo(
             ide.dependenciesSources(JvmDependency(model.sourcePath.map { File(it) }))
         }.adjustByDefinition(definition)
 
-        return ScriptCompilationConfigurationWrapper.FromCompilationConfiguration(VirtualFileScriptSource(virtualFile), configuration)
+        return ScriptCompilationConfigurationWrapper(VirtualFileScriptSource(virtualFile), configuration)
             .also { configuration.refineIfNeeded(virtualFile) }
     }
 
@@ -53,13 +52,8 @@ class GradleScriptInfo(
         val scriptDefinition = ktFile.findScriptDefinition()
             ?: error("Couldn't find script definition for ${ktFile.virtualFilePath}")
 
-        if (scriptDefinition.isDefinedViaModernApi()) { // refinement of the previous version is very inefficient (takes too much time)
-            refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), scriptDefinition, project, this)
-        }
+        refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), scriptDefinition, project, this)
     }
-
-    private fun ScriptDefinition.isDefinedViaModernApi() =
-        asLegacyOrNull<KotlinScriptDefinition>() == null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

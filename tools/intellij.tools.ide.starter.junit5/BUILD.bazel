@@ -27,7 +27,7 @@ jvm_library(
   resources = [":ide-starter-junit5_resources"],
   kotlinc_opts = ":custom_ide-starter-junit5",
   deps = [
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kodein-di-jvm",
@@ -49,7 +49,7 @@ jvm_library(
   kotlinc_opts = ":custom_ide-starter-junit5",
   associates = [":ide-starter-junit5"],
   deps = [
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin/reflect",
     "@lib//:kodein-di-jvm",

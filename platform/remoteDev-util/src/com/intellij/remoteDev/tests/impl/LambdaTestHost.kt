@@ -2,56 +2,52 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspend
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.impl.utils.waitSuspending
+import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
-import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
-import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
-import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import java.awt.Frame
-import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.Serializable
 import java.net.InetAddress
 import java.net.URLClassLoader
 import java.time.LocalTime
 import javax.imageio.ImageIO
-import javax.swing.JFrame
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
@@ -90,15 +86,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
       }
     }
-  }
-
-  open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
-    LOG.info("Setting up test logging factory")
-    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
-  }
-
-  protected open fun assertLoggerFactory() {
-    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
   init {
@@ -176,24 +163,15 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     val model = protocol.lambdaTestModel
 
     LOG.info("Advise for session. Current state: ${model.session.value}...")
-    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
+    model.session.viewNotNull(lifetime) { _, session ->
 
       try {
         @OptIn(ExperimentalCoroutinesApi::class)
         val sessionBgtDispatcher = Dispatchers.Default.limitedParallelism(1, "Lambda test session dispatcher")
 
-        setUpTestLoggingFactory(sessionLifetime, session)
-        val app = ApplicationManager.getApplication()
-
         // Needed to enable proper focus behaviour
         if (SystemInfoRt.isWindows) {
           WinFocusStealer.setFocusStealingEnabled(true)
-        }
-
-        val ideContext = when (session.rdIdeType) {
-          LambdaRdIdeType.BACKEND -> LambdaBackendContextClass()
-          LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass()
-          LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass()
         }
 
 
@@ -201,7 +179,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
                              ?: return@run null
           val tmd = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
-                     ?: error("Test plugin with test module '$testModuleId' is not found")
+                    ?: error("Test plugin with test module '$testModuleId' is not found")
 
           assert(tmd.pluginClassLoader != null) {
             "Test plugin with test module '${testModuleId}' is not loaded." +
@@ -211,6 +189,27 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
 
         LOG.info("All test code will be loaded using '${testModuleDescriptor?.pluginClassLoader}'")
+
+        fun getLambdaIdeContext(): LambdaIdeContext {
+          val currentTestCoroutineScope = CoroutineScope(Dispatchers.Default + CoroutineName("Lambda test session scope") + SupervisorJob())
+
+          currentTestCoroutineScope.coroutineContext.job.invokeOnCompletion {
+            LOG.info("Test coroutine scope is completed")
+          }
+          return when (session.rdIdeType) {
+            LambdaRdIdeType.BACKEND -> LambdaBackendContextClass(currentTestCoroutineScope.coroutineContext)
+            LambdaRdIdeType.FRONTEND -> LambdaFrontendContextClass(currentTestCoroutineScope.coroutineContext)
+            LambdaRdIdeType.MONOLITH -> LambdaMonolithContextClass(currentTestCoroutineScope.coroutineContext)
+          }
+        }
+
+        var ideContext = getLambdaIdeContext()
+
+        session.cleanUp.setSuspend(sessionBgtDispatcher) { _, _ ->
+          LOG.info("Resetting scopes")
+          ideContext.coroutineContext.job.cancelAndJoin()
+          ideContext = getLambdaIdeContext()
+        }
 
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
@@ -234,23 +233,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             LOG.info("'$parameters': received action execution request")
 
             val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: ${ideAction.name()}")
-            val requestFocusBeforeStart = false
             val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
             withContext(providedCoroutineContext) {
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
-              if (!app.isHeadlessEnvironment && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                requestFocus()
-              }
-
-              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
               runLogged(parameters.reference, 1.minutes) {
                 ideAction.runLambda(parameters.parameters ?: listOf())
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
@@ -261,44 +251,40 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         // Advice for processing events
         session.runSerializedLambda.setSuspend(sessionBgtDispatcher) { _, serializedLambda ->
+          suspend fun clientIdContextToRunLambda() = if (session.rdIdeType == LambdaRdIdeType.BACKEND && AppMode.isRemoteDevHost()) {
+            waitSuspendingNotNull("Got remote client id", 10.seconds) {
+              ClientSessionsManager.getAppSessions(ClientKind.REMOTE).singleOrNull()?.clientId
+            }.let { ClientIdContextElement(it) }
+          }
+          else {
+            EmptyCoroutineContext
+          }
+
           try {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
-
-            val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
-            val clientId = providedCoroutineContext.clientId() ?: ClientId.current
-
-            withContext(providedCoroutineContext) {
-              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
-
-              val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
+            return@setSuspend withContext(Dispatchers.Default + CoroutineName("Lambda task: ${serializedLambda.stepName}") + clientIdContextToRunLambda()) {
               runLogged(serializedLambda.stepName, 10.minutes) {
-                URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use {
-                  SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
-                    .accept(ideContext)
+                val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
+                URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
+                  withContext(ideContext.coroutineContext) {
+                    val params: List<Serializable> = serializedLambda.parametersBase64.map { SerializedLambdaLoader().loadObject(it, classLoader = cl) }
+                    val result = SerializedLambdaLoader().load<LambdaIdeContext>(serializedLambda.serializedDataBase64, classLoader = cl).accept(ideContext, params)
+                    SerializedLambdaLoader().save(serializedLambda.stepName, result)
+                  }
                 }
               }
-
-              // Assert state
-              assertLoggerFactory()
             }
           }
           catch (ex: Throwable) {
             LOG.warn("${session.rdIdeType}: '${serializedLambda.stepName}' hasn't finished successfully", ex)
             throw ex
           }
-          return@setSuspend
         }
 
         session.isResponding.setSuspend(sessionBgtDispatcher + NonCancellable) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
-        }
-
-        session.visibleFrameNames.setSuspend(sessionBgtDispatcher) { _, _ ->
-          Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
-            LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
-          }
         }
 
         session.projectsNames.setSuspend(sessionBgtDispatcher) { _, _ ->
@@ -354,10 +340,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         }
 
-        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, reportFailures ->
-          requestFocus(reportFailures)
-        }
-
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
           makeScreenshot(fileName)
         }
@@ -374,105 +356,6 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         session.ready.value = false
       }
     }
-  }
-
-
-  private suspend fun requestFocus(reportFailures: Boolean = true): Boolean {
-    LOG.info("Requesting focus")
-
-    val projects = ProjectManagerEx.getOpenProjects()
-
-    if (projects.size > 1) {
-      LOG.info("Can't choose a project to focus. All projects: ${projects.joinToString(", ")}")
-      return false
-    }
-
-    val currentProject = projects.singleOrNull()
-    return if (currentProject == null) {
-      requestFocusNoProject(reportFailures)
-    }
-    else {
-      requestFocusWithProjectIfNeeded(currentProject, reportFailures)
-    }
-  }
-
-  private suspend fun requestFocusWithProjectIfNeeded(project: Project, reportFailures: Boolean): Boolean {
-    val projectIdeFrame = WindowManager.getInstance().getFrame(project)
-    if (projectIdeFrame == null) {
-      LOG.info("No frame yet, nothing to focus")
-      return false
-    }
-    else {
-      val frameName = "frame '${projectIdeFrame.name}'"
-
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) {
-        LOG.info("Frame '$frameName' is already focused")
-        true
-      }
-      else {
-        requestFocusWithProject(projectIdeFrame, project, frameName, reportFailures)
-      }
-    }
-  }
-
-  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, reportFailures: Boolean): Boolean {
-    val logPrefix = "Requesting project focus for '$frameName'"
-    LOG.info(logPrefix)
-
-    AppIcon.getInstance().requestFocus(projectIdeFrame)
-    ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
-
-    return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
-        val message = "Couldn't wait for focus of '$frameName'," +
-                      "\n" + "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-                      "\n" + getFocusStateDescription()
-        if (reportFailures) {
-          LOG.error(message)
-        }
-        else {
-          LOG.info(message)
-        }
-      }) {
-        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
-      }
-    }
-  }
-
-  private suspend fun requestFocusNoProject(reportFailures: Boolean): Boolean {
-    val logPrefix = "Request for focus (no opened project case)"
-    LOG.info(logPrefix)
-
-    val visibleWindows = Window.getWindows().filter { it.isShowing }
-    if (visibleWindows.size > 1) {
-      LOG.info("$logPrefix There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
-    }
-    visibleWindows.forEach {
-      AppIcon.getInstance().requestFocus(it)
-    }
-    return withContext(Dispatchers.IO) {
-      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
-        val message = "Couldn't wait for focus" + "\n" + getFocusStateDescription()
-        if (reportFailures) {
-          LOG.error(message)
-        }
-        else {
-          LOG.info(message)
-        }
-      }) {
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
-      }
-    }
-  }
-
-  private fun getFocusStateDescription(): String {
-    val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-
-    return "Actual focused component: " +
-           "\nfocusedWindow is " + keyboardFocusManager.focusedWindow +
-           "\nfocusOwner is " + keyboardFocusManager.focusOwner +
-           "\nactiveWindow is " + keyboardFocusManager.activeWindow +
-           "\npermanentFocusOwner is " + keyboardFocusManager.permanentFocusOwner
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {

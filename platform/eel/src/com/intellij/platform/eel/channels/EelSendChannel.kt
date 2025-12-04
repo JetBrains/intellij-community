@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.channels
 
+import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.ThrowsChecked
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
@@ -23,18 +25,27 @@ interface EelSendChannel {
    */
   @EelSendApi
   @ApiStatus.Internal
+  @Throws(EelSendChannelException::class)
+  @ThrowsChecked(EelSendChannelException::class)
   suspend fun send(src: ByteBuffer)
 
   /**
    * Closes channel for sending. You can't send anything to a closed channel.
    * Receive side will get [com.intellij.platform.eel.ReadResult.EOF]
+   *
+   * If [err] null, the channel is closed as a regular end of stream,
+   * and a call of the corresponding [EelReceiveChannel.receive] will return [ReadResult.EOF].
+   *
+   * If [err] is not null, the corresponding [EelReceiveChannel.receive] will throw
+   * the error wrapped as the cause into [EelReceiveChannelException].
    */
   @ApiStatus.Experimental
-  suspend fun close()
+  suspend fun close(err: Throwable?)
 
   /**
    * Channel is closed, and any [send] is guaranteed to return an error.
    * This field is set some time after the channel is closed, so you might encounter an error with [send] even though this field is `false`.
+   * Both [close] and [EelReceiveChannel.closeForReceive] set this flag on.
    * Useful only for the case of skipping some unnecessary computations.
    */
   @get:ApiStatus.Experimental
@@ -48,6 +59,8 @@ interface EelSendChannel {
  */
 @OptIn(EelSendApi::class)
 @ApiStatus.Experimental
+@Throws(EelSendChannelException::class)
+@ThrowsChecked(EelSendChannelException::class)
 suspend fun EelSendChannel.sendWholeBuffer(src: ByteBuffer) {
   if (this is EelSendChannelCustomSendWholeBuffer) {
     return sendWholeBufferCustom(src)

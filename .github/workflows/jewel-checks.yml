@@ -189,7 +189,7 @@ jobs:
           CHANGED_BAZEL_FILES=$(git diff --name-only HEAD \
             | grep -E '\.(bzl|bazel)$|^BUILD|^WORKSPACE' \
             | grep -v '^android/' \
-            | grep -E '^[^/]+$|^build/BUILD\.bazel$|^platform/jewel/' \
+            | grep -E '^[^/]+$|^lib/(BUILD|MODULE).bazel$|^build/BUILD\.bazel$|^platform/jewel/' \
             || true)
           if [ -n "$CHANGED_BAZEL_FILES" ]; then
             echo "Error: Bazel files need to be updated:"

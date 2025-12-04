@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -34,6 +35,10 @@ public final class UnresolvedPluginConfigReferenceInspection extends DevKitUastI
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (InjectedLanguageManager.getInstance(holder.getProject()).isInjectedFragment(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitPolyadicExpression(@NotNull UPolyadicExpression node) {

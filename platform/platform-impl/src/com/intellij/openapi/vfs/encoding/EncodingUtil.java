@@ -11,9 +11,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -202,25 +199,6 @@ public final class EncodingUtil {
     }
   }
 
-  /**
-   * @param virtualFile file to check
-   * @return true if the charset is hard-coded, false if file type does not restrict encoding
-   */
-  private static boolean checkHardcodedCharsetFileType(@NotNull VirtualFile virtualFile) {
-    FileType fileType = virtualFile.getFileType();
-    // in lesser IDEs all special file types are plain text so check for that first
-    if (fileType == FileTypes.PLAIN_TEXT) return false;
-    if (fileType instanceof InternalFileType ||
-        fileType == StdFileTypes.GUI_DESIGNER_FORM ||
-        fileType == StdFileTypes.PROPERTIES ||
-        fileType == StdFileTypes.XML ||
-        fileType == StdFileTypes.JSPX) {
-      return true;
-    }
-
-    return false;
-  }
-
   public static boolean canReload(@NotNull VirtualFile virtualFile) {
     return checkCanReload(virtualFile, null) == null;
   }
@@ -254,9 +232,10 @@ public final class EncodingUtil {
   }
 
   private static @Nullable FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
-    if (virtualFile.getFileType().isBinary()) return FailReason.IS_BINARY;
+    FileType fileType = virtualFile.getFileType();
+    if (fileType.isBinary()) return FailReason.IS_BINARY;
 
-    boolean hardcoded = checkHardcodedCharsetFileType(virtualFile);
+    boolean hardcoded = fileType.isCharsetHardcoded();
     return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 

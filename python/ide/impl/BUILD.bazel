@@ -47,7 +47,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/util/progress",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/http-client",
     "//platform/whatsNew",
     "//platform/util/coroutines",
@@ -72,6 +72,8 @@ jvm_library(
     "//python/python-poetry/common",
     "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -115,7 +117,7 @@ jvm_library(
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//platform/util/progress",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//libraries/http-client",
     "//platform/whatsNew",
     "//platform/whatsNew:whatsNew_test_lib",
@@ -151,6 +153,8 @@ jvm_library(
     "//python/python-uv/common",
     "//python/python-exec-service/execService.python",
     "//python/python-exec-service/execService.python:execService.python_test_lib",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

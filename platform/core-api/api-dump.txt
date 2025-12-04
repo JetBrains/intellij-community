@@ -699,6 +699,7 @@ com.intellij.openapi.fileTypes.FileType
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - a:isBinary():Z
+- isCharsetHardcoded():Z
 - isReadOnly():Z
 com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -711,6 +712,7 @@ com.intellij.openapi.fileTypes.INativeFileType
 - a:useNativeIcon():Z
 com.intellij.openapi.fileTypes.InternalFileType
 - com.intellij.openapi.fileTypes.FileType
+- isCharsetHardcoded():Z
 - isReadOnly():Z
 com.intellij.openapi.fileTypes.OSFileIdeAssociation
 - getExtensionMode():com.intellij.openapi.fileTypes.OSFileIdeAssociation$ExtensionMode
@@ -1591,6 +1593,8 @@ com.intellij.psi.tree.ILeafElementType
 - a:createLeafNode(java.lang.CharSequence):com.intellij.lang.ASTNode
 com.intellij.psi.tree.ILightLazyParseableElementType
 - a:parseContents(com.intellij.lang.LighterLazyParseableNode):com.intellij.util.diff.FlyweightCapableTreeStructure
+c:com.intellij.psi.tree.IReparseableElementType
+- createNode(java.lang.CharSequence):com.intellij.lang.ASTNode
 com.intellij.psi.tree.IReparseableElementTypeBase
 - com.intellij.psi.tree.ILazyParseableElementTypeBase
 - isParsable(com.intellij.lang.ASTNode,java.lang.CharSequence,com.intellij.lang.Language,com.intellij.openapi.project.Project):Z

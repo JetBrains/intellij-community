@@ -42,6 +42,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//java/java-impl:impl",
+    "//platform/lang-api:lang",
   ]
 )
 
@@ -73,12 +74,14 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
     "//plugins/groovy-live-templates",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` end

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiAnnotationUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.java.library.JavaLibraryUtil;
@@ -23,7 +24,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -360,39 +360,16 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   protected @NotNull ContextNullabilityInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                                         PsiFile file) {
-    boolean superPackage = false;
-    ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
-    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) return info;
-    VirtualFile root = index.getSourceRootForFile(vFile);
-    boolean compiled = false;
-    if (root == null) {
-      root = index.getClassRootForFile(vFile);
-      if (root == null) return info;
-      compiled = true;
-    }
-    // Single-file source root -- no package-info processing for now
-    if (root.equals(vFile)) return info;
-    PsiDirectory directory = file.getContainingDirectory();
-    while (directory != null) {
-      PsiFile packageFile = directory.findFile(compiled ? PsiPackage.PACKAGE_INFO_CLS_FILE : PsiPackage.PACKAGE_INFO_FILE);
-      if (packageFile instanceof PsiJavaFile javaFile) {
-        PsiPackageStatement stmt = javaFile.getPackageStatement();
-        if (stmt != null) {
-          PsiModifierList modifierList = stmt.getAnnotationList();
-          if (modifierList != null) {
-            for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-              info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
-            }
-          }
-        }
+    var processor = new JavaPsiAnnotationUtil.PackageAnnotationProcessor() {
+      @NotNull ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
+
+      @Override
+      public void process(@NotNull PsiAnnotation annotation, boolean superPackage) {
+        info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
       }
-      if (root.equals(directory.getVirtualFile())) break;
-      directory = directory.getParentDirectory();
-      superPackage = true;
-    }
-    return info;
+    };
+    JavaPsiAnnotationUtil.processPackageAnnotations(file, processor, true);
+    return processor.info;
   }
 
   @Override

@@ -23,4 +23,9 @@ public interface InternalFileType extends FileType {
   default boolean isReadOnly() {
     return true;
   }
+
+  @Override
+  default boolean isCharsetHardcoded() {
+    return true;
+  }
 }

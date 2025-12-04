@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.ui.IconManager;
 import org.intellij.lang.annotations.MagicConstant;
 
 import javax.swing.*;
@@ -9,7 +10,15 @@ public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
   int ICON_FLAG_READ_STATUS = 0x0002;
 
-  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS})
+  /**
+   * If set, skip any potentially slow computations
+   */
+  int ICON_FLAG_FAST_ONLY = 0x80000000;
+
+  /**
+   * See also {@link IconManager#registerIconLayer(int, Icon)}
+   */
+  @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_READ_STATUS, ICON_FLAG_FAST_ONLY})
   @interface IconFlags {}
 
   Icon getIcon(@IconFlags int flags);

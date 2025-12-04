@@ -27,7 +27,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/workspace/jps",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/analysis-api:analysis",
     "//platform/object-serializer",
     "//platform/service-container",
@@ -50,6 +50,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-impl/initial-config-import",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.impl` end
@@ -91,7 +92,7 @@ jvm_library(
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
     "//platform/ide-core-impl",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//libraries/fastutil",
@@ -104,6 +105,8 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end

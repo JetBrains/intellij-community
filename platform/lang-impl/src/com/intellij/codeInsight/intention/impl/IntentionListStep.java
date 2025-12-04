@@ -9,6 +9,8 @@ import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionSource;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -23,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,7 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
+public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>,
+                                          SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
   private final @NotNull IntentionContainer myCachedIntentions;
@@ -185,6 +189,20 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
       }
     };
+  }
+
+  @ApiStatus.Internal
+  public @NotNull IntentionPreviewInfo calculateIntentionPreview(@NotNull IntentionAction action, int fixOffset) {
+    Editor editor = myEditor;
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(action)) return IntentionPreviewInfo.EMPTY;
+    if (editor == null) return IntentionPreviewInfo.EMPTY;
+    return new IntentionPreviewComputable(myProject, action, myPsiFile, editor, fixOffset)
+      .call();
+  }
+
+  @ApiStatus.Internal
+  public PsiFile getPsiFile() {
+    return myPsiFile;
   }
 
   private static Icon getIcon(IntentionAction optionIntention) {

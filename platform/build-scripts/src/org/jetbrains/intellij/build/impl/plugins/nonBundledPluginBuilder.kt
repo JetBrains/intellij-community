@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems")
-
 package org.jetbrains.intellij.build.impl.plugins
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -62,24 +60,19 @@ internal suspend fun buildNonBundledPlugins(
   buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
+  isUpdateFromSources: Boolean,
   descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ): List<PluginBuildDescriptor> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-    doBuildNonBundledPlugins(
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = compressPluginArchive,
-      buildPlatformLibJob = buildPlatformLibJob,
-      state = state,
-      searchableOptionSet = searchableOptionSet,
-      isUpdateFromSources = false,
-      descriptorCacheContainer = descriptorCacheContainer,
-      context = context,
+    buildNonBundledPlugins(
+      scope = this, pluginsToPublish, compressPluginArchive, buildPlatformLibJob, state, searchableOptionSet, isUpdateFromSources, descriptorCacheContainer, context
     )
   } ?: emptyList()
 }
 
-internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
+private suspend fun buildNonBundledPlugins(
+  scope: CoroutineScope,
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
   buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
@@ -97,8 +90,8 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
     null
   }
   else {
-    async(CoroutineName("build keymap plugins")) {
-      buildKeymapPlugins(targetDir = context.nonBundledPluginsToBePublished, context = context)
+    scope.async(CoroutineName("build keymap plugins")) {
+      buildKeymapPlugins(targetDir = context.nonBundledPluginsToBePublished, context)
     }
   }
 
@@ -112,24 +105,16 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
   val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins && isPluginArchiveEnabled
   val plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
   val isPluginValidationEnabled = !isUpdateFromSources && !context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)
-  val json: Lazy<JSON> = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
+  val json = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
   val mappings = buildPlugins(
-    moduleOutputPatcher = moduleOutputPatcher,
-    plugins = plugins,
-    os = null,
-    targetDir = stageDir,
-    state = state,
-    buildPlatformJob = buildPlatformLibJob,
-    searchableOptionSet = searchableOptionSet,
-    descriptorCacheContainer = descriptorCacheContainer,
-    context = context,
+    moduleOutputPatcher, plugins, os = null, stageDir, state, buildPlatformLibJob, searchableOptionSet, descriptorCacheContainer, context
   ) { plugin, pluginDirOrFile ->
     val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
       context.buildNumber
     }
     else {
       plugin.versionEvaluator.evaluate(
-        pluginXmlSupplier = { getUnprocessedPluginXmlContent(module = context.findRequiredModule(plugin.mainModule), context = context).decodeToString() },
+        pluginXmlSupplier = { getUnprocessedPluginXmlContent(context.findRequiredModule(plugin.mainModule), context).decodeToString() },
         ideBuildVersion = context.pluginBuildNumber,
         context,
       ).pluginVersion
@@ -206,14 +191,14 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
   if (prepareCustomPluginRepository) {
     val list = pluginSpecs.sortedBy { it.pluginZip }
     if (list.isNotEmpty()) {
-      launch {
+      scope.launch {
         generatePluginRepositoryMetaFile(pluginSpecs = list, targetDir = context.nonBundledPlugins, buildNumber = context.buildNumber)
       }
     }
 
     val pluginsToBePublished = list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }
     if (pluginsToBePublished.isNotEmpty()) {
-      launch {
+      scope.launch {
         generatePluginRepositoryMetaFile(pluginSpecs = pluginsToBePublished, targetDir = context.nonBundledPluginsToBePublished, buildNumber = context.buildNumber)
       }
     }

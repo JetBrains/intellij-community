@@ -1,6 +1,8 @@
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <module name="fleet.reporting.api"/>
     <module name="fleet.multiplatform.shims"/>
+    <module name="fleet.reporting.api"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

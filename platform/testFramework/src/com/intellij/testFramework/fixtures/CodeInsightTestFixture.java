@@ -671,8 +671,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Unmodifiable
   List<GutterMark> findAllGutters();
 
-  void type(final char c);
+  void type(char c);
 
+  /**
+   * Types all chars from the specified string one by one.
+   *
+   * @see #type(char)
+   */
   void type(@NotNull String s);
 
   /**
@@ -762,8 +767,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Experimental
   void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName);
 
-  void allowTreeAccessForFile(@NotNull VirtualFile file);
-
+  /**
+   * Removes any previously installed filters for virtual file access
+   */
   void allowTreeAccessForAllFiles();
 
   void renameElement(@NotNull PsiElement element,

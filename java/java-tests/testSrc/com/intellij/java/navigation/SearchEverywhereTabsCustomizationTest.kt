@@ -27,6 +27,7 @@ class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCas
 
   override fun setUp() {
     super.setUp()
+    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
     ui = SearchEverywhereUI(project, contributors).apply { Disposer.register(testRootDisposable, this) }
   }
 

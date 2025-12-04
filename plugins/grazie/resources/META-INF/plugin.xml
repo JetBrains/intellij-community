@@ -114,7 +114,6 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GrazieDarcula.xml"/>
 
     <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
-    <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
     <nameSuggestionProvider id="SpellcheckingSuggestionProvider" implementation="com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider" order="first"/>
 
     <registryKey key="spellchecker.grazie.enabled" defaultValue="true" description="Enables Grazie text-level spellchecking"/>

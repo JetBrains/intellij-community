@@ -13,22 +13,6 @@ val frameworkLogger: Logger by lazy {
   Logger.getInstance(RdctTestFrameworkLoggerCategory.category)
 }
 
-// Determines if long timeout is used for the local debug of the tests.
-private const val defaultLongWaitingOnDebug = true
-private val debugLongTimeout = 30.minutes
-private val isDebugging by lazy { DebugAttachDetector.isAttached() }
-
-fun getTimeoutHonouringDebug(providedTimeout: Duration): Duration =
-  if (isDebugging && defaultLongWaitingOnDebug) {
-    debugLongTimeout
-  }
-  else {
-    providedTimeout
-  }
-
-fun getTimeoutHonouringDebug(providedTimeout: Duration?, defaultTimeout: Duration): Duration =
-  getTimeoutHonouringDebug(providedTimeout ?: defaultTimeout)
-
 fun assertThatSoftly(errorMessage: String = "", assertion: () -> Boolean) {
   assertThatSoftly(errorMessage, assertion) { it }
 }

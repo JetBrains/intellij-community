@@ -3,9 +3,9 @@ package com.intellij.util.concurrency
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.util.use
-import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.backend.observation.dumpObservedComputations
 import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
+import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -70,7 +70,7 @@ class MergingUpdateQueuePropagationTest {
   @RegistryKey("ide.activity.tracking.enable.debug", "true")
   fun `test observed computation dumping for nested updates with same identity`(): Unit = timeoutRunBlocking {
     // wait for project initialization
-    Observation.awaitConfiguration(project)
+    TestObservation.awaitConfiguration(project)
 
     MergingUpdateQueue("test queue", 200, true, null).use { queue ->
 
@@ -86,7 +86,8 @@ class MergingUpdateQueuePropagationTest {
           }
         })
       }
-      Observation.awaitConfiguration(project)
+      // wait for project initialization
+      TestObservation.awaitConfiguration(project)
 
       updateAssertion.assertListenerState(1) {
         "Updates with the same id should be merged."

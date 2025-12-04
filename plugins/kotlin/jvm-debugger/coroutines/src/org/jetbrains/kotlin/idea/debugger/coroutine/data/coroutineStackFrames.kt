@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -89,7 +88,12 @@ open class CoroutineStackFrame(
         val frame = other as? CoroutineStackFrame ?: return false
 
         return descriptor.frameProxy == frame.descriptor.frameProxy
-                && position == frame.sourcePosition
+                && samePosition(frame)
+    }
+
+    private fun samePosition(other: CoroutineStackFrame): Boolean {
+        if (position == null) return other.position == null
+        return position == other.position
     }
 
     override fun hashCode(): Int {

@@ -22,7 +22,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.EntityChange
@@ -72,7 +72,7 @@ open class ModuleDependencyIndexImpl(private val project: Project): ModuleDepend
   private val rootSetChangeListener = ReferencedRootSetChangeListener()
 
   private val eelMachine: EelMachine
-    get() = project.getEelDescriptor().machine
+    get() = project.getEelMachine()
 
   init {
     if (!project.isDefault) {

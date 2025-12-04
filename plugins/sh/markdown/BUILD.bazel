@@ -16,10 +16,12 @@ jvm_library(
   deps = [
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
     "//plugins/sh/core",
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/lang-impl",
+    "//platform/execution",
   ],
   runtime_deps = ["//platform/backend"]
 )

@@ -18,6 +18,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -40,9 +42,18 @@ import java.util.*;
  */
 public class PyEvaluator {
 
+  private static final QualifiedName SYS_VERSION_INFO = QualifiedName.fromDottedString("sys.version_info");
+
+  private static final List<QualifiedName> TYPING_TYPE_CHECKING_NAMES = List.of(
+    QualifiedName.fromDottedString("TYPE_CHECKING"),
+    QualifiedName.fromDottedString("typing.TYPE_CHECKING")
+  );
+
   private final @NotNull Set<PyExpression> myVisited = new HashSet<>();
 
   private @Nullable Map<String, Object> myNamespace = null;
+
+  private int @Nullable [] myPythonVersion;
 
   /**
    * if true, collection items or dict values will be evaluated
@@ -66,6 +77,10 @@ public class PyEvaluator {
 
   public void setNamespace(@Nullable Map<String, Object> namespace) {
     myNamespace = namespace;
+  }
+
+  public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    myPythonVersion = new int[]{languageLevel.getMajorVersion(), languageLevel.getMinorVersion()};
   }
 
   public void setEvaluateCollectionItems(boolean evaluateCollectionItems) {
@@ -133,6 +148,22 @@ public class PyEvaluator {
 
   protected @Nullable Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
+
+    if (myPythonVersion != null && PyTokenTypes.RELATIONAL_OPERATIONS.contains(op)) {
+      if (isSysVersionInfoExpression(expression.getLeftExpression())) {
+        int[] version = evaluateAsVersion(expression.getRightExpression());
+        if (version != null) {
+          return evaluateVersionCheck(op, myPythonVersion, version);
+        }
+      }
+      else if (isSysVersionInfoExpression(expression.getRightExpression())) {
+        int[] version = evaluateAsVersion(expression.getLeftExpression());
+        if (version != null) {
+          return evaluateVersionCheck(op, version, myPythonVersion);
+        }
+      }
+    }
+
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
     if (op == PyTokenTypes.PLUS && lhs != null && rhs != null) {
@@ -179,6 +210,39 @@ public class PyEvaluator {
     }
 
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static int @Nullable [] evaluateAsVersion(@Nullable PyExpression expression) {
+    if (!(PyPsiUtils.flattenParens(expression) instanceof PyTupleExpression tupleExpression)) {
+      return null;
+    }
+    PyExpression[] elements = tupleExpression.getElements();
+    int[] result = new int[elements.length];
+    for (int i = 0; i < elements.length; i++) {
+      Integer num = evaluate(elements[i], Integer.class);
+      if (num == null) {
+        return null;
+      }
+      result[i] = num;
+    }
+    return result;
+  }
+
+  private static boolean evaluateVersionCheck(@NotNull PyElementType op, int @NotNull [] lhs, int @NotNull [] rhs) {
+    if (op == PyTokenTypes.LT) {
+      return ArrayUtil.lexicographicCompare(lhs, rhs) < 0;
+    }
+    if (op == PyTokenTypes.LE) {
+      return ArrayUtil.lexicographicCompare(lhs, rhs) <= 0;
+    }
+    if (op == PyTokenTypes.GT) {
+      return ArrayUtil.lexicographicCompare(lhs, rhs) > 0;
+    }
+    if (op == PyTokenTypes.GE) {
+      return ArrayUtil.lexicographicCompare(lhs, rhs) >= 0;
+    }
+    throw new IllegalArgumentException();
   }
 
   @ApiStatus.Internal
@@ -253,6 +317,9 @@ public class PyEvaluator {
   }
 
   protected @Nullable Object evaluateReference(@NotNull PyReferenceExpression expression) {
+    if (isTypeCheckingExpression(expression)) {
+      return true;
+    }
     if (!expression.isQualified()) {
       if (myNamespace != null) {
         return myNamespace.get(expression.getReferencedName());
@@ -411,6 +478,15 @@ public class PyEvaluator {
     return evaluateAsBoolean(prepareEvaluatorForBoolean(false), expression);
   }
 
+  @ApiStatus.Experimental
+  public static Boolean evaluateAsBooleanNoResolve(@Nullable PyExpression expression, @Nullable LanguageLevel languageLevel) {
+    PyEvaluator evaluator = prepareEvaluatorForBoolean(false);
+    if (languageLevel != null) {
+      evaluator.setLanguageLevel(languageLevel);
+    }
+    return evaluateAsBoolean(evaluator, expression);
+  }
+
   public static boolean evaluateAsBoolean(@Nullable PyExpression expression, boolean defaultValue) {
     return ObjectUtils.notNull(evaluateAsBoolean(expression), defaultValue);
   }
@@ -455,5 +531,21 @@ public class PyEvaluator {
       return result;
     }
     return myAllowExpressionsAsValues ? expression : null;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isSysVersionInfoExpression(@Nullable PyExpression expression) {
+    return PyPsiUtils.flattenParens(expression) instanceof PyReferenceExpression referenceExpression &&
+           SYS_VERSION_INFO.equals(referenceExpression.asQualifiedName());
+  }
+
+  @ApiStatus.Internal
+  public static boolean isTypeCheckingExpression(@Nullable PyExpression expression) {
+    return expression instanceof PyReferenceExpression referenceExpression && isTypeCheckingExpression(referenceExpression);
+  }
+
+  private static boolean isTypeCheckingExpression(@NotNull PyReferenceExpression expression) {
+    QualifiedName qualifiedName = expression.asQualifiedName();
+    return qualifiedName != null && TYPING_TYPE_CHECKING_NAMES.contains(qualifiedName);
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.BuildEvents;
 import com.intellij.build.events.BuildEventsNls.Description;
 import com.intellij.build.events.BuildEventsNls.Hint;
 import com.intellij.build.events.BuildEventsNls.Message;
@@ -50,7 +49,7 @@ public class FinishEventImpl extends AbstractBuildEvent implements FinishEvent {
   }
 
   /**
-   * @deprecated Use {@link BuildEvents#finish()} event builder instead.
+   * @deprecated Use {@link FinishEvent#builder} event builder instead.
    */
   @Deprecated
   public FinishEventImpl(

@@ -22,6 +22,7 @@ jvm_library(
     "//platform/kernel/rpc",
     "//platform/platform-impl/rpc",
     "//platform/core-api:core",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView.frontend` end

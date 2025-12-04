@@ -16,7 +16,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
@@ -26,6 +25,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -263,11 +263,11 @@ fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, f
  * and CodeWithMe.
  */
 @Internal
-fun saveSettingsForRemoteDevelopment(componentManager: ComponentManager) {
+fun saveSettingsForRemoteDevelopment(scope: CoroutineScope, componentManager: ComponentManager) {
   if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient())
     return
 
-  currentThreadCoroutineScope().launch {
+  scope.launch {
     // Don't replace with `saveSettings()`, it can't save under a remote clientId
     componentManager.stateStore.save(forceSavingAllSettings = true)
   }

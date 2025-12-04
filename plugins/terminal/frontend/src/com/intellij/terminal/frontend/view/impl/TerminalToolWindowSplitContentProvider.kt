@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
-internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentProvider {
+private class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentProvider {
   override fun createContentCopy(project: Project, content: Content): Content {
     val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW)
 

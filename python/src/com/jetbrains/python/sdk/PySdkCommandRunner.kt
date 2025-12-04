@@ -26,8 +26,9 @@ suspend fun <T> runExecutableWithProgress(
   env: Map<String, String> = emptyMap(),
   vararg args: String,
   transformer: ProcessOutputTransformer<T>,
+  processWeight: ConcurrentProcessWeight = ConcurrentProcessWeight.LIGHT
 ): PyResult<T> {
-  val execOptions = ExecOptions(timeout = timeout, env = env)
+  val execOptions = ExecOptions(timeout = timeout, env = env, weight = processWeight)
 
   val errorHandlerTransformer: ProcessOutputTransformer<T> = { output ->
     when {

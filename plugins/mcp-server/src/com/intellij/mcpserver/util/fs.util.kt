@@ -66,6 +66,9 @@ fun findMostRelevantProject(path: Path): Project? {
   return pairs.firstOrNull()?.first
 }
 
+/**
+ * Tries to relativize [virtualFile]'s path relatively to [Path].
+ */
 fun Path.relativizeIfPossible(virtualFile: VirtualFile): String {
   val nioPath = virtualFile.toNioPathOrNull()
                 ?: try {

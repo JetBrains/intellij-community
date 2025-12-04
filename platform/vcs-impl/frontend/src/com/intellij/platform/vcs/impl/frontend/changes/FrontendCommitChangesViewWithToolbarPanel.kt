@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes
 
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
@@ -17,10 +18,12 @@ import com.intellij.util.asDisposable
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
 
@@ -58,6 +61,9 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
+    cs.launch {
+      ChangesViewApi.getInstance().synchronizeInclusion(project.projectId())
+    }
   }
 
   private suspend fun subscribeToBackendEvents() {
@@ -83,15 +89,18 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
+      is BackendChangesViewEvent.SelectPath -> {
+        withContext(Dispatchers.UiWithModelAccess) {
+          changesView.selectFile(event.path.filePath.filePath)
+        }
+      }
     }
   }
 
   private fun scheduleRefresh(withDelay: Boolean, refreshCounter: Int) {
     scheduleRefresh(withDelay) {
-      cs.launch {
-        LOG.debug { "Changes view refreshed ($refreshCounter)" }
-        ChangesViewApi.getInstance().notifyRefreshPerformed(project.projectId(), refreshCounter)
-      }
+      LOG.debug { "Changes view refreshed ($refreshCounter)" }
+      ChangesViewApi.getInstance().notifyRefreshPerformed(project.projectId(), refreshCounter)
     }
   }
 

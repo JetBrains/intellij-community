@@ -29,7 +29,7 @@ import java.nio.file.Path
  * @param label Description label ("community" or "ultimate") for header generation
  * @return Result containing file status and statistics
  */
-fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): ModuleSetFileResult {
+internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): ModuleSetFileResult {
   val fileName = "${MODULE_SET_PREFIX}${moduleSet.name}.xml"
   val outputPath = outputDir.resolve(fileName)
 
@@ -44,6 +44,7 @@ fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): 
 
   // Only write if changed
   if (status != FileChangeStatus.UNCHANGED) {
+    Files.createDirectories(outputPath.parent)
     Files.writeString(outputPath, buildResult.xml)
   }
 
@@ -84,14 +85,7 @@ fun generateProductXml(
 
   // Compare with existing file if it exists
   val originalContent = Files.readString(pluginXmlPath)
-  val status = if (originalContent == buildResult.xml) {
-    FileChangeStatus.UNCHANGED
-  }
-  else {
-    FileChangeStatus.MODIFIED
-  }
-
-  // Only write if changed
+  val status = if (originalContent == buildResult.xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
   if (status != FileChangeStatus.UNCHANGED) {
     Files.writeString(pluginXmlPath, buildResult.xml)
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
+import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -34,6 +35,7 @@ interface UpdateCheckerFacade {
   fun loadProductData(indicator: ProgressIndicator?): Product?
 
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState)
+
   /**
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
@@ -47,6 +49,7 @@ interface UpdateCheckerFacade {
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
     updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
+    activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS
   ): InternalPluginResults
 
   fun saveDisabledToUpdatePlugins()

@@ -26,16 +26,20 @@ jvm_library(
     "//libraries/gson",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/execution",
     "//platform/execution-impl",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/vcs-impl",
     "//platform/core-ui",
     "//platform/util/jdom",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/text-matching",
     "//platform/statistics",
     "//platform/bookmarks",
+    "//platform/lang-api:lang",
+    "//platform/xdebugger-impl/shared",
   ]
 )
 ### auto-generated section `build intellij.platform.tasks.impl` end

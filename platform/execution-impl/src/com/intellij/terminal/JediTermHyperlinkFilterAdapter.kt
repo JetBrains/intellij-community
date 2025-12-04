@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -114,7 +115,9 @@ internal class JediTermHyperlinkFilterAdapter(
 
   private fun convertInfo(info: HyperlinkInfo): LinkInfo {
     val builder = LinkInfoEx.Builder().setNavigateCallback(Runnable {
-      info.navigate(project)
+      WriteIntentReadAction.run {
+        info.navigate(project)
+      }
     })
     if (info is HyperlinkWithPopupMenuInfo) {
       builder.setPopupMenuGroupProvider(object : PopupMenuGroupProvider {

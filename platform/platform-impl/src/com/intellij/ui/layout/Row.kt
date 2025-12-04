@@ -19,21 +19,26 @@ interface BaseBuilder
 interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun createChildRow(label: JLabel? = null,
-                     isSeparated: Boolean = false,
-                     noGrid: Boolean = false,
-                     @Nls title: String? = null): Row
+  @ApiStatus.Internal
+  fun createChildRow(label: JLabel? = null, isSeparated: Boolean = false): Row
+
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
+  fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+    return rowInternal(label, separated, init)
+  }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
+  @ApiStatus.Internal
+  fun rowInternal(label: JLabel?, separated: Boolean, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
-    return row(label?.let { Label(it) }, separated = separated, init)
+    return rowInternal(label?.let { Label(it) }, separated = separated, init)
   }
 
 }

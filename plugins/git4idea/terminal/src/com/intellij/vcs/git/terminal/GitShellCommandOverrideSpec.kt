@@ -58,27 +58,28 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
   }
 }
 
-private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithoutRemotes: Boolean = true): List<ShellCompletionSuggestion> =
-  lines.map { line ->
-    val splits = line.split(COLUMN_SPLIT_CHARACTER)
-    val name = splits.firstOrNull()!!.removePrefix("heads/").trim()
-    val isCurrentBranch = splits.getOrNull(1) == "*"
+private fun postProcessBranchesFromCommandLine(output: String, insertWithoutRemotes: Boolean = true): List<ShellCompletionSuggestion> =
+  output.lineSequence()
+    .filter { it.isNotBlank() }
+    .map { line ->
+      val splits = line.split(COLUMN_SPLIT_CHARACTER)
+      val name = splits.firstOrNull()!!.removePrefix("heads/").trim()
+      val isCurrentBranch = splits.getOrNull(1) == "*"
 
-    // Current branch
-    if (isCurrentBranch) {
-      return@map branchSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
+      // Current branch
+      if (isCurrentBranch) {
+        return@map branchSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
+      }
+
+      // Remote branches
+      if (name.startsWith("remotes/")) {
+        return@map branchSuggestion(if (insertWithoutRemotes) name.removePrefix("remotes/") else name, description = GitTerminalBundle.message("branch.remote"))
+      }
+
+      branchSuggestion(name)
     }
-
-    // Remote branches
-    if (name.startsWith("remotes/")) {
-      return@map branchSuggestion(
-        if (insertWithoutRemotes) name.removePrefix("remotes/") else name,
-        description = GitTerminalBundle.message("branch.remote")
-      )
-    }
-
-    branchSuggestion(name)
-  }.distinctBy { it.name }
+    .distinctBy { it.name }
+    .toList()
 
 // git --no-optional-locks branch --no-color --sort=-committerdate
 private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-local-branches") { context ->
@@ -99,7 +100,7 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
     val result = context.runShellCommand(GET_LOCAL_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
-    postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
+    postProcessBranchesFromCommandLine(result.output, insertWithoutRemotes = true)
   }
 }
 
@@ -122,7 +123,7 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
     val result = context.runShellCommand(GET_ALL_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
-    postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
+    postProcessBranchesFromCommandLine(result.output, insertWithoutRemotes = true)
   }
 }
 
@@ -144,7 +145,7 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
     val result = context.runShellCommand(GET_REMOTE_BRANCHES_COMMAND)
     if (result.exitCode != 0) return@ShellRuntimeDataGenerator listOf()
 
-    postProcessBranchesFromCommandLine(result.output.lines(), insertWithoutRemotes = true)
+    postProcessBranchesFromCommandLine(result.output, insertWithoutRemotes = true)
   }
 }
 

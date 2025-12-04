@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -158,10 +159,14 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
   class FramesContainer(val executionStack: XExecutionStack, private val session: XDebugSessionProxy) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
-      if (!session.hasSuspendContext()) return
+      if (!session.hasSuspendContext()) {
+        node.setMessage(XDebuggerBundle.message("debugger.frames.not.available"))
+        return
+      }
 
       executionStack.computeStackFrames(0, object : XExecutionStack.XStackFrameContainer {
         override fun errorOccurred(errorMessage: String) {
+          node.setMessage(errorMessage)
         }
 
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
@@ -174,6 +179,12 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
       node.setPresentation(executionStack.icon, XRegularValuePresentation(executionStack.displayName, null, ""), true)
+    }
+
+    private fun XCompositeNode.setMessage(text: String) {
+      // remove temporary loading message nodes
+      addChildren(XValueChildrenList.EMPTY, true)
+      setMessage(text, null, SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
     }
   }
 

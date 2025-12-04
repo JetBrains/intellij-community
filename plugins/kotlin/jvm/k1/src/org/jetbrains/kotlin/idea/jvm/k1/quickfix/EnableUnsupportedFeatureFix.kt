@@ -118,7 +118,7 @@ sealed class EnableUnsupportedFeatureFix(
             val apiVersionOnly = sinceVersion <= languageFeatureSettings.languageVersion &&
                     feature.sinceApiVersion > languageFeatureSettings.apiVersion
 
-            if (!sinceVersion.isStableOrReadyForPreview() && !isApplicationInternalMode()) {
+            if (!sinceVersion.isStable && !isApplicationInternalMode()) {
                 return null
             }
 

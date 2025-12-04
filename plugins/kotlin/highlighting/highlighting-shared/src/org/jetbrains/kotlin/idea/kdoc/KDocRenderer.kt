@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 
 object KDocRenderer {
@@ -116,6 +117,9 @@ object KDocRenderer {
         }
     }
 
+    private fun KDocReference.resolveToElement(): PsiElement? =
+        multiResolve(incompleteCode = false).firstOrNull()?.element
+
     private fun getTargetLinkElementAttributes(element: PsiElement?): TextAttributes {
         return element
             ?.let { textAttributesKeyForKtElement(it)?.attributesKey }
@@ -147,7 +151,8 @@ object KDocRenderer {
     }
 
     private fun KDocLink.getTargetElement(): PsiElement? {
-        return getChildrenOfType<KDocName>().last().references.firstOrNull { it is KDocReference }?.resolve()
+        return getChildrenOfType<KDocName>().last().references.firstIsInstanceOrNull<KDocReference>()
+            ?.resolveToElement()
     }
 
     @Nls
@@ -430,8 +435,8 @@ object KDocRenderer {
                         } else {
                             comment.findDescendantOfType<KDocName> { it.text == label }
                                 ?.references
-                                ?.firstOrNull { it is KDocReference }
-                                ?.resolve()
+                                ?.firstIsInstanceOrNull<KDocReference>()
+                                ?.resolveToElement()
                                 ?.let { resolvedLinkElement ->
                                     DocumentationManagerUtil.createHyperlink(
                                         sb,

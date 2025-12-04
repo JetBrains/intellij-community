@@ -1,0 +1,9 @@
+- name: dist.all/lib/intellij.platform.projectModel.jar
+  modules:
+  - name: intellij.platform.backend.workspace
+  - name: intellij.platform.concurrency
+  - name: intellij.platform.diagnostic.telemetry
+  - name: intellij.platform.eel.provider
+  - name: intellij.platform.projectModel
+  - name: intellij.platform.workspace.jps
+  - name: intellij.platform.workspace.storage

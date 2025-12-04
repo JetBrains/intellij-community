@@ -18,16 +18,16 @@ import org.junit.runner.RunWith;
 @TestRoot("compiler-reference-index/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin")
-    public abstract static class Kotlin extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+    public abstract static class Kotlin extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-        public abstract static class CompanionObject extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class CompanionObject extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestInContainingClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInContainingClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -46,7 +46,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestInContainingClassNoErrors extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInContainingClassNoErrors extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -65,7 +65,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestJavaUsage extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaUsage extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -84,7 +84,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestNamed extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestNamed extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -103,7 +103,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestNamedWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestNamedWithInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -122,7 +122,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestSimple extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSimple extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -141,7 +141,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestWithInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestWithInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -160,7 +160,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestWithInvokeExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestWithInvokeExtension extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -179,7 +179,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/companionObject")
-            public static class TestWithInvokeFromParent extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestWithInvokeFromParent extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -199,13 +199,13 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-        public abstract static class Conventions extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class Conventions extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-            public abstract static class Components extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class Components extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestCallableReferences extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestCallableReferences extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -224,7 +224,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestCompanionObjectAccess extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestCompanionObjectAccess extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -243,7 +243,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestComponentFunForGenericType1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestComponentFunForGenericType1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -262,7 +262,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestComponentFunForGenericType2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestComponentFunForGenericType2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -281,7 +281,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestDataClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDataClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -300,7 +300,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestDataClassComponentByRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDataClassComponentByRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -319,7 +319,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestDataClassComponentByRefLocal extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDataClassComponentByRefLocal extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -338,7 +338,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestDataClassFromStdlib extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDataClassFromStdlib extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -357,7 +357,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestDataClassInsideDataClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDataClassInsideDataClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -376,7 +376,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestExtensionComponentFun extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestExtensionComponentFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -395,7 +395,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestFor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestFor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -414,7 +414,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestIsAndAs extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestIsAndAs extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -433,7 +433,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestLambdas extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestLambdas extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -452,7 +452,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestMayTypeAffectAncestors extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestMayTypeAffectAncestors extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -471,7 +471,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestMemberComponentFun extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestMemberComponentFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -490,7 +490,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestOperators extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestOperators extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -509,7 +509,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestPropertyDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -528,7 +528,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestRecursiveDataClass1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestRecursiveDataClass1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -547,7 +547,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestRecursiveDataClass2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestRecursiveDataClass2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -566,7 +566,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestSAM extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestSAM extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -585,7 +585,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
-                public static class TestWhen extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestWhen extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -605,10 +605,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
-            public abstract static class Invoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class Invoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
-                public static class TestInvokeAsTypeParameterExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestInvokeAsTypeParameterExtension extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -627,7 +627,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
-                public static class TestInvokeAsTypeParameterExtensionWithSmartCast extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestInvokeAsTypeParameterExtensionWithSmartCast extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -646,7 +646,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
-                public static class TestInvokeInObjectAsFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestInvokeInObjectAsFunction extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -665,7 +665,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
-                public static class TestSuspendInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestSuspendInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -685,7 +685,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestCompareTo extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestCompareTo extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -704,7 +704,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestContains extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestContains extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -723,7 +723,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestEquals extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEquals extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -742,7 +742,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestEqualsNotAny extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEqualsNotAny extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -761,7 +761,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestForIteration extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestForIteration extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -780,7 +780,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestGet extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestGet extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -799,7 +799,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestGetAsPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestGetAsPropertyDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -818,7 +818,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestGetInObject extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestGetInObject extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -837,7 +837,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInc extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInc extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -856,7 +856,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -875,7 +875,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInvokeExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeExtension extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -894,7 +894,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInvokeInObject extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeInObject extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -913,7 +913,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInvokeInheritance extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeInheritance extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -932,7 +932,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestInvokeWithVarArg extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeWithVarArg extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -951,7 +951,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestPlus extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPlus extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -970,7 +970,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestPlusAssign extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPlusAssign extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -989,7 +989,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestRecursive extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestRecursive extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1008,7 +1008,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestSet extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSet extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1027,7 +1027,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestSet1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSet1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1046,7 +1046,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestSetAsPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSetAsPropertyDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1065,7 +1065,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestSeveralOperators extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSeveralOperators extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1084,7 +1084,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions")
-            public static class TestUnaryMinus extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestUnaryMinus extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1104,10 +1104,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-        public abstract static class FindClassUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindClassUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestClassUsedInPlainText extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestClassUsedInPlainText extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1126,7 +1126,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestClassUsedInTextAsRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestClassUsedInTextAsRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1145,7 +1145,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1164,7 +1164,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1183,7 +1183,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassFunctionUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassFunctionUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1202,7 +1202,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassFunctionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassFunctionUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1221,7 +1221,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassNonConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassNonConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1240,7 +1240,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassPropertyUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1259,7 +1259,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1278,7 +1278,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaClassSecondaryCtrUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassSecondaryCtrUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1297,7 +1297,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaDerivedClassUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaDerivedClassUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1316,7 +1316,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaDerivedClassUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaDerivedClassUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1335,7 +1335,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaDerivedInterfaceUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaDerivedInterfaceUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1354,7 +1354,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaDerivedInterfaceUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaDerivedInterfaceUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1373,7 +1373,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaInterfaceAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1392,7 +1392,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJavaLambdaUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaLambdaUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1411,7 +1411,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestJvmClassNameInLiteral extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmClassNameInLiteral extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1430,7 +1430,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinAliasedClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1449,7 +1449,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1468,7 +1468,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassAllUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassAllUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1487,7 +1487,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassAllUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassAllUsages3 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1506,7 +1506,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassAllUsagesNoImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassAllUsagesNoImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1525,7 +1525,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1544,7 +1544,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedAnonymousObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1563,7 +1563,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1582,7 +1582,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedInnerClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1601,7 +1601,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedInnerObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1620,7 +1620,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedLocalClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1639,7 +1639,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedLocalObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1658,7 +1658,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassDerivedObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1677,7 +1677,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassFunctionUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassFunctionUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1696,7 +1696,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassFunctionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassFunctionUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1715,7 +1715,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassImportAliasAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassImportAliasAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1734,7 +1734,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassNonConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassNonConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1753,7 +1753,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassPropertyUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1772,7 +1772,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1791,7 +1791,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinClassSecondaryCtorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassSecondaryCtorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1810,7 +1810,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinDeeplyNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinDeeplyNestedClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1829,7 +1829,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInnerClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInnerClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1848,7 +1848,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1867,7 +1867,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedAnonymousObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1886,7 +1886,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1905,7 +1905,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedInnerClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1924,7 +1924,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedInnerObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1943,7 +1943,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedInterfaces extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedInterfaces extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1962,7 +1962,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedLocalClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1981,7 +1981,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedLocalObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2000,7 +2000,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinInterfaceDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceDerivedObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2019,7 +2019,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinLocalClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalClassDerivedAnonymousObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2038,7 +2038,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinLocalClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalClassDerivedLocalClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2057,7 +2057,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinLocalClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalClassDerivedLocalObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2076,7 +2076,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinLocalClassUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalClassUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2095,7 +2095,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinLocalClassUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalClassUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2114,7 +2114,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinNestedClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2133,7 +2133,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestKotlinPrivateClassUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivateClassUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2152,7 +2152,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestLocalAndNonLocalClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestLocalAndNonLocalClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2171,7 +2171,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorOfEnum extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2190,7 +2190,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestPrimaryConstructorWithDefaultParams extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorWithDefaultParams extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2209,7 +2209,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
-            public static class TestUsageInTypeAlias extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestUsageInTypeAlias extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2229,10 +2229,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages")
-        public abstract static class FindEnumEntryUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindEnumEntryUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages")
-            public static class TestEnumEntry extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEnumEntry extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2252,10 +2252,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-        public abstract static class FindFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindFunctionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestDataClassComponent extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestDataClassComponent extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2274,7 +2274,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestEnumFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEnumFunctionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2293,7 +2293,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestEnumValueOf extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEnumValueOf extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2312,7 +2312,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestFunctionCallWithinLambda extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestFunctionCallWithinLambda extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2331,7 +2331,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestFunctionUsedInPlainText extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestFunctionUsedInPlainText extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2350,7 +2350,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestHighlightingOfSuperUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestHighlightingOfSuperUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2369,7 +2369,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestInterfaceOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInterfaceOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2388,7 +2388,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestInvokeFromClassCompanion extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeFromClassCompanion extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2407,7 +2407,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestInvokeFromClassCompanionExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeFromClassCompanionExtension extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2426,7 +2426,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestInvokeFromInterfaceCompanion extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeFromInterfaceCompanion extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2445,7 +2445,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestInvokeFromParentCompanionClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestInvokeFromParentCompanionClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2464,7 +2464,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJavaAndKotlinOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaAndKotlinOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2483,7 +2483,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJavaLambdaUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaLambdaUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2502,7 +2502,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJavaMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2521,7 +2521,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmOverloaded extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2540,7 +2540,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJvmStaticFun extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmStaticFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2559,7 +2559,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestJvmStaticJvmOverloadsFun extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmStaticJvmOverloadsFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2578,7 +2578,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinAliasedMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinAliasedMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2597,7 +2597,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinExtensionFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinExtensionFunction extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2616,7 +2616,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinFunctionWithPropertyFromSuperClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinFunctionWithPropertyFromSuperClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2635,7 +2635,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinInterfaceImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceImplThroughDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2654,7 +2654,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinInterfaceNoImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInterfaceNoImplThroughDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2673,7 +2673,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinInternalMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinInternalMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2692,7 +2692,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinLocalMethodUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalMethodUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2711,7 +2711,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinLocalMethodUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalMethodUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2730,7 +2730,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinMethodAliasedUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMethodAliasedUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2749,7 +2749,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2768,7 +2768,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinMethodsAliasedUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMethodsAliasedUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2787,7 +2787,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMultiRefInImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2806,7 +2806,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinNestedClassMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinNestedClassMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2825,7 +2825,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinNoBaseMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinNoBaseMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2844,7 +2844,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2863,7 +2863,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2882,7 +2882,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsages3 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2901,7 +2901,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsages4 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsages4 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2920,7 +2920,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsages5 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsages5 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2939,7 +2939,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesSameClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesSameClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2958,7 +2958,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesSuperClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesSuperClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2977,7 +2977,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevel extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -2996,7 +2996,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3015,7 +3015,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3034,7 +3034,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesTopLevelExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelExtension extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3053,7 +3053,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinOverloadAndExtensionUsagesTopLevelVsInstance extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelVsInstance extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3072,7 +3072,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinPrivateMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivateMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3091,7 +3091,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinTopLevelExternalFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelExternalFunction extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3110,7 +3110,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinTopLevelMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3129,7 +3129,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinTopLevelMethodUsagesMultifile extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelMethodUsagesMultifile extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3148,7 +3148,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinTopLevelMethodUsagesNoImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelMethodUsagesNoImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3167,7 +3167,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestKotlinTopLevelMethodUsagesWithRenamedFile extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelMethodUsagesWithRenamedFile extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3186,7 +3186,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestLabeledReturns extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestLabeledReturns extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3205,7 +3205,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestLocalClassMember extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestLocalClassMember extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3224,7 +3224,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestNonBaseDeclarationFunctionAsPropName extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestNonBaseDeclarationFunctionAsPropName extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3243,7 +3243,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionDeepMember extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionDeepMember extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3262,7 +3262,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionMember extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionMember extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3281,7 +3281,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionMember2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionMember2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3300,7 +3300,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionMemberInClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionMemberInClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3319,7 +3319,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionMemberInCompanion extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionMemberInCompanion extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3338,7 +3338,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestObjectExpressionMemberInTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectExpressionMemberInTopLevel extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3357,7 +3357,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3376,7 +3376,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestPrivateKotlinClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrivateKotlinClass extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3395,7 +3395,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestPrivateKotlinObject extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrivateKotlinObject extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3414,7 +3414,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestUsagesOfBaseForFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestUsagesOfBaseForFunction extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3434,10 +3434,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
-        public abstract static class FindJavaPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindJavaPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
-            public static class TestJavaPropertyUsagesK extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsagesK extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3456,7 +3456,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
-            public static class TestJavaPropertyUsagesKJK extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsagesKJK extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3475,7 +3475,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findJavaPropertyUsages")
-            public static class TestJavaPropertyUsagesKK extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsagesKK extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3495,10 +3495,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-        public abstract static class FindObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestJavaObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3517,7 +3517,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinImportedObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinImportedObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3536,7 +3536,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinLocalObjectUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalObjectUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3555,7 +3555,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinLocalObjectUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalObjectUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3574,7 +3574,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinNestedObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinNestedObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3593,7 +3593,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3612,7 +3612,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findObjectUsages")
-            public static class TestKotlinPrivateObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivateObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3632,10 +3632,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPackageUsages")
-        public abstract static class FindPackageUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindPackageUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPackageUsages")
-            public static class TestKotlinPackageUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPackageUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3655,10 +3655,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-        public abstract static class FindParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinAnnotationConstructorParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinAnnotationConstructorParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3677,7 +3677,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinComponentFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinComponentFunctionParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3696,7 +3696,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinConstructorParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinConstructorParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3715,7 +3715,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinConstructorParameterUsagesOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinConstructorParameterUsagesOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3734,7 +3734,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinDefaultAnnotationParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinDefaultAnnotationParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3753,7 +3753,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinFunctionParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3772,7 +3772,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinFunctionTypeParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3791,7 +3791,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinHighlightParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinHighlightParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3810,7 +3810,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinMemberFunctionMultipleParametersWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMemberFunctionMultipleParametersWithSearchInOverridings extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3829,7 +3829,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinMemberFunctionParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMemberFunctionParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3848,7 +3848,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestKotlinMemberFunctionParameterUsagesWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMemberFunctionParameterUsagesWithSearchInOverridings extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3867,7 +3867,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestParameterNameInTextFile extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestParameterNameInTextFile extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3886,7 +3886,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestParameterUsageInAnonymousInheritor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestParameterUsageInAnonymousInheritor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3905,7 +3905,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
-            public static class TestParameterUsageInAnonymousInheritorWithSearchInOverridings extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestParameterUsageInAnonymousInheritorWithSearchInOverridings extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3925,10 +3925,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-        public abstract static class FindPrimaryConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindPrimaryConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestAnnotationConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestAnnotationConstructorCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3947,7 +3947,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestAnnotationEntry extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestAnnotationEntry extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3966,7 +3966,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestConstructorCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -3985,7 +3985,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestEnumConstants extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestEnumConstants extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4004,7 +4004,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmOverloaded extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4023,7 +4023,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestMissingName extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestMissingName extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4042,7 +4042,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestPrimaryConstructorByRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorByRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4061,7 +4061,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestPrimaryConstructorNoKeyword extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorNoKeyword extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4080,7 +4080,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestPrimaryConstructorOfEnum extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorOfEnum extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4099,7 +4099,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestPrimaryConstructorWithKeyword extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorWithKeyword extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4118,7 +4118,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
-            public static class TestPrimaryConstructorWithOverloadedOption extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorWithOverloadedOption extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4138,10 +4138,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-        public abstract static class FindPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestBaseAndOverridingPropertyInBodyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestBaseAndOverridingPropertyInBodyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4160,7 +4160,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestBaseAndOverridingPropertyInCtrUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestBaseAndOverridingPropertyInCtrUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4179,7 +4179,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestExtensionPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestExtensionPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4198,7 +4198,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaAndKotlinImplementations extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaAndKotlinImplementations extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4217,7 +4217,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaAndKotlinOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaAndKotlinOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4236,7 +4236,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaAndKotlinOverrides2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaAndKotlinOverrides2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4255,7 +4255,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaClassObjectPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassObjectPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4274,7 +4274,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaClassObjectPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaClassObjectPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4293,7 +4293,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyReadUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyReadUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4312,7 +4312,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyReadUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyReadUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4331,7 +4331,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4350,7 +4350,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4369,7 +4369,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyUsages3 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4388,7 +4388,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyWriteUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyWriteUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4407,7 +4407,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJavaPropertyWriteUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyWriteUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4426,7 +4426,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJvmFieldProperty extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmFieldProperty extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4445,7 +4445,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestJvmStaticProperty extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmStaticProperty extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4464,7 +4464,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinClassObjectPropertyUsage extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassObjectPropertyUsage extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4483,7 +4483,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinLocalPropertyUsages1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalPropertyUsages1 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4502,7 +4502,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinLocalPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinLocalPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4521,7 +4521,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMultiRefInImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4540,7 +4540,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinNestedClassPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinNestedClassPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4559,7 +4559,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPrivatePropertyInClassObjectUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivatePropertyInClassObjectUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4578,7 +4578,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPrivatePropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivatePropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4597,7 +4597,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPrivatePropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivatePropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4616,7 +4616,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPrivatePropertyUsages3 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivatePropertyUsages3 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4635,7 +4635,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPrivatePropertyUsages4 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPrivatePropertyUsages4 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4654,7 +4654,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyReadUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyReadUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4673,7 +4673,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyReadUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyReadUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4692,7 +4692,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertySameNameAsMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertySameNameAsMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4711,7 +4711,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4730,7 +4730,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4749,7 +4749,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyWriteUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyWriteUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4768,7 +4768,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinPropertyWriteUsages2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyWriteUsages2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4787,7 +4787,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKotlinTopLevelPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinTopLevelPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4806,7 +4806,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestKt7656 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKt7656 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4826,10 +4826,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-        public abstract static class FindSecondaryConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindSecondaryConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestConstructorCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4848,7 +4848,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestDefaultSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestDefaultSecondaryConstructor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4867,7 +4867,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJvmOverloaded extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4886,7 +4886,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSecondaryConstructor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4905,7 +4905,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestSecondaryConstructorInMethodReference extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSecondaryConstructorInMethodReference extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4924,7 +4924,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findSecondaryConstructorUsages")
-            public static class TestSecondaryConstructorWithOverloadedOption extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSecondaryConstructorWithOverloadedOption extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4944,10 +4944,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
-        public abstract static class FindTypeAliasUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindTypeAliasUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
-            public static class TestClassAlias extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestClassAlias extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4966,7 +4966,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeAliasUsages")
-            public static class TestObjectAlias extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestObjectAlias extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -4986,10 +4986,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
-        public abstract static class FindTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindTypeParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
-            public static class TestKotlinClassTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassTypeParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5008,7 +5008,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
-            public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinFunctionTypeParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5027,7 +5027,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
-            public static class TestKotlinReifiedTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinReifiedTypeParameterUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5046,7 +5046,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findTypeParameterUsages")
-            public static class TestPropertyWithTypeParameter extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPropertyWithTypeParameter extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5066,10 +5066,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithFilteringImports")
-        public abstract static class FindWithFilteringImports extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindWithFilteringImports extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithFilteringImports")
-            public static class TestFindWithFilteringImports extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestFindWithFilteringImports extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5089,10 +5089,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
-        public abstract static class FindWithStructuralGrouping extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindWithStructuralGrouping extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
-            public static class TestKotlinClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5111,7 +5111,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
-            public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5130,7 +5130,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findWithStructuralGrouping")
-            public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestKotlinPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5150,13 +5150,13 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal")
-        public abstract static class Internal extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class Internal extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-            public abstract static class FindFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class FindFunctionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestEnumFunctionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestEnumFunctionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5175,7 +5175,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestKotlinInterfaceImplThroughDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinInterfaceImplThroughDelegate extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5194,7 +5194,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestKotlinMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5213,7 +5213,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinMultiRefInImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5232,7 +5232,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestKotlinOverloadAndExtensionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinOverloadAndExtensionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5251,7 +5251,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestKotlinTopLevelMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinTopLevelMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5270,7 +5270,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages")
-                public static class TestUsagesOfBaseForFunction extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestUsagesOfBaseForFunction extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5290,10 +5290,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
-            public abstract static class FindPrimaryConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class FindPrimaryConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
-                public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestConstructorCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5312,7 +5312,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPrimaryConstructorUsages")
-                public static class TestPrimaryConstructorByRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestPrimaryConstructorByRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5332,10 +5332,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
-            public abstract static class FindPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class FindPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
-                public static class TestKotlinClassObjectPropertyUsage extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinClassObjectPropertyUsage extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5354,7 +5354,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
-                public static class TestKotlinMultiRefInImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinMultiRefInImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5373,7 +5373,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
-                public static class TestKotlinPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5392,7 +5392,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findPropertyUsages")
-                public static class TestKotlinTopLevelPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestKotlinTopLevelPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5412,10 +5412,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
-            public abstract static class FindSecondaryConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public abstract static class FindSecondaryConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
-                public static class TestConstructorCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestConstructorCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5434,7 +5434,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
-                public static class TestDefaultSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestDefaultSecondaryConstructor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5453,7 +5453,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/internal/findSecondaryConstructorUsages")
-                public static class TestSecondaryConstructor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                public static class TestSecondaryConstructor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                     @java.lang.Override
                     @org.jetbrains.annotations.NotNull
                     public final KotlinPluginMode getPluginMode() {
@@ -5474,10 +5474,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
-        public abstract static class PropertyFiles extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class PropertyFiles extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
-            public static class TestPropertyFileUsagesByRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPropertyFileUsagesByRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5496,7 +5496,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/propertyFiles")
-            public static class TestPropertyUsagesByRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPropertyUsagesByRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5516,10 +5516,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/unresolvedAnnotation")
-        public abstract static class UnresolvedAnnotation extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class UnresolvedAnnotation extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/unresolvedAnnotation")
-            public static class TestUnresolvedAnnotation extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestUnresolvedAnnotation extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5539,10 +5539,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
-        public abstract static class Variable extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class Variable extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
-            public static class TestPlusAssignFun extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPlusAssignFun extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5561,7 +5561,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
-            public static class TestReadAccess extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestReadAccess extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5580,7 +5580,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
-            public static class TestVarInDoWhile extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestVarInDoWhile extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5599,7 +5599,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/variable")
-            public static class TestWriteAccess extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestWriteAccess extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5620,13 +5620,13 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/java")
-    public abstract static class Java extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+    public abstract static class Java extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-        public abstract static class FindConstructorUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindConstructorUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestJavaConstructorInDelegationCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaConstructorInDelegationCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5645,7 +5645,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestJavaDefaultConstructorInDelegationCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaDefaultConstructorInDelegationCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5664,7 +5664,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestPrimaryConstructorByJavaRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorByJavaRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5683,7 +5683,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestPrimaryConstructorByJavaSuperRef extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestPrimaryConstructorByJavaSuperRef extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5702,7 +5702,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestSecondaryConstructorByJavaNewExpression extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSecondaryConstructorByJavaNewExpression extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5721,7 +5721,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findConstructorUsages")
-            public static class TestSecondaryConstructorByJavaSuperCall extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSecondaryConstructorByJavaSuperCall extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5741,10 +5741,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-        public abstract static class FindJavaClassUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindJavaClassUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKAliasedClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5763,7 +5763,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5782,7 +5782,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedAnonymousObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5801,7 +5801,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5820,7 +5820,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedInnerClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5839,7 +5839,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedInnerObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5858,7 +5858,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedLocalClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5877,7 +5877,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedLocalObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5896,7 +5896,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassDerivedObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5915,7 +5915,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassFieldsUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassFieldsUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5934,7 +5934,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassMethodsUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassMethodsUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5953,7 +5953,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKClassWithImplicitConstructorAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKClassWithImplicitConstructorAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5972,7 +5972,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKDerivedInterfaces extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKDerivedInterfaces extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -5991,7 +5991,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInnerClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInnerClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6010,7 +6010,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedAnonymousObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedAnonymousObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6029,7 +6029,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6048,7 +6048,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedInnerClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedInnerClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6067,7 +6067,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedInnerObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedInnerObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6086,7 +6086,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedLocalClasses extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedLocalClasses extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6105,7 +6105,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedLocalObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedLocalObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6124,7 +6124,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKInterfaceDerivedObjects extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKInterfaceDerivedObjects extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6143,7 +6143,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaClassUsages")
-            public static class TestJKNestedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKNestedClassAllUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6163,10 +6163,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
-        public abstract static class FindJavaFieldUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindJavaFieldUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
-            public static class TestJKFieldUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKFieldUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6185,7 +6185,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
-            public static class TestJKFieldUsagesReadWriteAccess extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKFieldUsagesReadWriteAccess extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6204,7 +6204,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
-            public static class TestJKRecordFieldUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKRecordFieldUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6224,10 +6224,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-        public abstract static class FindJavaMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindJavaMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestConventionUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestConventionUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6246,7 +6246,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestDefaultJavaAnnotationMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestDefaultJavaAnnotationMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6265,7 +6265,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJKMethodOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKMethodOverrides extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6284,7 +6284,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJKMethodUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJKMethodUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6303,7 +6303,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJavaComponentFunctions extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaComponentFunctions extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6322,7 +6322,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJavaInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6341,7 +6341,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJavaInvokeWithStaticImport extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaInvokeWithStaticImport extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6360,7 +6360,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestJavaWithGroovyInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaWithGroovyInvoke extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6379,7 +6379,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestMismatchedAccessor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestMismatchedAccessor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6398,7 +6398,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverriddenMethodSyntheticAccessor extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverriddenMethodSyntheticAccessor extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6417,7 +6417,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverriddenMethodSyntheticAccessor2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverriddenMethodSyntheticAccessor2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6436,7 +6436,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverriddenMethodSyntheticAccessorWithFinalModifier extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverriddenMethodSyntheticAccessorWithFinalModifier extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6455,7 +6455,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenArrayType extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenArrayType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6474,7 +6474,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenBoxedType extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenBoxedType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6493,7 +6493,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenFlexibleCollection extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenFlexibleCollection extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6512,7 +6512,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenRawGenericSignatureBase extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenRawGenericSignatureBase extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6531,7 +6531,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenRawGenericSignatureBase2 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenRawGenericSignatureBase2 extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6550,7 +6550,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestOverridenRawType extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestOverridenRawType extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6569,7 +6569,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestSyntheticProperties extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestSyntheticProperties extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6588,7 +6588,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaMethodUsages")
-            public static class TestUnaryNot extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestUnaryNot extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6608,10 +6608,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaPropertyUsages")
-        public abstract static class FindJavaPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public abstract static class FindJavaPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaPropertyUsages")
-            public static class TestJavaPropertyGetterUsagesKJ extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertyGetterUsagesKJ extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6630,7 +6630,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaPropertyUsages")
-            public static class TestJavaPropertySetterUsagesKJ extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+            public static class TestJavaPropertySetterUsagesKJ extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -6651,10 +6651,10 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/propertyFiles")
-    public abstract static class PropertyFiles extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+    public abstract static class PropertyFiles extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/propertyFiles")
-        public static class TestPropertyFileUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public static class TestPropertyFileUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -6673,7 +6673,7 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/findUsages/propertyFiles")
-        public static class TestPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+        public static class TestPropertyUsages extends AbstractK1FindUsagesWithCompilerReferenceIndexTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {

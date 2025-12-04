@@ -16,7 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -62,14 +62,14 @@ open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps 
   }
 
   @ApiStatus.Internal
-  override fun findJdk(name: String, eelDescriptor: EelDescriptor): Sdk? {
-    return delegate.findSdkByName(name, environmentName = eelDescriptor.machine.getInternalEnvironmentName())
+  override fun findJdk(name: String, eelMachine: EelMachine): Sdk? {
+    return delegate.findSdkByName(name, eelMachine)
   }
 
   @ApiStatus.Internal
-  override fun findJdk(name: String, type: String, eelDescriptor: EelDescriptor): Sdk? {
-    val environmentName = eelDescriptor.machine.getInternalEnvironmentName()
-    val sdk = delegate.findSdkByName(name, environmentName)
+  override fun findJdk(name: String, type: String, eelMachine: EelMachine): Sdk? {
+    val environmentName = eelMachine.getInternalEnvironmentName()
+    val sdk = delegate.findSdkByName(name, eelMachine)
     if (sdk != null) return sdk
     return getCachedJdkOrTryCreateJdkUsingSystemProperty(name, type, environmentName)
   }
@@ -97,8 +97,8 @@ open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps 
   }
 
   @ApiStatus.Internal
-  override fun createSdk(name: String, sdkType: SdkTypeId, eelDescriptor: EelDescriptor): Sdk {
-    return delegate.createSdk(name, sdkType, eelDescriptor.machine.getInternalEnvironmentName())
+  override fun createSdk(name: String, sdkType: SdkTypeId, eelMachine: EelMachine): Sdk {
+    return delegate.createSdk(name, sdkType, eelMachine.getInternalEnvironmentName())
   }
 
   override fun getAllJdks(): Array<Sdk> = delegate.getAllSdks().toTypedArray()

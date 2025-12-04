@@ -15,7 +15,7 @@ jvm_library(
   resources = [":common_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
     "@lib//:protobuf",
@@ -31,7 +31,7 @@ jvm_library(
   associates = [":common"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
     "@lib//:protobuf",

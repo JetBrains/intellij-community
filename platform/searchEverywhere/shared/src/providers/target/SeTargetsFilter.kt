@@ -3,7 +3,6 @@ package com.intellij.platform.searchEverywhere.providers.target
 
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.SeFilterValue
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -12,12 +11,12 @@ class SeTargetsFilter(val selectedScopeId: String?, val isAutoTogglePossible: Bo
   fun cloneWith(hiddenTypes: List<String>?): SeTargetsFilter = SeTargetsFilter(selectedScopeId, isAutoTogglePossible, hiddenTypes)
 
   override fun toState(): SeFilterState {
-    val map = mutableMapOf<String, SeFilterValue>()
-    selectedScopeId?.let { map[SELECTED_SCOPE_ID] = SeFilterValue.One(it) }
-    map[IS_AUTO_TOGGLE_POSSIBLE] = SeFilterValue.One(isAutoTogglePossible.toString())
+    val map = mutableMapOf<String, List<String>>()
+    selectedScopeId?.let { map[SELECTED_SCOPE_ID] = listOf(it) }
+    map[IS_AUTO_TOGGLE_POSSIBLE] = listOf(isAutoTogglePossible.toString())
 
     if (hiddenTypes?.isNotEmpty() == true) {
-      map[HIDDEN_TYPES] = SeFilterValue.Many(hiddenTypes)
+      map[HIDDEN_TYPES] = hiddenTypes
     }
     return SeFilterState.Data(map)
   }
@@ -30,17 +29,9 @@ class SeTargetsFilter(val selectedScopeId: String?, val isAutoTogglePossible: Bo
     fun from(state: SeFilterState): SeTargetsFilter {
       when (state) {
         is SeFilterState.Data -> {
-          val map = state.map
-
-          val selectedScopeId = map[SELECTED_SCOPE_ID]?.let {
-            it as? SeFilterValue.One
-          }?.value
-
-          val isAutoTogglePossible = state.map[IS_AUTO_TOGGLE_POSSIBLE]?.let { it as? SeFilterValue.One }?.value?.toBoolean() ?: false
-
-          val hiddenTypes = map[HIDDEN_TYPES]?.let {
-            it as? SeFilterValue.Many
-          }?.values ?: emptyList()
+          val selectedScopeId = state.getOne(SELECTED_SCOPE_ID)
+          val isAutoTogglePossible = state.getBoolean(IS_AUTO_TOGGLE_POSSIBLE) ?: false
+          val hiddenTypes = state.get(HIDDEN_TYPES) ?: emptyList()
 
           return SeTargetsFilter(selectedScopeId, isAutoTogglePossible, hiddenTypes)
         }

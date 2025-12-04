@@ -6,17 +6,15 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeNewSearchToggleAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun isSelected(e: AnActionEvent): Boolean =
-    Registry.`is`(SearchEverywhereFeature.registryKey)
+  override fun isSelected(e: AnActionEvent): Boolean = SearchEverywhereFeature.isSplit
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    Registry.get(SearchEverywhereFeature.registryKey).setValue(state)
+    SearchEverywhereFeature.isSplit = state
   }
 }

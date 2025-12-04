@@ -16,13 +16,13 @@ import org.jetbrains.annotations.NotNull;
 final class LargeFilesAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof PsiFile) {
-      VirtualFile file = ((PsiFile)element).getViewProvider().getVirtualFile();
+    if (element instanceof PsiFile psiFile) {
+      VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
-        holder.newAnnotation(HighlightSeverity.WARNING, CodeInsightBundle.message("message.file.size.0.exceeds.code.insight.limit.1",
-                                                                                  StringUtil.formatFileSize(file.getLength()),
-                                                                                  StringUtil.formatFileSize(
-                                                                                    FileSizeLimit.getIntellisenseLimit(file.getExtension()))))
+        String message = CodeInsightBundle.message("message.file.size.0.exceeds.code.insight.limit.1",
+                                                   StringUtil.formatFileSize(file.getLength()),
+                                                   StringUtil.formatFileSize(FileSizeLimit.getIntellisenseLimit(file.getExtension())));
+        holder.newAnnotation(HighlightSeverity.WARNING, message)
           .fileLevel()
           .create();
       }

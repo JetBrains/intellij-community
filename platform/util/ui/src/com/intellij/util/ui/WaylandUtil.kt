@@ -10,8 +10,20 @@ import java.awt.Rectangle
 import java.awt.Window
 import javax.swing.SwingUtilities
 
+/**
+ * Returns the area where the given popup is allowed to be located.
+ *
+ * Normally the environment will allow the popup to be showing
+ * only if at least one pixel of it is located within this area.
+ *
+ * For this function to return a non-`null` meaningful value,
+ * the popup must be showing, it must have a parent,
+ * and it must be a descendant of some top-level (as in "not a popup") window.
+ *
+ * @return the rectangle in the given component's parent coordinate system, or `null` if the area cannot be determined
+ */
 @ApiStatus.Internal
-fun getPopupParentBounds(popup: Component): Rectangle? {
+fun getValidBoundsForPopup(popup: Component): Rectangle? {
   if (!popup.isShowing) {
     LOG.warn("Impossible to determine the valid bounds because the popup is not showing: $popup")
     return null
@@ -45,10 +57,8 @@ fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
 
   val topLevelBounds = getNearestTopLevelParentBounds(parent) ?: return
 
-  val parentLocation = parent.location
-  LOG.debug { "The relative parent location is $parentLocation" }
-  SwingUtilities.convertPointToScreen(parentLocation, parent.parent)
-  val parentBounds = Rectangle(parentLocation, parent.size)
+  LOG.debug { "The relative parent location is ${parent.location}" }
+  val parentBounds = Rectangle(parent.locationOnScreen, parent.size)
   LOG.debug { "The screen parent bounds are $parentBounds" }
 
   childLocation.x = fitValue(
@@ -69,9 +79,7 @@ fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
 private fun getNearestTopLevelParentBounds(component: Component): Rectangle? {
   // Can't use ComponentUtil.findUltimateParent() because we need the nearest non-popup window,
   // as it's what Wayland considers to be the owner of the popup.
-  val topLevelWindow = ComponentUtil.findParentByCondition(component) { c ->
-    c is Window && c.type != Window.Type.POPUP
-  }
+  val topLevelWindow = getNearestTopLevelAncestor(component)
   if (topLevelWindow !is Window) { // pretty much a non-null check with a smart cast
     LOG.warn("The top level parent isn't a window, but $topLevelWindow")
     return null
@@ -79,6 +87,20 @@ private fun getNearestTopLevelParentBounds(component: Component): Rectangle? {
   val topLevelBounds = Rectangle(topLevelWindow.locationOnScreen, topLevelWindow.size)
   LOG.debug { "The top level bounds are $topLevelBounds" }
   return topLevelBounds
+}
+
+/**
+ * Returns the nearest top-level ancestor window of the given component.
+ *
+ * Here, "top-level" means "not a popup as far as Wayland is concerned."
+ *
+ * @return the nearest top-level window or `null` if there's none
+ */
+@ApiStatus.Internal
+fun getNearestTopLevelAncestor(component: Component): Component? {
+  return ComponentUtil.findParentByCondition(component) { c ->
+    c is Window && c.type != Window.Type.POPUP
+  }
 }
 
 private fun fitValue(location: Int, width: Int, start1: Int, end1: Int, start2: Int, end2: Int, preferLess: Boolean): Int {

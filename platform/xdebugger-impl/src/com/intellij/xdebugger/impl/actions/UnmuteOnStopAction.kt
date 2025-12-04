@@ -19,7 +19,7 @@ class UnmuteOnStopAction : ToggleAction(), DumbAware, SplitDebuggerAction {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     XDebuggerSettingManagerImpl.getInstanceImpl().generalSettings.isUnmuteOnStop = state
-    saveSettingsForRemoteDevelopment(application)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, application)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

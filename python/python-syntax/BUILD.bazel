@@ -26,11 +26,13 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-ui",
+    "//platform/forms_rt:java-guiForms-rt",
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/fastutil",
     "//libraries/guava",
     "//libraries/kotlinx/serialization/core",
     "//platform/core-impl",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.python.syntax` end

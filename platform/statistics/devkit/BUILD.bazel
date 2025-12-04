@@ -31,11 +31,13 @@ jvm_library(
     "//json/backend",
     "//platform/core-ui",
     "//platform/statistics/uploader",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/core-impl",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 
@@ -65,11 +67,13 @@ jvm_library(
     "//json/backend",
     "//platform/core-ui",
     "//platform/statistics/uploader",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/core-impl",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/util/jdom",
+    "//platform/execution",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.devkit` end

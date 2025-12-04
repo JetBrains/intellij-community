@@ -401,16 +401,17 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   }
 }
 
-private suspend fun focusSelectedEditorInComposite(composite: EditorComposite) {
+private fun focusSelectedEditorInComposite(composite: EditorComposite) {
   val textEditor = composite.selectedEditor as? TextEditor
+  val preferredFocusedComponent = composite.preferredFocusedComponent ?: return
   if (textEditor == null) {
     FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file, System.nanoTime())
-    composite.preferredFocusedComponent?.requestFocusInWindow()
+    preferredFocusedComponent.requestFocusInWindow()
   }
   else {
     AsyncEditorLoader.performWhenLoaded(textEditor.editor) {
       FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file, composite.project)
-      composite.preferredFocusedComponent?.requestFocusInWindow()
+      preferredFocusedComponent.requestFocusInWindow()
     }
   }
 }

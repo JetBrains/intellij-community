@@ -16,6 +16,8 @@ internal interface GitRepositoryFrontendSynchronizer {
 
   fun tagsHidden()
 
+  fun workingTreesLoaded(repository: GitRepository)
+
   fun favoriteRefsUpdated(repository: GitRepository?)
 
   fun forceSync()

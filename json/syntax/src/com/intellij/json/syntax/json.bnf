@@ -152,5 +152,7 @@ reference_expression ::= IDENTIFIER {
 value ::= object | array | literal | reference_expression
 
 // Recoveries
-private not_bracket_or_next_value ::= !(']'|value)
-private not_brace_or_next_value ::= !('}'|value)
+private not_bracket_or_next_value ::= !( ']' | value_start )
+private not_brace_or_next_value ::= !( '}' | value_start )
+
+private value_start ::= '{' | '[' | SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING | NUMBER | TRUE | FALSE | NULL | IDENTIFIER

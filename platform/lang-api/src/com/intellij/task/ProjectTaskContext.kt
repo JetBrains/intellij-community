@@ -33,6 +33,14 @@ open class ProjectTaskContext @JvmOverloads constructor(
   @Volatile
   var isCollectionOfGeneratedFilesEnabled: Boolean = false
 
+  /**
+   * The class that initiated the task execution.
+   * This is an exposed version of [com.intellij.task.impl.ProjectTaskManagerImpl.BUILD_ORIGINATOR_KEY]
+   */
+  @ApiStatus.Internal
+  @Volatile
+  var buildOriginatorClass: Class<*>? = null
+
   @get:ApiStatus.Experimental
   val generatedFilesRoots: Collection<String>
     /**

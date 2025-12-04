@@ -4,6 +4,7 @@ package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
 import com.intellij.mcpserver.toolsets.general.FormattingToolset
+import com.intellij.mcpserver.util.relativizeIfPossible
 import io.kotest.common.runBlocking
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -15,7 +16,7 @@ class FormattingToolsetTest : McpToolsetTestBase() {
     testMcpTool(
       FormattingToolset::reformat_file.name,
       buildJsonObject {
-        put("pathInProject", JsonPrimitive(mainJavaFile.name))
+        put("path", JsonPrimitive(project.baseDir.toNioPath().relativizeIfPossible(mainJavaFile)))
       },
       "ok"
     )

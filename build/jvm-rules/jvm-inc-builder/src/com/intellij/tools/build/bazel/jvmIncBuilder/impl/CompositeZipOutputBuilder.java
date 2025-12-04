@@ -1,9 +1,11 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +44,13 @@ public class CompositeZipOutputBuilder implements ZipOutputBuilder {
 
   @Override
   public void putEntry(String entryName, byte[] content) {
+    for (ZipOutputBuilder delegate : myDelegates) {
+      delegate.putEntry(entryName, content);
+    }
+  }
+
+  @Override
+  public void putEntry(String entryName, @NotNull Path content) {
     for (ZipOutputBuilder delegate : myDelegates) {
       delegate.putEntry(entryName, content);
     }

@@ -33,7 +33,7 @@ val wrapCommandsInWriteIntent: Boolean = System.getProperty("idea.wrap.commands.
  * - `false` means that write-intent lock will not be inserted there
  */
 @ApiStatus.Internal
-val wrapHighLevelInputEventsInWriteIntentLock: Boolean = System.getProperty("idea.wrap.high.level.input.events.in.write.intent", "true").toBoolean()
+val wrapHighLevelInputEventsInWriteIntentLock: Boolean = System.getProperty("idea.wrap.high.level.input.events.in.write.intent", "false").toBoolean()
 
 
 /**

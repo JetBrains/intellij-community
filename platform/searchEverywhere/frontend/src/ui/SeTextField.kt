@@ -45,8 +45,8 @@ open class SeTextField(private val initialText: String?, private val resultListA
     if (isInitialSearchPattern) {
       if (lastSearchText != null && initialText.isNullOrEmpty()) {
         text = lastSearchText
-        selectAll()
       }
+      selectAll()
     }
     else {
       onTextChanged(text)

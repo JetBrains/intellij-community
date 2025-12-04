@@ -40,6 +40,7 @@ jvm_library(
     "//platform/structuralsearch:structuralSearch",
     "//plugins/properties/properties-common:properties",
     "//platform/diff-impl",
+    "//platform/forms_rt:java-guiForms-rt",
   ],
   runtime_deps = ["//platform/backend"]
 )

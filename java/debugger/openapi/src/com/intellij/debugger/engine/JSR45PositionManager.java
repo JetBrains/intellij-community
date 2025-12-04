@@ -40,12 +40,22 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   protected final Matcher myGeneratedClassPatternMatcher;
   private final Set<LanguageFileType> myFileTypes;
 
+  public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final SourcesFinder<Scope> sourcesFinder) {
+    this(debugProcess, scope, stratumId, null, sourcesFinder);
+  }
+
+  /**
+   * @deprecated use JSR45PositionManager(DebugProcess, Scope, String, SourcesFinder) and override {@link #isAcceptedFileType(FileType)}
+   * to check the file types.
+   */
+  @Deprecated
   public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,
                               final SourcesFinder<Scope> sourcesFinder) {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = Collections.unmodifiableSet(ContainerUtil.newHashSet(acceptedFileTypes)); // removes possible duplicates
+    myFileTypes = acceptedFileTypes == null ? null : 
+                  Collections.unmodifiableSet(ContainerUtil.newHashSet(acceptedFileTypes)); // removes possible duplicates
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
     if (generatedClassPattern.isEmpty()) {
@@ -120,14 +130,29 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return result;
   }
 
+  /**
+   * @deprecated use {@link #isAcceptedFileType(FileType)} instead
+   */
+  @Deprecated
   @Override
   public @NotNull Set<LanguageFileType> getAcceptedFileTypes() {
+    if (myFileTypes == null) {
+      throw new IllegalStateException("Either pass file types to constructor or override getAcceptedFileTypes() method");
+    }
     return myFileTypes;
+  }
+
+  @Override
+  public boolean isAcceptedFileType(@NotNull FileType fileType) {
+    if (myFileTypes == null) {
+      throw new IllegalStateException("Either pass file types to constructor or override isAcceptedFileType(FileType) method");
+    }
+    return myFileTypes.contains(fileType);
   }
 
   private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
     final FileType fileType = classPosition.getFile().getFileType();
-    if (!myFileTypes.contains(fileType)) {
+    if (!isAcceptedFileType(fileType)) {
       throw NoDataException.INSTANCE;
     }
   }

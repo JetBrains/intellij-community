@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "@lib//:opentelemetry-exporter-otlp-common",
     "//platform/util/http",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",

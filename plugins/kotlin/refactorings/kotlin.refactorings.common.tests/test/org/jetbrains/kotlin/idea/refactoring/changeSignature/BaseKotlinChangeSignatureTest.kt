@@ -249,10 +249,12 @@ public @interface NotNull {
             }
 
             if (checkErrorsAfter && psiFile is KtFile) {
-                DirectiveBasedActionUtils.checkForUnexpectedErrors(psiFile)
+                DirectiveBasedActionUtils.checkForUnexpectedErrors(psiFile, diagnosticsProvider = getDiagnosticProvider())
             }
         }
     }
+
+    abstract fun getDiagnosticProvider(): (KtFile) -> List<Diagnostic>
 
     protected open fun checkErrorsAfter() = InTextDirectivesUtils.isDirectiveDefined(file!!.text, "// CHECK_ERRORS_AFTER")
 

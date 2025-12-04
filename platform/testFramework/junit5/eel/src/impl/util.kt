@@ -13,9 +13,11 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.EelMachineProvider
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
@@ -70,7 +72,8 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
-  val descriptor = EelTestDescriptor(Path(fakeRoot), Ksuid.generate().toString(), os.osFamily, apiRef::get)
+  val id = Ksuid.generate()
+  val descriptor = EelTestDescriptor(Path(fakeRoot), id, os.osFamily)
 
   val disposable = Disposer.newDisposable()
 
@@ -91,10 +94,32 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
     disposable,
   )
 
+  val machine: EelMachine = object : EelMachine {
+    override val internalName: String = "mock-$id"
+    override suspend fun toEelApi(descriptor: EelDescriptor): EelApi = apiRef.get()
+    override fun ownsPath(path: Path): Boolean {
+      return path.getEelDescriptor() == descriptor
+    }
+  }
+
+  EelMachineProvider.EP_NAME.point.registerExtension(object : EelMachineProvider {
+    override fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+      return if (eelDescriptor == descriptor) machine else null
+    }
+
+    override suspend fun getEelMachine(eelDescriptor: EelDescriptor): EelMachine? {
+      return getResolvedEelMachine(eelDescriptor)
+    }
+
+    override suspend fun getEelMachineByInternalName(internalName: String): EelMachine? {
+      return if (internalName == machine.internalName) machine else null
+    }
+  }, disposable)
+
   EelProvider.EP_NAME.point.registerExtension(
     object : EelProvider {
-      override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String) {
-        // Nothing.
+      override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
+        return if (getEelDescriptor(Path(path)) == descriptor) machine else null
       }
 
       override fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor? =
@@ -103,14 +128,6 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
 
       override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? =
         if (eelDescriptor == descriptor) listOf(fakeRoot)
-        else null
-
-      override fun getInternalName(eelMachine: EelMachine): String? =
-        if (eelMachine == descriptor.machine) meaningfulDirName
-        else null
-
-      override fun getEelMachineByInternalName(internalName: String): EelMachine? =
-        if (internalName == meaningfulDirName) descriptor.machine
         else null
     },
     disposable,

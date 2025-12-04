@@ -416,6 +416,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    *
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performAction
    * @see ActionWrapperUtil#actionPerformed
+   * @see AnActionEvent#getCoroutineScope for running suspend computations in Kotlin implementations.
    */
   @ApiStatus.OverrideOnly
   public abstract void actionPerformed(@NotNull AnActionEvent e);

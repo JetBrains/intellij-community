@@ -33,7 +33,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_NO_ARG,
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             KotlinBuildToolFusMetricName.JVM_DEFAULTS,
-            KotlinBuildToolFusMetricName.USE_OLD_BACKEND
+            KotlinBuildToolFusMetricName.USE_OLD_BACKEND,
+            KotlinBuildToolFusMetricName.ENABLED_COMPILER_REFERENCE_INDEX
         )
     ),
 
@@ -54,7 +55,9 @@ val kotlinBuildToolsFusEvenList = listOf(
         GradleStatisticsEventGroups.MPP, listOf(
             KotlinBuildToolFusMetricName.MPP_PLATFORMS,
             KotlinBuildToolFusMetricName.ENABLED_HMPP,
-            KotlinBuildToolFusMetricName.JS_COMPILER_MODE
+            KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_DISABLED,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED
         )
     ),
 

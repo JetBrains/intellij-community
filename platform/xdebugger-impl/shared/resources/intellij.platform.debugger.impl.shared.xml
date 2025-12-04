@@ -1,10 +1,34 @@
 <idea-plugin visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+  </dependencies>
+  <!-- end editor-fold -->
+
   <extensionPoints>
     <extensionPoint name="xdebugger.consoleViewDataConverter"
                     interface="com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewConverter"
                     dynamic="true"/>
     <extensionPoint name="xdebugger.descriptorStateManager"
                     interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
+                    dynamic="true"/>
+    <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.monolithAccessPoint"
+                    interface="com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

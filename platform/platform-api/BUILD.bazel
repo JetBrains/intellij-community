@@ -38,7 +38,7 @@ jvm_library(
     "//platform/util/progress",
     "@lib//:jna",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/jdom",
     "//platform/util-ex",
     "//platform/util/concurrency",
@@ -60,7 +60,6 @@ jvm_library(
   ],
   exports = [
     "//platform/util",
-    "//platform/forms_rt:java-guiForms-rt",
     "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "//platform/ide-core",

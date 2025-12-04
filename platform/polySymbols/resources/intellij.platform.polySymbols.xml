@@ -1,4 +1,22 @@
 <idea-plugin visibility="public">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.commons.compress"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson.module.kotlin"/>
+    <module name="intellij.libraries.markdown"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- end editor-fold -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.polySymbols.framework"
                     beanClass="com.intellij.polySymbols.framework.impl.PolySymbolFrameworkRegistrationExtensionPoint"

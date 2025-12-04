@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.AsyncTooltipAction
 import com.intellij.openapi.editor.ex.TooltipAction
@@ -444,7 +445,9 @@ private fun createActionLabel(@NlsContexts.LinkLabel text: String, background: C
   label.border = JBUI.Borders.empty()
   label.addHyperlinkListener(object : HyperlinkAdapter() {
     override fun hyperlinkActivated(e: HyperlinkEvent) {
-      action(e.inputEvent)
+      WriteIntentReadAction.run {
+        action(e.inputEvent)
+      }
     }
   })
   val toolTipFont = getActionFont()

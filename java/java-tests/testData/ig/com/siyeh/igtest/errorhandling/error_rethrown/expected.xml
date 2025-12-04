@@ -4,13 +4,13 @@
     <file>ErrorRethrown.java</file>
     <line>11</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'java.lang.Error' not rethrown</problem_class>
-    <description>Error &lt;code&gt;e&lt;/code&gt; not rethrown #loc</description>
+    <description>Error &lt;code&gt;e&lt;/code&gt; not rethrown</description>
   </problem>
 
   <problem>
     <file>ErrorRethrown.java</file>
     <line>39</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'java.lang.Error' not rethrown</problem_class>
-    <description>Error &lt;code&gt;e&lt;/code&gt; not rethrown #loc</description>
+    <description>Error &lt;code&gt;e&lt;/code&gt; not rethrown</description>
   </problem>
 </problems>

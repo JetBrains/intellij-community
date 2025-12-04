@@ -1,39 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.analysis
 
-import org.jetbrains.intellij.build.productLayout.ModuleSet
-
-/**
- * Recursively collects all nested set names (direct + transitive) from a module set.
- *
- * For example, if essential includes libraries, and libraries includes libraries.core,
- * this returns {"libraries", "libraries.core", ...} for essential.
- *
- * @param allModuleSets All module sets to search in
- * @param startSetName The module set to start collecting from
- * @param visited Set of already visited module sets to prevent infinite recursion
- * @return Set of all nested set names (direct and transitive)
- */
-fun collectAllNestedSetNames(
-  allModuleSets: List<ModuleSet>,
-  startSetName: String,
-  visited: MutableSet<String> = mutableSetOf()
-): Set<String> {
-  if (visited.contains(startSetName)) return emptySet()
-  visited.add(startSetName)
-
-  val startSet = allModuleSets.firstOrNull { it.name == startSetName } ?: return emptySet()
-  val result = mutableSetOf<String>()
-
-  for (nestedSet in startSet.nestedSets) {
-    result.add(nestedSet.name)
-    // Recursively collect nested sets from this nested set
-    result.addAll(collectAllNestedSetNames(allModuleSets, nestedSet.name, visited))
-  }
-
-  return result
-}
-
 /**
  * Detects overlapping or redundant module sets.
  * CRITICAL FIX: Filters out intentional nested set inclusions (e.g., libraries ⊃ libraries.core).
@@ -44,7 +11,7 @@ fun collectAllNestedSetNames(
  * @param minOverlapPercent Minimum overlap percentage (0-100) to include in results
  * @return List of overlapping module set pairs sorted by overlap percentage (descending)
  */
-fun detectModuleSetOverlap(
+internal fun detectModuleSetOverlap(
   allModuleSets: List<ModuleSetMetadata>,
   minOverlapPercent: Int = 50
 ): List<ModuleSetOverlap> {
@@ -63,8 +30,8 @@ fun detectModuleSetOverlap(
       // ✅ ENHANCED: Now checks TRANSITIVE relationships too!
       // Example: essential → libraries → libraries.core
       // This prevents false positive for "essential overlaps with libraries.core"
-      val ms1AllNestedSetNames = collectAllNestedSetNames(moduleSetsList, ms1.moduleSet.name)
-      val ms2AllNestedSetNames = collectAllNestedSetNames(moduleSetsList, ms2.moduleSet.name)
+      val ms1AllNestedSetNames = ModuleSetTraversal.collectAllNestedSets(ms1.moduleSet.name, moduleSetsList)
+      val ms2AllNestedSetNames = ModuleSetTraversal.collectAllNestedSets(ms2.moduleSet.name, moduleSetsList)
 
       if (ms1AllNestedSetNames.contains(ms2.moduleSet.name) ||
           ms2AllNestedSetNames.contains(ms1.moduleSet.name)) {
@@ -135,7 +102,7 @@ private fun generateOverlapRecommendation(
  * @param similarityThreshold Minimum similarity (0.0 to 1.0) to include in results
  * @return List of similar product pairs sorted by similarity (descending)
  */
-fun analyzeProductSimilarity(
+internal fun analyzeProductSimilarity(
   products: List<ProductSpec>,
   similarityThreshold: Double = 0.7
 ): List<ProductSimilarityPair> {

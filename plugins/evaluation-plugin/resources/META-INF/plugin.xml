@@ -54,12 +54,6 @@
     <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
                  description="Disables check that project sdk configured properly" restartRequired="false"/>
     <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
-
-    <toolWindow id="Evaluation Dataset"
-                icon="AllIcons.Toolwindows.ToolWindowDataView"
-                factoryClass="com.intellij.cce.ui.EvaluationDatasetToolWindowFactory"
-                anchor="bottom"
-                canCloseContents="false"/>
   </extensions>
 
   <extensionPoints>
@@ -120,4 +114,10 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <supportsKotlinPluginMode supportsK2="true"/>
   </extensions>
+
+  <actions resource-bundle="messages.EvaluationPluginBundle">
+    <action id="EvaluationDatasetTool" class="com.intellij.cce.ui.EvaluationDatasetToolAction" internal="true">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

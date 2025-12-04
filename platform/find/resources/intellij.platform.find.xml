@@ -1,7 +1,17 @@
 <idea-plugin>
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.scopes"/>
   </dependencies>
+  <!-- end editor-fold -->
   <extensions defaultExtensionNs="com.intellij">
     <usagePresentationProvider implementation="com.intellij.platform.find.UsageInfoModelPresentationProvider"/>
 

@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.navbar" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>

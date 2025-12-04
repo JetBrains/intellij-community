@@ -29,8 +29,10 @@ import java.util.function.Supplier;
  */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
-  private final Project myProject;
+
   private static final Key<Boolean> USE_WEAK_FILE_SCOPE = Key.create("virtual.file.use.weak.scope");
+
+  private final Project myProject;
 
   protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
@@ -42,7 +44,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @ApiStatus.NonExtendable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 

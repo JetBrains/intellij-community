@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
@@ -406,7 +406,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
               myRightPanelUpdater.execute(() -> {
                 final var entity = node.getContainingFileLocalEntity();
                 SwingUtilities.invokeLater(() -> {
-                  WriteIntentReadAction.run((Runnable)() -> {
+                  WriteIntentReadAction.run(() -> {
                     TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
                     if (newPath == pathSelected) showInRightPanel(entity);
                   });

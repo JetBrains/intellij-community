@@ -4,7 +4,6 @@ package com.intellij.platform.find
 import com.intellij.find.impl.UsagePresentation
 import com.intellij.find.impl.UsagePresentationProvider
 import com.intellij.ide.ui.colors.color
-import com.intellij.ide.ui.textChunk
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfoAdapter
@@ -13,7 +12,7 @@ private class UsageInfoModelPresentationProvider: UsagePresentationProvider {
   override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope?): UsagePresentation? {
     if (usageInfo !is UsageInfoModel) return null
     val model = usageInfo.model
-    return UsagePresentation(model.presentation.map { it.textChunk() }.toTypedArray(),
+    return UsagePresentation(model.presentation.map { it.toTextChunk() }.toTypedArray(),
                              model.backgroundColor?.color(), model.shortenPresentablePath)
   }
 }

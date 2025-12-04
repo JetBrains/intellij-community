@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -20,11 +21,14 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
   private final @NotNull UnknownSdkLocalSdkFix myFix;
   private final @NotNull UnknownSdk mySdk;
+  private final @Nullable Project myProject;
 
-  UnknownMissingSdkFixLocal(@NotNull UnknownSdk sdk,
+  UnknownMissingSdkFixLocal(@Nullable Project project,
+                            @NotNull UnknownSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix fix) {
     myFix = fix;
     mySdk = sdk;
+    myProject = project;
   }
 
   @NotNull
@@ -93,7 +97,7 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
 
       mySdk.getSdkType().setupSdkPaths(sdk);
       myFix.configureSdk(sdk);
-      UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
+      UnknownMissingSdkFix.registerNewSdkInJdkTable(myProject, sdk.getName(), sdk);
 
       LOG.info("Automatically set Sdk " + mySdk + " to " + myFix.getExistingSdkHome());
       return sdk;

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import _LastInSuiteTest
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupManager
@@ -96,7 +97,7 @@ class TestApplicationManager private constructor() {
             }
           },
           { CodeStyle.dropTemporarySettings(project) },
-          { WriteIntentReadAction.run<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
+          { WriteIntentReadAction.runThrowable<Nothing?> { UsefulTestCase.doPostponedFormatting(project) } },
           { LookupManager.hideActiveLookup(project) },
           {
             if (isLightProject) {
@@ -112,10 +113,7 @@ class TestApplicationManager private constructor() {
             app.runWriteIntentReadAction<Unit, Nothing?> {
               WriteCommandAction.runWriteCommandAction(project) {
                 val fileDocumentManager = app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()
-                if (fileDocumentManager != null) {
-                  fileDocumentManager.dropAllUnsavedDocuments()
-                  fileDocumentManager.clearDocumentCache()
-                }
+                fileDocumentManager?.prepareForNextTest()
               }
             }
           },

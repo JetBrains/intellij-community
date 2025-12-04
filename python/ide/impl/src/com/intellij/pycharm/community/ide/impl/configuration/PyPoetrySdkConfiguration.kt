@@ -29,12 +29,10 @@ import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-@ApiStatus.Internal
-class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
+internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)

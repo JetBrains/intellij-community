@@ -18,16 +18,16 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
    * @return [IjentSessionMediator] with the scope of running IJent
    */
   protected abstract suspend fun deployEnvironment(): IjentSessionMediator
-  override suspend fun getConnectionStrategy(): IjentConnectionStrategy.Tcp {
-    TODO("Should be implemented by the subclass")
-  }
+  abstract override suspend fun getConnectionStrategy(): IjentConnectionStrategy.Tcp
+  abstract suspend fun getRemoteBinaryPath(): String
+
   protected abstract fun closeConnection()
 
   override suspend fun <T : IjentApi> createIjentSession(): IjentSession<T> =
     try {
       val mediator = deployEnvironment()
       createIjentSession(getConnectionStrategy(),
-                         "", // Binary path is used only in tests to acquire a path to deployed binary. TcpConnection
+                         getRemoteBinaryPath(),
                          getTargetPlatform(),
                          mediator)
     } catch (err: Exception) {

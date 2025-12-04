@@ -34,9 +34,14 @@ data class ExecuteCommandParams(
 ) : WorkDoneProgressParams
 
 object Commands {
-    val ExecuteCommand: RequestType<ExecuteCommandParams, JsonElement, Unit> = RequestType(
-        "workspace/executeCommand",
-        ExecuteCommandParams.serializer(),
-        JsonElement.serializer(), Unit.serializer()
-    )
+
+  /**
+   * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand">workspace/executeCommand (LSP spec)</a>
+   */
+  val ExecuteCommand: RequestType<ExecuteCommandParams, JsonElement, Unit> = RequestType(
+    method = "workspace/executeCommand",
+    paramsSerializer = ExecuteCommandParams.serializer(),
+    resultSerializer = JsonElement.serializer(),
+    errorSerializer = Unit.serializer(),
+  )
 }

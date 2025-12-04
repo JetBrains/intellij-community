@@ -7,7 +7,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           int endOffset,
                                           @NotNull CodeInsightContext context,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    ThreadingAssertions.softAssertReadAccess();
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
@@ -96,7 +96,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                                      int endOffset,
                                                      @NotNull CodeInsightContext context,
                                                      @NotNull Processor<? super HighlightInfo> processor) {
-    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    ThreadingAssertions.softAssertReadAccess();
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
       return info == null ||

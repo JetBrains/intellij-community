@@ -221,7 +221,7 @@ public class UsageViewImpl implements UsageViewEx {
 
     myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run((Runnable)() -> initInEDT()));
+      UIUtil.invokeLaterIfNeeded(() -> WriteIntentReadAction.run(() -> initInEDT()));
     }
     myExclusionHandler = new ExclusionHandlerEx<>() {
       @Override
@@ -1737,7 +1737,7 @@ public class UsageViewImpl implements UsageViewEx {
     addButtonToLowerPane(new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        runnable.run();
+        WriteIntentReadAction.run(runnable);
       }
     });
   }

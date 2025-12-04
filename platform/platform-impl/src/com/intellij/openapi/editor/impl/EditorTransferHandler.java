@@ -6,6 +6,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +61,10 @@ final class EditorTransferHandler extends TransferHandler {
 
   @Override
   public boolean importData(@NotNull TransferSupport support) {
-    return support.getComponent() instanceof JComponent jComp &&
-           EditorImpl.handleDrop(getEditor(jComp), support.getTransferable(), support.getDropAction());
+    return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
+      return support.getComponent() instanceof JComponent jComp &&
+             EditorImpl.handleDrop(getEditor(jComp), support.getTransferable(), support.getDropAction());
+    });
   }
 
   @Override

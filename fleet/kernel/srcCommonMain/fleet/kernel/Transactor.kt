@@ -133,8 +133,10 @@ suspend fun <T> Transactor.subscribe(capacity: Int = Channel.RENDEZVOUS, body: S
     val (send, receive) = channels<Change>(capacity)
     // trick: use channel in place of deferred, cause the latter one would hold the firstDB for the lifetime of the entire subscription
     val firstDB = Channel<DB>(1)
-    val job = launch(start = CoroutineStart.UNDISPATCHED,
-                     context = Dispatchers.Unconfined) {
+    val job = launch(
+      start = CoroutineStart.UNDISPATCHED,
+      context = CoroutineName("transactor log collector") + Dispatchers.Unconfined,
+    ) {
       log.collect { e ->
         when (e) {
           is SubscriptionEvent.First -> {

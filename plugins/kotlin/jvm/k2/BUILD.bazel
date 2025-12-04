@@ -31,6 +31,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/psi",
+    "//platform/execution",
     "//java/execution/impl",
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/vcs-impl",

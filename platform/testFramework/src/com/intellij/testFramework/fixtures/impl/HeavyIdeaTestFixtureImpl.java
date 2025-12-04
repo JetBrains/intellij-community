@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.IdeView;
@@ -177,6 +177,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     // project is disposed by now, no point in passing it
     actions.add(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null));
+    actions.add(() -> myModule = null);
 
     new RunAll(actions).run();
   }

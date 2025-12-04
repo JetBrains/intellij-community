@@ -4,6 +4,26 @@
     <module name="intellij.platform.vcs.shared"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="vcs.changes.changesViewNodeAction"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesTreeNodeFactory"
+                    interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.changes.changesViewModifier"
+                    interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.ShelfDiffEntityTypeProvider"/>
     <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemTypeProvider"/>
@@ -30,26 +50,6 @@
     <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
-    </extensionPoint>
-
-    <extensionPoint name="vcs.changes.changesViewNodeAction"
-                    interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-    <extensionPoint name="vcs.changes.changesTreeNodeFactory"
-                    interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
-                    dynamic="true"/>
-
-    <extensionPoint name="vcs.changes.changesViewModifier"
-                    interface="com.intellij.openapi.vcs.changes.ChangesViewModifier"
-                    area="IDEA_PROJECT"
-                    dynamic="true"/>
-  </extensionPoints>
 
   <actions>
     <!-- TODO IJPL-173924 Temporary way to register ChangesViewPopupMenu in shared code -->

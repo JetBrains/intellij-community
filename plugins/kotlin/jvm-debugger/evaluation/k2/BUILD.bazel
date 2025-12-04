@@ -30,6 +30,8 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/psi",
+    "//platform/util",
+    "//platform/util/multiplatform",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.evaluation` end

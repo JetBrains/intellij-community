@@ -37,7 +37,7 @@ jvm_library(
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//libraries/commons/compress",
     "//build",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/util/zip",
     "//platform/util/jdom",
     "//platform/util-ex",

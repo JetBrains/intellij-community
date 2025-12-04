@@ -18,13 +18,8 @@ import io.ktor.util.moveToByteArray
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import org.easymock.EasyMock.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -50,6 +45,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("checkedExceptions")
 class EelChannelToolsTest {
   companion object {
     private const val TEXT = "Some text"
@@ -191,6 +187,10 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      override fun available(): Int {
+        TODO("Not yet implemented")
+      }
+
       override suspend fun closeForReceive() = Unit
     }
 
@@ -206,7 +206,7 @@ class EelChannelToolsTest {
         result.add(dst.get())
       }
 
-      override suspend fun close() = Unit
+      override suspend fun close(err: Throwable?) = Unit
     }
 
     var errorHappened = false
@@ -243,6 +243,10 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
+      override fun available(): Int {
+        TODO("Not yet implemented")
+      }
+
       override suspend fun closeForReceive() = Unit
     }
     val stream = channel.consumeAsInputStream()
@@ -274,24 +278,17 @@ class EelChannelToolsTest {
     // 8192
     launch {
       pipe.sink.sendWholeBuffer(allocate(bytesCount))
-    } // 8192 * 2
-    launch {
-      pipe.sink.sendWholeBuffer(allocate(bytesCount))
     }
     awaitForCondition {
-      Assertions.assertEquals(bytesCount * 2, input.available(), "Wrong number of bytes available")
+      Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     } // 8192
-    pipe.source.receive(allocate(bytesCount)) // 8193
+    pipe.source.receive(allocate(bytesCount)) // 0
     launch {
       pipe.sink.sendWholeBuffer(allocate(1))
     }
     awaitForCondition {
-      Assertions.assertEquals(bytesCount + 1, input.available(), "Wrong number of bytes available")
+      Assertions.assertEquals(1, input.available(), "Wrong number of bytes available")
     } // 1
-    pipe.source.receive(allocate(bytesCount))
-    awaitForCondition {
-      Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
-    }
 
     //0
     pipe.source.receive(allocate(bytesCount))
@@ -310,7 +307,7 @@ class EelChannelToolsTest {
     awaitForCondition {
       Assertions.assertEquals(bytesCount, input.available(), "Wrong number of bytes available")
     }
-    pipe.closePipe()
+    pipe.closePipe(null)
     awaitForCondition {
       Assertions.assertEquals(0, input.available(), "Closed channel available must be 0 bytes")
     }
@@ -349,7 +346,7 @@ class EelChannelToolsTest {
         input.sendWholeBuffer(wrap(data))
       }
       assertFalse(input.isClosed)
-      input.close()
+      input.close(null)
       assertTrue(input.isClosed)
     }
 
@@ -598,7 +595,7 @@ class EelChannelToolsTest {
     assertFalse(pipe.sink.isClosed)
     sendJob1.join()
     sendJob2.join()
-    pipe.sink.close()
+    pipe.sink.close(null)
     assertTrue(pipe.sink.isClosed)
     val text = readJob.await()
     assertThat("Some litters missing", text.toCharArray().toList(), containsInAnyOrder(*lettersSent.toTypedArray()))

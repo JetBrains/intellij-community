@@ -1,0 +1,5 @@
+- name: dist.all/lib/intellij.platform.core.impl.jar
+  modules:
+  - name: intellij.platform.core.impl
+  - name: intellij.platform.plugins.parser.impl
+  - name: intellij.platform.syntax

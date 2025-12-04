@@ -7631,6 +7631,55 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged")
+    public static class KdocResolutionResultHasChanged extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("contextDeclaration.kt")
+        public void testContextDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/contextDeclaration.kt");
+        }
+
+        @TestMetadata("deprecatedHidden.kt")
+        public void testDeprecatedHidden() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/deprecatedHidden.kt");
+        }
+
+        @TestMetadata("functionVariableVsFunctionItself.kt")
+        public void testFunctionVariableVsFunctionItself() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/functionVariableVsFunctionItself.kt");
+        }
+
+        @TestMetadata("localVariableVsOuterProperty.kt")
+        public void testLocalVariableVsOuterProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/localVariableVsOuterProperty.kt");
+        }
+
+        @TestMetadata("outerClass.kt")
+        public void testOuterClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/outerClass.kt");
+        }
+
+        @TestMetadata("paramThis.kt")
+        public void testParamThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/paramThis.kt");
+        }
+
+        @TestMetadata("propertyTagWithConstructorParameter.kt")
+        public void testPropertyTagWithConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kdocResolutionResultHasChanged/propertyTagWithConstructorParameter.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantExplicitType")
     public static class RedundantExplicitType extends AbstractK2LocalInspectionTest {
         @java.lang.Override

@@ -30,10 +30,11 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//platform/ide-core-impl",
     "//libraries/jackson/databind",
-    "@lib//:kotlinx-coroutines-core",
+    "//libraries/kotlinx/coroutines/core",
     "//platform/platform-impl/initial-config-import",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
+    "//platform/forms_rt:java-guiForms-rt",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.updateChecker` end
