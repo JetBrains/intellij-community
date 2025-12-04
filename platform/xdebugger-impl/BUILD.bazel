@@ -76,6 +76,7 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/execution",
   ]
@@ -142,6 +143,7 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/ui",
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/execution",
   ]

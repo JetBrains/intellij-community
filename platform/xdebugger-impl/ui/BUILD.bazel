@@ -26,6 +26,12 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/xdebugger-impl/rpc",
     "//platform/xdebugger-impl/shared",
+    "//platform/util",
+    "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/xdebugger-api:debugger",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.ui` end

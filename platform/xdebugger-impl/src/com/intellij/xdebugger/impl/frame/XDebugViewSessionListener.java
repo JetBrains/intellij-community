@@ -8,6 +8,7 @@ import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
   private final XDebugSessionProxy mySession;

@@ -27,5 +27,8 @@
                     dynamic="true"/>
     <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.xdebugger.monolithAccessPoint"
+                    interface="com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

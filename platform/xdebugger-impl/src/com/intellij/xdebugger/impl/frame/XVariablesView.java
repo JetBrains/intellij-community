@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -16,7 +17,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
 import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
@@ -109,12 +109,15 @@ public class XVariablesView extends XVariablesViewBase {
   public final @Nullable XDebugSessionImpl getSession() {
     XDebugSessionProxy proxy = getSessionProxy();
     if (proxy == null) return null;
-    if (!(proxy instanceof MonolithSessionProxy monolith)) {
+    XDebugSession xDebugSession = XDebuggerEntityConverter.getSessionNonSplitOnly(proxy);
+    if (xDebugSession == null) {
       Logger.getInstance(XVariablesView.class).error("This method can be used only with monolith session proxies, got: " +
                                                      proxy + " of type " + proxy.getClass() + " instead");
-      return null;
     }
-    return monolith.getSessionImpl();
+    if (xDebugSession instanceof XDebugSessionImpl session) {
+      return session;
+    }
+    return null;
   }
 
   @ApiStatus.Internal

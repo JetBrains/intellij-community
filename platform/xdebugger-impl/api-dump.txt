@@ -38,7 +38,6 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:getDebuggerDisplayName():java.lang.String
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
-a:com.intellij.xdebugger.impl.frame.XDebugView
 c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
 - a:getBackgroundColor():java.awt.Color
@@ -48,6 +47,7 @@ com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 - com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
+- com.intellij.openapi.Disposable
 - pF:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 com.intellij.xdebugger.impl.frame.XWatchesView
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey

@@ -8,11 +8,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +20,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.EventObject;
 
+/**
+ * The implementations should override {@link XDebugView#processSessionEvent(SessionEvent, XDebugSessionProxy)}
+ */
+@ApiStatus.Internal
 public abstract class XDebugView implements Disposable {
   public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
@@ -55,8 +58,9 @@ public abstract class XDebugView implements Disposable {
   @ApiStatus.OverrideOnly
   @ApiStatus.Internal
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
-    if (session instanceof MonolithSessionProxy monolith) {
-      processSessionEvent(event, monolith.getSession());
+    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
+    if (xDebugSession != null) {
+      processSessionEvent(event, xDebugSession);
     }
   }
 
@@ -65,7 +69,7 @@ public abstract class XDebugView implements Disposable {
    */
   @ApiStatus.Obsolete
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
-    processSessionEvent(event, MonolithSessionProxyKt.asProxy(session));
+    throw new AbstractMethodError("Please override XDebugView.processSessionEvent(XDebugView.SessionEvent, XDebugSessionProxy)");
   }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
