@@ -51,7 +51,7 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
-  override suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?, customRepoPlugins: List<PluginDto>): InstallPluginResult {
+  override suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?, customRepoPlugins: List<PluginDto>?): InstallPluginResult {
     return installPlugin(sessionId) { enabler ->
       DefaultUiPluginManagerController.installOrUpdatePlugin(sessionId,
                                                              null,
@@ -64,7 +64,7 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     }
   }
 
-  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, customRepoPlugins: List<PluginDto>): InstallPluginResult {
+  override suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, customRepoPlugins: List<PluginDto>?): InstallPluginResult {
     return installPlugin(sessionId) { enabler ->
       DefaultUiPluginManagerController.continueInstallation(sessionId,
                                                             pluginId,

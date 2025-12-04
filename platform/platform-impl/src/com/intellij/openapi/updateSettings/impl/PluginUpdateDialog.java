@@ -80,8 +80,8 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      protected @NotNull Collection<PluginUiModel> getCustomRepoPlugins() {
-        return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
+      protected @Nullable Collection<PluginUiModel> getCustomRepoPlugins() {
+        return customRepositoryPlugins;
       }
     };
 

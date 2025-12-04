@@ -273,7 +273,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     actionDescriptor: PluginUiModel,
   ): InstallPluginResult {
     prepareToInstall(installPluginInfo, installationScope)
-    val customPlugins = customRepoPlugins.toList()
+    val customPlugins = customRepoPlugins?.toList()
     val result = controller.installOrUpdatePlugin(sessionId, parentComponent, descriptor, updateDescriptor, myInstallSource, modalityState, null, customPlugins)
     if (result.disabledPlugins.isEmpty() && result.disabledDependants.isEmpty()) {
       return result
@@ -1025,8 +1025,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     return getErrors(response)
   }
 
-  protected open val customRepoPlugins: Collection<PluginUiModel>
-    get() = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()
+  protected open val customRepoPlugins: Collection<PluginUiModel>? = null
 
   private val myIcons: MutableMap<String?, Icon?> = HashMap<String?, Icon?>() // local cache for PluginLogo WeakValueMap
 
