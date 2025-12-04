@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvents
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -16,6 +18,15 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
  * for more information.
  */
 class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEventTest() {
+    override fun setUp() {
+        super.setUp()
+
+        // To avoid having to edit too many files in each test to trigger a global modification event, we set the processing limit to a low
+        // value. In particular, 2 allows us to test single-file and multi-file behavior, without having to repeat steps for multi-file
+        // behavior.
+        Registry.get(FirIdeOutOfBlockPsiTreeChangePreprocessor.FILE_PROCESSING_LIMIT_KEY).setValue(2)
+    }
+
     fun `test that modification events are limited when modifying multiple files`() {
         val moduleA = createModuleInTmpDir("a") {
             listOf(
@@ -27,6 +38,7 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
                 """.trimIndent()),
                 FileWithText("b.kt", "fun bar(): Int = 20"),
                 FileWithText("c.kt", "fun baz(): Int = 30"),
+                FileWithText("d.kt", "fun qux(): Int = 40"),
             )
         }
 
@@ -48,6 +60,7 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
         val fileA = moduleA.findSourceKtFile("a.kt")
         val fileB = moduleA.findSourceKtFile("b.kt")
         val fileC = moduleA.findSourceKtFile("c.kt")
+        val fileD = moduleA.findSourceKtFile("d.kt")
 
         fun deleteTypeReference(file: KtFile) {
             file.firstTopLevelFunction.typeReference!!.delete()
@@ -74,17 +87,24 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
             moduleTracker.assertModifiedOnce()
             globalTracker.assertNotModified()
 
-            // When changes in `fileB` are encountered, a single global OOBM event should be published, as we're now dealing with multiple
-            // files.
+            // An out-of-block change in `fileB` is still within the processing limit of two files, so another out-of-block modification
+            // event should be published.
             deleteTypeReference(fileB)
 
-            moduleTracker.assertModifiedOnce()
-            globalTracker.assertModifiedOnce()
+            moduleTracker.assertModifiedExactly(times = 2)
+            globalTracker.assertNotModified()
 
-            // Finally, changes in `fileC` should not lead to any further modification events.
+            // When changes in `fileC` are encountered, a single global OOBM event should be published, as we're now dealing with more than
+            // two files.
             deleteTypeReference(fileC)
 
-            moduleTracker.assertModifiedOnce()
+            moduleTracker.assertModifiedExactly(times = 2)
+            globalTracker.assertModifiedOnce()
+
+            // Finally, changes in `fileD` should not lead to any further modification events.
+            deleteTypeReference(fileD)
+
+            moduleTracker.assertModifiedExactly(times = 2)
             globalTracker.assertModifiedOnce()
         }
     }
@@ -111,6 +131,12 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
                         return 30
                     }
                 """.trimIndent()),
+                FileWithText("d.kt", """
+                    fun qux(): Int { 
+                        println("qux")
+                        return 40
+                    }
+                """.trimIndent()),
             )
         }
 
@@ -132,6 +158,7 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
         val fileA = moduleA.findSourceKtFile("a.kt")
         val fileB = moduleA.findSourceKtFile("b.kt")
         val fileC = moduleA.findSourceKtFile("c.kt")
+        val fileD = moduleA.findSourceKtFile("d.kt")
 
         fun deleteFirstLineInFunction(file: KtFile) {
             file.firstTopLevelFunction.bodyBlockExpression!!.firstStatement!!.delete()
@@ -150,14 +177,20 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
             moduleTracker.assertNotModified()
             globalTracker.assertNotModified()
 
-            // An in-block modification in another file: Since we're processing another file, a global event should be published.
+            // An in-block modification in `fileB`: The file is within the processing limit, so no global event should be published.
             deleteFirstLineInFunction(fileB)
+
+            moduleTracker.assertNotModified()
+            globalTracker.assertNotModified()
+
+            // An in-block modification in `fileC`: Since we're processing a third file, a global event should be published.
+            deleteFirstLineInFunction(fileC)
 
             moduleTracker.assertNotModified()
             globalTracker.assertModifiedOnce()
 
-            // An in-block modification in a third file: As we've already published a global event, no further events should be published.
-            deleteFirstLineInFunction(fileC)
+            // An in-block modification in `fileD`: As we've already published a global event, no further events should be published.
+            deleteFirstLineInFunction(fileD)
 
             moduleTracker.assertNotModified()
             globalTracker.assertModifiedOnce()

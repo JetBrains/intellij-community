@@ -134,12 +134,20 @@ open class ModificationEventTracker(
     }
 
     fun assertModifiedOnce(shouldBeRemoval: Boolean = false) {
-        if (expectedEvents.size != 1) {
-            val eventsWithStackTraces = expectedEvents.joinToString("\n\n") { it.toStringWithStackTrace() }
+        assertModifiedExactly(times = 1, shouldBeRemoval = shouldBeRemoval)
+    }
+
+    fun assertModifiedExactly(times: Int, shouldBeRemoval: Boolean = false) {
+        if (expectedEvents.size != times) {
+            val numberText = if (times == 1) "A single" else "Exactly $times"
+            val eventsText = if (times == 1) "event" else "events"
+
             Assert.fail(
-                "A single `$expectedEventName` event for $label should have been published, but ${expectedEvents.size} events were received:\n\n$eventsWithStackTraces"
+                "$numberText `$expectedEventName` $eventsText for $label should have been published," +
+                        " but ${expectedEvents.size} events were received.",
             )
         }
+
         checkShouldBeRemoval(shouldBeRemoval)
         checkForbiddenEvents()
     }
