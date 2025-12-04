@@ -248,7 +248,7 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     BaseInspectionProfileManager profileManager = isProjectLevel ? myProjectProfileManager : myAppProfileManager;
     InspectionToolsSupplier inspectionsRegistrar = isProjectLevel ? ProjectInspectionToolRegistrar.getInstance(project)
                                                                   : InspectionToolRegistrar.getInstance();
-    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, inspectionsRegistrar, profileManager);
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(newName, inspectionsRegistrar, profileManager, selectedProfile, null);
 
     inspectionProfile.copyFrom(selectedProfile);
     inspectionProfile.setName(newName);
