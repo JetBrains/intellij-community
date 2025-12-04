@@ -896,6 +896,8 @@ public final class FileUtilRt {
         if (e instanceof AccessDeniedException) {
           // a file could be read-only, then fallback to legacy java.io API helps
           try {
+            // Dos readonly Attribute isn't cleared since JDK 25
+            Files.setAttribute(path, "dos:readonly", false);
             //noinspection IO_FILE_USAGE
             File file = path.toFile();
             if (file.delete() || !file.exists()) {
