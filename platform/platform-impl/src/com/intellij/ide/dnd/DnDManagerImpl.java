@@ -691,7 +691,7 @@ public final class DnDManagerImpl extends DnDManager {
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
-          boolean success = doDrop(component, event);
+          boolean success = WriteIntentReadAction.compute(() -> doDrop(component, event));
 
           if (event.shouldRemoveHighlighting()) {
             hideCurrentHighlighter();
