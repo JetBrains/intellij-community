@@ -51,19 +51,20 @@ public final class TodoFileNode extends PsiFileNode {
 
       if (shouldUseSplitTodo()) {
         VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile == null) return List.of();
+        if (virtualFile == null) {
+          return Collections.emptyList();
+        }
 
         TodoFilter filter = getToDoFilter();
 
         List<TodoResult> results = TodoRemoteClient.findAllTodos(getProject(), virtualFile, filter);
-        if (results.isEmpty()) return List.of();
 
         List<TodoRemoteItemNode> children = new ArrayList<>(results.size());
         for (TodoResult result : results) {
           String lineText = result.getPresentation().isEmpty() ? "" : result.getPresentation().getFirst().getText();
           TodoRemoteItemNode.Value value = new TodoRemoteItemNode.Value(virtualFile, result.getNavigationOffset(), result.getLength(), result.getLine(), lineText);
           children.add(new TodoRemoteItemNode(getProject(), value, myBuilder));
-          }
+        }
         return Collections.unmodifiableList(children);
       }
 
@@ -72,7 +73,7 @@ public final class TodoFileNode extends PsiFileNode {
 
       Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
       if (document == null) {
-        return List.of();
+        return Collections.emptyList();
       }
 
       for (TodoItem todoItem : items) {
@@ -91,7 +92,7 @@ public final class TodoFileNode extends PsiFileNode {
       return Collections.unmodifiableList(children);
     }
     catch (IndexNotReadyException e) {
-      return List.of();
+      return Collections.emptyList();
     }
   }
 
