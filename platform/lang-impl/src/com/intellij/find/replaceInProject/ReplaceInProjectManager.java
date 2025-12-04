@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -390,7 +391,7 @@ public class ReplaceInProjectManager {
 
   public boolean replaceSingleUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet)
     throws FindManager.MalformedReplacementStringException {
-    return ensureUsagesWritable(Collections.singleton(usage)) && replaceUsage(usage, findModel, excludedSet, false);
+    return WriteIntentReadAction.computeThrowable(() -> ensureUsagesWritable(Collections.singleton(usage)) && replaceUsage(usage, findModel, excludedSet, false));
   }
 
   public boolean replaceUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet, boolean justCheck)
