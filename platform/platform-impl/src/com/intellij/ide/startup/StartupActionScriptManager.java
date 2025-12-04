@@ -167,6 +167,7 @@ public final class StartupActionScriptManager {
   public static synchronized void executeMarketplaceCommandsFromActionScript() throws IOException {
     var scriptFile = getActionScriptFile();
     @Nullable List<ActionCommand> remainingCommands = null;
+    boolean marketplaceCommandsFound = false;
     try {
       var commands = loadActionScript(scriptFile);
 
@@ -187,13 +188,14 @@ public final class StartupActionScriptManager {
       remainingCommands = partitioned.get(false);
 
       for (var command : marketplaceCommands) {
+        marketplaceCommandsFound = true;
         command.execute();
       }
     } finally {
       if (remainingCommands == null || remainingCommands.isEmpty()) {
         Files.deleteIfExists(scriptFile);
       }
-      else {
+      else if (marketplaceCommandsFound) { // the file won't change if no marketplace commands were found
         saveActionScript(remainingCommands, scriptFile);
       }
     }
