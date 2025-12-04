@@ -162,7 +162,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
-        processKeyEvent(e);
+        WriteIntentReadAction.run(() -> {
+          processKeyEvent(e);
+        });
       }
 
       @Override
