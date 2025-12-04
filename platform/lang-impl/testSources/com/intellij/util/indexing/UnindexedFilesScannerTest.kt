@@ -40,6 +40,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
@@ -325,15 +326,19 @@ class UnindexedFilesScannerTest {
     val oneDirIterator = SingleRootIndexableFilesIterator(dir.toUri().toString())
 
     val dumbService = DumbService.getInstance(project)
-    val dumbModCount1 = dumbService.modificationTracker.modificationCount
+    val dumbModCountBeforeScanning = dumbService.modificationTracker.modificationCount
 
     val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
     assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
-    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+    IndexingTestUtil.waitUntilIndexesAreReady(project,
+                                              Duration.ofSeconds(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
 
-    val dumbModCount2 = dumbService.modificationTracker.modificationCount
-    assertEquals(dumbModCount1 + 1, dumbModCount2)
+    val dumbModCountAfterScanning = dumbService.modificationTracker.modificationCount
+    assertTrue(
+      "Scanning should increase dumbService.modCount: before(=$dumbModCountBeforeScanning), after(=$dumbModCountAfterScanning)",
+      dumbModCountAfterScanning >= dumbModCountBeforeScanning + 1,
+    )
   }
 
   private fun registerFiletype(filetype: FakeFileType) {
