@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
+import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
@@ -117,16 +118,15 @@ class AnalysisToolset : McpToolset {
 
   @McpTool
   @McpDescription("""
-      |Triggers building of the project, waits for completion, and returns build errors.
-      |Use this tool to build the project and get detailed information about compilation errors and warnings.
-      |The build will compile all modules in the project and return structured error information.
+      |Triggers building of the project or specified files, waits for completion, and returns build errors.
+      |Use this tool to build the project or compile files and get detailed information about compilation errors and warnings.
       |You have to use this tool after performing edits to validate if the edits are valid.
-      |
-      |If you see any unexpected errors after build you may try to call this tool again with `rebuild=true` parameter to perform full rebuild.
     """)
   suspend fun build_project(
-    @McpDescription("Whether to perform full rebuild the project")
+    @McpDescription("Whether to perform full rebuild the project. Defaults to false. Effective only when `filesToRebuild` is not specified.")
     rebuild: Boolean = false,
+    @McpDescription("If specified, only compile files with the specified paths. Paths are relative to the project root.")
+    filesToRebuild: List<String>? = null,
     @McpDescription(Constants.TIMEOUT_MILLISECONDS_DESCRIPTION)
     timeout: Int = Constants.LONG_TIMEOUT_MILLISECONDS_VALUE,
   ): BuildProjectResult {
@@ -201,8 +201,23 @@ class AnalysisToolset : McpToolset {
           }
         }, this.asDisposable())
 
-        logger.trace { "Creating all modules build task, isIncrementalBuild=${!rebuild}" }
-        val task = ProjectTaskManager.getInstance(project).createAllModulesBuildTask(!rebuild, project)
+        val task = if (filesToRebuild != null) {
+          val filePaths = filesToRebuild.map { file -> project.resolveInProject(file) }
+          logger.trace { "Refreshing files: $filePaths..." }
+          LocalFileSystem.getInstance().refreshNioFiles(filePaths)
+          val virtualFiles = filePaths.map { file -> LocalFileSystem.getInstance().findFileByNioFile(file) ?: mcpFail("File not found: $file") }
+          logger.trace { "Creating build task for files: ${virtualFiles.joinToString { it.path }}" }
+          readAction {
+            (ProjectTaskManager.getInstance(project) as ProjectTaskManagerImpl).createModulesFilesTask(virtualFiles.toTypedArray())
+          }
+        }
+        else {
+          logger.trace { "Creating all modules build task, isIncrementalBuild=${!rebuild}" }
+          readAction {
+            ProjectTaskManager.getInstance(project).createAllModulesBuildTask(!rebuild, project)
+          }
+        }
+
         val context = ProjectTaskContext(callId)
         logger.trace { "Running build task with context" }
         
