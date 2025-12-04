@@ -71,6 +71,7 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
 
     private fun createKotlinNativeBuiltIns(moduleInfo: ModuleInfo, projectContext: ProjectContext): KotlinBuiltIns {
         val stdlibInfo = moduleInfo.findNativeStdlib() ?: return DefaultBuiltIns.Instance
+        val stdlibLibrary = stdlibInfo.resolvedKotlinLibrary ?: return DefaultBuiltIns.Instance
 
         val project = projectContext.project
         val storageManager = projectContext.storageManager
@@ -78,7 +79,7 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
         val builtInsModule = metadataFactories.DefaultDescriptorFactory.createDescriptorAndNewBuiltIns(
             KotlinBuiltIns.BUILTINS_MODULE_NAME,
             storageManager,
-            DeserializedKlibModuleOrigin(stdlibInfo.resolvedKotlinLibrary),
+            DeserializedKlibModuleOrigin(stdlibLibrary),
             stdlibInfo.capabilities
         )
 
