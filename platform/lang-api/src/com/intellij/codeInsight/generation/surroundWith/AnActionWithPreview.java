@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * An action that can generate preview. Currently, used in the surrounder popup only
  */
 @ApiStatus.Experimental
-interface AnActionWithPreview {
+public interface AnActionWithPreview {
   /**
    * @return preview for an action.
    */

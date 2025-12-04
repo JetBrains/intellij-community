@@ -67,6 +67,8 @@ com.intellij.build.events.StartBuildEvent
 - getDefaultPosition():com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 *f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults$Companion
 - f:getInstance():com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
+*:com.intellij.codeInsight.generation.surroundWith.AnActionWithPreview
+- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *:com.intellij.codeInsight.hints.AbstractSettingsKey
 - a:getFullId(com.intellij.lang.Language):java.lang.String
 *f:com.intellij.codeInsight.hints.BlockConstrainedPresentation
