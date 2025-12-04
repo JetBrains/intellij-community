@@ -4,7 +4,8 @@ package org.jetbrains.plugins.terminal.runner;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.idea.AppMode;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
@@ -40,6 +41,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
@@ -165,10 +167,18 @@ public final class LocalShellIntegrationInjector {
   public static @NotNull Path findAbsolutePath(@NotNull String relativePath) throws IOException {
     Path result;
     if (PluginManagerCore.isRunningFromSources()) {
-      result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath);
+      result = PluginPathManager.getPluginHome("terminal").toPath().resolve("resources").resolve(relativePath);
+    }
+    else if (AppMode.isRunningFromDevBuild()) {
+      result = PluginPathManager.getPluginHome("terminal").toPath().resolve(relativePath);
     }
     else {
-      result = PathManager.getHomeDir().resolve("plugins/terminal").resolve(relativePath);
+      // The production distribution case: find the plugin path by JAR location that contains this class,
+      // so it should work even if the terminal plugin is installed in the custom location.
+      //noinspection DataFlowIssue
+      result = Optional.ofNullable(PluginPathManager.getPluginResource(LocalShellIntegrationInjector.class, relativePath))
+        .orElseThrow(() -> new IOException("Cannot find " + relativePath))
+        .toPath();
     }
     if (!Files.isRegularFile(result)) {
       throw new IOException("Cannot find " + relativePath + ": " + result + " is not a file");
