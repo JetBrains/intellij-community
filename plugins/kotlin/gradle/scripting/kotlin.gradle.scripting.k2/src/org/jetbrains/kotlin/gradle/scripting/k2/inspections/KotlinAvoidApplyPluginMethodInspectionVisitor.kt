@@ -132,7 +132,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
 private class GradleMoveApplyPluginToPluginsBlockFix(
     val pluginFixInfo: PluginFixInfo
 ) : KotlinModCommandQuickFix<KtCallExpression>() {
-    override fun getName(): @IntentionName String = GradleInspectionBundle.message("intention.name.move.apply.to.plugins.block")
+    override fun getName(): @IntentionName String = GradleInspectionBundle.message("intention.name.use.plugins.block")
 
     override fun getFamilyName(): @IntentionFamilyName String = name
 

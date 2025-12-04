@@ -43,7 +43,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     @AllGradleVersionsSource
     fun testNoQuickFix(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
-            testNoIntentions("apply(plugin = \"org.hi.mark\")<caret>", "Move plugin to the plugins block")
+            testNoIntentions("apply(plugin = \"org.hi.mark\")<caret>", "Use the ‘plugins’ block")
         }
     }
 
@@ -63,7 +63,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -97,7 +97,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -118,7 +118,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -161,7 +161,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -213,7 +213,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -266,7 +266,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -320,7 +320,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -358,7 +358,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 apply(plugin = "org.real.plugin")<caret>
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -368,7 +368,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     fun testNoIntentionWithoutBuildscript(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting("<weak_warning>apply(plugin = \"org.real.plugin\")</weak_warning>")
-            testNoIntentions("apply(plugin = \"org.real.plugin\")<caret>", "Move plugin to the plugins block")
+            testNoIntentions("apply(plugin = \"org.real.plugin\")<caret>", "Use the ‘plugins’ block")
         }
     }
 
@@ -403,7 +403,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 apply(plugin = "org.real.plugin")<caret>
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -431,7 +431,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 apply(plugin = "org.real.plugin")<caret>
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -467,7 +467,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 apply(plugin = "org.real.plugin")<caret>
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -513,7 +513,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 val pluginName = "org.real.plugin"
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -565,7 +565,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -617,7 +617,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }
@@ -669,7 +669,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                 }
                 
                 """.trimIndent(),
-                "Move plugin to the plugins block"
+                "Use the ‘plugins’ block"
             )
         }
     }

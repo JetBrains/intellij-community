@@ -2,16 +2,16 @@
 <body>
 <p>Detects usage of legacy <code>apply</code> plugin methods in Gradle build scripts.</p>
 <p>
-  If the plugin is a core plugin, or it comes from the `gradlePluginPortal`,
-  offers a quick fix to convert the legacy syntax to the preferred <code>plugins</code> block syntax.
-  The `buildscript` block will be automatically modified to remove redundant dependencies,
+  If the plugin is a core plugin, or it comes from the <code>gradlePluginPortal</code>,
+  offers a quick-fix to convert the legacy syntax to the preferred <code>plugins</code> block syntax.
+  The <code>buildscript</code> block will be automatically modified to remove redundant dependencies,
   and in the case it becomes empty, it will be removed as well.
 </p>
 <p><b>Core Plugin example:</b></p>
 <pre><code lang="kotlin">
 apply(plugin = "java") // highlights this line
 </code></pre>
-<p>After the quick fix is applied:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code lang="kotlin">
 plugins {
     id("java")
@@ -30,9 +30,9 @@ buildscript {
     }
 }
 
-apply plugin: "com.google.protobuf" // highlights this line
+apply(plugin = "com.google.protobuf") // reports this line
 </code></pre>
-<p>After the quick fix is applied:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code lang="kotlin">
 plugins {
     id("com.google.protobuf").version("0.9.4")

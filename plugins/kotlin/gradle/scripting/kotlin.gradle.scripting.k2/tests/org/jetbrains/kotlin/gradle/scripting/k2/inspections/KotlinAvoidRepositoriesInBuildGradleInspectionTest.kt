@@ -1077,8 +1077,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SCRIPT_NAME))
             val repositoriesParentBlockInSettingsName = if (isForPlugins) "pluginManagement" else "dependencyResolutionManagement"
             val intentionName =
-                if (settingsBefore != null) "Move repositories to '$repositoriesParentBlockInSettingsName' in the Gradle settings file"
-                else "Create a 'settings.gradle.kts' file and move repositories to '$repositoriesParentBlockInSettingsName'"
+                if (settingsBefore != null) "Move repositories to the '$repositoriesParentBlockInSettingsName' block in the 'settings.gradle.kts' file"
+                else "Create a 'settings.gradle.kts' file and move repositories to the '$repositoriesParentBlockInSettingsName' block"
             val intention = codeInsightFixture.findSingleIntention(intentionName)
             codeInsightFixture.launchAction(intention)
             codeInsightFixture.checkResult(buildAfter)

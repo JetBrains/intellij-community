@@ -1,7 +1,7 @@
 <html>
 <body>
-<p>Detects duplicate dependency declarations in Gradle scripts.</p>
-<p>Offers an intention to navigate to duplicates and a quick fix to remove exact duplicates.</p>
+<p>Detects duplicate dependency declarations in Gradle build scripts.</p>
+<p>Offers an intention to navigate to duplicates and a quick-fix to remove exact matches.</p>
 <p><b>Inspection reporting example:</b></p>
 <pre><code lang="kotlin">
 dependencies {
@@ -10,7 +10,7 @@ dependencies {
     api("com.google.guava:guava:32.1.2-jre") // will also report this line since it's available through another configuration
 }
 </code></pre>
-<p><b>Remove exact duplicates quick fix example:</b></p>
+<p><b>Remove exact duplicates quick-fix example:</b></p>
 <pre><code lang="kotlin">
 dependencies {
     implementation("com.google.guava:guava:32.1.2-jre") // will offer a quick fix
@@ -18,7 +18,7 @@ dependencies {
     api("com.google.guava:guava:32.1.2-jre") // will not offer a quick fix
 }
 </code></pre>
-<p>After the quick fix is applied:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code lang="kotlin">
 dependencies {
     implementation("com.google.guava:guava:32.1.2-jre")
