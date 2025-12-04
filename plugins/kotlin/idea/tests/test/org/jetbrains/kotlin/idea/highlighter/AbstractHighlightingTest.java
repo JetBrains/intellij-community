@@ -12,6 +12,7 @@ import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
@@ -69,6 +70,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
+                initializeHighlightingSuspender();
                 KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun(myFixture.getProject(), fileText, () -> {
                     checkHighlighting(fileText);
                     return Unit.INSTANCE;
@@ -83,6 +85,10 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
                 throw e;
             }
         });
+    }
+
+    protected void initializeHighlightingSuspender() {
+        KotlinHighlightingSuspender.Companion.getInstance(myFixture.getProject());
     }
 
     public static void withExpectedDuplicatedHighlighting(boolean expectedDuplicatedHighlighting, boolean isFirPlugin, Runnable runnable) {

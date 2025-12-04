@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.findUsages
 
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.idea.test.mapFromK1Provider
 import org.jetbrains.kotlin.psi.KtFile

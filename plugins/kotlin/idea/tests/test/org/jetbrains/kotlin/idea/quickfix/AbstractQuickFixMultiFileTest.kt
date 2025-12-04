@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -288,7 +289,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
     }
 
     protected open fun checkForUnexpectedErrors(file: KtFile) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(file, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
     }
 
     protected open fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {

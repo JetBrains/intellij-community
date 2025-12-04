@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
@@ -113,7 +114,13 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
 
                 if (actionFile is KtFile) {
                     when (pluginMode) {
-                        KotlinPluginMode.K1 -> DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                        KotlinPluginMode.K1 -> {
+                            DirectiveBasedActionUtils.checkForUnexpectedErrors(
+                                actionFile,
+                                DirectiveBasedActionUtils.ERROR_DIRECTIVE,
+                                k1DiagnosticsProvider
+                            )
+                        }
                         KotlinPluginMode.K2 -> {} // TODO check diagnostics for K2
                     }
                 }

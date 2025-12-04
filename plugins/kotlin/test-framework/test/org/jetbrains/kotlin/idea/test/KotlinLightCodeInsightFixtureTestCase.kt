@@ -54,8 +54,6 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.coroutineContext
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.kotlinxCoroutines
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -72,7 +70,6 @@ import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
@@ -118,14 +115,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun setUp() {
         super.setUp()
         enableKotlinOfficialCodeStyle(project)
-
-        if (pluginMode == KotlinPluginMode.K1) {
-            // We do it here to avoid possible initialization problems
-            // UnusedSymbolInspection() calls IDEA UnusedDeclarationInspection() in static initializer,
-            // which in turn registers some extensions provoking "modifications aren't allowed during highlighting"
-            // when done lazily
-            UnusedSymbolInspection()
-        }
 
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, KotlinRoot.DIR.path)
 
@@ -521,7 +510,6 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
 }
 
 fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
-    KotlinHighlightingSuspender.getInstance(project) // register Registry listener, otherwise registry changes wouldn't be picked up by ElementAnnotator
     val registers = InTextDirectivesUtils.findListWithPrefixes(fileText, "// REGISTRY:")
         .map { it.split(' ') }
         .map { Registry.get(it.first()) to it.last() }

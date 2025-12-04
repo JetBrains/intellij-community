@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.grazie.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="RUNTIME" />
   </component>
 </module>

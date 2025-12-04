@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -193,7 +194,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     }
 
     protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
     }
 
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
@@ -201,11 +202,12 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             DirectiveBasedActionUtils.checkForUnexpectedWarnings(
                 ktFile,
                 disabledByDefault = false,
-                directiveName = "AFTER-WARNING"
+                directiveName = "AFTER-WARNING",
+                diagnosticsProvider = k1DiagnosticsProvider
             )
         }
 
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
     }
 
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
