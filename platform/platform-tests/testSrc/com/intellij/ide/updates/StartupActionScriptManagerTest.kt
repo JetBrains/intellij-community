@@ -5,7 +5,10 @@ import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.Compressor
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createParentDirectories
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.After
@@ -13,8 +16,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.listDirectoryEntries
 
@@ -147,4 +150,109 @@ class StartupActionScriptManagerTest {
     assertThat(source).exists()
     assertThat(scriptFile).doesNotExist()
   }
+
+  @Test fun `executing marketplace commands only`() {
+    val tempDir = Files.createTempDirectory("test") // tempDir from class has 'marketplace' in path due to test name
+    val marketplaceSource = tempDir.resolve("marketplace/plugin.zip").createParentDirectories()
+    Compressor.Zip(marketplaceSource).use { it.addFile("plugin/content.txt", byteArrayOf()) }
+    val marketplaceDestination = tempDir.resolve("plugins")
+    val unpacked = marketplaceDestination.resolve("plugin/content.txt")
+
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(marketplaceSource, marketplaceDestination))
+    StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+
+    assertThat(unpacked).exists()
+    assertThat(scriptFile).doesNotExist()
+    tempDir.deleteRecursively()
+  }
+
+  @Test fun `preserving non-marketplace commands`() {
+    val tempDir = Files.createTempDirectory("test") // tempDir from class has 'marketplace' in path due to test name
+    val regularFile = tempDir.resolve("temp.txt").createParentDirectories()
+    Files.writeString(regularFile, "content")
+    assertThat(regularFile).exists()
+
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.DeleteCommand(regularFile))
+    StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+
+    assertThat(regularFile).exists()
+    assertThat(scriptFile).exists()
+    assertThat(StartupActionScriptManager.loadActionScript(scriptFile)).hasSize(1)
+    tempDir.deleteRecursively()
+  }
+
+  @Test fun `executing mixed marketplace and non-marketplace commands`() {
+    val tempDir = Files.createTempDirectory("test") // tempDir from class has 'marketplace' in path due to test name
+    val marketplaceCopySource = tempDir.resolve("marketplace/file.txt").createParentDirectories()
+    Files.writeString(marketplaceCopySource, "content")
+    val marketplaceCopyDest = marketplaceCopySource.resolveSibling("destination.txt")
+    val regularFile = tempDir.resolve("regular/temp.txt").createParentDirectories()
+    Files.writeString(regularFile, "content")
+    val marketplaceDeleteFile = tempDir.resolve("marketplace/old.txt").createParentDirectories()
+    Files.writeString(marketplaceDeleteFile, "old")
+
+    assertThat(marketplaceCopySource).exists()
+    assertThat(marketplaceCopyDest).doesNotExist()
+    assertThat(regularFile).exists()
+    assertThat(marketplaceDeleteFile).exists()
+
+    StartupActionScriptManager.addActionCommands(listOf(
+      StartupActionScriptManager.CopyCommand(marketplaceCopySource, marketplaceCopyDest),
+      StartupActionScriptManager.DeleteCommand(regularFile),
+      StartupActionScriptManager.DeleteCommand(marketplaceDeleteFile)
+    ))
+
+    StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+
+    assertThat(marketplaceCopyDest).exists()
+    assertThat(marketplaceDeleteFile).doesNotExist()
+    assertThat(regularFile).exists()
+    assertThat(scriptFile).exists()
+    assertThat(StartupActionScriptManager.loadActionScript(scriptFile)).hasSize(1)
+    tempDir.deleteRecursively()
+  }
+
+  @Test fun `executing marketplace commands from empty script`() {
+    assertThatCode { StartupActionScriptManager.executeMarketplaceCommandsFromActionScript() }.doesNotThrowAnyException()
+    assertThat(scriptFile).doesNotExist()
+  }
+
+  @Test fun `updating marketplace plugin`() {
+    val tempDir = Files.createTempDirectory("test") // tempDir from class has 'marketplace' in path due to test name
+    val pluginsDir = tempDir.resolve("plugins")
+    val oldMarketplaceDir = pluginsDir.resolve("marketplace")
+    val oldFile = oldMarketplaceDir.resolve("old-version.txt")
+    oldFile.parent.createDirectories()
+    Files.writeString(oldFile, "old content")
+
+    val marketplaceZip = tempDir.resolve("marketplace-1.2.3.zip").createParentDirectories()
+    Compressor.Zip(marketplaceZip).use { zip ->
+      zip.addFile("marketplace/new-version.txt", "new content".toByteArray())
+      zip.addFile("marketplace/plugin.xml", "<plugin></plugin>".toByteArray())
+    }
+
+    val newFile = oldMarketplaceDir.resolve("new-version.txt")
+    val pluginXml = oldMarketplaceDir.resolve("plugin.xml")
+
+    assertThat(oldFile).exists()
+    assertThat(newFile).doesNotExist()
+    assertThat(pluginXml).doesNotExist()
+    assertThat(marketplaceZip).exists()
+
+    StartupActionScriptManager.addActionCommands(listOf(
+      StartupActionScriptManager.DeleteCommand(oldMarketplaceDir),
+      StartupActionScriptManager.UnzipCommand(marketplaceZip, pluginsDir),
+      StartupActionScriptManager.DeleteCommand(marketplaceZip)
+    ))
+
+    StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+
+    assertThat(oldFile).doesNotExist()
+    assertThat(newFile).exists()
+    assertThat(pluginXml).exists()
+    assertThat(marketplaceZip).doesNotExist()
+    assertThat(scriptFile).doesNotExist()
+    tempDir.deleteRecursively()
+  }
+
 }
