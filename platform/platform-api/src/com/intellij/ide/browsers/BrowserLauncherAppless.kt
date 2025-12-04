@@ -99,19 +99,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     val signedUrl = signUrl(url.trim { it <= ' ' })
     LOG.debug { "opening [${signedUrl}]" }
 
-    if (canBrowse(project, signedUrl)) {
-      doBrowse(url, browser, project)
-    }
-  }
-
-  private fun doBrowse(signedUrl: String, browser: WebBrowser?, project: Project?) {
-    if (processWithUrlOpener(browser, signedUrl, project)) {
-      return
-    }
-
-    if (processMailToUrl(signedUrl, project)) {
-      return
-    }
+    if (!canBrowse(project, signedUrl)) return
 
     val uri = VfsUtil.toUri(signedUrl)
     if (uri == null) {
@@ -119,7 +107,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
     if (uri.scheme.equals(StandardFileSystems.FILE_PROTOCOL, ignoreCase = true) && uri.host != null) {
-      showError(IdeBundle.message("error.unc.not.supported", signedUrl), project)
+      showError(IdeBundle.message("error.unc.not.supported", uri), project)
+      return
+    }
+
+    browse(uri, browser, project)
+  }
+
+  private fun browse(uri: URI, browser: WebBrowser?, project: Project?) {
+    if (processWithUrlOpener(browser, uri.toString(), project)) {
+      return
+    }
+
+    if (openMailToUrl(uri, project)) {
       return
     }
 
@@ -129,32 +129,32 @@ open class BrowserLauncherAppless : BrowserLauncher() {
         openWithDesktopApi(uri, project)
       }
       else {
-        openWithDefaultBrowserCommand(signedUrl, project)
+        openWithDefaultBrowserCommand(uri.toString(), project)
       }
     }
     else {
       val browserPath = settings.browserPath
       val substitutedBrowser = substituteBrowser(browserPath)
       if (substitutedBrowser != null) {
-        openWithBrowser(signedUrl, substitutedBrowser, project)
+        openWithBrowser(uri.toString(), substitutedBrowser, project)
       }
       else {
-        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project, retry = {
-          doBrowse(signedUrl, browser = null, project)
+        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, uri.toString(), emptyList(), false)), project, retry = {
+          browse(uri, browser = null, project)
         })
       }
     }
   }
 
-  private fun processMailToUrl(url: String, project: Project?): Boolean {
-    if (url.startsWith("mailto:") && isDesktopActionSupported(Desktop.Action.MAIL)) {
+  private fun openMailToUrl(uri: URI, project: Project?): Boolean {
+    if (uri.scheme == "mailto" && isDesktopActionSupported(Desktop.Action.MAIL)) {
       getScope(project).launch {
         try {
           LOG.debug("trying Desktop#mail")
-          Desktop.getDesktop().mail(URI(url))
+          Desktop.getDesktop().mail(uri)
         }
         catch (e: Exception) {
-          LOG.warn("[${url}]", e)
+          LOG.warn("[${uri}]", e)
         }
       }
       return true
