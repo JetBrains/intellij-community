@@ -6,9 +6,10 @@ import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
@@ -127,15 +128,23 @@ private class TerminalLookupListener : LookupListener {
  * Set's the [AllIcons.Actions.Execute] icon for the selected item in the lookup if it matches the user input.
  * To indicate that insertion of the item will cause immediate execution of the command.
  */
-private class TerminalSelectedItemIconUpdater(private val lookup: Lookup) : PrefixChangeListener {
+private class TerminalSelectedItemIconUpdater(private val lookup: LookupImpl) : PrefixChangeListener {
   private var curSelectedItem: LookupElement? = null
 
   override fun afterAppend(c: Char) {
-    updateSelectedItemIcon()
+    scheduleUpdate()
   }
 
   override fun afterTruncate() {
-    updateSelectedItemIcon()
+    scheduleUpdate()
+  }
+
+  private fun scheduleUpdate() {
+    invokeLater(ModalityState.stateForComponent(lookup.component)) {
+      if (!lookup.isLookupDisposed) {
+        updateSelectedItemIcon()
+      }
+    }
   }
 
   private fun updateSelectedItemIcon() {

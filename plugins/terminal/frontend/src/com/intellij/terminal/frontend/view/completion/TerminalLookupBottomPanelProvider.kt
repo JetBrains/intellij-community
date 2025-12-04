@@ -9,6 +9,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.Shortcut
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -16,6 +18,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.terminal.frontend.view.completion.TerminalLookupBottomPanelProvider.ShortcutPreset
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBHtmlPane
@@ -209,17 +212,25 @@ private object TerminalCompletionPopupPromotion {
  * if a typed string matches the lookup item, then show the "Execute" hint instead of "Insert".
  */
 private class ShortcutHintTextState(
-  private val lookup: Lookup,
+  private val lookup: LookupImpl,
   private val shortcutText: String,
 ) : PrefixChangeListener {
   val value: ObservableMutableProperty<String> = AtomicProperty(defaultText())
 
   override fun afterAppend(c: Char) {
-    value.set(calculateHintText())
+    scheduleUpdate()
   }
 
   override fun afterTruncate() {
-    value.set(calculateHintText())
+    scheduleUpdate()
+  }
+
+  private fun scheduleUpdate() {
+    invokeLater(ModalityState.stateForComponent(lookup.component)) {
+      if (!lookup.isLookupDisposed) {
+        value.set(calculateHintText())
+      }
+    }
   }
 
   private fun calculateHintText(): String {

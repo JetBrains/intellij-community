@@ -106,7 +106,7 @@ class TerminalLookupPrefixUpdater private constructor(
         return
       }
 
-      lookup.truncatePrefix(preserveSelection, hideOffset)
+      lookup.truncatePrefix(preserveSelection, hideOffset, false)
     }
 
     if (!lookup.isLookupDisposed && times > 0) {
@@ -125,7 +125,7 @@ class TerminalLookupPrefixUpdater private constructor(
         return
       }
       lookup.fireBeforeAppendPrefix(c)
-      lookup.appendPrefix(c)
+      lookup.appendPrefix(c, false)
     }
   }
 

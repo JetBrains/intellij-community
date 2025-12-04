@@ -160,7 +160,7 @@ internal class TerminalCommandCompletionProcess(
       return
     }
 
-    lookup.refreshUi(true, false)
+    lookup.refreshUi(true, true)
     if (isPopupMeaningless()) {
       cancel()
     }
