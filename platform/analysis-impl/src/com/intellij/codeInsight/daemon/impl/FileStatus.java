@@ -140,11 +140,12 @@ final class FileStatus {
   public @NonNls String toString() {
     return
       (defensivelyMarked.isEmpty() ? "" : "defensivelyMarked = " + defensivelyMarked)
-      +(wolfPassFinished ? "" : "; wolfPassFinished = "+wolfPassFinished)
-      +(errorFound ? "; errorFound = "+errorFound : "")
+      +(wolfPassFinished ? "" : "; wolfPassFinished")
+      +(errorFound ? "; errorFound" : "")
       +(dirtyScopes.isEmpty() ? "" : "; dirtyScopes: (" +
+        (allDirtyScopesAreNull() ? "all null" :
                                      StringUtil.join(dirtyScopes.int2ObjectEntrySet(), e ->
-        " pass: "+e.getIntKey()+" -> "+(e.getValue() == WholeFileDirtyMarker.INSTANCE ? "Whole file" : e.getValue()), ";") + ")");
+        " pass: "+e.getIntKey()+" -> "+(e.getValue() == WholeFileDirtyMarker.INSTANCE ? "Whole file" : e.getValue()), ";")) + ")");
   }
 
   void setDirtyScope(int passId, @Nullable RangeMarker scope) {

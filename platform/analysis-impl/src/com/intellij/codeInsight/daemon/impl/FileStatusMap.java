@@ -26,6 +26,7 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -301,9 +302,9 @@ public final class FileStatusMap implements Disposable {
    */
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public boolean allDirtyScopesAreNull() {
+  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
     synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNull();
+      return myFileStatusMapState.allDirtyScopesAreNullFor(documents);
     }
   }
 

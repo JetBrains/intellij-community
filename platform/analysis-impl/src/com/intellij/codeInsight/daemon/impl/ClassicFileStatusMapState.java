@@ -52,8 +52,10 @@ final class ClassicFileStatusMapState implements FileStatusMapState {
   }
 
   @Override
-  public boolean allDirtyScopesAreNull() {
-    for (FileStatus status : myDocumentToStatusMap.values()) {
+  public boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents) {
+    for (Document document : documents) {
+      FileStatus status = myDocumentToStatusMap.get(document);
+      if (status == null) continue;
       if (status.isDefensivelyMarkedForAnyPass() || !status.isWolfPassFinished() || !status.allDirtyScopesAreNull()) {
         return false;
       }

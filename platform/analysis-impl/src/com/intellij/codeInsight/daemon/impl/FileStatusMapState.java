@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Internal state of FileStatusMap.
@@ -29,5 +30,5 @@ sealed interface FileStatusMapState permits ClassicFileStatusMapState, Multivers
 
   @NotNull String toString(@NotNull Document document);
 
-  boolean allDirtyScopesAreNull();
+  boolean allDirtyScopesAreNullFor(@NotNull List<? extends Document> documents);
 }
