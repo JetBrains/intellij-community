@@ -1,12 +1,8 @@
 package com.intellij.driver.sdk.ui.components.settings
 
 import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.IdeFrame
 import com.intellij.driver.client.Remote
-import com.intellij.driver.sdk.PluginDescriptor
-import com.intellij.driver.sdk.PluginId
-import com.intellij.driver.sdk.getPlugin
-import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -25,6 +21,10 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+fun IdeaFrameUI.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+  onPluginsPage(action = action)
 
 fun DialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   onPluginsPage().apply(action)
@@ -33,7 +33,17 @@ fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Uni
   onPluginsPage().apply(action)
 
 fun Driver.openPluginsSettings() {
-  invokeAction("WelcomeScreen.Plugins", now = false)
+  step("Open the Plugin Manager") {
+    invokeAction("WelcomeScreen.Plugins", now = false)
+  }
+}
+
+fun IdeaFrameUI.clickOkBtnAndCloseDialog() {
+  step("Click the OK button and close the Plugin Manager") {
+    settingsDialog {
+      okButton.click()
+    }
+  }
 }
 
 private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
@@ -72,6 +82,12 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   fun getPluginsList(): List<ListPluginComponent> =
     xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java).list()
 
+  fun openInstalledTab() {
+    step("Go to the Installed tab in the Plugin Manager") {
+      installedTab.click()
+    }
+  }
+
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
 
@@ -90,6 +106,18 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
 
     fun getPluginDescriptor(): PluginDescriptor =
       checkNotNull(driver.getPlugin(listPluginComponent.getPluginModel().pluginId.getIdString())) { "Plugin $name not found" }
+
+    fun updatePlugin() {
+      step("Wait for update btn and click") {
+        updateButton.waitFound(30.seconds).click()
+      }
+    }
+
+    fun checkRestartBtn() {
+      step("Wait for the Restart IDE btn appearance") {
+        restartIdeButton.waitFound(30.seconds)
+      }
+    }
 
     @Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
     interface ListPluginComponentRef {
