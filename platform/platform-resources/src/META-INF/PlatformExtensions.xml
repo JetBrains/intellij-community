@@ -1571,9 +1571,6 @@
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.logCollector.CollectZippedLogsService"
-                        serviceImplementation="com.intellij.platform.ide.impl.logsUploader.CollectZippedLogsServiceImpl"/>
-
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation="" open="true"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
