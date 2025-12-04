@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.actions.CollectZippedLogsAction;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -192,5 +193,10 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void showProxyAuthNotification() {
     JdkProxyProvider.showProxyAuthNotification();
+  }
+
+  @Override
+  public void invokeLogCollectionAction(@Nullable Project project) {
+    new CollectZippedLogsAction().perform(project);
   }
 }
