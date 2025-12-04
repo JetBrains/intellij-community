@@ -121,16 +121,16 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      span("run early action script") {
+      span("update marketplace plugin") {
         // this check must be performed before system directories are locked
         val configImportNeeded = !AppMode.isHeadless() && Files.notExists(PathManager.getConfigDir())
         if (!configImportNeeded) {
-          runEarlyActionScript()
+          runMarketplaceCommandsInActionScript()
         }
       }
     }
 
-    // must be after runEarlyActionScript
+    // must be after runMarketplaceCommandsInActionScript
     span("marketplace init") {
       // 'marketplace' plugin breaks JetBrains Client, so for now this condition is used to disable it
       if (changeClassPath == null) {  
@@ -315,13 +315,13 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   return otherArgs
 }
 
-private fun runEarlyActionScript() {
+private fun runMarketplaceCommandsInActionScript() {
   try {
     // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
     // (referencing a string constant is OK - it is inlined by the compiler)
-    val earlyScriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.EARLY_ACTION_SCRIPT_FILE)
+    val earlyScriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(earlyScriptFile)) {
-      StartupActionScriptManager.executeEarlyActionScript()
+      StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
     }
   }
   catch (e: Throwable) {
