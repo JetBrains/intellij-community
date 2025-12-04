@@ -77,11 +77,7 @@ import sun.awt.SunToolkit
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.*
-import java.lang.Class
 import java.lang.Runnable
-import java.lang.System
-import java.lang.Thread
-import java.lang.Void
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -1398,7 +1394,7 @@ private fun showBalloonWithAdvice(e: Throwable) {
     lastNotificationTime = System.currentTimeMillis()
   }
   val issueLink = "https://youtrack.jetbrains.com/issue/IJPL-219144"
-  val assigneeLink = "https://jetbrains.slack.com/archives/DL4EL79HC"
+  val assigneeLink = "https://jetbrains.slack.com/team/UL4EL747Q"
   val notification = Notification("IDE-errors",
                                   HtmlBuilder()
                                     .append("An IDE operation failed because of recent changes in read access (")
