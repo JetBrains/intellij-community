@@ -1,7 +1,7 @@
 <html>
 <body>
 <p>Detects registration of tasks without assigning them a description.
-  Suggests a quick fix to add a description field.
+  Suggests a quick-fix to add a description field.
 </p>
 <p><b>Example:</b></p>
 <pre><code lang="kotlin">
@@ -9,7 +9,7 @@ tasks.register("generateDocs") { // reports method 'register'
     // Build logic to generate documentation
 }
 </code></pre>
-<p>After the quick fix is applied:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code lang="kotlin">
 tasks.register("generateDocs") {
     description = "&lt;caret&gt;"
