@@ -23,14 +23,16 @@ object IdeInstance {
 
   lateinit var currentIdeMode: IdeRunMode
     private set
+
+  private lateinit var currentIdeConfig: IdeStartConfig
   private lateinit var runContext: IDERunContext
 
   fun isStarted(): Boolean = _ide != null
 
   fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
     try {
-      if (isStarted() && currentIdeMode == runMode) {
-        LOG.info("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
+      if (isStarted() && currentIdeMode == runMode && IdeStartConfig.current == currentIdeConfig) {
+        LOG.info("IDE is already running in mode: $runMode and there were no requests to change it's config. Reusing the current instance of IDE.")
         return ide
       }
       else {
@@ -39,6 +41,7 @@ object IdeInstance {
 
       stopIde()
       currentIdeMode = runMode
+      currentIdeConfig = IdeStartConfig.current
       ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
 
       val testContext = Starter.newContextWithLambda(runMode.name, IdeStartConfig.current)
