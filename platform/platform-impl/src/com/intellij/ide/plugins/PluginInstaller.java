@@ -92,11 +92,7 @@ public final class PluginInstaller {
     LOG.debug("Scheduling uninstallation of plugin " + pluginDescriptor + " after restart");
     // Make sure this method does not interfere with installAfterRestart by adding the DeleteCommand to the beginning of the script.
     // This way plugin installation always takes place after plugin uninstallation.
-    if (pluginDescriptor.getPluginId().equals(PluginManagerCore.MARKETPLACE_PLUGIN_ID)) {
-      setMarketplacePluginUpdateActionScript(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
-    } else {
-      addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
-    }
+    addActionCommandsToBeginning(List.of(new DeleteCommand(pluginDescriptor.getPluginPath())));
   }
 
   @ApiStatus.Internal
@@ -181,11 +177,7 @@ public final class PluginInstaller {
       commands.add(new DeleteCommand(sourceFile));
     }
 
-    if (descriptor.getPluginId().equals(PluginManagerCore.MARKETPLACE_PLUGIN_ID)) {
-      setMarketplacePluginUpdateActionScript(commands);
-    } else {
-      addActionCommands(commands);
-    }
+    addActionCommands(commands);
 
     PluginStateManager.fireState(descriptor, true);
   }
