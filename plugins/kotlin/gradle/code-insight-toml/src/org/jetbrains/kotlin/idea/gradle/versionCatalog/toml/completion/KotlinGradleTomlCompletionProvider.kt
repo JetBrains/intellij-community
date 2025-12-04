@@ -8,15 +8,17 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.ProcessingContext
-import org.jetbrains.idea.completion.api.DependencyCompletionRequest
-import org.jetbrains.idea.completion.api.DependencyCompletionService
-import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
+import org.jetbrains.idea.completion.api.*
 import org.jetbrains.kotlin.gradle.scripting.shared.completion.FullStringInsertHandler
 import org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleDependencyCompletionMatcher
 import org.jetbrains.kotlin.gradle.scripting.shared.completion.removeDummySuffix
 import org.jetbrains.kotlin.gradle.scripting.shared.completion.useDependencyCompletionService
+import org.toml.lang.psi.TomlLiteral
 
 private const val moduleKey = "module"
+private const val groupKey = "group"
+private const val artifactKey = "name"
+private const val versionKey = "version"
 
 internal class KotlinGradleTomlCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(
@@ -29,48 +31,74 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
         }
 
         val positionElement = parameters.position
+        val tomlLiteral = positionElement.parent as? TomlLiteral ?: return
 
-        if (!positionElement.isTomlValue()) {
-            return
-        }
-
-        val dummyText = removeWrappingQuotes(positionElement.text)
+        val dummyText = positionElement.text.removeWrappingQuotes()
         val text = removeDummySuffix(dummyText)
-        val tomlKey = positionElement.getTomlKey()
+        val tomlKey = tomlLiteral.getTomlKey() ?: return
+        val key = tomlKey.getLastSegmentName()
 
         val completionService = service<DependencyCompletionService>()
-        val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
 
         val resultSet = result.withPrefixMatcher(KotlinGradleDependencyCompletionMatcher(text))
 
         when {
-            tomlKey.endsWith(moduleKey) -> {
+            key == moduleKey -> {
+                val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
                 runBlockingCancellable {
                     completionService.suggestCompletions(request)
-                        .collect { item ->
-                            val lookupString = item.groupId + ":" + item.artifactId
-                            val lookupObject = "\"$lookupString\""
-                            val lookupElement = LookupElementBuilder
-                                .create(lookupObject, lookupString)
-                                .withPresentableText(lookupString)
-                                .withInsertHandler(FullStringInsertHandler)
-
-                            resultSet.addElement(lookupElement)
-                        }
+                        .collect { resultSet.addElement(it.groupId + ":" + it.artifactId) }
                 }
             }
 
-            //TODO: complete group, name, version
+            key == groupKey -> {
+                val artifact = tomlLiteral.getSiblingValue(artifactKey)
+                val request = DependencyGroupCompletionRequest(text, artifact, GradleDependencyCompletionContext)
+                runBlockingCancellable {
+                    completionService.suggestGroupCompletions(request)
+                        .collect { resultSet.addElement(it) }
+                }
+            }
+
+            key == artifactKey -> {
+                val group = tomlLiteral.getSiblingValue(groupKey)
+                val request = DependencyArtifactCompletionRequest(group, text, GradleDependencyCompletionContext)
+                runBlockingCancellable {
+                    completionService.suggestArtifactCompletions(request)
+                        .collect { resultSet.addElement(it) }
+                }
+            }
+
+            key == versionKey -> {
+                val (group, artifact) = tomlLiteral.getGroupAndArtifactForVersion()
+                val request = DependencyVersionCompletionRequest(group, artifact, text, GradleDependencyCompletionContext)
+                runBlockingCancellable {
+                    completionService.suggestVersionCompletions(request)
+                        .collect { resultSet.addElement(it) }
+                }
+            }
+
+            // TODO: any-key="g:a:v" at top level
+
         }
-
     }
 
-    private fun removeWrappingQuotes(s: String): String {
-        return if (s.length >= 2 &&
-            ((s.startsWith('"') && s.endsWith('"')) ||
-                    (s.startsWith('\'') && s.endsWith('\'')))) {
-            s.substring(1, s.length - 1)
-        } else s
+    private fun CompletionResultSet.addElement(lookupString: String) {
+        val lookupObject = "\"$lookupString\""
+        val lookupElement = LookupElementBuilder
+            .create(lookupObject, lookupString)
+            .withPresentableText(lookupString)
+            .withInsertHandler(FullStringInsertHandler)
+
+        this.addElement(lookupElement)
     }
 
+    private fun TomlLiteral.getGroupAndArtifactForVersion(): Pair<String, String> {
+        val module = getSiblingValue(moduleKey)
+        if (module.isNotEmpty()) return module.substringBefore(':') to module.substringAfter(':')
+
+        val group = getSiblingValue(groupKey)
+        val artifact = getSiblingValue(artifactKey)
+        return group to artifact
+    }
 }

@@ -5,10 +5,7 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
-import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlLiteral
-import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.TomlTableHeader
+import org.toml.lang.psi.*
 
 internal const val DEFAULT_VERSION_CATALOG_NAME: String = "libs.versions.toml"
 
@@ -29,10 +26,34 @@ internal fun insideLibrariesTable() =
                 )
         )
 
-internal fun PsiElement.isTomlValue(): Boolean {
-    return this.parent is TomlLiteral
+internal fun TomlLiteral.getParentKeyValue(): TomlKeyValue? {
+    return this.parent as? TomlKeyValue
 }
 
-internal fun PsiElement.getTomlKey(): String {
-    return (this.parent.parent as? TomlKeyValue)?.key?.text ?: ""
+internal fun TomlKeyValue.getParentInlineTable(): TomlInlineTable? {
+    return this.parent as? TomlInlineTable
+}
+
+internal fun TomlLiteral.getTomlKey(): TomlKey? {
+    return this.getParentKeyValue()?.key
+}
+
+internal fun TomlKey.getLastSegmentName(): String {
+    return this.text.substringAfterLast(".")
+}
+
+internal fun TomlLiteral.getSiblingValue(siblingKey: String): String {
+    val siblingKeyValue = this.getParentKeyValue()?.getParentInlineTable()?.children?.firstOrNull {
+        it is TomlKeyValue && it.key.text == siblingKey
+    } as? TomlKeyValue ?: return ""
+    return siblingKeyValue.value?.text?.removeWrappingQuotes() ?: ""
+}
+
+internal fun String.removeWrappingQuotes(): String {
+    val s = this
+    return if (s.length >= 2 &&
+        ((s.startsWith('"') && s.endsWith('"')) ||
+                (s.startsWith('\'') && s.endsWith('\'')))) {
+        s.substring(1, s.length - 1)
+    } else s
 }
