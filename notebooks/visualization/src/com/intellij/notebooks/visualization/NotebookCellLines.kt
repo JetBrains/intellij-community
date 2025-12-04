@@ -38,7 +38,8 @@ interface NotebookCellLines {
     val markers: MarkersAtLines,
     val data: KeyFMap, // different notebook implementations could store their own values in this map
   ) : Comparable<Interval> {
-    val language: Language = data.get(INTERVAL_LANGUAGE_KEY)!!
+    val language: Language
+      get() = data.get(INTERVAL_LANGUAGE_KEY)!!
 
     val firstContentLine: Int
       get() =
@@ -100,6 +101,16 @@ interface NotebookCellLines {
       val document = editor.document
       return getContentText(document).toString()
     }
+
+    fun getOffsetInInterval(editor: Editor, offset: Int): Int? {
+      val document = editor.document
+      val contentRange = getContentRange(document)
+      return if (contentRange.containsOffset(offset))
+        offset - contentRange.startOffset
+      else
+        null
+    }
+
 
     fun getContentText(file: VirtualFile): String {
       val document = FileDocumentManager.getInstance().getDocument(file)!!
