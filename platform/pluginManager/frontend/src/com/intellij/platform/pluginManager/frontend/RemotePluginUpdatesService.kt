@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.util.coroutines.childScope
+import fleet.rpc.client.durable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -20,8 +21,10 @@ open class RemotePluginUpdatesService(private val sessionId: String) : PluginUpd
 
   override fun calculateUpdates(callback: Consumer<in Collection<PluginUiModel>>) {
     coroutineScope.launch {
-      PluginManagerApi.getInstance().subscribeToPluginUpdates(sessionId).collect {
-        callback.accept(it)
+      durable {
+        PluginManagerApi.getInstance().subscribeToPluginUpdates(sessionId).collect {
+          callback.accept(it)
+        }
       }
     }
   }
