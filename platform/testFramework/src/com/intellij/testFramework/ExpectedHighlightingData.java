@@ -889,7 +889,7 @@ public class ExpectedHighlightingData {
     private final String myTooltip;
 
     MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip, String iconPath) {
-      super(NULL_POINTER, range, new PathIcon(iconPath), null, null, null, alignment);
+      super(NULL_POINTER, 0, range, new PathIcon(iconPath), null, null, null, alignment);
       myTooltip = tooltip;
     }
 
