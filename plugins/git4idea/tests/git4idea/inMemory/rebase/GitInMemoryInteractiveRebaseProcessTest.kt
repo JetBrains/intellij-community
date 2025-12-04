@@ -508,4 +508,34 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
     file("b.txt").assertExists()
     assertEquals("local modified content", file("b.txt").read())
   }
+
+  fun `test rebase initial commit`() {
+    val initialCommit = commitDetails(last())
+    file("a.txt").create("content a").addCommit("Add a")
+    file("b.txt").create("content b").addCommit("Add b")
+
+    logData.refreshAndWait(repo, true)
+    updateChangeListManager()
+
+    val entries = getEntriesUsingLog(repo, initialCommit, logData)
+    val model = convertToModel(entries)
+
+    model.exchangeIndices(0, 1)
+
+    val validationResult = GitInMemoryRebaseData.createValidatedRebaseData(model, initialCommit, entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
+
+    GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
+
+    repo.assertLatestHistory(
+      "Add b",
+      "initial",
+      "Add a"
+    )
+
+    with(repo) {
+      assertCommitted(1) { added("b.txt") }
+      assertCommitted(2) { added("initial.txt") }
+      assertCommitted(3) { added("a.txt") }
+    }
+  }
 }

@@ -93,7 +93,7 @@ internal class GitInMemoryInteractiveRebaseProcess(
 
     private object PickActionProcessor : RebaseActionProcessor {
       override fun process(objectRepo: GitObjectRepository, baseCommit: GitObject.Commit?, commitToRebase: GitObject.Commit, entry: GitRebaseEntryWithDetails): GitObject.Commit {
-        if (commitToRebase.parentsOids.single() == baseCommit?.oid) {
+        if (commitToRebase.parentsOids.singleOrNull() == baseCommit?.oid) {
           return commitToRebase
         }
         return objectRepo.findCommit(objectRepo.rebaseCommit(commitToRebase, baseCommit))
