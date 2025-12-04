@@ -17,6 +17,10 @@ fun doLayout(panel: JPanel) {
   doLayout(panel, 800, 600)
 }
 
+fun doLayout(panel: JPanel, dimensions: Dimension) {
+  doLayout(panel, dimensions.width, dimensions.height)
+}
+
 fun doLayout(panel: JPanel, width: Int, height: Int) {
   panel.setSize(width, height)
   (panel.layout as GridLayout).layoutContainer(panel)
@@ -28,6 +32,13 @@ fun label(preferredWidth: Int = PREFERRED_WIDTH, preferredHeight: Int = PREFERRE
   return result
 }
 
+fun label(minimumSize: Dimension, preferredSize: Dimension): JLabel {
+  val result = JLabel("Label")
+  result.minimumSize = minimumSize
+  result.preferredSize = preferredSize
+  return result
+}
+
 fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuilder {
   val label = JLabel("${verticalAlign.name} $size")
   label.font = label.font.deriveFont(size.toFloat())
@@ -36,5 +47,5 @@ fun RowsGridBuilder.label(verticalAlign: VerticalAlign, size: Int): RowsGridBuil
 }
 
 fun generateLongString(): String {
-  return (0..9).map { "Long string $it" }.joinToString()
+  return (0..9).joinToString { "Long string $it" }
 }

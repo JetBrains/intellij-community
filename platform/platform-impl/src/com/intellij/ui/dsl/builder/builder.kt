@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
 import com.intellij.ui.dsl.builder.impl.PanelBuilder
 import com.intellij.ui.dsl.builder.impl.PanelImpl
@@ -20,10 +21,15 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
   dialogPanelConfig.context.postInit()
 
   val layout = GridLayout()
+  layout.respectMinimumSize = Registry.`is`("ui.kotlin.ui.dsl.respect.minimum.size", false)
   val result = DialogPanel(layout = layout)
   val builder = PanelBuilder(panel.rows, dialogPanelConfig, panel.spacingConfiguration, result, layout.rootGrid)
   builder.build()
   initPanel(dialogPanelConfig, result)
+
+  Registry.getColor("ui.kotlin.ui.dsl.background", null)?.let {
+    result.background = it
+  }
   return result
 }
 

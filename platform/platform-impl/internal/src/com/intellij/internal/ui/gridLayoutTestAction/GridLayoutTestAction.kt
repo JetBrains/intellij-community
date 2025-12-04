@@ -17,7 +17,7 @@ import javax.swing.*
 import javax.swing.border.Border
 import kotlin.random.Random
 
-internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
+internal class GridLayoutTestAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -50,6 +50,7 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
         result.addTab("VisualPaddings", createVisualPaddingsPanel())
         result.addTab("Baseline", createBaselinePanel())
         result.addTab("SizeGroup", SizeGroupPanel().panel)
+        result.addTab("MinimumSize", MinimumSizePanel().panel)
 
         return result
       }
@@ -292,34 +293,6 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     return createTabPanel("cell[1, 1] contains another grid inside", panel)
   }
 
-  fun createPanelLabels(
-    width: Int,
-    height: Int,
-    constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
-  ): JPanel {
-    val layoutManager = GridLayout()
-    val result = JPanel(layoutManager)
-    fillGridByLabels(result, layoutManager.rootGrid, width, height, constraintFactory)
-    return result
-  }
-
-  private fun fillGridByLabels(
-    container: JComponent,
-    grid: Grid,
-    width: Int,
-    height: Int,
-    constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
-  ) {
-    for (x in 0 until width) {
-      for (y in 0 until height) {
-        val constraints =
-          constraintFactory.invoke(grid, x, y) ?: Constraints(grid, x, y)
-
-        container.addLabel(constraints, longLabel = x == y)
-      }
-    }
-  }
-
   private fun fillGridByCompoundLabels(
     container: JComponent,
     grid: Grid
@@ -353,34 +326,6 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     )
     addLabel(0, 2, width = 2, height = 2)
     addLabel(2, 3, width = 3)
-  }
-
-  fun label(constraints: Constraints, longLabel: Boolean = false): JLabel {
-    val text = if (longLabel) "Very very very very very long label" else "Label"
-    return JLabel("<html>$text<br>${constraintsToHtmlString(constraints)}")
-  }
-
-  private fun constraintsToHtmlString(constraints: Constraints): String {
-    var result = "x = ${constraints.x}, y = ${constraints.y}<br>" +
-                 "width = ${constraints.width}, height = ${constraints.height}<br>" +
-                 "hAlign = ${constraints.horizontalAlign}, vAlign = ${constraints.verticalAlign}<br>"
-    if (constraints.gaps != UnscaledGaps.EMPTY) {
-      result += "gaps = ${constraints.gaps}<br>"
-    }
-    if (constraints.visualPaddings != UnscaledGaps.EMPTY) {
-      result += "visualPaddings = ${constraints.visualPaddings}<br>"
-    }
-    return result
-  }
-
-  fun label(x: Int, y: Int, longLabel: Boolean = false): JLabel {
-    val text = if (longLabel) "Very very very very very long label" else "Label"
-    return JLabel("$text [x = $x, y = $y]")
-  }
-
-  fun JComponent.addLabel(constraints: Constraints, longLabel: Boolean = false) {
-    val label = label(constraints, longLabel)
-    add(label, constraints)
   }
 }
 
@@ -487,4 +432,60 @@ private fun createControls(container: JComponent, content: JComponent, grid: Gri
   container.add(btnHide, Constraints(grid, 0, 1, horizontalAlign = HorizontalAlign.CENTER))
   container.add(btnShow, Constraints(grid, 1, 1, horizontalAlign = HorizontalAlign.CENTER))
   container.add(cbHighlight, Constraints(grid, 0, 2, width = 2))
+}
+
+internal fun createPanelLabels(
+  width: Int,
+  height: Int,
+  constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
+): JPanel {
+  val layoutManager = GridLayout()
+  val result = JPanel(layoutManager)
+  fillGridByLabels(result, layoutManager.rootGrid, width, height, constraintFactory)
+  return result
+}
+
+private fun fillGridByLabels(
+  container: JComponent,
+  grid: Grid,
+  width: Int,
+  height: Int,
+  constraintFactory: (grid: Grid, x: Int, y: Int) -> Constraints?
+) {
+  for (x in 0 until width) {
+    for (y in 0 until height) {
+      val constraints =
+        constraintFactory.invoke(grid, x, y) ?: Constraints(grid, x, y)
+
+      container.addLabel(constraints, longLabel = x == y)
+    }
+  }
+}
+
+private fun JComponent.addLabel(constraints: Constraints, longLabel: Boolean = false) {
+  val label = label(constraints, longLabel)
+  add(label, constraints)
+}
+
+internal fun label(x: Int, y: Int, longLabel: Boolean = false): JLabel {
+  val text = if (longLabel) "Very very very very very long label" else "Label"
+  return JLabel("$text [x = $x, y = $y]")
+}
+
+private fun label(constraints: Constraints, longLabel: Boolean = false): JLabel {
+  val text = if (longLabel) "Very very very very very long label" else "Label"
+  return JLabel("<html>$text<br>${constraintsToHtmlString(constraints)}")
+}
+
+internal fun constraintsToHtmlString(constraints: Constraints): String {
+  var result = "x = ${constraints.x}, y = ${constraints.y}<br>" +
+               "width = ${constraints.width}, height = ${constraints.height}<br>" +
+               "hAlign = ${constraints.horizontalAlign}, vAlign = ${constraints.verticalAlign}<br>"
+  if (constraints.gaps != UnscaledGaps.EMPTY) {
+    result += "gaps = ${constraints.gaps}<br>"
+  }
+  if (constraints.visualPaddings != UnscaledGaps.EMPTY) {
+    result += "visualPaddings = ${constraints.visualPaddings}<br>"
+  }
+  return result
 }

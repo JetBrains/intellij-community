@@ -14,6 +14,8 @@ import kotlin.math.max
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class GridLayoutTest {
 
@@ -51,7 +53,7 @@ class GridLayoutTest {
     RowsGridBuilder(panel)
       .cell(label, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(0, label.x)
     assertEquals(0, label.y)
     assertEquals(panel.preferredSize, PREFERRED_SIZE)
@@ -63,7 +65,7 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM,
             resizableColumn = true, visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(0, label.x)
     assertEquals(100 - PREFERRED_HEIGHT, label.y)
     assertEquals(panel.preferredSize, PREFERRED_SIZE)
@@ -153,9 +155,10 @@ class GridLayoutTest {
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
     assertEquals(PREFERRED_SIZE, label.preferredSize)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(max(0, JBUIScale.scale(gaps.left) - JBUIScale.scale(visualPaddings.left)), label.x)
-    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height) + JBUIScale.scale(visualPaddings.height)) / 2 - JBUIScale.scale(visualPaddings.top), label.y)
+    assertEquals(JBUIScale.scale(gaps.top) + (100 - PREFERRED_HEIGHT - JBUIScale.scale(gaps.height) + JBUIScale.scale(visualPaddings.height)) / 2 - JBUIScale.scale(
+      visualPaddings.top), label.y)
 
     panel.removeAll()
     RowsGridBuilder(panel)
@@ -163,7 +166,7 @@ class GridLayoutTest {
       .cell(label, horizontalAlign = HorizontalAlign.RIGHT, verticalAlign = VerticalAlign.FILL, resizableColumn = true, gaps = gaps,
             visualPaddings = visualPaddings)
     doLayout(panel, 200, 100)
-    // Visual paddings are compensated by layout, so whole component is fit
+    // Layout compensates for visual paddings, so the whole component is fit
     assertEquals(Dimension(PREFERRED_WIDTH, 100), label.size)
     assertEquals(200 - PREFERRED_WIDTH, label.x)
     assertEquals(0, label.y)
@@ -227,7 +230,7 @@ class GridLayoutTest {
     var preferredHeight = rowsCount * PREFERRED_HEIGHT + layout.rootGrid.rowsGaps.sumOf { it.height }
     assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
 
-    // Hide whole column 1
+    // Hide the whole column 1
     for (y in 0 until rowsCount) {
       labels[y][1].isVisible = false
       if (y == rowsCount - 1) {
@@ -236,7 +239,7 @@ class GridLayoutTest {
       assertEquals(Dimension(preferredWidth, preferredHeight), panel.preferredSize)
     }
 
-    // Hide whole row 2
+    // Hide the whole row 2
     for (x in 0 until columnsCount) {
       labels[2][x].isVisible = false
       if (x == columnsCount - 1) {
@@ -309,6 +312,156 @@ class GridLayoutTest {
     }
 
     testIdea298908(panel, labels, false, nonResizeableIndex)
+  }
+
+  @Test
+  fun testMinimumSizeInRow() {
+    val layout = GridLayout()
+    layout.respectMinimumSize = true
+    val panel = JPanel(layout)
+    val labels = listOf(
+      label(Dimension(10, 20), Dimension(20, 30)),
+      label(Dimension(50, 60), Dimension(60, 70)),
+      label(Dimension(100, 110), Dimension(110, 120)),
+    )
+
+    RowsGridBuilder(panel)
+      .cell(labels[0])
+      .cell(labels[1], resizableColumn = true, horizontalAlign = HorizontalAlign.FILL)
+      .cell(labels[2], resizableColumn = true, horizontalAlign = HorizontalAlign.FILL)
+
+    checkMinimumConfiguration(panel, labels)
+  }
+
+  @Test
+  fun testMinimumSizeInColumn() {
+    val layout = GridLayout()
+    layout.respectMinimumSize = true
+    val panel = JPanel(layout)
+    val labels = listOf(
+      label(Dimension(10, 20), Dimension(20, 30)),
+      label(Dimension(50, 60), Dimension(60, 70)),
+      label(Dimension(100, 110), Dimension(110, 120)),
+    )
+
+    RowsGridBuilder(panel)
+      .cell(labels[0])
+      .row(resizable = true)
+      .cell(labels[1], verticalAlign = VerticalAlign.FILL)
+      .cell(labels[2], verticalAlign = VerticalAlign.FILL)
+
+    checkMinimumConfiguration(panel, labels)
+  }
+
+  @Test
+  fun testMinimumSizeFull() {
+    val layout = GridLayout()
+    layout.respectMinimumSize = true
+    val panel = JPanel(layout)
+    val labels = listOf(
+      label(Dimension(20, 10), Dimension(30, 20)),
+      label(Dimension(60, 50), Dimension(70, 60)),
+      label(Dimension(110, 100), Dimension(120, 110)),
+    )
+
+    RowsGridBuilder(panel)
+      .row(resizable = true)
+      .cell(labels[0], resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
+      .row(resizable = true)
+      .cell(labels[1], resizableColumn = true, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL)
+      .row()
+      .cell(labels[2])
+
+    checkMinimumConfiguration(panel, labels)
+  }
+
+  private fun checkMinimumConfiguration(panel: JPanel, labels: List<JLabel>) {
+    val layout = panel.layout as GridLayout
+
+    val minimumSize = panel.minimumSize
+    val preferredSize = panel.preferredSize
+
+    val rowColumnSizes = calculateSizes(layout, labels)
+
+    assertEquals(minimumSize.width, rowColumnSizes.minimumColumnSize.sum())
+    assertEquals(minimumSize.height, rowColumnSizes.minimumRowSize.sum())
+    assertEquals(preferredSize.width, rowColumnSizes.preferredColumnSize.sum())
+    assertEquals(preferredSize.height, rowColumnSizes.preferredRowSize.sum())
+
+    doLayout(panel, minimumSize)
+    for (label in labels) {
+      checkLabelDimensions(layout, label, label.minimumSize)
+    }
+
+    doLayout(panel, preferredSize.width, preferredSize.height)
+    for (label in labels) {
+      checkLabelDimensions(layout, label, label.preferredSize)
+    }
+  }
+
+  private fun checkLabelDimensions(layout: GridLayout, label: JLabel, requiredMinimumSize: Dimension) {
+    val constraints = layout.getConstraints(label) ?: fail()
+
+    assertTrue(label.size.width >= requiredMinimumSize.width)
+    assertTrue(label.size.height >= requiredMinimumSize.height)
+
+    if (!constraints.isResizableColumn()) {
+      assertEquals(label.size.width, label.preferredSize.width)
+    }
+    if (!constraints.isResizableRow()) {
+      assertEquals(label.size.height, label.preferredSize.height)
+    }
+  }
+
+  private data class RowColumnSizes(
+    val minimumRowSize: List<Int>,
+    val preferredRowSize: List<Int>,
+    val minimumColumnSize: List<Int>,
+    val preferredColumnSize: List<Int>,
+  )
+
+  private fun calculateSizes(layout: GridLayout, labels: List<JLabel>): RowColumnSizes {
+    val minimumRowSize = mutableMapOf<Int, Int>()
+    val preferredRowSize = mutableMapOf<Int, Int>()
+    val minimumColumnSize = mutableMapOf<Int, Int>()
+    val preferredColumnSize = mutableMapOf<Int, Int>()
+
+    for (label in labels) {
+      val constraints = layout.getConstraints(label) ?: fail()
+
+      minimumColumnSize.registerSize(constraints.x, label.minimumSize.width)
+      preferredColumnSize.registerSize(constraints.x, label.preferredSize.width)
+      minimumRowSize.registerSize(constraints.y, label.minimumSize.height)
+      preferredRowSize.registerSize(constraints.y, label.preferredSize.height)
+    }
+
+    return RowColumnSizes(minimumRowSize = minimumRowSize.toList(),
+                          preferredRowSize = preferredRowSize.toList(),
+                          minimumColumnSize = minimumColumnSize.toList(),
+                          preferredColumnSize = preferredColumnSize.toList())
+  }
+
+  private fun MutableMap<Int, Int>.registerSize(index: Int, size: Int) {
+    this[index] = max(this.getOrDefault(index, 0), size)
+  }
+
+  private fun MutableMap<Int, Int>.toList(): List<Int> {
+    val result = mutableListOf<Int>()
+
+    for ((key, value) in this.toSortedMap()) {
+      assertEquals(key, result.size)
+      result.add(value)
+    }
+
+    return result
+  }
+
+  private fun Constraints.isResizableColumn(): Boolean {
+    return grid.resizableColumns.contains(x)
+  }
+
+  private fun Constraints.isResizableRow(): Boolean {
+    return grid.resizableRows.contains(y)
   }
 
   /**
