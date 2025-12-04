@@ -130,6 +130,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkExpressionTypeForConstructorDelegationCall(myFixture)
     }
 
+    fun testExpressionTypeForContractLambda() {
+        checkExpressionTypeForContractLambda(myFixture)
+    }
+
     fun testFlexibleFunctionalInterfaceType() {
         checkFlexibleFunctionalInterfaceType(myFixture)
     }
