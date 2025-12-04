@@ -102,6 +102,7 @@ from networkx.algorithms.mis import *
 from networkx.algorithms.moral import *
 from networkx.algorithms.non_randomness import *
 from networkx.algorithms.operators import *
+from networkx.algorithms.perfect_graph import *
 from networkx.algorithms.planar_drawing import *
 from networkx.algorithms.planarity import *
 from networkx.algorithms.polynomials import *

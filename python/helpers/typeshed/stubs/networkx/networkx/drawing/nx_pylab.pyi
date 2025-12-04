@@ -110,6 +110,26 @@ def apply_matplotlib_colors(
     vmax: float | None = None,
     nodes: bool = True,
 ) -> None: ...
+
+class CurvedArrowTextBase:
+    arrow: FancyArrowPatch
+    label_pos: float
+    labels_horizontal: bool
+    ax: Axes
+    x: Incomplete
+    y: Incomplete
+    angle: Incomplete
+    def __init__(
+        self,
+        arrow: FancyArrowPatch,
+        *args,
+        label_pos: float = 0.5,
+        labels_horizontal: bool = False,
+        ax: Axes | None = None,
+        **kwargs,
+    ) -> None: ...
+    def draw(self, renderer) -> None: ...
+
 def display(
     G: _G,
     canvas: Axes | None = None,

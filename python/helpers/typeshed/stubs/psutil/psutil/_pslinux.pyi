@@ -1,237 +1,288 @@
-import enum
-from _typeshed import Incomplete
-from typing import NamedTuple
+import sys
 
-from psutil._common import (
-    NIC_DUPLEX_FULL as NIC_DUPLEX_FULL,
-    NIC_DUPLEX_HALF as NIC_DUPLEX_HALF,
-    NIC_DUPLEX_UNKNOWN as NIC_DUPLEX_UNKNOWN,
-    AccessDenied as AccessDenied,
-    NoSuchProcess as NoSuchProcess,
-    ZombieProcess as ZombieProcess,
-    isfile_strict as isfile_strict,
-    parse_environ_block as parse_environ_block,
-    path_exists_strict as path_exists_strict,
-    supports_ipv6 as supports_ipv6,
-    usage_percent as usage_percent,
-)
+if sys.platform == "linux":
+    import enum
+    import re
+    from _typeshed import FileDescriptorOrPath, Incomplete
+    from collections import defaultdict
+    from collections.abc import Callable, Generator, Sequence
+    from typing import Final, NamedTuple, TypeVar, overload
+    from typing_extensions import ParamSpec
 
-__extra__all__: Incomplete
-POWER_SUPPLY_PATH: str
-HAS_PROC_SMAPS: bool
-HAS_PROC_SMAPS_ROLLUP: bool
-HAS_PROC_IO_PRIORITY: Incomplete
-HAS_CPU_AFFINITY: Incomplete
-CLOCK_TICKS: Incomplete
-PAGESIZE: Incomplete
-LITTLE_ENDIAN: Incomplete
-UNSET: object
-DISK_SECTOR_SIZE: int
-AF_LINK: Incomplete
-AddressFamily: Incomplete
-IOPRIO_CLASS_NONE: int
-IOPRIO_CLASS_RT: int
-IOPRIO_CLASS_BE: int
-IOPRIO_CLASS_IDLE: int
+    from psutil._common import (
+        ENCODING as ENCODING,
+        NIC_DUPLEX_FULL as NIC_DUPLEX_FULL,
+        NIC_DUPLEX_HALF as NIC_DUPLEX_HALF,
+        NIC_DUPLEX_UNKNOWN as NIC_DUPLEX_UNKNOWN,
+        AccessDenied as AccessDenied,
+        NoSuchProcess as NoSuchProcess,
+        ZombieProcess as ZombieProcess,
+        bcat as bcat,
+        cat as cat,
+        debug as debug,
+        decode as decode,
+        get_procfs_path as get_procfs_path,
+        isfile_strict as isfile_strict,
+        memoize as memoize,
+        memoize_when_activated as memoize_when_activated,
+        open_binary as open_binary,
+        open_text as open_text,
+        parse_environ_block as parse_environ_block,
+        path_exists_strict as path_exists_strict,
+        supports_ipv6 as supports_ipv6,
+        usage_percent as usage_percent,
+    )
 
-class IOPriority(enum.IntEnum):
-    IOPRIO_CLASS_NONE = 0
-    IOPRIO_CLASS_RT = 1
-    IOPRIO_CLASS_BE = 2
-    IOPRIO_CLASS_IDLE = 3
+    from . import _common, _psposix, _psutil_linux
 
-PROC_STATUSES: Incomplete
-TCP_STATUSES: Incomplete
+    _P = ParamSpec("_P")
+    _R = TypeVar("_R")
 
-class svmem(NamedTuple):
-    total: int
-    available: int
-    percent: float
-    used: int
-    free: int
-    active: int
-    inactive: int
-    buffers: int
-    cached: int
-    shared: int
-    slab: int
+    __extra__all__: Final[list[str]]
+    POWER_SUPPLY_PATH: Final = "/sys/class/power_supply"
+    HAS_PROC_SMAPS: Final[bool]
+    HAS_PROC_SMAPS_ROLLUP: Final[bool]
+    HAS_PROC_IO_PRIORITY: Final[bool]
+    HAS_CPU_AFFINITY: Final[bool]
+    CLOCK_TICKS: Final[int]
+    PAGESIZE: Final[int]
+    LITTLE_ENDIAN: Final[bool]
+    UNSET: object
+    DISK_SECTOR_SIZE: Final = 512
 
-class sdiskio(NamedTuple):
-    read_count: Incomplete
-    write_count: Incomplete
-    read_bytes: Incomplete
-    write_bytes: Incomplete
-    read_time: Incomplete
-    write_time: Incomplete
-    read_merged_count: Incomplete
-    write_merged_count: Incomplete
-    busy_time: Incomplete
+    class AddressFamily(enum.IntEnum):
+        AF_LINK = 17  # = socket.AF_PACKET
 
-class popenfile(NamedTuple):
-    path: Incomplete
-    fd: Incomplete
-    position: Incomplete
-    mode: Incomplete
-    flags: Incomplete
+    AF_LINK: Final = AddressFamily.AF_LINK
 
-class pmem(NamedTuple):
-    rss: Incomplete
-    vms: Incomplete
-    shared: Incomplete
-    text: Incomplete
-    lib: Incomplete
-    data: Incomplete
-    dirty: Incomplete
+    class IOPriority(enum.IntEnum):
+        IOPRIO_CLASS_NONE = 0
+        IOPRIO_CLASS_RT = 1
+        IOPRIO_CLASS_BE = 2
+        IOPRIO_CLASS_IDLE = 3
 
-class pfullmem(NamedTuple):
-    rss: Incomplete
-    vms: Incomplete
-    shared: Incomplete
-    text: Incomplete
-    lib: Incomplete
-    data: Incomplete
-    dirty: Incomplete
-    uss: Incomplete
-    pss: Incomplete
-    swap: Incomplete
+    IOPRIO_CLASS_NONE: Final = IOPriority.IOPRIO_CLASS_NONE
+    IOPRIO_CLASS_RT: Final = IOPriority.IOPRIO_CLASS_RT
+    IOPRIO_CLASS_BE: Final = IOPriority.IOPRIO_CLASS_BE
+    IOPRIO_CLASS_IDLE: Final = IOPriority.IOPRIO_CLASS_IDLE
 
-class pmmap_grouped(NamedTuple):
-    path: Incomplete
-    rss: Incomplete
-    size: Incomplete
-    pss: Incomplete
-    shared_clean: Incomplete
-    shared_dirty: Incomplete
-    private_clean: Incomplete
-    private_dirty: Incomplete
-    referenced: Incomplete
-    anonymous: Incomplete
-    swap: Incomplete
+    PROC_STATUSES: Final[dict[str, str]]
+    TCP_STATUSES: Final[dict[str, str]]
 
-pmmap_ext: Incomplete
+    class svmem(NamedTuple):
+        total: int
+        available: int
+        percent: float
+        used: int
+        free: int
+        active: int
+        inactive: int
+        buffers: int
+        cached: int
+        shared: int
+        slab: int
 
-class pio(NamedTuple):
-    read_count: Incomplete
-    write_count: Incomplete
-    read_bytes: Incomplete
-    write_bytes: Incomplete
-    read_chars: Incomplete
-    write_chars: Incomplete
+    class sdiskio(NamedTuple):
+        read_count: Incomplete
+        write_count: Incomplete
+        read_bytes: Incomplete
+        write_bytes: Incomplete
+        read_time: Incomplete
+        write_time: Incomplete
+        read_merged_count: Incomplete
+        write_merged_count: Incomplete
+        busy_time: Incomplete
 
-class pcputimes(NamedTuple):
-    user: float
-    system: float
-    children_user: float
-    children_system: float
-    iowait: float
+    class popenfile(NamedTuple):
+        path: str
+        fd: int
+        position: int
+        mode: str
+        flags: int
 
-def readlink(path): ...
-def file_flags_to_mode(flags): ...
-def is_storage_device(name): ...
-def set_scputimes_ntuple(procfs_path) -> None: ...
+    class pmem(NamedTuple):
+        rss: int
+        vms: int
+        shared: int
+        text: int
+        lib: int
+        data: int
+        dirty: int
 
-class scputimes(NamedTuple):
-    # Note: scputimes has different fields depending on exactly how Linux
-    # is setup, but we'll include the "complete" set of fields
-    user: float
-    nice: float
-    system: float
-    idle: float
-    iowait: float
-    irq: float
-    softirq: float
-    steal: float
-    guest: float
-    guest_nice: float
+    class pfullmem(NamedTuple):
+        rss: int
+        vms: int
+        shared: int
+        text: int
+        lib: int
+        data: int
+        dirty: int
+        uss: int
+        pss: int
+        swap: int
 
-def calculate_avail_vmem(mems): ...
-def virtual_memory() -> svmem: ...
-def swap_memory(): ...
-def cpu_times(): ...
-def per_cpu_times(): ...
-def cpu_count_logical(): ...
-def cpu_count_cores() -> int | None: ...
-def cpu_stats(): ...
-def cpu_freq(): ...
+    class pmmap_grouped(NamedTuple):
+        path: Incomplete
+        rss: Incomplete
+        size: Incomplete
+        pss: Incomplete
+        shared_clean: Incomplete
+        shared_dirty: Incomplete
+        private_clean: Incomplete
+        private_dirty: Incomplete
+        referenced: Incomplete
+        anonymous: Incomplete
+        swap: Incomplete
 
-net_if_addrs: Incomplete
+    class pmmap_ext(NamedTuple):
+        addr: Incomplete
+        perms: Incomplete
+        path: Incomplete
+        rss: Incomplete
+        size: Incomplete
+        pss: Incomplete
+        shared_clean: Incomplete
+        shared_dirty: Incomplete
+        private_clean: Incomplete
+        private_dirty: Incomplete
+        referenced: Incomplete
+        anonymous: Incomplete
+        swap: Incomplete
 
-class _Ipv6UnsupportedError(Exception): ...
+    class pio(NamedTuple):
+        read_count: int
+        write_count: int
+        read_bytes: int
+        write_bytes: int
+        read_chars: int
+        write_chars: int
 
-class NetConnections:
-    tmap: Incomplete
-    def __init__(self) -> None: ...
-    def get_proc_inodes(self, pid): ...
-    def get_all_inodes(self): ...
-    @staticmethod
-    def decode_address(addr, family): ...
-    @staticmethod
-    def process_inet(file, family, type_, inodes, filter_pid: Incomplete | None = ...) -> None: ...
-    @staticmethod
-    def process_unix(file, family, inodes, filter_pid: Incomplete | None = ...) -> None: ...
-    def retrieve(self, kind, pid: Incomplete | None = ...): ...
+    class pcputimes(NamedTuple):
+        user: float
+        system: float
+        children_user: float
+        children_system: float
+        iowait: float
 
-def net_connections(kind: str = ...): ...
-def net_io_counters(): ...
-def net_if_stats(): ...
+    def readlink(path: str) -> str: ...
+    def file_flags_to_mode(flags: int) -> str: ...
+    def is_storage_device(name: str) -> bool: ...
+    def set_scputimes_ntuple(procfs_path: str) -> None: ...
 
-disk_usage: Incomplete
+    class scputimes(NamedTuple):
+        # Note: scputimes has different fields depending on exactly how Linux
+        # is setup, but we'll include the "complete" set of fields
+        user: float
+        nice: float
+        system: float
+        idle: float
+        iowait: float
+        irq: float
+        softirq: float
+        steal: float
+        guest: float
+        guest_nice: float
 
-def disk_io_counters(perdisk: bool = ...): ...
+    def calculate_avail_vmem(mems: dict[bytes, int]) -> int: ...
+    def virtual_memory() -> svmem: ...
+    def swap_memory() -> _common.sswap: ...
+    def cpu_times() -> scputimes: ...
+    def per_cpu_times() -> list[scputimes]: ...
+    def cpu_count_logical() -> int | None: ...
+    def cpu_count_cores() -> int | None: ...
+    def cpu_stats() -> _common.scpustats: ...
+    def cpu_freq() -> list[_common.scpufreq]: ...
 
-class RootFsDeviceFinder:
-    major: Incomplete
-    minor: Incomplete
-    def __init__(self) -> None: ...
-    def ask_proc_partitions(self): ...
-    def ask_sys_dev_block(self): ...
-    def ask_sys_class_block(self): ...
-    def find(self): ...
+    net_if_addrs = _psutil_linux.net_if_addrs
 
-def disk_partitions(all: bool = ...): ...
-def sensors_temperatures(): ...
-def sensors_fans(): ...
-def sensors_battery(): ...
-def users(): ...
-def boot_time(): ...
-def pids(): ...
-def pid_exists(pid): ...
-def ppid_map(): ...
-def wrap_exceptions(fun): ...
+    class _Ipv6UnsupportedError(Exception): ...
 
-class Process:
-    pid: Incomplete
-    def __init__(self, pid) -> None: ...
-    def oneshot_enter(self) -> None: ...
-    def oneshot_exit(self) -> None: ...
-    def name(self): ...
-    def exe(self): ...
-    def cmdline(self): ...
-    def environ(self): ...
-    def terminal(self): ...
-    def io_counters(self) -> pio: ...
-    def cpu_times(self): ...
-    def cpu_num(self): ...
-    def wait(self, timeout: Incomplete | None = ...): ...
-    def create_time(self, monotonic: bool = False) -> float: ...
-    def memory_info(self): ...
-    def memory_full_info(self): ...
-    def memory_maps(self): ...
-    def cwd(self): ...
-    def num_ctx_switches(self, _ctxsw_re=...): ...
-    def num_threads(self, _num_threads_re=...): ...
-    def threads(self): ...
-    def nice_get(self): ...
-    def nice_set(self, value): ...
-    def cpu_affinity_get(self): ...
-    def cpu_affinity_set(self, cpus) -> None: ...
-    def ionice_get(self): ...
-    def ionice_set(self, ioclass, value): ...
-    def rlimit(self, resource_, limits: Incomplete | None = ...): ...
-    def status(self): ...
-    def open_files(self): ...
-    def net_connections(self, kind: str = ...): ...
-    def num_fds(self): ...
-    def ppid(self): ...
-    def uids(self, _uids_re=...): ...
-    def gids(self, _gids_re=...): ...
+    class NetConnections:
+        tmap: dict[str, tuple[tuple[str, int, int | None], ...]]
+        def __init__(self) -> None: ...
+        def get_proc_inodes(self, pid: int) -> defaultdict[str, list[tuple[int, int]]]: ...
+        def get_all_inodes(self) -> dict[str, list[tuple[int, int]]]: ...
+        @staticmethod
+        def decode_address(addr: str, family: int) -> _common.addr | tuple[()]: ...
+        @staticmethod
+        def process_inet(
+            file: str, family: int, type_: int, inodes: dict[str, list[tuple[int, int]]], filter_pid: int | None = None
+        ) -> Generator[tuple[int, int, int, _common.addr | tuple[()], _common.addr | tuple[()], str, int | None]]: ...
+        @staticmethod
+        def process_unix(
+            file: FileDescriptorOrPath, family: int, inodes: dict[str, list[tuple[int, int]]], filter_pid: int | None = None
+        ) -> Generator[tuple[int, int, int, str, str, str, int | None]]: ...
+        @overload
+        def retrieve(self, kind: str, pid: int) -> list[_common.pconn]: ...
+        @overload
+        def retrieve(self, kind: str, pid: None = None) -> list[_common.sconn]: ...
+
+    def net_connections(kind: str = "inet") -> list[_common.sconn]: ...
+    def net_io_counters() -> dict[str, tuple[int, int, int, int, int, int, int, int]]: ...
+    def net_if_stats() -> dict[str, _common.snicstats]: ...
+
+    disk_usage = _psposix.disk_usage
+
+    def disk_io_counters(perdisk: bool = False) -> dict[str, tuple[int, int, int, int, int, int, int, int]]: ...
+
+    class RootFsDeviceFinder:
+        __slots__ = ["major", "minor"]
+        major: int
+        minor: int
+        def __init__(self) -> None: ...
+        def ask_proc_partitions(self) -> str | None: ...
+        def ask_sys_dev_block(self) -> str | None: ...
+        def ask_sys_class_block(self) -> str | None: ...
+        def find(self) -> str | None: ...
+
+    def disk_partitions(all: bool = False) -> list[_common.sdiskpart]: ...
+    def sensors_temperatures() -> dict[str, list[tuple[str, float, float | None, float | None]]]: ...
+    def sensors_fans() -> dict[str, list[_common.sfan]]: ...
+    def sensors_battery() -> _common.sbattery | None: ...
+    def users() -> list[_common.suser]: ...
+    def boot_time() -> float: ...
+    def pids() -> list[int]: ...
+    def pid_exists(pid: int) -> bool: ...
+    def ppid_map() -> dict[int, int]: ...
+    def wrap_exceptions(fun: Callable[_P, _R]) -> Callable[_P, _R]: ...
+
+    class Process:
+        __slots__ = ["_cache", "_ctime", "_name", "_ppid", "_procfs_path", "pid"]
+        pid: int
+        def __init__(self, pid: int) -> None: ...
+        def oneshot_enter(self) -> None: ...
+        def oneshot_exit(self) -> None: ...
+        def name(self) -> str: ...
+        def exe(self) -> str: ...
+        def cmdline(self) -> list[str]: ...
+        def environ(self) -> dict[str, str]: ...
+        def terminal(self) -> str | None: ...
+        def io_counters(self) -> pio: ...
+        def cpu_times(self) -> pcputimes: ...
+        def cpu_num(self) -> int: ...
+        def wait(self, timeout: float | None = None) -> int | None: ...
+        def create_time(self, monotonic: bool = False) -> float: ...
+        def memory_info(self) -> pmem: ...
+        def memory_full_info(self) -> pfullmem: ...
+        def memory_maps(self) -> list[tuple[str, str, str, int, int, int, int, int, int, int, int, int, int]]: ...
+        def cwd(self) -> str: ...
+        def num_ctx_switches(self, _ctxsw_re: re.Pattern[bytes] = ...) -> _common.pctxsw: ...
+        def num_threads(self, _num_threads_re: re.Pattern[bytes] = ...) -> int: ...
+        def threads(self) -> list[_common.pthread]: ...
+        def nice_get(self) -> int: ...
+        def nice_set(self, value: int) -> None: ...
+        def cpu_affinity_get(self) -> list[int]: ...
+        def cpu_affinity_set(self, cpus: Sequence[int]) -> None: ...
+        def ionice_get(self) -> _common.pionice: ...
+        def ionice_set(self, ioclass: int, value: int | None) -> None: ...
+        @overload
+        def rlimit(self, resource_: int, limits: tuple[int, int]) -> None: ...
+        @overload
+        def rlimit(self, resource_: int, limits: None = None) -> tuple[int, int]: ...
+        def status(self) -> str: ...
+        def open_files(self) -> list[popenfile]: ...
+        def net_connections(self, kind: str = "inet") -> list[_common.pconn]: ...
+        def num_fds(self) -> int: ...
+        def ppid(self) -> int: ...
+        def uids(self, _uids_re: re.Pattern[bytes] = ...) -> _common.puids: ...
+        def gids(self, _gids_re: re.Pattern[bytes] = ...) -> _common.pgids: ...

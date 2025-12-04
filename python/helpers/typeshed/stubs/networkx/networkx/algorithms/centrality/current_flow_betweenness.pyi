@@ -20,6 +20,8 @@ def approximate_current_flow_betweenness_centrality(
     epsilon: float = 0.5,
     kmax: int = 10000,
     seed: int | RandomState | None = None,
+    *,
+    sample_weight: float = 1,
 ) -> dict[Incomplete, float]: ...
 @_dispatchable
 def current_flow_betweenness_centrality(

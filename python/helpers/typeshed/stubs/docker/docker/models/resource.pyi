@@ -1,17 +1,17 @@
 from typing import Any, Generic, NoReturn, TypeVar
 from typing_extensions import Self
 
-from docker import APIClient
+from docker import DockerClient
 
 _T = TypeVar("_T", bound=Model)
 
 class Model:
     id_attribute: str
-    client: APIClient | None
+    client: DockerClient | None
     collection: Collection[Self] | None
     attrs: dict[str, Any]
     def __init__(
-        self, attrs: dict[str, Any] | None = None, client: APIClient | None = None, collection: Collection[Self] | None = None
+        self, attrs: dict[str, Any] | None = None, client: DockerClient | None = None, collection: Collection[Self] | None = None
     ) -> None: ...
     def __eq__(self, other) -> bool: ...
     def __hash__(self) -> int: ...
@@ -23,8 +23,8 @@ class Model:
 
 class Collection(Generic[_T]):
     model: type[_T]
-    client: APIClient
-    def __init__(self, client: APIClient | None = None) -> None: ...
+    client: DockerClient
+    def __init__(self, client: DockerClient | None = None) -> None: ...
     def __call__(self, *args, **kwargs) -> NoReturn: ...
     def list(self) -> list[_T]: ...
     def get(self, key: str) -> _T: ...
