@@ -25,7 +25,6 @@
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <toolWindowExtractorMode id="TODO" mode="fallback"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport"/>
   </extensions>
 
