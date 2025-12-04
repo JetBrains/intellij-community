@@ -18,7 +18,6 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
@@ -73,7 +72,6 @@ object GrazieTextLevelSpellCheckingExtension {
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
-    if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return SpellCheckingResult.Checked
 
     val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
     if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
