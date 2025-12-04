@@ -1,6 +1,8 @@
+<!-- depends on jettison (https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration)  -->
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <!-- depends on jettison (https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration)  -->
     <module name="intellij.libraries.jettison"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

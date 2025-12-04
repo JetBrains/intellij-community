@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 
+const val LIB_MODULE_PREFIX: String = "intellij.libraries."
+
 // Constants for magic strings used throughout the generator
 internal const val ADDITIONAL_MODULES_BLOCK = "additional"
 internal const val JETBRAINS_NAMESPACE = "jetbrains"

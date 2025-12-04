@@ -13,6 +13,9 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":utils_resources"],
   exports = ["@lib//:libraries-ktor-utils-ktor-utils"],
-  runtime_deps = ["@lib//:libraries-ktor-utils-ktor-utils"]
+  runtime_deps = [
+    "@lib//:libraries-ktor-utils-ktor-utils",
+    "//libraries/ktor/io",
+  ]
 )
 ### auto-generated section `build intellij.libraries.ktor.utils` end

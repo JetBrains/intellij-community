@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout
 
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -257,7 +260,12 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
   validateNoRedundantModuleSets(allModuleSets = allModuleSets, productSpecs = products)
 
   // Execute all generation operations in parallel
-  val (moduleSetResults, dependencyResult, productResult) = coroutineScope {
+  val (moduleSetResults, dependencyResult, pluginDependencyResult, productResult) = coroutineScope {
+    // Compute embedded modules once (deferred), used by both TIER 2 and TIER 3
+    val embeddedModulesDeferred = async {
+      collectEmbeddedModulesFromProducts(config.discoveredProducts)
+    }
+
     // TIER 1: Parallel module set generation for all configured sources
     val moduleSetJobs = config.moduleSetSources.map { (label, source) ->
       val (sourceObj, outputDir) = source
@@ -279,12 +287,34 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       }
 
       generateModuleDescriptorDependencies(
-        communityModuleSets = moduleSetsByLabel["community"] ?: emptyList(),
-        ultimateModuleSets = moduleSetsByLabel["ultimate"] ?: emptyList(),
-        coreModuleSets = moduleSetsByLabel["core"] ?: emptyList(),
+        communityModuleSets = moduleSetsByLabel.get("community") ?: emptyList(),
+        ultimateModuleSets = moduleSetsByLabel.get("ultimate") ?: emptyList(),
+        coreModuleSets = moduleSetsByLabel.get("core") ?: emptyList(),
         moduleOutputProvider = config.moduleOutputProvider,
-        productSpecs = products
+        productSpecs = products,
+        embeddedModulesDeferred = embeddedModulesDeferred,
       )
+    }
+
+    // TIER 3: Plugin dependency generation for bundled plugins
+    val pluginDependencyJob = async {
+      val allBundledPlugins = config.discoveredProducts
+        .mapNotNull { it.spec?.bundledPlugins }
+        .flatten()
+        .distinct()
+
+      if (allBundledPlugins.isNotEmpty()) {
+        val cache = ModuleDescriptorCache(config.moduleOutputProvider)
+        generatePluginDependencies(
+          bundledPlugins = allBundledPlugins,
+          moduleOutputProvider = config.moduleOutputProvider,
+          descriptorCache = cache,
+          embeddedModules = embeddedModulesDeferred.await(),
+        )
+      }
+      else {
+        null
+      }
     }
 
     val productJob = async {
@@ -299,7 +329,8 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
     GenerationResults(
       moduleSetResults = moduleSetJobs.awaitAll(),
       dependencyResult = dependencyJob.await(),
-      productResult = productJob.await()
+      pluginDependencyResult = pluginDependencyJob.await(),
+      productResult = productJob.await(),
     )
   }
 
@@ -308,8 +339,40 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
   printGenerationSummary(
     moduleSetResults = moduleSetResults,
     dependencyResult = dependencyResult,
+    pluginDependencyResult = pluginDependencyResult,
     productResult = productResult,
     projectRoot = config.projectRoot,
-    durationMs = System.currentTimeMillis() - startTime
+    durationMs = System.currentTimeMillis() - startTime,
   )
+}
+
+/**
+ * Collects all embedded modules from all product specs.
+ * Used to filter out embedded platform modules from plugin dependencies.
+ */
+private fun collectEmbeddedModulesFromProducts(products: List<DiscoveredProduct>): Set<String> {
+  val result = HashSet<String>()
+  for (discovered in products) {
+    val spec = discovered.spec ?: continue
+    for (moduleSetWithOverrides in spec.moduleSets) {
+      collectEmbeddedModules(moduleSetWithOverrides.moduleSet, result)
+    }
+    for (module in spec.additionalModules) {
+      if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+        result.add(module.name)
+      }
+    }
+  }
+  return result
+}
+
+private fun collectEmbeddedModules(moduleSet: ModuleSet, result: MutableSet<String>) {
+  for (module in moduleSet.modules) {
+    if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+      result.add(module.name)
+    }
+  }
+  for (nestedSet in moduleSet.nestedSets) {
+    collectEmbeddedModules(nestedSet, result)
+  }
 }

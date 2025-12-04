@@ -1,5 +1,7 @@
 <idea-plugin>
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
-    <module name="intellij.libraries.ktor.io" />
+    <module name="intellij.libraries.ktor.io"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

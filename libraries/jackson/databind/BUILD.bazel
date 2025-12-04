@@ -13,6 +13,9 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":databind_resources"],
   exports = ["@lib//:jackson-databind"],
-  runtime_deps = ["@lib//:jackson-databind"]
+  runtime_deps = [
+    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+  ]
 )
 ### auto-generated section `build intellij.libraries.jackson.databind` end

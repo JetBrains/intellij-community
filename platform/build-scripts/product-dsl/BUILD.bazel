@@ -27,8 +27,10 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/util",
     "//platform/util/jdom",
+    "//platform/util/xmlDom",
     "//libraries/jackson/jackson",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/aalto-xml",
   ]
 )
 
@@ -49,10 +51,12 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/util",
     "//platform/util/jdom",
+    "//platform/util/xmlDom",
     "@lib//:junit5",
     "@lib//:assert_j",
     "//libraries/jackson/jackson",
     "//libraries/kotlinx/coroutines/core",
+    "//libraries/aalto-xml",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` end

@@ -13,6 +13,9 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson-module-kotlin_resources"],
   exports = ["@lib//:jackson-module-kotlin"],
-  runtime_deps = ["@lib//:jackson-module-kotlin"]
+  runtime_deps = [
+    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+  ]
 )
 ### auto-generated section `build intellij.libraries.jackson.module.kotlin` end
