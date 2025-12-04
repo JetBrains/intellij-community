@@ -16,27 +16,15 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public interface UndoForeignCommandService {
 
-  void beforeStartForeignCommand(@Nullable FileEditor fileEditor, @Nullable DocumentReference originator);
+  void beforeStartForeignCommand(@Nullable Project project, @Nullable FileEditor fileEditor, @Nullable DocumentReference originator);
 
   void startForeignCommand(@NotNull CommandId commandId);
 
   void finishForeignCommand();
 
-  boolean isForeignIsProgress();
+  @Nullable ForeignEditorProvider getForeignEditorProvider(@Nullable Project project);
 
-  @Nullable FileEditor foreignFileEditor();
-
-  @Nullable DocumentReference foreignOriginator();
-
-  static @Nullable UndoForeignCommandService getInstance(@Nullable Project project) {
-    if (project == null || project.isDefault()) {
-      return getGlobalService();
-    } else {
-      return getServicePerProject(project);
-    }
-  }
-
-  private static @Nullable UndoForeignCommandService getGlobalService() {
+  static @Nullable UndoForeignCommandService getInstance() {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       return ProgressManager.getInstance().computeInNonCancelableSection(
@@ -44,11 +32,5 @@ public interface UndoForeignCommandService {
       );
     }
     return null;
-  }
-
-  private static @Nullable UndoForeignCommandService getServicePerProject(@NotNull Project project) {
-    return ProgressManager.getInstance().computeInNonCancelableSection(
-      () -> project.getService(UndoForeignCommandService.class)
-    );
   }
 }
