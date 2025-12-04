@@ -309,6 +309,7 @@ private fun doRegisterIndex(
   val id = getMessageByCoordinate(s = item.id, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: return
 
   for (entry in item.entries) {
+    val hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: continue
     processor.putOptionWithHelpId(
       words = Iterable {
         val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT)?.lowercase(Locale.ROOT) ?: return@Iterable emptyIterator()
@@ -324,7 +325,7 @@ private fun doRegisterIndex(
       },
       id = id,
       groupName = groupName,
-      hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: return,
+      hit = hit,
       path = entry.path?.let {
         getMessageByCoordinate(s = it, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
       },
