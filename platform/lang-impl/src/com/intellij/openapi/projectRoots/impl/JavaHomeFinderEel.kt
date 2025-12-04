@@ -25,6 +25,10 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
     eel.exec.fetchLoginShellEnvVariables()
   }
 
+  override fun getPathEnvVar(): String = runBlockingMaybeCancellable {
+    eel.descriptor.osFamily.expandPathEnvVar(environmentVariables.getValue()).orEmpty()
+  }
+
   override fun getEnvironmentVariable(name: String): String? = runBlockingMaybeCancellable {
     environmentVariables.getValue()[name]
   }

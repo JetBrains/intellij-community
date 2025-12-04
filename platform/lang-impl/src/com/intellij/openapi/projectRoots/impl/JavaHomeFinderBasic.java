@@ -138,8 +138,8 @@ public class JavaHomeFinderBasic {
 
   private @NotNull Set<String> findInPATH() {
     try {
-      String pathVarString = mySystemInfo.getEnvironmentVariable("PATH");
-      if (pathVarString == null || pathVarString.isEmpty()) {
+      String pathVarString = mySystemInfo.getPathEnvVar();
+      if (pathVarString.isEmpty()) {
         return Collections.emptySet();
       }
 

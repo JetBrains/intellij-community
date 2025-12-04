@@ -407,6 +407,9 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+*f:com.intellij.platform.eel.ExpandPathEnvVarKt
+- *sf:expandPathEnvVar(com.intellij.platform.eel.EelExecApi,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:expandPathEnvVar(com.intellij.platform.eel.EelOsFamily,java.util.Map):java.lang.String
 *f:com.intellij.platform.eel.GetConnectionToRemotePortArgsBuilder
 - <init>():V
 - f:build():com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs
