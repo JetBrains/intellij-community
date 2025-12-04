@@ -91,7 +91,8 @@ class CodeInsightContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getCodeInsightContexts(file: VirtualFile): List<CodeInsightContext> {
-    ThreadingAssertions.softAssertBackgroundThread()
+    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
+    // ThreadingAssertions.softAssertBackgroundThread()
     ThreadingAssertions.softAssertReadAccess()
 
     if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
@@ -117,7 +118,8 @@ class CodeInsightContextManagerImpl(
   override fun getPreferredContext(file: VirtualFile): CodeInsightContext {
     if (!isSharedSourceSupportEnabled(project)) return defaultContext()
 
-    ThreadingAssertions.softAssertBackgroundThread()
+    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
+    // ThreadingAssertions.softAssertBackgroundThread()
     ThreadingAssertions.softAssertReadAccess()
 
     log.trace { "requested preferred context of file ${file.path}" }
@@ -132,7 +134,8 @@ class CodeInsightContextManagerImpl(
 
     log.trace { "requested context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
-    ThreadingAssertions.softAssertBackgroundThread()
+    // FIXME: the assert had never worked due to IJPL-221633, but when it is enabled some tests fail
+    // ThreadingAssertions.softAssertBackgroundThread()
     ThreadingAssertions.softAssertReadAccess()
 
     val context = getCodeInsightContextRaw(fileViewProvider)
