@@ -98,11 +98,13 @@ private val oldSearchers = setOf(
     "org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithFlexibleTypesSearcher",
     "org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"
 )
-private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters>() {
-    init {
-        OverridingMethodsSearch.EP_NAME.extensionList
-            .filterNot { oldSearchers.contains(it::class.java.name) }
-            .forEach { registerExecutor(it) }
+private val EVERYTHING_BUT_KOTLIN by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    object : QueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters>() {
+        init {
+            OverridingMethodsSearch.EP_NAME.extensionList
+                .filterNot { oldSearchers.contains(it::class.java.name) }
+                .forEach { registerExecutor(it) }
+        }
     }
 }
 
