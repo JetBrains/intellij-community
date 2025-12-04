@@ -11,4 +11,4 @@ class MyClass(object):
         _x = 42  # unrelated assignment
 
     def function(self):
-        <weak_warning descr="Instance attribute _x defined outside __init__">self._x</weak_warning> = 42
+        <weak_warning descr="Instance attribute '_x' defined outside `__init__`">self._x</weak_warning> = 42
