@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.impl.status.ProcessPopup.hideSeparator
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.InlineBanner
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
@@ -32,8 +31,6 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
 
   private val banner: Component by lazy { createBanner(onBannerClose) }
 
-  private val popupMinSizeWithBanner: JBDimension by lazy { JBDimension(355, 265) }
-
   private val popup: JBPopup?
     get() = popupGetter()
 
@@ -44,7 +41,6 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
       analyzingComponent = indicator.component
       panel.add(analyzingComponent, 0, 0)
       panel.add(banner, 1, 1)
-      resizePopupToFitBannerIfNecessary()
     }
   }
 
@@ -57,6 +53,20 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
         removeBanner()
       }
     }
+  }
+
+  fun isBannerPresent(): Boolean = when {
+    userClosedBanner() -> false
+    else -> panel.components.contains(banner)
+  }
+
+
+  /**
+   * Returns the height, required to fully display the banner and the analyzing component if present in progresses popup.
+   */
+  fun getPopupRequiredHeight(): Int {
+    if (userClosedBanner()) return 0
+    return banner.preferredSize.height + (analyzingComponent?.preferredSize?.height ?: 0) + JBUI.scale(28)
   }
 
   /**
@@ -76,20 +86,6 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, private val p
     removeBanner()
   }
 
-  /**
-   * Increases the minimum size of the popup to fit the banner if it is present.
-   * If the popup is visible, ensures that it will fit the screen
-   */
-  fun resizePopupToFitBannerIfNecessary() {
-    if (userClosedBanner() || !panel.components.contains(banner)) return
-
-    popupMinSizeWithBanner.update() // rescale to the current zoom level
-    popup?.setMinimumSize(popupMinSizeWithBanner)
-    popup?.content?.minimumSize = popupMinSizeWithBanner // this is required so the popup size is calculated correctly during showing
-    if (popup?.isVisible == true) {
-      popup?.moveToFitScreen()
-    }
-  }
 
   private fun createBanner(revalidatePanel: Runnable): Component {
     val banner = InlineBanner().apply {
