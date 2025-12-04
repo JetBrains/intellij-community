@@ -109,7 +109,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertBackgroundThread() {
-    if (EDT.isCurrentThreadEdt() && EDT.isDisableEdtChecks()) {
+    if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }
