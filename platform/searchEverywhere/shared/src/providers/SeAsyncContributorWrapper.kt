@@ -6,15 +6,13 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoPro
 import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
-import com.intellij.platform.searchEverywhere.SeExtendedInfoImpl
+import com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -58,17 +56,8 @@ interface AsyncProcessor<T> {
   suspend fun process(item: T, weight: Int): Boolean
 }
 
-@ApiStatus.Internal
+@Internal
 fun SearchEverywhereContributor<*>.getExtendedInfo(item: Any): SeExtendedInfo {
   val extendedInfo = (this as? SearchEverywhereExtendedInfoProvider)?.createExtendedInfo()
-  val leftText = extendedInfo?.leftText?.invoke(item)
-  val rightAction = extendedInfo?.rightAction?.invoke(item)
-  val keyStroke = rightAction?.shortcutSet?.shortcuts
-    ?.filterIsInstance<KeyboardShortcut>()
-    ?.firstOrNull()
-    ?.firstKeyStroke
-
-  return SeExtendedInfoImpl(leftText, rightAction?.templatePresentation?.text,
-                            rightAction?.templatePresentation?.description,
-                            keyStroke?.keyCode, keyStroke?.modifiers)
+  return SeExtendedInfoBuilder().withExtendedInfo(extendedInfo, item).build()
 }

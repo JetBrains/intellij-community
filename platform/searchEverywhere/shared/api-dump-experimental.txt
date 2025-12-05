@@ -7,6 +7,25 @@
 - a:getText():java.lang.String
 *f:com.intellij.platform.searchEverywhere.SeExtendedInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- <init>():V
+- f:build():com.intellij.platform.searchEverywhere.SeExtendedInfo
+- f:getActionDescription():java.lang.String
+- f:getActionText():java.lang.String
+- f:getKeyCode():java.lang.Integer
+- f:getModifiers():java.lang.Integer
+- f:getText():java.lang.String
+- f:setActionDescription(java.lang.String):V
+- f:setActionText(java.lang.String):V
+- f:setKeyCode(java.lang.Integer):V
+- f:setModifiers(java.lang.Integer):V
+- f:setText(java.lang.String):V
+- f:withActionDescription(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withActionText(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withExtendedInfo(com.intellij.ide.actions.searcheverywhere.ExtendedInfo,java.lang.Object):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withKeyCode(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withModifiers(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withText(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 *a:com.intellij.platform.searchEverywhere.SeFilterState
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeFilterState$Companion
 - b:<init>(I,kotlinx.serialization.internal.SerializationConstructorMarker):V
