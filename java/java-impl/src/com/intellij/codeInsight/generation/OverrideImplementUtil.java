@@ -138,6 +138,11 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
       PsiClass copyClass = copyClass(aClass);
+      // FIXME: Force document initialization
+      //        otherwise something strange happens in analyzer context, 
+      //        and the document is not synchronized.
+      //        Probably some extension is not registered.
+      copyClass.getContainingFile().getFileDocument();
       PsiMethod result = (PsiMethod)copyClass.addBefore(method1, copyClass.getRBrace());
       if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
