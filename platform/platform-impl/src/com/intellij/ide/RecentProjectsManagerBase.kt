@@ -290,7 +290,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
     }
     set(value) {
-      val newValue = value?.takeIf { it.isNotBlank() && isLocal(it)}?.let { FileUtilRt.toSystemIndependentName(it) }
+      if (value?.let { !isLocal(it) } ?: false) return // Do not update location if the value is not from the local file system
+      val newValue = value?.takeIf { it.isNotBlank() }?.let { FileUtilRt.toSystemIndependentName(it) }
       synchronized(stateLock) {
         state.lastProjectLocation = newValue
       }
