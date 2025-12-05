@@ -88,8 +88,8 @@ internal class ErrorStateImpl : ErrorState {
     return extendsSets.any { it.contains(child) && it.contains(parent) }
   }
 
-  fun initState(util: SyntaxGeneratedParserRuntime, extendsSets: Array<SyntaxElementTypeSet>) {
+  fun initState(runtime: SyntaxGeneratedParserRuntime, extendsSets: Array<SyntaxElementTypeSet>) {
     this.extendsSets = extendsSets
-    this.braces = util.impl.braces.toTypedArray()
+    this.braces = runtime.impl.braces.toTypedArray()
   }
 }
