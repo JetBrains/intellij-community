@@ -442,7 +442,9 @@ class GlobalWorkspaceModelRegistry {
       LocalEelMachine
     }
     else {
-      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelMachineByInternalName(protectedName.name) }
+      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+        eelProvider.getEelMachineByInternalName(protectedName.name)
+      } ?: throw IllegalStateException("No EelMachine found for internal name: ${protectedName.name}")
     }
     val model = getGlobalModel(machine)
     return model
