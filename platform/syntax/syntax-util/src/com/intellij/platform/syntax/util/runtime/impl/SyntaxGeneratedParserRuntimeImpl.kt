@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("FunctionName")
+
 package com.intellij.platform.syntax.util.runtime.impl
 
 import com.intellij.platform.syntax.Logger
@@ -70,6 +72,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
   }
 
   override fun invalid_left_marker_guard_(marker: SyntaxTreeBuilder.Marker?, funcName: String?): Boolean {
+    // TODO
     //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
     val goodMarker = marker != null // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
     if (!goodMarker) return false
@@ -262,6 +265,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     return count
   }
 
+  @Suppress("unused")
   private fun addVariantSmart(token: Any, force: Boolean): Boolean {
     syntaxBuilder.eof()
     if (!errorState.suppressErrors && errorState.predicateCount < 2) {
