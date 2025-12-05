@@ -61,7 +61,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
@@ -123,17 +122,18 @@ internal suspend fun loadApp(
 
     initServiceContainerJob.join()
 
-    val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
-      try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app.getCoroutineScope(), app.isUnitTestMode))
+    TelemetryManager.setTelemetryManager(async(CoroutineName("opentelemetry configuration")) {
+      return@async try {
+        TelemetryManagerImpl(app.getCoroutineScope(), app.isUnitTestMode)
       }
       catch (e: CancellationException) {
         throw e
       }
       catch (e: Throwable) {
         logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+        null
       }
-    }
+    })
 
     app.getCoroutineScope().launch {
       // precompute after plugin model loaded
@@ -156,10 +156,6 @@ internal suspend fun loadApp(
 
     launch(CoroutineName("app pre-initialization")) {
       initConfigurationStoreJob.join()
-
-      span("telemetry waiting") {
-        initTelemetryJob.join()
-      }
 
       val preloadJob = launch(CoroutineName("critical services preloading")) {
         preloadCriticalServices(
@@ -208,12 +204,6 @@ internal suspend fun loadApp(
     }
 
     launch {
-      if (AppMode.isRemoteDevHost()) {
-        span("telemetry waiting") {
-          initTelemetryJob.join()
-        }
-      }
-
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
