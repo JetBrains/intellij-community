@@ -6,17 +6,22 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.lang.LangBundle;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -50,6 +55,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import static com.intellij.build.ExecutionNode.getEventResultIcon;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -58,6 +65,7 @@ import java.util.stream.IntStream;
 public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   private static final @NonNls String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
+  private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
 
   private final Project myProject;
   private final BuildContentManager myBuildContentManager;
@@ -66,9 +74,9 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
   private final OnePixelSplitter threeComponentsSplitter;
-  private final JBList<AbstractViewManager.BuildInfo> myBuildsList;
-  private final Map<Object, AbstractViewManager.BuildInfo> myBuildsMap;
-  private final Map<AbstractViewManager.BuildInfo, BuildView> myViewMap;
+  private final JBList<BuildInfo> myBuildsList;
+  private final Map<Object, BuildInfo> myBuildsMap;
+  private final Map<BuildInfo, BuildView> myViewMap;
   private final AbstractViewManager myViewManager;
   private final FocusWatcher myFocusWatcher;
   private volatile Content myContent;
@@ -129,10 +137,6 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     });
   }
 
-  public Content getContent() {
-    return myContent;
-  }
-
   public Map<BuildDescriptor, BuildView> getBuildsMap() {
     return Collections.unmodifiableMap(myViewMap);
   }
@@ -144,12 +148,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
-    AbstractViewManager.BuildInfo buildInfo;
+    BuildInfo buildInfo;
     if (event instanceof StartBuildEvent startBuildEvent) {
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      buildInfo = new AbstractViewManager.BuildInfo(startBuildEvent.getBuildDescriptor());
+      buildInfo = new BuildInfo(startBuildEvent.getBuildDescriptor());
       myBuildsMap.put(buildId, buildInfo);
     }
     else {
@@ -164,8 +168,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       if (event instanceof StartBuildEvent) {
         buildInfo.message = event.getMessage();
 
-        DefaultListModel<AbstractViewManager.BuildInfo> listModel =
-          (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
+        DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
         listModel.addElement(buildInfo);
 
         RunContentDescriptor contentDescriptor;
@@ -234,7 +237,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
             (event instanceof FinishEvent && ((FinishEvent)event).getResult() instanceof FailureResult) ||
             (event instanceof MessageEvent && ((MessageEvent)event).getResult().getKind() == MessageEvent.Kind.ERROR)) {
           if (isFirstErrorShown.compareAndSet(false, true)) {
-            ListModel<AbstractViewManager.BuildInfo> listModel = myBuildsList.getModel();
+            ListModel<BuildInfo> listModel = myBuildsList.getModel();
             IntStream.range(0, listModel.getSize())
               .filter(i -> buildInfo == listModel.getElementAt(i))
               .findFirst()
@@ -251,6 +254,20 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
           ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo, buildInfo.content);
+          if (buildInfo.result instanceof FailureResult) {
+            boolean activate = buildInfo.isActivateToolWindowWhenFailed();
+            myBuildContentManager.setSelectedContent(buildInfo.content, false, false, activate, null);
+            List<? extends Failure> failures = ((FailureResult)buildInfo.result).getFailures();
+            if (!failures.isEmpty()) {
+              Failure failure = failures.getFirst();
+              Notification notification = failure.getNotification();
+              if (notification != null) {
+                String title = notification.getTitle();
+                String content = notification.getContent();
+                SystemNotifications.getInstance().notify(UIBundle.message("tool.window.name.build"), title, content);
+              }
+            }
+          }
           myViewManager.onBuildFinish(buildInfo);
         }
         else {
@@ -270,7 +287,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
           myBuildsList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-              AbstractViewManager.BuildInfo selectedBuild = myBuildsList.getSelectedValue();
+              BuildInfo selectedBuild = myBuildsList.getSelectedValue();
               if (selectedBuild == null) return;
               setActiveView(myViewMap.get(selectedBuild));
             }
@@ -337,7 +354,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       JComponent viewComponent = view.getComponent();
       threeComponentsSplitter.setSecondComponent(viewComponent);
       myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
-      myViewManager.configureToolbar(myToolbarActions, this, view);
+      configureToolbar(view);
       viewComponent.setVisible(true);
       viewComponent.repaint();
       if (myFocused) {
@@ -349,13 +366,20 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     }
   }
 
+  private void configureToolbar(@NotNull BuildView view) {
+    myToolbarActions.removeAll();
+    myToolbarActions.addAll(view.createConsoleActions());
+    myToolbarActions.add(new PinBuildViewAction(myContent));
+    myToolbarActions.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>(view)));
+  }
+
   private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
     long currentTime = System.currentTimeMillis();
-    DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
+    DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
     boolean clearAll = !listModel.isEmpty();
-    List<AbstractViewManager.BuildInfo> sameBuildsToClear = new SmartList<>();
+    List<BuildInfo> sameBuildsToClear = new SmartList<>();
     for (int i = 0; i < listModel.getSize(); i++) {
-      AbstractViewManager.BuildInfo build = listModel.getElementAt(i);
+      BuildInfo build = listModel.getElementAt(i);
       boolean sameBuildKind = build.getWorkingDir().equals(startBuildEvent.getBuildDescriptor().getWorkingDir());
       boolean differentBuildsFromSameBuildGroup = !build.getId().equals(startBuildEvent.getBuildDescriptor().getId()) &&
                                                   build.getGroupId() != null &&
@@ -403,9 +427,66 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
 
   @ApiStatus.Internal
   public BuildView getBuildView(Object buildId) {
-    AbstractViewManager.BuildInfo buildInfo = myBuildsMap.get(buildId);
+    BuildInfo buildInfo = myBuildsMap.get(buildId);
     if (buildInfo == null) return null;
     return myViewMap.get(buildInfo);
+  }
+
+  boolean isPinned() {
+    Content content = myContent;
+    return content != null && content.isPinned();
+  }
+
+  void lockContent() {
+    Content content = myContent;
+    if (content == null) return;
+    String tabName = getPinnedTabName();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      content.setPinnable(false);
+      if (content.getIcon() == null) {
+        content.setIcon(EmptyIcon.ICON_8);
+      }
+      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+      ((BuildContentManagerImpl)myBuildContentManager).updateTabDisplayName(content, tabName);
+    });
+    content.putUserData(PINNED_EXTRACTED_CONTENT, Boolean.TRUE);
+  }
+
+  private @NlsContexts.TabTitle String getPinnedTabName() {
+    BuildDescriptor buildInfo = myViewMap.keySet()
+      .stream()
+      .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
+      .orElse(null);
+    if (buildInfo != null) {
+      @BuildEventsNls.Title String title = buildInfo.getTitle();
+      @NlsContexts.TabTitle String viewName = myViewManager.getViewName().split(" ")[0];
+      String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
+      if (myViewMap.size() > 1) {
+        return LangBundle.message("tab.title.more", tabName, myViewMap.size() - 1);
+      }
+      return tabName;
+    }
+    return myViewManager.getViewName();
+  }
+
+  private static final class BuildInfo extends DefaultBuildDescriptor {
+    @BuildEventsNls.Message String message;
+    @BuildEventsNls.Message String statusMessage;
+    long endTime = -1;
+    EventResult result;
+    Content content;
+
+    BuildInfo(@NotNull BuildDescriptor descriptor) {
+      super(descriptor);
+    }
+
+    public Icon getIcon() {
+      return getEventResultIcon(result);
+    }
+
+    public boolean isRunning() {
+      return endTime == -1;
+    }
   }
 
   private final class MultipleBuildsPanel extends JPanel implements OccurenceNavigator {
@@ -421,7 +502,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       int index = Math.max(myBuildsList.getSelectedIndex(), 0);
 
       Function<Integer, Pair<Integer, Supplier<OccurenceInfo>>> function = i -> {
-        AbstractViewManager.BuildInfo buildInfo = myBuildsList.getModel().getElementAt(i);
+        BuildInfo buildInfo = myBuildsList.getModel().getElementAt(i);
         BuildView buildView = myViewMap.get(buildInfo);
         if (buildView == null) return null;
         if (i != index) {
@@ -502,7 +583,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   private final class ProgressWatcher implements Runnable {
 
     private final SingleEdtTaskScheduler refreshAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
-    private final Set<AbstractViewManager.BuildInfo> builds = ConcurrentCollectionFactory.createConcurrentSet();
+    private final Set<BuildInfo> builds = ConcurrentCollectionFactory.createConcurrentSet();
 
     private volatile boolean isStopped = false;
 
@@ -519,7 +600,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       }
     }
 
-    void addBuild(AbstractViewManager.BuildInfo buildInfo) {
+    void addBuild(BuildInfo buildInfo) {
       if (isStopped) {
         LOG.warn("Attempt to add new build " + buildInfo + ";title=" + buildInfo.getTitle() + " to stopped watcher instance");
         return;
@@ -530,7 +611,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       }
     }
 
-    void stopBuild(AbstractViewManager.BuildInfo buildInfo) {
+    void stopBuild(BuildInfo buildInfo) {
       builds.remove(buildInfo);
     }
 
@@ -546,6 +627,46 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       if (event instanceof FocusEvent focusEvent && event.getID() == FocusEvent.FOCUS_GAINED) {
         myFocused = SwingUtilities.isDescendingFrom(focusEvent.getComponent(), myContent.getComponent());
       }
+    }
+  }
+
+  private static final class PinBuildViewAction extends DumbAwareAction implements Toggleable {
+    private final Content myContent;
+
+    PinBuildViewAction(Content content) {
+      myContent = content;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      boolean selected = !myContent.isPinned();
+      if (selected) {
+        myContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+      }
+      myContent.setPinned(selected);
+      Toggleable.setSelected(e.getPresentation(), selected);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!myContent.isValid()) return;
+      Boolean isPinnedAndExtracted = myContent.getUserData(PINNED_EXTRACTED_CONTENT);
+      if (isPinnedAndExtracted == Boolean.TRUE) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      boolean selected = myContent.isPinned();
+
+      e.getPresentation().setIcon(AllIcons.General.Pin_tab);
+      Toggleable.setSelected(e.getPresentation(), selected);
+      e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }
