@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":ion_resources"],
-  exports = ["@lib//:ion"],
-  runtime_deps = ["@lib//:ion"]
+  exports = ["@lib//:libraries-ion-ion"],
+  runtime_deps = ["@lib//:libraries-ion-ion"]
 )
 ### auto-generated section `build intellij.libraries.ion` end

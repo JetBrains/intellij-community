@@ -2772,12 +2772,6 @@ jvm_import(
   source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file"
 )
 
-jvm_import(
-  name = "ion",
-  jar = "@com_amazon_ion-ion-java-1_11_10_http//file",
-  source_jar = "@com_amazon_ion-ion-java-1_11_10-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "jackson",
