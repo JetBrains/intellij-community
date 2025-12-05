@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -441,7 +442,9 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                         } else {
                             element.putUserData(FIND_USAGES_ONES_FOR_DATA_CLASS_KEY, true)
                         }
-                        FindManager.getInstance(project).findUsages(element)
+                        WriteIntentReadAction.run {
+                            FindManager.getInstance(project).findUsages(element)
+                        }
                     }
                 }
 
