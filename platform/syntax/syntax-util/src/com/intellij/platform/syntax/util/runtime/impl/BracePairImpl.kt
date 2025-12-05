@@ -5,7 +5,7 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.util.runtime.BracePair
 
 internal data class BracePairImpl(
-  override val myLeftBrace: SyntaxElementType?,
-  override val myRightBrace: SyntaxElementType?,
-  private val myStructural: Boolean,
+  override val leftBrace: SyntaxElementType?,
+  override val rightBrace: SyntaxElementType?,
+  private val structural: Boolean,
 ) : BracePair

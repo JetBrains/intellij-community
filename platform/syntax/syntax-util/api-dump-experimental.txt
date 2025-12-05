@@ -174,8 +174,8 @@
 - setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
 - setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
 *:com.intellij.platform.syntax.util.runtime.BracePair
-- a:getMyLeftBrace():com.intellij.platform.syntax.SyntaxElementType
-- a:getMyRightBrace():com.intellij.platform.syntax.SyntaxElementType
+- a:getLeftBrace():com.intellij.platform.syntax.SyntaxElementType
+- a:getRightBrace():com.intellij.platform.syntax.SyntaxElementType
 *f:com.intellij.platform.syntax.util.runtime.BracePairKt
 - *sf:BracePair(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,Z):com.intellij.platform.syntax.util.runtime.BracePair
 *f:com.intellij.platform.syntax.util.runtime.DymmyBlockKt

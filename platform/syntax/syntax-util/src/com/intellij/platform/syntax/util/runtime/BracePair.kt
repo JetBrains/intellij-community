@@ -10,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface BracePair {
-  val myLeftBrace: SyntaxElementType?
-  val myRightBrace: SyntaxElementType?
+  val leftBrace: SyntaxElementType?
+  val rightBrace: SyntaxElementType?
 }
 
 @ApiStatus.Experimental

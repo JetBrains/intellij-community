@@ -447,8 +447,8 @@ internal class SyntaxGeneratedParserRuntimeImpl(
       while ((eatMoreFlag || parenCount > 0) && syntaxBuilder.rawTokenIndex() < lastErrorPos) {
         val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
         if (state.braces.isNotEmpty()) {
-          if (tokenType === state.braces[0].myLeftBrace) parenCount++
-          else if (tokenType === state.braces[0].myRightBrace) parenCount--
+          if (tokenType === state.braces[0].leftBrace) parenCount++
+          else if (tokenType === state.braces[0].rightBrace) parenCount--
         }
         if (syntaxBuilder.rawTokenIndex() >= lastErrorPos) break
         TOKEN_ADVANCER.parse(this, frame.level + 1)
@@ -780,8 +780,8 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     val siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>> = ArrayDeque()
     var marker: SyntaxTreeBuilder.Marker? = null
 
-    val lBrace: SyntaxElementType? = if (checkBraces && state.braces.isNotEmpty()) state.braces[0].myLeftBrace else null
-    val rBrace: SyntaxElementType? = if (lBrace != null) state.braces[0].myRightBrace else null
+    val lBrace: SyntaxElementType? = if (checkBraces && state.braces.isNotEmpty()) state.braces[0].leftBrace else null
+    val rBrace: SyntaxElementType? = if (lBrace != null) state.braces[0].rightBrace else null
     var totalCount = 0
     var tokenCount = 0
     if (lBrace != null) {
