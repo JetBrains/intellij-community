@@ -6,22 +6,14 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.respondText
 import io.ktor.server.response.respondTextWriter
-import io.modelcontextprotocol.kotlin.sdk.InitializeResult
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCError
-import io.modelcontextprotocol.kotlin.sdk.ErrorCode
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCMessage
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCRequest
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCResponse
-import io.modelcontextprotocol.kotlin.sdk.LATEST_PROTOCOL_VERSION
-import io.modelcontextprotocol.kotlin.sdk.Method
-import io.modelcontextprotocol.kotlin.sdk.RequestId
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
-import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
+import io.modelcontextprotocol.kotlin.sdk.shared.TransportSendOptions
+import io.modelcontextprotocol.kotlin.sdk.types.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.jsonPrimitive
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
@@ -58,7 +50,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
     }
   }
 
-  override suspend fun send(message: JSONRPCMessage) {
+  override suspend fun send(message: JSONRPCMessage, options: TransportSendOptions?) {
     if (!started.get()) {
       error("Transport not started")
     }
@@ -107,7 +99,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.InternalServerError,
-        ErrorCode.Defined.InternalError,
+        RPCError.ErrorCode.INTERNAL_ERROR,
         "Transport not started"
       )
       return
@@ -117,14 +109,14 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.NotAcceptable,
-        ErrorCode.Defined.InvalidRequest,
+        RPCError.ErrorCode.INVALID_REQUEST,
         "Client must accept application/json",
       )
       return
     }
 
     val isInitializationRequest = messages.any { message ->
-      message is JSONRPCRequest && message.method == Method.Defined.Initialize.value
+      message is JSONRPCRequest && message.method == "initialize"
     }
 
     var initializationReserved = false
@@ -133,7 +125,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
         respondError(
           call,
           HttpStatusCode.BadRequest,
-          ErrorCode.Defined.InvalidRequest,
+          RPCError.ErrorCode.INVALID_REQUEST,
           "Server already initialized for this session",
         )
         return
@@ -144,7 +136,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.BadRequest,
-        ErrorCode.Defined.InvalidRequest,
+        RPCError.ErrorCode.INVALID_REQUEST,
         "Session not initialized. Send initialize request first.",
       )
       return
@@ -176,7 +168,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.BadRequest,
-        ErrorCode.Defined.InternalError,
+        RPCError.ErrorCode.INTERNAL_ERROR,
         "Failed to process request: ${t.message ?: t.javaClass.simpleName}",
       )
       return
@@ -212,7 +204,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.InternalServerError,
-        ErrorCode.Defined.InternalError,
+        RPCError.ErrorCode.INTERNAL_ERROR,
         "Failed to produce response: ${t.message ?: t.javaClass.simpleName}",
       )
       return
@@ -220,8 +212,8 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
 
     val payload = when {
       responses.isEmpty() -> "[]"
-      responses.size == 1 && !respondAsBatch -> McpJson.encodeToString(responses.first())
-      else -> McpJson.encodeToString(responses)
+      responses.size == 1 && !respondAsBatch -> io.modelcontextprotocol.kotlin.sdk.shared.McpJson.encodeToString(responses.first())
+      else -> io.modelcontextprotocol.kotlin.sdk.shared.McpJson.encodeToString(responses)
     }
 
     attachSessionHeaders(call)
@@ -233,7 +225,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.BadRequest,
-        ErrorCode.Defined.InvalidRequest,
+        RPCError.ErrorCode.INVALID_REQUEST,
         "Session not initialized",
       )
       return
@@ -243,7 +235,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.NotAcceptable,
-        ErrorCode.Defined.InvalidRequest,
+        RPCError.ErrorCode.INVALID_REQUEST,
         "Client must accept text/event-stream",
       )
       return
@@ -253,7 +245,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.Conflict,
-        ErrorCode.Defined.InvalidRequest,
+        RPCError.ErrorCode.INVALID_REQUEST,
         "An SSE stream is already active for this session",
       )
       return
@@ -282,7 +274,7 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       respondError(
         call,
         HttpStatusCode.BadRequest,
-        ErrorCode.Defined.InternalError,
+        RPCError.ErrorCode.INTERNAL_ERROR,
         "Session not initialized",
       )
       return
@@ -307,17 +299,17 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
       append(SSE_EVENT_NAME)
       append('\n')
       append("data: ")
-      append(McpJson.encodeToString(message))
+      append(io.modelcontextprotocol.kotlin.sdk.shared.McpJson.encodeToString(message))
       append("\n\n")
     }
     sseEvents.trySend(payload)
   }
 
   private fun extractProtocolVersion(response: JSONRPCResponse): String? {
-    val result = response.result ?: return null
+    val result = response.result
     return when (result) {
       is InitializeResult -> result.protocolVersion
-      else -> result._meta["protocolVersion"]?.jsonPrimitive?.content
+      else -> result.meta?.get("protocolVersion")?.jsonPrimitive?.content
     }
   }
 
@@ -348,12 +340,16 @@ internal class StreamableHttpServerTransport : AbstractTransport() {
   private suspend fun respondError(
     call: ApplicationCall,
     status: HttpStatusCode,
-    code: ErrorCode,
+    code: Int,
     message: String,
   ) {
-    val jsonError = JSONRPCError(
+    val error = RPCError(
       code = code,
       message = message.take(MAX_ERROR_MESSAGE_LENGTH)
+    )
+    val jsonError = JSONRPCError(
+      id = RequestId.NumberId(0),
+      error = error
     )
 
     call.respondText(McpJson.encodeToString(jsonError), ContentType.Application.Json, status)

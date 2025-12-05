@@ -14,12 +14,12 @@ import com.intellij.util.application
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.request.header
-import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
 import io.modelcontextprotocol.kotlin.sdk.client.StreamableHttpClientTransport
 import io.modelcontextprotocol.kotlin.sdk.shared.AbstractTransport
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.*
 import kotlinx.io.asSink
 import kotlinx.io.asSource
@@ -57,17 +57,22 @@ class TransportTest {
   @ParameterizedTest
   @MethodSource("getTransports")
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
+    delay(500)
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
         override fun getTools(): List<McpTool> {
           return listOf(this@TransportTest::test_tool.asTool())
         }
       }, disposable)
+      // tools change is being listened in a backgound coroutine, so we have to wait a bit
+      delay(500)
       client.callTool("test_tool", emptyMap())
 
       val actual = withTimeout(2000) { projectFromTool.await() }
       assertEquals(project, actual)
     }
+    // the same to unregistration. Otherwise, tools change notification is being sent into a closed transport
+    delay(500) // delay for exit from use {}
   }
 
   val projectFromTool = CompletableDeferred<Project?>()
