@@ -182,7 +182,7 @@ class SyntaxGeneratedParserRuntime(
       arrayList.iterator()
   }
 
-  class ErrorState() {
+  class ErrorState {
     internal var currentFrame: Frame? = null
     internal val variants: MyList<Variant> = MyList(INITIAL_VARIANTS_SIZE)
     internal val unexpected: MyList<Variant> = MyList(INITIAL_VARIANTS_SIZE / 10)
@@ -710,7 +710,9 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Modifiers
 
 private fun SyntaxGeneratedParserRuntime.enter_section_impl_(level: Int, modifiers: Modifiers, elementType: SyntaxElementType?, frameName: String?) {
   errorState.level++
-  val frame: SyntaxGeneratedParserRuntime.Frame = errorState.FRAMES.alloc().init(syntaxBuilder, errorState, level, modifiers, elementType, frameName)
+  val frame: SyntaxGeneratedParserRuntime.Frame = errorState.FRAMES.alloc().init(
+    syntaxBuilder, errorState, level, modifiers, elementType, frameName
+  )
   if (((frame.modifiers and _LEFT_) or (frame.modifiers and _LEFT_INNER_)) != _NONE_) {
     val left: SyntaxTreeBuilder.Marker? = syntaxBuilder.lastDoneMarker
     if (invalid_left_marker_guard_(left, frameName)) {
@@ -899,6 +901,7 @@ private fun SyntaxGeneratedParserRuntime.close_frame_impl_(
     marker = if (elementType != null && marker != null && (result || pinned)) syntaxBuilder.mark() else null
     if (resetLastPos) frame.lastVariantAt = syntaxBuilder.rawTokenIndex()
   }
+
   if (elementType != null && marker != null) {
     if (result || pinned) {
       if ((frame.modifiers and _COLLAPSE_) != _NONE_) {
