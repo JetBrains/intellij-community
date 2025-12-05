@@ -53,6 +53,10 @@ object CommunityModuleSets  {
     embeddedModule("intellij.libraries.kotlin.reflect")
     // intellij.platform.wsl.impl and intellij.platform.util.http uses it
     embeddedModule("intellij.libraries.kotlinx.io")
+
+    // todo - JB Client should not embed intellij.platform.split
+    embeddedModule("intellij.libraries.kotlinx.serialization.cbor")
+
     embeddedModule("intellij.libraries.kotlinx.serialization.core")
     embeddedModule("intellij.libraries.kotlinx.serialization.json")
     embeddedModule("intellij.libraries.kotlinx.serialization.protobuf")
@@ -148,7 +152,9 @@ object CommunityModuleSets  {
     embeddedModule("intellij.libraries.miglayout.swing")
     embeddedModule("intellij.libraries.pty4j")
     embeddedModule("intellij.libraries.sshj")
+    embeddedModule("intellij.libraries.swingx")
     embeddedModule("intellij.libraries.winp")
+
     embeddedModule("intellij.libraries.rd.text")
   }
 
@@ -181,6 +187,8 @@ object CommunityModuleSets  {
     module("intellij.libraries.kotlinx.document.store.mvstore")
     module("intellij.libraries.opencsv")
     module("intellij.libraries.lucene.common")
+    // todo - once intellij.java.aetherDependencyResolver will be migrated to product module, it can be a non-embedded module (see ArtifactRepositoryManager)
+    embeddedModule("intellij.libraries.plexus.utils")
   }
 
   /**

@@ -214,7 +214,6 @@ object CommunityRepositoryModules {
     plugin("intellij.repository.search") { spec ->
       spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
       spec.withProjectLibrary("package-search-api-client")
-      spec.withProjectLibrary("kotlinx-document-store-mvstore")
     },
     pluginAuto("intellij.java.jshell") { spec ->
       spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
@@ -504,8 +503,6 @@ object CommunityRepositoryModules {
       //spec.withModuleLibrary("compose-desktop-runtime", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("compose-desktop-ui", "intellij.android.adt.ui.compose", "")
       //spec.withModuleLibrary("skiko", "intellij.android.adt.ui.compose", "")
-
-      spec.withProjectLibrary("asm-tools")
 
       val ffmpegVersion = "6.0-1.5.9"
       val javacppVersion = "1.5.9"

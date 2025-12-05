@@ -8,6 +8,7 @@
     <!-- <editor-fold desc="nested: core.platform > libraries.platform"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
+    <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.protobuf" loading="embedded"/>
@@ -121,6 +122,7 @@
     <module name="intellij.libraries.miglayout.swing" loading="embedded"/>
     <module name="intellij.libraries.pty4j" loading="embedded"/>
     <module name="intellij.libraries.sshj" loading="embedded"/>
+    <module name="intellij.libraries.swingx" loading="embedded"/>
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.rd.text" loading="embedded"/>
     <!-- </editor-fold> -->

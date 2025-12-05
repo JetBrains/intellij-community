@@ -9,5 +9,6 @@
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.plexus.utils" loading="embedded"/>
   </content>
 </idea-plugin>
