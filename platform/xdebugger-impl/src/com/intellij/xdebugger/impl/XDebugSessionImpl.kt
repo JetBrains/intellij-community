@@ -33,6 +33,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -452,6 +453,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     @ApiStatus.Internal
     get() = mySessionTab
 
+  /**
+   * Use [runWhenUiReady] to avoid races.
+   *
+   * See [XDebugSession.getUI] doc for proper migration steps.
+   */
   @ApiStatus.Obsolete
   override fun getUI(): RunnerLayoutUi? {
     assertSessionTabInitialized()
@@ -464,6 +470,27 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
     else {
       getSessionTabInternal()?.ui
+    }
+  }
+
+  /**
+   * Calls [block] in EDT when the tab UI is ready.
+   *
+   * See [XDebugSession.getUI] doc for proper migration steps.
+   */
+  @ApiStatus.Obsolete
+  fun runWhenUiReady(block: (RunnerLayoutUi) -> Unit) {
+    tabCoroutineScope.launch(Dispatchers.EDT) {
+      assertSessionTabInitialized()
+      val ui = if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
+        getMockRunContentDescriptorIfInitialized()?.runnerLayoutUi
+      }
+      else {
+        sessionTabDeferred.await()?.ui
+      }
+      if (ui != null) {
+        block(ui)
+      }
     }
   }
 
