@@ -11,13 +11,14 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XSmartStepIntoHandlerEntry
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.event.HyperlinkListener
 
 @ApiStatus.Internal
@@ -277,19 +279,21 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
 }
 
 @Service(Service.Level.PROJECT)
-internal class XDebugSessionProxyKeeper {
-  private val proxyMap = mutableMapOf<XDebugSession, XDebugSessionProxy>()
+private class XDebugSessionProxyKeeper {
+  private val proxyMap = ConcurrentHashMap<XDebugSession, XDebugSessionProxy>()
 
   fun getOrCreateProxy(session: XDebugSession): XDebugSessionProxy {
-    return proxyMap.getOrPut(session) { MonolithSessionProxy(session) }
+    return proxyMap.computeIfAbsent(session, this::createProxy)
   }
 
-  fun removeProxy(session: XDebugSession) {
-    proxyMap.remove(session)
-  }
-
-  companion object {
-    fun getInstanceIfExists(project: Project): XDebugSessionProxyKeeper? = project.serviceIfCreated()
+  @OptIn(AwaitCancellationAndInvoke::class)
+  private fun createProxy(session: XDebugSession): XDebugSessionProxy {
+    if (session is XDebugSessionImpl) {
+      session.coroutineScope.awaitCancellationAndInvoke {
+        proxyMap.remove(session)
+      }
+    }
+    return MonolithSessionProxy(session)
   }
 }
 

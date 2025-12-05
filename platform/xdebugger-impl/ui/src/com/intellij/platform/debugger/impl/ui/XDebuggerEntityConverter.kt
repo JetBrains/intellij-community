@@ -30,6 +30,6 @@ object XDebuggerEntityConverter {
   @ApiStatus.Internal
   @JvmStatic
   fun getSessionNonSplitOnly(proxy: XDebugSessionProxy): XDebugSession? {
-    return XDebuggerMonolithAccessPoint.find { it.getSession(proxy) }
+    return XDebuggerMonolithAccessPoint.find { it.getSessionNonSplitOnly(proxy) }
   }
 }
