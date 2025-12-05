@@ -9671,12 +9671,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "stream_ex",
-  jar = "@one_util-streamex-0_8_4_http//file",
-  source_jar = "@one_util-streamex-0_8_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "studio-platform",
