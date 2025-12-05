@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.BitUtil
 import com.sun.jdi.*
+import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
@@ -589,10 +590,6 @@ fun createCompiledDataDescriptor(result: CompilationResult, canBeCached: Boolean
 
 fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
 fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
-
-
-@ApiStatus.Internal
-class IncorrectCodeFragmentException(message: String) : EvaluateException(message)
 
 enum class CompilerType {
     OLD, IR, K2

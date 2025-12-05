@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.ReadAction;
@@ -115,7 +116,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
             res.append(m.getText()).append("\n");
           }
         }
-        throw new EvaluateException(res.toString());
+        throw new IncorrectCodeFragmentException(res.toString());
       }
       catch (Exception e) {
         throw new EvaluateException(e.getMessage());
