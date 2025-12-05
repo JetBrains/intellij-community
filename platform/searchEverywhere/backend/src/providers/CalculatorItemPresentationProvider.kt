@@ -6,9 +6,9 @@ import com.intellij.ide.actions.searcheverywhere.EvaluationResult
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
-import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

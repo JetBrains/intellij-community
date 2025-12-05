@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams

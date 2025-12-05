@@ -14,7 +14,11 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import com.intellij.ui.Changeable
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale
@@ -44,10 +48,12 @@ object SeTopHitItemPresentationProvider {
             icon = toSize(icon, iconSize, iconSize)
           }
 
-           SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
-                                    text = text,
-                                    extendedInfo = extendedInfo,
-                                    isMultiSelectionSupported = isMultiSelectionSupported)
+            SeSimpleItemPresentation(
+                iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
+                text = text,
+                extendedInfo = extendedInfo,
+                isMultiSelectionSupported = isMultiSelectionSupported
+            )
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
@@ -63,24 +69,30 @@ object SeTopHitItemPresentationProvider {
             }
 
           if (item is BooleanOptionDescription) {
-            SeOptionActionItemPresentation(SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
-                                           isBooleanOption = true, isMultiSelectionSupported = isMultiSelectionSupported)
+              SeOptionActionItemPresentation(
+                  SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
+                  isBooleanOption = true, isMultiSelectionSupported = isMultiSelectionSupported
+              )
           }
-          else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
-                                        textChunk = textChunk,
-                                        selectedTextChunk = selectedTextChunk,
-                                        description = null,
-                                        accessibleAdditionToText = null,
-                                        extendedInfo = extendedInfo,
-                                        isMultiSelectionSupported = isMultiSelectionSupported)
+          else SeSimpleItemPresentation(
+              iconId = EmptyIcon.ICON_16.rpcId(),
+              textChunk = textChunk,
+              selectedTextChunk = selectedTextChunk,
+              description = null,
+              accessibleAdditionToText = null,
+              extendedInfo = extendedInfo,
+              isMultiSelectionSupported = isMultiSelectionSupported
+          )
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation
 
-          SeSimpleItemPresentation(iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
-                                   text = presentation?.presentableText ?: item.toString(),
-                                   extendedInfo = extendedInfo,
-                                   isMultiSelectionSupported = isMultiSelectionSupported)
+            SeSimpleItemPresentation(
+                iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
+                text = presentation?.presentableText ?: item.toString(),
+                extendedInfo = extendedInfo,
+                isMultiSelectionSupported = isMultiSelectionSupported
+            )
         }
       }
     }

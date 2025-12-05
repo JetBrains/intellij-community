@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync

@@ -16,6 +16,8 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation

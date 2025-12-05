@@ -4,10 +4,10 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.files
 import com.intellij.ide.actions.SETextShortener
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
-import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams

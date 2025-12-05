@@ -20,12 +20,12 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation.Promo
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation.Promo
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.util.text.nullize

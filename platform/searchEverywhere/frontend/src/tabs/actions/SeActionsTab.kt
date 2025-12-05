@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
@@ -16,6 +15,7 @@ import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActio
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext

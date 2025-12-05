@@ -2,6 +2,8 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

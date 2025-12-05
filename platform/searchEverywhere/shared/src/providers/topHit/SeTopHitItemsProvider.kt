@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider

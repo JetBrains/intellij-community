@@ -5,6 +5,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

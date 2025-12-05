@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls

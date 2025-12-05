@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable

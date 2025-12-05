@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.providers.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

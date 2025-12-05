@@ -8,8 +8,8 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

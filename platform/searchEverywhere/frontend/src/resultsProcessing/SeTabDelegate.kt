@@ -15,6 +15,8 @@ import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvide
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
