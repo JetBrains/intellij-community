@@ -1240,6 +1240,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    res4 = twice(a_int_b_str, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>, <warning descr="Expected type 'int', got 'str' instead">a="A"</warning>)""");
   }
 
+  // PY-85543
+  public void testNewTypeAcceptedByIntCallInsideFString() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   MyInt = NewType("MyInt", int)
+                   
+                   def test_():
+                       number = MyInt(10)
+                       q = f"{int(number)}"
+                   """);
+  }
+
+  // PY-85543
+  public void testNewTypeWithGenerics() {
+    doTest();
+  }
+
   // PY-50403
   public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
     doTestByText("""
