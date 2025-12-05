@@ -51,15 +51,16 @@ private const val VARIANTS_POOL_SIZE = 10000
 private const val FRAMES_POOL_SIZE = 500
 
 // here's the new section API for compact parsers and less IntelliJ platform API exposure
-@ApiStatus.Experimental
-@JvmInline
+
 /**
  * Encapsulates an integer mask to provide functionality using bitwise operations for controlling parser behavior.
  *
  * @author Maxim Medvedev
  */
+@ApiStatus.Experimental
+@JvmInline
 value class Modifiers private constructor(private val mask: Int) {
-  
+
   infix fun and(other: Modifiers): Modifiers = Modifiers(mask and other.mask)
 
   infix fun or(other: Modifiers): Modifiers = Modifiers(mask or other.mask)
