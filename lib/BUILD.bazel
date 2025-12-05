@@ -9417,12 +9417,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "rhino",
-  jar = "@org_mozilla-rhino-runtime-1_7_15_http//file",
-  source_jar = "@org_mozilla-rhino-runtime-1_7_15-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
