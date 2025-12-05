@@ -13,11 +13,14 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) :
   IBackgroundRun by delegate {
   suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(
     name: String? = null,
+    timeout: Duration = 1.minutes,
     parameters: List<Serializable> = emptyList(),
     crossinline lambda: suspend T.(List<Serializable>) -> Serializable,
   ): Serializable {
@@ -31,7 +34,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
                                           exec.serializedDataBase64,
                                           exec.classPath.map { it.canonicalPath },
                                           parametersBase64)
-    return runLogged(lambda.stepName) {
+    return runLogged(lambda.stepName, timeout) {
       val base64 = runSerializedLambda.startSuspending(protocol.lifetime, lambda)
       SerializedLambdaLoader().loadObject(base64)
     }
@@ -42,7 +45,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
     parameters: List<Serializable> = emptyList(),
     crossinline lambda: suspend LambdaFrontendContext.(List<Serializable>) -> Serializable,
   ): Serializable {
-    return rdSession.run(name, parameters, lambda)
+    return rdSession.run(name, parameters = parameters, lambda = lambda)
   }
 
   suspend inline fun run(
@@ -61,7 +64,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
     parameters: List<Serializable> = emptyList(),
     crossinline lambda: suspend LambdaBackendContext.(List<Serializable>) -> Serializable,
   ): Serializable {
-    return (backendRdSession ?: rdSession).run(name, parameters, lambda)
+    return (backendRdSession ?: rdSession).run(name, parameters = parameters, lambda = lambda)
   }
 
   suspend inline fun runInBackend(
