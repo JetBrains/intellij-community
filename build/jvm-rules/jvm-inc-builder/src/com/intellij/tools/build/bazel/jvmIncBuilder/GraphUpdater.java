@@ -6,7 +6,6 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SnapshotDeltaImpl;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
-import org.jetbrains.jps.util.Iterators;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -114,7 +113,7 @@ public final class GraphUpdater {
       // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
       // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
       // This fallback logic detects such loops and recompiles the whole module chunk instead.
-      Set<NodeSource> affectedForChunk = Iterators.collect(filter(diffResult.getAffectedSources(), params.belongsToCurrentCompilationChunk()::test), new HashSet<>());
+      Set<NodeSource> affectedForChunk = collect(filter(diffResult.getAffectedSources(), params.belongsToCurrentCompilationChunk()), new HashSet<>());
       if (!affectedForChunk.isEmpty() && !myAllAffectedSources.addAll(affectedForChunk)) {
         // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
         // todo: diagnostic

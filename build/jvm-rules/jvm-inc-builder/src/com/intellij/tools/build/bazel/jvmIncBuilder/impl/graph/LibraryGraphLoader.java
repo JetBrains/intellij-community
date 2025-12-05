@@ -4,7 +4,9 @@ import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.intellij.tools.build.bazel.jvmIncBuilder.BuildContext;
 import com.intellij.tools.build.bazel.jvmIncBuilder.NodeSourceSnapshot;
+import com.intellij.tools.build.bazel.jvmIncBuilder.VMFlags;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ClassDataZipEntry;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.SourceSnapshotImpl;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +26,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class LibraryGraphLoader {
-  private static final int CACHE_SIZE = 1024; // todo: make configurable
+  private static final int CACHE_SIZE = VMFlags.getLibraryGraphCacheSize();
 
   private static final LoadingCache<@NotNull LibDescriptor, Pair<NodeSourceSnapshot, Graph>> ourCache = Caffeine
     .newBuilder()
@@ -34,10 +36,6 @@ public final class LibraryGraphLoader {
 
   public static Pair<NodeSourceSnapshot, Graph> getLibraryGraph(NodeSource library, String digest, Path loadPath) {
     return ourCache.get(new LibDescriptor(library, digest, loadPath));
-  }
-
-  public static void clearSharedCache() {  // for tests
-    ourCache.invalidateAll();
   }
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Path jarPath) throws IOException {

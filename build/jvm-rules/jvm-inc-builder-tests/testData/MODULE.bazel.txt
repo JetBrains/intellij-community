@@ -1,0 +1,16 @@
+module(
+    name = "jvm-inc-builder-tests",
+    version = "0.1",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.8.1")
+
+# the module is supposed to always be overridden with the local version
+bazel_dep(name = "rules_jvm", version = "")
+
+# The "hermetic_cc_toolchain" is used in rules_jvm
+# These explicit instructions help to avoid failures with zig_sdk repository creation in rules_jvm
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk")
+

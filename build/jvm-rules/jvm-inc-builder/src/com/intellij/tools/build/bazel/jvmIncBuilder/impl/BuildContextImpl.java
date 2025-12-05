@@ -39,6 +39,7 @@ public class BuildContextImpl implements BuildContext {
   private final BuilderOptions myBuilderOptions;
 
   private final List<Message> myErrors = new ArrayList<>();
+  private BuildProcessLogger myBuildProcessLogger;
 
   public BuildContextImpl(Path baseDir, Iterable<Input> inputs, Map<CLFlags, List<String>> flags, Appendable messageSink) {
     myFlags = Map.copyOf(flags);
@@ -107,6 +108,7 @@ public class BuildContextImpl implements BuildContext {
     myResources = resources;
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
+    myBuildProcessLogger = VMFlags.isBuildProcessLoggerEnabled()? new BuildProcessLoggerImpl(baseDir) : BuildProcessLogger.EMPTY;
   }
 
   private static @NotNull List<String> buildKotlinOptions(Map<CLFlags, List<String>> flags, @NotNull Iterable<@NotNull Path> classpath) {
@@ -355,7 +357,7 @@ public class BuildContextImpl implements BuildContext {
 
   @Override
   public BuildProcessLogger getBuildLogger() {
-    return BuildProcessLogger.EMPTY; // used for tests
+    return myBuildProcessLogger; // used for tests
   }
 
   @Override

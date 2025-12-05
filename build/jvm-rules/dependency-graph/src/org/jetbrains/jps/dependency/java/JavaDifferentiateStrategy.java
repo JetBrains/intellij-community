@@ -154,6 +154,11 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
     }
 
+    if (classDiff.metadataKindChanged()) {
+      debug(context, "Some class metadata has been added or removed (=> metadata kind has changed), added class usage to affected usages");
+      context.affectUsage(new ClassUsage(changedClass.getReferenceID()));
+    }
+
     if (changedClass.isAnnotation()) {
       debug(context, "Class is annotation, performing annotation-specific analysis");
 
