@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -123,7 +124,7 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
             PsiFile psiFile = filePointer.getElement();
             if (psiFile == null) return true;
             CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
-            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS);
+            IntentionListStep step = WriteIntentReadAction.compute(() -> new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS));
             HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
             IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
             if (step.hasSubstep(actionWithTextCaching)) {
