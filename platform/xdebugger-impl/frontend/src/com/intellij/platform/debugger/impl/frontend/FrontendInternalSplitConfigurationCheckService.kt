@@ -5,10 +5,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.InternalSplitConfigurationApi
 import com.intellij.util.application
@@ -17,6 +20,20 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+private class EnabledSplitDebuggerAction : DumbAwareToggleAction() {
+  override fun isSelected(e: AnActionEvent): Boolean {
+    return SplitDebuggerMode.isSplitDebugger()
+  }
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    setSplitDebuggerEnabled(state)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+}
 
 private fun setSplitDebuggerEnabled(state: Boolean, callback: () -> Unit = {}) {
   SplitDebuggerMode.setEnabled(state)
