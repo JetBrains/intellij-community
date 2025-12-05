@@ -5696,12 +5696,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "lz4-java",
-  jar = "@org_lz4-lz4-java-1_8_0_http//file",
-  source_jar = "@org_lz4-lz4-java-1_8_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 java_library(
   name = "maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5",

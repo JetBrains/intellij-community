@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":lz4_resources"],
-  exports = ["@lib//:lz4-java"],
-  runtime_deps = ["@lib//:lz4-java"]
+  exports = ["@lib//:libraries-lz4-lz4-java"],
+  runtime_deps = ["@lib//:libraries-lz4-lz4-java"]
 )
 ### auto-generated section `build intellij.libraries.lz4` end
