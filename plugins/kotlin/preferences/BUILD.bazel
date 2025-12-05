@@ -15,7 +15,7 @@ jvm_library(
   resources = [":preferences_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:swingx",
+    "//libraries/swingx",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",

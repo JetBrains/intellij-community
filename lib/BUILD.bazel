@@ -9711,12 +9711,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "swingx",
-  jar = "@org_swinglabs-swingx-core-1_6_2-2_http//file",
-  source_jar = "@org_swinglabs-swingx-core-1_6_2-2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "tasks-core-commons-discovery",
