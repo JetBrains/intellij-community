@@ -3735,12 +3735,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "jzlib",
-  jar = "@com_jcraft-jzlib-1_1_3_http//file",
-  source_jar = "@com_jcraft-jzlib-1_1_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 java_library(
   name = "kaml",
