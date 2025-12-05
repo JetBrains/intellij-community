@@ -60,13 +60,16 @@ object IdeInstance {
   }
 
   fun stopIde(): Unit = synchronized(this) {
-    if (!isStarted()) return
+    if (isStarted()) {
+      LOG.info("Stopping IDE with current ide mode: $currentIdeMode")
+      catchAll { _ide?.forceKill() }
+      _ide = null
+    }
+    else {
+      LOG.info("IDE wasn't started. Skipping stopping it.")
+    }
 
-    LOG.info("Stopping IDE that is running in mode: $currentIdeMode")
-    catchAll { _ide?.forceKill() }
-    _ide = null
-
-    cancelSupervisorScope(perClassSupervisorScope, "IDE was stopped so cancelling it's scope as well")
+    cancelSupervisorScope(perClassSupervisorScope, "IDE was stopped/not running so cancelling it's scope as well")
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
@@ -74,6 +77,8 @@ object IdeInstance {
   }
 
   fun cleanup() = synchronized(this) {
+    if (!isStarted()) return@synchronized
+
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(testSuiteSupervisorScope.coroutineContext) {
       withTimeout(5.seconds) {

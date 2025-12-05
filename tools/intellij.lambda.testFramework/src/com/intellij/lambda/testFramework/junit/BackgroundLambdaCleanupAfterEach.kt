@@ -31,6 +31,8 @@ class BackgroundLambdaCleanupAfterEach : AfterEachCallback {
     runBlocking(perTestSupervisorScope.coroutineContext) {
       withTimeout(5.seconds) {
         catchAll("Invoking test application cleanup") {
+          if (!IdeInstance.isStarted()) return@catchAll
+
           IdeInstance.ide.apply {
             run("IDE test application cleanup") {
               ApplicationManager.getApplication().cleanApplicationState()
