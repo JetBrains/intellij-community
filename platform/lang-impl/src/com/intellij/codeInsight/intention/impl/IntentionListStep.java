@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
@@ -179,16 +180,18 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     intentions.setTitle(title);
 
-    return new IntentionListStep(myPopup, myEditor, myPsiFile, myProject,
-                                 CachedIntentions.create(myProject, myPsiFile, myEditor, intentions), myIntentionSource) {
-      @Override
-      protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
-                                           @NotNull PsiFile psiFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
-        IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
-      }
-    };
+    return WriteIntentReadAction.compute(() -> {
+      return new IntentionListStep(myPopup, myEditor, myPsiFile, myProject,
+                            CachedIntentions.create(myProject, myPsiFile, myEditor, intentions), myIntentionSource) {
+        @Override
+        protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                             @NotNull PsiFile psiFile,
+                                             @NotNull Project project,
+                                             @Nullable Editor editor) {
+          IntentionListStep.this.chooseActionAndInvoke(cachedAction, psiFile, project, editor);
+        }
+      };
+    });
   }
 
   @ApiStatus.Internal
@@ -225,10 +228,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       List<IntentionActionWithTextCaching> subActions = getSubStep(cached, cached.getToolName()).getValues();
-      List<IntentionAction> options = subActions.stream()
-        .map(IntentionActionWithTextCaching::getAction)
-        .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, option) != null)
-        .collect(Collectors.toList());
+      List<IntentionAction> options = WriteIntentReadAction.compute(() -> {
+        return subActions.stream()
+          .map(IntentionActionWithTextCaching::getAction)
+          .filter(option -> ShowIntentionActionsHandler.chooseFileForAction(myPsiFile, myEditor, option) != null)
+          .collect(Collectors.toList());
+      });
       result.put(action, options);
     }
     return result;
