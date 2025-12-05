@@ -180,7 +180,6 @@ class JavaSupportTest : GrazieTestBase() {
     runHighlightTestForFile("ide/language/java/Trailing.java")
   }
 
-  @Suppress("MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT")
   fun `test add capitalized word to dictionary`() {
     val isUseSingleDictionary = SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave
     Disposer.register(testRootDisposable) {

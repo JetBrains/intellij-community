@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.*
 
 fun ProblemFix.Part.Change.ijRange(): TextRange = TextRange(range.start, range.endExclusive)
+fun ai.grazie.text.TextRange.ijRange(): TextRange = TextRange(start, endExclusive)
 
 fun String.trimToNull(): String? = trim().takeIf(String::isNotBlank)
 

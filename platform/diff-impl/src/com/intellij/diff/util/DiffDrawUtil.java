@@ -370,6 +370,10 @@ public final class DiffDrawUtil {
     return new InlineHighlighterBuilder(editor, start, end, type).done();
   }
 
+  public static @NotNull List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, int layer, @NotNull TextDiffType type) {
+    return new InlineHighlighterBuilder(editor, start, end, type).withLayerPriority(layer).done();
+  }
+
   public static @NotNull List<RangeHighlighter> createLineMarker(final @NotNull Editor editor, int line, final @NotNull TextDiffType type) {
     if (line == 0) return Collections.emptyList();
     return new LineMarkerBuilder(editor, line, SeparatorPlacement.TOP)

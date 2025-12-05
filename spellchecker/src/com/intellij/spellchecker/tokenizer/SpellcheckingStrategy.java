@@ -26,7 +26,10 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -173,24 +176,23 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
                                                        @NotNull PsiElement element,
                                                        @NotNull TextRange range,
                                                        @Nullable Set<String> suggestions) {
-    ArrayList<LocalQuickFix> result = new ArrayList<>();
+    List<LocalQuickFix> result = new ArrayList<>();
     SpellcheckerRateTracker tracker = new SpellcheckerRateTracker(element);
 
     if (useRename && PsiTreeUtil.getNonStrictParentOfType(element, PsiNamedElement.class) != null) {
       result.add(SpellCheckerQuickFixFactory.rename(typo, range, element, tracker));
     } else {
       List<LocalQuickFix> fixes = SpellCheckerQuickFixFactory.changeToVariants(element, range, typo, tracker, suggestions);
+      result.addAll(SpellCheckerQuickFixFactory.additionalFixes());
       result.addAll(fixes);
     }
 
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
+    SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
+    DictionaryLayer layer = null;
     if (settings.isUseSingleDictionaryToSave()) {
-      DictionaryLayer layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
-      result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer, tracker));
-      return result.toArray(LocalQuickFix.EMPTY_ARRAY);
+      layer = DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave());
     }
-
-    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, tracker));
+    result.add(SpellCheckerQuickFixFactory.saveTo(element, range, typo, layer, tracker));
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
