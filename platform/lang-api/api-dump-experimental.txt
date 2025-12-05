@@ -61,14 +61,14 @@ com.intellij.build.events.StartBuildEvent
 *:com.intellij.build.issue.BuildIssueQuickFix
 - a:getId():java.lang.String
 - runQuickFix(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.concurrent.CompletableFuture
+*:com.intellij.codeInsight.AnActionWithPreview
+- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
 - *sf:Companion:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults$Companion
 - getDefaultEnablementForProviderId():java.util.Map
 - getDefaultPosition():com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 *f:com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults$Companion
 - f:getInstance():com.intellij.codeInsight.codeVision.settings.CodeVisionSettingsDefaults
-*:com.intellij.codeInsight.generation.surroundWith.AnActionWithPreview
-- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *:com.intellij.codeInsight.hints.AbstractSettingsKey
 - a:getFullId(com.intellij.lang.Language):java.lang.String
 *f:com.intellij.codeInsight.hints.BlockConstrainedPresentation
