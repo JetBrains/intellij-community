@@ -23,7 +23,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
   override val maxRecursionDepth: Int,
   internal val isLanguageCaseSensitive: Boolean,
   internal val braces: Collection<BracePair>,
-  internal val LOG: Logger,
+  internal val logger: Logger,
   override val parserUserState: ParserUserState?,
 ) : SyntaxGeneratedParserRuntime {
   internal val errorState: ErrorStateImpl = ErrorStateImpl()
@@ -384,7 +384,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     errorState.currentFrame = frame?.parentFrame
     val elementTypeToExit = frame?.elementType ?: elementType
     if (frame == null || level != frame.level) {
-      LOG.error("Unbalanced error section: got $frame, expected level $level")
+      logger.error("Unbalanced error section: got $frame, expected level $level")
       if (frame != null) errorState.framePool.recycle(frame)
       close_marker_impl_(frame, marker, elementTypeToExit, result)
       return
@@ -654,7 +654,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
 
     val frame = state.currentFrame
     if (frame == null) {
-      LOG.error("unbalanced enter/exit section call: got null")
+      logger.error("unbalanced enter/exit section call: got null")
       return
     }
     val position: Int = syntaxBuilder.rawTokenIndex()

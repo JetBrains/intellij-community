@@ -22,6 +22,6 @@ fun SyntaxGeneratedParserRuntime(
   maxRecursionDepth = maxRecursionDepth,
   isLanguageCaseSensitive = isLanguageCaseSensitive,
   braces = braces,
-  LOG = logger,
+  logger = logger,
   parserUserState = parserUserState
 )
