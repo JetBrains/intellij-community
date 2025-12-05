@@ -21,38 +21,35 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.common.BazelTestUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.PeekableIterator;
+import com.intellij.util.containers.PeekableIteratorWrapper;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
 import kotlin.io.path.PathsKt;
 import kotlin.jvm.functions.Function1;
 import kotlin.text.StringsKt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity;
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation;
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
-import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
-import org.jetbrains.kotlin.config.CommonConfigurationKeys;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
-import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest;
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestRunner;
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.test.TargetBackend;
-import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.junit.Assert;
+import org.junit.ComparisonFailure;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,6 +58,8 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,9 +67,9 @@ import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.IGNORE_B
 import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget;
 
 public final class KotlinTestUtils {
-    public static final String TEST_MODULE_NAME = "test-module";
 
-    private static final boolean RUN_IGNORED_TESTS_AS_REGULAR =
+  public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
+  private static final boolean RUN_IGNORED_TESTS_AS_REGULAR =
             Boolean.getBoolean("org.jetbrains.kotlin.run.ignored.tests.as.regular");
 
     private static final boolean PRINT_STACKTRACE_FOR_IGNORED_TESTS =
@@ -85,18 +84,6 @@ public final class KotlinTestUtils {
     private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*[!]?([A-Z0-9_]+)(:[ \\t]*(.*))?$", Pattern.MULTILINE);
 
     private KotlinTestUtils() {
-    }
-
-    @NotNull
-    public static KotlinCoreEnvironment createEnvironmentWithJdkAndNullabilityAnnotationsFromIdea(
-            @NotNull Disposable disposable,
-            @NotNull ConfigurationKind configurationKind,
-            @NotNull TestJdkKind jdkKind
-    ) {
-        return KotlinCoreEnvironment.createForTests(
-                disposable, newConfiguration(configurationKind, jdkKind, TestKotlinArtifacts.getJetbrainsAnnotations().toFile()),
-                EnvironmentConfigFiles.JVM_CONFIG_FILES
-        );
     }
 
     @NotNull
@@ -119,8 +106,27 @@ public final class KotlinTestUtils {
         }
     }
 
-    public static File findMockJdkRtJar() {
-        return new File(IdeaTestUtil.getMockJdk18Path().getAbsolutePath(), "jre/lib/rt.jar");
+
+    @NotNull
+    public static File getCurrentProcessJdkHome() {
+        return new File(System.getProperty("java.home"));
+    }
+
+    public static boolean compileJavaFiles(@NotNull Collection<File> files, List<String> options) throws IOException {
+        List<String> command = new ArrayList<>();
+        command.add(new File(getCurrentProcessJdkHome(), "bin/javac").getPath());
+        command.addAll(options);
+        for (File file : files) {
+            command.add(file.getPath());
+        }
+
+        try {
+            Process process = new ProcessBuilder().command(command).inheritIO().start();
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (Exception e) {
+            throw ExceptionUtilsKt.rethrow(e);
+        }
     }
 
     @NotNull
@@ -214,94 +220,6 @@ public final class KotlinTestUtils {
                     messageWithFullPath,
                     fileNotFoundException);
         }
-    }
-
-    @NotNull
-    public static CompilerConfiguration newConfiguration() {
-        CompilerConfiguration configuration = new CompilerConfiguration();
-        configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
-
-        configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
-            @Override
-            public void clear() {
-            }
-
-            @Override
-            public void report(
-                    @NotNull CompilerMessageSeverity severity, @NotNull String message, @Nullable CompilerMessageSourceLocation location
-            ) {
-                if (severity == CompilerMessageSeverity.ERROR) {
-                    String prefix = location == null
-                                    ? ""
-                                    : "(" + location.getPath() + ":" + location.getLine() + ":" + location.getColumn() + ") ";
-                    throw new AssertionError(prefix + message);
-                }
-            }
-
-            @Override
-            public boolean hasErrors() {
-                return false;
-            }
-        });
-
-        return configuration;
-    }
-
-    @NotNull
-    public static CompilerConfiguration newConfiguration(
-            @NotNull ConfigurationKind configurationKind,
-            @NotNull TestJdkKind jdkKind,
-            @NotNull File... extraClasspath
-    ) {
-        return newConfiguration(configurationKind, jdkKind, Arrays.asList(extraClasspath), Collections.emptyList());
-    }
-
-    @NotNull
-    public static CompilerConfiguration newConfiguration(
-            @NotNull ConfigurationKind configurationKind,
-            @NotNull TestJdkKind jdkKind,
-            @NotNull List<File> classpath,
-            @NotNull List<File> javaSource
-    ) {
-        CompilerConfiguration configuration = newConfiguration();
-        JvmContentRootsKt.addJavaSourceRoots(configuration, javaSource);
-        if (jdkKind == TestJdkKind.MOCK_JDK) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, findMockJdkRtJar());
-            configuration.put(JVMConfigurationKeys.NO_JDK, true);
-        } else {
-            configuration.put(JVMConfigurationKeys.JDK_HOME, getCurrentProcessJdkHome());
-        }
-
-        if (configurationKind.getKotlinStdlib()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinStdlib().toFile());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinScriptRuntime().toFile());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinTest().toFile());
-            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.getKotlinCompiler().toFile());
-        }
-
-        if (configurationKind.getKotlinReflect()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, TestKotlinArtifacts.getKotlinReflect().toFile());
-        }
-
-        JvmContentRootsKt.addJvmClasspathRoots(configuration, classpath);
-
-        configuration.put(
-                CLIConfigurationKeys.INTELLIJ_PLUGIN_ROOT,
-                TestKotlinArtifacts.getKotlinCompiler().toFile().getAbsolutePath()
-        );
-
-        setupIdeaStandaloneExecution();
-
-        return configuration;
-    }
-
-    private static void setupIdeaStandaloneExecution() {
-        System.getProperties().setProperty("psi.incremental.reparse.depth.limit", "1000");
-    }
-
-    @NotNull
-    public static File getCurrentProcessJdkHome() {
-        return new File(System.getProperty("java.home"));
     }
 
     public static void assertEqualsToFile(@NotNull File expectedFile, @NotNull Editor editor) {
@@ -421,6 +339,351 @@ public final class KotlinTestUtils {
         return files;
     }
 
+    @SafeVarargs
+    public static <T> void assertOrderedEquals(@NotNull T[] actual, @NotNull T... expected) {
+        assertOrderedEquals(Arrays.asList(actual), expected);
+    }
+
+    @SafeVarargs
+    public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+        assertOrderedEquals("", actual, expected);
+    }
+
+    public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
+        TestCase.assertEquals(expected.length, actual.length);
+        for (int i = 0; i < actual.length; i++) {
+            byte a = actual[i];
+            byte e = expected[i];
+            TestCase.assertEquals("not equals at index: " + i, e, a);
+        }
+    }
+
+    public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
+        if (actual.length != expected.length) {
+            TestCase.fail("Expected size: " + expected.length + "; actual: " + actual.length + "\nexpected: " + Arrays.toString(expected) + "\nactual  : " + Arrays.toString(actual));
+        }
+        for (int i = 0; i < actual.length; i++) {
+            int a = actual[i];
+            int e = expected[i];
+            TestCase.assertEquals("not equals at index: " + i, e, a);
+        }
+    }
+
+    @SafeVarargs
+    public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
+        assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
+    }
+
+    public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
+        assertOrderedEquals("", actual, expected);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> void assertOrderedEquals(@NotNull String errorMsg,
+            @NotNull Iterable<? extends T> actual,
+            @NotNull Iterable<? extends T> expected) {
+        assertOrderedEquals(errorMsg, actual, expected, (o1, o2) -> o1 != null ? o1.equals(o2) : o2 == null);
+    }
+
+    public static <T> void assertOrderedEquals(@NotNull String errorMsg,
+            @NotNull Iterable<? extends T> actual,
+            @NotNull Iterable<? extends T> expected,
+            @NotNull BiPredicate<? super T, ? super T> comparator) {
+        if (!equals(actual, expected, comparator)) {
+            String expectedString = KtUsefulTestCase.toString(expected);
+            String actualString = KtUsefulTestCase.toString(actual);
+            Assert.assertEquals(errorMsg, expectedString, actualString);
+            Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
+        }
+    }
+
+    private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
+            @NotNull Iterable<? extends T> a2,
+            @NotNull BiPredicate<? super T, ? super T> comparator) {
+        Iterator<? extends T> it1 = a1.iterator();
+        Iterator<? extends T> it2 = a2.iterator();
+        while (it1.hasNext() || it2.hasNext()) {
+            if (!it1.hasNext() || !it2.hasNext()) return false;
+            if (!comparator.test(it1.next(), it2.next())) return false;
+        }
+        return true;
+    }
+
+    @SafeVarargs
+    public static <T> void assertOrderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+        assertOrderedCollection(Arrays.asList(collection), checkers);
+    }
+
+    /**
+     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+     */
+    @SafeVarargs
+    public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
+        assertSameElements(Arrays.asList(actual), expected);
+    }
+
+    /**
+     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+     */
+    @SafeVarargs
+    public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
+        assertSameElements(actual, Arrays.asList(expected));
+    }
+
+    /**
+     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+     */
+    public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+        assertSameElements("", actual, expected);
+    }
+
+    /**
+     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
+     */
+    public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+        if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
+            Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
+        }
+    }
+
+    @SafeVarargs
+    public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+        assertContainsOrdered(collection, Arrays.asList(expected));
+    }
+
+    public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+        PeekableIterator<T> expectedIt = new PeekableIteratorWrapper<>(expected.iterator());
+        PeekableIterator<T> actualIt = new PeekableIteratorWrapper<>(collection.iterator());
+
+        while (actualIt.hasNext() && expectedIt.hasNext()) {
+            T expectedElem = expectedIt.peek();
+            T actualElem = actualIt.peek();
+            if (expectedElem.equals(actualElem)) {
+                expectedIt.next();
+            }
+            actualIt.next();
+        }
+        if (expectedIt.hasNext()) {
+            throw new ComparisonFailure("", KtUsefulTestCase.toString(expected), KtUsefulTestCase.toString(collection));
+        }
+    }
+
+    @SafeVarargs
+    public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+        assertContainsElements(collection, Arrays.asList(expected));
+    }
+
+    public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+        ArrayList<T> copy = new ArrayList<>(collection);
+        copy.retainAll(expected);
+        assertSameElements(KtUsefulTestCase.toString(collection), copy, expected);
+    }
+
+    @SafeVarargs
+    public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull T... notExpected) {
+        assertDoesntContain(collection, Arrays.asList(notExpected));
+    }
+
+    public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+        ArrayList<T> expected = new ArrayList<>(collection);
+        expected.removeAll(notExpected);
+        assertSameElements(collection, expected);
+    }
+
+    @SafeVarargs
+    public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+        if (collection.size() != checkers.length) {
+            Assert.fail(KtUsefulTestCase.toString(collection));
+        }
+        int i = 0;
+        for (final T actual : collection) {
+            try {
+                checkers[i].consume(actual);
+            }
+            catch (AssertionFailedError e) {
+                //noinspection UseOfSystemOutOrSystemErr
+                System.out.println(i + ": " + actual);
+                throw e;
+            }
+            i++;
+        }
+    }
+
+    @SafeVarargs
+    public static <T> void assertUnorderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
+        assertUnorderedCollection(Arrays.asList(collection), checkers);
+    }
+
+    @SafeVarargs
+    public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
+        if (collection.size() != checkers.length) {
+            Assert.fail(KtUsefulTestCase.toString(collection));
+        }
+        Set<Consumer<T>> checkerSet = ContainerUtil.newHashSet(checkers);
+        int i = 0;
+        Throwable lastError = null;
+        for (final T actual : collection) {
+            boolean flag = true;
+            for (final Consumer<T> condition : checkerSet) {
+                Throwable error = accepts(condition, actual);
+                if (error == null) {
+                    checkerSet.remove(condition);
+                    flag = false;
+                    break;
+                }
+                else {
+                    lastError = error;
+                }
+            }
+            if (flag) {
+                //noinspection ConstantConditions,CallToPrintStackTrace
+                lastError.printStackTrace();
+                Assert.fail("Incorrect element(" + i + "): " + actual);
+            }
+            i++;
+        }
+    }
+
+    private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
+        try {
+            condition.consume(actual);
+            return null;
+        }
+        catch (Throwable e) {
+            return e;
+        }
+    }
+
+    @Contract("null, _ -> fail")
+    @NotNull
+    public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
+        Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
+        Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
+        @SuppressWarnings("unchecked") T t = (T)o;
+        return t;
+    }
+
+    public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
+        Iterator<? extends T> iterator = collection.iterator();
+        String toString = KtUsefulTestCase.toString(collection);
+        Assert.assertTrue(toString, iterator.hasNext());
+        T t = iterator.next();
+        Assert.assertFalse(toString, iterator.hasNext());
+        return t;
+    }
+
+    public static <T> T assertOneElement(@NotNull T[] ts) {
+        Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
+        return ts[0];
+    }
+
+    @SafeVarargs
+    public static <T> void assertOneOf(T value, @NotNull T... values) {
+        for (T v : values) {
+            if (Objects.equals(value, v)) {
+                return;
+            }
+        }
+        Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
+    }
+
+    public static void assertEmpty(@NotNull Object[] array) {
+        assertOrderedEquals(array);
+    }
+
+    public static void assertNotEmpty(final Collection<?> collection) {
+        TestCase.assertNotNull(collection);
+        TestCase.assertFalse(collection.isEmpty());
+    }
+
+    public static void assertEmpty(@NotNull Collection<?> collection) {
+        assertEmpty(collection.toString(), collection);
+    }
+
+    public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
+        if (collection == null) return;
+        assertEmpty("", collection);
+    }
+
+    public static void assertEmpty(final String s) {
+        TestCase.assertTrue(s, StringUtil.isEmpty(s));
+    }
+
+    public static <T> void assertEmpty(@NotNull String errorMsg, @NotNull Collection<? extends T> collection) {
+        assertOrderedEquals(errorMsg, collection, Collections.emptyList());
+    }
+
+    public static void assertSize(int expectedSize, @NotNull Object[] array) {
+        if (array.length != expectedSize) {
+            TestCase.assertEquals(KtUsefulTestCase.toString(Arrays.asList(array)), expectedSize, array.length);
+        }
+    }
+
+    public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
+        if (c.size() != expectedSize) {
+            TestCase.assertEquals(KtUsefulTestCase.toString(c), expectedSize, c.size());
+        }
+    }
+
+    public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
+        assertSameLines(null, expected, actual);
+    }
+
+    public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
+        String expectedText = StringUtil.convertLineSeparators(expected.trim());
+        String actualText = StringUtil.convertLineSeparators(actual.trim());
+        Assert.assertEquals(message, expectedText, actualText);
+    }
+
+    public static void assertExists(@NotNull File file){
+        TestCase.assertTrue("File should exist " + file, file.exists());
+    }
+
+    public static void assertDoesntExist(@NotNull File file){
+        TestCase.assertFalse("File should not exist " + file, file.exists());
+    }
+
+    public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
+        assertSameLinesWithFile(filePath, actualText, true);
+    }
+
+    public static void assertSameLinesWithFile(@NotNull String filePath,
+            @NotNull String actualText,
+            @NotNull Supplier<String> messageProducer) {
+        assertSameLinesWithFile(filePath, actualText, true, messageProducer);
+    }
+
+    public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
+        assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
+    }
+
+    public static void assertSameLinesWithFile(@NotNull String filePath,
+            @NotNull String actualText,
+            boolean trimBeforeComparing,
+            @Nullable Supplier<String> messageProducer) {
+        String fileText;
+        try {
+            if (KtUsefulTestCase.OVERWRITE_TESTDATA) {
+                VfsTestUtil.overwriteTestData(filePath, actualText);
+                //noinspection UseOfSystemOutOrSystemErr
+                System.out.println("File " + filePath + " created.");
+            }
+            fileText = FileUtil.loadFile(new File(filePath), StandardCharsets.UTF_8);
+        }
+        catch (FileNotFoundException e) {
+            VfsTestUtil.overwriteTestData(filePath, actualText);
+            throw new AssertionFailedError("No output text found. File " + filePath + " created.");
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
+        String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
+        if (!Objects.equals(expected, actual)) {
+            throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+        }
+    }
+
     public record TestFile(String name, String content) {}
 
     public static String getLastCommentedLines(@NotNull Document document) {
@@ -491,23 +754,6 @@ public final class KotlinTestUtils {
         }
 
         return comments;
-    }
-
-    public static boolean compileJavaFiles(@NotNull Collection<File> files, List<String> options) throws IOException {
-        List<String> command = new ArrayList<>();
-        command.add(new File(getCurrentProcessJdkHome(), "bin/javac").getPath());
-        command.addAll(options);
-        for (File file : files) {
-            command.add(file.getPath());
-        }
-
-        try {
-            Process process = new ProcessBuilder().command(command).inheritIO().start();
-            process.waitFor();
-            return process.exitValue() == 0;
-        } catch (Exception e) {
-            throw ExceptionUtilsKt.rethrow(e);
-        }
     }
 
     public interface DoTest {

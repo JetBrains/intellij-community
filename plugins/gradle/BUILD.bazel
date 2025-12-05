@@ -179,6 +179,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/testFramework/eelJava",
     "//platform/forms_rt:java-guiForms-rt",
+    "//java/testFramework/backend",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = ["//platform/execution.dashboard"]

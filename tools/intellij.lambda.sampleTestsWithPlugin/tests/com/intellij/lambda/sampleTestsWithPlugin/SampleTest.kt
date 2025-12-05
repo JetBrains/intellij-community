@@ -7,7 +7,7 @@ import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
 import com.intellij.lambda.testFramework.testApi.waitForProject
-import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 @RunInMonolithAndSplitMode
 class SampleTest {
   @TestTemplate
-  fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
+  fun `serialized test`(ide: IdeWithLambda) = runBlocking {
     Assumptions.assumeThat(ide.rdSession.rdIdeType)
       .describedAs("works in both modes if headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda" +
                    "as ProjectManager returns empty projects list in headless IJPL-221229")
@@ -66,7 +66,7 @@ class SampleTest {
   @ParameterizedTest
   @MethodSource("simpleParamProvider")
   // BackgroundRunWithLambda must be the last parameter
-  fun `simple parameterized test`(param: Int, str: String, ide: BackgroundRunWithLambda) = runBlocking {
+  fun `simple parameterized test`(param: Int, str: String, ide: IdeWithLambda) = runBlocking {
     ide.apply {
       run {
         Logger.getInstance("test")
@@ -93,7 +93,7 @@ class SampleTest {
   @ParameterizedTest
   @MethodSource("customParamProvider")
   // BackgroundRunWithLambda must be the last parameter
-  fun `custom parameterized test`(param: CustomParam, ide: BackgroundRunWithLambda) = runBlocking {
+  fun `custom parameterized test`(param: CustomParam, ide: IdeWithLambda) = runBlocking {
     ide.apply {
       run {
         Logger.getInstance("test")

@@ -3,14 +3,10 @@ package com.intellij.lambda.sampleTestsWithFixtures
 
 import com.intellij.lambda.sampleTestsWithFixtures.util.openNewProjectAndEditor
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.testApi.editor.editorImplOrThrow
-import com.intellij.lambda.testFramework.testApi.editor.moveTo
-import com.intellij.lambda.testFramework.testApi.editor.typeWithLatency
-import com.intellij.lambda.testFramework.testApi.editor.waitContains
-import com.intellij.lambda.testFramework.testApi.editor.waitForExpectedSelectedFile
+import com.intellij.lambda.testFramework.testApi.editor.*
 import com.intellij.lambda.testFramework.testApi.getProjects
 import com.intellij.lambda.testFramework.testApi.waitForProject
-import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
@@ -19,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 @RunInMonolithAndSplitMode
 class SampleTest {
   @TestTemplate
-  fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
+  fun `serialized test`(ide: IdeWithLambda) = runBlocking {
     ide.apply {
       val toType = "//123"
       val editorName = "Foo.java"
@@ -46,7 +42,7 @@ class SampleTest {
   }
 
   @TestTemplate
-  fun serialized(ide: BackgroundRunWithLambda) = runBlocking {
+  fun serialized(ide: IdeWithLambda) = runBlocking {
     ide.apply {
       runInBackend("get projects") {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })

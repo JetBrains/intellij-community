@@ -329,6 +329,7 @@ java/remote-servers/api
 java/remote-servers/impl
 java/structuralsearch-java
 java/testFramework
+java/testFramework/backend
 java/testFramework/shared
 java/typeMigration
 java/unscramble

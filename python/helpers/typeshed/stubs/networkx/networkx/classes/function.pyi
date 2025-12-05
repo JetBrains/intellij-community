@@ -1,5 +1,5 @@
 from _typeshed import Incomplete, SupportsItems, SupportsKeysAndGetItem, Unused
-from collections.abc import Generator, Hashable, Iterable, Iterator
+from collections.abc import Callable, Generator, Hashable, Iterable, Iterator
 from typing import Literal, TypeVar, overload
 
 from networkx import _dispatchable
@@ -48,6 +48,7 @@ __all__ = [
     "number_of_selfloops",
     "path_weight",
     "is_path",
+    "describe",
 ]
 
 _U = TypeVar("_U")
@@ -171,3 +172,4 @@ def selfloop_edges(
 def number_of_selfloops(G: Graph[Hashable]) -> int: ...
 def is_path(G: Graph[_Node], path: Iterable[Incomplete]) -> bool: ...
 def path_weight(G: Graph[_Node], path, weight) -> int: ...
+def describe(G: Graph[_Node], describe_hook: Callable[[Graph[_Node]], dict[str, Incomplete]] | None = None) -> None: ...

@@ -38,6 +38,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.picocontainer.ComponentAdapter;
 
 import java.io.File;
@@ -278,7 +279,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
 
     public static void doCheckResult(String fullPath, String targetDataName, String actual) throws IOException {
         String expectedFileName = fullPath + File.separatorChar + targetDataName;
-        KtUsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
+        KotlinTestUtils.assertSameLinesWithFile(expectedFileName, actual);
     }
 
     protected static String toParseTreeText(PsiElement file,  boolean skipSpaces, boolean printRanges) {

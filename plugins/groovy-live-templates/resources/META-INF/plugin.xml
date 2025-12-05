@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>org.intellij.groovy.live.templates</id>
-  <name>Groovy Live Templates Support</name>
+  <name>Groovy Live Templates</name>
   <description><![CDATA[
   Adds support for Groovy in IDE live templates.
   ]]></description>

@@ -12,7 +12,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
@@ -33,13 +33,13 @@ interface UastApiTestBase : ExpectedPluginModeProvider {
         TestCase.assertEquals(10L, annotation.findAttributeValue("from")?.evaluate())
         val toAttribute = annotation.findAttributeValue("to")!!
         TestCase.assertEquals(0L, toAttribute.evaluate())
-        KtUsefulTestCase.assertInstanceOf(annotation.psi.toUElement(), UAnnotation::class.java)
-        KtUsefulTestCase.assertInstanceOf(
+        KotlinTestUtils.assertInstanceOf(annotation.psi.toUElement(), UAnnotation::class.java)
+        KotlinTestUtils.assertInstanceOf(
             annotation.psi.cast<KtAnnotationEntry>().toLightAnnotation().toUElement(),
             UAnnotation::class.java
         )
-        KtUsefulTestCase.assertInstanceOf(toAttribute.uastParent, UNamedExpression::class.java)
-        KtUsefulTestCase.assertInstanceOf(toAttribute.psi.toUElement()?.uastParent, UNamedExpression::class.java)
+        KotlinTestUtils.assertInstanceOf(toAttribute.uastParent, UNamedExpression::class.java)
+        KotlinTestUtils.assertInstanceOf(toAttribute.psi.toUElement()?.uastParent, UNamedExpression::class.java)
 
         checkFindAttributeDefaultValue(uFile)
         checkLiteralArraysTypes(uFile)

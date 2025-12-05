@@ -10,19 +10,23 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @TestApplication
 class ActionCoroutineScopeTest {
 
+  @OptIn(ExperimentalStdlibApi::class)
   @Test
   fun `coroutineScope is available in actionPerformed`() = timeoutRunBlocking {
     val gotScope = AtomicBoolean(false)
     val jobRan = CompletableDeferred<Boolean>()
+    val scopeDispatcher = AtomicReference<CoroutineDispatcher>()
 
     val action = object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
         val scope = e.coroutineScope
         gotScope.set(true)
+        scopeDispatcher.set(scope.coroutineContext[CoroutineDispatcher])
         scope.launch {
           jobRan.complete(true)
         }
@@ -39,6 +43,7 @@ class ActionCoroutineScopeTest {
     // Wait for the launched coroutine to run
     Assertions.assertTrue(jobRan.awaitWithTimeout(5, TimeUnit.SECONDS) == true,
                           "Coroutine launched from action scope should run")
+    Assertions.assertTrue(scopeDispatcher.get() == Dispatchers.Default, "Coroutine scope dispatcher should be Dispatchers.Default")
   }
 
   @Test
@@ -121,7 +126,7 @@ class ActionCoroutineScopeTest {
   }
 
   @Test
-  fun `action coroutineScope is completed after work finishes`() = timeoutRunBlocking {
+  fun `action coroutineScope is alive completed after work finishes`() = timeoutRunBlocking {
     val capturedScope = CompletableDeferred<kotlinx.coroutines.CoroutineScope>()
     val jobDone = CompletableDeferred<Unit>()
 
@@ -151,8 +156,8 @@ class ActionCoroutineScopeTest {
     Assertions.assertTrue(scope != null, "Scope should be captured from actionPerformed")
     val job = scope!!.coroutineContext[Job]
     Assertions.assertTrue(job != null, "Scope should have a Job in its context")
-    // After all computations are completed, the scope must not be alive
-    Assertions.assertFalse(job!!.isActive, "Action coroutine scope should not be active after work completes")
+    // After all computations are completed, the scope must still be alive
+    Assertions.assertTrue(job!!.isActive, "Action coroutine scope should be active after work completes")
   }
 
   @Test

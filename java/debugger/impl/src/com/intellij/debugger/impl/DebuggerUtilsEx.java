@@ -368,18 +368,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ui.selectAndFocus(content, true, true);
   }
 
+  @SuppressWarnings("SSBasedInspection")
   public static StringReference mirrorOfString(@NotNull String s, @NotNull EvaluationContext context)
     throws EvaluateException {
-    return mirrorOfString(s, ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy(), context);
+    VirtualMachine vm = ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy().getVirtualMachine();
+    return context.computeAndKeep(() -> vm.mirrorOf(s));
   }
 
   /**
    * @deprecated use {@link #mirrorOfString(String, EvaluationContext)}
    */
+  @SuppressWarnings("SSBasedInspection")
   @Deprecated
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
-    return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
+    VirtualMachine vm = virtualMachineProxy.getVirtualMachine();
+    return context.computeAndKeep(() -> vm.mirrorOf(s));
   }
 
   public static @NotNull ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)

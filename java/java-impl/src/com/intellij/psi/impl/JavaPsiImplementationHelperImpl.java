@@ -34,6 +34,10 @@ import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.jps.entities.*;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImplKt;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -224,16 +228,28 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
         return null;
       }
       String className = virtualFile.getNameWithoutExtension();
+      String sdkClassesRootTypeName = SdkBridgeImplKt.getCustomName(OrderRootType.CLASSES);
+
+      Stream<VirtualFileUrl> libraryClassRoots = index.findContainingLibraries(virtualFile).stream()
+        .flatMap(library -> library.getRoots().stream())
+        .filter(root -> root.getType().equals(LibraryRootTypeId.Companion.getCOMPILED()))
+        .map(LibraryRoot::getUrl);
+
+      Stream<VirtualFileUrl> sdkClassRoots = index.findContainingSdks(virtualFile).stream()
+        .flatMap(sdk -> sdk.getRoots().stream())
+        .filter(root -> root.getType().getName().equals(sdkClassesRootTypeName))
+        .map(SdkRoot::getUrl);
+
+      List<VirtualFileUrl> roots = Stream.concat(libraryClassRoots, sdkClassRoots).toList();
+
       Set<VirtualFile> visitedRoots = new HashSet<>();
-      for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
-        if (!(entry instanceof LibraryOrSdkOrderEntry libraryOrSdkEntry)) continue;
-        for (VirtualFile rootFile : libraryOrSdkEntry.getRootFiles(OrderRootType.CLASSES)) {
-          if (visitedRoots.add(rootFile)) {
-            VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-            PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
-            if (javaFile != null) {
-              return javaFile.getLanguageLevel();
-            }
+      for (VirtualFileUrl rootUrl : roots) {
+        VirtualFile rootFile = VirtualFileUrls.getVirtualFile(rootUrl);
+        if (rootFile != null && visitedRoots.add(rootFile)) {
+          VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+          PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
+          if (javaFile != null) {
+            return javaFile.getLanguageLevel();
           }
         }
       }

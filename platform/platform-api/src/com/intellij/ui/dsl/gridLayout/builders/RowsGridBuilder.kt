@@ -12,6 +12,7 @@ private const val GRID_EMPTY = -1
  * Builds grid layout row by row
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
   private val layout = panel.layout as GridLayout
@@ -38,7 +39,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   }
 
   /**
-   * Starts new row. Can be omitted for the first and after last rows
+   * Starts a new row. Can be omitted for the first and after last rows
    */
   fun row(rowGaps: UnscaledGapsY = UnscaledGapsY.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
@@ -61,8 +62,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
            resizableColumn: Boolean = false,
            gaps: UnscaledGaps = UnscaledGaps.EMPTY,
            visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
-           widthGroup: String? = null,
-           componentHelper: ComponentHelper? = null): RowsGridBuilder {
+           widthGroup: String? = null): RowsGridBuilder {
     if (y == GRID_EMPTY) {
       y = 0
     }
@@ -72,8 +72,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
                                   verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup,
-                                  componentHelper = componentHelper)
+                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup)
     panel.add(component, constraints)
     return skip(width)
   }
@@ -84,8 +83,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                   baselineAlign: Boolean = defaultBaselineAlign,
                   gaps: UnscaledGaps = UnscaledGaps.EMPTY,
                   visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
-                  widthGroup: String? = null,
-                  componentHelper: ComponentHelper? = null): Constraints {
+                  widthGroup: String? = null): Constraints {
     if (y == GRID_EMPTY) {
       y = 0
     }
@@ -93,8 +91,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                              width = width, horizontalAlign = horizontalAlign,
                              verticalAlign = verticalAlign, baselineAlign = baselineAlign,
                              gaps = gaps, visualPaddings = visualPaddings,
-                             widthGroup = widthGroup,
-                             componentHelper = componentHelper)
+                             widthGroup = widthGroup)
     skip(width)
     return result
   }
@@ -165,7 +162,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   }
 
   /**
-   * Marks current row as a resizable one
+   * Marks the current row as a resizable one
    */
   fun resizableRow(): RowsGridBuilder {
     startFirstRow()

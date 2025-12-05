@@ -1,158 +1,83 @@
-from _typeshed import Incomplete
-from contextlib import AbstractContextManager
-from typing import NamedTuple
+import sys
 
-from psutil._common import (
-    FREEBSD as FREEBSD,
-    NETBSD as NETBSD,
-    OPENBSD as OPENBSD,
-    AccessDenied as AccessDenied,
-    NoSuchProcess as NoSuchProcess,
-    ZombieProcess as ZombieProcess,
-    conn_tmap as conn_tmap,
-    conn_to_ntuple as conn_to_ntuple,
-    memoize as memoize,
-    pio,
-    usage_percent as usage_percent,
-)
+# sys.platform.startswith(("freebsd", "midnightbsd", "openbsd", "netbsd")):
+if sys.platform != "linux" and sys.platform != "win32" and sys.platform != "darwin":
+    from _typeshed import Incomplete
+    from collections import defaultdict
+    from collections.abc import Callable
+    from contextlib import AbstractContextManager
+    from typing import Final, NamedTuple, TypeVar, overload
+    from typing_extensions import ParamSpec
 
-__extra__all__: Incomplete
-PROC_STATUSES: Incomplete
-TCP_STATUSES: Incomplete
-PAGESIZE: Incomplete
-AF_LINK: Incomplete
-HAS_PROC_NUM_THREADS: Incomplete
-kinfo_proc_map: Incomplete
+    from psutil._common import (
+        FREEBSD as FREEBSD,
+        NETBSD as NETBSD,
+        OPENBSD as OPENBSD,
+        AccessDenied as AccessDenied,
+        NoSuchProcess as NoSuchProcess,
+        ZombieProcess as ZombieProcess,
+        conn_tmap as conn_tmap,
+        conn_to_ntuple as conn_to_ntuple,
+        memoize as memoize,
+        usage_percent as usage_percent,
+    )
 
-class svmem(NamedTuple):
-    total: int
-    available: int
-    percent: float
-    used: int
-    free: int
-    active: int
-    inactive: int
-    buffers: int
-    cached: int
-    shared: int
-    wired: int
+    from . import _common, _psposix, _psutil_bsd
 
-class scputimes(NamedTuple):
-    user: float
-    nice: float
-    system: float
-    idle: float
-    irq: float
+    _P = ParamSpec("_P")
+    _R = TypeVar("_R")
 
-class pmem(NamedTuple):
-    rss: Incomplete
-    vms: Incomplete
-    text: Incomplete
-    data: Incomplete
-    stack: Incomplete
+    __extra__all__: Final[list[str]]
+    PROC_STATUSES: Final[dict[int, str]]
+    TCP_STATUSES: Final[dict[int, str]]
+    PAGESIZE: Final[int]
+    AF_LINK: Final = _psutil_bsd.AF_LINK
+    HAS_PROC_NUM_THREADS: Final[bool]
+    kinfo_proc_map: Final[dict[str, int]]
 
-pfullmem = pmem
+    class svmem(NamedTuple):
+        total: int
+        available: int
+        percent: float
+        used: int
+        free: int
+        active: int
+        inactive: int
+        buffers: int
+        cached: int
+        shared: int
+        wired: int
 
-class pcputimes(NamedTuple):
-    user: Incomplete
-    system: Incomplete
-    children_user: Incomplete
-    children_system: Incomplete
+    class scputimes(NamedTuple):
+        user: float
+        nice: float
+        system: float
+        idle: float
+        irq: float
 
-class pmmap_grouped(NamedTuple):
-    path: Incomplete
-    rss: Incomplete
-    private: Incomplete
-    ref_count: Incomplete
-    shadow_count: Incomplete
+    class pmem(NamedTuple):
+        rss: int
+        vms: int
+        text: int
+        data: int
+        stack: int
 
-class pmmap_ext(NamedTuple):
-    addr: Incomplete
-    perms: Incomplete
-    path: Incomplete
-    rss: Incomplete
-    private: Incomplete
-    ref_count: Incomplete
-    shadow_count: Incomplete
+    pfullmem = pmem
 
-class sdiskio(NamedTuple):
-    read_count: Incomplete
-    write_count: Incomplete
-    read_bytes: Incomplete
-    write_bytes: Incomplete
-    read_time: Incomplete
-    write_time: Incomplete
-    busy_time: Incomplete
+    class pcputimes(NamedTuple):
+        user: float
+        system: float
+        children_user: float
+        children_system: float
 
-def virtual_memory() -> svmem: ...
-def swap_memory(): ...
-def cpu_times(): ...
-def per_cpu_times(): ...
-def cpu_count_logical(): ...
-def cpu_count_cores() -> int | None: ...
-def cpu_stats(): ...
-def disk_partitions(all: bool = ...): ...
-
-disk_usage: Incomplete
-disk_io_counters: Incomplete
-net_io_counters: Incomplete
-net_if_addrs: Incomplete
-
-def net_if_stats(): ...
-def net_connections(kind): ...
-def sensors_battery(): ...
-def sensors_temperatures(): ...
-def cpu_freq(): ...
-def boot_time(): ...
-def users(): ...
-
-INIT_BOOT_TIME: float
-
-def adjust_proc_create_time(ctime: float) -> float: ...
-def pids(): ...
-def pid_exists(pid): ...
-def is_zombie(pid): ...
-def wrap_exceptions(fun): ...
-def wrap_exceptions_procfs(inst) -> AbstractContextManager[None]: ...
-
-class Process:
-    pid: Incomplete
-    def __init__(self, pid) -> None: ...
-    def oneshot(self): ...
-    def oneshot_enter(self) -> None: ...
-    def oneshot_exit(self) -> None: ...
-    def name(self): ...
-    def exe(self): ...
-    def cmdline(self): ...
-    def environ(self): ...
-    def terminal(self): ...
-    def ppid(self): ...
-    def uids(self): ...
-    def gids(self): ...
-    def cpu_times(self): ...
-    def cpu_num(self): ...
-    def memory_info(self): ...
-    memory_full_info: Incomplete
-    def create_time(self, monotonic: bool = False) -> float: ...
-    def num_threads(self): ...
-    def num_ctx_switches(self): ...
-    def threads(self): ...
-    def net_connections(self, kind: str = ...): ...
-    def wait(self, timeout: Incomplete | None = ...): ...
-    def nice_get(self): ...
-    def nice_set(self, value): ...
-    def status(self): ...
-    def io_counters(self) -> pio: ...
-    def cwd(self): ...
-
-    class nt_mmap_grouped(NamedTuple):
+    class pmmap_grouped(NamedTuple):
         path: Incomplete
         rss: Incomplete
         private: Incomplete
         ref_count: Incomplete
         shadow_count: Incomplete
 
-    class nt_mmap_ext(NamedTuple):
+    class pmmap_ext(NamedTuple):
         addr: Incomplete
         perms: Incomplete
         path: Incomplete
@@ -161,9 +86,126 @@ class Process:
         ref_count: Incomplete
         shadow_count: Incomplete
 
-    def open_files(self): ...
-    def num_fds(self): ...
-    def cpu_affinity_get(self): ...
-    def cpu_affinity_set(self, cpus) -> None: ...
-    def memory_maps(self): ...
-    def rlimit(self, resource, limits: Incomplete | None = ...): ...
+    class sdiskio(NamedTuple):
+        read_count: Incomplete
+        write_count: Incomplete
+        read_bytes: Incomplete
+        write_bytes: Incomplete
+        read_time: Incomplete
+        write_time: Incomplete
+        busy_time: Incomplete
+
+    def virtual_memory() -> svmem: ...
+    def swap_memory() -> _common.sswap: ...
+    def cpu_times() -> scputimes: ...
+    def per_cpu_times() -> list[scputimes]: ...
+    def cpu_count_logical() -> int | None: ...
+    def cpu_count_cores() -> int | None: ...
+    def cpu_stats() -> _common.scpustats: ...
+    def disk_partitions(all: bool = False) -> list[_common.sdiskpart]: ...
+
+    disk_usage = _psposix.disk_usage
+    disk_io_counters = _psutil_bsd.disk_io_counters
+    net_io_counters = _psutil_bsd.net_io_counters
+    net_if_addrs = _psutil_bsd.net_if_addrs
+
+    def net_if_stats() -> dict[str, _common.snicstats]: ...
+    def net_connections(kind: str) -> list[_common.sconn]: ...
+    def sensors_battery() -> _common.sbattery | None: ...  # only FreeBSD
+    def sensors_temperatures() -> defaultdict[str, list[_common.shwtemp]]: ...  # only FreeBSD
+    def cpu_freq() -> list[_common.scpufreq]: ...  # only FreeBSD and OpenBSD
+    def boot_time() -> float: ...
+    def users() -> list[_common.suser]: ...
+
+    INIT_BOOT_TIME: Final[float]  # only NetBSD
+
+    def adjust_proc_create_time(ctime: float) -> float: ...  # only NetBSD
+    def pids() -> list[int]: ...
+    def pid_exists(pid: int) -> bool: ...
+    def wrap_exceptions(fun: Callable[_P, _R]) -> Callable[_P, _R]: ...
+    def wrap_exceptions_procfs(inst: Process) -> AbstractContextManager[None]: ...
+
+    class Process:
+        __slots__ = ["_cache", "_name", "_ppid", "pid"]
+        pid: int
+        def __init__(self, pid: int) -> None: ...
+        def oneshot(
+            self,
+        ) -> tuple[
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            float,
+            int,
+            int,
+            int,
+            int,
+            float,
+            float,
+            float,
+            float,
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            str,
+        ]: ...
+        def oneshot_enter(self) -> None: ...
+        def oneshot_exit(self) -> None: ...
+        def name(self) -> str: ...
+        def exe(self) -> str: ...
+        def cmdline(self) -> list[str]: ...
+        def environ(self) -> dict[str, str]: ...
+        def terminal(self) -> str | None: ...
+        def ppid(self) -> int: ...
+        def uids(self) -> _common.puids: ...
+        def gids(self) -> _common.pgids: ...
+        def cpu_times(self) -> _common.pcputimes: ...
+        def cpu_num(self) -> int: ...  # only FreeBSD
+        def memory_info(self) -> pmem: ...
+        memory_full_info = memory_info
+        def create_time(self, monotonic: bool = False) -> float: ...
+        def num_threads(self) -> int: ...
+        def num_ctx_switches(self) -> _common.pctxsw: ...
+        def threads(self) -> list[_common.pthread]: ...
+        def net_connections(self, kind: str = "inet") -> list[_common.pconn]: ...
+        def wait(self, timeout: float | None = None) -> int | None: ...
+        def nice_get(self) -> int: ...
+        def nice_set(self, value: int) -> None: ...
+        def status(self) -> str: ...
+        def io_counters(self) -> _common.pio: ...
+        def cwd(self) -> str: ...
+
+        class nt_mmap_grouped(NamedTuple):
+            path: Incomplete
+            rss: Incomplete
+            private: Incomplete
+            ref_count: Incomplete
+            shadow_count: Incomplete
+
+        class nt_mmap_ext(NamedTuple):
+            addr: Incomplete
+            perms: Incomplete
+            path: Incomplete
+            rss: Incomplete
+            private: Incomplete
+            ref_count: Incomplete
+            shadow_count: Incomplete
+
+        def open_files(self) -> list[_common.popenfile]: ...
+        def num_fds(self) -> int: ...
+        def cpu_affinity_get(self) -> list[int]: ...  # only FreeBSD
+        def cpu_affinity_set(self, cpus: list[int]) -> None: ...  # only FreeBSD
+        def memory_maps(self) -> list[tuple[str, str, str, int, int, int, int]]: ...  # only FreeBSD
+        @overload
+        def rlimit(self, resource: int, limits: tuple[int, int]) -> None: ...  # only FreeBSD
+        @overload
+        def rlimit(self, resource: int, limits: None = None) -> tuple[int, int]: ...  # only FreeBSD

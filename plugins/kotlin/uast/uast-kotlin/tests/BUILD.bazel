@@ -48,6 +48,7 @@ jvm_library(
     "//uast/uast-java:java-uast",
     "//plugins/groovy/groovy-uast-tests:uast-tests_test_lib",
     "@lib//:vavr",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin.tests` end

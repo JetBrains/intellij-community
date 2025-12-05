@@ -1,0 +1,5 @@
+<idea-plugin visibility="internal">
+  <!--<dependencies>-->
+  <!-- it doesn't depend on any backend modules because of https://youtrack.jetbrains.com/issue/IJPL-221669/Problem-with-loading-test-modules-interacting-with-both-frontend-and-backend -->
+  <!--</dependencies>-->
+</idea-plugin>

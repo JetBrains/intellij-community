@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebugUtilsKt;
@@ -321,7 +322,8 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
   }
 
   /**
-   * Avoid using directly, as the result may be garbage collected immediately - use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString} instead
+   * Avoid using directly, as the result may be garbage collected immediately -
+   * use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString(String, EvaluationContext)} instead
    */
   @ApiStatus.Obsolete
   public StringReference mirrorOf(String s) {

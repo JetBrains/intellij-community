@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
@@ -15,7 +16,7 @@ class K1GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
         get() = KotlinPluginMode.K1
 
     override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
     }
 
     @Test

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import javax.swing.Icon
 
@@ -314,9 +316,30 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
          */
         @Volatile
         var processTerminated = false
+
+        /**
+         * In the split mode, it's possible that the process starts
+         * before the execution gets here, and [startNotified] is not called.
+         *
+         * A frontend counterpart of the [ProcessHandler] is aware of that
+         * and calls [startNotified] manually if the process is already started.
+         *
+         * In the monolith mode, we now pass the very same instance of [ProcessHandler]
+         * (see [com.intellij.execution.rpc.ProcessHandlerDto.localProcessHandler]),
+         * but, as the other code is the same, execution here is delayed
+         * the same way as in split mode.
+         *
+         * So let's make sure [startNotified] is called at least once
+         * (and, ideally, only once).
+         */
+        val processStarted = AtomicBoolean(false)
         private var startNotifiedJob: Job? = null
 
         override fun startNotified(event: ProcessEvent) {
+          if (!processStarted.compareAndSet(false, true)) {
+            logger<RunContentManagerImpl>().info("startNotified had already been called")
+            return
+          }
           emitLiveIconUpdate(project, toolWindowId, alive = true)
 
           startNotifiedJob = descriptor.coroutineScope.launch {
@@ -364,6 +387,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
       }
       processHandler.addProcessListener(processAdapter)
+      if (processHandler.isStartNotified && !processAdapter.processStarted.get()) {
+        processAdapter.startNotified(ProcessEvent(processHandler))
+      }
       val disposer = content.disposer
       if (disposer != null) {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })

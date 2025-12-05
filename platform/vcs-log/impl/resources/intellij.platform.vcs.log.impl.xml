@@ -316,7 +316,7 @@
       <reference ref="Vcs.Log.CheckFirstCommitsIndexData"/>
       <reference ref="Vcs.Log.CheckSelectedCommitsIndexData"/>
       <reference ref="Vcs.Log.ShowBigRepositories"/>
-      <add-to-group group-id="Internal"/>
+      <add-to-group group-id="Vcs.Internal"/>
     </group>
 
     <group id="Log.KeymapGroup" searchable="false">

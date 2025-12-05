@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -172,7 +173,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     protected open fun checkForUnexpectedErrors(ktFile: KtFile) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
     }
 
     protected open fun configExtra(rootDir: VirtualFile, renameParamsObject: JsonObject) {

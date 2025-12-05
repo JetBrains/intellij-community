@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_D
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -51,6 +52,10 @@ abstract class AbstractJoinLinesTest : KotlinLightCodeInsightFixtureTestCase() {
         listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = AFTER_ERROR_DIRECTIVE)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(
+            ktFile,
+            directive = AFTER_ERROR_DIRECTIVE,
+            diagnosticsProvider = k1DiagnosticsProvider
+        )
     }
 }

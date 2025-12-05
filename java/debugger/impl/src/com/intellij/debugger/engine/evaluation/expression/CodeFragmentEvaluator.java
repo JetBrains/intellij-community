@@ -1,13 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +31,20 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     myStatements = evaluators;
   }
 
-  public Value getValue(String localName, VirtualMachineProxyImpl vm) throws EvaluateException {
+  public Value getValue(@NotNull String localName, @NotNull EvaluationContextImpl context) throws EvaluateException {
+    return getValue(localName, context.getSuspendContext().getVirtualMachineProxy(), context);
+  }
+
+  /**
+   * @deprecated Use {@link #getValue(String, EvaluationContextImpl)} instead
+   */
+  @Deprecated
+  public Value getValue(@NotNull String localName, @NotNull VirtualMachineProxyImpl vm) throws EvaluateException {
+    return getValue(localName, vm, null);
+  }
+
+  private Value getValue(@NotNull String localName, @NotNull VirtualMachineProxyImpl vm, @Nullable EvaluationContextImpl context)
+    throws EvaluateException {
     if (!mySyntheticLocals.containsKey(localName)) {
       if (myParentFragmentEvaluator != null) {
         return myParentFragmentEvaluator.getValue(localName, vm);
@@ -67,8 +84,8 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator {
     else if (value instanceof Double) {
       return vm.mirrorOf(((Double)value).doubleValue());
     }
-    else if (value instanceof String) {
-      return vm.mirrorOf((String)value);
+    else if (value instanceof String stringValue) {
+      return context != null ? DebuggerUtilsEx.mirrorOfString(stringValue, context) : vm.getVirtualMachine().mirrorOf(stringValue);
     }
     else {
       LOG.error("unknown default initializer type " + value.getClass().getName());

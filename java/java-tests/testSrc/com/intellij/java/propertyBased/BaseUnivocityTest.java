@@ -2,7 +2,7 @@
 package com.intellij.java.propertyBased;
 
 
-import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;

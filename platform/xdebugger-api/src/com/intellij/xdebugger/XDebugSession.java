@@ -202,11 +202,14 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * Tab UI should not be configured from a backend session.
    * <p>
+   * In monolith, the tab is created asynchronously, so the usages of this method may lead to a race.
+   * <p>
    * By using this method in RemDev, the tabs are passed to the frontend as LUXed UI.
    * <p>
    * To migrate, please use one of the following approaches:
    * <ul>
    *   <li>Use {@link XDebugProcess#createTabLayouter()} to create static tabs. Note that this option still uses LUX.</li>
+   *   <li>Use {@link com.intellij.xdebugger.impl.XDebugSessionImpl#runWhenUiReady} as a temporary workaround to avoid races.</li>
    *   <li>Use {@link com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy#getSessionTab()} to add a tab on the frontend.</li>
    * </ul>
    */

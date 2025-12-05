@@ -64,6 +64,7 @@ jvm_library(
     "//platform/testFramework/junit5/codeInsight",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/xdebugger-impl/shared",
+    "//java/testFramework/backend",
   ],
   exports = [
     "//java/testFramework/shared",

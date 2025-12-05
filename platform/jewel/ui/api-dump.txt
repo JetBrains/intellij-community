@@ -1763,11 +1763,13 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarStyle$Companion
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarStylingKt
 - sf:getLocalScrollbarStyle():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$Companion
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
 - a:getThumbColorAnimationDuration-UwyO8pc():J
 - a:getTrackColorAnimationDuration-UwyO8pc():J
 - a:getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- a:getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackThickness-D9Ej5fM():F
 - a:getTrackThicknessExpanded-D9Ej5fM():F
@@ -1775,6 +1777,7 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion
+- b:<init>(F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,J,J,J,J,F,androidx.compose.foundation.layout.PaddingValues,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - getExpandAnimationDuration-UwyO8pc():J
 - getLingerDuration-UwyO8pc():J
@@ -1783,11 +1786,13 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - getThumbColorAnimationDuration-UwyO8pc():J
 - getTrackColorAnimationDuration-UwyO8pc():J
 - getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - getTrackThickness-D9Ej5fM():F
 - getTrackThicknessExpanded-D9Ej5fM():F
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion
+f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$Companion
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
@@ -1798,6 +1803,7 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
 - getThumbColorAnimationDuration-UwyO8pc():J
 - getTrackColorAnimationDuration-UwyO8pc():J
 - getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - getTrackThickness-D9Ej5fM():F
 - getTrackThicknessExpanded-D9Ej5fM():F

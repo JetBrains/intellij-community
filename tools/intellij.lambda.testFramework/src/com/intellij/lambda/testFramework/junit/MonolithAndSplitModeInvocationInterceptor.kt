@@ -2,7 +2,7 @@ package com.intellij.lambda.testFramework.junit
 
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
-import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.toLambdaParams
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
@@ -46,8 +46,8 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
 
     logOutput("Executing test method \"$fullMethodName\" inside IDE in mode ${IdeInstance.currentIdeMode} with arguments: ${argumentsToString(invocationContext.arguments)}")
 
-    if (invocationContext.arguments.any { it::class == BackgroundRunWithLambda::class }) {
-      logOutput("Test \"$fullMethodName\" has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
+    if (invocationContext.arguments.any { it::class == IdeWithLambda::class }) {
+      logOutput("Test \"$fullMethodName\" has ${IdeWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
 
       // executing the code from the test as is (it will invoke lambda execution in IDE itself)
       return invocation.proceed()
@@ -70,11 +70,11 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
   }
 }
 
-internal suspend fun BackgroundRunWithLambda.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+internal suspend fun IdeWithLambda.runNamedLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
   return rdSession.runNamedLambda(namedLambdaClass, params)
 }
 
-internal suspend fun BackgroundRunWithLambda.runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
+internal suspend fun IdeWithLambda.runNamedLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
   return (backendRdSession ?: rdSession).runNamedLambda(namedLambdaClass, params)
 }
 

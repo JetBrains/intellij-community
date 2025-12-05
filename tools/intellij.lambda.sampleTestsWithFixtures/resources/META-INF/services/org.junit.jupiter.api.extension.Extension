@@ -1,2 +1,2 @@
 com.intellij.lambda.sampleTestsWithFixtures.util.SetLambdaPluginCallback
-com.intellij.lambda.sampleTestsWithFixtures.util.SetUnitTestMode
+com.intellij.lambda.sampleTestsWithFixtures.util.IdeConfigSetup

@@ -5,7 +5,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkComponent
 import com.intellij.ui.dsl.checkConstraints
 import com.intellij.ui.dsl.gridLayout.impl.GridImpl
-import com.intellij.ui.dsl.gridLayout.impl.PreferredSizeData
+import com.intellij.ui.dsl.gridLayout.impl.SizeConstrainsData
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
@@ -29,6 +29,19 @@ class GridLayout : LayoutManager2 {
 
   private val _rootGrid = GridImpl()
 
+  /**
+   * Forces layout manager to respect the minimum size of components:
+   * * Components don't exceed the minimum size (`false` - old behavior: resizable rows/columns are squeezed, and left/right components may overlap)
+   * * [minimumLayoutSize] calculates real minimum size (`false` - old behavior: preferred size is used as minimum size)
+   * * When parent has the preferred size: all resizable children should have preferred size
+   * * While resizing the parent, resizable children are resized based on their preferred size
+   * * When parent has the minimum size: all resizable children should have minimum size
+   *
+   * todo - Remove this option once the renderers are migrated from [GridLayout] and use it as the default behavior
+   */
+  @ApiStatus.Internal
+  var respectMinimumSize: Boolean = false
+
   override fun addLayoutComponent(comp: Component?, constraints: Any?) {
     val checkedConstraints = checkConstraints(constraints)
     val checkedComponent = checkComponent(comp)
@@ -41,7 +54,7 @@ class GridLayout : LayoutManager2 {
   }
 
   /**
-   * Creates sub grid in the specified cell
+   * Creates a sub grid in the specified cell
    */
   fun addLayoutSubGrid(constraints: Constraints): Grid {
     if (constraints.widthGroup != null) {
@@ -62,9 +75,7 @@ class GridLayout : LayoutManager2 {
   }
 
   override fun preferredLayoutSize(parent: Container?): Dimension {
-    if (parent == null) {
-      throw UiDslException("Parent is null")
-    }
+    requireNotNull(parent)
 
     synchronized(parent.treeLock) {
       return getPreferredSizeData(parent).preferredSize
@@ -72,8 +83,15 @@ class GridLayout : LayoutManager2 {
   }
 
   override fun minimumLayoutSize(parent: Container?): Dimension {
-    // May be we need to implement more accurate calculation later
-    return preferredLayoutSize(parent)
+    if (!respectMinimumSize) {
+      return preferredLayoutSize(parent)
+    }
+
+    requireNotNull(parent)
+
+    synchronized(parent.treeLock) {
+      return getPreferredSizeData(parent).minimumSize
+    }
   }
 
   override fun maximumLayoutSize(target: Container?): Dimension =
@@ -85,7 +103,7 @@ class GridLayout : LayoutManager2 {
     }
 
     synchronized(parent.treeLock) {
-      _rootGrid.layout(parent.width, parent.height, parent.insets)
+      _rootGrid.layout(parent.width, parent.height, parent.insets, respectMinimumSize)
     }
   }
 
@@ -110,7 +128,7 @@ class GridLayout : LayoutManager2 {
   }
 
   @ApiStatus.Internal
-  internal fun getPreferredSizeData(parent: Container): PreferredSizeData {
-    return _rootGrid.getPreferredSizeData(parent.insets)
+  internal fun getPreferredSizeData(parent: Container): SizeConstrainsData {
+    return _rootGrid.getSizeConstrainsData(parent.insets, respectMinimumSize)
   }
 }

@@ -109,7 +109,3 @@ fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_S
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
   get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "2000").toLong().milliseconds }
   set(value) = instance().put(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, value.inWholeMilliseconds.toString())
-
-fun ConfigurationStorage.Companion.setUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, true)
-fun ConfigurationStorage.Companion.removeUnitTestMode() = instance().put(ENV_UNIT_TEST_MODE, false)
-fun ConfigurationStorage.Companion.getUnitTestMode() = instance().getBoolean(ENV_UNIT_TEST_MODE)

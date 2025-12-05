@@ -141,7 +141,6 @@ def forceatlas2_layout(
     node_mass: Mapping[_Node, float] | None = None,
     node_size: Mapping[_Node, float] | None = None,
     weight: str | None = None,
-    dissuade_hubs: bool = False,
     linlog: bool = False,
     seed: Seed | None = None,
     dim: int = 2,

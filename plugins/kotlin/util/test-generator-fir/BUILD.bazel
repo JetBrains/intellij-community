@@ -45,7 +45,6 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
     "//plugins/kotlin/coverage/tests:tests_test_lib",
     "//plugins/kotlin/copyright/tests:tests_test_lib",
-    "//plugins/kotlin/uast/uast-kotlin/tests:tests_test_lib",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k2:k2_test_lib",
     "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",

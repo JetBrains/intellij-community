@@ -13,39 +13,65 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
-class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) : IBackgroundRun by delegate {
-  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(name: String? = null, parameters: List<Serializable> = emptyList(), crossinline lambda: suspend T.(List<Serializable>) -> Serializable): Serializable {
+class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) :
+  IBackgroundRun by delegate {
+  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(
+    name: String? = null,
+    timeout: Duration = 1.minutes,
+    parameters: List<Serializable> = emptyList(),
+    crossinline lambda: suspend T.(List<Serializable>) -> Serializable,
+  ): Serializable {
     val protocol = this@run.protocol
                    ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
     val exec = SerializedLambda.fromLambdaWithCoroutineScope(name, lambda)
     val parametersBase64 = parameters.map { SerializedLambdaLoader().save(name, it) }
-    val lambda = LambdaRdSerializedLambda("${protocol.name}: ${name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))}",
+    val lambda = LambdaRdSerializedLambda("${protocol.name}: ${
+      name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))
+    }",
                                           exec.serializedDataBase64,
                                           exec.classPath.map { it.canonicalPath },
                                           parametersBase64)
-    return runLogged(lambda.stepName) {
+    return runLogged(lambda.stepName, timeout) {
       val base64 = runSerializedLambda.startSuspending(protocol.lifetime, lambda)
       SerializedLambdaLoader().loadObject(base64)
     }
   }
 
-  suspend inline fun runGetResult(name: String? = null, parameters: List<Serializable> = emptyList(), crossinline lambda: suspend LambdaFrontendContext.(List<Serializable>) -> Serializable): Serializable {
-    return rdSession.run(name, parameters, lambda)
+  suspend inline fun runGetResult(
+    name: String? = null,
+    parameters: List<Serializable> = emptyList(),
+    crossinline lambda: suspend LambdaFrontendContext.(List<Serializable>) -> Serializable,
+  ): Serializable {
+    return rdSession.run(name, parameters = parameters, lambda = lambda)
   }
 
-  suspend inline fun run(name: String? = null, parameters: List<Serializable> = emptyList(), crossinline lambda: suspend LambdaFrontendContext.(List<Serializable>) -> Unit) {
+  suspend inline fun run(
+    name: String? = null,
+    parameters: List<Serializable> = emptyList(),
+    crossinline lambda: suspend LambdaFrontendContext.(List<Serializable>) -> Unit,
+  ) {
     runGetResult(name, parameters) {
       lambda(it)
       true
     }
   }
 
-  suspend inline fun runInBackendGetResult(name: String? = null, parameters: List<Serializable> = emptyList(), crossinline lambda: suspend LambdaBackendContext.(List<Serializable>) -> Serializable): Serializable {
-    return (backendRdSession ?: rdSession).run(name, parameters, lambda)
+  suspend inline fun runInBackendGetResult(
+    name: String? = null,
+    parameters: List<Serializable> = emptyList(),
+    crossinline lambda: suspend LambdaBackendContext.(List<Serializable>) -> Serializable,
+  ): Serializable {
+    return (backendRdSession ?: rdSession).run(name, parameters = parameters, lambda = lambda)
   }
 
-  suspend inline fun runInBackend(name: String? = null, parameters: List<Serializable> = emptyList(), crossinline lambda: suspend LambdaBackendContext.(List<Serializable>) -> Unit) {
+  suspend inline fun runInBackend(
+    name: String? = null,
+    parameters: List<Serializable> = emptyList(),
+    crossinline lambda: suspend LambdaBackendContext.(List<Serializable>) -> Unit,
+  ) {
     runInBackendGetResult(name, parameters) {
       lambda(it)
       true

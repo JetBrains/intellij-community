@@ -39,6 +39,7 @@ jvm_library(
     "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/execution",
+    "//java/testFramework/backend",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end

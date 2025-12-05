@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestWithEnvironment
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
@@ -113,7 +112,7 @@ abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment() {
         val renderedDescriptors = descriptors.map { renderer.render(it) }.joinToString(separator = "\n")
 
         val document = DocumentImpl(psiFile.text)
-        KtUsefulTestCase.assertSameLines(KotlinTestUtils.getLastCommentedLines(document), renderedDescriptors)
+        KotlinTestUtils.assertSameLines(KotlinTestUtils.getLastCommentedLines(document), renderedDescriptors)
     }
 
     override fun createEnvironment(): KotlinCoreEnvironment {

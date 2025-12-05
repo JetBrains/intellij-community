@@ -11,11 +11,13 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 
-private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters>() {
-    init {
-        DirectClassInheritorsSearch.EP_NAME.extensionList
-            .filterNot { it::class.java.name.equals("org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher") }
-            .forEach { registerExecutor(it) }
+private val EVERYTHING_BUT_KOTLIN by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    object : QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters>() {
+        init {
+            DirectClassInheritorsSearch.EP_NAME.extensionList
+                .filterNot { it::class.java.name.equals("org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinDirectInheritorsSearcher") }
+                .forEach { registerExecutor(it) }
+        }
     }
 }
 

@@ -8,12 +8,16 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -24,6 +28,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.Companion.TEST_NAME_PARTS_SPLITTER
 import org.jetbrains.annotations.ApiStatus.Internal
+
 
 /**
  * Parent of all test configurations
@@ -117,6 +122,7 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
   /**
    * Check if framework is available on SDK
    */
+  @RequiresBlockingContext
   fun isFrameworkInstalled(): Boolean {
     val sdk = sdk
     if (sdk == null) {
@@ -125,7 +131,12 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       return false
     }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
-    return PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
+    val hasInstalledPackage = { PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage) }
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return runWithModalProgressBlocking(project, PyBundle.message("progress.title.checking.test.framework")) { hasInstalledPackage() }
+    }
+    return runBlockingMaybeCancellable { hasInstalledPackage() }
   }
 
 

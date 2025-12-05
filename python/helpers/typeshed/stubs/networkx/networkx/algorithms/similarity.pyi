@@ -12,6 +12,7 @@ __all__ = [
     "optimize_edit_paths",
     "simrank_similarity",
     "panther_similarity",
+    "panther_vector_similarity",
     "generate_random_paths",
 ]
 
@@ -93,9 +94,24 @@ def panther_similarity(
     path_length: int = 5,
     c: float = 0.5,
     delta: float = 0.1,
-    eps=None,
+    eps: float | None = None,
     weight: str | None = "weight",
+    seed: int | RandomState | None = None,
 ) -> dict[bytes, bytes]: ...
+@_dispatchable
+def panther_vector_similarity(
+    G: Graph[_Node],
+    source: _Node,
+    *,
+    D: int = 10,
+    k: int = 5,
+    path_length: int = 5,
+    c: float = 0.5,
+    delta: float = 0.1,
+    eps: float | None = None,
+    weight: str | None = "weight",
+    seed: int | RandomState | None = None,
+) -> dict[Incomplete, float]: ...
 @_dispatchable
 def generate_random_paths(
     G: Graph[_Node],

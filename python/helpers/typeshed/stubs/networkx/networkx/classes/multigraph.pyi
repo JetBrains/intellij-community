@@ -1,7 +1,7 @@
 from collections.abc import Hashable
 from functools import cached_property
 from typing import Any, ClassVar, overload
-from typing_extensions import TypeAlias, TypeVar
+from typing_extensions import Self, TypeAlias, TypeVar
 
 from networkx.classes.coreviews import MultiAdjacencyView
 from networkx.classes.graph import Graph, _MapFactory, _Node
@@ -22,6 +22,9 @@ class MultiGraph(Graph[_Node]):
     edge_key_dict_factory: ClassVar[_MapFactory]
     def to_directed_class(self) -> type[MultiDiGraph[_Node]]: ...
     def to_undirected_class(self) -> type[MultiGraph[_Node]]: ...
+    # @_dispatchable adds `backend` argument, but this decorated is unsupported constructor type here
+    # and __init__() ignores this argument
+    def __new__(cls, incoming_graph_data=None, multigraph_input: bool | None = None, *, backend=None, **attr: Any) -> Self: ...
     def __init__(self, incoming_graph_data=None, multigraph_input: bool | None = None, **attr: Any) -> None: ...
     @cached_property
     def adj(self) -> MultiAdjacencyView[_Node, _Node, dict[str, Any]]: ...  # data can be any type

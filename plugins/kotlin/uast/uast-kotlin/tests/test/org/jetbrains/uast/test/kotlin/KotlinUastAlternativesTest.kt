@@ -5,7 +5,8 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertInstanceOf
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.junit.Test
@@ -76,7 +77,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UField::class.java)).let {
-                assertInstanceOf(it.single(), UField::class.java)
+                KotlinTestUtils.assertInstanceOf(it.single(), UField::class.java)
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull private final var paramAndProp: java.lang.String",
                     it.joinToString(transform = UElement::asRenderString)

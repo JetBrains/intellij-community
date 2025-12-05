@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DocumentCommitProcessor;
@@ -32,47 +31,36 @@ import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.PeekableIterator;
-import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import kotlin.Unit;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.idea.testFramework.MockComponentManagerCreationTracer;
 import org.jetbrains.kotlin.types.AbstractTypeChecker;
-import org.jetbrains.kotlin.types.FlexibleTypeImpl;
 import org.junit.Assert;
-import org.junit.ComparisonFailure;
 import org.junit.runner.Description;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiPredicate;
-import java.util.function.Supplier;
 
 import static com.intellij.testFramework.EdtTestUtilKt.dispatchAllEventsInIdeEventQueue;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 
 @SuppressWarnings("ALL")
 public abstract class KtUsefulTestCase extends TestCase {
-    public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
     public static final String TEMP_DIR_MARKER = "unitTest_";
     public static final boolean OVERWRITE_TESTDATA = Boolean.getBoolean("idea.tests.overwrite.data");
 
@@ -114,7 +102,14 @@ public abstract class KtUsefulTestCase extends TestCase {
 
         // -- KOTLIN ADDITIONAL START --
 
-        FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = true;
+        try {
+            Class<?> flexTypeClass = Class.forName("org.jetbrains.kotlin.types.FlexibleTypeImpl");
+            Field assertionsField = flexTypeClass.getDeclaredField("RUN_SLOW_ASSERTIONS");
+            assertionsField.setAccessible(true);
+            assertionsField.set(null, true);
+        } catch (Throwable ignore) {
+            // ignore
+        }
         AbstractTypeChecker.RUN_SLOW_ASSERTIONS = true;
 
         // -- KOTLIN ADDITIONAL END --
@@ -470,160 +465,9 @@ public abstract class KtUsefulTestCase extends TestCase {
         return builder.toString();
     }
 
-    @SafeVarargs
-    public static <T> void assertOrderedEquals(@NotNull T[] actual, @NotNull T... expected) {
-        assertOrderedEquals(Arrays.asList(actual), expected);
-    }
-
-    @SafeVarargs
-    public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
-        assertOrderedEquals("", actual, expected);
-    }
-
-    public static void assertOrderedEquals(@NotNull byte[] actual, @NotNull byte[] expected) {
-        assertEquals(expected.length, actual.length);
-        for (int i = 0; i < actual.length; i++) {
-            byte a = actual[i];
-            byte e = expected[i];
-            assertEquals("not equals at index: "+i, e, a);
-        }
-    }
-
-    public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
-        if (actual.length != expected.length) {
-            fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
-        }
-        for (int i = 0; i < actual.length; i++) {
-            int a = actual[i];
-            int e = expected[i];
-            assertEquals("not equals at index: "+i, e, a);
-        }
-    }
-
-    @SafeVarargs
-    public static <T> void assertOrderedEquals(@NotNull String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
-        assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
-    }
-
-    public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
-        assertOrderedEquals("", actual, expected);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> void assertOrderedEquals(@NotNull String errorMsg,
-            @NotNull Iterable<? extends T> actual,
-            @NotNull Iterable<? extends T> expected) {
-        assertOrderedEquals(errorMsg, actual, expected, (o1, o2) -> o1 != null ? o1.equals(o2) : o2 == null);
-    }
-
-    public static <T> void assertOrderedEquals(@NotNull String errorMsg,
-            @NotNull Iterable<? extends T> actual,
-            @NotNull Iterable<? extends T> expected,
-            @NotNull BiPredicate<? super T, ? super T> comparator) {
-        if (!equals(actual, expected, comparator)) {
-            String expectedString = toString(expected);
-            String actualString = toString(actual);
-            Assert.assertEquals(errorMsg, expectedString, actualString);
-            Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
-        }
-    }
-
-    private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
-            @NotNull Iterable<? extends T> a2,
-            @NotNull BiPredicate<? super T, ? super T> comparator) {
-        Iterator<? extends T> it1 = a1.iterator();
-        Iterator<? extends T> it2 = a2.iterator();
-        while (it1.hasNext() || it2.hasNext()) {
-            if (!it1.hasNext() || !it2.hasNext()) return false;
-            if (!comparator.test(it1.next(), it2.next())) return false;
-        }
-        return true;
-    }
-
-    @SafeVarargs
-    public static <T> void assertOrderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
-        assertOrderedCollection(Arrays.asList(collection), checkers);
-    }
-
-    /**
-     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
-     */
-    @SafeVarargs
-    public static <T> void assertSameElements(@NotNull T[] actual, @NotNull T... expected) {
-        assertSameElements(Arrays.asList(actual), expected);
-    }
-
-    /**
-     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
-     */
-    @SafeVarargs
-    public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull T... expected) {
-        assertSameElements(actual, Arrays.asList(expected));
-    }
-
-    /**
-     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
-     */
-    public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
-        assertSameElements("", actual, expected);
-    }
-
-    /**
-     * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
-     */
-    public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
-        if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
-            Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
-        }
-    }
-
-    @SafeVarargs
-    public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
-        assertContainsOrdered(collection, Arrays.asList(expected));
-    }
-
-    public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
-        PeekableIterator<T> expectedIt = new PeekableIteratorWrapper<>(expected.iterator());
-        PeekableIterator<T> actualIt = new PeekableIteratorWrapper<>(collection.iterator());
-
-        while (actualIt.hasNext() && expectedIt.hasNext()) {
-            T expectedElem = expectedIt.peek();
-            T actualElem = actualIt.peek();
-            if (expectedElem.equals(actualElem)) {
-                expectedIt.next();
-            }
-            actualIt.next();
-        }
-        if (expectedIt.hasNext()) {
-            throw new ComparisonFailure("", toString(expected), toString(collection));
-        }
-    }
-
-    @SafeVarargs
-    public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
-        assertContainsElements(collection, Arrays.asList(expected));
-    }
-
-    public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
-        ArrayList<T> copy = new ArrayList<>(collection);
-        copy.retainAll(expected);
-        assertSameElements(toString(collection), copy, expected);
-    }
-
     @NotNull
     public static String toString(@NotNull Object[] collection, @NotNull String separator) {
         return toString(Arrays.asList(collection), separator);
-    }
-
-    @SafeVarargs
-    public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull T... notExpected) {
-        assertDoesntContain(collection, Arrays.asList(notExpected));
-    }
-
-    public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
-        ArrayList<T> expected = new ArrayList<>(collection);
-        expected.removeAll(notExpected);
-        assertSameElements(collection, expected);
     }
 
     @NotNull
@@ -641,167 +485,14 @@ public abstract class KtUsefulTestCase extends TestCase {
         return builder.toString();
     }
 
-    @SafeVarargs
-    public static <T> void assertOrderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
-        if (collection.size() != checkers.length) {
-            Assert.fail(toString(collection));
-        }
-        int i = 0;
-        for (final T actual : collection) {
-            try {
-                checkers[i].consume(actual);
-            }
-            catch (AssertionFailedError e) {
-                //noinspection UseOfSystemOutOrSystemErr
-                System.out.println(i + ": " + actual);
-                throw e;
-            }
-            i++;
-        }
-    }
-
-    @SafeVarargs
-    public static <T> void assertUnorderedCollection(@NotNull T[] collection, @NotNull Consumer<T>... checkers) {
-        assertUnorderedCollection(Arrays.asList(collection), checkers);
-    }
-
-    @SafeVarargs
-    public static <T> void assertUnorderedCollection(@NotNull Collection<? extends T> collection, @NotNull Consumer<T>... checkers) {
-        if (collection.size() != checkers.length) {
-            Assert.fail(toString(collection));
-        }
-        Set<Consumer<T>> checkerSet = ContainerUtil.newHashSet(checkers);
-        int i = 0;
-        Throwable lastError = null;
-        for (final T actual : collection) {
-            boolean flag = true;
-            for (final Consumer<T> condition : checkerSet) {
-                Throwable error = accepts(condition, actual);
-                if (error == null) {
-                    checkerSet.remove(condition);
-                    flag = false;
-                    break;
-                }
-                else {
-                    lastError = error;
-                }
-            }
-            if (flag) {
-                //noinspection ConstantConditions,CallToPrintStackTrace
-                lastError.printStackTrace();
-                Assert.fail("Incorrect element(" + i + "): " + actual);
-            }
-            i++;
-        }
-    }
-
-    private static <T> Throwable accepts(@NotNull Consumer<? super T> condition, final T actual) {
-        try {
-            condition.consume(actual);
-            return null;
-        }
-        catch (Throwable e) {
-            return e;
-        }
-    }
-
-    @Contract("null, _ -> fail")
-    @NotNull
-    public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
-        Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
-        Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
-        @SuppressWarnings("unchecked") T t = (T)o;
-        return t;
-    }
-
-    public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
-        Iterator<? extends T> iterator = collection.iterator();
-        String toString = toString(collection);
-        Assert.assertTrue(toString, iterator.hasNext());
-        T t = iterator.next();
-        Assert.assertFalse(toString, iterator.hasNext());
-        return t;
-    }
-
-    public static <T> T assertOneElement(@NotNull T[] ts) {
-        Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
-        return ts[0];
-    }
-
-    @SafeVarargs
-    public static <T> void assertOneOf(T value, @NotNull T... values) {
-        for (T v : values) {
-            if (Objects.equals(value, v)) {
-                return;
-            }
-        }
-        Assert.fail(value + " should be equal to one of " + Arrays.toString(values));
-    }
-
     public static void printThreadDump() {
         PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
-    }
-
-    public static void assertEmpty(@NotNull Object[] array) {
-        assertOrderedEquals(array);
-    }
-
-    public static void assertNotEmpty(final Collection<?> collection) {
-        assertNotNull(collection);
-        assertFalse(collection.isEmpty());
-    }
-
-    public static void assertEmpty(@NotNull Collection<?> collection) {
-        assertEmpty(collection.toString(), collection);
-    }
-
-    public static void assertNullOrEmpty(@Nullable Collection<?> collection) {
-        if (collection == null) return;
-        assertEmpty("", collection);
-    }
-
-    public static void assertEmpty(final String s) {
-        assertTrue(s, StringUtil.isEmpty(s));
-    }
-
-    public static <T> void assertEmpty(@NotNull String errorMsg, @NotNull Collection<? extends T> collection) {
-        assertOrderedEquals(errorMsg, collection, Collections.emptyList());
-    }
-
-    public static void assertSize(int expectedSize, @NotNull Object[] array) {
-        if (array.length != expectedSize) {
-            assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
-        }
-    }
-
-    public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
-        if (c.size() != expectedSize) {
-            assertEquals(toString(c), expectedSize, c.size());
-        }
     }
 
     @NotNull
     protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
         Disposer.register(getTestRootDisposable(), disposable);
         return disposable;
-    }
-
-    public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
-        assertSameLines(null, expected, actual);
-    }
-
-    public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
-        String expectedText = StringUtil.convertLineSeparators(expected.trim());
-        String actualText = StringUtil.convertLineSeparators(actual.trim());
-        Assert.assertEquals(message, expectedText, actualText);
-    }
-
-    public static void assertExists(@NotNull File file){
-        assertTrue("File should exist " + file, file.exists());
-    }
-
-    public static void assertDoesntExist(@NotNull File file){
-        assertFalse("File should not exist " + file, file.exists());
     }
 
     @NotNull
@@ -818,47 +509,6 @@ public abstract class KtUsefulTestCase extends TestCase {
     protected String getTestDirectoryName() {
         final String testName = getTestName(true);
         return testName.replaceAll("_.*", "");
-    }
-
-    public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
-        assertSameLinesWithFile(filePath, actualText, true);
-    }
-
-    public static void assertSameLinesWithFile(@NotNull String filePath,
-            @NotNull String actualText,
-            @NotNull Supplier<String> messageProducer) {
-        assertSameLinesWithFile(filePath, actualText, true, messageProducer);
-    }
-
-    public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
-        assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
-    }
-
-    public static void assertSameLinesWithFile(@NotNull String filePath,
-            @NotNull String actualText,
-            boolean trimBeforeComparing,
-            @Nullable Supplier<String> messageProducer) {
-        String fileText;
-        try {
-            if (OVERWRITE_TESTDATA) {
-                VfsTestUtil.overwriteTestData(filePath, actualText);
-                //noinspection UseOfSystemOutOrSystemErr
-                System.out.println("File " + filePath + " created.");
-            }
-            fileText = FileUtil.loadFile(new File(filePath), StandardCharsets.UTF_8);
-        }
-        catch (FileNotFoundException e) {
-            VfsTestUtil.overwriteTestData(filePath, actualText);
-            throw new AssertionFailedError("No output text found. File " + filePath + " created.");
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
-        String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-        if (!Objects.equals(expected, actual)) {
-            throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
-        }
     }
 
     protected static void clearFields(@NotNull Object test) throws IllegalAccessException {
@@ -1025,7 +675,7 @@ public abstract class KtUsefulTestCase extends TestCase {
 
             if (shouldOccur) {
                 wasThrown = true;
-                assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
+                KotlinTestUtils.assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
                 if (expectedErrorMsgPart != null) {
                     assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
                 }

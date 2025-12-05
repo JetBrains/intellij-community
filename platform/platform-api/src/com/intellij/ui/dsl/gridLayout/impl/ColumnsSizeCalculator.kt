@@ -11,31 +11,40 @@ import kotlin.math.max
 @ApiStatus.Internal
 class ColumnsSizeCalculator {
 
-  private val sizes = mutableMapOf<ColumnInfo, Int>()
+  private val sizes = mutableMapOf<ColumnInfo, SizeInfo>()
 
   /**
-   * [size] is a width constraint for columns with correspondent [x] and [width].
+   * [minSize] and [prefSize] are width constraints for columns with correspondent [x] and [width].
    * It includes gaps, visualPaddings, column gaps
    */
-  fun addConstraint(x: Int, width: Int, size: Int) {
+  fun addConstraint(x: Int, width: Int, minSize: Int, prefSize: Int) {
     val key = ColumnInfo(x, width)
-    val existingSize = sizes[key] ?: 0
-    sizes[key] = max(size, existingSize)
+    val existingSizeInfo = sizes[key]
+    sizes[key] = max(existingSizeInfo, minSize, prefSize)
   }
 
   /**
    * Calculates columns coordinates with size limitations from [sizes]
    */
-  fun calculateCoords(width: Int, resizableColumns: Set<Int>): Array<Int> {
+  fun calculateCoords(width: Int, resizableColumns: Set<Int>, respectMinimumSize: Boolean): Array<Int> {
     if (sizes.isEmpty()) {
       return arrayOf(0)
     }
 
+    val resizableVisibleColumns = resizableColumns.intersect(getVisibleColumns())
+    val preferredSizeWidths = calculateWidths(resizableVisibleColumns, sizes.mapValues { it.value.prefSize })
+    val minimumSizeWidths = if (respectMinimumSize) calculateWidths(resizableVisibleColumns, sizes.mapValues { it.value.minSize }) else null
+
+    return createCoordsFromWidths(calculateResizedWidths(minimumSizeWidths, preferredSizeWidths, resizableVisibleColumns, width))
+  }
+
+  // todo make static later
+  private fun calculateWidths(resizableVisibleColumns: Set<Int>, sizes: Map<ColumnInfo, Int>): Array<Int> {
     val dimension = getDimension()
     val visibleColumns = getVisibleColumns()
-    val result = Array(dimension + 1) { 0 }
-    var remainedSizes = sizes.toMap()
-    val remainedResizableColumns = resizableColumns.intersect(visibleColumns).toMutableSet()
+    val result = Array(dimension) { 0 }
+    var remainedSizes = sizes
+    val remainedResizableColumns = resizableVisibleColumns.toMutableSet()
 
     // Calculate preferred sizes of columns one by one
     for (i in 0 until dimension) {
@@ -58,7 +67,7 @@ class ColumnsSizeCalculator {
         }
 
         remainedSizes = sizesWithoutFirstColumn
-        result[i + 1] = result[i] + firstColumnMinWidth + columnWidthCorrection
+        result[i] = firstColumnMinWidth + columnWidthCorrection
       }
       else {
         val sizesFirstColumn = mutableMapOf<ColumnInfo, Int>()
@@ -69,7 +78,7 @@ class ColumnsSizeCalculator {
           throw UiDslException()
         }
         remainedSizes = sizesWithoutFirstColumn
-        result[i + 1] = result[i]
+        result[i] = 0
       }
     }
 
@@ -80,8 +89,6 @@ class ColumnsSizeCalculator {
       throw UiDslException()
     }
 
-    resizeCoords(result, resizableColumns.filter { visibleColumns.contains(it) }.toSet(), width)
-
     return result
   }
 
@@ -89,16 +96,32 @@ class ColumnsSizeCalculator {
     sizes.clear()
   }
 
+  /**
+   * Calculates minimum possible size with provided by [addConstraint] constraints
+   */
+  fun calculateMinimumSize(): Int {
+    if (sizes.isEmpty()) {
+      return 0
+    }
+    val minCoords = calculateMinCoords(getDimension(), sizes.mapValues { it.value.minSize })
+    return minCoords.last()
+  }
+
+  /**
+   * Calculates preferred size with provided by [addConstraint] constraints
+   */
   fun calculatePreferredSize(): Int {
     if (sizes.isEmpty()) {
       return 0
     }
-    val minCoords = calculateMinCoords(getDimension(), sizes)
+    val minCoords = calculateMinCoords(getDimension(), sizes.mapValues { it.value.prefSize })
     return minCoords.last()
   }
 
-  private fun removeFirstColumn(sizes: Map<ColumnInfo, Int>, sizesFirstColumn: MutableMap<ColumnInfo, Int>,
-                                sizesWithoutFirstColumn: MutableMap<ColumnInfo, Int>, firstColumnMinWidth: Int) {
+  private fun removeFirstColumn(
+    sizes: Map<ColumnInfo, Int>, sizesFirstColumn: MutableMap<ColumnInfo, Int>,
+    sizesWithoutFirstColumn: MutableMap<ColumnInfo, Int>, firstColumnMinWidth: Int,
+  ) {
     for ((columnInfo, size) in sizes) {
       if (columnInfo.x == 0) {
         if (columnInfo.width > 1) {
@@ -141,36 +164,81 @@ class ColumnsSizeCalculator {
 
   /**
    * Resizes columns so that the grid occupies [width] (if there are resizable columns)
-   * Extra size is distributed equally between [resizableColumns]
+   * Extra size is distributed equally between [resizableVisibleColumns]
    */
-  private fun resizeCoords(coordinates: Array<Int>, resizableColumns: Set<Int>, width: Int) {
-    var extraSize = width - coordinates.last()
-
-    if (extraSize == 0 || resizableColumns.isEmpty()) {
-      return
+  private fun calculateResizedWidths(
+    minimumSizeWidths: Array<Int>?,
+    preferredSizeWidths: Array<Int>,
+    resizableVisibleColumns: Set<Int>,
+    width: Int,
+  ): Array<Int> {
+    if (width == preferredSizeWidths.sum() || resizableVisibleColumns.isEmpty()) {
+      return preferredSizeWidths
     }
 
-    var previousShift = 0
+    // Calculate columns based on preferred sizes
+    val result = preferredSizeWidths.clone()
+
     // Filter out resizable columns that are out of scope
-    // todo use isColumnVisible?
-    var remainedResizableColumns = resizableColumns.count { it < coordinates.size - 1 }
+    val remainedResizableColumns = resizableVisibleColumns.filter { it < preferredSizeWidths.size }.toMutableList()
 
-    for (i in coordinates.indices) {
-      coordinates[i] += previousShift
+    while (!remainedResizableColumns.isEmpty()) {
+      var remainedResizableColumnsCount = remainedResizableColumns.size
+      var extraSize = width - result.sum() // can be negative
+      var minimumSizeExceededIndex: Int? = null
 
-      if (i < coordinates.size - 1 && i in resizableColumns) {
-        // Use such correction so exactly whole extra size is used (rounding could break other approaches)
-        val correction = extraSize / remainedResizableColumns
-        previousShift += correction
+      for ((index, column) in remainedResizableColumns.withIndex()) {
+        // Use such correction so exactly the whole extra size is used (rounding could break other approaches)
+        val correction = extraSize / remainedResizableColumnsCount
+        remainedResizableColumnsCount--
         extraSize -= correction
-        remainedResizableColumns--
+
+        result[column] += correction
+        if (minimumSizeWidths != null && result[column] < minimumSizeWidths[column]) {
+          result[column] = minimumSizeWidths[column]
+          minimumSizeExceededIndex = index
+
+          break
+        }
       }
+
+      if (minimumSizeExceededIndex == null) {
+        break
+      }
+
+      // Restore affected columns
+      for ((index, column) in remainedResizableColumns.withIndex()) {
+        if (index >= minimumSizeExceededIndex) {
+          break
+        }
+        result[column] = preferredSizeWidths[column]
+      }
+
+      remainedResizableColumns.removeAt(minimumSizeExceededIndex)
+
+      // Redistribute extra size over remained resizable columns
     }
+
+    return result
+  }
+
+  private fun createCoordsFromWidths(widths: Array<Int>): Array<Int> {
+    val result = Array(widths.size + 1) { 0 }
+    for ((i, width) in widths.withIndex()) {
+      result[i + 1] = result[i] + width
+    }
+    return result
   }
 
   private fun getDimension(): Int {
     return sizes.keys.maxOf { it.x + it.width }
   }
+}
 
-  private data class ColumnInfo(val x: Int, val width: Int)
+private data class ColumnInfo(val x: Int, val width: Int)
+
+private data class SizeInfo(val minSize: Int, val prefSize: Int)
+
+private fun max(sizeInfo: SizeInfo?, minSize: Int, prefSize: Int): SizeInfo {
+  return SizeInfo(max(sizeInfo?.minSize ?: 0, minSize), max(sizeInfo?.prefSize ?: 0, prefSize))
 }

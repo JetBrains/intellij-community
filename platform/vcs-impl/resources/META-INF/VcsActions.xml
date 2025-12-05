@@ -671,6 +671,10 @@
     <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
+
+    <group id="Vcs.Internal" internal="true" popup="true">
+      <add-to-group group-id="Internal"/>
+    </group>
   </actions>
 
   <actions resource-bundle="messages.VcsBundle">

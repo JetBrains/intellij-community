@@ -39,25 +39,11 @@ open class TestCleanupListener : TestExecutionListener {
     }
   }
 
-  private fun cancelSupervisorScope(scope: CoroutineScope, message: String) {
-    logOutput("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message")
-    val timeout = ConfigurationStorage.coroutineScopesCancellationTimeout
+  fun cancelPerTestSupervisorScope(testIdentifier: TestIdentifier) {
+    if (!testIdentifier.isTest) return
 
-    @Suppress("SSBasedInspection")
-    runBlocking {
-      catchAll {
-        scope.coroutineContext.cancelChildren(CancellationException((message)))
-        // Wait with timeout - don't hang indefinitely
-        val joinResult = withTimeoutOrNull(timeout) {
-          scope.coroutineContext.job.children.forEach { it.cancelAndJoin() }
-        }
-
-        if (joinResult == null) {
-          logError("Some child coroutines of ${scope.coroutineContext[CoroutineName]?.name} didn't complete in $timeout cancellation timeout. Proceeding anyway. " +
-                   "Children: ${scope.coroutineContext.job.children.joinToString(",")}")
-        }
-      }
-    }
+    cancelSupervisorScope(perTestSupervisorScope, "Test `${testIdentifier.displayName}` execution is finished")
+    ConfigurationStorage.instance().resetToDefault()
   }
 
   override fun executionFinished(testIdentifier: TestIdentifier, testExecutionResult: TestExecutionResult) {
@@ -66,13 +52,31 @@ open class TestCleanupListener : TestExecutionListener {
       cancelSupervisorScope(perClassSupervisorScope, "Test class `$testIdentifierName` execution is finished")
     }
 
-    if (testIdentifier.isTest) {
-      cancelSupervisorScope(perTestSupervisorScope, "Test `$testIdentifierName` execution is finished")
-      ConfigurationStorage.instance().resetToDefault()
-    }
+    cancelPerTestSupervisorScope(testIdentifier)
   }
 
   override fun testPlanExecutionFinished(testPlan: TestPlan) {
     cancelSupervisorScope(testSuiteSupervisorScope, "Test plan execution is finished")
+  }
+}
+
+fun cancelSupervisorScope(scope: CoroutineScope, message: String) {
+  logOutput("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message")
+  val timeout = ConfigurationStorage.coroutineScopesCancellationTimeout
+
+  @Suppress("SSBasedInspection")
+  runBlocking {
+    catchAll {
+      scope.coroutineContext.cancelChildren(CancellationException((message)))
+      // Wait with timeout - don't hang indefinitely
+      val joinResult = withTimeoutOrNull(timeout) {
+        scope.coroutineContext.job.children.forEach { it.cancelAndJoin() }
+      }
+
+      if (joinResult == null) {
+        logError("Some child coroutines of ${scope.coroutineContext[CoroutineName]?.name} didn't complete in $timeout cancellation timeout. Proceeding anyway. " +
+                 "Children: ${scope.coroutineContext.job.children.joinToString(",")}")
+      }
+    }
   }
 }

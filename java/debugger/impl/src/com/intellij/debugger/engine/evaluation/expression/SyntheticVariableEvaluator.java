@@ -36,8 +36,7 @@ public class SyntheticVariableEvaluator implements ModifiableEvaluator {
   public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
     String typeNameString = myTypeName != null ? myTypeName.getName(context.getDebugProcess()) : null;
     myTypeNameString = typeNameString;
-    return new ModifiableValue(myCodeFragmentEvaluator.getValue(myLocalName, context.getVirtualMachineProxy()),
-                               new MyModifier(typeNameString));
+    return new ModifiableValue(myCodeFragmentEvaluator.getValue(myLocalName, context), new MyModifier(typeNameString));
   }
 
   @Override

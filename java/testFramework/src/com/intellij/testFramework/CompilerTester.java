@@ -2,7 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.java.testFramework.backend.CompilerTestUtil;
 import com.intellij.compiler.CompilerTests;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;

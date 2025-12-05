@@ -395,7 +395,7 @@ public fun AlwaysVisible.Companion.macOs(
  */
 public fun AlwaysVisible.Companion.windowsAndLinux(
     trackThickness: Dp = 10.dp,
-    trackPadding: PaddingValues = PaddingValues(0.dp),
+    trackPadding: PaddingValues = PaddingValues(),
     thumbColorAnimationDuration: Duration = 330.milliseconds,
     trackColorAnimationDuration: Duration = thumbColorAnimationDuration,
 ): AlwaysVisible =
@@ -508,8 +508,8 @@ public fun WhenScrolling.Companion.macOs(
 public fun WhenScrolling.Companion.windowsAndLinux(
     trackThickness: Dp = 10.dp,
     trackThicknessExpanded: Dp = 10.dp,
-    trackPadding: PaddingValues = PaddingValues(0.dp),
-    trackPaddingWithBorder: PaddingValues = PaddingValues(0.dp),
+    trackPadding: PaddingValues = PaddingValues(),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(),
     trackColorAnimationDuration: Duration = 330.milliseconds,
     expandAnimationDuration: Duration = 0.milliseconds,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
@@ -524,4 +524,29 @@ public fun WhenScrolling.Companion.windowsAndLinux(
         expandAnimationDuration = expandAnimationDuration,
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
+    )
+
+public fun ScrollbarVisibility.Companion.tabStrip(
+    trackThickness: Dp = 5.dp,
+    trackThicknessExpanded: Dp = 5.dp,
+    trackPadding: PaddingValues = PaddingValues(1.dp),
+    trackPaddingExpanded: PaddingValues = PaddingValues(),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility =
+    AlwaysVisible(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+        scrollbarBackgroundColorLight = Color.Unspecified,
+        scrollbarBackgroundColorDark = Color.Unspecified,
     )

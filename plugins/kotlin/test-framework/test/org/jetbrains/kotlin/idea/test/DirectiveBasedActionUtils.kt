@@ -17,27 +17,17 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertEqualsToFile
 import junit.framework.TestCase
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.K1_ACTIONS_LIST_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.K2_ACTIONS_LIST_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import java.io.File
 import kotlin.test.assertTrue
 
 data class Diagnostic(val message: String, val severity: Severity)
-
-val k1DiagnosticsProvider: (KtFile) -> List<Diagnostic> =
-    mapFromK1Provider { it.analyzeWithContent().diagnostics }
-
-fun mapFromK1Provider(diagnosticsProvider: (KtFile) -> Diagnostics): (KtFile) -> List<Diagnostic> = { file ->
-    diagnosticsProvider(file).map { Diagnostic(DefaultErrorMessages.render(it), it.severity) }
-}
 
 object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE_ERRORS"
@@ -67,7 +57,7 @@ object DirectiveBasedActionUtils {
     fun checkForUnexpectedErrors(
         file: KtFile,
         directive: String = ERROR_DIRECTIVE,
-        diagnosticsProvider: (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
+        diagnosticsProvider: (KtFile) -> List<Diagnostic>
     ) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
             return
@@ -80,7 +70,7 @@ object DirectiveBasedActionUtils {
         file: KtFile,
         disabledByDefault: Boolean = true,
         directiveName: String = Severity.WARNING.name,
-        diagnosticsProvider: (KtFile) -> List<Diagnostic> = k1DiagnosticsProvider
+        diagnosticsProvider: (KtFile) -> List<Diagnostic>
     ) {
         if (disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ENABLE_WARNINGS_DIRECTIVE).isEmpty() ||
             !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()
