@@ -33,7 +33,9 @@ class ColumnsSizeCalculator {
 
     val resizableVisibleColumns = resizableColumns.intersect(getVisibleColumns())
     val preferredSizeWidths = calculateWidths(resizableVisibleColumns, sizes.mapValues { it.value.prefSize })
-    val minimumSizeWidths = if (respectMinimumSize) calculateWidths(resizableVisibleColumns, sizes.mapValues { it.value.minSize }) else null
+    val minimumSizeWidths = if (respectMinimumSize)
+      calculateWidths(resizableVisibleColumns, mapSizesToMinimumSizes(resizableVisibleColumns))
+    else null
 
     return createCoordsFromWidths(calculateResizedWidths(minimumSizeWidths, preferredSizeWidths, resizableVisibleColumns, width))
   }
@@ -99,11 +101,13 @@ class ColumnsSizeCalculator {
   /**
    * Calculates minimum possible size with provided by [addConstraint] constraints
    */
-  fun calculateMinimumSize(): Int {
+  fun calculateMinimumSize(resizableColumns: Set<Int>): Int {
     if (sizes.isEmpty()) {
       return 0
     }
-    val minCoords = calculateMinCoords(getDimension(), sizes.mapValues { it.value.minSize })
+
+    val resizableVisibleColumns = resizableColumns.intersect(getVisibleColumns())
+    val minCoords = calculateMinCoords(getDimension(), mapSizesToMinimumSizes(resizableVisibleColumns))
     return minCoords.last()
   }
 
@@ -116,6 +120,23 @@ class ColumnsSizeCalculator {
     }
     val minCoords = calculateMinCoords(getDimension(), sizes.mapValues { it.value.prefSize })
     return minCoords.last()
+  }
+
+  /**
+   * For minimum size calculation non-resizable columns use preferred sizes (as the fixed final size), resizable - minimum sizes
+   */
+  private fun mapSizesToMinimumSizes(resizableVisibleColumns: Set<Int>): Map<ColumnInfo, Int> {
+    return sizes.mapValues {
+      var resizable = false
+      for (i in 0..<it.key.width) {
+        if (resizableVisibleColumns.contains(it.key.x + i)) {
+          resizable = true
+          break
+        }
+      }
+
+      if (resizable) it.value.minSize else it.value.prefSize
+    }
   }
 
   private fun removeFirstColumn(

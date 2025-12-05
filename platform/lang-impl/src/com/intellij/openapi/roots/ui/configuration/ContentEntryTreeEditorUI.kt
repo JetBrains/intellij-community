@@ -5,9 +5,9 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.JBUI
 
 internal class ContentEntryTreeEditorUI(tree: Tree) {
 
@@ -29,13 +29,11 @@ internal class ContentEntryTreeEditorUI(tree: Tree) {
         excludePatternsField = textField()
           .comment(ProjectBundle.message("label.content.entry.separate.name.patterns"), maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
           .align(AlignX.FILL)
-          .apply {
-            comment?.putClientProperty(DslComponentPropertyInternal.PREFERRED_COLUMNS_LABEL_WORD_WRAP, 10)
+          .applyToComponent {
+            minimumSize = JBUI.size(100, 0)
           }
           .component
       }
     }.customize(UnscaledGaps(left = gap, right = gap))
   }
-    .withMinimumWidth(350)
-    .withMinimumHeight(200)
 }

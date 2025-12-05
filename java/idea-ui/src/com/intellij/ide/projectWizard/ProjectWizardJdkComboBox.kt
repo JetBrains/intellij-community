@@ -54,10 +54,9 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -109,6 +108,7 @@ fun Row.projectWizardJdkComboBox(
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
   val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter)
+  comboBox.isUsePreferredSizeAsMinimum = false
 
   val intentValue = intentProperty.get()
   require(intentValue == NoJdk) {
@@ -121,7 +121,7 @@ fun Row.projectWizardJdkComboBox(
   intentProperty.set(comboBox.item)
 
   return cell(comboBox)
-    .columns(COLUMNS_LARGE)
+    .align(AlignX.FILL)
     .apply {
       val commentCell = comment(component.comment, 50)
       component.addItemListener {

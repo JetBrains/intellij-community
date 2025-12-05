@@ -46,6 +46,7 @@ import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.impl.trimHtml
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
@@ -83,7 +84,7 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
 
-  private lateinit var descriptionLabel: JLabel
+  private lateinit var descriptionLabel: JEditorPane
 
   private var groupByDirectory: Boolean = false
     get() = when {
@@ -139,7 +140,7 @@ open class MultipleFileMergeDialog(
     BackgroundTaskUtil.executeOnPooledThread(disposable, Runnable {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
       runInEdt(modalityState) {
-        descriptionLabel.text = description
+        descriptionLabel.text = description.trimHtml
       }
     })
   }
@@ -147,7 +148,7 @@ open class MultipleFileMergeDialog(
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
-        descriptionLabel = label(VcsBundle.message("merge.loading.merge.details")).component
+        descriptionLabel = text(VcsBundle.message("merge.loading.merge.details")).component
       }
 
       row {
@@ -191,9 +192,6 @@ open class MultipleFileMergeDialog(
             }
         }
       }
-    }.also {
-      // Temporary workaround for IDEA-302779
-      it.minimumSize = JBUI.size(200, 150)
     }
   }
 
@@ -319,6 +317,7 @@ open class MultipleFileMergeDialog(
               markFileProcessed(file, resolution)
             }
           }
+
         }
         catch (e: Exception) {
           LOG.warn(e)

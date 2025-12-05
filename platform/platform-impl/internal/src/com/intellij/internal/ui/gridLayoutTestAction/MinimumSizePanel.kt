@@ -27,6 +27,11 @@ internal class MinimumSizePanel {
       for (x in 0..2) {
         val resizableColumn = x >= 1
         val label = JLabel()
+
+        if (!resizableColumn && !resizableRow) {
+          label.minimumSize = Dimension(0, 0) // Shouldn't be taken into account
+        }
+
         val title = mutableListOf<String>()
         if (x == 1 && y == 1) {
           label.preferredSize = Dimension(400, 100)

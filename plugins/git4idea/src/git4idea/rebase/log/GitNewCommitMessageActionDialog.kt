@@ -8,11 +8,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -87,9 +86,6 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   override fun createCenterPanel(): JComponent {
     return panel {
       commitMessageWithLabelAndToolbar(commitEditor, dialogLabel)
-    }.also {
-      // Temporary workaround for IDEA-302779
-      it.minimumSize = JBUI.size(400, 120)
     }
   }
 
@@ -143,12 +139,14 @@ internal fun Panel.commitMessageWithLabelAndToolbar(commitMessage: CommitMessage
   row {
     label(label).also { it.component.labelFor = commitMessage.editorField }
       .resizableColumn()
-      .align(Align.FILL)
+      .align(AlignX.FILL)
     cell(commitMessage.createToolbar(true))
   }
   row {
     cell(commitMessage)
-      .resizableColumn()
       .align(Align.FILL)
+      .applyToComponent {
+        minimumSize = JBUI.size(300, 60)
+      }
   }.resizableRow()
 }
