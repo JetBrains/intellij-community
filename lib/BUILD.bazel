@@ -4388,25 +4388,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "kotlinx-document-store-mvstore",
-  exports = [
-    ":com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http_import",
-    ":com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http_import",
-  jar = "@com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http//file",
-  source_jar = "@com_github_lamba92-kotlinx-document-store-mvstore-0_0_4-sources_http//file"
-)
-
-jvm_import(
-  name = "com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http_import",
-  jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http//file",
-  source_jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4-sources_http//file"
 )
 
 java_library(
