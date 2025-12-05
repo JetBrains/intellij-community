@@ -288,7 +288,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     pos: Int,
     o: Any?,
   ) {
-    val variant: Variant = state.VARIANTS.alloc().init(pos, o)
+    val variant: Variant = state.variantPool.alloc().init(pos, o)
     if (state.predicateSign) {
       state.variants.add(variant)
       if (frame != null && frame.lastVariantAt < pos) {
@@ -340,7 +340,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
 
   private fun enter_section_impl_(level: Int, modifiers: Modifiers, elementType: SyntaxElementType?, frameName: String?) {
     errorState.level++
-    val frame: FrameImpl = errorState.FRAMES.alloc().init(
+    val frame: FrameImpl = errorState.framePool.alloc().init(
       syntaxBuilder, errorState, level, modifiers, elementType, frameName
     )
     if (((frame.modifiers and _LEFT_) or (frame.modifiers and _LEFT_INNER_)) != _NONE_) {
@@ -385,7 +385,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     val elementTypeToExit = frame?.elementType ?: elementType
     if (frame == null || level != frame.level) {
       LOG.error("Unbalanced error section: got $frame, expected level $level")
-      if (frame != null) errorState.FRAMES.recycle(frame)
+      if (frame != null) errorState.framePool.recycle(frame)
       close_marker_impl_(frame, marker, elementTypeToExit, result)
       return
     }
@@ -393,7 +393,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
     close_frame_impl_(errorState, frame, marker, elementTypeToExit, result, pinned)
     exit_section_impl_(errorState, frame, elementTypeToExit, result, pinned, eatMore)
     run_hooks_impl_(errorState, if (pinned || result) elementTypeToExit else null)
-    errorState.FRAMES.recycle(frame)
+    errorState.framePool.recycle(frame)
     errorState.level--
   }
 

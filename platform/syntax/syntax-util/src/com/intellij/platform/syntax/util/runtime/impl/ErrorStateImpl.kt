@@ -21,8 +21,8 @@ internal class ErrorStateImpl : ErrorState {
   internal var braces: Array<BracePair> = emptyArray()
   internal var altMode: Boolean = false
 
-  internal val VARIANTS: LimitedPool<Variant> = LimitedPool(VARIANTS_POOL_SIZE) { Variant() }
-  internal val FRAMES: LimitedPool<FrameImpl> = LimitedPool(FRAMES_POOL_SIZE) { FrameImpl() }
+  internal val variantPool: LimitedPool<Variant> = LimitedPool(VARIANTS_POOL_SIZE) { Variant() }
+  internal val framePool: LimitedPool<FrameImpl> = LimitedPool(FRAMES_POOL_SIZE) { FrameImpl() }
 
   override fun getExpected(position: Int, expected: Boolean): String {
     val list = if (expected) variants else unexpected
@@ -77,7 +77,7 @@ internal class ErrorStateImpl : ErrorState {
     var i = start
     val len: Int = list.size
     while (i < len) {
-      VARIANTS.recycle(list[i])
+      variantPool.recycle(list[i])
       i++
     }
     list.trimSize(start)
