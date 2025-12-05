@@ -2705,7 +2705,6 @@ c:com.intellij.lang.parser.GeneratedParserUtilBase$Builder
 - f:state:com.intellij.lang.parser.GeneratedParserUtilBase$ErrorState
 - <init>(com.intellij.lang.PsiBuilder,com.intellij.lang.parser.GeneratedParserUtilBase$ErrorState,com.intellij.lang.PsiParser):V
 - getLexer():com.intellij.lexer.Lexer
-- getProductions():java.util.List
 c:com.intellij.lang.parser.GeneratedParserUtilBase$CompletionState
 - com.intellij.util.Function
 - f:items:java.util.Collection

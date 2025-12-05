@@ -72,9 +72,7 @@ internal class SyntaxGeneratedParserRuntimeImpl(
   }
 
   override fun invalid_left_marker_guard_(marker: SyntaxTreeBuilder.Marker?, funcName: String?): Boolean {
-    // TODO
-    //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
-    val goodMarker = marker != null // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
+    val goodMarker = marker != null
     if (!goodMarker) return false
     return errorState.currentFrame != null
   }
