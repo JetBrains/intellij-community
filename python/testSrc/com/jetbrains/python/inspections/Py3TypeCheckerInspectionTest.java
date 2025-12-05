@@ -1253,6 +1253,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-85543
+  public void testNewTypeWithGenerics() {
+    doTest();
+  }
+
   // PY-50403
   public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
     doTestByText("""

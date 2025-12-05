@@ -116,7 +116,14 @@ public final class PyTypeChecker {
     // PY-85543: Treat typing.NewType instances as their underlying runtime type for assignability checks.
     // NewType is only a static marker; at runtime it's the supertype, so unwrap it early.
     if (actual instanceof PyTypingNewType typingNewType) {
-      actual = new PyClassTypeImpl(typingNewType.getPyClass(), typingNewType.isDefinition());
+      List<PyClassLikeType> superTypes = typingNewType.getSuperClassTypes(context.context);
+      if (!superTypes.isEmpty()) {
+        actual = superTypes.get(0);
+      }
+      else {
+        actual = new PyClassTypeImpl(typingNewType.getPyClass(), typingNewType.isDefinition());
+      }
+
       if (Objects.equals(expected, actual)) {
         return Optional.of(true);
       }
