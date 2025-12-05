@@ -9,6 +9,7 @@ import com.intellij.ide.todo.rpc.TodoQuerySettings
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.rpc.TodoResult
 import com.intellij.ide.ui.SerializableTextChunk
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -93,6 +94,58 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
       for (result in results) {
         trySend(result)
+      }
+    }
+  }
+
+  override suspend fun getFilesWithTodos(
+    projectId: ProjectId,
+    filter: TodoFilterConfig?,
+  ): List<VirtualFileId> {
+
+    val project = projectId.findProjectOrNull() ?: return emptyList()
+    val resolvedFilter = resolveFilter(project, filter)
+
+    return readAction {
+      val files = mutableListOf<VirtualFileId>()
+      val helper = PsiTodoSearchHelper.getInstance(project)
+
+      helper.processFilesWithTodoItems { psiFile ->
+        val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+
+        val matchesFilter = if (resolvedFilter != null) {
+          resolvedFilter.accept(helper, psiFile)
+        } else {
+          helper.getTodoItemsCount(psiFile) > 0
+        }
+
+        if (matchesFilter) {
+          files.add(virtualFile.rpcId())
+        }
+        true
+      }
+      files
+    }
+  }
+
+  override suspend fun getTodoCount(
+    projectId: ProjectId,
+    fileId: VirtualFileId,
+    filter: TodoFilterConfig?,
+  ): Int {
+    val project = projectId.findProjectOrNull() ?: return 0
+    val virtualFile = fileId.virtualFile() ?: return 0
+    val resolvedFilter = resolveFilter(project, filter)
+
+    return readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction 0
+      val helper = PsiTodoSearchHelper.getInstance(project)
+
+      if (resolvedFilter != null) {
+        val items = helper.findTodoItems(psiFile)
+        items.count { item -> resolvedFilter.contains(item.pattern)}
+      } else {
+        helper.getTodoItemsCount(psiFile)
       }
     }
   }

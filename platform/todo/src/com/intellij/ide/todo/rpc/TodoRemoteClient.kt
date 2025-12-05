@@ -3,6 +3,7 @@ package com.intellij.ide.todo.rpc
 
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +28,30 @@ class TodoRemoteClient {
         val projectId: ProjectId = project.projectId()
         val settings = TodoQuerySettings(file.rpcId(), filter?.let { toConfig(it) })
         TodoRemoteApi.getInstance().listTodos(projectId, settings).toList()
+      }
+    }
+
+    @JvmStatic
+    fun getFilesWithTodos(
+      project: Project,
+      filter: TodoFilter?
+    ) : List<VirtualFile> = runBlockingCancellable {
+      durable {
+        val projectId: ProjectId = project.projectId()
+        val fileIds = TodoRemoteApi.getInstance().getFilesWithTodos(projectId, filter?.let { toConfig(it) })
+        fileIds.mapNotNull { it.virtualFile() }
+      }
+    }
+
+    @JvmStatic
+    fun getTodoCount(
+      project: Project,
+      file: VirtualFile,
+      filter: TodoFilter?
+    ) : Int = runBlockingCancellable {
+      durable {
+        val projectId: ProjectId = project.projectId()
+        TodoRemoteApi.getInstance().getTodoCount(projectId, file.rpcId(), filter?.let { toConfig(it) })
       }
     }
 
