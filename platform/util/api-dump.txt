@@ -416,6 +416,9 @@ f:com.intellij.util.containers.SmartHashSet
 - java.util.AbstractSet
 - <init>(I):V
 - <init>(I,F):V
+f:com.intellij.util.containers.UtilKt
+- sf:mapValues(com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
+- sf:mapValuesTo(com.intellij.util.containers.MultiMap,com.intellij.util.containers.MultiMap,kotlin.jvm.functions.Function1):com.intellij.util.containers.MultiMap
 com.intellij.util.containers.hash.EqualityPolicy
 - sf:CANONICAL:com.intellij.util.containers.hash.EqualityPolicy
 - sf:IDENTITY:com.intellij.util.containers.hash.EqualityPolicy
