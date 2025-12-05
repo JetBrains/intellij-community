@@ -2533,12 +2533,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "imgscalr",
-  jar = "@org_imgscalr-imgscalr-lib-4_2_http//file",
-  source_jar = "@org_imgscalr-imgscalr-lib-4_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 java_library(
   name = "intellij-plugin-structure",
