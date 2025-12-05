@@ -11,7 +11,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -62,7 +61,7 @@ import static com.intellij.build.ExecutionNode.getEventResultIcon;
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public final class MultipleBuildsView implements BuildProgressListener, Disposable {
+public final class MultipleBuildsView extends AbstractMultipleBuildsView {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   private static final @NonNls String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
   private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
@@ -137,10 +136,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     });
   }
 
+  @Override
   public Map<BuildDescriptor, BuildView> getBuildsMap() {
     return Collections.unmodifiableMap(myViewMap);
   }
 
+  @Override
   public boolean shouldConsume(@NotNull Object buildId) {
     return myBuildsMap.containsKey(buildId);
   }
@@ -425,6 +426,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     }
   }
 
+  @Override
   @ApiStatus.Internal
   public BuildView getBuildView(Object buildId) {
     BuildInfo buildInfo = myBuildsMap.get(buildId);
@@ -432,11 +434,13 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     return myViewMap.get(buildInfo);
   }
 
+  @Override
   boolean isPinned() {
     Content content = myContent;
     return content != null && content.isPinned();
   }
 
+  @Override
   void lockContent() {
     Content content = myContent;
     if (content == null) return;

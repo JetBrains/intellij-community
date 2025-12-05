@@ -33,8 +33,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
-  private final SynchronizedClearableLazy<MultipleBuildsView> myBuildsViewValue;
-  private final Set<MultipleBuildsView> myPinnedViews;
+  private final SynchronizedClearableLazy<AbstractMultipleBuildsView> myBuildsViewValue;
+  private final Set<AbstractMultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
 
@@ -42,11 +42,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myProject = project;
     myBuildContentManager = BuildContentManager.getInstance(project);
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
-      Ref<MultipleBuildsView> ref = new Ref<>();
+      Ref<AbstractMultipleBuildsView> ref = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         ref.set(new MultipleBuildsView(myProject, myBuildContentManager, this));
       });
-      MultipleBuildsView buildsView = ref.get();
+      AbstractMultipleBuildsView buildsView = ref.get();
       Disposer.register(this, buildsView);
       return buildsView;
     });
@@ -83,7 +83,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
     if (isDisposed.get()) return;
 
-    MultipleBuildsView buildsView;
+    AbstractMultipleBuildsView buildsView;
     if (event instanceof StartBuildEvent) {
       configurePinnedContent();
       buildsView = myBuildsViewValue.getValue();
@@ -104,9 +104,9 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
   }
 
-  private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
+  private @Nullable AbstractMultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
     if (myProject.isDisposed()) return null;
-    MultipleBuildsView buildsView = myBuildsViewValue.getValue();
+    AbstractMultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (!buildsView.shouldConsume(buildId)) {
       buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
     }
@@ -115,7 +115,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   @ApiStatus.Internal
   public @Nullable BuildView getBuildView(@NotNull Object buildId) {
-    MultipleBuildsView buildsView = getMultipleBuildsView(buildId);
+    AbstractMultipleBuildsView buildsView = getMultipleBuildsView(buildId);
     if (buildsView == null) return null;
 
     return buildsView.getBuildView(buildId);
@@ -138,7 +138,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myBuildsViewValue.drop();
   }
 
-  void onBuildsViewRemove(@NotNull MultipleBuildsView buildsView) {
+  void onBuildsViewRemove(@NotNull AbstractMultipleBuildsView buildsView) {
     if (isDisposed.get()) return;
 
     if (myBuildsViewValue.getValue() == buildsView) {
@@ -150,7 +150,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   private void configurePinnedContent() {
-    MultipleBuildsView buildsView = myBuildsViewValue.getValue();
+    AbstractMultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (buildsView.isPinned()) {
       buildsView.lockContent();
       myPinnedViews.add(buildsView);
