@@ -87,7 +87,7 @@ val TRUE_CONDITION: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntim
 @ApiStatus.Experimental
 @JvmField
 val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<WhitespacesAndCommentsBinder> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(param, null)
     return marker
   }
@@ -96,7 +96,7 @@ val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<WhitespacesA
 @ApiStatus.Experimental
 @JvmField
 val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<WhitespacesAndCommentsBinder> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(null, param)
     return marker
   }
@@ -104,9 +104,9 @@ val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<Whitespaces
 
 @ApiStatus.Experimental
 @JvmField
-val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array<WhitespacesAndCommentsBinder?>> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
-    marker?.setCustomEdgeTokenBinders(param!![0], param[1])
+val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder>> = object : Hook<Array<WhitespacesAndCommentsBinder>> {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder>): SyntaxTreeBuilder.Marker? {
+    marker?.setCustomEdgeTokenBinders(param[0], param[1])
     return marker
   }
 }
@@ -144,7 +144,7 @@ class SyntaxGeneratedParserRuntime(
 
   fun interface Hook<T> {
     @Contract("_,null,_->null")
-    fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T?): SyntaxTreeBuilder.Marker?
+    fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T): SyntaxTreeBuilder.Marker?
   }
 
   internal data class HookBatch<T>(val hook: Hook<T>, val param: T, val level: Int) {
