@@ -163,7 +163,7 @@ class SyntaxGeneratedParserRuntime(
     val size: Int
       get() = arrayList.size
 
-    fun get(index: Int): E =
+    operator fun get(index: Int): E =
       arrayList[index]
 
     fun trimSize(fromIndex: Int) {
@@ -251,7 +251,7 @@ class SyntaxGeneratedParserRuntime(
       var i = start
       val len: Int = list.size
       while (i < len) {
-        VARIANTS.recycle(list.get(i))
+        VARIANTS.recycle(list[i])
         i++
       }
       list.trimSize(start)
