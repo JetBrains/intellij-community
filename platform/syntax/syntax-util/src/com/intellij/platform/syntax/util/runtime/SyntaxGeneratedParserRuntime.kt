@@ -767,18 +767,23 @@ fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<T>, param: T) {
 }
 
 private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedParserRuntime.ErrorState, elementType: SyntaxElementType?) {
-  if (state.hooks.isEmpty()) return
-  val batch = state.hooks.last()
-  var marker: SyntaxTreeBuilder.Marker? = if (elementType == null) null else syntaxBuilder.lastDoneMarker
+  val hooks = state.hooks
+  if (hooks.isEmpty()) return
+
+  var marker = if (elementType == null) null else syntaxBuilder.lastDoneMarker
+
   if (elementType != null && marker == null) {
     syntaxBuilder.mark().error(SyntaxRuntimeBundle.message("parsing.error.no.expected.done.marker.at.offset", syntaxBuilder.currentOffset))
   }
-  while (batch.level >= state.level) {
-    if (batch.level == state.level) {
-      marker = batch.process(this, marker)
+
+  do {
+    val curHookBatch = hooks.lastOrNull()?.takeIf { it.level >= state.level } ?: break
+    if (curHookBatch.level == state.level) {
+      marker = curHookBatch.process(this, marker)
     }
-    state.hooks.removeLast()
+    hooks.removeLast()
   }
+  while (true)
 }
 
 private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
