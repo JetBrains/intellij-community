@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.isIt
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
-import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames.Collections
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -51,8 +51,8 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
     }
 
     protected class FlatMapToFlattenConversion : Conversion(
-        targetFqName = Collections.flatMap,
-        replacementFqName = Collections.flatten,
+        targetFqName = StandardKotlinNames.Collections.flatMap,
+        replacementFqName = StandardKotlinNames.Collections.flatten,
     ) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
@@ -75,8 +75,8 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
     }
 
     protected class FilterToFilterNotNullConversion(
-        targetFqName: FqName = Collections.filter,
-        replacementFqName: FqName = Collections.filterNotNull,
+        targetFqName: FqName = StandardKotlinNames.Collections.filter,
+        replacementFqName: FqName = StandardKotlinNames.Collections.filterNotNull,
     ) : Conversion(targetFqName, replacementFqName) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
@@ -105,8 +105,8 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
     }
 
     protected class FilterToFilterIsInstanceConversion(
-        targetFqName: FqName = Collections.filter,
-        replacementFqName: FqName = Collections.filterIsInstance,
+        targetFqName: FqName = StandardKotlinNames.Collections.filter,
+        replacementFqName: FqName = StandardKotlinNames.Collections.filterIsInstance,
     ) : Conversion(targetFqName, replacementFqName) {
         context(_: KaSession)
         override fun analyze(callExpression: KtCallExpression): String? {
