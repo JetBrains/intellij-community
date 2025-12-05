@@ -14,7 +14,7 @@ import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -172,7 +172,7 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
 }
 
 internal fun streamProvider(project: Project?): StreamProvider {
-  return (project ?: ApplicationManager.getApplication()).getService(IComponentStore::class.java).storageManager.streamProvider
+  return ((project ?: ApplicationManager.getApplication()) as ComponentStoreOwner).componentStore.storageManager.streamProvider
 }
 
 private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult {
