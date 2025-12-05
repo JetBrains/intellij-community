@@ -289,8 +289,10 @@
 - a:register_hook_(com.intellij.platform.syntax.util.runtime.Hook,java.lang.Object):V
 - a:report_error_(com.intellij.platform.syntax.util.runtime.ErrorState,Z):V
 - a:report_error_(Z):Z
+*f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntimeFactoryKt
+- *sf:SyntaxGeneratedParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState,Z,java.util.Collection,com.intellij.platform.syntax.Logger,I):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- *bs:SyntaxGeneratedParserRuntime$default(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState,Z,java.util.Collection,com.intellij.platform.syntax.Logger,I,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntimeKt
-- *sf:SyntaxGeneratedParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - *sf:create_token_set_(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 *:com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 - a:buildParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime

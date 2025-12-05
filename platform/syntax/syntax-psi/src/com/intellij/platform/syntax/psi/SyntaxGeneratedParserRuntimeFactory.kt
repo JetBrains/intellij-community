@@ -20,10 +20,9 @@ fun createSyntaxGeneratedParserRuntime(
 
   return SyntaxGeneratedParserRuntime(
     syntaxBuilder = builder,
+    parserUserState = state,
     isLanguageCaseSensitive = language.isCaseSensitive,
     braces = languageInformer.getPairedBraces(),
-    maxRecursionDepth = 1000,
     logger = logger<SyntaxGeneratedParserRuntime>().asSyntaxLogger(),
-    parserUserState = state
   )
 }

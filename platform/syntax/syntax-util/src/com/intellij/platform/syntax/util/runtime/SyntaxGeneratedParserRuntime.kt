@@ -4,7 +4,6 @@
 
 package com.intellij.platform.syntax.util.runtime
 
-import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
@@ -12,18 +11,12 @@ import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.platform.syntax.util.runtime.impl.SyntaxGeneratedParserRuntimeImpl
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime(
-  syntaxBuilder: SyntaxTreeBuilder,
-  maxRecursionDepth: Int,
-  isLanguageCaseSensitive: Boolean,
-  braces: Collection<BracePair>,
-  logger: Logger,
-  parserUserState: ParserUserState?,
-): SyntaxGeneratedParserRuntime {
-  return SyntaxGeneratedParserRuntimeImpl(syntaxBuilder, maxRecursionDepth, isLanguageCaseSensitive, braces, logger, parserUserState)
-}
-
+/**
+ * SyntaxGeneratedParserRuntime interface defines all the necessary methods for generated parsers to work.
+ * The class is not expected to be used manually.
+ *
+ * @see SyntaxGeneratedParserRuntime() factory method.
+ */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface SyntaxGeneratedParserRuntime {
