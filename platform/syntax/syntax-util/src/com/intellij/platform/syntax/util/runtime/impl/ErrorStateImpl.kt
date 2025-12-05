@@ -90,6 +90,6 @@ internal class ErrorStateImpl : ErrorState {
 
   fun initState(runtime: SyntaxGeneratedParserRuntime, extendsSets: Array<SyntaxElementTypeSet>) {
     this.extendsSets = extendsSets
-    this.braces = runtime.impl.braces.toTypedArray()
+    this.braces = (runtime as SyntaxGeneratedParserRuntimeImpl).braces.toTypedArray()
   }
 }
