@@ -534,6 +534,26 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testDecoratedClassMethod2() {
+    doTestByText("""
+                   from typing import TypeVar, Callable, Any, Generic
+                   
+                   T = TypeVar("T")
+                   
+                   def dec[T](f: Callable[[T, bool], bool]) -> Callable[[T, bool], bool]:
+                       def a(self, b: bool) -> bool:
+                           return f(self, b)
+                       return a
+                   
+                   class A:
+                       @dec
+                       def f(self, a: bool) -> bool:
+                           return True
+                   
+                   a = A()
+                   value = a.f(True)
+                   """);
+  }
 
   // PY-60104 PY-13276
   public void testTypedDecoratorNotChangingSignatureDoesNotSuppressWarnings() {

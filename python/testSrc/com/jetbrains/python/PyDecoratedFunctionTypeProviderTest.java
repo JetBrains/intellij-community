@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.util.RecursionManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -10,6 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
+  }
 
   public void testAnnotatedDecoratorTurnsFunctionIntoConstant() {
     doTest("Any", "int",
@@ -221,6 +229,42 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              
              value = f('foo', 42, True)
              dec_func = f
+             """);
+  }
+
+  public void testInStackOfDecoratorsChangingFunctionSignatureOnlyAnnotatedAreConsideredClassMethod() {
+    doTest("tuple[str, tuple[bool, None]]", "(str, bool) -> tuple[str, tuple[bool, None]]",
+           """
+             from typing import Callable, Concatenate, ParamSpec, TypeVar
+             
+             P = ParamSpec('P')
+             T = TypeVar('T')
+             
+             
+             def prepend_str(fn: Callable[P, T]) -> Callable[Concatenate[str, P], tuple[str, T]]:
+                 def wrapper(p: str, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             def prepend_int(fn):
+                 def wrapper(p: int, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             def prepend_bool(fn: Callable[P, T]) -> Callable[Concatenate[bool, P], tuple[bool, T]]:
+                 def wrapper(p: bool, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             class A:
+               @prepend_str
+               @prepend_int
+               @prepend_bool
+               def f():
+                   pass
+             a = A()
+             value = a.f('foo', 42, True)
+             dec_func = a.f
              """);
   }
 
@@ -463,6 +507,46 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
   // PY-79622
   public void testDecoratedTransformsReturnTypeTwoMatchingImportedOverloadsChoseSecond() {
     doMultiFileTest("bool", "(bool) -> bool");
+  }
+
+  public void testDecoratedClassMethodGenericDecoratorIdentity() {
+    doTest("bool", "(a: bool) -> bool", """
+      from typing import TypeVar, Callable, Any
+      
+      F = TypeVar("F", bound=Callable[..., Any])
+      
+      def dec(f: F) -> F:
+          return f
+      
+      class A:
+          @dec
+          def f(self, a: bool) -> bool:
+              return True
+      
+      value = A().f(True)
+      dec_func = A().f
+      """);
+  }
+
+  public void testDecoratedClassMethodGenericDecoratorSameType() {
+    doTest("bool", "(bool) -> bool", """
+      from typing import Callable
+      
+      def dec[T](f: Callable[[T, bool], bool]) -> Callable[[T, bool], bool]:
+          def a(self, b: bool) -> bool:
+              return f(self, b)
+          return a
+      
+      class A:
+          @dec
+          def f(self, a: bool) -> bool:
+              return True
+      
+      a = A()
+      
+      value = a.f(True)
+      dec_func = a.f
+      """);
   }
 
   private void doTest(@NotNull String expectedValueType, @NotNull String expectedFuncType, @NotNull String text) {
