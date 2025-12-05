@@ -50,6 +50,7 @@ final class UndoClientState implements Disposable {
 
   private @NotNull UndoRedoInProgress undoRedoInProgress = UndoRedoInProgress.NONE;
   private int commandTimestamp = 1;
+  private int dumpCount = 0;
 
   @SuppressWarnings("unused")
   UndoClientState(@NotNull ClientProjectSession session) {
@@ -178,7 +179,7 @@ final class UndoClientState implements Disposable {
     }
     UndoCommandFlushReason flushReason = commandMerger.shouldFlush(performedCommand);
     if (flushReason != null) {
-      flushCommandMerger(flushReason, performedCommand);
+      flushCommandMerger(flushReason);
       compactIfNeeded();
     }
     commandMerger.mergeWithPerformedCommand(performedCommand);
@@ -192,10 +193,6 @@ final class UndoClientState implements Disposable {
         undoSpy.undoableActionAdded(project, action, UndoableActionType.forAction(action));
       }
     }
-  }
-
-  void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason) {
-    flushCommandMerger(flushReason, null);
   }
 
   boolean isInsideCommand() {
@@ -349,10 +346,12 @@ final class UndoClientState implements Disposable {
     //noinspection ConstantValue
     return """
       %s
+      %s
       >>CurrentMerger %s
       >>Merger %s
       %s
       %s""".formatted(
+        "dumpCount: " + dumpCount++,
         clientId,
         currentMerger.isEmpty() ? "null" : ("\n  " + currentMerger),
         merger.isEmpty() ? "null" : ("\n  " + merger + "\n"),
@@ -368,13 +367,7 @@ final class UndoClientState implements Disposable {
     redoStacksHolder.clearAllStacksInTests();
   }
 
-  private void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason, @Nullable PerformedCommand performedCommand) {
-    if (performedCommand != null && !performedCommand.hasActions() && commandMerger.hasActions() && !isUndoOrRedoInProgress()) {
-      UndoSpy undoSpy = UndoSpy.getInstance();
-      if (undoSpy != null) {
-        undoSpy.commandMergerFlushed(project);
-      }
-    }
+  void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason) {
     UndoableGroup group = commandMerger.formGroup(flushReason, nextCommandTimestamp());
     if (group != null) {
       composeStartFinishGroup(group);
