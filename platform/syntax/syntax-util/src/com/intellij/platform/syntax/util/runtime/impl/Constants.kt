@@ -9,3 +9,6 @@ internal const val MAX_CHILDREN_IN_TREE = 10
 internal const val INITIAL_VARIANTS_SIZE = 1000
 internal const val VARIANTS_POOL_SIZE = 10000
 internal const val FRAMES_POOL_SIZE = 500
+
+internal const val MAX_RECURSION_LEVEL = 1000
+

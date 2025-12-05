@@ -61,8 +61,6 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType): SyntaxElementTypeSe
   return syntaxElementTypeSetOf(*tokenTypes)
 }
 
-//private val MAX_RECURSION_LEVEL = StringUtil.parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000)
-
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.eof(level: Int): Boolean {
   return syntaxBuilder.eof()
