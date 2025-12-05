@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.contentEquals
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultJBList
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListModel

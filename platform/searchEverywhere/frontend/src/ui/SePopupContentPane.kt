@@ -42,6 +42,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemPresent
 import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.withPresentation
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.awt.RelativePoint
