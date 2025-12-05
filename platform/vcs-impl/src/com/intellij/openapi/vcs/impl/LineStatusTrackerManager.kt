@@ -286,7 +286,10 @@ class LineStatusTrackerManager(
         }
       }
       if (data.tracker is SimpleLocalLineStatusTracker) {
-        return data.tracker.hasPartialState()
+        if (data.tracker.hasPartialState()) {
+          log("checkIfTrackerCanBeReleased - has partial state", data.tracker.virtualFile)
+          return
+        }
       }
 
       releaseTracker(document)
