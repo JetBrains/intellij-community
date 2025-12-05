@@ -14,8 +14,9 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import org.intellij.markdown.html.entities.Entities
@@ -200,12 +201,18 @@ class MarkdownHeader: MarkdownHeaderImpl {
 
     private fun calculateUniqueNumber(header: MarkdownHeader, rawAnchorText: String): Int {
       val file = header.containingFile
-      val headers = CachedValuesManager.getCachedValue(file) {
-        CachedValueProvider.Result.create(SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>(),
-                                          PsiModificationTracker.MODIFICATION_COUNT)
-      }
+      val headers = getCachedValueStubBuildOptimized(file, HEADERS_LIST_PROVIDER)
       val sameHeaders = headers.filter { obtainRawAnchorText(it) == rawAnchorText }
       return sameHeaders.takeWhile { it != header }.count()
+    }
+
+    private val HEADERS_LIST_PROVIDER = StubBuildCachedValueProvider<Iterable<MarkdownHeader>, com.intellij.psi.PsiFile>(
+      "markdown.header.headersList"
+    ) { file ->
+      CachedValueProvider.Result.create(
+        SyntaxTraverser.psiTraverser(file).filterIsInstance<MarkdownHeader>(),
+        PsiModificationTracker.MODIFICATION_COUNT
+      )
     }
 
     @ApiStatus.Internal
@@ -218,15 +225,23 @@ class MarkdownHeader: MarkdownHeaderImpl {
     }
 
     fun obtainAnchorText(header: MarkdownHeader): String? {
-      return CachedValuesManager.getCachedValue(header) {
-        CachedValueProvider.Result.create(buildUniqueAnchorText(header), PsiModificationTracker.MODIFICATION_COUNT)
-      }
+      return getCachedValueStubBuildOptimized(header, OBTAIN_ANCHOR_PROVIDER)
+    }
+
+    private val OBTAIN_ANCHOR_PROVIDER = StubBuildCachedValueProvider<String?, MarkdownHeader>(
+      "markdown.header.anchorText"
+    ) { header ->
+      CachedValueProvider.Result.create(buildUniqueAnchorText(header), PsiModificationTracker.MODIFICATION_COUNT)
     }
 
     private fun obtainRawAnchorText(header: MarkdownHeader): String? {
-      return CachedValuesManager.getCachedValue(header) {
-        CachedValueProvider.Result.create(header.buildRawAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
-      }
+      return getCachedValueStubBuildOptimized(header, OBTAIN_RAW_ANCHOR_PROVIDER)
+    }
+
+    private val OBTAIN_RAW_ANCHOR_PROVIDER = StubBuildCachedValueProvider<String?, MarkdownHeader>(
+      "markdown.header.rawAnchorText"
+    ) { header ->
+      CachedValueProvider.Result.create(header.buildRawAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
     }
 
     private val ENTITY_REGEX = Regex("""&(?:([a-zA-Z0-9]+)|#([0-9]{1,8})|#[xX]([a-fA-F0-9]{1,8}));""")
