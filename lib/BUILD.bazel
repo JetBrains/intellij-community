@@ -9400,12 +9400,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "plexus-utils",
-  jar = "@org_codehaus_plexus-plexus-utils-3_5_1_http//file",
-  source_jar = "@org_codehaus_plexus-plexus-utils-3_5_1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "protobuf",

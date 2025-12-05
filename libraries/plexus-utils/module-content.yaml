@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.plexus.utils.jar
+  modules:
+  - name: intellij.libraries.plexus.utils
+    libraries:
+      plexus-utils:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3/plexus-utils-3.jar

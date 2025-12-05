@@ -89,7 +89,6 @@ private val libsUsedInJps = setOf(
   "jna",
   "maven-resolver-provider",
   // see ArtifactRepositoryManager.getClassesFromDependencies
-  "plexus-utils",
   "kotlin-stdlib",
 )
 

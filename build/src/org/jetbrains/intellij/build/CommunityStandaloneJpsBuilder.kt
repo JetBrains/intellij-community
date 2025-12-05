@@ -46,6 +46,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.lz4",
     "intellij.libraries.http.client",
     "intellij.libraries.cli.parser",
+    "intellij.libraries.plexus.utils",
     "intellij.libraries.asm",
     "intellij.libraries.jgoodies.forms",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
@@ -100,7 +101,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "Eclipse",
     "netty-jps",
     "slf4j-api",
-    "plexus-utils",
     "jetbrains-annotations",
     "jps-javac-extension",
     "kotlin-stdlib",
