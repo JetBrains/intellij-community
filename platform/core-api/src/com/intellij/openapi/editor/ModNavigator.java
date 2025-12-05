@@ -37,9 +37,9 @@ public interface ModNavigator {
   @NotNull Document getDocument();
 
   /**
-   * Registers a tab out scope, so pressing tab inside the scope moves the caret to the specified offset
+   * Registers a tab out scope, so pressing the tab inside the scope moves the caret to the specified offset
    * instead of adding a tab character.
-   * 
+   * <p> 
    * May do nothing if tab out is not supported by the implementation.
    * 
    * @param range scope range 
