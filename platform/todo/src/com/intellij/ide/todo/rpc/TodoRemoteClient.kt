@@ -56,6 +56,18 @@ class TodoRemoteClient {
     }
 
     @JvmStatic
+    fun fileMatchesFilter(
+      project: Project,
+      file: VirtualFile,
+      filter: TodoFilter?
+    ): Boolean = runBlockingCancellable {
+        durable {
+          val projectId = project.projectId()
+          TodoRemoteApi.getInstance().fileMatchesFilter(projectId, file.rpcId(), filter?.let { toConfig(it) })
+        }
+    }
+
+    @JvmStatic
     internal fun toConfig(filter: TodoFilter): TodoFilterConfig {
       val patterns = mutableListOf<TodoPatternConfig>()
       val it = filter.iterator()

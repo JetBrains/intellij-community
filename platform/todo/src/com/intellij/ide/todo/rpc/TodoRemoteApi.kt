@@ -29,6 +29,12 @@ interface TodoRemoteApi : RemoteApi<Unit> {
     filter: TodoFilterConfig?
   ) : Int
 
+  suspend fun fileMatchesFilter(
+    projectId: ProjectId,
+    fileId: VirtualFileId,
+    filter: TodoFilterConfig?
+  ): Boolean
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): TodoRemoteApi {
