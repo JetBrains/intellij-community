@@ -420,7 +420,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 jvm_import(
   name = "assert_j",
   jar = "@org_assertj-assertj-core-4_0_0-M1_http//file",
@@ -434,7 +433,6 @@ jvm_import(
   source_jar = "@org_assertj-assertj-swing-3_17_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 jvm_import(
   name = "bouncy-castle-pgp",
@@ -562,7 +560,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 jvm_import(
   name = "commons-io",
   jar = "@commons-io-commons-io-2_18_0_http//file",
@@ -576,7 +573,6 @@ jvm_import(
   source_jar = "@org_apache_commons-commons-lang3-3_18_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 jvm_import(
   name = "completion_ml_ranking_models-completion-ranking-cpp-exp",
@@ -2533,7 +2529,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 java_library(
   name = "intellij-plugin-structure",
   exports = [
@@ -2771,7 +2766,6 @@ jvm_import(
   jar = "@io_qameta_allure-allure-model-2_25_0_http//file",
   source_jar = "@io_qameta_allure-allure-model-2_25_0-sources_http//file"
 )
-
 
 jvm_import(
   name = "jackson",
@@ -3099,7 +3093,6 @@ jvm_import(
   source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file"
 )
 
-
 jvm_import(
   name = "jb-jdi",
   jar = "@org_jetbrains_intellij_deps-jb-jdi-2_45_http//file",
@@ -3113,7 +3106,6 @@ jvm_import(
   source_jar = "@org_jetbrains_runtime-jbr-api-1_9_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 jvm_import(
   name = "jediterm-core",
@@ -3734,7 +3726,6 @@ jvm_import(
   source_jar = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 java_library(
   name = "kaml",
@@ -4388,8 +4379,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-)
-
 java_library(
   name = "kotlinx-io-core",
   exports = [
@@ -4410,7 +4399,6 @@ jvm_import(
   jar = "@org_jetbrains_kotlinx-kotlinx-io-bytestring-jvm-0_7_0_http//file",
   source_jar = "@org_jetbrains_kotlinx-kotlinx-io-bytestring-jvm-0_7_0-sources_http//file"
 )
-
 
 jvm_import(
   name = "kotlinx-serialization-core",
@@ -4433,7 +4421,6 @@ jvm_import(
   source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-json-io-jvm-1_9_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 java_library(
   name = "ktor-client-cio",
@@ -4760,6 +4747,41 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "libraries-asm-tools-asm-tools",
+  exports = [
+    ":org_ow2_asm-asm-analysis-9_8_http_import",
+    ":org_ow2_asm-asm-tree-9_8_http_import",
+    ":org_ow2_asm-asm-9_8_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-analysis-9_8_http_import",
+  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-tree-9_8_http_import",
+  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "org_ow2_asm-asm-9_8_http_import",
+  jar = "@org_ow2_asm-asm-9_8_http//file",
+  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
+)
+
+jvm_import(
+  name = "libraries-automaton-automaton",
+  jar = "@dk_brics-automaton-1_12-4_http//file",
+  source_jar = "@dk_brics-automaton-1_12-4-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 jvm_import(
   name = "libraries-blockmap-blockmap",
   jar = "@org_jetbrains_intellij-blockmap-1_0_7_http//file",
@@ -4862,6 +4884,20 @@ jvm_import(
   name = "libraries-coil-io-coil-kt-coil3-test-jvm",
   jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
   source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-commons-imaging-commons-imaging",
+  jar = "@org_jetbrains_intellij_deps-commons-imaging-1_0-RC-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-commons-imaging-1_0-RC-1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-commons-logging-commons-logging",
+  jar = "@commons-logging-commons-logging-1_2_http//file",
+  source_jar = "@commons-logging-commons-logging-1_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5276,9 +5312,23 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-imgscalr-imgscalr",
+  jar = "@org_imgscalr-imgscalr-lib-4_2_http//file",
+  source_jar = "@org_imgscalr-imgscalr-lib-4_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-ini4j-ini4j",
   jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2_http//file",
   source_jar = "@org_jetbrains_intellij_deps-ini4j-0_5_5-2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ion-ion",
+  jar = "@com_amazon_ion-ion-java-1_11_10_http//file",
+  source_jar = "@com_amazon_ion-ion-java-1_11_10-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5290,9 +5340,23 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-jaxen-_jaxen",
+  jar = "@jaxen-jaxen-1_2_0_http//file",
+  source_jar = "@jaxen-jaxen-1_2_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-jcef-jcef",
   jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13_http//file",
   source_jar = "@org_jetbrains_intellij_deps_jcef-jcef-137_0_17-gf354b0e-chromium-137_0_7151_104-api-1_20-253-b13-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jcip-jcip",
+  jar = "@net_jcip-jcip-annotations-1_0_http//file",
+  source_jar = "@net_jcip-jcip-annotations-1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5331,9 +5395,51 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-jzlib-jzlib",
+  jar = "@com_jcraft-jzlib-1_1_3_http//file",
+  source_jar = "@com_jcraft-jzlib-1_1_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-kotlinx-document-store-mvstore-kotlinx-document-store-mvstore",
+  exports = [
+    ":com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http_import",
+    ":com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http_import",
+  jar = "@com_github_lamba92-kotlinx-document-store-mvstore-0_0_4_http//file",
+  source_jar = "@com_github_lamba92-kotlinx-document-store-mvstore-0_0_4-sources_http//file"
+)
+
+jvm_import(
+  name = "com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http_import",
+  jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4_http//file",
+  source_jar = "@com_github_lamba92-kotlinx-document-store-core-jvm-0_0_4-sources_http//file"
+)
+
+jvm_import(
   name = "libraries-kotlinx-html-kotlinx-html-jvm",
   jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0_http//file",
   source_jar = "@org_jetbrains_kotlinx-kotlinx-html-jvm-0_12_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-kotlinx-serialization-cbor-kotlinx-serialization-cbor",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_9_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-kotlinx-serialization-protobuf-kotlinx-serialization-protobuf",
+  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0_http//file",
+  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5401,6 +5507,13 @@ jvm_import(
   source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-core-jvm-1_9_0-sources_http//file"
 )
 
+jvm_import(
+  name = "libraries-lz4-lz4-java",
+  jar = "@org_lz4-lz4-java-1_8_0_http//file",
+  source_jar = "@org_lz4-lz4-java-1_8_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "libraries-miglayout-swing-miglayout-swing",
   exports = [
@@ -5451,9 +5564,30 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-oro-matcher-_oro_matcher",
+  jar = "@oro-oro-2_0_8_http//file",
+  source_jar = "@oro-oro-2_0_8-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-plexus-utils-plexus-utils",
+  jar = "@org_codehaus_plexus-plexus-utils-3_5_1_http//file",
+  source_jar = "@org_codehaus_plexus-plexus-utils-3_5_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-pty4j-pty4j",
   jar = "@org_jetbrains_pty4j-pty4j-0_13_11_http//file",
   source_jar = "@org_jetbrains_pty4j-pty4j-0_13_11-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-rhino-rhino",
+  jar = "@org_mozilla-rhino-runtime-1_7_15_http//file",
+  source_jar = "@org_mozilla-rhino-runtime-1_7_15-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5468,6 +5602,13 @@ jvm_import(
   name = "libraries-skiko-jetbrains-skiko-awt-runtime-all",
   jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_37_3_http//file",
   source_jar = "@org_jetbrains_skiko-skiko-awt-runtime-all-0_9_37_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-snakeyaml-engine-snakeyaml-engine",
+  jar = "@org_snakeyaml-snakeyaml-engine-2_9_http//file",
+  source_jar = "@org_snakeyaml-snakeyaml-engine-2_9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5497,6 +5638,20 @@ jvm_import(
   name = "net_i2p_crypto-eddsa-0_3_0_http_import",
   jar = "@net_i2p_crypto-eddsa-0_3_0_http//file",
   source_jar = "@net_i2p_crypto-eddsa-0_3_0-sources_http//file"
+)
+
+jvm_import(
+  name = "libraries-stream-_stream_ex",
+  jar = "@one_util-streamex-0_8_4_http//file",
+  source_jar = "@one_util-streamex-0_8_4-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-swingx-swingx",
+  jar = "@org_swinglabs-swingx-core-1_6_2-2_http//file",
+  source_jar = "@org_swinglabs-swingx-core-1_6_2-2-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_library(
@@ -5664,7 +5819,6 @@ jvm_import(
   source_jar = "@org_apache_lucene-lucene-suggest-10_3_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 java_library(
   name = "maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5",
@@ -8338,7 +8492,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 java_library(
   name = "package-search-api-client",
   exports = [
@@ -9282,7 +9435,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 jvm_import(
   name = "protobuf",
   jar = "@com_google_protobuf-protobuf-java-3_24_4-jb_2_http//file",
@@ -9385,7 +9537,6 @@ jvm_import(
   source_jar = "@thaiopensource-jing-20030619-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 jvm_import(
   name = "rhizomedb-compiler-plugin",
@@ -9518,7 +9669,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 jvm_import(
   name = "spellchecker-java-string-similarity",
   jar = "@info_debatty-java-string-similarity-2_0_0_http//file",
@@ -9553,7 +9703,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-
 jvm_import(
   name = "studio-platform",
   jar = "@org_jetbrains_intellij_deps-studio-platform-2025_2_1-alpha01-290_http//file",
@@ -9574,7 +9723,6 @@ jvm_import(
   source_jar = "@org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290-sources_http//file",
   visibility = ["//visibility:public"]
 )
-
 
 jvm_import(
   name = "tasks-core-commons-discovery",
