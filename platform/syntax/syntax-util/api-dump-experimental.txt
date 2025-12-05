@@ -178,6 +178,8 @@
 - a:getMyRightBrace():com.intellij.platform.syntax.SyntaxElementType
 *f:com.intellij.platform.syntax.util.runtime.BracePairKt
 - *sf:BracePair(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,Z):com.intellij.platform.syntax.util.runtime.BracePair
+*f:com.intellij.platform.syntax.util.runtime.DymmyBlockKt
+- *sf:DUMMY_BLOCK:com.intellij.platform.syntax.SyntaxElementType
 *:com.intellij.platform.syntax.util.runtime.ErrorState
 - a:clearVariants(com.intellij.platform.syntax.util.runtime.Frame):V
 - a:clearVariants(Z,I):V
@@ -204,6 +206,10 @@
 - a:parse(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime):V
 *:com.intellij.platform.syntax.util.runtime.Hook
 - a:run(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,java.lang.Object):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+*f:com.intellij.platform.syntax.util.runtime.HooksKt
+- *sf:LEFT_BINDER:com.intellij.platform.syntax.util.runtime.Hook
+- *sf:RIGHT_BINDER:com.intellij.platform.syntax.util.runtime.Hook
+- *sf:WS_BINDERS:com.intellij.platform.syntax.util.runtime.Hook
 *f:com.intellij.platform.syntax.util.runtime.Modifiers
 - *sf:Companion:com.intellij.platform.syntax.util.runtime.Modifiers$Companion
 - sf:and-thSIBIw(I,I):I
@@ -227,6 +233,9 @@
 *:com.intellij.platform.syntax.util.runtime.Parser
 - a:parse(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
 *:com.intellij.platform.syntax.util.runtime.ParserUserState
+*f:com.intellij.platform.syntax.util.runtime.ParsersKt
+- *sf:TOKEN_ADVANCER:com.intellij.platform.syntax.util.runtime.Parser
+- *sf:TRUE_CONDITION:com.intellij.platform.syntax.util.runtime.Parser
 *:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - a:getMaxRecursionDepth():I
 - a:getParserUserState():com.intellij.platform.syntax.util.runtime.ParserUserState
@@ -234,12 +243,6 @@
 - a:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V
 - bs:init$default(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[],I,java.lang.Object):V
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntimeKt
-- *sf:DUMMY_BLOCK:com.intellij.platform.syntax.SyntaxElementType
-- *sf:LEFT_BINDER:com.intellij.platform.syntax.util.runtime.Hook
-- *sf:RIGHT_BINDER:com.intellij.platform.syntax.util.runtime.Hook
-- *sf:TOKEN_ADVANCER:com.intellij.platform.syntax.util.runtime.Parser
-- *sf:TRUE_CONDITION:com.intellij.platform.syntax.util.runtime.Parser
-- *sf:WS_BINDERS:com.intellij.platform.syntax.util.runtime.Hook
 - *sf:SyntaxGeneratedParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - *sf:addVariant(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):V
 - *sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z

@@ -9,7 +9,6 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._AND_
@@ -22,48 +21,8 @@ import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._UPPER_
 import com.intellij.platform.syntax.util.runtime.impl.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.math.min
-
-@ApiStatus.Experimental
-@JvmField
-val TOKEN_ADVANCER: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> parserRuntime.advanceToken(level) }
-
-@ApiStatus.Experimental
-@JvmField
-val TRUE_CONDITION: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> true }
-
-@ApiStatus.Experimental
-@JvmField
-val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<WhitespacesAndCommentsBinder> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder): SyntaxTreeBuilder.Marker? {
-    marker?.setCustomEdgeTokenBinders(param, null)
-    return marker
-  }
-}
-
-@ApiStatus.Experimental
-@JvmField
-val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder> = object : Hook<WhitespacesAndCommentsBinder> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder): SyntaxTreeBuilder.Marker? {
-    marker?.setCustomEdgeTokenBinders(null, param)
-    return marker
-  }
-}
-
-@ApiStatus.Experimental
-@JvmField
-val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder>> = object : Hook<Array<WhitespacesAndCommentsBinder>> {
-  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder>): SyntaxTreeBuilder.Marker? {
-    marker?.setCustomEdgeTokenBinders(param[0], param[1])
-    return marker
-  }
-}
-
-@ApiStatus.Experimental
-@JvmField
-val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime(
