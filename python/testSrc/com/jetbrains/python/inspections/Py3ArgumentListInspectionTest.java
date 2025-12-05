@@ -644,4 +644,22 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testImportedDecoratedFunctionWithParamSpec() {
     doMultiFileTest();
   }
+
+  // PY-85027
+  public void testBoundMethodDecoratedWithParamSpec() {
+    doTestByText("""
+      from typing import Callable
+      
+      def outer_decorator[**P, T](f: Callable[P, T]) -> Callable[P, T]:
+          return f
+      
+      class NonWorkingClass:
+          @outer_decorator
+          def add_two(self, x: float, y: float) -> float:
+              return x + y
+      
+      
+      NonWorkingClass().add_two(<warning descr="Parameter 'x' unfilled"><warning descr="Parameter 'y' unfilled">)</warning></warning>
+      """);
+  }
 }
