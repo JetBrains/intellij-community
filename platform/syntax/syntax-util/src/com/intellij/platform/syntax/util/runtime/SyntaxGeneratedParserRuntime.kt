@@ -157,7 +157,7 @@ class SyntaxGeneratedParserRuntime(
   @JvmInline
   internal value class MyList<E> private constructor(
     private val arrayList: ArrayList<E> = ArrayList()
-  ) {
+  ) : Iterable<E> {
     constructor(initialCapacity: Int) : this(ArrayList<E>(initialCapacity))
 
     val size: Int
@@ -177,6 +177,9 @@ class SyntaxGeneratedParserRuntime(
       }
       return arrayList.add(e)
     }
+
+    override fun iterator(): Iterator<E> =
+      arrayList.iterator()
   }
 
   class ErrorState() {
@@ -199,42 +202,40 @@ class SyntaxGeneratedParserRuntime(
 
     fun getExpected(position: Int, expected: Boolean): String {
       val list = if (expected) variants else unexpected
-      val strings = HashSet<String>(list.size)
-      for (i in 0 until list.size) {
-        val variant: Variant = list.get(i)
-        if (position == variant.position) {
-          val text: String = variant.`object`.toString()
-          if (text.isNotEmpty()) {
-            strings.add(text)
-          }
-        }
-      }
 
-      fun shouldPutInQuotes(ch: Char): Boolean {
-        return ch != '$' && ch != '_' && ch != '<' && !ch.isLetter()
+      val strings = list.asSequence()
+        .filter { it.position == position }
+        .mapNotNull { it.`object`?.toString() }
+        .filter { it.isNotEmpty() }
+        .distinct()
+        .sorted()
+        .toList()
+
+      fun escape(s: String): String {
+        val firstLetter = s[0]
+        return if (firstLetter == '$' || firstLetter == '_' || firstLetter == '<' || firstLetter.isLetter()) {
+          s
+        }
+        else {
+          "'$s'"
+        }
       }
 
       return when {
         strings.size > MAX_VARIANTS_TO_DISPLAY -> {
           strings
-            .asSequence()
-            .sorted()
             .take(MAX_VARIANTS_TO_DISPLAY)
-            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}") { s ->
-              if (shouldPutInQuotes(s[0])) "'$s'" else s
-            }
+            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}") { s -> escape(s) }
         }
         strings.size > 1 -> {
-          val sorted = strings.sorted().map { s -> if (shouldPutInQuotes(s[0])) "'$s'" else s }
+          val sorted = strings.map { s -> escape(s) }
           val last = sorted.last()
           sorted
             .dropLast(1)
             .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.or")} $last")
         }
         else -> {
-          strings.singleOrNull()?.let {
-            if (shouldPutInQuotes(it[0])) "'$it'" else it
-          }.orEmpty()
+          strings.singleOrNull()?.let { escape(it) }.orEmpty()
         }
       }
     }
