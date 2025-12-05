@@ -9549,12 +9549,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "snakeyaml-engine",
-  jar = "@org_snakeyaml-snakeyaml-engine-2_9_http//file",
-  source_jar = "@org_snakeyaml-snakeyaml-engine-2_9-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "spellchecker-java-string-similarity",
