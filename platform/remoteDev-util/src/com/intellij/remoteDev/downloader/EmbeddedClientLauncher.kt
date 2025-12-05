@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -13,6 +14,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -209,11 +211,28 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "jna.noclasspath", 
       "idea.is.internal",
       "intellij.test.jars.location",
-      PathManager.PROPERTY_HOME_PATH,
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))
     }
+
+    /* if this is Gateway staring from source code in 'dev build' mode, we need to pass the path to the actual source directory;
+       otherwise, JetBrains Client won't detect that it's running from sources and won't be able to start */
+    val ideHomePath =
+      if (PlatformUtils.isGateway() && AppMode.isRunningFromDevBuild()) findRunningFromSourcesHomeDir().pathString
+      else System.getProperty(PathManager.PROPERTY_HOME_PATH)
+    vmParametersList.defineProperty(PathManager.PROPERTY_HOME_PATH, ideHomePath)
+  }
+
+  private fun findRunningFromSourcesHomeDir(): Path {
+    var currentHome: Path? = PathManager.getHomeDir()
+    while (currentHome != null) {
+      if (currentHome.resolve(Project.DIRECTORY_STORE_FOLDER).exists()) {
+        return currentHome
+      }
+      currentHome = currentHome.parent
+    }
+    error("Cannot find home directory for running from sources upwards from ${PathManager.getHomeDir()}")
   }
 
   private fun addVmOptions(vmParametersList: ParametersList, moduleRepositoryPath: Path) {
