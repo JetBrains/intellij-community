@@ -12,9 +12,19 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+/**
+ * Represents a base interface for serializable basic item presentations in the "Search Everywhere".
+ */
 @ApiStatus.Experimental
 sealed interface SeBasicItemPresentation : SeItemPresentation
 
+/**
+ * Builder class for constructing instances of `SeBasicItemPresentation`.
+ * This class provides methods to customize the properties of an item presentation used in "Search Everywhere".
+ *
+ * Once all desired properties are set, the `build` method can be used to create an immutable
+ * instance of `SeBasicItemPresentation` that encapsulates the specified configuration.
+ */
 @ApiStatus.Experimental
 class SeBasicItemPresentationBuilder {
   private var iconId: IconId? = null

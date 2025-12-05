@@ -23,10 +23,22 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 
+/**
+ * Represents a base interface for serializable target item (file, class, psi element) presentations in the "Search Everywhere".
+ */
 @Serializable
 @ApiStatus.Experimental
 sealed interface SeTargetItemPresentation : SeItemPresentation
 
+/**
+ * Builder class for constructing instances of `SeTargetItemPresentation`.
+ * This class provides methods to customize the properties of a target item presentation used in "Search Everywhere".
+ *
+ * Once all desired properties are set, the `build` method can be used to create an immutable
+ * instance of `SeTargetItemPresentation` that encapsulates the specified configuration.
+ * Has a method which directly constructs a `SeTargetItemPresentation` instance from [TargetPresentation]
+ * which is used in some of the legacy [com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor].
+ */
 @ApiStatus.Experimental
 class SeTargetItemPresentationBuilder {
   private var backgroundColorId: ColorId? = null
