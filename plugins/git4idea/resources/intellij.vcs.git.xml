@@ -108,7 +108,7 @@
             class="git4idea.ui.branch.cleanup.CleanupBranchesAction"
             icon="AllIcons.Actions.ClearCash"
             internal="true">
-      <add-to-group group-id="Git.Log.Branches.Toolbar.Actions"/>
+      <add-to-group group-id="Vcs.Internal"/>
     </action>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">

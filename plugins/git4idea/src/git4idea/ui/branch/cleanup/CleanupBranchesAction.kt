@@ -6,11 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.ui.GotItTooltip
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepositoryManager
 
 /**
  * Opens the Branches Cleanup dialog.
@@ -21,8 +19,7 @@ internal class CleanupBranchesAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val hasEnoughBranches = project?.let { hasEnoughLocalBranches(it) } ?: false
-    e.presentation.isEnabledAndVisible = project != null && hasEnoughBranches
+    e.presentation.isEnabledAndVisible = project != null
 
     // Try to show a one-time Got It tooltip when this action is present on the Git Log branches toolbar.
     // We identify the context via VcsLog data keys and the toolbar place used in Branches UI.
@@ -34,12 +31,6 @@ internal class CleanupBranchesAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     CleanupBranchesDialog(project).show()
-  }
-
-  private fun hasEnoughLocalBranches(project: Project): Boolean {
-    val repos = GitRepositoryManager.getInstance(project).repositories
-    val total = repos.sumOf { it.branches.localBranches.size }
-    return total > 4 // according to FUS
   }
 
   private fun maybeShowGotItTooltip(e: AnActionEvent) { // Only in the VCS Log branches toolbar context
