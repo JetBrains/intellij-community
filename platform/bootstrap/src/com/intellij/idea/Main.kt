@@ -321,7 +321,12 @@ private fun runMarketplaceCommandsInActionScript() {
     // (referencing a string constant is OK - it is inlined by the compiler)
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+      if (System.getProperty("disable.IJPL.221005") == "true") {
+        // just in case the fix for IJPL-221005 blows up in the minor update, TODO drop after 26.1
+        StartupActionScriptManager.executeActionScript()
+      } else {
+        StartupActionScriptManager.executeMarketplaceCommandsFromActionScript()
+      }
     }
   }
   catch (e: Throwable) {
