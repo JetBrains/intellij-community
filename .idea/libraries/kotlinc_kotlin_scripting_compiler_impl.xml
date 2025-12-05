@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.3.20-ij253-39">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.3.20-ij253-45">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-39/kotlin-scripting-compiler-impl-2.3.20-ij253-39.jar">
-          <sha256sum>8d14daf7ab0e55174ffea67b65682d93984ed5d7b9403cdef8ea6268d71011fe</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-45/kotlin-scripting-compiler-impl-2.3.20-ij253-45.jar">
+          <sha256sum>c2b19162264b2aa78371cd834f8703e1c49c032ec9862cdb9b744a4a2a8e7ded</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-39/kotlin-scripting-compiler-impl-2.3.20-ij253-39.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-45/kotlin-scripting-compiler-impl-2.3.20-ij253-45.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-39/kotlin-scripting-compiler-impl-2.3.20-ij253-39-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.3.20-ij253-45/kotlin-scripting-compiler-impl-2.3.20-ij253-45-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
