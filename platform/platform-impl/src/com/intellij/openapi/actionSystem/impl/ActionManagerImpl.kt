@@ -1160,7 +1160,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
       // todo: remove `ThreadScopeCheckpoint` from here once we migrate all usages to `AnActionEvent#coroutineScope`
       val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
-      val providedScope = cs.childScope("actionPerformed of $actionId", coroutineContext.minusKey(Job.Key))
+      val providedScope = cs.childScope("actionPerformed of $actionId", coroutineContext.minusKey(Job.Key) + Dispatchers.Default)
       event.installCoroutineScope(providedScope)
       try {
         installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
