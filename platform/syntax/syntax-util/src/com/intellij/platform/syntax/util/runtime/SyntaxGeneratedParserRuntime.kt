@@ -126,7 +126,8 @@ class SyntaxGeneratedParserRuntime(
 ) {
   private val error: ErrorState = ErrorState()
 
-  internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
+  internal lateinit var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit
+
   internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
   internal val isLanguageCaseSensitive get() = isCaseSensitive
   internal val errorState get() = error
