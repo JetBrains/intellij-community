@@ -154,22 +154,26 @@ class SyntaxGeneratedParserRuntime(
     }
   }
 
-  internal class MyList<E>(initialCapacity: Int) {
-    private var arrayList: ArrayList<E> = ArrayList(initialCapacity)
-    val size: Int get() = arrayList.size
+  @JvmInline
+  internal value class MyList<E> private constructor(
+    private val arrayList: ArrayList<E> = ArrayList()
+  ) {
+    constructor(initialCapacity: Int) : this(ArrayList<E>(initialCapacity))
 
-    fun get(index: Int): E {
-      return arrayList[index]
-    }
+    val size: Int
+      get() = arrayList.size
 
-    fun setSize(fromIndex: Int) {
+    fun get(index: Int): E =
+      arrayList[index]
+
+    fun trimSize(fromIndex: Int) {
       arrayList.subList(fromIndex, this.size).clear()
     }
 
     fun add(e: E): Boolean {
       val size = this.size
       if (size >= MAX_VARIANTS_SIZE) {
-        setSize(MAX_VARIANTS_SIZE / 4)
+        trimSize(MAX_VARIANTS_SIZE / 4)
       }
       return arrayList.add(e)
     }
@@ -249,7 +253,7 @@ class SyntaxGeneratedParserRuntime(
         VARIANTS.recycle(list.get(i))
         i++
       }
-      list.setSize(start)
+      list.trimSize(start)
     }
 
     fun typeExtends(child: SyntaxElementType?, parent: SyntaxElementType?): Boolean {
