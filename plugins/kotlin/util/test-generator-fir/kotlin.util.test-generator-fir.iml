@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.parcelize" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
   </component>
 </module>

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 
 import com.intellij.lang.annotation.HighlightSeverity
@@ -9,7 +8,6 @@ import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMark
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.FileLevelHighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
-
 
 open class LineMarkerConfiguration(
     private val renderDescription: Boolean = true,

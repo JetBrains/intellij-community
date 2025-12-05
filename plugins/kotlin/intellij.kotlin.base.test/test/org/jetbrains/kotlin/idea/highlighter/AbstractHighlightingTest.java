@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -12,9 +12,7 @@ import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
@@ -43,7 +41,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
         {
             if (InTextDirectivesUtils.isDirectiveDefined(fileText, LOAD_SCRIPT_DEFINITIONS_DIRECTIVE)) {
-                ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(myFixture.getFile());
+                updateScriptDependencies();
             }
 
             ExpectedHighlightingData data = new ExpectedHighlightingData(myFixture.getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
@@ -54,6 +52,9 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
             return ((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
         });
     }
+
+    protected void updateScriptDependencies() {}
+    protected void initializeHighlightingSuspender() {}
 
     protected void doTest(String unused) throws Exception {
         String fileText = FileUtil.loadFile(new File(dataFilePath(fileName())), true);
@@ -85,10 +86,6 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
                 throw e;
             }
         });
-    }
-
-    protected void initializeHighlightingSuspender() {
-        KotlinHighlightingSuspender.Companion.getInstance(myFixture.getProject());
     }
 
     public static void withExpectedDuplicatedHighlighting(boolean expectedDuplicatedHighlighting, boolean isFirPlugin, Runnable runnable) {

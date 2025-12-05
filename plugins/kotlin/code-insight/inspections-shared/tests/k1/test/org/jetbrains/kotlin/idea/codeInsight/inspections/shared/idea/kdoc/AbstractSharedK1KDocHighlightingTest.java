@@ -2,9 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc;
 
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest;
+import org.jetbrains.kotlin.idea.highlighter.AbstractK1HighlightingTest;
 import org.jetbrains.kotlin.idea.k1.codeinsight.inspections.KDocUnresolvedReferenceInspection;
 
-public abstract class AbstractSharedK1KDocHighlightingTest extends AbstractHighlightingTest {
+public abstract class AbstractSharedK1KDocHighlightingTest extends AbstractK1HighlightingTest {
     @Override
     protected void setUp() {
         super.setUp();

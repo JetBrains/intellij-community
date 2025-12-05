@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractKotlinBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.highlighter.AbstractUsageHighlightingTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
@@ -408,6 +409,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirFoldingTest> {
             model("folding/noCollapse")
             model("folding/checkCollapse", testMethodName = "doSettingsFoldingTest")
+        }
+
+        testClass<AbstractUsageHighlightingTest>(generatedClassName = "org.jetbrains.kotlin.idea.fir.highlighter.UsageHighlightingTestGenerated") {
+            model("usageHighlighter")
         }
     }
 

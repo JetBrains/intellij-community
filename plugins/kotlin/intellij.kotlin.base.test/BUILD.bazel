@@ -39,6 +39,9 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//platform/projectModel-api:projectModel",
+    "//libraries/guava",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

@@ -425,7 +425,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("kotlinAndJavaChecker/javaAgainstKotlin")
         }
 
-        testClass<AbstractHighlightingTest>(commonSuite = false) {
+        testClass<AbstractK1HighlightingTest>(commonSuite = false) {
             model("highlighter", pattern = KT_OR_JAVA)
         }
 

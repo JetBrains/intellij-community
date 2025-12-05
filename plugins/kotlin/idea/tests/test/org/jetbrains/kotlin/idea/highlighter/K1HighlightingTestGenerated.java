@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/highlighter")
-public abstract class HighlightingTestGenerated extends AbstractHighlightingTest {
+public abstract class K1HighlightingTestGenerated extends AbstractK1HighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter/deprecated")
-    public static class Deprecated extends AbstractHighlightingTest {
+    public static class Deprecated extends AbstractK1HighlightingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -121,7 +121,7 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter/suppress")
-    public static class Suppress extends AbstractHighlightingTest {
+    public static class Suppress extends AbstractK1HighlightingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -175,7 +175,7 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter")
-    public static class Uncategorized extends AbstractHighlightingTest {
+    public static class Uncategorized extends AbstractK1HighlightingTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

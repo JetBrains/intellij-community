@@ -1,17 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.utils.io.deleteRecursively
-import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-abstract class AbstractHighlightingOutsideSourceSetTest : AbstractKotlinHighlightVisitorTest() {
+abstract class AbstractHighlightingOutsideSourceSetTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testFileOutsideSourceSet() {
         withTempDirectory { tempDirPath ->
             val tempFilePath = tempDirPath.resolve("outsideSourceSet.kt").apply {

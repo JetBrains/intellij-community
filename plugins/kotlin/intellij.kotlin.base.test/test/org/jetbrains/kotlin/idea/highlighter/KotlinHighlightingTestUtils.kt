@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -13,10 +13,9 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.AbstractHighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.FileLevelHighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
 import org.jetbrains.kotlin.idea.test.Directives
 import java.io.File
-import java.util.*
+import java.util.Objects
 
 const val CHECK_SYMBOL_NAMES = "CHECK_SYMBOL_NAMES"
 const val HIGHLIGHT_SEVERITY = "HIGHLIGHT_SEVERITY"
@@ -32,7 +31,7 @@ fun checkHighlighting(
     globalDirectives: Directives,
     project: Project,
     highlightWarnings: Boolean? = false,
-    severityOption: SeverityRenderingOption = SeverityRenderingOption.ONLY_NON_INFO
+    severityOption: HighlightingConfiguration.SeverityRenderingOption = HighlightingConfiguration.SeverityRenderingOption.Companion.ONLY_NON_INFO
 ) {
     val highlightSeverity = globalDirectives.highlightSeverity()
     // compatibility mode

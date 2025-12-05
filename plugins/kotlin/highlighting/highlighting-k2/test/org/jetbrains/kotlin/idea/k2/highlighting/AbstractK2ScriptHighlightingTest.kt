@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
-import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {

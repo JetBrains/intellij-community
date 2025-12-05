@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.test.withImplicitPackagePrefix
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import java.io.File
 
 abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
@@ -26,14 +25,14 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         val psiFile = files.first()
 
         if (!isFirPlugin && psiFile is KtFile && psiFile.isScript()) {
-            ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+            updateScriptDependencies(psiFile)
         }
 
         if (this is KMPTest) {
             KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
         }
 
-        val mainFileText = runReadAction<String> { psiFile.text }
+        val mainFileText = runReadAction { psiFile.text }
         val tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, AbstractHighlightingTest.TOOL_PREFIX)
         myFixture.enableInspections(*InspectionTestUtil.instantiateTools(tools.toSet()).toTypedArray())
 
@@ -58,6 +57,8 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             }
         }
     }
+
+    protected open fun updateScriptDependencies(psiFile: KtFile) {}
 
     protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {
         return resolveSibling("$name.$suffix")

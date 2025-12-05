@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.codeMetaInfo.K1CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.resolve.descriptorUtil.getKotlinTypeRefiner
 import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
@@ -81,7 +82,7 @@ class MultiplatformModulesAndServicesCreationTest : AbstractCodeMetaInfoTest() {
     }
 
     private fun runHighlightingForModules(testDataDir: String) {
-        val checker = CodeMetaInfoTestCase(getConfigurations(), checkNoDiagnosticError)
+        val checker = K1CodeMetaInfoTestCase(getConfigurations(), checkNoDiagnosticError)
 
         for (module in ModuleManager.getInstance(project).modules) {
             for (sourceRoot in module.sourceRoots) {

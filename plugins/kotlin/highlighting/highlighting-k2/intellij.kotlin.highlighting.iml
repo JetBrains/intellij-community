@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -76,5 +75,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
   </component>
 </module>

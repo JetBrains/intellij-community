@@ -86,6 +86,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test/parcelize:parcelize_test_lib",
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:kotlin-gradle-codeInsight-groovy-tests_test_lib",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.util.test-generator-fir` end

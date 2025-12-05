@@ -101,7 +101,6 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-analysis-api-k2",
     "//platform/execution-impl",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//platform/lang-impl",
@@ -134,6 +133,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/platform-api:ide",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.highlighting` end
