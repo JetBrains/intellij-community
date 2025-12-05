@@ -562,12 +562,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "commons-imaging",
-  jar = "@org_jetbrains_intellij_deps-commons-imaging-1_0-RC-1_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-commons-imaging-1_0-RC-1-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "commons-io",
