@@ -116,10 +116,11 @@ internal class BlockTerminalTest(private val shellPath: Path) {
           }
         }
         val context = ShellRuntimeContextImpl(
-          "",
-          "",
-          session.shellIntegration.shellType.toShellName(),
-          ShellCachingGeneratorCommandsRunner(commandExecutor)
+          currentDirectory = "",
+          envVariables = emptyMap(),
+          typedPrefix = "",
+          shellName = session.shellIntegration.shellType.toShellName(),
+          generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
         )
         val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {
           generatorsExecutor.execute(context, availableCommandsGenerator())

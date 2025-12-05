@@ -14,11 +14,12 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeCon
 class TestRuntimeContextProvider(
   private val project: Project? = null,
   private val directory: String = "",
+  private val envVariables: Map<String, String> = emptyMap(),
   private val shellName: ShellName = ShellName("dummy"),
   private val generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor,
 ) : ShellRuntimeContextProvider {
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
-    return ShellRuntimeContextImpl(directory, typedPrefix, shellName, generatorCommandsRunner).also {
+    return ShellRuntimeContextImpl(directory, envVariables, typedPrefix, shellName, generatorCommandsRunner).also {
       it.putUserData(PROJECT_KEY, project)
     }
   }

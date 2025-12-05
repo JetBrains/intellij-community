@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.util.ShellType
 internal class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
+  private val envVariables: Map<String, String>,
   eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
   private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
@@ -23,12 +24,13 @@ internal class ShellRuntimeContextProviderReworkedImpl(
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
-      sessionModel.terminalState.value.currentDirectory,
-      typedPrefix,
-      ShellType.ZSH.toShellName(),
-      shellCommandExecutor,
-      generatorProcessExecutor,
-      fileSystemSupport,
+      currentDirectory = sessionModel.terminalState.value.currentDirectory,
+      envVariables = envVariables,
+      typedPrefix = typedPrefix,
+      shellName = ShellType.ZSH.toShellName(),
+      generatorCommandsRunner = shellCommandExecutor,
+      generatorProcessExecutor = generatorProcessExecutor,
+      fileSystemSupport = fileSystemSupport,
     ).apply {
       putUserData(PROJECT_KEY, project)
       putUserData(IS_REWORKED_KEY, true)

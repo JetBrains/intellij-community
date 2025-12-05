@@ -113,12 +113,13 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
     val eelDescriptor = LocalEelDescriptor
     val processExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
     val context = ShellRuntimeContextImpl(
-      currentDirectory,
+      currentDirectory = currentDirectory,
+      envVariables = emptyMap(),
       typedPrefix = path,
-      ShellName("test"),
-      ShellCommandExecutorReworked(processExecutor),
-      processExecutor,
-      ShellFileSystemSupportImpl(eelDescriptor)
+      shellName = ShellName("test"),
+      generatorCommandsRunner = ShellCommandExecutorReworked(processExecutor),
+      generatorProcessExecutor = processExecutor,
+      fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
     )
     context.putUserData(IS_REWORKED_KEY, true)
     context.getChildFiles(path)

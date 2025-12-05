@@ -55,10 +55,11 @@ class ShellRuntimeContextProviderImpl(
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
-      curDirectory,
-      typedPrefix,
-      session.shellIntegration.shellType.toShellName(),
-      generatorCommandsRunner
+      currentDirectory = curDirectory,
+      envVariables = emptyMap(),
+      typedPrefix = typedPrefix,
+      shellName = session.shellIntegration.shellType.toShellName(),
+      generatorCommandsRunner = generatorCommandsRunner
     ).apply {
       putUserData(PROJECT_KEY, project)
     }

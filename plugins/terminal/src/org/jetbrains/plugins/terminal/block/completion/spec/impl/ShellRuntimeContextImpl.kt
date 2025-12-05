@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class ShellRuntimeContextImpl(
   override val currentDirectory: String,
+  override val envVariables: Map<String, String>,
   override val typedPrefix: String,
   override val shellName: ShellName,
   private val generatorCommandsRunner: ShellCommandExecutor,

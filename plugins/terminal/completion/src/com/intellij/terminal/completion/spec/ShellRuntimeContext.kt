@@ -16,6 +16,13 @@ interface ShellRuntimeContext {
   val currentDirectory: String
 
   /**
+   * Env variables used to start the shell process.
+   *
+   * Available only in the Reworked Terminal, empty map otherwise.
+   */
+  val envVariables: Map<String, String>
+
+  /**
    * User typed prefix of the current value we are trying to complete.
    */
   val typedPrefix: String

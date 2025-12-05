@@ -320,10 +320,12 @@ class TerminalViewImpl(
         )
       }
 
+      val startupOptions = startupOptionsDeferred.await()
       configureCommandCompletion(
         outputEditor,
         sessionModel,
         shellIntegration,
+        startupOptions.envVariables,
         coroutineScope.childScope("TerminalCommandCompletion")
       )
     }
@@ -563,12 +565,13 @@ class TerminalViewImpl(
     editor: Editor,
     sessionModel: TerminalSessionModel,
     shellIntegration: TerminalShellIntegration,
+    envVariables: Map<String, String>,
     coroutineScope: CoroutineScope,
   ) {
     val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
     val services = TerminalCommandCompletionServices(
       commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
-      runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
+      runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, envVariables, eelDescriptor),
       dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(
         shellIntegration,
         coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl")

@@ -129,9 +129,10 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
     }
     val context = ShellRuntimeContextImpl(
       currentDirectory = "",
-      typedPrefix,
-      session.shellIntegration.shellType.toShellName(),
-      ShellCachingGeneratorCommandsRunner(commandExecutor)
+      envVariables = emptyMap(),
+      typedPrefix = typedPrefix,
+      shellName = session.shellIntegration.shellType.toShellName(),
+      generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
     )
     val deferred: Deferred<T> = async(Dispatchers.Default) {
       executor.execute(context, generator)

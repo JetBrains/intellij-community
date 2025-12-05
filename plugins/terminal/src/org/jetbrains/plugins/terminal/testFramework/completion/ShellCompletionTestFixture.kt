@@ -53,7 +53,7 @@ class ShellCompletionTestFixture private constructor(
     val completion = ShellCommandSpecCompletion(
       commandSpecsManager,
       generatorsExecutor,
-      TestRuntimeContextProvider(project, curDirectory, shellName, generatorCommandsRunner)
+      TestRuntimeContextProvider(project, curDirectory, emptyMap(), shellName, generatorCommandsRunner)
     )
 
     val command = tokens.first()
