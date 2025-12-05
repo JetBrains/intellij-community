@@ -93,6 +93,7 @@ import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.JLabel
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -1160,17 +1161,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
       // todo: remove `ThreadScopeCheckpoint` from here once we migrate all usages to `AnActionEvent#coroutineScope`
       val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
-      val providedScope = cs.childScope("actionPerformed of $actionId", coroutineContext.minusKey(Job.Key) + Dispatchers.Default)
+      val providedScope = ActionCoroutineScope(coroutineContext.minusKey(Job.Key) + Dispatchers.Default + CoroutineName("actionPerformed of $actionId"), cs)
       event.installCoroutineScope(providedScope)
-      try {
-        installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
-          SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
-            runnable.run()
-          }
+      installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
+        SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+          runnable.run()
         }
-      }
-      finally {
-        providedScope.cancelWhenChildrenAreCompleted()
       }
       AnActionResult.PERFORMED
     }
@@ -1213,6 +1209,21 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
+    }
+  }
+
+  /**
+   * The coroutines in actions should be launched on a scope with a specific coroutine context,
+   * that's why we augment the container's scope with [localContext].
+   * In addition, scope's context should NOT be terminated when the action is finished, because the action could fire some `invokeLater`s
+   * which capture this context and possibly launch some more coroutines.
+   */
+  private class ActionCoroutineScope(val localContext: CoroutineContext, val delegate: CoroutineScope): CoroutineScope by delegate {
+    override val coroutineContext: CoroutineContext
+      get() = delegate.coroutineContext + localContext
+
+    override fun toString(): String {
+      return "ActionCoroutineScope(delegate=$delegate, localContext=$localContext)"
     }
   }
 
@@ -2190,19 +2201,6 @@ private fun registerAction(actionId: String,
  * We want to avoid leaking scope for `actionPerformed`
  * So we await until all children coroutines finish and then terminate the scope
  */
-
-private fun CoroutineScope.cancelWhenChildrenAreCompleted() {
-  val theScope = this
-  launch(CoroutineName("Termination tracker") + Dispatchers.IO) {
-    val thisJob = this@launch.coroutineContext.job
-    theScope.coroutineContext.job.children.forEach {
-      if (it != thisJob) {
-        it.join()
-      }
-    }
-    theScope.cancel()
-  }
-}
 
 private fun getAction(
   id: String,

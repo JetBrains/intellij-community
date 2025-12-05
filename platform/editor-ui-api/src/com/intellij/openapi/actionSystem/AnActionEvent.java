@@ -337,24 +337,13 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * Returns a coroutine scope associated with the context of {@link AnAction#actionPerformed}
+   * Returns a coroutine scope associated with the context of {@link AnAction#actionPerformed}. Use this scope to initiate suspending computations in actions.
    * <p>
-   * This scope gets canceled when {@link AnAction#actionPerformed} is terminated and all its existing child coroutines are terminated.
-   * I.e., the following behavior holds:
-   * <pre>
-   * {@code
-   * override fun actionPerformed(e: AnActionEvent) {
-   *   // the scope is kept alive during `actionPerformed`
-   *   e.coroutineScope.launch(CoroutineName("Coroutine#1")) {
-   *     // the scope is kept alive while this coroutine runs
-   *     application.executeOnPooledThread { // here we break Kotlin's structured concurrency by escaping the launching `Coroutine#1`
-   *       e.coroutineScope.launch(CoroutineName("Coroutine#2")) {} // the scope may be canceled at this point, so this coroutine would not start!
-   *     }
-   *   }
-   * }
-   * }</pre>
-   * <p>
-   * Use this scope to execute suspending computations from {@link AnAction#actionPerformed}.
+   * This scope has the same lifetime as the scope of {@link AnAction} where it is used.
+   * <ul>
+   *   <li>By default, this scope gets canceled on the closing of {@link Project}. </li>
+   *   <li>If an action is bound to the {@link com.intellij.openapi.application.Application} (via {@link Presentation#setApplicationScope}), then the scope lives as long as the application is opened.</li>
+   * </ul>
    */
   @ApiStatus.Experimental
   public final @NotNull CoroutineScope getCoroutineScope() {

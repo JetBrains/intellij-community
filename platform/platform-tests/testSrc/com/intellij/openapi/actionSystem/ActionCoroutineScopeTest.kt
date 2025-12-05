@@ -126,7 +126,7 @@ class ActionCoroutineScopeTest {
   }
 
   @Test
-  fun `action coroutineScope is completed after work finishes`() = timeoutRunBlocking {
+  fun `action coroutineScope is alive completed after work finishes`() = timeoutRunBlocking {
     val capturedScope = CompletableDeferred<kotlinx.coroutines.CoroutineScope>()
     val jobDone = CompletableDeferred<Unit>()
 
@@ -156,8 +156,8 @@ class ActionCoroutineScopeTest {
     Assertions.assertTrue(scope != null, "Scope should be captured from actionPerformed")
     val job = scope!!.coroutineContext[Job]
     Assertions.assertTrue(job != null, "Scope should have a Job in its context")
-    // After all computations are completed, the scope must not be alive
-    Assertions.assertFalse(job!!.isActive, "Action coroutine scope should not be active after work completes")
+    // After all computations are completed, the scope must still be alive
+    Assertions.assertTrue(job!!.isActive, "Action coroutine scope should be active after work completes")
   }
 
   @Test
