@@ -7,8 +7,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -47,18 +49,20 @@ private val inspections
     PyTypeAliasRedeclarationInspection(),
   )
 
+// The test suite has not been updated for 3.14 by default.
+// In particular, forward references are not enabled by default
+// and require an explicit `from __future__ import annotations`.
+private val PY313_DESCRIPTOR = PyLightProjectDescriptor(LanguageLevel.PYTHON313)
+
 @RunWith(Parameterized::class)
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor = PY313_DESCRIPTOR
+
   @Test
   fun test() {
     myFixture.configureByFiles(*getFilePaths())
     myFixture.enableInspections(*inspections)
-    // The test suite has not been updated for 3.14 by default.
-    // In particular, forward references are not enabled by default
-    // and require an explicit `from __future__ import annotations`.
-    runWithLanguageLevel(LanguageLevel.PYTHON313) {
-      checkHighlighting()
-    }
+    checkHighlighting()
   }
 
   private fun getFilePaths(): Array<String> {
@@ -158,9 +162,11 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     }
   }
 
-  private fun compareErrors(lineToError: Map<Int, Error>,
-                            errorGroups: Map<CharSequence, ErrorGroup>,
-                            actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
+  private fun compareErrors(
+    lineToError: Map<Int, Error>,
+    errorGroups: Map<CharSequence, ErrorGroup>,
+    actualErrors: Map<Int, @NlsContexts.DetailedDescription String>,
+  ) {
     val missingErrors = mutableListOf<Pair<Int, CharSequence>>()
     val unexpectedErrors = mutableListOf<Pair<Int, CharSequence>>()
 
