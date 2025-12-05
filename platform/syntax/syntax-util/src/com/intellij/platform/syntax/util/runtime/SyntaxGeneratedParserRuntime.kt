@@ -19,8 +19,7 @@ import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._LEFT_INNER
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NONE_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._NOT_
 import com.intellij.platform.syntax.util.runtime.Modifiers.Companion._UPPER_
-import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.Hook
-import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.Parser
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.*
 import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -128,7 +127,10 @@ class SyntaxGeneratedParserRuntime(
 
   internal lateinit var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit
 
-  fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<SyntaxElementTypeSet> = emptyArray()) {
+  fun init(
+    parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit,
+    extendsSets: Array<SyntaxElementTypeSet> = emptyArray(),
+  ) {
     parser = parse
     errorState.initState(this, extendsSets)
   }
@@ -142,44 +144,6 @@ class SyntaxGeneratedParserRuntime(
   fun interface Hook<T> {
     @Contract("_,null,_->null")
     fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T): SyntaxTreeBuilder.Marker?
-  }
-
-  internal data class HookBatch<T>(
-    val hook: Hook<T>,
-    val param: T,
-    val level: Int,
-  ) {
-    fun process(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?): SyntaxTreeBuilder.Marker? {
-      return hook.run(parserRuntime, marker, param)
-    }
-  }
-
-  @JvmInline
-  internal value class MyList<E> private constructor(
-    private val arrayList: ArrayList<E> = ArrayList()
-  ) : Iterable<E> {
-    constructor(initialCapacity: Int) : this(ArrayList<E>(initialCapacity))
-
-    val size: Int
-      get() = arrayList.size
-
-    operator fun get(index: Int): E =
-      arrayList[index]
-
-    fun trimSize(fromIndex: Int) {
-      arrayList.subList(fromIndex, this.size).clear()
-    }
-
-    fun add(e: E): Boolean {
-      val size = this.size
-      if (size >= MAX_VARIANTS_SIZE) {
-        trimSize(MAX_VARIANTS_SIZE / 4)
-      }
-      return arrayList.add(e)
-    }
-
-    override fun iterator(): Iterator<E> =
-      arrayList.iterator()
   }
 
   class ErrorState {
@@ -340,26 +304,64 @@ class SyntaxGeneratedParserRuntime(
     }
   }
 
-  internal class Variant {
-    var position: Int = 0
-    var `object`: Any? = null
-
-    fun init(pos: Int, o: Any?): Variant {
-      position = pos
-      `object` = o
-      return this
-    }
-
-    override fun toString(): String {
-      return "<$position, $`object`>"
-    }
-  }
-
   data class BracePair(
     val myLeftBrace: SyntaxElementType?,
     val myRightBrace: SyntaxElementType?,
     private val myStructural: Boolean,
   )
+}
+
+internal data class HookBatch<T>(
+  val hook: Hook<T>,
+  val param: T,
+  val level: Int,
+) {
+  fun process(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?): SyntaxTreeBuilder.Marker? {
+    return hook.run(parserRuntime, marker, param)
+  }
+}
+
+@JvmInline
+internal value class MyList<E> private constructor(
+  private val arrayList: ArrayList<E> = ArrayList()
+) : Iterable<E> {
+  constructor(initialCapacity: Int) : this(ArrayList<E>(initialCapacity))
+
+  val size: Int
+    get() = arrayList.size
+
+  operator fun get(index: Int): E =
+    arrayList[index]
+
+  fun trimSize(fromIndex: Int) {
+    arrayList.subList(fromIndex, this.size).clear()
+  }
+
+  fun add(e: E): Boolean {
+    val size = this.size
+    if (size >= MAX_VARIANTS_SIZE) {
+      trimSize(MAX_VARIANTS_SIZE / 4)
+    }
+    return arrayList.add(e)
+  }
+
+  override fun iterator(): Iterator<E> =
+    arrayList.iterator()
+}
+
+internal class Variant {
+  var position: Int = 0
+  var `object`: Any? = null
+
+  fun init(pos: Int, o: Any?): Variant {
+    position = pos
+    `object` = o
+    return this
+  }
+
+  override fun toString(): String {
+    return "<$position, $`object`>"
+  }
 }
 
 @ApiStatus.Experimental
@@ -640,7 +642,7 @@ fun SyntaxGeneratedParserRuntime.addVariant(text: String) {
 }
 
 private fun SyntaxGeneratedParserRuntime.addVariant(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
+  state: ErrorState,
   o: Any,
 ) {
   syntaxBuilder.eof() // skip whitespaces
@@ -648,12 +650,12 @@ private fun SyntaxGeneratedParserRuntime.addVariant(
 }
 
 private fun addVariantInner(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
-  frame: SyntaxGeneratedParserRuntime.Frame?,
+  state: ErrorState,
+  frame: Frame?,
   pos: Int,
   o: Any?,
 ) {
-  val variant: SyntaxGeneratedParserRuntime.Variant = state.VARIANTS.alloc().init(pos, o)
+  val variant: Variant = state.VARIANTS.alloc().init(pos, o)
   if (state.predicateSign) {
     state.variants.add(variant)
     if (frame != null && frame.lastVariantAt < pos) {
@@ -710,7 +712,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Modifiers
 
 private fun SyntaxGeneratedParserRuntime.enter_section_impl_(level: Int, modifiers: Modifiers, elementType: SyntaxElementType?, frameName: String?) {
   errorState.level++
-  val frame: SyntaxGeneratedParserRuntime.Frame = errorState.FRAMES.alloc().init(
+  val frame: Frame = errorState.FRAMES.alloc().init(
     syntaxBuilder, errorState, level, modifiers, elementType, frameName
   )
   if (((frame.modifiers and _LEFT_) or (frame.modifiers and _LEFT_INNER_)) != _NONE_) {
@@ -752,7 +754,7 @@ fun SyntaxGeneratedParserRuntime.exit_section_(
   pinned: Boolean,
   eatMore: Parser?,
 ) {
-  val frame: SyntaxGeneratedParserRuntime.Frame? = errorState.currentFrame
+  val frame: Frame? = errorState.currentFrame
   errorState.currentFrame = frame?.parentFrame
   val elementTypeToExit: SyntaxElementType? = frame?.elementType ?: elementType
   if (frame == null || level != frame.level) {
@@ -771,10 +773,10 @@ fun SyntaxGeneratedParserRuntime.exit_section_(
 
 @ApiStatus.Experimental
 fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<T>, param: T) {
-  errorState.hooks.addLast(SyntaxGeneratedParserRuntime.HookBatch(hook, param, errorState.level))
+  errorState.hooks.addLast(HookBatch(hook, param, errorState.level))
 }
 
-private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedParserRuntime.ErrorState, elementType: SyntaxElementType?) {
+private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: ErrorState, elementType: SyntaxElementType?) {
   val hooks = state.hooks
   if (hooks.isEmpty()) return
 
@@ -795,8 +797,8 @@ private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedP
 }
 
 private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
-  frame: SyntaxGeneratedParserRuntime.Frame,
+  state: ErrorState,
+  frame: Frame,
   elementType: SyntaxElementType?,
   result: Boolean,
   pinned: Boolean,
@@ -854,7 +856,7 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
       state.clearVariants(true, 0)
       state.clearVariants(false, 0)
       frame.lastVariantAt = -1
-      var f: SyntaxGeneratedParserRuntime.Frame? = frame
+      var f: Frame? = frame
       while (f != null && f.variantCount > 0) {
         f.variantCount = 0
         f = f.parentFrame
@@ -884,8 +886,8 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
 }
 
 private fun SyntaxGeneratedParserRuntime.close_frame_impl_(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
-  frame: SyntaxGeneratedParserRuntime.Frame,
+  state: ErrorState,
+  frame: Frame,
   marker: SyntaxTreeBuilder.Marker?,
   elementType: SyntaxElementType?,
   result: Boolean,
@@ -915,7 +917,7 @@ private fun SyntaxGeneratedParserRuntime.close_frame_impl_(
       }
       if ((frame.modifiers and _UPPER_) != _NONE_) {
         marker.drop()
-        var f: SyntaxGeneratedParserRuntime.Frame? = frame.parentFrame
+        var f: Frame? = frame.parentFrame
         while (f != null) {
           if (f.elementType == null) {
             f = f.parentFrame
@@ -967,8 +969,17 @@ private fun extend_marker_impl(marker: SyntaxTreeBuilder.Marker) {
   marker.drop()
 }
 
+/**
+ * Finalizes or rolls back a parser marker based on the specified result and element type.
+ *
+ * @param frame The current parser frame, used to manage error reporting and state during parsing.
+ * @param marker The marker to be closed, which represents a node or span in the syntax tree.
+ * @param elementType The type of syntax element to be associated with the marker if the operation succeeds.
+ * @param result Indicates whether the operation succeeded (`true`) or failed (`false`). A successful operation marks the marker as done or drops it, while a failed operation rolls
+ *  it back.
+ */
 private fun close_marker_impl_(
-  frame: SyntaxGeneratedParserRuntime.Frame?,
+  frame: Frame?,
   marker: SyntaxTreeBuilder.Marker?,
   elementType: SyntaxElementType?,
   result: Boolean,
@@ -994,8 +1005,8 @@ private fun close_marker_impl_(
 }
 
 private fun SyntaxGeneratedParserRuntime.replace_variants_with_name_(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
-  frame: SyntaxGeneratedParserRuntime.Frame,
+  state: ErrorState,
+  frame: Frame,
   elementType: SyntaxElementType?,
   result: Boolean,
   pinned: Boolean,
@@ -1015,8 +1026,8 @@ fun SyntaxGeneratedParserRuntime.report_error_(result: Boolean): Boolean {
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.report_error_(state: SyntaxGeneratedParserRuntime.ErrorState, advance: Boolean) {
-  val frame: SyntaxGeneratedParserRuntime.Frame? = state.currentFrame
+fun SyntaxGeneratedParserRuntime.report_error_(state: ErrorState, advance: Boolean) {
+  val frame: Frame? = state.currentFrame
   if (frame == null) {
     LOG.error("unbalanced enter/exit section call: got null")
     return
@@ -1034,8 +1045,8 @@ private fun getLatestExtensibleDoneMarker(builder: SyntaxTreeBuilder): SyntaxTre
 }
 
 private fun SyntaxGeneratedParserRuntime.reportError(
-  state: SyntaxGeneratedParserRuntime.ErrorState,
-  frame: SyntaxGeneratedParserRuntime.Frame,
+  state: ErrorState,
+  frame: Frame,
   inner: Boolean,
   force: Boolean,
   advance: Boolean,
@@ -1082,9 +1093,9 @@ private fun SyntaxGeneratedParserRuntime.reportError(
   return true
 }
 
-private fun SyntaxGeneratedParserRuntime.reportFrameError(state: SyntaxGeneratedParserRuntime.ErrorState) {
+private fun SyntaxGeneratedParserRuntime.reportFrameError(state: ErrorState) {
   if (state.currentFrame == null || state.suppressErrors) return
-  val frame: SyntaxGeneratedParserRuntime.Frame? = state.currentFrame
+  val frame: Frame? = state.currentFrame
   val pos: Int = syntaxBuilder.rawTokenIndex()
   if (frame != null && frame.errorReportedAt > pos) {
     // report error for previous unsuccessful frame
@@ -1134,9 +1145,12 @@ fun SyntaxGeneratedParserRuntime.parseWithProtectedLastPos(level: Int, parser: P
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.parseAsTree(
-  state: SyntaxGeneratedParserRuntime.ErrorState, level: Int,
-  chunkType: SyntaxElementType, checkBraces: Boolean,
-  parser: Parser, eatMoreConditionParser: Parser,
+  state: ErrorState,
+  level: Int,
+  chunkType: SyntaxElementType,
+  checkBraces: Boolean,
+  parser: Parser,
+  eatMoreConditionParser: Parser,
 ): Boolean {
   val parens: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, SyntaxTreeBuilder.Marker?>> = ArrayDeque(4)
   val siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>> = ArrayDeque()
