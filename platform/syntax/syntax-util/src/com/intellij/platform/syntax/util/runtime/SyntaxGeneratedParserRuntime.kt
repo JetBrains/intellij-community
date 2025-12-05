@@ -144,7 +144,11 @@ class SyntaxGeneratedParserRuntime(
     fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T): SyntaxTreeBuilder.Marker?
   }
 
-  internal data class HookBatch<T>(val hook: Hook<T>, val param: T, val level: Int) {
+  internal data class HookBatch<T>(
+    val hook: Hook<T>,
+    val param: T,
+    val level: Int,
+  ) {
     fun process(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?): SyntaxTreeBuilder.Marker? {
       return hook.run(parserRuntime, marker, param)
     }
