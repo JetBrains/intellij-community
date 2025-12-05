@@ -17,7 +17,8 @@ internal class ShellRuntimeContextProviderReworkedImpl(
   private val sessionModel: TerminalSessionModel,
   eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
-  private val shellCommandExecutor = ShellCommandExecutorReworked(eelDescriptor)
+  private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
+  private val shellCommandExecutor = ShellCommandExecutorReworked(generatorProcessExecutor)
   private val fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
@@ -26,6 +27,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
       typedPrefix,
       ShellType.ZSH.toShellName(),
       shellCommandExecutor,
+      generatorProcessExecutor,
       fileSystemSupport,
     ).apply {
       putUserData(PROJECT_KEY, project)

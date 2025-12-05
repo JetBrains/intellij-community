@@ -28,6 +28,14 @@ interface ShellRuntimeContext {
   suspend fun runShellCommand(@Language("ShellScript") command: String): ShellCommandResult
 
   /**
+   * Creates the builder for process execution in the environment where the current terminal session is running.
+   * Modify the builder parameters and call [ShellDataGeneratorProcessBuilder.execute] to execute the process.
+   *
+   * @param executable the absolute path the executable or the executable name to be found in the PATH environment variable.
+   */
+  suspend fun createProcessBuilder(executable: String): ShellDataGeneratorProcessBuilder
+
+  /**
    * @param path absolute os-dependent path to the directory.
    */
   suspend fun listDirectoryFiles(path: String): List<ShellFileInfo>

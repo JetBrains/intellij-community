@@ -7,6 +7,7 @@ import com.intellij.terminal.completion.spec.ShellFileInfo.Type.DIRECTORY
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.FILE
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.frontend.view.completion.ShellCommandExecutorReworked
+import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorProcessExecutorImpl
 import com.intellij.terminal.frontend.view.completion.ShellFileSystemSupportImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
@@ -110,11 +111,13 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
 
   private fun getChildFiles(currentDirectory: String, path: String): List<ShellFileInfo> = runBlocking {
     val eelDescriptor = LocalEelDescriptor
+    val processExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
     val context = ShellRuntimeContextImpl(
       currentDirectory,
       typedPrefix = path,
       ShellName("test"),
-      ShellCommandExecutorReworked(eelDescriptor),
+      ShellCommandExecutorReworked(processExecutor),
+      processExecutor,
       ShellFileSystemSupportImpl(eelDescriptor)
     )
     context.putUserData(IS_REWORKED_KEY, true)
