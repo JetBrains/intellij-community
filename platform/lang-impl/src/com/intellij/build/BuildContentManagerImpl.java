@@ -5,11 +5,14 @@ import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.BaseContentCloseListener;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.frontend.FrontendApplicationInfo;
+import com.intellij.frontend.FrontendType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -76,6 +79,12 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
     ToolWindow toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
     if (toolWindow != null) {
       return toolWindow;
+    }
+
+    FrontendType frontendType = FrontendApplicationInfo.INSTANCE.getFrontendType();
+    if (frontendType instanceof FrontendType.Remote remoteFrontendType && remoteFrontendType.isController()) {
+      // if the tool window is created on the frontend, any content potentially added by the backend later won't be shown
+      Logger.getInstance(getClass()).error("Build tool window should be created on the backend");
     }
 
     toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {

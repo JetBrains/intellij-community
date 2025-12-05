@@ -24,6 +24,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/project/shared:project",
   ]
 )
 ### auto-generated section `build intellij.platform.buildView` end

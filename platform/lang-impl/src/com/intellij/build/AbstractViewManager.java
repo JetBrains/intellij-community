@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
@@ -22,6 +23,7 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides base implementation of the {@link ViewManager}
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, BuildProgressObservable, Disposable {
   private static final Logger LOG = Logger.getInstance(AbstractViewManager.class);
+  private static final AtomicInteger ID_GENERATOR = new AtomicInteger();
 
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
@@ -37,6 +40,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private final Set<AbstractMultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
+  final int myId = ID_GENERATOR.incrementAndGet();
 
   public AbstractViewManager(Project project) {
     myProject = project;
@@ -44,7 +48,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
       Ref<AbstractMultipleBuildsView> ref = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        ref.set(new MultipleBuildsView(myProject, myBuildContentManager, this));
+        ref.set(createMultipleBuildsView());
       });
       AbstractMultipleBuildsView buildsView = ref.get();
       Disposer.register(this, buildsView);
@@ -55,6 +59,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     if (buildViewProblemsService != null) {
       buildViewProblemsService.listenToBuildView(this);
     }
+  }
+
+  private AbstractMultipleBuildsView createMultipleBuildsView() {
+    return Registry.is("build.toolwindow.split") ? new BackendMultipleBuildsView(myProject, myBuildContentManager, this)
+                                                 : new MultipleBuildsView(myProject, myBuildContentManager, this);
   }
 
   @Override

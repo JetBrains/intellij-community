@@ -241,7 +241,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
 
   @Nullable
   @ApiStatus.Internal
-  BuildTreeConsoleView getEventView() {
+  public BuildTreeConsoleView getEventView() {
     return getView(BuildTreeConsoleView.class.getName(), BuildTreeConsoleView.class);
   }
 
