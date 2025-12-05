@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -368,11 +369,67 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ui.selectAndFocus(content, true, true);
   }
 
+  protected static <R, T> R processCollectibleValue(
+    @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+    @NotNull Function<? super T, ? extends R> processor,
+    @NotNull SuspendContextImpl suspendContext) throws EvaluateException {
+    int retries = 3;
+    while (true) {
+      try {
+        T result = valueComputable.compute();
+        return processor.apply(result);
+      }
+      catch (ObjectCollectedException oce) {
+        if (--retries < 0) {
+          return suspendAllAndEvaluate(valueComputable, processor, suspendContext.getVirtualMachineProxy());
+        }
+      }
+      catch (EvaluateException e) {
+        if (e.getCause() instanceof ObjectCollectedException) {
+          if (--retries < 0) {
+            return suspendAllAndEvaluate(valueComputable, processor, suspendContext.getVirtualMachineProxy());
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+  }
+
+  private static <R, T> R suspendAllAndEvaluate(@NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+                                                @NotNull Function<? super T, ? extends R> processor,
+                                                @NotNull VirtualMachineProxyImpl virtualMachineProxy) throws EvaluateException {
+    if (Registry.is("debugger.collectible.value.retries.error", true)) {
+      LOG.error("Retries exhausted, applying suspend-all evaluation");
+    }
+    virtualMachineProxy.suspend();
+    try {
+      return processor.apply(valueComputable.compute());
+    }
+    finally {
+      virtualMachineProxy.resume();
+    }
+  }
+
   @SuppressWarnings("SSBasedInspection")
+  public static StringReference mirrorOfString(@NotNull String s, @NotNull SuspendContextImpl context) {
+    VirtualMachine vm = context.getVirtualMachineProxy().getVirtualMachine();
+    try {
+      return processCollectibleValue(() -> vm.mirrorOf(s),
+                                     value -> {
+                                       context.keep(value);
+                                       return value;
+                                     }, context);
+    }
+    catch (EvaluateException e) { // should not happen
+      throw new RuntimeException(e);
+    }
+  }
+
   public static StringReference mirrorOfString(@NotNull String s, @NotNull EvaluationContext context)
     throws EvaluateException {
-    VirtualMachine vm = ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy().getVirtualMachine();
-    return context.computeAndKeep(() -> vm.mirrorOf(s));
+    return mirrorOfString(s, (SuspendContextImpl)context.getSuspendContext());
   }
 
   /**
