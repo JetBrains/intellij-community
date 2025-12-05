@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jcip_resources"],
-  exports = ["@lib//:jcip"],
-  runtime_deps = ["@lib//:jcip"]
+  exports = ["@lib//:libraries-jcip-jcip"],
+  runtime_deps = ["@lib//:libraries-jcip-jcip"]
 )
 ### auto-generated section `build intellij.libraries.jcip` end

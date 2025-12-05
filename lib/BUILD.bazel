@@ -3114,12 +3114,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "jcip",
-  jar = "@net_jcip-jcip-annotations-1_0_http//file",
-  source_jar = "@net_jcip-jcip-annotations-1_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "jediterm-core",
