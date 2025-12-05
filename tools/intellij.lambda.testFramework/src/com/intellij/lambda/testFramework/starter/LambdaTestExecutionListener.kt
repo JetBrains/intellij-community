@@ -2,7 +2,6 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.teamcity.TeamCityCIServer
-import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.junit5.TestCleanupListener
 import com.intellij.ide.starter.runner.CurrentTestMethod
@@ -46,6 +45,6 @@ class LambdaTestExecutionListener : TestCleanupListener() {
     if (!testIdentifier.isTest) return
 
     IdeInstance.publishArtifacts()
-    ConfigurationStorage.instance().resetToDefault()
+    cancelPerTestSupervisorScope(testIdentifier)
   }
 }

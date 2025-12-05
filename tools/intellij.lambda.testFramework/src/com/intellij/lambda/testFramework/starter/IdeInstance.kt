@@ -2,7 +2,9 @@ package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
+import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
+import com.intellij.ide.starter.junit5.cancelSupervisorScope
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
@@ -63,6 +65,8 @@ object IdeInstance {
     LOG.info("Stopping IDE that is running in mode: $currentIdeMode")
     catchAll { _ide?.forceKill() }
     _ide = null
+
+    cancelSupervisorScope(perClassSupervisorScope, "IDE was stopped so cancelling it's scope as well")
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
