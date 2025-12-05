@@ -420,33 +420,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "asm-tools",
-  exports = [
-    ":org_ow2_asm-asm-analysis-9_8_http_import",
-    ":org_ow2_asm-asm-tree-9_8_http_import",
-    ":org_ow2_asm-asm-9_8_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-analysis-9_8_http_import",
-  jar = "@org_ow2_asm-asm-analysis-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-analysis-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-tree-9_8_http_import",
-  jar = "@org_ow2_asm-asm-tree-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-tree-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "org_ow2_asm-asm-9_8_http_import",
-  jar = "@org_ow2_asm-asm-9_8_http//file",
-  source_jar = "@org_ow2_asm-asm-9_8-sources_http//file"
-)
 
 jvm_import(
   name = "assert_j",
