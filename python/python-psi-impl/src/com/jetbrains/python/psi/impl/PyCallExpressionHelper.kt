@@ -665,7 +665,7 @@ private fun PyClass.getSuperClassUnionType(context: TypeEvalContext?): PyType? {
     for (aSuper in supers) {
       superTypes.add(PyClassTypeImpl(aSuper, false))
     }
-    return PyUnionType.union(superTypes)
+    return PyUnsafeUnionType.unsafeUnion(superTypes)
   }
   return null
 }
