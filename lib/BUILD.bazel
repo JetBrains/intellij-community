@@ -435,12 +435,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "automaton",
-  jar = "@dk_brics-automaton-1_12-4_http//file",
-  source_jar = "@dk_brics-automaton-1_12-4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "bouncy-castle-pgp",
