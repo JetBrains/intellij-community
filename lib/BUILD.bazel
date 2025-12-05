@@ -8444,12 +8444,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "oro_matcher",
-  jar = "@oro-oro-2_0_8_http//file",
-  source_jar = "@oro-oro-2_0_8-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 java_library(
   name = "package-search-api-client",

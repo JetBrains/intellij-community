@@ -49,6 +49,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.libraries.plexus.utils",
     "intellij.libraries.asm",
     "intellij.libraries.jgoodies.forms",
+    "intellij.libraries.oro.matcher",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -95,7 +96,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
 
   for (it in listOf(
     "jna",
-    "OroMatcher",
     "protobuf",
     "Log4J",
     "Eclipse",
