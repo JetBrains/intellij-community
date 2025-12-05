@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -26,16 +25,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
@@ -87,7 +85,6 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   private val stateLock = Any()
   private val filesYetToStartHighlighting = ConcurrentHashMap<VirtualFile, Unit>()
   private val sessions = ConcurrentHashMap<TextEditor, ExceptionWithTime>()
-  private val waitingJobs: MutableList<CompletableFuture<Unit>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Unit>>())
   private var locked: Boolean = false
 
   private fun ensureLockedIfNeeded() {
@@ -113,10 +110,6 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           Highlighting done,
           Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds}
          """)
-        for (job in waitingJobs) {
-          job.complete(Unit)
-        }
-        waitingJobs.clear()
         locked = false
       }
       else {
@@ -136,76 +129,36 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
     }
+    // WaitForFinishedCodeAnalysisFileEditorListener.fileOpenedSync works on EDT,
+    // so this is to ensure the reopened editor from startup would be caught by the listener before we ask ListenerState to wait
+    withContext(Dispatchers.EDT) {
+      // do nothing
+    }
+
     LOG.info("Waiting for code analysis to finish in $timeout")
-    val future = CompletableFuture<Unit>()
-    future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-    coroutineScope {
-      launch {
-        while (true) {
-          @Suppress("TestOnlyProblems")
-          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !FUSProjectHotStartUpMeasurer.isHandlingFinished() && !future.isDone) {
-            delay(500)
-          }
-          else {
-            break
-          }
-        }
+    val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
 
-        if (future.isDone) {
-          return@launch
-        }
-
-        // WaitForFinishedCodeAnalysisFileEditorListener.fileOpenedSync works on EDT,
-        // so this is to ensure the reopened editor from startup would be caught by the listener before we ask ListenerState to wait
-        withContext(Dispatchers.EDT) {
-          // do nothing
-        }
-
-        if (!future.isDone) {
-          registerToWaitForAnalysisToFinish(future)
-        }
+    while (System.currentTimeMillis() < deadline) {
+      val isAllAnalysisFinished = withContext(Dispatchers.EDT) {
+        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).isAllAnalysisFinished()
       }
-    }
 
-    try {
-      future.join()
+      LOG.debug("isAllAnalysisFinished()=" + isAllAnalysisFinished + "; file status map:" + (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).fileStatusMap)
+      if (isAllAnalysisFinished) {
+        return
+      }
+      delay(500)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: CompletionException) {
-      val errorText = "Waiting for highlight to finish took more than $timeout."
-      printStatistic()
+    val errorText = "Waiting for highlight to finish took more than $timeout. file status map:"+(DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).fileStatusMap
+    printStatistic()
 
-      if (logsError) {
-        LOG.error(errorText, e)
-      }
-      if (throws) {
-        throw TimeoutException(errorText)
-      }
+    if (logsError) {
+      LOG.error(errorText)
+    }
+    if (throws) {
+      throw TimeoutException(errorText)
     }
     LOG.info("Code analysis waiting finished")
-  }
-
-  private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Unit>) {
-    if (LightEdit.owns(project)) {
-      future.complete(Unit)
-      return
-    }
-    if (!future.isDone) {
-      registerWaiter(future)
-    }
-  }
-
-  private fun registerWaiter(future: CompletableFuture<Unit>) {
-    synchronized(stateLock) {
-      if (!locked) {
-        future.complete(Unit)
-      }
-      else {
-        waitingJobs.add(future)
-      }
-    }
   }
 
   internal fun registerOpenedEditors(openedEditors: List<TextEditor>) {
