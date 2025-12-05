@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.presentations
 
+import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.colors.rpcId
@@ -21,23 +23,154 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 
-@ApiStatus.Internal
 @Serializable
-class SeTargetItemPresentation(
+@ApiStatus.Experimental
+sealed interface SeTargetItemPresentation : SeItemPresentation
+
+@ApiStatus.Experimental
+class SeTargetItemPresentationBuilder {
+  private var backgroundColorId: ColorId? = null
+  private var iconId: IconId? = null
+  private var presentableText: String = ""
+  private var presentableTextMatchedRanges: List<TextRangeId>? = null
+  private var presentableTextFgColorId: ColorId? = null
+  private var presentableTextErrorHighlight: Boolean = false
+  private var presentableTextStrikethrough: Boolean = false
+  private var containerText: String? = null
+  private var containerTextMatchedRanges: List<TextRangeId>? = null
+  private var locationText: String? = null
+  private var locationIconId: IconId? = null
+  private var extendedInfo: SeExtendedInfo? = null
+  private var isMultiSelectionSupported: Boolean = false
+
+  fun withBackgroundColor(color: Color?): SeTargetItemPresentationBuilder {
+    this.backgroundColorId = color?.rpcId()
+    return this
+  }
+
+  fun withIcon(icon: Icon?): SeTargetItemPresentationBuilder {
+    this.iconId = icon?.rpcId()
+    return this
+  }
+
+  fun withPresentableText(text: String): SeTargetItemPresentationBuilder {
+    this.presentableText = text
+    return this
+  }
+
+  fun withPresentableTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
+    this.presentableTextMatchedRanges = ranges?.map { it.toRpc() }
+    return this
+  }
+
+  fun withPresentableTextFgColor(color: Color?): SeTargetItemPresentationBuilder {
+    this.presentableTextFgColorId = color?.rpcId()
+    return this
+  }
+
+  fun withPresentableTextErrorHighlight(highlight: Boolean): SeTargetItemPresentationBuilder {
+    this.presentableTextErrorHighlight = highlight
+    return this
+  }
+
+  fun withPresentableTextStrikethrough(strikethrough: Boolean): SeTargetItemPresentationBuilder {
+    this.presentableTextStrikethrough = strikethrough
+    return this
+  }
+
+  fun withContainerText(text: String?): SeTargetItemPresentationBuilder {
+    this.containerText = text
+    return this
+  }
+
+  fun withContainerTextMatchedRanges(ranges: List<TextRange>?): SeTargetItemPresentationBuilder {
+    this.containerTextMatchedRanges = ranges?.map { it.toRpc() }
+    return this
+  }
+
+  fun withLocationText(text: String?): SeTargetItemPresentationBuilder {
+    this.locationText = text
+    return this
+  }
+
+  fun locationIcon(icon: Icon?): SeTargetItemPresentationBuilder {
+    this.locationIconId = icon?.rpcId()
+    return this
+  }
+
+  fun withExtendedInfo(info: SeExtendedInfo?): SeTargetItemPresentationBuilder {
+    this.extendedInfo = info
+    return this
+  }
+
+  fun withMultiSelectionSupported(supported: Boolean): SeTargetItemPresentationBuilder {
+    this.isMultiSelectionSupported = supported
+    return this
+  }
+
+  fun withTargetPresentation(tp: TargetPresentation, matchers: ItemMatchers?, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeTargetItemPresentationBuilder =
+    withBackgroundColor(tp.backgroundColor)
+      .withIcon(tp.icon)
+      .withPresentableText(tp.presentableText)
+      .withPresentableTextMatchedRanges((matchers?.nameMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.presentableText))
+      .withPresentableTextFgColor(tp.presentableTextAttributes?.foregroundColor)
+      .withPresentableTextErrorHighlight(tp.presentableTextAttributes?.let { attrs ->
+        val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
+        simpleAttrs.isWaved && attrs.effectColor == JBColor.RED
+      } == true)
+      .withPresentableTextStrikethrough(tp.presentableTextAttributes?.let { attrs ->
+        SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
+        attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
+      } == true)
+      .withContainerText(tp.containerText)
+      .withContainerTextMatchedRanges((matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText))
+      .withLocationText(tp.locationText)
+      .locationIcon(tp.locationIcon)
+      .withExtendedInfo(extendedInfo)
+      .withMultiSelectionSupported(isMultiSelectionSupported)
+
+  fun build(): SeTargetItemPresentation =
+    SeTargetItemPresentationImpl(
+      backgroundColorId = backgroundColorId,
+      iconId = iconId,
+      presentableText = presentableText,
+      presentableTextMatchedRanges = presentableTextMatchedRanges,
+      presentableTextFgColorId = presentableTextFgColorId,
+      presentableTextErrorHighlight = presentableTextErrorHighlight,
+      presentableTextStrikethrough = presentableTextStrikethrough,
+      containerText = containerText,
+      containerTextMatchedRanges = containerTextMatchedRanges,
+      locationText = locationText,
+      locationIconId = locationIconId,
+      extendedInfo = extendedInfo,
+      isMultiSelectionSupported = isMultiSelectionSupported
+    )
+
+  companion object {
+    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<TextRange>? {
+      text ?: return null
+      return matchingFragments(text)
+    }
+  }
+}
+
+@Serializable
+@ApiStatus.Internal
+class SeTargetItemPresentationImpl internal constructor(
   private val backgroundColorId: ColorId? = null,
   private val iconId: IconId? = null,
   val presentableText: @NlsSafe String,
-  val presentableTextMatchedRanges: List<SerializableRange>? = null,
+  val presentableTextMatchedRanges: List<TextRangeId>? = null,
   private val presentableTextFgColorId: ColorId? = null,
   val presentableTextErrorHighlight: Boolean = false,
   val presentableTextStrikethrough: Boolean = false,
   val containerText: @NlsSafe String? = null,
-  val containerTextMatchedRanges: List<SerializableRange>? = null,
+  val containerTextMatchedRanges: List<TextRangeId>? = null,
   val locationText: @NlsSafe String? = null,
   private val locationIconId: IconId? = null,
   override val extendedInfo: SeExtendedInfo?,
   override val isMultiSelectionSupported: Boolean,
-) : SeItemPresentation {
+) : SeTargetItemPresentation {
   override val text: String get() = presentableText
 
   val backgroundColor: Color? get() = backgroundColorId?.color()
@@ -45,44 +178,9 @@ class SeTargetItemPresentation(
   val locationIcon: Icon? get() = locationIconId?.icon()
   val presentableTextFgColor: Color? get() = presentableTextFgColorId?.color()
 
-  @Serializable
-  data class SerializableRange(val start: Int, val end: Int) {
-    val textRange: TextRange get() = TextRange(start, end)
-
-    constructor(textRange: TextRange) : this(textRange.startOffset, textRange.endOffset)
-  }
-
-  companion object {
-    fun create(tp: TargetPresentation, matchers: ItemMatchers?, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeTargetItemPresentation =
-      SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
-                               iconId = tp.icon?.rpcId(),
-                               presentableText = tp.presentableText,
-                               presentableTextMatchedRanges = (matchers?.nameMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.presentableText),
-                               presentableTextFgColorId = tp.presentableTextAttributes?.foregroundColor?.rpcId(),
-                               presentableTextErrorHighlight = tp.presentableTextAttributes?.let { attrs ->
-                                 val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
-                                 simpleAttrs.isWaved && attrs.effectColor == JBColor.RED
-                               } == true,
-                               presentableTextStrikethrough = tp.presentableTextAttributes?.let { attrs ->
-                                 SimpleTextAttributes.fromTextAttributes(attrs).isStrikeout ||
-                                 attrs.additionalEffects?.contains(EffectType.STRIKEOUT) == true
-                               } == true,
-                               containerText = tp.containerText,
-                               containerTextMatchedRanges = (matchers?.locationMatcher as? MinusculeMatcher)?.calcMatchedRanges(tp.containerText),
-                               locationText = tp.locationText,
-                               locationIconId = tp.locationIcon?.rpcId(),
-                               extendedInfo = extendedInfo,
-                               isMultiSelectionSupported = isMultiSelectionSupported)
-
-    private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<SerializableRange>? {
-      text ?: return null
-      return matchingFragments(text)?.map { SerializableRange(it) }
-    }
-  }
-
   override fun contentEquals(other: SeItemPresentation?): Boolean {
     if (this === other) return true
-    if (other !is SeTargetItemPresentation) return false
+    if (other !is SeTargetItemPresentationImpl) return false
     return super.contentEquals(other) &&
            presentableText == other.presentableText &&
            containerText == other.containerText &&

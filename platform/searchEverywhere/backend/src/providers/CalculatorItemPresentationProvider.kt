@@ -3,26 +3,24 @@ package com.intellij.platform.searchEverywhere.backend.providers
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.EvaluationResult
-import com.intellij.ide.ui.icons.rpcId
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
+import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
-import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class CalculatorItemPresentationProvider : SeLegacyItemPresentationProvider {
-  override val id: String
-    get() =
-      if (Registry.`is`("search.everywhere.calculator.presentation.provider", true)) "CalculatorSEContributor"
-      else "CalculatorSEContributor-wrong-id"
+  override val id: String get() =
+    if (Registry.`is`("search.everywhere.calculator.presentation.provider", true)) "CalculatorSEContributor"
+    else "CalculatorSEContributor-wrong-id"
 
   override suspend fun getPresentation(item: Any): SeItemPresentation? {
     val evaluationResult = item as? EvaluationResult ?: return null
-    return SeSimpleItemPresentation(AllIcons.Debugger.EvaluateExpression.rpcId(),
-                                    LangBundle.message("search.everywhere.calculator.result.0", evaluationResult.value),
-                                    extendedInfo = null,
-                                    isMultiSelectionSupported = false)
+    return SeBasicItemPresentationBuilder()
+      .withIcon(AllIcons.Debugger.EvaluateExpression)
+      .withText(LangBundle.message("search.everywhere.calculator.result.0", evaluationResult.value))
+      .build()
   }
 }

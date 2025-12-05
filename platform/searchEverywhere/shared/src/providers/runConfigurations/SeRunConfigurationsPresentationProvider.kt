@@ -4,12 +4,11 @@ package com.intellij.platform.searchEverywhere.providers.runConfigurations
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
+import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
-import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -39,11 +38,12 @@ object SeRunConfigurationsPresentationProvider {
       }
     }
 
-    return SeSimpleItemPresentation(iconId = item.icon?.rpcId(),
-                                    text = item.text,
-                                    description = descriptionText.toString(),
-                                    extendedInfo = extendedInfo,
-                                    accessibleAdditionToText = null,
-                                    isMultiSelectionSupported = isMultiSelectionSupported)
+    return SeBasicItemPresentationBuilder()
+      .withIcon(item.icon)
+      .withText(item.text)
+      .withDescription(descriptionText.toString())
+      .withExtendedInfo(extendedInfo)
+      .withMultiSelectionSupported(isMultiSelectionSupported)
+      .build()
   }
 }

@@ -5,8 +5,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
-import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.*
 import kotlinx.coroutines.cancel
@@ -76,9 +76,8 @@ class SeItemMock(val text: @NlsSafe String) : SeItem {
   override suspend fun presentation(): SeItemPresentation {
     presentationUpdateCounter++
 
-    return SeSimpleItemPresentation(
-        text = if (presentationUpdateCounter > 0) "$text - $presentationUpdateCounter" else text,
-        isMultiSelectionSupported = false
-    )
+    return SeBasicItemPresentationBuilder()
+      .withText(if (presentationUpdateCounter > 0) "$text - $presentationUpdateCounter" else text)
+      .build()
   }
 }

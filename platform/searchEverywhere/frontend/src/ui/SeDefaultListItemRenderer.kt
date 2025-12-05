@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.presentations.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -22,11 +22,11 @@ class SeDefaultListItemRenderer {
     when (val value = value) {
       is SeResultListItemRow -> {
         when (val presentation = value.item.presentation) {
-          is SeSimpleItemPresentation -> {
+          is SeBasicItemPresentationImpl -> {
             presentation.iconId?.icon()?.let { icon(it) }
 
             if (selected) {
-              (presentation.selectedTextChunk ?: presentation.textChunk)?.let { selectedTextChunk ->
+              (presentation.selectedTextChunk ?: presentation.textChunk).let { selectedTextChunk ->
                 text(selectedTextChunk.text) {
                   attributes = SimpleTextAttributes(selectedTextChunk.fontType, selectedTextChunk.foregroundColorId?.color())
                   accessibleName = selectedTextChunk.text.withAccessibleAddition(presentation.accessibleAdditionToText)
@@ -34,7 +34,7 @@ class SeDefaultListItemRenderer {
               }
             }
             else {
-              presentation.textChunk?.let { textChunk ->
+              presentation.textChunk.let { textChunk ->
                 text(textChunk.text) {
                   attributes = SimpleTextAttributes(textChunk.fontType, textChunk.foregroundColorId?.color())
                   accessibleName = textChunk.text.withAccessibleAddition(presentation.accessibleAdditionToText)

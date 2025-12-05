@@ -12,6 +12,7 @@ sealed interface SeItemPresentation {
   val extendedInfo: SeExtendedInfo? get() = null
   val isMultiSelectionSupported: Boolean
 
+  @ApiStatus.Internal
   fun contentEquals(other: SeItemPresentation?): Boolean {
     if (other == null) return false
     return text == other.text && extendedInfo == other.extendedInfo
