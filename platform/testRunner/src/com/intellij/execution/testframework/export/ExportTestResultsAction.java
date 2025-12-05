@@ -4,6 +4,8 @@ package com.intellij.execution.testframework.export;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.ide.BrowserUtil;
@@ -24,14 +26,16 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
@@ -42,8 +46,14 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.Objects;
 
 public final class ExportTestResultsAction extends DumbAwareAction {
 
@@ -105,7 +115,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
         return;
       }
       filename = d.getFileName();
-      showDialog = getOutputFile(config, project, filename).exists()
+      Path outputFile = getOutputFile(config, project, filename);
+      showDialog = outputFile != null && Files.exists(outputFile)
                    && Messages.showOkCancelDialog(project,
                                                   ExecutionBundle.message("export.test.results.file.exists.message", filename),
                                                   ExecutionBundle.message("export.test.results.file.exists.title"),
@@ -115,14 +126,15 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       ) != Messages.OK;
     }
 
-    final File outputFile = getOutputFile(config, project, filename);
-    File parentFile = outputFile.getParentFile();
-    final VirtualFile parent = parentFile.exists() || parentFile.mkdirs() 
-                               ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile)
+    final Path outputFile = getOutputFile(config, project, filename);
+    Path parentFile = createDirectories(outputFile != null ? outputFile.getParent() : null);
+    final VirtualFile parent = parentFile != null 
+                               ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(parentFile)
                                : null;
     if (parent == null || !parent.isValid()) {
+      String filePath = outputFile != null ? outputFile.toString() : filename;
       showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", 
-                                                                      ExecutionBundle.message("failed.to.create.output.file", outputFile.getPath())), null);
+                                                                      ExecutionBundle.message("failed.to.create.output.file", filePath)), null);
       return;
     }
     ProgressManager.getInstance().run(
@@ -139,11 +151,14 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
             return;
           }
+          catch (ProcessCanceledException pce) {
+            throw pce;
+          }
           catch (RuntimeException ex) {
             
-            File tempFile;
+            Path tempFile;
             try {
-              tempFile = FileUtil.createTempFile("", "_xml");
+              tempFile = Files.createTempFile("", "_xml");
             }
             catch (IOException exception) {
               LOG.error("Failed to create temp file", exception);
@@ -159,8 +174,13 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             }
             catch (Throwable ignored) { }
 
-            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile.toPath(), false));
-            FileUtil.delete(tempFile);
+            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile, false));
+            try {
+              NioFiles.deleteRecursively(tempFile);
+            }
+            catch (IOException e) {
+              LOG.warn("Failed to delete temp file", e);
+            }
             return;
           }
 
@@ -169,8 +189,9 @@ public final class ExportTestResultsAction extends DumbAwareAction {
           ApplicationManager.getApplication().invokeAndWait(() -> {
             result.set(WriteAction.compute(() -> {
               try {
-                VirtualFile child = parent.findChild(outputFile.getName());
-                return child == null ? parent.createChildData(this, outputFile.getName()) : child;
+                String fileName = outputFile.getFileName().toString();
+                VirtualFile child = parent.findChild(fileName);
+                return child == null ? parent.createChildData(this, fileName) : child;
               }
               catch (IOException e) {
                 LOG.warn(e);
@@ -194,7 +215,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
                   }
                 }
               };
-              showBalloon(project, MessageType.INFO, ExecutionBundle.message("export.test.results.succeeded", outputFile.getName()),
+              showBalloon(project, MessageType.INFO, ExecutionBundle.message("export.test.results.succeeded", outputFile.getFileName().toString()),
                           listener);
             }
           }
@@ -205,26 +226,44 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       });
   }
 
-  private static @NotNull File getOutputFile(
+  private static @Nullable Path createDirectories(@Nullable Path path) {
+    if (path == null) return path;
+    try {
+      return Files.createDirectories(path);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  private static @Nullable Path getOutputFile(
     final @NotNull ExportTestResultsConfiguration config,
     final @NotNull Project project,
     final @NotNull String filename)
   {
-    final File outputFolder;
-    final String outputFolderPath = config.getOutputFolder();
-    if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
-      if (FileUtil.isAbsolute(outputFolderPath)) {
-        outputFolder = new File(outputFolderPath);
-      }
-      else {
-        outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
-      }
+    try {
+      Path outputFolder = getOutputFolder(config, project);
+      return outputFolder != null ? outputFolder.resolve(filename) : null;
     }
-    else {
-      outputFolder = new File(project.getBasePath());
+    catch (InvalidPathException e) {
+      LOG.warn(e);
+      return null;
     }
+  }
 
-    return new File(outputFolder, filename);
+  private static @Nullable Path getOutputFolder(@NotNull ExportTestResultsConfiguration config, @NotNull Project project) {
+    String outputFolderStr = config.getOutputFolder();
+    if (!StringUtil.isEmptyOrSpaces(outputFolderStr)) {
+      Path outputFolder = Path.of(outputFolderStr);
+      if (outputFolder.isAbsolute()) {
+        return outputFolder;
+      }
+    }
+    String basePathStr = project.getBasePath();
+    if (basePathStr == null) return null;
+    Path basePath = Path.of(basePathStr);
+    return StringUtil.isEmptyOrSpaces(outputFolderStr) ? basePath : basePath.resolve(outputFolderStr);
   }
 
   private static void openEditorOrBrowser(final VirtualFile result, final Project project, final boolean editor) {
@@ -238,49 +277,68 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     });
   }
 
-  private boolean writeOutputFile(ExportTestResultsConfiguration config, File outputFile) throws IOException, TransformerException, SAXException {
-    switch (config.getExportFormat()) {
+  private boolean writeOutputFile(ExportTestResultsConfiguration config, @NotNull Path outputFile) throws IOException, TransformerException, SAXException {
+    try {
+      writeOutputFile(new ExportContext(
+        config.getExportFormat(),
+        config.getUserTemplatePath(),
+        myModel.getRoot(),
+        myRunConfiguration,
+        myModel.getProperties(),
+        outputFile
+      ));
+      return true;
+    }
+    catch (NonExistentUserTemplatePathException e) {
+      showBalloon(myRunConfiguration.getProject(), MessageType.ERROR, e.getMessage(), null);
+      return false;
+    }
+  }
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static void writeOutputFile(@NotNull ExportContext context) throws IOException, TransformerException, SAXException {
+    switch (context.exportFormat) {
       case Xml -> {
         TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");  // NON-NLS
-        return transform(outputFile, handler);
+        transform(context, handler);
       }
       case BundledTemplate -> {
-        try (InputStream bundledXsltUrl = getClass().getResourceAsStream("intellij-export.xsl")) {
-          return transformWithXslt(outputFile, new StreamSource(bundledXsltUrl));
+        try (InputStream bundledXsltUrl = ExportTestResultsAction.class.getResourceAsStream("intellij-export.xsl")) {
+          transformWithXslt(context, new StreamSource(bundledXsltUrl));
         }
       }
       case UserTemplate -> {
-        File xslFile = new File(config.getUserTemplatePath());
-        if (!xslFile.isFile()) {
-          showBalloon(myRunConfiguration.getProject(), MessageType.ERROR,
-                      ExecutionBundle.message("export.test.results.custom.template.not.found", xslFile.getPath()), null);
-          return false;
+        String userTemplatePath = context.userTemplatePath;
+        Path xslFile = StringUtil.isEmptyOrSpaces(userTemplatePath) ? null : NioFiles.toPath(userTemplatePath);
+        if (xslFile == null || !Files.isRegularFile(xslFile)) {
+          throw new NonExistentUserTemplatePathException(userTemplatePath);
         }
-        return transformWithXslt(outputFile, new StreamSource(xslFile));
+        transformWithXslt(context, new StreamSource(xslFile.toUri().toASCIIString()));
       }
       default -> throw new IllegalArgumentException();
     }
   }
 
-  private boolean transformWithXslt(File outputFile, Source xslSource)
+  private static void transformWithXslt(@NotNull ExportContext context, @NotNull Source xslSource)
     throws TransformerConfigurationException, IOException, SAXException {
-    TransformerHandler handler = ((SAXTransformerFactory)TransformerFactory.newDefaultInstance()).newTransformerHandler(xslSource);
-    handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", myRunConfiguration.getName(),
-                                                                           myRunConfiguration.getType().getDisplayName()));
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
+    // Enable extension functions to use `str:tokenize` in `intellij-export.xsl`
+    // https://docs.oracle.com/en/java/javase/25/docs/api/java.xml/module-summary.html#jdk.xml.enableExtensionFunctions
+    transformerFactory.setFeature("jdk.xml.enableExtensionFunctions", true);
+    TransformerHandler handler = transformerFactory.newTransformerHandler(xslSource);
+    handler.getTransformer().setParameter("TITLE", ExecutionBundle.message("export.test.results.filename", context.runConfiguration.getName(),
+                                                                           context.runConfiguration.getType().getDisplayName()));
 
-    return transform(outputFile, handler);
+    transform(context, handler);
   }
 
-  private boolean transform(File outputFile, TransformerHandler handler) throws IOException, SAXException {
-    try (BufferedWriter w = new BufferedWriter(new FileWriter(outputFile, StandardCharsets.UTF_8))) {
+  private static void transform(@NotNull ExportContext context, TransformerHandler handler) throws IOException, SAXException {
+    try (BufferedWriter w = Files.newBufferedWriter(context.outputFile, StandardCharsets.UTF_8)) {
       handler.setResult(new StreamResult(w));
-      TestResultsXmlFormatter.execute(myModel.getRoot(), myRunConfiguration, myModel.getProperties(), handler);
-      return true;
-    }
-    catch (ProcessCanceledException e) {
-      return false;
+      TestResultsXmlFormatter.execute(context.root, context.runConfiguration, context.properties, handler);
     }
   }
 
@@ -296,4 +354,20 @@ public final class ExportTestResultsAction extends DumbAwareAction {
     });
   }
 
+  private static class NonExistentUserTemplatePathException extends RuntimeException {
+    NonExistentUserTemplatePathException(@Nullable String userTemplatePath) {
+      super(ExecutionBundle.message("export.test.results.custom.template.not.found", Objects.requireNonNullElse(userTemplatePath, "N/A")));
+    }
+  }
+
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public record ExportContext(
+    @NotNull ExportTestResultsConfiguration.ExportFormat exportFormat,
+    @Nullable String userTemplatePath,
+    @NotNull AbstractTestProxy root,
+    @NotNull RunConfiguration runConfiguration,
+    @NotNull TestConsoleProperties properties,
+    @NotNull Path outputFile
+  ) {}
 }

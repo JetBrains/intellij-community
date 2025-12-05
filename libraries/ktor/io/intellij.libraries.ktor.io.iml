@@ -25,5 +25,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="RUNTIME" />
   </component>
 </module>

@@ -153,6 +153,7 @@ internal fun validateProductModuleSets(
   allModuleSets: List<ModuleSet>,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>>,
   descriptorCache: ModuleDescriptorCache,
+  precomputedEmbeddedModules: Set<String>? = null,
 ) {
   data class ProductError(
     val productName: String,
@@ -169,7 +170,7 @@ internal fun validateProductModuleSets(
     }
     
     // Build index of modules available in this product
-    val productIndex = buildProductModuleIndex(productName, spec)
+    val productIndex = buildProductModuleIndex(productName, spec, precomputedEmbeddedModules)
     
     // Validate that all referenced module sets exist
     val missingModuleSets = productIndex.referencedModuleSets.filter { it !in moduleSetsByName }
@@ -344,18 +345,15 @@ private data class ProductModuleIndex(
 private fun buildProductModuleIndex(
   productName: String,
   spec: ProductModulesContentSpec,
+  precomputedEmbeddedModules: Set<String>? = null,
 ): ProductModuleIndex {
   val allModules = mutableSetOf<String>()
-  val embeddedModules = mutableSetOf<String>()
   val referencedModuleSets = mutableSetOf<String>()
 
   // Recursively collect all modules from a module set
   fun collectModulesFromSet(moduleSet: ModuleSet) {
     for (module in moduleSet.modules) {
       allModules.add(module.name)
-      if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
-        embeddedModules.add(module.name)
-      }
     }
     for (nestedSet in moduleSet.nestedSets) {
       collectModulesFromSet(nestedSet)
@@ -373,9 +371,36 @@ private fun buildProductModuleIndex(
   // Add additional individual modules
   for (module in spec.additionalModules) {
     allModules.add(module.name)
-    if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
-      embeddedModules.add(module.name)
+  }
+
+  // Use precomputed embedded modules if available (optimization to avoid recomputing),
+  // otherwise compute just for this product's modules
+  val embeddedModules = if (precomputedEmbeddedModules != null) {
+    // Filter to only include modules that are in this product
+    allModules.filterTo(mutableSetOf()) { it in precomputedEmbeddedModules }
+  }
+  else {
+    // Fallback: compute embedded modules for this product
+    val result = mutableSetOf<String>()
+    fun collectEmbeddedFromSet(moduleSet: ModuleSet) {
+      for (module in moduleSet.modules) {
+        if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+          result.add(module.name)
+        }
+      }
+      for (nestedSet in moduleSet.nestedSets) {
+        collectEmbeddedFromSet(nestedSet)
+      }
     }
+    for (moduleSetWithOverrides in spec.moduleSets) {
+      collectEmbeddedFromSet(moduleSetWithOverrides.moduleSet)
+    }
+    for (module in spec.additionalModules) {
+      if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
+        result.add(module.name)
+      }
+    }
+    result
   }
 
   // Build product-scoped reachability: each module can see all other modules in the product

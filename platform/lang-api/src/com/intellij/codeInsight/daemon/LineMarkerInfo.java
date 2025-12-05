@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   private static final Logger LOG = Logger.getInstance(LineMarkerInfo.class);
 
   protected final Icon myIcon;
+  private final int myElementHashCode;
   private final @NotNull SmartPsiElementPointer<? extends T> elementRef;
   public final int startOffset;
   public final int endOffset;
@@ -116,17 +118,20 @@ public class LineMarkerInfo<T extends PsiElement> {
     return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element, containingFile);
   }
 
-  LineMarkerInfo(@NotNull T element,
+  @ApiStatus.Internal
+  protected LineMarkerInfo(@NotNull T element,
                  @NotNull TextRange range,
                  @Nullable Icon icon,
                  @Nullable Supplier<@Nls @NotNull String> accessibleNameProvider,
                  @Nullable Function<? super T, @NlsContexts.Tooltip String> tooltipProvider,
                  @Nullable GutterIconNavigationHandler<T> navHandler,
                  @NotNull GutterIconRenderer.Alignment alignment) {
-    this(createElementRef(element, range), range, icon, accessibleNameProvider, tooltipProvider, navHandler, alignment);
+    this(createElementRef(element, range), element.hashCode(), range, icon, accessibleNameProvider, tooltipProvider, navHandler, alignment);
   }
 
+  @ApiStatus.Internal
   protected LineMarkerInfo(@NotNull SmartPsiElementPointer<? extends T> elementRef,
+                           int elementHashCode,
                            @NotNull TextRange range,
                            @Nullable Icon icon,
                            @Nullable Supplier<@Nls @NotNull String> accessibleNameProvider,
@@ -134,6 +139,7 @@ public class LineMarkerInfo<T extends PsiElement> {
                            @Nullable GutterIconNavigationHandler<T> navHandler,
                            @NotNull GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
+    myElementHashCode = elementHashCode;
     myAccessibleNameProvider = accessibleNameProvider;
     myTooltipProvider = tooltipProvider;
     myIconAlignment = alignment;
@@ -279,8 +285,7 @@ public class LineMarkerInfo<T extends PsiElement> {
 
     @Override
     public int hashCode() {
-      T element = myInfo.getElement();
-      return element == null ? 0 : element.hashCode();
+      return myInfo.myElementHashCode;
     }
   }
 

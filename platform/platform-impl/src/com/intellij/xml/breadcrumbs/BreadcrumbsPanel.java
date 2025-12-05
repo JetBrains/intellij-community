@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
@@ -276,7 +277,9 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
     if (crumb instanceof NavigatableCrumb navigatableCrumb) {
       myUserCaretChange = false;
-      navigatableCrumb.navigate(myEditor, withSelection);
+      WriteIntentReadAction.run(() -> {
+        navigatableCrumb.navigate(myEditor, withSelection);
+      });
     }
   }
 

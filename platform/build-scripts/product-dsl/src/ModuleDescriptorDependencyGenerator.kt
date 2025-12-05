@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -43,9 +44,11 @@ internal suspend fun generateModuleDescriptorDependencies(
   coreModuleSets: List<ModuleSet> = emptyList(),
   moduleOutputProvider: ModuleOutputProvider,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>> = emptyList(),
+  embeddedModulesDeferred: Deferred<Set<String>>? = null,
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
-  val modulesToProcess = collectModulesWithIncludeDependencies(allModuleSets)
+  val embeddedModules = embeddedModulesDeferred?.await() ?: emptySet()
+  val modulesToProcess = collectModulesToProcess(allModuleSets)
   if (modulesToProcess.isEmpty()) {
     return@coroutineScope DependencyGenerationResult(emptyList())
   }
@@ -55,10 +58,15 @@ internal suspend fun generateModuleDescriptorDependencies(
   // Validate self-contained module sets in isolation
   // Module sets marked with selfContained=true must be resolvable without other sets
   validateSelfContainedModuleSets(allModuleSets, cache)
-  
+
   // Tier 2: Validate product-level dependencies
   // This ensures all products can load without missing dependency errors
-  validateProductModuleSets(allModuleSets = allModuleSets, productSpecs = productSpecs, descriptorCache = cache)
+  validateProductModuleSets(
+    allModuleSets = allModuleSets,
+    productSpecs = productSpecs,
+    descriptorCache = cache,
+    precomputedEmbeddedModules = embeddedModules,
+  )
 
   // Write XML files in parallel
   val results = modulesToProcess.map { moduleName ->
@@ -79,7 +87,6 @@ internal suspend fun generateModuleDescriptorDependencies(
 
 /**
  * Cache for module descriptor information to avoid redundant file system lookups.
- * Made public for access from analysis package.
  */
 internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOutputProvider) {
   data class DescriptorInfo(
@@ -145,167 +152,37 @@ internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOut
 }
 
 /**
- * Collects all modules with includeDependencies=true from a list of module sets.
+ * Collects modules that need dependency generation:
+ * 1. Modules with includeDependencies=true
+ * 2. Library modules (intellij.libraries.*) that are not embedded
  */
-private fun collectModulesWithIncludeDependencies(moduleSets: List<ModuleSet>): Set<String> {
+private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
   val result = mutableSetOf<String>()
-
-  fun processModuleSet(moduleSet: ModuleSet) {
-    // Add modules with includeDependencies=true
-    for (module in moduleSet.modules) {
-      if (module.includeDependencies) {
+  for (set in moduleSets) {
+    visitAllModules(set) { module ->
+      // todo enable for all on the next stage
+      if (module.includeDependencies ||
+          module.name.startsWith(LIB_MODULE_PREFIX) ||
+          module.name.startsWith("intellij.platform.settings.")) {
         result.add(module.name)
       }
     }
-
-    // Recursively process nested sets
-    for (nestedSet in moduleSet.nestedSets) {
-      processModuleSet(nestedSet)
-    }
   }
-
-  for (moduleSet in moduleSets) {
-    processModuleSet(moduleSet)
-  }
-
   return result
 }
 
 /**
  * Updates module descriptor XML file with generated dependencies.
- * Replaces content between generation markers or entire dependencies section.
+ * Uses JDOM to preserve existing content and add generated dependencies within editor-fold markers.
  * Returns the file change status.
+ *
+ * @param preserveExistingModule predicate to identify which existing modules should be preserved (manual deps)
  */
-private fun updateModuleDescriptor(
+internal fun updateModuleDescriptor(
   descriptorPath: Path,
   dependencies: List<String>,
+  preserveExistingModule: ((String) -> Boolean)? = null,
 ): FileChangeStatus {
-  if (Files.notExists(descriptorPath)) {
-    return FileChangeStatus.UNCHANGED
-  }
-
-  val existingContent = Files.readString(descriptorPath)
-  val newContent = replaceOrInsertDependencies(existingContent, dependencies)
-
-  return if (newContent != existingContent) {
-    Files.writeString(descriptorPath, newContent)
-    // Check if this was a creation (no markers before) or modification
-    if (existingContent.contains("<!-- editor-fold desc=\"Generated dependencies")) {
-      FileChangeStatus.MODIFIED
-    }
-    else {
-      FileChangeStatus.CREATED
-    }
-  }
-  else {
-    FileChangeStatus.UNCHANGED
-  }
+  return updateXmlDependencies(descriptorPath, dependencies, preserveExistingModule)
 }
 
-/**
- * Replaces dependencies section in XML, preserving other content.
- * Uses string-based parsing instead of regex for reliability.
- */
-private fun replaceOrInsertDependencies(xmlContent: String, dependencies: List<String>): String {
-  val generatedStart = "<!-- editor-fold desc=\"Generated dependencies - do not edit manually\" -->"
-  val generatedEnd = "<!-- end editor-fold -->"
-
-  // Legacy markers for backward compatibility
-  val legacyStart = "<!-- Generated dependencies - do not edit manually -->"
-  val legacyEnd = "<!-- End generated dependencies -->"
-
-  // Generate new dependencies block
-  val newDepsBlock = if (dependencies.isEmpty()) {
-    ""
-  }
-  else {
-    buildString {
-      append("  $generatedStart\n")
-      append("  <dependencies>\n")
-      for (dep in dependencies) {
-        append("    <module name=\"$dep\"/>\n")
-      }
-      append("  </dependencies>\n")
-      append("  $generatedEnd\n")
-    }
-  }
-
-  // Case 1: Check if current editor-fold markers exist
-  val startIndex = xmlContent.indexOf(generatedStart)
-  if (startIndex >= 0) {
-    val endIndex = xmlContent.indexOf(generatedEnd, startIndex)
-    if (endIndex >= 0) {
-      val result = replaceBlockBetweenMarkers(xmlContent, startIndex, endIndex, generatedEnd.length, newDepsBlock)
-      // Clean up any orphaned legacy markers
-      return result.replace("  $legacyStart\n", "").replace("  $legacyEnd\n", "")
-    }
-  }
-
-  // Case 2: Check if legacy markers exist and replace them
-  val legacyStartIndex = xmlContent.indexOf(legacyStart)
-  if (legacyStartIndex >= 0) {
-    val legacyEndIndex = xmlContent.indexOf(legacyEnd, legacyStartIndex)
-    if (legacyEndIndex >= 0) {
-      return replaceBlockBetweenMarkers(xmlContent, legacyStartIndex, legacyEndIndex, legacyEnd.length, newDepsBlock)
-    }
-  }
-
-  // Case 3: No markers found, try to replace entire <dependencies> section using string parsing
-  val depsTagStart = xmlContent.indexOf("<dependencies>")
-  if (depsTagStart >= 0) {
-    val depsTagEnd = xmlContent.indexOf("</dependencies>", depsTagStart)
-    if (depsTagEnd >= 0) {
-      // Find line boundaries to replace entire block including indentation
-      val lineStart = xmlContent.lastIndexOf('\n', depsTagStart - 1) + 1
-      val lineEnd = xmlContent.indexOf('\n', depsTagEnd + "</dependencies>".length)
-      val actualEnd = if (lineEnd >= 0) lineEnd + 1 else xmlContent.length
-      return xmlContent.substring(0, lineStart) + newDepsBlock + xmlContent.substring(actualEnd)
-    }
-  }
-
-  // Case 4: No dependencies section exists, insert after opening tag
-  if (dependencies.isEmpty()) {
-    return xmlContent
-  }
-  
-  val insertionPoint = findInsertionPointAfterPluginTag(xmlContent)
-  return if (insertionPoint > 0) {
-    xmlContent.substring(0, insertionPoint) + newDepsBlock + xmlContent.substring(insertionPoint)
-  }
-  else {
-    xmlContent
-  }
-}
-
-/**
- * Replaces content between markers, preserving line boundaries.
- */
-private fun replaceBlockBetweenMarkers(
-  content: String,
-  markerStart: Int,
-  markerEnd: Int,
-  markerEndLength: Int,
-  newBlock: String
-): String {
-  // Find the start of the line (after previous newline) to preserve correct indentation
-  val lineStartIndex = content.lastIndexOf('\n', markerStart - 1) + 1
-  // Find end of line containing the end marker
-  val endLineIndex = content.indexOf('\n', markerEnd + markerEndLength)
-  val actualEndIndex = if (endLineIndex >= 0) endLineIndex + 1 else content.length
-  return content.substring(0, lineStartIndex) + newBlock + content.substring(actualEndIndex)
-}
-
-/**
- * Finds the insertion point after the opening <idea-plugin> tag.
- * Returns -1 if the tag is not found.
- */
-private fun findInsertionPointAfterPluginTag(xmlContent: String): Int {
-  val pluginTagStart = xmlContent.indexOf("<idea-plugin")
-  if (pluginTagStart < 0) return -1
-  
-  val pluginTagEnd = xmlContent.indexOf('>', pluginTagStart)
-  if (pluginTagEnd < 0) return -1
-  
-  val newlineAfterTag = xmlContent.indexOf('\n', pluginTagEnd)
-  return if (newlineAfterTag >= 0) newlineAfterTag + 1 else -1
-}

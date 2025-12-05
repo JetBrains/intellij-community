@@ -227,7 +227,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
 
       DialogWrapper dialog = new DialogWrapper(myProject) {
         {
-          setTitle(IndexingBundle.message("progress.indexing.updating"));
+          setTitle(IndexingBundle.message("progress.indexing.updating.title"));
           setOKButtonText(ExecutionBundle.message("test.button.run.with.partial.index"));
           init();
           LaterInvocator.markTransparent(ModalityState.stateForComponent(component));

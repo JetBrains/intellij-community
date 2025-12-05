@@ -1,5 +1,7 @@
 <idea-plugin>
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
   <dependencies>
     <module name="intellij.libraries.jackson"/>
   </dependencies>
+  <!-- end editor-fold -->
 </idea-plugin>

@@ -35,6 +35,7 @@ jvm_library(
     "@lib//:libraries-ktor-client-ktor-client-logging",
     "//libraries/ktor/utils",
     "//libraries/ktor/io",
+    "//libraries/kotlinx/coroutines/slf4j",
   ]
 )
 ### auto-generated section `build intellij.libraries.ktor.client` end

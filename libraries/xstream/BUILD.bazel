@@ -13,6 +13,9 @@ jvm_library(
   srcs = glob([], allow_empty = True),
   resources = [":xstream_resources"],
   exports = ["@lib//:libraries-xstream-xstream"],
-  runtime_deps = ["@lib//:libraries-xstream-xstream"]
+  runtime_deps = [
+    "@lib//:libraries-xstream-xstream",
+    "//libraries/jettison",
+  ]
 )
 ### auto-generated section `build intellij.libraries.xstream` end

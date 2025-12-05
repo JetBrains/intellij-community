@@ -32,6 +32,8 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 final class ProcessPopup {
   public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
+  static final JBDimension POPUP_MIN_SIZE = new JBDimension(300, 100);
+  static final JBDimension POPUP_MIN_SIZE_WITH_BANNER = new JBDimension(464, 100);
   private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
   private final InfoAndProgressPanel myProgressPanel;
@@ -55,7 +57,7 @@ final class ProcessPopup {
     }
 
     myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
-    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> {
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> myPopup, () -> {
       SeparatorDecorator.placeSeparators(myIndicatorPanel);
       revalidateAll();
     });
@@ -75,11 +77,7 @@ final class ProcessPopup {
     myAnalyzingBannerDecorator.indicatorAdded(indicator);
     mySeparatorDecorator.indicatorAdded();
     revalidateAll();
-
-    if (myPopupVisible && myAnalyzingBannerDecorator.isBannerPresent()) {
-      updateContentUI();
-      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
-    }
+    ensureSufficientSize();
   }
 
   public void removeIndicator(@NotNull ProgressComponent indicator) {
@@ -94,6 +92,33 @@ final class ProcessPopup {
     myAnalyzingBannerDecorator.indicatorRemoved(indicator, isShowing());
     mySeparatorDecorator.indicatorRemoved();
     revalidateAll();
+    ensureSufficientSize();
+  }
+
+  /// Update the size of the popup so that the banner from [AnalyzingBannerDecorator] is well-visible:
+  /// 1. Increases the minimum width of the popup if a banner is present.
+  /// 2. Increases the height of the popup so the banner is fully visible.
+  private void ensureSufficientSize() {
+    if (myPopup == null) {
+      return;
+    }
+    if (!myAnalyzingBannerDecorator.isBannerPresent()) {
+      myPopup.setMinimumSize(POPUP_MIN_SIZE);
+      return;
+    }
+
+    myPopup.setMinimumSize(POPUP_MIN_SIZE_WITH_BANNER);
+    updateContentUI();
+
+    int requiredHeight = myAnalyzingBannerDecorator.getPopupRequiredHeight();
+    if (myContentPanel.getHeight() >= requiredHeight) {
+      return; // the popup is tall enough already, no need to change anything
+    }
+
+    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, requiredHeight));
+    myContentPanel.revalidate();
+    myPopup.pack(false, true);
+    myPopup.moveToFitScreen(); // the popup may expand out of screen, move it back if necessary
   }
 
   private @NotNull Rectangle calculateBounds() {
@@ -137,18 +162,6 @@ final class ProcessPopup {
     return new Rectangle(x, y, width, height);
   }
 
-  private void updateHeight(int height) {
-    if (!myPopupVisible || myContentPanel.getSize().height >= height) {
-      return;
-    }
-
-    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, height));
-    myContentPanel.revalidate();
-    myPopup.pack(false, true);
-
-    myPopup.moveToFitScreen();
-  }
-
   public void show(boolean requestFocus) {
     updateContentUI();
 
@@ -160,9 +173,7 @@ final class ProcessPopup {
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
     myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
-    if (myAnalyzingBannerDecorator.isBannerPresent()) {
-      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
-    }
+    ensureSufficientSize();
   }
 
   public boolean isShowing() {
@@ -227,7 +238,7 @@ final class ProcessPopup {
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
-    builder.setMinSize(new JBDimension(300, 100));
+    builder.setMinSize(POPUP_MIN_SIZE);
     Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent());
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
     builder.setLocateWithinScreenBounds(false);

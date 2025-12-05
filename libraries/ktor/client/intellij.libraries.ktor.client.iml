@@ -85,5 +85,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.ktor.utils" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.io" exported="" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" scope="RUNTIME" />
   </component>
 </module>

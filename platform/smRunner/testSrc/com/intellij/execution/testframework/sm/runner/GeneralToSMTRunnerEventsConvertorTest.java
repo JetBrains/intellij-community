@@ -2,11 +2,12 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
-import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
+import com.intellij.execution.testframework.export.ExportTestResultsConfiguration;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
@@ -19,23 +20,21 @@ import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXException;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import javax.xml.transform.TransformerException;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -676,21 +675,32 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
+    String renderedResult = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.BundledTemplate);
 
-    try (InputStream bundledXsltUrl = ExportTestResultsAction.class.getResourceAsStream("intellij-export.xsl")) {
-      TransformerHandler handler = transformerFactory.newTransformerHandler(new StreamSource(bundledXsltUrl));
-      File output = FileUtil.createTempFile("output", "");
-      FileUtilRt.createParentDirs(output);
-      try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
-        handler.setResult(new StreamResult(writer));
-        MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
-        TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
-        String renderedResult = FileUtil.loadFile(output);
-        assertContains(escapedSystemOutput, renderedResult);
-        assertContains(escapedNormalOutput, renderedResult);
-        assertContains(escapedErrorOutput, renderedResult);
-      }
+    assertContains(escapedSystemOutput, renderedResult);
+    assertContains(escapedNormalOutput, renderedResult);
+    assertContains(escapedErrorOutput, renderedResult);
+  }
+
+  private @NotNull String exportTestResults(
+    @NotNull AbstractTestProxy root,
+    @NotNull ExportTestResultsConfiguration.ExportFormat exportFormat
+  ) throws IOException, TransformerException, SAXException {
+    Path outputFile = Files.createTempFile("output", "");
+    try {
+      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
+      ExportTestResultsAction.writeOutputFile(new ExportTestResultsAction.ExportContext(
+        exportFormat,
+        null,
+        root,
+        configuration,
+        new SMTRunnerConsoleProperties(configuration, "framework", DefaultRunExecutor.getRunExecutorInstance()),
+        outputFile
+      ));
+      return Files.readString(outputFile);
+    }
+    finally {
+      Files.delete(outputFile);
     }
   }
 
@@ -705,41 +715,30 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
-    TransformerHandler handler = transformerFactory.newTransformerHandler();
-    handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
-    handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-    File output = FileUtil.createTempFile("output", "");
-    FileUtilRt.createParentDirs(output);
-    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
-      handler.setResult(new StreamResult(writer));
-      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
-      TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
-      String savedText = FileUtil.loadFile(output);
-      assertTrue(savedText.split("\n").length > 550);
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(savedText.split("\n").length > 550);
 
-      myEventsProcessor.onStartTesting();
-      ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
-      myEventsProcessor.onFinishTesting();
+    myEventsProcessor.onStartTesting();
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
+    myEventsProcessor.onFinishTesting();
 
-      List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
-      assertSize(1, children);
-      SMTestProxy testProxy = children.get(0);
-      MockPrinter mockPrinter = new MockPrinter();
-      mockPrinter.setShowHyperLink(true);
-      testProxy.printOn(mockPrinter);
-      String allOut = mockPrinter.getAllOut();
-      assertContains(StringsKt.trimMargin("""
-        |line549 a < b\s
-        |
-        |Expected :a < b
-        |Actual   :
-        |<Click to see difference>
-        |
-        |messagestacktrace
-      """, "|"), allOut);
-      assertSize(558, allOut.split("\n"));
-    }
+    List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+    assertSize(1, children);
+    SMTestProxy testProxy = children.get(0);
+    MockPrinter mockPrinter = new MockPrinter();
+    mockPrinter.setShowHyperLink(true);
+    testProxy.printOn(mockPrinter);
+    String allOut = mockPrinter.getAllOut();
+    assertContains(StringsKt.trimMargin("""
+      |line549 a < b\s
+      |
+      |Expected :a < b
+      |Actual   :
+      |<Click to see difference>
+      |
+      |messagestacktrace
+    """, "|"), allOut);
+    assertSize(558, allOut.split("\n"));
   }
 
   public void testComparisonFailureImport() throws Exception {
@@ -750,54 +749,42 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
-    TransformerHandler handler = transformerFactory.newTransformerHandler();
-    handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
-    handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-    File output = FileUtil.createTempFile("output", "");
-    FileUtilRt.createParentDirs(output);
-    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
-      handler.setResult(new StreamResult(writer));
-      MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
-      TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(StringUtil.convertLineSeparators(savedText)
+                 .endsWith("""
+                             <count name="total" value="1"/>
+                                 <count name="failed" value="1"/>
+                                 <config configId="MockRuntimeConfiguration" name="">
+                                     <method v="2"/>
+                                 </config>
+                                 <test locationUrl="file://test.text" name="test" status="failed">
+                                     <diff actual="actual" expected="expected"/>
+                                     <output type="stdout">execution output
+                             </output>
+                                     <output type="stderr">messagestacktrace
+                             </output>
+                                 </test>
+                             </testrun>
+                             """));
 
-      String savedText = FileUtil.loadFile(output);
-      assertTrue(StringUtil.convertLineSeparators(savedText)
-                   .endsWith("""
-                               <count name="total" value="1"/>
-                                   <count name="failed" value="1"/>
-                                   <config configId="MockRuntimeConfiguration" name="">
-                                       <method v="2"/>
-                                   </config>
-                                   <test locationUrl="file://test.text" name="test" status="failed">
-                                       <diff actual="actual" expected="expected"/>
-                                       <output type="stdout">execution output
-                               </output>
-                                       <output type="stderr">messagestacktrace
-                               </output>
-                                   </test>
-                               </testrun>
-                               """));
+    myEventsProcessor.onStartTesting();
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
+    myEventsProcessor.onFinishTesting();
 
-      myEventsProcessor.onStartTesting();
-      ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), myEventsProcessor);
-      myEventsProcessor.onFinishTesting();
-
-      List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
-      assertSize(1, children);
-      SMTestProxy testProxy = children.get(0);
-      MockPrinter mockPrinter = new MockPrinter();
-      mockPrinter.setShowHyperLink(true);
-      testProxy.printOn(mockPrinter);
-      assertEquals(StringsKt.trimMargin("""
-        |execution output
-        |
-        |Expected :expected
-        |Actual   :actual
-        |<Click to see difference>
-        |
-        |messagestacktrace
-      """, "|"), StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
-    }
+    List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+    assertSize(1, children);
+    SMTestProxy testProxy = children.get(0);
+    MockPrinter mockPrinter = new MockPrinter();
+    mockPrinter.setShowHyperLink(true);
+    testProxy.printOn(mockPrinter);
+    assertEquals(StringsKt.trimMargin("""
+      |execution output
+      |
+      |Expected :expected
+      |Actual   :actual
+      |<Click to see difference>
+      |
+      |messagestacktrace
+    """, "|"), StringUtil.convertLineSeparators(mockPrinter.getAllOut().trim()));
   }
 }

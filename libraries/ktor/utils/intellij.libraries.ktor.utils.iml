@@ -36,5 +36,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ktor.io" scope="RUNTIME" />
   </component>
 </module>

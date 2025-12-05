@@ -246,7 +246,18 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
 
   @VisibleForTesting
   protected open suspend fun delayLoadGlobalWorkspaceModel(eelMachine: EelMachine, environmentName: InternalEnvironmentName) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(environmentName)
+    val globalWorkspaceModel = try {
+      GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(environmentName)
+    }
+    catch (e: IllegalStateException) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        LOG.warn(e)
+        return
+      }
+      else {
+        throw e
+      }
+    }
     if (loadedFromDisk[environmentName] == true || !globalWorkspaceModel.loadedFromCache) {
       return
     }

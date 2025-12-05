@@ -152,6 +152,8 @@ private class RpcClient(
   @OptIn(ExperimentalCoroutinesApi::class)
   internal suspend fun work(abortOnError: Boolean) {
     supervisorScope {
+      val rpcScope = this
+
       val receiver = async(start = CoroutineStart.ATOMIC) {
         consumeAll(transport.incoming, eventLoopChannel) {
           val mergedIncomingAndTransport = flow {
@@ -171,7 +173,7 @@ private class RpcClient(
                   logger.trace { "Received ${event.message}" }
                   when (val message = event.message) {
                     is TransportMessage.Envelope -> {
-                      acceptMessage(message.parseMessage(), message.origin)
+                      acceptMessage(message.parseMessage(), message.origin, rpcScope)
                     }
                     is TransportMessage.RouteClosed -> {
                       grayList.putIfAbsent(message.address, CompletableDeferred())
@@ -299,7 +301,7 @@ private class RpcClient(
     }
   }
 
-  private fun CoroutineScope.acceptMessage(message: RpcMessage, senderRoute: UID) {
+  private fun acceptMessage(message: RpcMessage, senderRoute: UID, rpcScope: CoroutineScope) {
     when (message) {
       is RpcMessage.CallResult -> {
         logger.trace { "Got CallResult: requestId = ${message.requestId}" }
@@ -330,7 +332,7 @@ private class RpcClient(
                 }
                 return@run resource to emptyList()
               }
-              val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, this) {
+              val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, rpcScope) {
                 val kser = rpc.returnType.serializer(rpc.call.classMethodDisplayName())
                 val json = rpcJsonImplementationDetail()
                 json.decodeFromJsonElement(kser, message.result)
@@ -368,7 +370,7 @@ private class RpcClient(
         if (stream != null) {
           when (stream) {
             is InternalStreamDescriptor.FromRemote -> {
-              val (element, streamDescriptors) = withSerializationContext(stream.displayName, stream.token, this) {
+              val (element, streamDescriptors) = withSerializationContext(stream.displayName, stream.token, rpcScope) {
                 rpcJsonImplementationDetail().decodeFromJsonElement(stream.elementSerializer, message.data)
               }
               for (internalDescriptor in registerStreams(streamDescriptors, stream.route, stream.prefetchStrategy)) {

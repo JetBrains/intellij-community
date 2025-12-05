@@ -108,13 +108,48 @@ data class DependencyGenerationResult(
 }
 
 /**
+ * Result of generating a single plugin.xml dependency file.
+ */
+data class PluginDependencyFileResult(
+  /** Plugin module name (e.g., "intellij.database.plugin") */
+  @JvmField val pluginModuleName: String,
+  /** Absolute path to the plugin.xml file */
+  @JvmField val pluginXmlPath: Path,
+  /** Change status of the file */
+  @JvmField val status: FileChangeStatus,
+  /** Number of dependencies added */
+  @JvmField val dependencyCount: Int,
+  /** Results for content module descriptor updates */
+  @JvmField val contentModuleResults: List<DependencyFileResult> = emptyList(),
+)
+
+/**
+ * Result of generating all plugin.xml dependencies for bundled plugins.
+ */
+data class PluginDependencyGenerationResult(
+  @JvmField val files: List<PluginDependencyFileResult>,
+) {
+  val createdCount: Int get() = files.count { it.status == FileChangeStatus.CREATED }
+  val modifiedCount: Int get() = files.count { it.status == FileChangeStatus.MODIFIED }
+  val unchangedCount: Int get() = files.count { it.status == FileChangeStatus.UNCHANGED }
+  val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
+
+  // Content module statistics
+  val contentModuleCount: Int get() = files.sumOf { it.contentModuleResults.size }
+  val contentModuleCreatedCount: Int get() = files.sumOf { it.contentModuleResults.count { r -> r.status == FileChangeStatus.CREATED } }
+  val contentModuleModifiedCount: Int get() = files.sumOf { it.contentModuleResults.count { r -> r.status == FileChangeStatus.MODIFIED } }
+  val contentModuleUnchangedCount: Int get() = files.sumOf { it.contentModuleResults.count { r -> r.status == FileChangeStatus.UNCHANGED } }
+}
+
+/**
  * Combined results from all generation operations.
  * Used to collect parallel generation results before printing summary.
  */
 data class GenerationResults(
   val moduleSetResults: List<ModuleSetGenerationResult>,
   val dependencyResult: DependencyGenerationResult,
-  val productResult: ProductGenerationResult
+  val pluginDependencyResult: PluginDependencyGenerationResult?,
+  val productResult: ProductGenerationResult,
 )
 
 // ANSI color codes
@@ -166,15 +201,17 @@ private fun fileWord(count: Int): String = if (count == 1) "file" else "files"
 fun printGenerationSummary(
   moduleSetResults: List<ModuleSetGenerationResult>,
   dependencyResult: DependencyGenerationResult?,
+  pluginDependencyResult: PluginDependencyGenerationResult? = null,
   productResult: ProductGenerationResult?,
   projectRoot: Path,
-  durationMs: Long
+  durationMs: Long,
 ) {
   println()
   printModuleSetsSummary(moduleSetResults)
   printDependenciesSummary(dependencyResult, projectRoot)
+  printPluginDependenciesSummary(pluginDependencyResult, projectRoot)
   printProductsSummary(productResult)
-  printOverallSummary(moduleSetResults, dependencyResult, productResult, durationMs)
+  printOverallSummary(moduleSetResults, dependencyResult, pluginDependencyResult, productResult, durationMs)
 }
 
 /**
@@ -231,6 +268,48 @@ private fun printDependenciesSummary(dependencyResult: DependencyGenerationResul
 }
 
 /**
+ * Prints plugin dependencies section.
+ */
+private fun printPluginDependenciesSummary(pluginDependencyResult: PluginDependencyGenerationResult?, projectRoot: Path) {
+  if (pluginDependencyResult == null || pluginDependencyResult.files.isEmpty()) return
+
+  printSectionHeader("Plugin Dependencies")
+
+  // Show changed plugin.xml files (up to 10)
+  val changedFiles = pluginDependencyResult.files.filter { it.status != FileChangeStatus.UNCHANGED }
+  for (file in changedFiles.take(10)) {
+    val (statusIcon, statusText) = formatFileStatus(file.status)
+    val relativePath = projectRoot.relativize(file.pluginXmlPath)
+    println("  $statusIcon ${AnsiColors.BOLD}${file.pluginModuleName}${AnsiColors.RESET} ${AnsiColors.GRAY}($relativePath)${AnsiColors.RESET}")
+    println("    Status: $statusText, ${AnsiColors.BOLD}${file.dependencyCount}${AnsiColors.RESET} dependencies")
+
+    // Show content module updates for this plugin
+    val changedContentModules = file.contentModuleResults.filter { it.status != FileChangeStatus.UNCHANGED }
+    if (changedContentModules.isNotEmpty()) {
+      println("    Content modules updated: ${changedContentModules.size}")
+    }
+  }
+
+  if (pluginDependencyResult.unchangedCount > 0) {
+    println("  ${AnsiColors.GRAY}• ${pluginDependencyResult.unchangedCount} plugin.xml ${fileWord(pluginDependencyResult.unchangedCount)} unchanged${AnsiColors.RESET}")
+  }
+
+  val changesSummary = buildChangesSummary(pluginDependencyResult.createdCount, pluginDependencyResult.modifiedCount, pluginDependencyResult.unchangedCount)
+  println("  ${AnsiColors.BOLD}Plugin.xml Total:${AnsiColors.RESET} ${pluginDependencyResult.files.size} ${fileWord(pluginDependencyResult.files.size)} ($changesSummary), ${AnsiColors.BOLD}${pluginDependencyResult.totalDependencies}${AnsiColors.RESET} dependencies")
+
+  // Content module summary
+  if (pluginDependencyResult.contentModuleCount > 0) {
+    val contentSummary = buildChangesSummary(
+      pluginDependencyResult.contentModuleCreatedCount,
+      pluginDependencyResult.contentModuleModifiedCount,
+      pluginDependencyResult.contentModuleUnchangedCount
+    )
+    println("  ${AnsiColors.BOLD}Content Modules:${AnsiColors.RESET} ${pluginDependencyResult.contentModuleCount} ${fileWord(pluginDependencyResult.contentModuleCount)} ($contentSummary)")
+  }
+  println()
+}
+
+/**
  * Prints products section.
  */
 private fun printProductsSummary(productResult: ProductGenerationResult?) {
@@ -256,8 +335,9 @@ private fun printProductsSummary(productResult: ProductGenerationResult?) {
 private fun printOverallSummary(
   moduleSetResults: List<ModuleSetGenerationResult>,
   dependencyResult: DependencyGenerationResult?,
+  pluginDependencyResult: PluginDependencyGenerationResult?,
   productResult: ProductGenerationResult?,
-  durationMs: Long
+  durationMs: Long,
 ) {
   printSectionHeader("Summary")
 
@@ -270,10 +350,26 @@ private fun printOverallSummary(
   val moduleSetSummary = buildChangesSummary(totalCreated, totalModified, totalUnchanged, totalDeleted)
   println("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}$totalFiles${AnsiColors.RESET} module set ${fileWord(totalFiles)} ($moduleSetSummary)")
 
-  // Dependencies total
+  // Module dependencies total
   if (dependencyResult != null && dependencyResult.files.isNotEmpty()) {
     val depSummary = buildChangesSummary(dependencyResult.createdCount, dependencyResult.modifiedCount, dependencyResult.unchangedCount)
-    println("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${dependencyResult.files.size}${AnsiColors.RESET} dependency ${fileWord(dependencyResult.files.size)} ($depSummary)")
+    println("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${dependencyResult.files.size}${AnsiColors.RESET} module dependency ${fileWord(dependencyResult.files.size)} ($depSummary)")
+  }
+
+  // Plugin dependencies total
+  if (pluginDependencyResult != null && pluginDependencyResult.files.isNotEmpty()) {
+    val pluginDepSummary = buildChangesSummary(pluginDependencyResult.createdCount, pluginDependencyResult.modifiedCount, pluginDependencyResult.unchangedCount)
+    println("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.files.size}${AnsiColors.RESET} plugin dependency ${fileWord(pluginDependencyResult.files.size)} ($pluginDepSummary)")
+
+    // Content modules summary
+    if (pluginDependencyResult.contentModuleCount > 0) {
+      val contentSummary = buildChangesSummary(
+        pluginDependencyResult.contentModuleCreatedCount,
+        pluginDependencyResult.contentModuleModifiedCount,
+        pluginDependencyResult.contentModuleUnchangedCount
+      )
+      println("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.contentModuleCount}${AnsiColors.RESET} content module dependency ${fileWord(pluginDependencyResult.contentModuleCount)} ($contentSummary)")
+    }
   }
 
   // Products total

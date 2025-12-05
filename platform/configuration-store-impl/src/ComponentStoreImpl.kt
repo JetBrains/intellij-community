@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.*
@@ -880,7 +881,7 @@ internal suspend fun getStateForComponent(component: PersistentStateComponent<*>
   return when {
     component is SerializablePersistentStateComponent<*> -> component.state
     // maybe read action
-    stateSpec.getStateRequiresEdt -> withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) { component.state }
+    stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { component.state }
     else -> readAction { component.state }
   }
 }
