@@ -59,15 +59,5 @@ class PluginModuleId private constructor(val name: String, val namespace: String
      * It's used by default when declaring a dependency if the namespace isn't specified explicitly.
      */
     const val JETBRAINS_NAMESPACE: String = "jetbrains"
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use getId(name, namespace) instead")
-    fun getId(name: String): PluginModuleId {
-      return getId(name, JETBRAINS_NAMESPACE)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use PluginModuleId(name, namespace) instead")
-    operator fun invoke(name: String): PluginModuleId = getId(name)
   }
 }
