@@ -22,7 +22,7 @@ import java.lang.annotation.Inherited
   MonolithAndSplitModeTestTemplateProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
   BackgroundLambdaCleanupAfterEach::class,
-  BackgroundRunWithLambdaParameterResolver::class,
+  IdeWithLambdaParameterResolver::class,
   RemoteDevRun::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

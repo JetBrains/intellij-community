@@ -9,8 +9,8 @@ import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
-import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
+import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -19,8 +19,8 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG = starterLogger<IdeInstance>()
 
 object IdeInstance {
-  private var _ide: BackgroundRunWithLambda? = null
-  val ide: BackgroundRunWithLambda
+  private var _ide: IdeWithLambda? = null
+  val ide: IdeWithLambda
     get() = _ide ?: throw IllegalStateException("IDE is not started yet")
 
   lateinit var currentIdeMode: IdeRunMode
@@ -31,7 +31,7 @@ object IdeInstance {
 
   fun isStarted(): Boolean = _ide != null
 
-  fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
+  fun startIde(runMode: IdeRunMode): IdeWithLambda = synchronized(this) {
     try {
       if (isStarted() && currentIdeMode == runMode && IdeStartConfig.current == currentIdeConfig) {
         LOG.info("IDE is already running in mode: $runMode and there were no requests to change it's config. Reusing the current instance of IDE.")

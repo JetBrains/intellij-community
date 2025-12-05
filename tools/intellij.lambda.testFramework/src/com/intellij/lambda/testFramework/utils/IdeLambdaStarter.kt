@@ -35,7 +35,7 @@ object IdeLambdaStarter {
     expectedExitCode: Int = 0,
     collectNativeThreads: Boolean = false,
     configure: IDERunContext.() -> Unit = {},
-  ): BackgroundRunWithLambda {
+  ): IdeWithLambda {
     if (this is IDERemDevTestContext) {
       val driverRunner = RemDevDriverRunner()
       LambdaTestPluginHolder.additionalPluginDirNames().forEach { addCustomFrontendPlugin(it) }
@@ -44,14 +44,14 @@ object IdeLambdaStarter {
 
       val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
       listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
-      return BackgroundRunWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
+      return IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
     }
 
     val driverRunner = LocalDriverRunner()
     val monolithRdSession = setUpRdTestSession(MONOLITH)
     val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
     monolithRdSession.awaitSessionReady()
-    return BackgroundRunWithLambda(backgroundRun, monolithRdSession, null)
+    return IdeWithLambda(backgroundRun, monolithRdSession, null)
   }
 
   private fun LambdaRdTestSession.awaitSessionReady() {
