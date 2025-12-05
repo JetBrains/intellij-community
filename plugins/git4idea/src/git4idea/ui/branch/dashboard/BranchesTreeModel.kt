@@ -162,7 +162,6 @@ interface BranchesTreeModel {
   interface Listener : EventListener {
     fun onTreeChange() {}
     fun onLoadingStateChange() {}
-    fun onTreeDataChange() {}
   }
 }
 
@@ -197,10 +196,6 @@ abstract class BranchesTreeModelBase : BranchesTreeModel {
 
   final override fun removeListener(listener: BranchesTreeModel.Listener) {
     listeners.removeListener(listener)
-  }
-
-  fun onTreeDataChange() {
-    listeners.multicaster.onTreeDataChange()
   }
 }
 

@@ -232,11 +232,6 @@ internal class FilteringBranchesTree(
       override fun onTreeChange() {
         updateTree()
       }
-
-      override fun onTreeDataChange() {
-        tree.revalidate()
-        tree.repaint()
-      }
     }
 
     tree.launchOnShow("Git Dashboard Tree") {
