@@ -6,7 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter
 import com.intellij.platform.syntax.psi.impl.getSyntaxParserRuntimeFactory
 import com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
-import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+import com.intellij.platform.syntax.util.runtime.ParserUserState
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IFileElementType
 
@@ -36,6 +36,6 @@ class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(lan
     return root.getFirstChildNode() 
   }
   
-  open fun createExtendedParserUserState(): SyntaxGeneratedParserRuntime.ParserUserState? = null
+  open fun createExtendedParserUserState(): ParserUserState? = null
   
 }

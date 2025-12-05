@@ -8,6 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 interface SyntaxParserRuntimeFactory {
   fun buildParserRuntime(
     builder: SyntaxTreeBuilder,
-    extendedState: SyntaxGeneratedParserRuntime.ParserUserState? = null,
+    extendedState: ParserUserState? = null,
   ): SyntaxGeneratedParserRuntime
 }

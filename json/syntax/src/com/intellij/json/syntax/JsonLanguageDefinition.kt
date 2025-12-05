@@ -7,6 +7,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.util.runtime.BracePair
 import com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import org.jetbrains.annotations.ApiStatus
@@ -16,11 +17,11 @@ open class JsonLanguageDefinition : LanguageSyntaxDefinition, GrammarKitLanguage
   private val jsonComments = syntaxElementTypeSetOf(JsonSyntaxElementTypes.LINE_COMMENT,
                                                     JsonSyntaxElementTypes.BLOCK_COMMENT)
   private val jsonPairedBraces = listOf(
-    SyntaxGeneratedParserRuntime.BracePair(JsonSyntaxElementTypes.L_CURLY, JsonSyntaxElementTypes.R_CURLY, true),
-    SyntaxGeneratedParserRuntime.BracePair(JsonSyntaxElementTypes.L_BRACKET, JsonSyntaxElementTypes.R_BRACKET, true),
+    BracePair(JsonSyntaxElementTypes.L_CURLY, JsonSyntaxElementTypes.R_CURLY, true),
+    BracePair(JsonSyntaxElementTypes.L_BRACKET, JsonSyntaxElementTypes.R_BRACKET, true),
   )
 
-  override fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = jsonPairedBraces
+  override fun getPairedBraces(): Collection<BracePair> = jsonPairedBraces
 
   override fun parse(builder: SyntaxTreeBuilder) {
     throw UnsupportedOperationException("Unsupported operation - generated Parser.")
