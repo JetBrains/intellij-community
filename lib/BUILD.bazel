@@ -3156,12 +3156,6 @@ jvm_import(
   source_jar = "@com_sun_activation-jakarta_activation-1_2_2-sources_http//file"
 )
 
-jvm_import(
-  name = "jaxen",
-  jar = "@jaxen-jaxen-1_2_0_http//file",
-  source_jar = "@jaxen-jaxen-1_2_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "jb-jdi",
