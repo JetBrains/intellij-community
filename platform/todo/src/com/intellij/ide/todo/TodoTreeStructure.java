@@ -4,11 +4,13 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.todo.nodes.ToDoRootNode;
+import com.intellij.ide.todo.rpc.TodoRemoteClient;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
@@ -19,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
 
 @ApiStatus.Internal
 public abstract class TodoTreeStructure extends AbstractTreeStructureBase implements ToDoSettings {
@@ -96,17 +100,26 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
    * @return number of {@code TodoItem}s located in the file.
    */
   public final int getTodoItemCount(PsiFile psiFile) {
+    if (psiFile == null) {
+      return 0;
+    }
+    if (shouldUseSplitTodo()) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile == null) {
+        return 0;
+      }
+      return TodoRemoteClient.getTodoCount(myProject, virtualFile, myTodoFilter);
+    }
+
     int count = 0;
-    if (psiFile != null) {
-      if (myTodoFilter != null) {
-        for (Iterator i = myTodoFilter.iterator(); i.hasNext(); ) {
-          TodoPattern pattern = (TodoPattern)i.next();
-          count += getSearchHelper().getTodoItemsCount(psiFile, pattern);
-        }
+    if (myTodoFilter != null) {
+      for (Iterator i = myTodoFilter.iterator(); i.hasNext(); ) {
+        TodoPattern pattern = (TodoPattern)i.next();
+        count += getSearchHelper().getTodoItemsCount(psiFile, pattern);
       }
-      else {
-        count = getSearchHelper().getTodoItemsCount(psiFile);
-      }
+    }
+    else {
+      count = getSearchHelper().getTodoItemsCount(psiFile);
     }
     return count;
   }
