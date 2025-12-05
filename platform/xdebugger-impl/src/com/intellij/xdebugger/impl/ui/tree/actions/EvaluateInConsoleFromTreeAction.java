@@ -31,7 +31,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
   }
 
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValueNodeImpl node, @NotNull String nodeName, @NotNull AnActionEvent e) {
     final ConsoleExecuteAction action = getConsoleExecuteAction(e);
     if (action != null) {
       node.calculateEvaluationExpression()

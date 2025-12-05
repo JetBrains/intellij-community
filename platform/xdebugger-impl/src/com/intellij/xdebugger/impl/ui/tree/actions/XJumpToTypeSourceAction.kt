@@ -5,10 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
-private class XJumpToTypeSourceAction : XJumpToSourceActionBase(), SplitDebuggerAction {
+private class XJumpToTypeSourceAction : XJumpToSourceActionBase() {
   override suspend fun navigateToSource(xValueId: XValueId): Boolean =
     XDebuggerNavigationApi.getInstance().navigateToXValueType(xValueId).await()
 

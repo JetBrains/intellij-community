@@ -201,5 +201,20 @@ com.intellij.xdebugger.impl.ui.XValueTextProvider
 - f:getName():java.lang.String
 - f:getXValue():com.intellij.xdebugger.frame.XValue
 - hashCode():I
+*a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
+- com.intellij.openapi.actionSystem.AnAction
+- *sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase$Companion
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+- p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+*f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase$Companion
+- f:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- f:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- f:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
 - *s:renderName(java.lang.String,I,java.util.function.Consumer):V

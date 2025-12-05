@@ -67,6 +67,8 @@ com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getPresentation():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - rebuild():V
+c:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
+- com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
 - p:handle(com.intellij.openapi.project.Project,java.lang.String):V
 - p:handle(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V

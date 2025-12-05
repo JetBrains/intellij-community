@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class XInspectAction extends XDebuggerTreeActionBase implements SplitDebuggerAction {
+public class XInspectAction extends XDebuggerTreeSplitActionBase {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
