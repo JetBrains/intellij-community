@@ -4434,12 +4434,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "kotlinx-serialization-protobuf",
-  jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0_http//file",
-  source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-protobuf-jvm-1_9_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 java_library(
   name = "ktor-client-cio",
