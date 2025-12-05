@@ -1,0 +1,16 @@
+JsonFile: n_object_comma_instead_of_colon.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+      PsiErrorElement:':' expected, got ','
+        <empty list>
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonNullLiteral
+        PsiElement(null)('null')
+      PsiErrorElement:':' expected, got '}'
+        <empty list>
+    PsiElement(})('}')

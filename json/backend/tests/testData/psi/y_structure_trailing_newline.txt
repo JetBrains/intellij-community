@@ -1,0 +1,6 @@
+JsonFile: y_structure_trailing_newline.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+    PsiElement(])(']')

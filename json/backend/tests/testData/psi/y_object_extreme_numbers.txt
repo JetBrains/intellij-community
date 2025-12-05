@@ -1,0 +1,22 @@
+JsonFile: y_object_extreme_numbers.json
+  JsonObject
+    PsiElement({)('{')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"min"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('-1.0e+28')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"max"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonNumberLiteral
+        PsiElement(NUMBER)('1.0e+28')
+    PsiWhiteSpace(' ')
+    PsiElement(})('}')

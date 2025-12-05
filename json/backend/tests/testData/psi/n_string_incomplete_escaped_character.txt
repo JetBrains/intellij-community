@@ -1,0 +1,6 @@
+JsonFile: n_string_incomplete_escaped_character.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u00A"')
+    PsiElement(])(']')

@@ -1,0 +1,5 @@
+JsonFile: n_structure_open_object_comma.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> expected, got ','
+      PsiElement(,)(',')

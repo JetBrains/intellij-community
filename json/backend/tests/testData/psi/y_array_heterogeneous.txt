@@ -1,0 +1,19 @@
+JsonFile: y_array_heterogeneous.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNullLiteral
+      PsiElement(null)('null')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"1"')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    JsonObject
+      PsiElement({)('{')
+      PsiElement(})('}')
+    PsiElement(])(']')

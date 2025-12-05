@@ -1,0 +1,3 @@
+JsonFile: n_string_single_doublequote.json
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"')

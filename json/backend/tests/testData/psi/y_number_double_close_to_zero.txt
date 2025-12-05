@@ -1,0 +1,6 @@
+JsonFile: y_number_double_close_to_zero.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('-0.000000000000000000000000000000000000000000000000000000000000000000000000000001')
+    PsiElement(])(']')

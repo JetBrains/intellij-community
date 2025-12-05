@@ -1,0 +1,6 @@
+JsonFile: y_number.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('123e65')
+    PsiElement(])(']')

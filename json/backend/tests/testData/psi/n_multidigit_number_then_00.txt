@@ -1,0 +1,3 @@
+JsonFile: n_multidigit_number_then_00.json
+  JsonNumberLiteral
+    PsiElement(NUMBER)('123')

@@ -1,0 +1,6 @@
+JsonFile: y_number_real_neg_exp.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1e-2')
+    PsiElement(])(']')

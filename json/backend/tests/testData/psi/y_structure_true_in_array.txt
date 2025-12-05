@@ -1,0 +1,6 @@
+JsonFile: y_structure_true_in_array.json
+  JsonArray
+    PsiElement([)('[')
+    JsonBooleanLiteral
+      PsiElement(true)('true')
+    PsiElement(])(']')

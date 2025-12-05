@@ -1,0 +1,12 @@
+JsonFile: n_object_with_trailing_garbage.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+    PsiElement(})('}')
+  PsiErrorElement:<value> expected, got '#'
+    PsiElement(BAD_CHARACTER)('#')

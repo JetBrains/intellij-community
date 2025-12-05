@@ -1,0 +1,6 @@
+JsonFile: n_array_star_inside.json
+  JsonArray
+    PsiElement([)('[')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('*')
+    PsiElement(])(']')
