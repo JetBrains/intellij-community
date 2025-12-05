@@ -654,6 +654,8 @@
                  When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
+    <registryKey key="git.log.branches.use.async.tree.model" defaultValue="true"
+                 description="Use asynchronous branches dashboard tree model in Git Log. If disabled, use the synchronous model instead."/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
     <registryKey key="git.recent.checkout.branches.reflog.entries.count" defaultValue="50"

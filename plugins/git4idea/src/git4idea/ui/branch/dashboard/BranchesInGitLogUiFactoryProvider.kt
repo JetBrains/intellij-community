@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.icons.AllIcons
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -41,10 +42,12 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
+import git4idea.GitDisposable
 import git4idea.GitVcs
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardTreeSelectionHandler.SelectionAction
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
@@ -102,9 +105,15 @@ internal class BranchesVcsLogUi(
   }
 
   private fun createMainComponent(logData: VcsLogData, properties: MainVcsLogUiProperties, mainFrame: MainFrame): JComponent {
-    val model = SyncBranchesDashboardTreeModel(logData).also {
-      Disposer.register(this, it)
-    }
+    val model: BranchesDashboardTreeModelBase = (
+      if (Registry.`is`("git.log.branches.use.async.tree.model", true)) {
+        val cs = GitDisposable.getInstance(logData.project).childScope("AsyncBranchesDashboardTreeModel")
+          .also { Disposer.register(this) { it.cancel() } }
+        AsyncBranchesDashboardTreeModel(cs, logData)
+      }
+      else {
+        SyncBranchesDashboardTreeModel(logData)
+      }).also { Disposer.register(this, it) }
 
     val filterUi = mainFrame.filterUi
     val roots = logData.roots.toSet()
