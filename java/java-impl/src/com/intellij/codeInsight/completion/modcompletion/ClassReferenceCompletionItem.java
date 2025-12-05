@@ -57,8 +57,8 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem 
   }
 
   @Override
-  public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
-    AllClassesGetter.tryShorten(file, updater, myClass);
+  public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
+    AllClassesGetter.tryShorten(updater.getPsiFile(), updater, myClass);
   }
 
   @Override

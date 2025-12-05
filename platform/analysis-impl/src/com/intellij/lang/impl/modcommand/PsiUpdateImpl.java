@@ -325,8 +325,18 @@ final class PsiUpdateImpl {
     }
 
     @Override
+    public @NotNull Project getProject() {
+      return myActionContext.project();
+    }
+
+    @Override
     public @NotNull Document getDocument() {
       return tracker().myDocument;
+    }
+
+    @Override
+    public @NotNull PsiFile getPsiFile() {
+      return tracker().myCopyFile;
     }
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {

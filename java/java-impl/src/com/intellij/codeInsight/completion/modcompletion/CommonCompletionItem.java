@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -41,7 +40,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     myAdditionalStrings = Set.of();
     myTail = (ModNavigatorTailType)TailTypes.noneType();
     myPriority = 0;
-    myAdditionalUpdater = (UpdateHandler)(start, file, updater) -> { };
+    myAdditionalUpdater = (UpdateHandler)(start, updater) -> { };
     myPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
   
@@ -123,8 +122,8 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a CommonCompletionItem, with an additional handler, which will automatically adjust the indentation of current line
    */
   public CommonCompletionItem adjustIndent() {
-    return withAdditionalUpdater((start, file, updater) -> {
-      CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, start);
+    return withAdditionalUpdater((start, updater) -> {
+      CodeStyleManager.getInstance(updater.getProject()).adjustLineIndent(updater.getPsiFile(), start);
     });
   }
 
@@ -172,15 +171,15 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
+  public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
     Project project = actionContext.project();
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    Document document = file.getFileDocument();
+    Document document = updater.getDocument();
     manager.commitDocument(document);
-    myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater.getWritable(file), updater, insertionContext);
+    myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater, insertionContext);
     manager.commitDocument(document);
     manager.doPostponedOperationsAndUnblockDocument(document);
-    myTail.processTail(project, updater, updater.getCaretOffset());
+    myTail.processTail(updater, updater.getCaretOffset());
   }
 
   /**
@@ -190,16 +189,15 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   public interface UpdateHandler extends InsertionAwareUpdateHandler {
     /**
      * Perform an update. Executed after lookup string insertion but before tail processing.
-     * 
+     *
      * @param completionStart offset of the completion start position
-     * @param writableFile file to be updated
-     * @param updater updater; its caret position points to the end of the inserted lookup string
+     * @param updater         updater; its caret position points to the end of the inserted lookup string
      */
-    void update(int completionStart, PsiFile writableFile, ModPsiUpdater updater);
+    void update(int completionStart, ModPsiUpdater updater);
     
     @Override
-    default void update(int completionStart, PsiFile writableFile, ModPsiUpdater updater, InsertionContext insertionContext) {
-      update(completionStart, writableFile, updater);
+    default void update(int completionStart, ModPsiUpdater updater, InsertionContext insertionContext) {
+      update(completionStart, updater);
     }
   }
 
@@ -212,11 +210,10 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     /**
      * Perform an update. Executed after lookup string insertion but before tail processing.
      *
-     * @param completionStart offset of the completion start position
-     * @param writableFile file to be updated
-     * @param updater updater; its caret position points to the end of the inserted lookup string
+     * @param completionStart  offset of the completion start position
+     * @param updater          updater; its caret position points to the end of the inserted lookup string
      * @param insertionContext insertion context
      */
-    void update(int completionStart, PsiFile writableFile, ModPsiUpdater updater, InsertionContext insertionContext);
+    void update(int completionStart, ModPsiUpdater updater, InsertionContext insertionContext);
   }
 }

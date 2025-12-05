@@ -33,7 +33,7 @@ public abstract class PsiUpdateCompletionItem implements ModCompletionItem {
                              calculateEndOffsetForOverwrite(document, completionStart) : completionStart, lookupString);
       updater.moveCaretTo(updatedCaretPos);
       update(actionContext.withOffset(updatedCaretPos)
-               .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, writableFile, updater);
+               .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, updater);
       int offset = updater.getCaretOffset();
       updater.select(TextRange.create(offset, offset));
     });
@@ -55,14 +55,13 @@ public abstract class PsiUpdateCompletionItem implements ModCompletionItem {
   }
 
   /**
-   * Performs PSI/document update of the file copy to generate a final {@link ModCommand}. 
-   * 
-   * @param actionContext context of the action
+   * Performs PSI/document update of the file copy to generate a final {@link ModCommand}.
+   *
+   * @param actionContext    context of the action
    * @param insertionContext context of the insertion (like which character was used to finish the completion)
-   * @param file a file copy to update
-   * @param updater an updater to use
+   * @param updater          an updater to use
    */
-  public abstract void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater);
+  public abstract void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater);
 
   @Override
   public String toString() {

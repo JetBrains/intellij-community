@@ -103,7 +103,8 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
+  public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
+    PsiFile file = updater.getPsiFile();
     PsiClass psiClass = PsiUtil.resolveClassInType(myType);
     if (psiClass != null) {
       addImportForItem(psiClass, file, actionContext.selection().getStartOffset(), updater);

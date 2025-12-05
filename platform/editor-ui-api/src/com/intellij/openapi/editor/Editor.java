@@ -16,7 +16,9 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +28,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -464,6 +467,16 @@ public interface Editor extends UserDataHolder {
       @Override
       public @NotNull Document getDocument() {
         return Editor.this.getDocument();
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        return Objects.requireNonNull(Editor.this.getProject());
+      }
+
+      @Override
+      public @NotNull PsiFile getPsiFile() {
+        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
       }
 
       @Override

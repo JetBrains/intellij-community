@@ -125,9 +125,9 @@ public final class JavaTailTypes {
   private static final String ARROW = " -> ";
   public static final ModNavigatorTailType CASE_ARROW = new ModNavigatorTailType() {
     @Override
-    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
       Document document = navigator.getDocument();
-      if (!isApplicable(project, document, tailOffset)) return tailOffset;
+      if (!isApplicable(navigator.getProject(), document, tailOffset)) return tailOffset;
       document.insertString(tailOffset, ARROW);
       return moveCaret(navigator, tailOffset, ARROW.length());
     }

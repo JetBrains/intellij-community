@@ -4,7 +4,6 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +12,7 @@ public final class TailTypes {
 
   private static final ModNavigatorTailType UNKNOWN = new ModNavigatorTailType() {
     @Override
-    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
       return tailOffset;
     }
 
@@ -30,7 +29,7 @@ public final class TailTypes {
 
   private static final ModNavigatorTailType NONE = new ModNavigatorTailType() {
     @Override
-    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
       return tailOffset;
     }
 
@@ -53,7 +52,7 @@ public final class TailTypes {
 
   private static final ModNavigatorTailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
     @Override
-    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
       CharSequence text = navigator.getDocument().getCharsSequence();
       if (text.length() > tailOffset + 1 && text.charAt(tailOffset) == ' ') {
         char ch = text.charAt(tailOffset + 1);
@@ -61,7 +60,7 @@ public final class TailTypes {
           return tailOffset;
         }
       }
-      return super.processTail(project, navigator, tailOffset);
+      return super.processTail(navigator, tailOffset);
     }
 
     @Override
@@ -78,7 +77,7 @@ public final class TailTypes {
 
   private static final ModNavigatorTailType COND_EXPR_COLON = new ModNavigatorTailType() {
     @Override
-    public int processTail(@NotNull Project project, @NotNull ModNavigator editor, int tailOffset) {
+    public int processTail(@NotNull ModNavigator editor, int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       CharSequence chars = document.getCharsSequence();

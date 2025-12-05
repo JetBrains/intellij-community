@@ -90,22 +90,21 @@ final class AnnotationAttributeItemProvider implements ModCompletionItemProvider
     return new CommonCompletionItem(lookupString)
       .withObject(annoMethod)
       .withPresentation(presentation)
-      .withAdditionalUpdater((completionStart, writableFile, updater) -> {
+      .withAdditionalUpdater((completionStart, updater) -> {
         if (value == null) {
-          new EqTailType().processTail(writableFile.getProject(), updater, updater.getCaretOffset());
+          new EqTailType().processTail(updater, updater.getCaretOffset());
         }
         //context.setAddCompletionChar(false);
 
         Document document = updater.getDocument();
-        PsiDocumentManager.getInstance(writableFile.getProject()).commitDocument(document);
+        PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
 
         PsiAnnotationParameterList paramList =
-          PsiTreeUtil.findElementOfClassAtOffset(writableFile, completionStart, PsiAnnotationParameterList.class, false);
+          PsiTreeUtil.findElementOfClassAtOffset(updater.getPsiFile(), completionStart, PsiAnnotationParameterList.class, false);
         if (paramList != null && paramList.getAttributes().length > 0 && paramList.getAttributes()[0].getName() == null) {
           int valueOffset = paramList.getAttributes()[0].getTextRange().getStartOffset();
           document.insertString(valueOffset, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-          new EqTailType().processTail(writableFile.getProject(), updater,
-                                       valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
+          new EqTailType().processTail(updater, valueOffset + PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.length());
         }
         int offset = updater.getCaretOffset();
         CharSequence sequence = document.getCharsSequence();

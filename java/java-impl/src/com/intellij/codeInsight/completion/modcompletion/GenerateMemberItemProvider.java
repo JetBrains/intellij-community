@@ -94,10 +94,10 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
             addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
           Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
           sink.accept(createGenerateMethodElement(prototype, PsiSubstitutor.EMPTY, icon, "",
-                                                  (completionStart, writableFile, updater) -> {
-                                                    removeLookupString(completionStart, writableFile, updater);
+                                                  (completionStart, updater) -> {
+                                                    removeLookupString(completionStart, updater);
 
-                                                    insertGenerationInfos(completionStart, writableFile, updater,
+                                                    insertGenerationInfos(completionStart, updater,
                                                                           Collections.singletonList(new PsiGenerationInfo<>(prototype)));
                                                   }, false, parent));
 
@@ -113,10 +113,10 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
            field.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  private static void removeLookupString(int completionStart, PsiFile writableFile, ModPsiUpdater updater) {
+  private static void removeLookupString(int completionStart, ModPsiUpdater updater) {
     Document document = updater.getDocument();
     document.deleteString(completionStart, updater.getCaretOffset());
-    PsiDocumentManager.getInstance(writableFile.getProject()).commitDocument(document);
+    PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
   }
 
   private static void addSuperSignatureElements(PsiClass parent,
@@ -145,26 +145,24 @@ final class GenerateMemberItemProvider implements ModCompletionItemProvider {
     RowIcon icon = IconManager
       .getInstance()
       .createRowIcon(baseMethod.getIcon(0), implemented ? AllIcons.Gutter.ImplementingMethod : AllIcons.Gutter.OverridingMethod);
-    CommonCompletionItem.UpdateHandler handler = (int completionStart, PsiFile writableFile, ModPsiUpdater updater) -> {
-      removeLookupString(completionStart, writableFile, updater);
+    CommonCompletionItem.UpdateHandler handler = (int completionStart, ModPsiUpdater updater) -> {
+      removeLookupString(completionStart, updater);
 
-      final PsiClass parent =
-        PsiTreeUtil.findElementOfClassAtOffset(writableFile, completionStart, PsiClass.class, false);
+      PsiClass parent = PsiTreeUtil.findElementOfClassAtOffset(updater.getPsiFile(), completionStart, PsiClass.class, false);
       if (parent == null) return;
 
       List<PsiMethod> prototypes = OverrideImplementUtil.overrideOrImplementMethod(parent, baseMethod, false);
-      insertGenerationInfos(completionStart, writableFile, updater, OverrideImplementUtil.convert2GenerationInfos(prototypes));
+      insertGenerationInfos(completionStart, updater, OverrideImplementUtil.convert2GenerationInfos(prototypes));
     };
     return createGenerateMethodElement(baseMethod, substitutor, icon, baseClass.getName(), handler,
                                        generateDefaultMethods, targetClass);
   }
 
   private static void insertGenerationInfos(int completionStart,
-                                            PsiFile writableFile,
                                             ModPsiUpdater updater,
                                             List<PsiGenerationInfo<PsiMethod>> infos) {
     List<PsiGenerationInfo<PsiMethod>> newInfos = GenerateMembersUtil
-      .insertMembersAtOffset(writableFile, completionStart, infos);
+      .insertMembersAtOffset(updater.getPsiFile(), completionStart, infos);
     if (!newInfos.isEmpty()) {
       final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newInfos) {

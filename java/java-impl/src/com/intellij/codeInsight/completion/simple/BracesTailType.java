@@ -7,7 +7,6 @@ import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.java.syntax.JavaSyntaxBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ModNavigator;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class BracesTailType extends ModNavigatorTailType {
 
   @Override
-  public int processTail(@NotNull Project project, @NotNull ModNavigator editor, int tailOffset) {
+  public int processTail(@NotNull ModNavigator editor, int tailOffset) {
     int startOffset = tailOffset;
 
     CharSequence seq = editor.getDocument().getCharsSequence();
@@ -30,31 +29,29 @@ public class BracesTailType extends ModNavigatorTailType {
       tailOffset = insertChar(editor, startOffset, '{');
     }
 
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(editor.getProject());
     Document document = editor.getDocument();
     manager.commitDocument(document);
-    PsiFile psiFile = manager.getPsiFile(document);
-    if (psiFile != null) {
-      editor.moveCaretTo(tailOffset);
-      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-      styleManager.reformatText(psiFile, startOffset, tailOffset);
-      int offset = editor.getCaretOffset();
-      PsiElement element = PsiTreeUtil.skipWhitespacesBackward(psiFile.findElementAt(offset));
-      if (PsiUtil.isJavaToken(element, JavaTokenType.LBRACE)) {
-        if (StreamEx.iterate(element, e -> e.getParent()).takeWhile(e -> e != null && !(e instanceof PsiFile))
-          .anyMatch(e -> e.getNextSibling() instanceof PsiErrorElement errorElement &&
-                         errorElement.getErrorDescription().equals(JavaSyntaxBundle.message("expected.rbrace")))) {
-          manager.doPostponedOperationsAndUnblockDocument(document);
-          document.insertString(offset, "\n\n}");
-          manager.commitDocument(document);
-          editor.moveCaretTo(offset + 1);
-          styleManager.reformatText(psiFile, offset, offset + 2);
-          offset = editor.getCaretOffset();
-          String newIndent = styleManager.getLineIndent(document, offset);
-          if (newIndent != null) {
-            int adjusted = EnterHandler.adjustLineIndentNoCommit(document, offset, newIndent);
-            editor.moveCaretTo(adjusted);
-          }
+    PsiFile psiFile = editor.getPsiFile();
+    editor.moveCaretTo(tailOffset);
+    CodeStyleManager styleManager = CodeStyleManager.getInstance(editor.getProject());
+    styleManager.reformatText(psiFile, startOffset, tailOffset);
+    int offset = editor.getCaretOffset();
+    PsiElement element = PsiTreeUtil.skipWhitespacesBackward(psiFile.findElementAt(offset));
+    if (PsiUtil.isJavaToken(element, JavaTokenType.LBRACE)) {
+      if (StreamEx.iterate(element, e -> e.getParent()).takeWhile(e -> e != null && !(e instanceof PsiFile))
+        .anyMatch(e -> e.getNextSibling() instanceof PsiErrorElement errorElement &&
+                       errorElement.getErrorDescription().equals(JavaSyntaxBundle.message("expected.rbrace")))) {
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        document.insertString(offset, "\n\n}");
+        manager.commitDocument(document);
+        editor.moveCaretTo(offset + 1);
+        styleManager.reformatText(psiFile, offset, offset + 2);
+        offset = editor.getCaretOffset();
+        String newIndent = styleManager.getLineIndent(document, offset);
+        if (newIndent != null) {
+          int adjusted = EnterHandler.adjustLineIndentNoCommit(document, offset, newIndent);
+          editor.moveCaretTo(adjusted);
         }
       }
     }
