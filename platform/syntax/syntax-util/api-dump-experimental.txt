@@ -176,6 +176,8 @@
 *:com.intellij.platform.syntax.util.runtime.BracePair
 - a:getMyLeftBrace():com.intellij.platform.syntax.SyntaxElementType
 - a:getMyRightBrace():com.intellij.platform.syntax.SyntaxElementType
+*f:com.intellij.platform.syntax.util.runtime.BracePairKt
+- *sf:BracePair(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,Z):com.intellij.platform.syntax.util.runtime.BracePair
 *:com.intellij.platform.syntax.util.runtime.ErrorState
 - a:clearVariants(com.intellij.platform.syntax.util.runtime.Frame):V
 - a:clearVariants(Z,I):V
@@ -238,7 +240,6 @@
 - *sf:TOKEN_ADVANCER:com.intellij.platform.syntax.util.runtime.Parser
 - *sf:TRUE_CONDITION:com.intellij.platform.syntax.util.runtime.Parser
 - *sf:WS_BINDERS:com.intellij.platform.syntax.util.runtime.Hook
-- *sf:BracePair(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,Z):com.intellij.platform.syntax.util.runtime.BracePair
 - *sf:SyntaxGeneratedParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - *sf:addVariant(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):V
 - *sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
