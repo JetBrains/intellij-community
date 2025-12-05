@@ -8,8 +8,8 @@ import kotlin.jvm.JvmField
 
 @ApiStatus.Experimental
 @JvmField
-val TOKEN_ADVANCER: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> parserRuntime.advanceToken(level) }
+val TOKEN_ADVANCER: Parser = Parser { runtime, level -> runtime.advanceToken(level) }
 
 @ApiStatus.Experimental
 @JvmField
-val TRUE_CONDITION: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> true }
+val TRUE_CONDITION: Parser = Parser { _, _ -> true }

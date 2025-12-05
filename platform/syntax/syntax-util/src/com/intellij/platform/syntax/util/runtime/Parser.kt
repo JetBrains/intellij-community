@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.OverrideOnly
 fun interface Parser {
-  fun parse(parserRuntime: SyntaxGeneratedParserRuntime, level: Int): Boolean
+  fun parse(runtime: SyntaxGeneratedParserRuntime, level: Int): Boolean
 }
