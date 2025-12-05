@@ -20,7 +20,7 @@ internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language)
     }
     return SyntaxGeneratedParserRuntime(
       syntaxBuilder = builder,
-      isCaseSensitive = language.isCaseSensitive,
+      isLanguageCaseSensitive = language.isCaseSensitive,
       braces = languageInformer.getPairedBraces(),
       maxRecursionDepth = 1000,
       LOG = logger<SyntaxGeneratedParserRuntime>().asSyntaxLogger(),

@@ -119,18 +119,14 @@ val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 class SyntaxGeneratedParserRuntime(
   val syntaxBuilder: SyntaxTreeBuilder,
   val maxRecursionDepth: Int,
-  private val isCaseSensitive: Boolean,
+  internal val isLanguageCaseSensitive: Boolean,
   private val braces: Collection<BracePair>,
   internal val LOG: Logger,
   val parserUserState: ParserUserState?,
 ) {
-  private val error: ErrorState = ErrorState()
+  internal val errorState: ErrorState = ErrorState()
 
   internal lateinit var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit
-
-  internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
-  internal val isLanguageCaseSensitive get() = isCaseSensitive
-  internal val errorState get() = error
 
   fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<SyntaxElementTypeSet> = emptyArray()) {
     parser = parse
@@ -383,8 +379,8 @@ fun SyntaxGeneratedParserRuntime.current_position_(): Int {
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String): Boolean {
-  if (level > MAX_RECURSION_LEVEL) {
-    syntaxBuilder.mark().error(SyntaxRuntimeBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
+  if (level > maxRecursionDepth) {
+    syntaxBuilder.mark().error(SyntaxRuntimeBundle.message("parsing.error.maximum.recursion.level.reached.in", maxRecursionDepth, funcName))
     return false
   }
   return true
