@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
+import java.util.Objects
 
 /**
  * Coroutine exit frame represented by a stack frames
@@ -88,12 +89,7 @@ open class CoroutineStackFrame(
         val frame = other as? CoroutineStackFrame ?: return false
 
         return descriptor.frameProxy == frame.descriptor.frameProxy
-                && samePosition(frame)
-    }
-
-    private fun samePosition(other: CoroutineStackFrame): Boolean {
-        if (position == null) return other.position == null
-        return position == other.position
+                && position == frame.position
     }
 
     override fun hashCode(): Int {
