@@ -40,16 +40,16 @@ import com.intellij.openapi.util.Pair as JBPair
  * @return a pair of wrapper name and wrapped function; for `staticmethod(foo)` it would be ("staticmethod", foo).
  */
 fun PyCallExpression.interpretAsModifierWrappingCall(): JBPair<String, PyFunction>? {
-  val redefining_callee = callee
+  val redefiningCallee = callee
   if (!isCalleeText(PyNames.CLASSMETHOD, PyNames.STATICMETHOD)) return null
-  val referenceExpr = redefining_callee as PyReferenceExpression? ?: return null
+  val referenceExpr = redefiningCallee as PyReferenceExpression? ?: return null
   val refName = referenceExpr.referencedName
   if (!(PyNames.CLASSMETHOD == refName || PyNames.STATICMETHOD == refName) || !PyBuiltinCache.isInBuiltins(referenceExpr)) return null
   // yes, really a case of "foo = classmethod(foo)"
   val argumentList = argumentList ?: return null
   // really can't be any other way
-  val possible_original_ref = argumentList.arguments.firstOrNull() as? PyReferenceExpression ?: return null
-  val original = possible_original_ref.reference.resolve() as? PyFunction ?: return null
+  val possibleOriginalRef = argumentList.arguments.firstOrNull() as? PyReferenceExpression ?: return null
+  val original = possibleOriginalRef.reference.resolve() as? PyFunction ?: return null
   // pinned down the original; replace our resolved callee with it and add flags.
   return JBPair.create(refName, original)
 }
@@ -363,7 +363,7 @@ private fun PyCallable.getImplicitArgumentCount(
   isByInstance: Boolean,
   isByClass: Boolean,
 ): Int {
-  var implicit_offset = 0
+  var implicitOffset = 0
   var firstIsArgsOrKwargs = false
   val parameters = parameterList.parameters
   if (parameters.size > 0) {
@@ -374,9 +374,9 @@ private fun PyCallable.getImplicitArgumentCount(
     }
   }
   if (!firstIsArgsOrKwargs && (isByInstance || isConstructorCall)) {
-    implicit_offset += 1
+    implicitOffset += 1
   }
-  val method = asMethod() ?: return implicit_offset
+  val method = asMethod() ?: return implicitOffset
 
   if (PyUtil.isNewMethod(method)) {
     return if (isConstructorCall) 1 else 0
@@ -387,12 +387,12 @@ private fun PyCallable.getImplicitArgumentCount(
 
   // decorators?
   if (modifier == PyAstFunction.Modifier.STATICMETHOD) {
-    if (isByInstance && implicit_offset > 0) implicit_offset -= 1 // might have marked it as implicit 'self'
+    if (isByInstance && implicitOffset > 0) implicitOffset -= 1 // might have marked it as implicit 'self'
   }
   else if (modifier == PyAstFunction.Modifier.CLASSMETHOD) {
-    if (!isByInstance) implicit_offset += 1 // Both Foo.method() and foo.method() have implicit the first arg
+    if (!isByInstance) implicitOffset += 1 // Both Foo.method() and foo.method() have implicit the first arg
   }
-  return implicit_offset
+  return implicitOffset
 }
 
 private fun PyCallable?.isQualifiedByInstance(qualifiers: List<PyExpression?>, context: TypeEvalContext): Boolean {
@@ -592,15 +592,15 @@ private fun ClarifiedResolveResult.clarifyConstructorCallType(callSite: PyCallSi
 private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<PyType?> {
   val callee = this.callee
   if (callee !is PyReferenceExpression) return Maybe()
-  val must_be_super = callee.reference.resolve()
-  if (must_be_super !== PyBuiltinCache.getInstance(this).getClass(PyNames.SUPER)) return Maybe()
+  val mustBeSuper = callee.reference.resolve()
+  if (mustBeSuper !== PyBuiltinCache.getInstance(this).getClass(PyNames.SUPER)) return Maybe()
   val args = argumentList?.arguments ?: return Maybe()
   val containingClass = PsiTreeUtil.getParentOfType(this, PyClass::class.java)
   if (containingClass != null && args.size > 1) {
-    val first_arg = args[0]
-    if (first_arg !is PyReferenceExpression) return Maybe()
-    val qualifier = first_arg.qualifier
-    if (qualifier != null && PyNames.__CLASS__ == first_arg.referencedName) {
+    val firstArg = args[0]
+    if (firstArg !is PyReferenceExpression) return Maybe()
+    val qualifier = firstArg.qualifier
+    if (qualifier != null && PyNames.__CLASS__ == firstArg.referencedName) {
       val element = qualifier.reference?.resolve()
       if (element is PyParameter) {
         val parameterList = PsiTreeUtil.getParentOfType(element, PyParameterList::class.java)
@@ -609,12 +609,12 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
         }
       }
     }
-    val possible_class = first_arg.reference.resolve()
-    if (possible_class is PyClass && possible_class.isNewStyleClass(context)) {
-      return Maybe(getSuperCallTypeForArguments(context, possible_class, args[1]))
+    val possibleClass = firstArg.reference.resolve()
+    if (possibleClass is PyClass && possibleClass.isNewStyleClass(context)) {
+      return Maybe(getSuperCallTypeForArguments(context, possibleClass, args[1]))
     }
-    if (possible_class is PyNamedParameter) {
-      val paramType = context.getType(possible_class)
+    if (possibleClass is PyNamedParameter) {
+      val paramType = context.getType(possibleClass)
       if (paramType is PyClassType) {
         return Maybe(getSuperCallTypeForArguments(context, paramType.pyClass, args[1]))
       }
@@ -626,13 +626,13 @@ private fun PyCallExpression.getSuperCallType(context: TypeEvalContext): Maybe<P
   return Maybe()
 }
 
-private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: PyClass, second_arg: PyExpression?): PyType? {
+private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: PyClass, secondArg: PyExpression?): PyType? {
   // check 2nd argument, too; it should be an instance
-  if (second_arg != null) {
-    val second_type = context.getType(second_arg);
-    if (second_type is PyClassType) {
-      // imitate isinstance(second_arg, possible_class)
-      val secondClass = second_type.pyClass
+  if (secondArg != null) {
+    val secondType = context.getType(secondArg);
+    if (secondType is PyClassType) {
+      // imitate isinstance(secondArg, possibleClass)
+      val secondClass = secondType.pyClass
       if (CompletionUtilCoreImpl.getOriginalOrSelf(firstClass) === secondClass) {
         return firstClass.getSuperClassUnionType(context)
       }
