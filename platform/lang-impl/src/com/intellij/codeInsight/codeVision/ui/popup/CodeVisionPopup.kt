@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.popup
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
@@ -16,7 +17,7 @@ import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.map
 import java.awt.Rectangle
 
-class CodeVisionPopup {
+internal class CodeVisionPopup {
   enum class Disposition(val list: List<Anchoring2D>) {
     MOUSE_POPUP_DISPOSITION(listOf(
       Anchoring2D(Anchoring.FarOutside, Anchoring.NearOutside),

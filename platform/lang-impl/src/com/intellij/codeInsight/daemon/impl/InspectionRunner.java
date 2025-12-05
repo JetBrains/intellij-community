@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-class InspectionRunner {
+final class InspectionRunner {
   private static final Logger LOG = Logger.getInstance(InspectionRunner.class);
   private final PsiFile myPsiFile;
   private final TextRange myRestrictRange;
@@ -95,12 +95,12 @@ class InspectionRunner {
 
   @Unmodifiable
   @NotNull
-  List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                            @Nullable HighlightSeverity minimumSeverity,
-                                            boolean addRedundantSuppressions,
-                                            @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                            @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                            @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+  List<InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                  @Nullable HighlightSeverity minimumSeverity,
+                                  boolean addRedundantSuppressions,
+                                  @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
+                                  @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                  @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }

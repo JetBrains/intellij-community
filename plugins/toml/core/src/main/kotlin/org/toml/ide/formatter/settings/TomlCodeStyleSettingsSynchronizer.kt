@@ -4,7 +4,7 @@ import com.intellij.lang.Language
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer
 import org.toml.lang.TomlLanguage
 
-class TomlCodeStyleSettingsSynchronizer : CodeStyleSettingsCustomDataSynchronizer<TomlCodeStyleSettings>() {
+internal class TomlCodeStyleSettingsSynchronizer : CodeStyleSettingsCustomDataSynchronizer<TomlCodeStyleSettings>() {
   override val language: Language
     get() = TomlLanguage
 

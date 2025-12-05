@@ -13,8 +13,8 @@ import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.BASE_KEYWORD_COMPLETION_USED_EVENT_ID;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.CONDITION_KEYWORD_COMPLETION_USED_EVENT_ID;
 
-public class ShKeywordCompletionContributor extends CompletionContributor implements DumbAware {
-  public ShKeywordCompletionContributor() {
+final class ShKeywordCompletionContributor extends CompletionContributor implements DumbAware {
+  ShKeywordCompletionContributor() {
     extend(CompletionType.BASIC, keywordElementPattern(), new ShKeywordCompletionProvider(BASE_KEYWORD_COMPLETION_USED_EVENT_ID,
                                                   "if", "select", "case", "for", "while", "until", "function"));
     extend(CompletionType.BASIC, elifElementPattern(), new ShKeywordCompletionProvider(BASE_KEYWORD_COMPLETION_USED_EVENT_ID, "elif"));

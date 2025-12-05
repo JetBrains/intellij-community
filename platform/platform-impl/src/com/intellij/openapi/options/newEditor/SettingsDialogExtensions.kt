@@ -25,11 +25,11 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
-import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.*
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -39,7 +39,7 @@ private const val PANEL_NARROW_WIDTH = 850
 
 
 internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPanel? {
-  val actionGroup = getActionGroup("Back", "Forward");
+  val actionGroup = getActionGroup("Back", "Forward")
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SETTINGS_HISTORY, actionGroup!!, true)
   val settingsEditor = editor as? SettingsEditor ?: return null
   settingsEditor.search.preferredSize = JBUI.size(SEARCH_MAX_WIDTH, settingsEditor.search.preferredSize.height)
@@ -170,7 +170,7 @@ internal class ResetConfigurableHandler(
   coroutineScope: CoroutineScope,
   disposable: Disposable,
 ) {
-  private val jobs = concurrentMapOf<String, Job>()
+  private val jobs = ConcurrentHashMap<String, Job>()
   private val properties = PropertiesComponent.getInstance(project)
   private val myCoroutineScope: CoroutineScope = coroutineScope.childScope("ResetConfigurableHandler", EmptyCoroutineContext, true)
 

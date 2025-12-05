@@ -2,7 +2,10 @@ package com.intellij.sh.codeInsight
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiReference
-import com.intellij.sh.psi.*
+import com.intellij.sh.psi.ShLiteral
+import com.intellij.sh.psi.ShLiteralExpression
+import com.intellij.sh.psi.ShLiteralOperation
+import com.intellij.sh.psi.ShVariable
 import org.jetbrains.annotations.NotNull
 
 interface ShPsiReferenceSupport {

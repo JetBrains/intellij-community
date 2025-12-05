@@ -32,7 +32,7 @@ import java.util.List;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.sh.backend.completion.ShCompletionUtil.*;
 
-public class ShCommandCompletionContributor extends CompletionContributor implements DumbAware {
+final class ShCommandCompletionContributor extends CompletionContributor implements DumbAware {
   private static final int BUILTIN_PRIORITY = -10;
 
   public ShCommandCompletionContributor() {

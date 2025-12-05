@@ -15,6 +15,7 @@ import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
 import com.intellij.openapi.application.useDebouncedDrawingInSuvorovProgress
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
@@ -25,8 +26,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.GraphicsUtil
-import com.jetbrains.rd.util.error
-import com.jetbrains.rd.util.getLogger
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
@@ -192,7 +191,7 @@ object SuvorovProgress {
               RevealFileAction.openFile(dumpFile)
             }
             else {
-              getLogger<SuvorovProgress>().error { "Failed to dump threads to $dumpFile" }
+              logger<SuvorovProgress>().error("Failed to dump threads to $dumpFile")
             }
           }
         })
