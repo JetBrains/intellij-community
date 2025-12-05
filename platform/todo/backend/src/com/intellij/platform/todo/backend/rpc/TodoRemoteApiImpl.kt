@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
@@ -107,24 +108,26 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val resolvedFilter = resolveFilter(project, filter)
 
     return readAction {
-      val files = mutableListOf<VirtualFileId>()
-      val helper = PsiTodoSearchHelper.getInstance(project)
+      blockingContextToIndicator {
+        val files = mutableListOf<VirtualFileId>()
+        val helper = PsiTodoSearchHelper.getInstance(project)
 
-      helper.processFilesWithTodoItems { psiFile ->
-        val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+        helper.processFilesWithTodoItems { psiFile ->
+          val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
 
-        val matchesFilter = if (resolvedFilter != null) {
-          resolvedFilter.accept(helper, psiFile)
-        } else {
-          helper.getTodoItemsCount(psiFile) > 0
+          val matchesFilter = if (resolvedFilter != null) {
+            resolvedFilter.accept(helper, psiFile)
+          } else {
+            helper.getTodoItemsCount(psiFile) > 0
+          }
+
+          if (matchesFilter) {
+            files.add(virtualFile.rpcId())
+          }
+          true
         }
-
-        if (matchesFilter) {
-          files.add(virtualFile.rpcId())
-        }
-        true
+        files
       }
-      files
     }
   }
 
