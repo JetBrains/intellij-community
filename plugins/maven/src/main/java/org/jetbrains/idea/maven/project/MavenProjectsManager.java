@@ -255,14 +255,15 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initProjectsTree() {
+    if (projectsTreeInitialized.get()) return;
     initLock.lock();
     try {
-      if (projectsTreeInitialized.getAndSet(true)) return;
-
+      if (projectsTreeInitialized.get()) return;
       Path path = getProjectsTreeFile();
       myProjectsTree.read(path);
       applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+      projectsTreeInitialized.set(true);
     }
     finally {
       initLock.unlock();
