@@ -577,12 +577,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "commons-logging",
-  jar = "@commons-logging-commons-logging-1_2_http//file",
-  source_jar = "@commons-logging-commons-logging-1_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
 
 jvm_import(
   name = "completion_ml_ranking_models-completion-ranking-cpp-exp",
