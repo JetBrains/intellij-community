@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -30,12 +31,14 @@ import com.intellij.task.ProjectTaskManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -149,8 +152,10 @@ class ExtractModuleService(
             usedModules.add(depModule)
             return@forEach
           }
-          val library = fileIndex.getOrderEntriesForFile(virtualFile).asSequence()
-            .filterIsInstance<LibraryOrderEntry>().filter { !it.isModuleLevel }.mapNotNull { it.library }.firstOrNull()
+
+          val library = fileIndex.findContainingLibraries(virtualFile).asSequence()
+            .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
+            .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
           if (library != null) {
             usedLibraries.add(library)
           }
