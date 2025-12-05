@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -420,8 +421,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
       }
       setEnabled(myDefaultAction.myDialog.canPush());
 
-      var presentation = buildActionPresentation(myDefaultAction.myRealAction, myDefaultAction.myProject, myDefaultAction.myDialog);
-      var textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
+      Presentation presentation = buildActionPresentation(myDefaultAction.myRealAction, myDefaultAction.myProject, myDefaultAction.myDialog);
+      TextWithMnemonic textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       putValue(NAME, textWithMnemonic.getText());
       putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
       putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
@@ -455,10 +456,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     }
 
     public void update() {
-      var presentation = buildActionPresentation(myRealAction, myProject, myDialog);
+      Presentation presentation = buildActionPresentation(myRealAction, myProject, myDialog);
       setEnabled(presentation.isEnabled());
 
-      var textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
+      TextWithMnemonic textWithMnemonic = presentation.getTextWithPossibleMnemonic().get();
       putValue(NAME, textWithMnemonic.getText());
       putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
       putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
@@ -472,21 +473,18 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   private static Presentation buildActionPresentation(@NotNull AnAction action, @NotNull Project project, @NotNull VcsPushDialog dialog) {
-    var dataContext = new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        if (VCS_PUSH_DIALOG.is(dataId)) {
-          return dialog;
-        }
-        else if (CommonDataKeys.PROJECT.is(dataId)) {
-          return project;
-        }
-        else {
-          return null;
-        }
+    DataContext dataContext = dataId -> {
+      if (VCS_PUSH_DIALOG.is(dataId)) {
+        return dialog;
+      }
+      else if (CommonDataKeys.PROJECT.is(dataId)) {
+        return project;
+      }
+      else {
+        return null;
       }
     };
-    var presentation = new Presentation();
+    Presentation presentation = new Presentation();
     if (action instanceof SimplePushAction simplePushAction) {
       customizeDialog(dialog, simplePushAction);
     }
