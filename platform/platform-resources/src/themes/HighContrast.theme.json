@@ -711,6 +711,7 @@
       }
     },
     "Recap": {
+      "ijnext": "#55339C",
       "cardBackground": "#000000",
       "cardBorderColor": "#E6E6E6",
       "cardHeaderTitle": "#FFFFFF",
@@ -721,7 +722,11 @@
       "chroniclesBorderColor": "#E6E6E6",
       "chroniclesBackgroundHovered": "#42424E",
       "chroniclesForeground": "#DFE1E5",
-      "chroniclesForegroundGreyed": "#D8F45C"
+      "chroniclesForegroundGreyed": "#D8F45C",
+      "errorBackground": "#000000",
+      "errorBorder": "#FF5261",
+      "errorForeground": "#FF5261"
+      
     },
 
     "OpenTelemetry": {

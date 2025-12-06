@@ -305,6 +305,68 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+java_library(
+  name = "junit5",
+  exports = [
+    ":org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
+    ":org_opentest4j-opentest4j-1_3_0_http_import",
+    ":org_junit_platform-junit-platform-commons-1_13_4_http_import",
+    ":org_apiguardian-apiguardian-api-1_1_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-api-5_13_4_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-api-5_13_4_http//file",
+)
+
+jvm_import(
+  name = "org_opentest4j-opentest4j-1_3_0_http_import",
+  jar = "@org_opentest4j-opentest4j-1_3_0_http//file",
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-commons-1_13_4_http_import",
+  jar = "@org_junit_platform-junit-platform-commons-1_13_4_http//file",
+)
+
+jvm_import(
+  name = "org_apiguardian-apiguardian-api-1_1_2_http_import",
+  jar = "@org_apiguardian-apiguardian-api-1_1_2_http//file",
+)
+
+java_library(
+  name = "junit5Launcher",
+  exports = [
+    ":org_junit_platform-junit-platform-launcher-1_13_4_http_import",
+    ":org_junit_platform-junit-platform-engine-1_13_4_http_import",
+    ":org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+    ":org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-launcher-1_13_4_http_import",
+  jar = "@org_junit_platform-junit-platform-launcher-1_13_4_http//file",
+)
+
+jvm_import(
+  name = "org_junit_jupiter-junit-jupiter-engine-5_13_4_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-engine-5_13_4_http//file",
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-engine-1_13_4_http_import",
+  jar = "@org_junit_platform-junit-platform-engine-1_13_4_http//file",
+)
+
+jvm_import(
+  name = "org_junit_platform-junit-platform-reporting-1_12_2_http_import",
+  jar = "@org_junit_platform-junit-platform-reporting-1_12_2_http//file",
+)
+
 kt_javac_options(
     name = "default-javac-opts-value",
     visibility = ["//visibility:public"],

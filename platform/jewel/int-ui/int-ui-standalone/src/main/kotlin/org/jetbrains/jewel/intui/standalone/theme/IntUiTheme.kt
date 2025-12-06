@@ -726,7 +726,7 @@ public fun IntUiTheme(
             LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
             LocalTypography provides IntUiTypography,
-            LocalMessageResourceResolverProvider provides IntUiMessageResourceResolver(),
+            LocalMessageResourceResolverProvider provides IntUiMessageResourceResolver,
         ) {
             content()
         }

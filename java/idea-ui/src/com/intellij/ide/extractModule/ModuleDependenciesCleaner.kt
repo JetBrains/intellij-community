@@ -16,10 +16,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.packageDependencies.DependenciesToolWindow
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.packageDependencies.ui.DependenciesPanel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 /**
  * Finds and removes dependencies which aren't used in the code.
@@ -47,11 +50,9 @@ class ModuleDependenciesCleaner(
             usedModules.add(dependencyModule)
           }
           else {
-            fileIndex.getOrderEntriesForFile(virtualFile).asSequence()
-              .filterIsInstance<LibraryOrderEntry>()
-              .filter { !it.isModuleLevel }
-              .mapNotNull { it.library }
-              .firstOrNull()
+            fileIndex.findContainingLibraries(virtualFile).asSequence()
+              .filterNot { it.tableId.level == JpsLibraryTableSerializer.MODULE_LEVEL }
+              .firstNotNullOfOrNull { it.findLibraryBridge(WorkspaceModel.getInstance(project).currentSnapshot) }
               ?.let { usedLibraries.add(it) }
           }
         }

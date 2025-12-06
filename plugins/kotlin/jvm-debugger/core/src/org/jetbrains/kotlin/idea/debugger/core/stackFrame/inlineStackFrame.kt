@@ -9,6 +9,7 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.ui.DebuggerColors
 import com.sun.jdi.Location
 import java.awt.Color
+import java.util.Objects
 
 class InlineStackFrame(
     location: Location?,
@@ -51,9 +52,8 @@ class InlineStackFrame(
         if (!super.equals(other)) {
             return false
         }
-        val thisInlineDepth = inlineDepth ?: return false
-        val otherInlineDepth = other.inlineDepth ?: return false
-        return thisInlineDepth == otherInlineDepth
+        return inlineDepth == other.inlineDepth
+                && descriptor.location == other.descriptor.location
     }
 
     override fun hashCode(): Int {

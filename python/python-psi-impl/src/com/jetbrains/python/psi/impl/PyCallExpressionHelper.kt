@@ -84,30 +84,44 @@ fun PyCallExpression.resolveCalleeClass(): PyClass? {
  * please obtain its result via [TypeEvalContext.getType] with `call.getCallee()` as an argument.
  */
 fun PyCallExpression.getCalleeType(resolveContext: PyResolveContext): PyType? {
-  val callableTypes = mutableListOf<PyType?>()
-  val context = resolveContext.typeEvalContext
 
   val results = PyUtil.filterTopPriorityResults(
     callee
       .multipleResolveCallee(resolveContext)
-      .forEveryScopeTakeOverloadsOtherwiseImplementations(context) { it.element }
+      .forEveryScopeTakeOverloadsOtherwiseImplementations(resolveContext.typeEvalContext) { it.element }
   )
 
+  val callableTypes = mutableListOf<PyType?>()
   for (resolveResult in results) {
     val element = resolveResult.element
-    if (element != null) {
-      val typeFromProviders =
-        Ref.deref(PyReferenceExpressionImpl.getReferenceTypeFromProviders(element, resolveContext.typeEvalContext, this))
+    val clarified = resolveResult.clarifyResolveResult(resolveContext)
 
-      if (PyTypeUtil.toStream(typeFromProviders).allMatch { it is PyCallableType }) {
-        PyTypeUtil.toStream(typeFromProviders).forEachOrdered { callableTypes.add(it) }
-        continue
+    val typeFromProviders = if (element != null) {
+      val typeFromProviders =
+        PyReferenceExpressionImpl.getReferenceTypeFromProviders(element, resolveContext.typeEvalContext, this)
+
+      typeFromProviders?.get()
+    }
+    else {
+      null
+    }
+
+    val result = mutableListOf<PyType?>()
+    if (clarified != null) {
+      PyTypeUtil.toStream(typeFromProviders).forEach {
+        ContainerUtil.addIfNotNull<PyCallableType?>(result, toCallableType(clarified, it, resolveContext.typeEvalContext))
+      }
+
+      if (result.isEmpty()) {
+        val clarifiedResolved = clarified.clarifiedResolved as? PyTypedElement ?: continue
+        ContainerUtil.addIfNotNull<PyCallableType?>(
+          result,
+          toCallableType(clarified, resolveContext.typeEvalContext.getType(clarifiedResolved), resolveContext.typeEvalContext)
+        )
       }
     }
 
-    for (clarifiedResolveResult in resolveResult.clarifyResolveResult(resolveContext)) {
-      ContainerUtil.addIfNotNull<PyCallableType?>(callableTypes, toCallableType(clarifiedResolveResult, context))
-    }
+    callableTypes.addAll(result)
   }
 
   return PyUnionType.union(callableTypes)
@@ -240,7 +254,7 @@ private fun PyExpression?.multipleResolveCallee(resolveContext: PyResolveContext
   }
 }
 
-private fun QualifiedRatedResolveResult.clarifyResolveResult(resolveContext: PyResolveContext): List<ClarifiedResolveResult> {
+private fun QualifiedRatedResolveResult.clarifyResolveResult(resolveContext: PyResolveContext): ClarifiedResolveResult? {
   val resolved = element
 
   if (resolved is PyCallExpression) { // foo = classmethod(foo)
@@ -256,8 +270,7 @@ private fun QualifiedRatedResolveResult.clarifyResolveResult(resolveContext: PyR
         else
           null
 
-      val result = ClarifiedResolveResult(this, wrapperInfo.second, wrappedModifier, false)
-      return listOf(result)
+      return ClarifiedResolveResult(this, wrapperInfo.second, wrappedModifier, false)
     }
   }
   else if (resolved is PyFunction) {
@@ -266,22 +279,21 @@ private fun QualifiedRatedResolveResult.clarifyResolveResult(resolveContext: PyR
     if (resolved.property != null && resolved.isQualifiedByInstance(qualifiers, context)) {
       val type = context.getReturnType(resolved)
 
-      return if (type is PyFunctionType) listOf(
-        ClarifiedResolveResult(this, type.callable, null, false))
-      else emptyList()
+      return if (type is PyFunctionType) ClarifiedResolveResult(this, type.callable, null, false) else null
     }
   }
 
-  return if (resolved != null) listOf(
-    ClarifiedResolveResult(this, resolved, null, resolved is PyClass))
-  else emptyList()
+  return if (resolved != null) ClarifiedResolveResult(this, resolved, null, resolved is PyClass) else null
 }
 
-private fun PyCallSiteExpression.toCallableType(resolveResult: ClarifiedResolveResult, context: TypeEvalContext): PyCallableType? {
+private fun PyCallSiteExpression.toCallableType(
+  resolveResult: ClarifiedResolveResult,
+  inferredType: PyType?,
+  context: TypeEvalContext,
+): PyCallableType? {
   val clarifiedResolved = resolveResult.clarifiedResolved as? PyTypedElement ?: return null
 
-  val callableType = context.getType(clarifiedResolved) as? PyCallableType
-                     ?: return null
+  val callableType = inferredType as? PyCallableType ?: return null
 
   if (clarifiedResolved is PyCallable) {
     val originalModifier = if (clarifiedResolved is PyFunction) clarifiedResolved.modifier else null
@@ -848,7 +860,10 @@ private fun PyClassType.changeToImplicitlyInvokedMethods(
         PyUtil.isInitOrNewMethod(it)
       )
     }
-    .mapNotNull { call.toCallableType(it, context) }
+    .mapNotNull {
+      val clarifiedResolved = it.clarifiedResolved as? PyTypedElement ?: return@mapNotNull null
+      call.toCallableType(it, context.getType(clarifiedResolved), context)
+    }
 }
 
 private fun PyClassType.resolveConstructors(callSite: PyCallSiteExpression?, resolveContext: PyResolveContext): List<RatedResolveResult> {

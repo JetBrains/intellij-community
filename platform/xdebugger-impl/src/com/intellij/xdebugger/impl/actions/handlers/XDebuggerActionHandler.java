@@ -4,12 +4,11 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,22 +48,16 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
 
   @ApiStatus.Internal
   protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    if (session instanceof MonolithSessionProxy monolith) {
-      return isEnabled(monolith.getSession(), dataContext);
-    }
-    return false;
+    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
+    if (xDebugSession == null) return false;
+    return isEnabled(xDebugSession, dataContext);
   }
 
   @ApiStatus.Internal
   @ApiStatus.OverrideOnly
   protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    if (session instanceof MonolithSessionProxy monolith) {
-      perform(monolith.getSession(), dataContext);
-    }
-    else {
-      Logger.getInstance(getClass())
-        .warn("Action perform is skipped: isEnabled returned true, " +
-              "but perform method was not adapted for XDebugSessionProxy usage");
-    }
+    XDebugSession xDebugSession = XDebuggerEntityConverter.getSession(session);
+    if (xDebugSession == null) return;
+    perform(xDebugSession, dataContext);
   }
 }

@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":automaton_resources"],
-  exports = ["@lib//:automaton"],
-  runtime_deps = ["@lib//:automaton"]
+  exports = ["@lib//:libraries-automaton-automaton"],
+  runtime_deps = ["@lib//:libraries-automaton-automaton"]
 )
 ### auto-generated section `build intellij.libraries.automaton` end

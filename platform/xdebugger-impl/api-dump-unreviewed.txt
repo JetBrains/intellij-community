@@ -1049,7 +1049,6 @@ a:com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 - <init>():V
 - isModified():Z
 c:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
-- com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z

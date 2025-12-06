@@ -125,10 +125,16 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     }
 
     public boolean metadataChanged() {
+      // whether any metadata has been added, removed or changed
       //noinspection unchecked
       return Iterators.find(
-        Iterators.unique(Iterators.map(Iterators.flat(myPast.getMetadata(), getMetadata()), m -> m.getClass())), metaClass -> !metadata(metaClass).unchanged()
+        Iterators.unique(Iterators.map(Iterators.flat(myPast.getMetadata(), getMetadata()), JvmMetadata::getClass)), metaClass -> !metadata(metaClass).unchanged()
       ) != null;
+    }
+
+    public boolean metadataKindChanged() {
+      // whether any metadata has been added or removed
+      return !Difference.diff(Iterators.map(myPast.getMetadata(), JvmMetadata::getClass), Iterators.map(getMetadata(), JvmMetadata::getClass)).unchanged();
     }
 
     public <MT extends JvmMetadata<MT, MD>, MD extends Difference> Specifier<MT, MD> metadata(Class<MT> metaClass) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -8,6 +8,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -82,27 +83,29 @@ internal class ChangeSignaturePopup(
     button.text = if (parameterValuesPage == null) updateButtonText else nextButtonText
 
     button.addActionListener {
-      when (currentPage) {
-        Page.SignatureChange -> {
-          if (parameterValuesPage != null) {
-            parameterValuesPage.initialize()
-            remove(signatureChangePage)
-            add(parameterValuesPage, BorderLayout.CENTER)
-            button.text = updateButtonText
-            onParameterValueChanged(null)
-            currentPage = Page.ParameterValues
-            onNext()
-            parameterValuesPage.defaultFocus()
+      WriteIntentReadAction.run {
+        when (currentPage) {
+          Page.SignatureChange -> {
+            if (parameterValuesPage != null) {
+              parameterValuesPage.initialize()
+              remove(signatureChangePage)
+              add(parameterValuesPage, BorderLayout.CENTER)
+              button.text = updateButtonText
+              onParameterValueChanged(null)
+              currentPage = Page.ParameterValues
+              onNext()
+              parameterValuesPage.defaultFocus()
+            }
+            else {
+              onOk(newParameterData.map { data -> NewParameterInfo(data, data.presentableName, NewParameterValue.None) })
+            }
           }
-          else {
-            onOk(newParameterData.map { data -> NewParameterInfo(data, data.presentableName, NewParameterValue.None) })
-          }
-        }
 
-        Page.ParameterValues -> {
-          val updatedValues = parameterValuesPage!!.getUpdatedValues()
-          if (updatedValues != null) {
-            onOk(updatedValues)
+          Page.ParameterValues -> {
+            val updatedValues = parameterValuesPage!!.getUpdatedValues()
+            if (updatedValues != null) {
+              onOk(updatedValues)
+            }
           }
         }
       }

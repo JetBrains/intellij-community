@@ -60,7 +60,7 @@ public class StorageManager implements CloseableExt {
       // need this for tests
       Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
       try (var is = new BufferedInputStream(Files.newInputStream(Files.exists(outBackup)? outBackup : output))) {
-        List<String> paths = collect(filter(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), n -> !n.endsWith("/")), new ArrayList<>());
+        List<String> paths = collect(filter(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), n -> !n.endsWith("/") && !"__index__".equals(n)), new ArrayList<>());
         if (!paths.isEmpty()) {
           logger.logDeletedPaths(paths);
         }
@@ -79,18 +79,7 @@ public class StorageManager implements CloseableExt {
   }
 
   public void cleanTrashDir() throws IOException {
-    deleteRecursively(DataPaths.getTrashDir(myContext));
-  }
-
-  public static Path cleanDir(Path dir) throws IOException {
-    if (Files.exists(dir)) {
-      try (var files = Files.list(dir)) {
-        for (Path file : files.toList()) {
-          Utils.deleteIfExists(file);
-        }
-      }
-    }
-    return dir;
+    Utils.deleteRecursively(DataPaths.getTrashDir(myContext));
   }
 
   public <K, V> Map<K, V> createOffHeapMap(String name) {
@@ -392,28 +381,4 @@ public class StorageManager implements CloseableExt {
     });
   }
 
-  private static void deleteRecursively(Path dataDir) throws IOException {
-    if (Files.exists(dataDir)) {
-      Files.walkFileTree(dataDir, new SimpleFileVisitor<>() {
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Utils.deleteIfExists(file);
-          return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          if (exc != null) {
-            throw exc;
-          }
-          try {
-            Utils.deleteIfExists(dir);
-          }
-          catch (DirectoryNotEmptyException ignore) {
-          }
-          return FileVisitResult.CONTINUE;
-        }
-      });
-    }
-  }
 }

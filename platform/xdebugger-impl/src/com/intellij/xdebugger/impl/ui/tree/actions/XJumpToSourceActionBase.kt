@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
+abstract class XJumpToSourceActionBase : XDebuggerTreeSplitActionBase() {
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val value = node.valueContainer
     val dialog = e.getData(XDebuggerEvaluationDialog.KEY)

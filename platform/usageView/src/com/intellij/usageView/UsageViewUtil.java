@@ -5,7 +5,6 @@ package com.intellij.usageView;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class UsageViewUtil {
-  private static final Logger LOG = Logger.getInstance(UsageViewUtil.class);
   public static final @NonNls String FIND_OPTIONS_HREF_TARGET = "FindOptions";
 
   private UsageViewUtil() { }

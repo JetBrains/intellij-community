@@ -163,4 +163,19 @@ public class PyCallableTypeImpl implements PyCallableType {
   public int hashCode() {
     return Objects.hash(myParameters, myReturnType, myCallable, myModifier, myImplicitOffset);
   }
+
+  @Override
+  public @NotNull PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = getParameters(context);
+    if (!ContainerUtil.isEmpty(parameters) && myCallable instanceof PyFunction function) {
+      final List<PyCallableParameter> functionParameters = function.getParameters(context);
+
+      if (!ContainerUtil.isEmpty(functionParameters) && functionParameters.get(0).isSelf()) {
+        List<PyCallableParameter> newParameters = ContainerUtil.subList(parameters, 1);
+        return new PyCallableTypeImpl(newParameters, myReturnType, myCallable, myModifier, myImplicitOffset);
+      }
+    }
+
+    return this;
+  }
 }

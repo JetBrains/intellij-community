@@ -575,6 +575,8 @@ c:com.intellij.util.system.OS$UnixInfo
 f:com.intellij.util.system.OS$WindowsInfo
 - com.intellij.util.system.OS$OsInfo
 - getBuildNumber():java.lang.Long
+f:com.intellij.util.text.TextRangeUtil
+- s:mergeRanges(java.util.List):java.util.List
 com.intellij.util.xmlb.Accessor
 - a:getAnnotation(java.lang.Class):java.lang.annotation.Annotation
 - a:getGenericType():java.lang.reflect.Type

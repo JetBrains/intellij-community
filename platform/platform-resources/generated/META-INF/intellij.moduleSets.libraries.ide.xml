@@ -12,6 +12,7 @@
     <module name="intellij.libraries.miglayout.swing" loading="embedded"/>
     <module name="intellij.libraries.pty4j" loading="embedded"/>
     <module name="intellij.libraries.sshj" loading="embedded"/>
+    <module name="intellij.libraries.swingx" loading="embedded"/>
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.rd.text" loading="embedded"/>
   </content>

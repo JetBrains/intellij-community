@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -25,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString;
 
 @ApiStatus.Experimental
 public final class CollectionBreakpointUtils {
@@ -121,8 +123,8 @@ public final class CollectionBreakpointUtils {
       return Collections.emptyList();
     }
 
-    Value clsNameRef = virtualMachineProxy.mirrorOf(clsName);
-    Value fieldNameRef = virtualMachineProxy.mirrorOf(fieldName);
+    Value clsNameRef = mirrorOfString(clsName, context);
+    Value fieldNameRef = mirrorOfString(fieldName, context);
 
     Value result = invokeStorageMethod(context.getDebugProcess(), context,
                                        GET_FIELD_MODIFICATIONS_METHOD_NAME,
@@ -147,8 +149,8 @@ public final class CollectionBreakpointUtils {
       return Collections.emptyList();
     }
 
-    Value clsNameRef = virtualMachineProxy.mirrorOf(clsName);
-    Value fieldNameRef = virtualMachineProxy.mirrorOf(fieldName);
+    Value clsNameRef = mirrorOfString(clsName, context);
+    Value fieldNameRef = mirrorOfString(fieldName, context);
 
     Value result = invokeStorageMethod(context.getDebugProcess(), context,
                                        GET_FIELD_STACK_METHOD_NAME,

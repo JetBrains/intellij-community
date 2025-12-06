@@ -172,6 +172,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return getFrameNavigatable(frame, true);
     });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      return new Navigatable[]{getFrameNavigatable(frame, true)};
+    });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
       return getFile(frame);
     });

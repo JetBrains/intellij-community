@@ -36,7 +36,7 @@ class SimpleLocalLineStatusTracker(project: Project,
     setBaseRevisionContent(vcsContent, null)
   }
 
-  fun hasPartialState() {
+  fun hasPartialState(): Boolean {
     return documentTracker.readLock {
       blocks.any { it.ourData.clientIds.isNotEmpty() }
     }

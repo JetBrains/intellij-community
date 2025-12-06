@@ -86,6 +86,7 @@ jvm_library(
     "//libraries/ktor/client",
     "//libraries/ktor/client-cio:libraries-ktor-client-cio",
     "//platform/forms_rt:java-guiForms-rt",
+    "//platform/diff-impl",
   ],
   exports = [
     "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",

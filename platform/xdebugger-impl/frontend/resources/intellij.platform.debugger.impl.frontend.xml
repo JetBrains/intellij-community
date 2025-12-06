@@ -21,6 +21,7 @@
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
     </action>
+    <action id="XDebugger.Split.Enable" class="com.intellij.platform.debugger.impl.frontend.EnabledSplitDebuggerAction" internal="true"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>

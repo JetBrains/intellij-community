@@ -49,7 +49,7 @@ jvm_library(
     "//platform/usageView-impl",
     "//platform/util/diff",
     "//platform/workspace/jps",
-    "@lib//:swingx",
+    "//libraries/swingx",
     "//libraries/guava",
     "//libraries/gson",
     "//jps/model-impl",

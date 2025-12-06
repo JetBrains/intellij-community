@@ -5,18 +5,17 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.pinned.items.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
 import java.util.*
 
-class XDebuggerPinToTopAction : XDebuggerTreeActionBase(), SplitDebuggerAction {
+class XDebuggerPinToTopAction : XDebuggerTreeSplitActionBase() {
 
     companion object {
         fun pinToTopField(mouseEvent: MouseEvent?, node: XValueNodeImpl) {
@@ -63,8 +62,7 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase(), SplitDebuggerAction {
     return ActionUpdateThread.EDT
   }
 
-  override fun perform(node: XValueNodeImpl?, nodeName: String, e: AnActionEvent) {
-    node ?: return
+  override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val project = e.project ?: return
     performImpl(project, node)
   }

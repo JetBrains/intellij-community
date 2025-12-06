@@ -274,6 +274,7 @@ class CheckerRunner(val text: TextContent) {
       }
     })
     result.add(GrazieRuleSettingsAction(problem.rule, problem.text.getTextDomain()))
+    result.add(GrazieMassApplyAction())
     result.add(GrazieEnableCloudAction())
     return result.toTypedArray()
   }

@@ -1786,6 +1786,7 @@ f:com.intellij.diff.util.DiffDrawUtil
 - s:createHighlighter(com.intellij.openapi.editor.Editor,I,I,com.intellij.diff.util.TextDiffType,com.intellij.diff.util.DiffDrawUtil$PaintMode,com.intellij.diff.util.DiffDrawUtil$PaintMode):java.util.List
 - s:createHighlighter(com.intellij.openapi.editor.Editor,I,I,com.intellij.diff.util.TextDiffType,Z):java.util.List
 - s:createHighlighter(com.intellij.openapi.editor.Editor,I,I,com.intellij.diff.util.TextDiffType,Z,Z,Z,Z,Z):java.util.List
+- s:createInlineHighlighter(com.intellij.openapi.editor.Editor,I,I,I,com.intellij.diff.util.TextDiffType):java.util.List
 - s:createInlineHighlighter(com.intellij.openapi.editor.Editor,I,I,com.intellij.diff.util.TextDiffType):java.util.List
 - s:createLineMarker(com.intellij.openapi.editor.Editor,I,com.intellij.diff.util.TextDiffType):java.util.List
 - s:createLineSeparatorHighlighter(com.intellij.openapi.editor.Editor,I,I):java.util.List

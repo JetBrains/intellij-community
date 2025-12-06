@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -174,7 +175,9 @@ public final class DependenciesPanel extends JPanel implements Disposable, UiDat
         }
         for (TreePath path : paths) {
           PackageDependenciesNode selectedNode = (PackageDependenciesNode)path.getLastPathComponent();
-          traverseToLeaves(selectedNode, denyRules, allowRules);
+          WriteIntentReadAction.run(() -> {
+            traverseToLeaves(selectedNode, denyRules, allowRules);
+          });
         }
         if (denyRules.length() + allowRules.length() > 0) {
           StatusBar.Info.set(CodeInsightBundle.message("status.bar.rule.violation.message",

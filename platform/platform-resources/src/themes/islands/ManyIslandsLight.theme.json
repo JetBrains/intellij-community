@@ -268,6 +268,7 @@
     },
     
     "Recap": {
+      "ijnext": "#DCCBFB",
       "cardBackground": "#F7F8FA",
       "cardBorderColor": "#F7F8FA",
       "cardHeaderTitle": "#000000",
@@ -278,7 +279,10 @@
       "chroniclesBorderColor": "#EBECF0",
       "chroniclesBackgroundHovered": "#DFE1E5",
       "chroniclesForeground": "#000000",
-      "chroniclesForegroundGreyed": "#868A91"
+      "chroniclesForegroundGreyed": "#868A91",
+      "errorBackground": "#FFFAEB",
+      "errorBorder": "#FED277",
+      "errorForeground": "#000000"
     }
   }
 }

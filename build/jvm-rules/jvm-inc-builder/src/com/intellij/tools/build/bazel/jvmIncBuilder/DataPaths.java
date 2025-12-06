@@ -17,6 +17,7 @@ public interface DataPaths {
   String DATA_DIR_NAME_SUFFIX = "-ic";
   String KOTLIN_CRI_STORAGE_SUFFIX = "-kotlinCriStorage";
   String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
+  String BUILD_LOG_FILE_NAME = "build.log";
 
 
   static @NotNull Path getTrashDir(BuildContext context) {
@@ -43,6 +44,10 @@ public interface DataPaths {
   static @NotNull Path getDiagnosticDataPath(BuildContext context) {
     String artifactName = truncateExtension(context.getOutputZip().getFileName().toString());
     return context.getDataDir().resolve(artifactName + DIAGNOSTIC_FILE_NAME_SUFFIX);
+  }
+
+  static @NotNull Path getBuildProcessLoggerDataPath(BuildContext context) {
+    return context.getOutputZip().resolveSibling(BUILD_LOG_FILE_NAME);
   }
 
   static @NotNull Path getDepGraphStoreFile(BuildContext context) {

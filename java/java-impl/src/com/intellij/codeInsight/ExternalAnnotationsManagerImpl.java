@@ -15,7 +15,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -89,8 +88,6 @@ import java.util.function.Supplier;
  */
 public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnotationsManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
-  private static final NotificationGroup EXTERNAL_ANNOTATIONS_MESSAGES =
-    NotificationGroupManager.getInstance().getNotificationGroup("External annotations");
 
   private @Nullable VirtualFile myAdditionalAnnotationsRoot;
 
@@ -686,7 +683,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     }
     Runnable openAnnotationXml =
       () -> new OpenFileDescriptor(project, file, exception.getLineNumber() - 1, exception.getColumnNumber() - 1).navigate(true);
-    EXTERNAL_ANNOTATIONS_MESSAGES.createNotification(
+    NotificationGroupManager.getInstance().getNotificationGroup("External annotations").createNotification(
         JavaBundle.message("external.annotations.problem.title"),
         JavaBundle.message("external.annotations.problem.parse.error", filePath, exception.getMessage()),
         NotificationType.WARNING)

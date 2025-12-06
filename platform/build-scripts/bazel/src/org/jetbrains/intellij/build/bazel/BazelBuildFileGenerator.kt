@@ -321,6 +321,12 @@ internal class BazelBuildFileGenerator(
         continue
       }
 
+      if (module.name == "intellij.tools.build.bazel.jvmIncBuilder" || module.name == "intellij.tools.build.bazel.jvmIncBuilderTests") {
+        // Skip bazel generator itself since it's a standalone Bazel project
+        skippedModules.add(module.name)
+        continue
+      }
+
       val descriptor = getModuleDescriptor(module)
       if (descriptor.isCommunity) {
         community.add(descriptor)

@@ -7,10 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Miscellaneous utility methods to manipulate lists of text ranges.
@@ -76,6 +73,30 @@ public final class TextRangeUtil {
       upperBound = Math.max(upperBound, textRange.getEndOffset());
     }
     return new TextRange(lowerBound, upperBound);
+  }
+
+  /**
+   * Merges intersecting (including adjacent) text ranges into one.
+   * For example, [[0, 5], [4, 9], [9, 13], [17, 29], [25, 31]] will be merged to [[0, 13], [17, 31]].
+   *
+   * @param sortedRanges The list of ranges, must be sorted by start offset.
+   */
+  public static List<TextRange> mergeRanges(List<TextRange> sortedRanges) {
+    if (sortedRanges.size() <= 1) return sortedRanges;
+    ArrayDeque<TextRange> mergedRanges = new ArrayDeque<>();
+    mergedRanges.add(sortedRanges.get(0));
+    for (int i = 1; i < sortedRanges.size(); i++) {
+      TextRange range = sortedRanges.get(i);
+      TextRange leftNeighbour = mergedRanges.peekLast();
+      if (leftNeighbour.intersects(range)) {
+        mergedRanges.pop();
+        mergedRanges.push(leftNeighbour.union(range));
+      }
+      else {
+        mergedRanges.push(range);
+      }
+    }
+    return new ArrayList<>(mergedRanges);
   }
 
   /**

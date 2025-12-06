@@ -69,22 +69,29 @@ private suspend fun ByteReader.readFrame(): JsonElement? {
       val line = readUTF8Line()
       if (line.isNullOrEmpty()) break
       readSomething = true
-      val (key, value) = line.split(':').map { it.trim() }
-      if (key == "Content-Length") {
-        contentLength = value.toInt()
+      try {
+        val (key, value) = line.split(':').map { it.trim() }
+        if (key == "Content-Length") {
+          contentLength = value.toInt()
+        }
+      } catch(x: Throwable) {
+        throw IllegalStateException("could not read header: $line", x)
       }
     }
     if (!readSomething) return null
     if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
     readByteArray(contentLength)
   }
-  catch (e: Exception) {
-    when (e) {
-      is IOException -> return null
-      else -> throw e
-    }
+  catch (_: IOException) {
+    return null
   }
-  return LSP.json.decodeFromString(JsonElement.serializer(), buf.decodeToStringUtf8())
+  val jsonStr = buf.decodeToStringUtf8()
+  return try {
+    LSP.json.decodeFromString(JsonElement.serializer(), jsonStr)
+  }
+  catch (x: Throwable) {
+    throw IllegalStateException("could not decode json: $jsonStr", x)
+  }
 }
 
 /**

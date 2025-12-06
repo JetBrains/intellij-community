@@ -17,6 +17,6 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5.jupiter" scope="RUNTIME" />
     <orderEntry type="library" name="opentest4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
-    <orderEntry type="library" name="asm-tools" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
   </component>
 </module>

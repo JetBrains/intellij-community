@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
 import com.intellij.jarFinder.InternetAttachSourceProvider
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.library.getMavenCoordinates
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
@@ -16,7 +17,10 @@ import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
+import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -191,8 +195,12 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val primaryNotation = "$productCoordinates:$version:sources"
         val fallbackNotation = "$productCoordinates:$closeVersion:sources"
 
+        val snapshotVersion = version.substringBefore('.') + "-SNAPSHOT"
+        val nightlySnapshotNotation = "$productCoordinates:$snapshotVersion:sources" // last chance, nightly snapshot
+
         fun downloadAndAttach(artifactNotation: String, onFailure: () -> Unit) {
-          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, externalProjectPath)
+          GradleArtifactDownloader.downloadArtifact(project, name, artifactNotation, externalProjectPath,
+                                                    GradleDependencySourceDownloaderErrorHandler.Noop)
             .whenComplete { path, error ->
               when {
                 error == null && path != null -> attachSources(path, orderEntries) { executionResult.setDone() }
@@ -203,7 +211,16 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
         downloadAndAttach(primaryNotation) {
           downloadAndAttach(fallbackNotation) {
-            executionResult.setRejected()
+            downloadAndAttach(nightlySnapshotNotation) {
+              GradleNotification.gradleNotificationGroup
+                .createNotification(title = GradleBundle.message("gradle.notifications.sources.download.failed.title"),
+                                    content = GradleBundle.message("gradle.notifications.sources.download.failed.content", primaryNotation),
+                                    NotificationType.WARNING)
+                .setDisplayId("gradle.notifications.sources.download.failed")
+                .notify(project)
+
+              executionResult.setRejected()
+            }
           }
         }
 

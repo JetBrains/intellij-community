@@ -71,7 +71,6 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
 import com.intellij.xdebugger.impl.proxy.FileColorsComputer
-import com.intellij.xdebugger.impl.proxy.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
@@ -1180,7 +1179,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
       sessionData.isBreakpointsMuted = false
     }
     myDebuggerManager.removeSession(this)
-    XDebugSessionProxyKeeper.getInstanceIfExists(project)?.removeProxy(this)
     myDispatcher.getMulticaster().sessionStopped()
     myDispatcher.getListeners().clear()
 

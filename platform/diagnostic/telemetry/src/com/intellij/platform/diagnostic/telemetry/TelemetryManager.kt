@@ -3,17 +3,20 @@
 
 package com.intellij.platform.diagnostic.telemetry
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -51,9 +54,11 @@ interface TelemetryManager {
 
     fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
 
-    fun setTelemetryManager(value: TelemetryManager) {
+    fun setTelemetryManager(provider: Deferred<TelemetryManager?>) {
       require(!instance.isInitialized())
-      instance.value = value
+      if (!telemetryInitializer.compareAndSet(null, provider)) {
+        log.warn("Unable to register a custom telemetry manager. NOOP implementation will be used")
+      }
     }
 
     @TestOnly
@@ -124,9 +129,16 @@ interface TelemetryManager {
   }
 }
 
+private val telemetryInitializer: AtomicReference<Deferred<TelemetryManager?>> = AtomicReference(null)
+private val log = logger<TelemetryManager>()
+
 private val instance = SynchronizedClearableLazy {
-  val log = logger<TelemetryManager>()
+  LoadingState.COMPONENTS_REGISTERED.checkOccurred()
   // GlobalOpenTelemetry.set(sdk) can be invoked only once
+  val providedInstance = runBlocking { telemetryInitializer.get()?.await() }
+  if (providedInstance != null) {
+    return@SynchronizedClearableLazy providedInstance
+  }
   val instance = try {
     val aClass = TelemetryManager::class.java
     val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()

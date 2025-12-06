@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
  */
 @ApiStatus.Internal
-public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
+public class XAddToWatchesTreeAction extends XDebuggerTreeSplitActionBase {
   @Override
   protected boolean isEnabled(final @NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && DebuggerUIUtil.getWatchesView(e) != null;
@@ -28,17 +28,15 @@ public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     for (XValueNodeImpl node : getSelectedNodes(e.getDataContext())) {
-      if (node != null) {
-        String nodeName = node.getName();
-        if (nodeName != null) {
-          perform(node, nodeName, e);
-        }
+      String nodeName = node.getName();
+      if (nodeName != null) {
+        perform(node, nodeName, e);
       }
     }
   }
 
   @Override
-  protected void perform(final XValueNodeImpl node, final @NotNull String nodeName, final AnActionEvent e) {
+  protected void perform(final @NotNull XValueNodeImpl node, final @NotNull String nodeName, final @NotNull AnActionEvent e) {
     final XWatchesView watchesView = DebuggerUIUtil.getWatchesView(e);
     if (watchesView != null) {
       DebuggerUIUtil.addToWatches(watchesView, node);

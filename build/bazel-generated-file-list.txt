@@ -440,6 +440,7 @@ libraries/kotlinx/coroutines/test
 libraries/kotlinx/datetime
 libraries/kotlinx/document-store-mvstore
 libraries/kotlinx/html
+libraries/kotlinx/serialization/cbor
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/kotlinx/serialization/protobuf
@@ -458,6 +459,7 @@ libraries/mockito
 libraries/mvstore
 libraries/opencsv
 libraries/oro-matcher
+libraries/plexus-utils
 libraries/proxy-vole
 libraries/pty4j
 libraries/rd-text
@@ -468,6 +470,7 @@ libraries/snakeyaml-engine
 libraries/sshd-osgi
 libraries/sshj
 libraries/stream
+libraries/swingx
 libraries/system-stubs-jupiter
 libraries/testcontainers
 libraries/testng

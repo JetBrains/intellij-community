@@ -149,6 +149,9 @@ public final class XFramesView extends XDebugView {
     installSpeedSearch(myFramesList);
 
     myFrameSelectionHandler.install(myFramesList);
+
+    // Double-click enables focusing on the editor of a selected frame;
+    // plus it opens a file fully when Preview mode is enabled
     EditSourceOnDoubleClickHandler.install(myFramesList);
 
     myFramesList.addMouseListener(new PopupHandler() {

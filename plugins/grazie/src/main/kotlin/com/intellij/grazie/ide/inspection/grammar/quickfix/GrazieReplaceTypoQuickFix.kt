@@ -171,12 +171,18 @@ object GrazieReplaceTypoQuickFix {
   @VisibleForTesting
   @JvmStatic
   fun toFileReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
-    val replacedText = replacementRange.subSequence(text)
     val file = text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
+    return toRangeReplacements(replacementRange, suggestion, text)
+      .map { (range, replacement) -> spm.createSmartPsiFileRangePointer(file, range) to replacement }
+  }
+
+  @JvmStatic
+  fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<TextRange, String>> {
+    val replacedText = replacementRange.subSequence(text)
     if (replacedText.contains(Regex("(- *\n)|(\n *-)"))) {
       val fileRange = text.textRangeToFile(replacementRange)
-      return listOf(spm.createSmartPsiFileRangePointer(file, fileRange) to suggestion.toString())
+      return listOf(fileRange to suggestion.toString())
     }
     val commonPrefix = commonPrefixLength(suggestion, replacedText)
     val commonSuffix =
@@ -192,7 +198,7 @@ object GrazieReplaceTypoQuickFix {
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()
-    return shreds.map { spm.createSmartPsiFileRangePointer(file, it) to (if (it === best) replacement else "") }
+    return shreds.map { it to (if (it === best) replacement else "") }
   }
 
   private fun removalWouldGlueUnrelatedTokens(removedRange: TextRange, text: TextContent): Boolean {

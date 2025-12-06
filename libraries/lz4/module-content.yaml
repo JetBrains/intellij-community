@@ -1,6 +1,6 @@
 - name: dist.all/lib/intellij.libraries.lz4.jar
   modules:
   - name: intellij.libraries.lz4
-  library: lz4-java
-  files:
-  - name: $MAVEN_REPOSITORY$/org/lz4/lz4-java/1/lz4-java-1.jar
+    libraries:
+      lz4-java:
+      - name: $MAVEN_REPOSITORY$/org/lz4/lz4-java/1/lz4-java-1.jar

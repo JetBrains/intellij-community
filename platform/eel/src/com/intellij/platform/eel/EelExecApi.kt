@@ -168,6 +168,8 @@ sealed interface EelExecApi {
   /**
    * Gets the same environment variables on the remote machine as the user would get.
    *
+   * *Notice:* use [EelExecApi.expandPathEnvVar] or [EelOsFamily.expandPathEnvVar] for `PATH`.
+   *
    * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
    */
   @ApiStatus.Experimental

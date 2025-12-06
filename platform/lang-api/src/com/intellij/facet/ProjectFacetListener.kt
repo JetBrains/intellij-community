@@ -5,11 +5,12 @@ import com.intellij.openapi.project.Project
 
 /**
  * Implement this interface to be notified about changes in facets in all project modules. The implementation must be registered in plugin.xml
- * <pre>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;
- * &nbsp;&nbsp;&lt;projectFacetListener facet-type="facet-type-id" implementation="qualified-class-name"/&gt;
- * &lt;/extensions&gt;
-</pre> *
+ * ```
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <projectFacetListener facet-type="facet-type-id" implementation="qualified-class-name"/>
+ * </extensions>
+ * ```
+ *
  * If `facet-type-id` is set to [ID][FacetType.getStringId] of a specific facet type, the listener will be notified about changes
  * in facets of this type only. If it is `"any"` the listener will get events about all facets in the project.
  *

@@ -39,11 +39,12 @@ import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.response.respond
 import io.ktor.util.toMap
-import io.modelcontextprotocol.kotlin.sdk.*
+
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
+import io.modelcontextprotocol.kotlin.sdk.types.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -249,7 +250,6 @@ class McpServerService(val cs: CoroutineScope) {
               tools = ServerCapabilities.Tools(listChanged = true),
               logging = null,
               experimental = null,
-              sampling = null,
               prompts = null,
               resources = null,
             )
@@ -289,8 +289,8 @@ class McpServerService(val cs: CoroutineScope) {
     val tool = toSdkTool()
     return RegisteredTool(tool) { request ->
       val httpRequest = currentCoroutineContext().httpRequestOrNull
-      val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
-      val projectPathFromMcpRequest = (request.arguments[projectPathParameterName] as? JsonPrimitive)?.content
+      val projectPathFromHeaders = httpRequest?.headers?.get(IJ_MCP_SERVER_PROJECT_PATH) ?: (request.meta?.get(IJ_MCP_SERVER_PROJECT_PATH) as? JsonPrimitive)?.content ?: projectPathFromInitialRequest
+      val projectPathFromMcpRequest = (request.arguments?.get(projectPathParameterName) as? JsonPrimitive)?.content
       @Suppress("IncorrectCancellationExceptionHandling")
       val project = try {
         if (!projectPathFromMcpRequest.isNullOrBlank()) {
@@ -338,8 +338,8 @@ class McpServerService(val cs: CoroutineScope) {
         clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
         project = project,
         mcpToolDescriptor = descriptor,
-        rawArguments = request.arguments,
-        meta = request._meta,
+        rawArguments = request.arguments ?: EmptyJsonObject,
+        meta = request.meta?.json ?: EmptyJsonObject,
         mcpSessionOptions = sessionOptions,
         headers = headersWithoutAuthToken ?: emptyMap(),
       )
@@ -380,7 +380,7 @@ class McpServerService(val cs: CoroutineScope) {
 
             logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'. Arguments: ${request.arguments}" }
 
-            val result = this@mcpToolToRegisteredTool.call(request.arguments)
+            val result = this@mcpToolToRegisteredTool.call(request.arguments ?: EmptyJsonObject)
 
             logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'. Result: ${result.content.joinToString("\n") { it.toString() }}" }
             try {
@@ -490,23 +490,23 @@ private fun McpToolCallResult.toSdkToolCallResult(): CallToolResult {
     }
   }
   val structuredContent = if (structuredToolOutputEnabled) structuredContent else null
-  val callToolResult = CallToolResult(content = contents, structuredContent = structuredContent, isError)
+  val callToolResult = CallToolResult(content = contents, structuredContent = structuredContent, isError = isError)
   return callToolResult
 }
 
 private fun McpTool.toSdkTool(): Tool {
   val outputSchema = if (structuredToolOutputEnabled) {
     descriptor.outputSchema?.let {
-      Tool.Output(
-        it.propertiesSchema,
-        it.requiredProperties.toList())
+      ToolSchema(
+        properties = it.propertiesSchema,
+        required = it.requiredProperties.toList())
     }
   }
   else null
   val tool = Tool(name = descriptor.name,
                   title = null,
                   description = descriptor.description,
-                  inputSchema = Tool.Input(
+                  inputSchema = ToolSchema(
                     properties = descriptor.inputSchema.propertiesSchema,
                     required = descriptor.inputSchema.requiredProperties.toList()),
                   outputSchema = outputSchema,

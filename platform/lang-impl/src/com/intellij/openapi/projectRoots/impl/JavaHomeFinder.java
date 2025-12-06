@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
@@ -36,6 +37,10 @@ import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlockin
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
   public static class SystemInfoProvider {
+    public @NotNull String getPathEnvVar() {
+      return StringUtil.notNullize(getEnvironmentVariable("PATH"));
+    }
+
     public @Nullable String getEnvironmentVariable(@NotNull String name) {
       return EnvironmentUtil.getValue(name);
     }

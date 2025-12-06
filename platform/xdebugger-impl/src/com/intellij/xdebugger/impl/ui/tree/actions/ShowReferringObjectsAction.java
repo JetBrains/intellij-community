@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowReferringObjectsAction extends XDebuggerTreeActionBase implements SplitDebuggerAction {
+public class ShowReferringObjectsAction extends XDebuggerTreeSplitActionBase {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

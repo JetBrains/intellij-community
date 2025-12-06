@@ -742,17 +742,21 @@
     "AlertDialog.background": "PopupBackground",
     
     "Recap": {
-      "cardBackground": "#1E1F22",
+      "ijnext": "#55339C",
+      "cardBackground": "#212326",
       "cardBorderColor": "#1E1F22",
       "cardHeaderTitle": "#F0F1F2",
       "cardHeaderLinkBackground": "#2B2D30",
-      "cardHeaderSubtitle": "#B4B8BF",
+      "cardHeaderSubtitle": "#888888",
       "cardFooterForeground": "#CED0D6",
-      "chroniclesBackground": "#2B2D30",
-      "chroniclesBorderColor": "#2B2D30",
-      "chroniclesBackgroundHovered": "#393B40",
+      "chroniclesBackground": "#26282C",
+      "chroniclesBorderColor": "#26282C",
+      "chroniclesBackgroundHovered": "#33353B",
       "chroniclesForeground": "#DFE1E5",
-      "chroniclesForegroundGreyed": "#868A91"
+      "chroniclesForegroundGreyed": "#868A91",
+      "errorBackground": "#3D3223",
+      "errorBorder": "#5E4D33",
+      "errorForeground": "#DFE1E5"
     }
   }
 }

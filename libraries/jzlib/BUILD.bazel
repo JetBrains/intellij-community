@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jzlib_resources"],
-  exports = ["@lib//:jzlib"],
-  runtime_deps = ["@lib//:jzlib"]
+  exports = ["@lib//:libraries-jzlib-jzlib"],
+  runtime_deps = ["@lib//:libraries-jzlib-jzlib"]
 )
 ### auto-generated section `build intellij.libraries.jzlib` end

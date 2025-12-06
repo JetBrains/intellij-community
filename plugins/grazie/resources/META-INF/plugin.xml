@@ -134,6 +134,8 @@
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"/>
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"/>
 
+    <spellchecker.quickFixFactory implementation="com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieMassApplyActionProvider"/>
+
     <intentionAction>
       <language/>
       <bundleName>messages.GrazieBundle</bundleName>

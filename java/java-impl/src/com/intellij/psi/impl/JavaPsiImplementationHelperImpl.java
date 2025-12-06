@@ -173,9 +173,22 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
-    Stream<VirtualFile> modelRoots = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(file).stream()
-      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
-      .flatMap(entry -> Stream.of(((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.SOURCES)));
+    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
+    String sdkSourcesRootTypeName = SdkBridgeImplKt.getCustomName(OrderRootType.SOURCES);
+
+    Stream<VirtualFileUrl> librarySourceRoots = index.findContainingLibraries(file).stream()
+      .flatMap(library -> library.getRoots().stream())
+      .filter(root -> root.getType().equals(LibraryRootTypeId.Companion.getSOURCES()))
+      .map(LibraryRoot::getUrl);
+
+    Stream<VirtualFileUrl> sdkSourceRoots = index.findContainingSdks(file).stream()
+      .flatMap(sdk -> sdk.getRoots().stream())
+      .filter(root -> root.getType().getName().equals(sdkSourcesRootTypeName))
+      .map(SdkRoot::getUrl);
+
+    Stream<VirtualFile> modelRoots = Stream.concat(librarySourceRoots, sdkSourceRoots)
+      .map(VirtualFileUrls::getVirtualFile)
+      .filter(Objects::nonNull);
 
     Stream<VirtualFile> synthRoots = AdditionalLibraryRootsProvider.EP_NAME.getExtensionList().stream()
       .flatMap(provider -> provider.getAdditionalProjectLibraries(myProject).stream())

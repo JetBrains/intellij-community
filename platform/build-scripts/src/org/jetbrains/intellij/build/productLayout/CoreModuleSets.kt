@@ -53,7 +53,6 @@ object CoreModuleSets {
    * @see essentialMinimal for lightweight IDE with editing (most IDE products should use this)
    */
   fun corePlatform(): ModuleSet = moduleSet("core.platform", selfContained = true, outputModule = "intellij.platform.ide.core", includeDependencies = true) {
-    // Include only core libraries (universal infrastructure)
     moduleSet(librariesPlatform())
 
     embeddedModule("intellij.platform.util.ex")
@@ -306,8 +305,8 @@ object CoreModuleSets {
     embeddedModule("intellij.platform.builtInServer.impl")
     embeddedModule("intellij.platform.smRunner")
     embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
-    embeddedModule("intellij.platform.externalSystem.impl",)
-    embeddedModule("intellij.platform.externalProcessAuthHelper" )
+    embeddedModule("intellij.platform.externalSystem.impl")
+    embeddedModule("intellij.platform.externalProcessAuthHelper")
   }
 
   /**

@@ -476,7 +476,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static @Nullable PyType dropSelfForQualifiedMethod(@Nullable PyType type,
                                                              @NotNull TypeEvalContext context,
                                                              @NotNull PyReferenceExpression anchor) {
-    if (type instanceof PyFunctionType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
+    if (type instanceof PyCallableType functionType && context.maySwitchToAST(anchor) && anchor.getQualifier() != null) {
       if (context.getType(anchor.getQualifier()) instanceof PyClassLikeType classLikeType && classLikeType.isDefinition() &&
           functionType.getModifier() != PyAstFunction.Modifier.CLASSMETHOD) {
         return type;

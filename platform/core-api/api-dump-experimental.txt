@@ -532,6 +532,14 @@ a:com.intellij.psi.stubs.StubBase
 - *f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
 - *:getElementType():com.intellij.psi.tree.IElementType
 - *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubBuildCachedValuesManager
+- sf:INSTANCE:com.intellij.psi.stubs.StubBuildCachedValuesManager
+- sf:getCachedValueIfBuildingStubs(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,java.lang.Object,java.util.function.Function):java.lang.Object
+- sf:getCachedValueStubBuildOptimized(com.intellij.lang.ASTNode,com.intellij.openapi.project.Project,com.intellij.openapi.util.Key,com.intellij.openapi.util.Key,com.intellij.psi.util.ParameterizedCachedValueProvider,java.lang.Object):java.lang.Object
+- sf:getCachedValueStubBuildOptimized(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,com.intellij.openapi.util.Key,com.intellij.psi.util.ParameterizedCachedValueProvider,java.lang.Object):java.lang.Object
+- sf:getCachedValueStubBuildOptimized(com.intellij.psi.PsiElement,com.intellij.openapi.util.Key,com.intellij.psi.util.CachedValueProvider):java.lang.Object
+- sf:isBuildingStubs():Z
+*f:com.intellij.psi.stubs.StubBuildCachedValuesManager$StubBuildCachedValue
 com.intellij.psi.stubs.StubElement
 - com.intellij.psi.stubs.Stub
 - *:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement

@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
     "//libraries/commons/lang3",
-    "@lib//:plexus-utils",
+    "//libraries/plexus-utils",
     "//libraries/commons/codec",
     "//platform/util",
   ]
@@ -43,7 +43,7 @@ jvm_library(
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
     "//libraries/commons/lang3",
-    "@lib//:plexus-utils",
+    "//libraries/plexus-utils",
     "//libraries/commons/codec",
     "//platform/util",
   ]

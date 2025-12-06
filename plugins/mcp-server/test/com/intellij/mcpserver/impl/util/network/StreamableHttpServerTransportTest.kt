@@ -1,13 +1,7 @@
 package com.intellij.mcpserver.impl.util.network
 
-import io.modelcontextprotocol.kotlin.sdk.Implementation
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCMessage
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCNotification
-import io.modelcontextprotocol.kotlin.sdk.JSONRPCResponse
-import io.modelcontextprotocol.kotlin.sdk.InitializeResult
-import io.modelcontextprotocol.kotlin.sdk.RequestId
-import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
+import io.modelcontextprotocol.kotlin.sdk.types.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.runTest
@@ -36,14 +30,11 @@ class StreamableHttpServerTransportTest {
 
     val response = JSONRPCResponse(
       id = requestId,
-      jsonrpc = "2.0",
       result = InitializeResult(
         protocolVersion = "1.1",
         capabilities = ServerCapabilities(),
-        serverInfo = Implementation("test", "1.0"),
-        _meta = buildJsonObject {}
-      ),
-      error = null,
+        serverInfo = Implementation("test", "1.0")
+      )
     )
 
     val initialVersion = transport.negotiatedProtocolVersion()
@@ -66,8 +57,7 @@ class StreamableHttpServerTransportTest {
 
     val notification = JSONRPCNotification(
       method = "notifications/test",
-      params = buildJsonObject { put("payload", JsonPrimitive("value")) },
-      jsonrpc = "2.0",
+      params = buildJsonObject { put("payload", JsonPrimitive("value")) }
     )
 
     transport.send(notification)
@@ -97,7 +87,6 @@ class StreamableHttpServerTransportTest {
     val notification = JSONRPCNotification(
       method = "notifications/test",
       params = JsonNull,
-      jsonrpc = "2.0",
     )
 
     transport.send(notification)

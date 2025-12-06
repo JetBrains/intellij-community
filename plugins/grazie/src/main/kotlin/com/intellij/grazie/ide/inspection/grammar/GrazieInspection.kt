@@ -123,11 +123,11 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     }
 
     @JvmStatic
-    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean {
+    fun skipCheckingTooLargeTexts(texts: Collection<TextContent>): Boolean {
       if (texts.isEmpty()) return false
       if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
 
-      val file = texts[0].containingFile
+      val file = texts.first().containingFile
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
 
       return CachedValuesManager.getCachedValue(file) {

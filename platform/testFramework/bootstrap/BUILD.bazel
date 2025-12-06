@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:tc_service_messages",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
-    "@lib//:asm-tools",
+    "//libraries/asm-tools",
     ":libraries_junit5-vintage_provided",
   ],
   runtime_deps = [

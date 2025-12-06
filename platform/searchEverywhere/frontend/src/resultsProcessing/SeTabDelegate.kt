@@ -330,7 +330,10 @@ class SeTabDelegate(
 
       ensureActive()
       val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
-                                 ?: error("Local providers holder is not initialized")
+                                 ?: run {
+                                   SeLog.error("Local providers holder is not initialized")
+                                   return@coroutineScope Providers(emptyMap(), null, emptySet())
+                                 }
 
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
       val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()

@@ -1,9 +1,3 @@
-- name: lib/kotlinx-document-store-mvstore.jar
-  library: kotlinx-document-store-mvstore
-  files:
-  - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
-  - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
-  reason: withProjectLibrary
 - name: lib/maven-model.jar
   modules:
   - name: intellij.maven.model

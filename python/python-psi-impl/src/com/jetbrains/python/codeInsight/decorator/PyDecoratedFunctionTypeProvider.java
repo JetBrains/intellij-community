@@ -1,25 +1,21 @@
 package com.jetbrains.python.codeInsight.decorator;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeProviderBase;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.psi.resolve.PyResolveUtil.resolveQualifiedNameInScope;
 import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
 
 /**
@@ -44,17 +40,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     if (explicitlyTypedDecorators.isEmpty()) {
       return null;
     }
-
-    /* Our goal is to infer the type of reference of a decorated object.
-     * For that we are going to infer a type of expression <code>decorator(reference)<code>.
-     * The expression contains a new reference for the same object, and our
-     * type inferring engine will ask this provider about the type of the object again.
-     * To prevent an infinite loop, we need to add a recursion guard here. */
-    return RecursionManager.doPreventingRecursion(
-      Pair.create(referenceTarget, context),
-      false,
-      () -> evaluateType(pyDecoratable, context, explicitlyTypedDecorators)
-    );
+    return evaluateType(pyDecoratable, context, explicitlyTypedDecorators);
   }
 
   private static boolean isTransparentDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
@@ -66,7 +52,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     if (qualifiedName == null) return false;
     // Decorator is the only expression persisted in PSI stubs.
     // Calling decorator.getCallee() to retrieve a reference will cause un-stubbing of the containing file
-    List<PsiElement> resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (PyFile)decorator.getContainingFile(), context);
+    List<PsiElement> resolved = resolveQualifiedNameInScope(qualifiedName, (PyFile)decorator.getContainingFile(), context);
     for (PsiElement res : resolved) {
       if (res instanceof PyFunction function) {
         if (hasReturnTypeHint(function, context)) {
@@ -89,36 +75,163 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
   private static @Nullable Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,
                                                     @NotNull TypeEvalContext context,
                                                     @NotNull List<PyDecorator> decorators) {
-    PyExpression fakeCallExpression = fakeCallExpression(referenceTarget, decorators, context);
-    if (fakeCallExpression == null) {
-      return null;
-    }
-    // TODO Don't ignore explicit return type Any on one of the decorators 
-    return notNullToRef(context.getType(fakeCallExpression));
-  }
+    @Nullable PyCallableType currentType = null;
 
-  private static @Nullable PyExpression fakeCallExpression(@NotNull PyDecoratable referenceTarget,
-                                                           @NotNull List<PyDecorator> decorators,
-                                                           @NotNull TypeEvalContext context) {
-    StringBuilder result = new StringBuilder();
-
-    for (PyDecorator decorator : decorators) {
-      if (context.maySwitchToAST(decorator)) {
-        result.append(decorator.getText().substring(1));
+    for (int i = decorators.size() - 1; i >= 0; i--) {
+      PyDecorator decorator = decorators.get(i);
+      PyType argument;
+      if (currentType != null) {
+        argument = currentType;
       }
       else {
-        result
-          .append(decorator.getName())
-          .append(decorator.hasArgumentList() ? "()" : "");
+        argument = context.getType((PyTypedElement)referenceTarget);
       }
-      result.append("(");
-    }
-    if (ScopeUtil.getScopeOwner(referenceTarget) instanceof PyClass containingClass) {
-      result.append(containingClass.getName()).append(".");
-    }
-    result.append(referenceTarget.getName());
-    StringUtil.repeatSymbol(result, ')', decorators.size());
 
-    return PyUtil.createExpressionFromFragment(result.toString(), referenceTarget.getContainingFile());
+      PyCallableType decoratorType = getDecoratorType(decorator, argument, context);
+      if (decoratorType != null) {
+        PyType newType = PySyntheticCallHelper.getCallTypeOnTypesOnly(
+          decoratorType,
+          null,
+          Collections.singletonList(argument),
+          context
+        );
+
+        if (newType instanceof PyCallableType newFunctionType) {
+          currentType = newFunctionType;
+        }
+      }
+    }
+
+    if (currentType instanceof PyCallableTypeImpl && referenceTarget instanceof PyFunction callableReference) {
+      return Ref.create(new PyCallableTypeImpl(
+        currentType.getParameters(context),
+        currentType.getReturnType(context),
+        callableReference,
+        currentType.getModifier(),
+        currentType.getImplicitOffset()
+      ));
+    }
+
+    // TODO Don't ignore explicit return type Any on one of the decorators
+    return notNullToRef(currentType);
+  }
+
+  private static @Nullable PyCallableType getDecoratorType(@NotNull PyDecorator decorator,
+                                                           @Nullable PyType decoratedFunctionType,
+                                                           @NotNull TypeEvalContext context) {
+    QualifiedName decoratorQualifiedName = decorator.getQualifiedName();
+    if (decoratorQualifiedName == null) return null;
+    PsiFile file = decorator.getContainingFile();
+    PyTypedElement typedElement = StreamEx.of(resolveQualifiedNameInScope(decoratorQualifiedName, (PyFile)file, context))
+      .select(PyTypedElement.class)
+      .findFirst()
+      .orElse(null);
+    if (typedElement != null) {
+      if (decorator.hasArgumentList()) {
+        return getDecoratorCallType(decorator, typedElement, context);
+      }
+
+      List<PyFunction> overloads;
+      if (typedElement instanceof PyFunction resolvedFunction) {
+        overloads = PyiUtil.getOverloads(resolvedFunction, context);
+      }
+      else {
+        overloads = Collections.emptyList();
+      }
+      return getDecoratorCalleeType(typedElement, Collections.singletonList(decoratedFunctionType), overloads, context);
+    }
+
+    return null;
+  }
+
+  private static @Nullable PyCallableType getDecoratorCallType(@NotNull PyDecorator decorator,
+                                                               @NotNull PyTypedElement typedElement,
+                                                               @NotNull TypeEvalContext context) {
+    PyType typedElementType = context.getType(typedElement);
+    List<PyFunction> overloads = Collections.emptyList();
+    if (typedElement instanceof PyFunction resolvedFunction) {
+      overloads = PyiUtil.getOverloads(resolvedFunction, context);
+    }
+
+
+    // Shortcircuit:
+    // if there are no overloads and the decorator is not generic,
+    // there's no need to `PySyntheticCallHelper.getCallTypeOnTypesOnly` to get its return type
+    // and a simple `getReturnType` can be used instead
+    if (typedElementType instanceof PyCallableType callableType &&
+        !PyTypeChecker.hasGenerics(typedElementType, context) &&
+        overloads.isEmpty()) {
+      PyType returnType = callableType.getReturnType(context);
+      if (returnType instanceof PyCallableType returnPyCallableType) {
+        return returnPyCallableType;
+      }
+      else {
+        return null;
+      }
+    }
+
+
+    // Otherwise:
+    // if the decorator has overloads or is generic, we have to calculate its type
+    if (context.maySwitchToAST(decorator)) {
+      PyType type = context.getType(decorator);
+      if (type instanceof PyCallableType callableType) {
+        return callableType;
+      }
+    }
+
+    // If we cannot switch to AST, our only option is to calculate the call with no arguments
+    // TODO: instead, we should return an UnsafeUnion of all possible overloads
+    PyCallableType decoratorCalleeType = getDecoratorCalleeType(typedElement, List.of(), overloads, context);
+    if (decoratorCalleeType != null) {
+      PyType newType = PySyntheticCallHelper.getCallTypeOnTypesOnly(
+        decoratorCalleeType,
+        null,
+        List.of(),
+        context
+      );
+
+      if (newType instanceof PyCallableType newFunctionType) {
+        return newFunctionType;
+      }
+    }
+
+    return null;
+  }
+
+  private static @Nullable PyCallableType getDecoratorCalleeType(@NotNull PyTypedElement typedElement,
+                                                                 @NotNull List<@Nullable PyType> decoratorArgumentTypes,
+                                                                 @NotNull List<PyFunction> overloads,
+                                                                 @NotNull TypeEvalContext context) {
+    List<? extends PyTypedElement> resolvedElements;
+    if (typedElement instanceof PyFunction resolvedFunction) {
+      if (overloads.isEmpty()) {
+        resolvedElements = List.of(resolvedFunction);
+      }
+      else {
+        resolvedElements = PySyntheticCallHelper.matchOverloadsByArgumentTypes(overloads, decoratorArgumentTypes, null, context);
+      }
+    }
+    else {
+      resolvedElements = List.of(typedElement);
+    }
+
+    if (resolvedElements.size() == 1) {
+      PyTypedElement resolvedElement = resolvedElements.getFirst();
+      PyType type;
+      if (resolvedElement instanceof PyClass pyClass) {
+        type = PyTypeChecker.findGenericDefinitionType(pyClass, context);
+        if (type instanceof PyClassType classType) {
+          type = classType.toClass();
+        }
+      }
+      else {
+        type = context.getType(resolvedElement);
+      }
+      if (type instanceof PyCallableType callableType) {
+        return callableType;
+      }
+    }
+    return null;
   }
 }

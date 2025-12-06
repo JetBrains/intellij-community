@@ -68,15 +68,21 @@ public final class PySyntheticCallHelper {
                                                          @NotNull TypeEvalContext context) {
     PyType type = context.getType(function);
     if (type instanceof PyFunctionType functionType) {
-      SyntheticCallArgumentsMapping argumentsMapping = mapArgumentsOnTypes(arguments, functionType, context);
-      Map<Ref<PyType>, PyCallableParameter> actualParameters = argumentsMapping.getMappedParameters();
-      List<PyCallableParameter> allParameters = ContainerUtil.notNullize(function.getParameters(context));
-      PyType returnType = functionType.getReturnType(context);
-      return analyzeCallTypeOnTypesOnly(returnType, actualParameters, allParameters, receiverType, context);
+      return getCallTypeOnTypesOnly(functionType, receiverType, arguments, context);
     }
     return null;
   }
 
+  public static @Nullable PyType getCallTypeOnTypesOnly(@NotNull PyCallableType callableType,
+                                                        @Nullable PyType receiverType,
+                                                        @NotNull List<PyType> arguments,
+                                                        @NotNull TypeEvalContext context) {
+    SyntheticCallArgumentsMapping argumentsMapping = mapArgumentsOnTypes(arguments, callableType, context);
+    Map<Ref<PyType>, PyCallableParameter> actualParameters = argumentsMapping.getMappedParameters();
+    List<PyCallableParameter> allParameters = ContainerUtil.notNullize(callableType.getParameters(context));
+    PyType returnType = callableType.getReturnType(context);
+    return analyzeCallTypeOnTypesOnly(returnType, actualParameters, allParameters, receiverType, context);
+  }
 
   static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
                                                                    @NotNull List<PyType> argumentTypes,
@@ -107,10 +113,10 @@ public final class PySyntheticCallHelper {
     return resolvedFunctions;
   }
 
-  private static @NotNull List<PyFunction> matchOverloadsByArgumentTypes(@NotNull List<PyFunction> functions,
-                                                                         @NotNull List<PyType> argumentTypes,
-                                                                         @Nullable PyType receiverType,
-                                                                         @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> matchOverloadsByArgumentTypes(@NotNull List<PyFunction> functions,
+                                                                        @NotNull List<PyType> argumentTypes,
+                                                                        @Nullable PyType receiverType,
+                                                                        @NotNull TypeEvalContext context) {
     PyFunction firstFunc = ContainerUtil.getFirstItem(functions);
     if (firstFunc != null && PyiUtil.isOverload(firstFunc, context)) {
       List<PyFunction> matchingOverloads = ContainerUtil.filter(
@@ -144,7 +150,7 @@ public final class PySyntheticCallHelper {
   }
 
   private static @NotNull SyntheticCallArgumentsMapping mapArgumentsOnTypes(@NotNull List<PyType> arguments,
-                                                                            @NotNull PyFunctionType functionType,
+                                                                            @NotNull PyCallableType functionType,
                                                                             @NotNull TypeEvalContext context) {
     List<PyCallableParameter> parameters = functionType.getParameters(context);
     if (parameters == null) return SyntheticCallArgumentsMapping.empty(functionType);

@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":jaxen_resources"],
-  exports = ["@lib//:jaxen"],
-  runtime_deps = ["@lib//:jaxen"]
+  exports = ["@lib//:libraries-jaxen-_jaxen"],
+  runtime_deps = ["@lib//:libraries-jaxen-_jaxen"]
 )
 ### auto-generated section `build intellij.libraries.jaxen` end

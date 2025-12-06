@@ -14,8 +14,10 @@ import org.jetbrains.jps.util.Pair;
 import org.jetbrains.jps.util.SystemInfo;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -27,7 +29,7 @@ import static org.jetbrains.jps.util.Iterators.*;
 public class BazelIncBuilder {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncBuilder");
   // recompile all, if more than X percent of files has been changed; for incremental tests, set equal to 100
-  private static final int RECOMPILE_CHANGED_RATIO_PERCENT = 85;
+  private static final int RECOMPILE_CHANGED_RATIO_PERCENT = VMFlags.getChangesPercentToRebuild();
   private static final boolean COLLECT_BUILD_DIAGNOSTICS = true;
 
   public ExitCode build(BuildContext context) {
@@ -427,6 +429,17 @@ public class BazelIncBuilder {
       new ConfigurationState(
         context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()
       ).save(context);
+
+      BuildProcessLogger buildLogger = context.getBuildLogger();
+      if (buildLogger.isEnabled()) {
+        // in test mode, save build log for tests
+        Files.writeString(
+          DataPaths.getBuildProcessLoggerDataPath(context),
+          buildLogger.getCollectedData(),
+          StandardCharsets.UTF_8,
+          StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND
+        );
+      }
     }
     catch (Throwable e) {
       LOG.log(Level.SEVERE, "Error saving build state " + context.getTargetName(), e);
