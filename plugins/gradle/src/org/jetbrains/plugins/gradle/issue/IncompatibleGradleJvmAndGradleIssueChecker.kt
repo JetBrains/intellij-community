@@ -10,10 +10,13 @@ import org.gradle.internal.jvm.UnsupportedJavaRuntimeException
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.io.File
 import java.util.function.Consumer
+import kotlin.io.path.Path
 
 /**
  * This issue checker provides quick fixes for compatibility issues with Gradle and Java.
@@ -39,7 +42,7 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val gradleVersion = getGradleVersion(issueData)
-    val javaVersion = getJavaVersion(issueData)
+    val javaVersion = getJavaVersion(issueData, gradleVersion)
 
     when {
       gradleVersion != null && javaVersion != null -> {
@@ -68,7 +71,15 @@ class IncompatibleGradleJvmAndGradleIssueChecker : GradleIssueChecker {
     return null
   }
 
-  private fun getJavaVersion(issueData: GradleIssueData): JavaVersion? {
+  private fun getJavaVersion(issueData: GradleIssueData, gradleVersion: GradleVersion?): JavaVersion? {
+    val projectPath = Path(issueData.projectPath)
+    // Projects using Daemon JVM criteria with a compatible Gradle version will ignore javaHome defined on BuildEnvironment
+    // for this reason defined version in gradle/gradle-daemon-jvm.properties is used to run build instead
+    if (gradleVersion != null && GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectPath, gradleVersion)) {
+      GradleDaemonJvmPropertiesFile.getProperties(projectPath).version?.value?.let {
+        return JavaVersion.parse(it)
+      }
+    }
     if (issueData.buildEnvironment != null) {
       return ExternalSystemJdkUtil.getJavaVersion(issueData.buildEnvironment.java.javaHome.path)
     }
