@@ -16,6 +16,7 @@ interface DaemonCodeAnalyzer {
 
   fun isAllAnalysisFinished(psiFile: PsiFile): Boolean
   fun getHighlights(document: Document, severity: HighlightSeverity?, project: Project): List<HighlightInfo>
+  fun getLineMarkers(document: Document, project: Project): List<LineMarkerInfo>
 }
 
 @Remote("com.intellij.codeInsight.daemon.impl.HighlightInfo")
@@ -49,6 +50,11 @@ interface HighlightInfoType {
 @Remote("com.intellij.openapi.editor.colors.TextAttributesKey")
 interface TextAttributesKey {
   fun compareTo(key: TextAttributesKey): Int
+}
+
+@Remote("com.intellij.codeInsight.daemon.LineMarkerInfo")
+interface LineMarkerInfo {
+  fun getElement(): PsiElement
 }
 
 fun Driver.isCodeAnalysisRunning(project: Project? = null): Boolean {
