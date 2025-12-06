@@ -101,9 +101,14 @@ object KotlinPluginLayout {
     private val standaloneCompilerVersionProvider: Lazy<IdeKotlinVersion>
 
     init {
-         val standaloneCompilerVersionDefaultProvider = lazy {
-            val rawVersion = kotlinc.resolve("build.txt").readText().trim()
-            IdeKotlinVersion.get(rawVersion)
+        val standaloneCompilerVersionDefaultProvider = lazy {
+            val buildTxtFile = kotlinc.resolve("build.txt")
+            if (!buildTxtFile.exists()) {
+                ideCompilerVersion
+            } else {
+                val rawVersion = buildTxtFile.readText().trim()
+                IdeKotlinVersion.get(rawVersion)
+            }
         }
         when (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode) {
             KotlinPluginLayoutMode.SOURCES -> {
