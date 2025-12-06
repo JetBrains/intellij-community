@@ -3,9 +3,10 @@ package com.intellij.terminal.tests.reworked.backend
 import com.intellij.execution.CommandLineUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
@@ -61,11 +62,12 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
   @TestFactory
   fun `default scenario (no,yes,no)`() = withShellPathAndShellIntegration(eelApi, 60.seconds) { shellPath, shellIntegration ->
     TerminalOptionsProvider.instance::shellIntegration.setValueInTest(shellIntegration, this.asDisposable())
-    val (session) = startTerminalSession(shellPath, this)
+    val (session, shellProcess) = startTerminalSession(shellPath, this)
+    echoShellVersion(session, shellPath)
     val outputHandler = TestTerminalOutputHandler(session, this)
     sendEchoCommandAndAwaitItsCompletion(outputHandler, shellPath, GREETING)
     Assertions.assertThat(session.isClosed).isFalse()
-    awaitNoCommandRunning(outputHandler, "echo $GREETING")
+    awaitNoCommandRunning(outputHandler, "echo $GREETING", shellProcess)
     val enterNamePrompt = "Please enter your name: "
     val askNameCommand = createAskNameCommand(enterNamePrompt)
     session.getInputChannel().sendCommandToExecute(askNameCommand, shellPath)
@@ -79,7 +81,7 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
     outputHandler.awaitOutput(20.seconds) { output ->
       Assertions.assertThat(output).contains("Welcome, IntelliJ")
     }
-    awaitNoCommandRunning(outputHandler, askNameCommand)
+    awaitNoCommandRunning(outputHandler, askNameCommand, shellProcess)
     Assertions.assertThat(session.isClosed).isFalse()
     session.getInputChannel().send(TerminalCloseEvent())
   }
@@ -100,15 +102,38 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
     return sessionResult.session to shellEelProcess
   }
 
+  private suspend fun echoShellVersion(session: TerminalSession, shellPath: EelPath) {
+    when (PathUtil.getFileName(shellPath.toString())) {
+      ShellNameUtil.BASH_NAME -> "BASH_VERSION"
+      ShellNameUtil.ZSH_NAME -> "ZSH_VERSION"
+      ShellNameUtil.FISH_NAME -> "FISH_VERSION"
+      else -> null
+    }?.let {
+      session.getInputChannel().sendCommandToExecute("echo $$it", shellPath)
+    }
+  }
+
   /**
    * Async prompt spawns `(zsh)` and `(git)` child processes after command completion:
    * https://github.com/ohmyzsh/ohmyzsh?tab=readme-ov-file#async-git-prompt
    * We wait for these processes to terminate.
    */
-  private suspend fun awaitNoCommandRunning(outputHandler: TestTerminalOutputHandler, lastCommand: String) {
+  private suspend fun awaitNoCommandRunning(
+    outputHandler: TestTerminalOutputHandler,
+    lastCommand: String,
+    shellProcess: ShellEelProcess,
+  ) {
     awaitCondition(20.seconds) {
-      Assertions.assertThat(outputHandler.session.hasRunningCommands())
-        .describedAs { "Command is running (last command: $lastCommand)\n--- OUTPUT ---\n" + outputHandler.getAllOutput() }
+      val processSubtree = getProcessSubtree(shellProcess)
+      val hasRunningCommands = outputHandler.session.hasRunningCommands() &&
+                               !processSubtree.contains(ONLY_DEFUNCT_CHILD_PROCESSES_DETECTED)
+      Assertions.assertThat(hasRunningCommands)
+        .describedAs(
+          "Command is running (last command: $lastCommand)\n" +
+          processSubtree + "\n" +
+          "--- OUTPUT ---\n" +
+          outputHandler.getAllOutput()
+        )
         .isFalse()
     }
   }
@@ -252,5 +277,85 @@ private suspend fun SendChannel<TerminalInputEvent>.sendCommandToExecute(command
 private suspend fun SendChannel<TerminalInputEvent>.sendStringAndHitEnter(str: String) {
   this.send(TerminalWriteBytesEvent(str.toByteArray(Charsets.UTF_8) + ENTER_BYTES))
 }
+
+private suspend fun getProcessSubtree(shellEelProcess: ShellEelProcess): String {
+  return when (val process = shellEelProcess.eelProcess) {
+    is EelPosixProcess -> {
+      try {
+        getPosixProcessSubtree(process, shellEelProcess.eelApi as EelPosixApi)
+      }
+      catch (e: Exception) {
+        "(failed to list descendant processes ($shellEelProcess): ${e.message})"
+      }
+    }
+    is EelWindowsProcess -> "(no process subtree on Windows)"
+  }
+}
+
+@Throws(IllegalStateException::class)
+private suspend fun getPosixProcessSubtree(shellProcess: EelPosixProcess, eelApi: EelPosixApi): String = coroutineScope {
+  val psProcess = try {
+    buildPsCommand(eelApi)
+      .env(eelApi.exec.environmentVariables().minimal().eelIt().await())
+      .scope(this)
+      .eelIt()
+  }
+  catch (e: ExecuteProcessException) {
+    throw IllegalStateException("Cannot build `ps` command", e)
+  }
+  catch (e: EnvironmentVariablesException) {
+    throw IllegalStateException("Cannot build `ps` command", e)
+  }
+  val result = withTimeoutOrNull(20.seconds) {
+    psProcess.awaitProcessResult()
+  } ?: throw IllegalStateException("Timed out when awaiting `ps` result")
+  if (result.exitCode != 0) {
+    throw IllegalStateException("`ps` terminated with exit code ${result.exitCode}, stderr: ${result.stderr.decodeToString()}")
+  }
+  buildProcessSubtree(shellProcess.pid, result.stdout.decodeToString())
+}
+
+@Throws(IllegalStateException::class)
+private fun buildProcessSubtree(shellPid: EelApi.Pid, stdout: String): String {
+  class ProcessInfo(val parentPid: Long, val pid: Long, val command: String, val line: String)
+  val lines = stdout.trimEnd().lines()
+  @Suppress("SpellCheckingInspection")
+  val infos = lines.drop(1 /* drop "PPID PID COMMAND" header */).map { line ->
+    val parts = line.trimStart().split(Regex("\\s+"), limit = 3)
+    try {
+      ProcessInfo(parts[0].toLong(), parts[1].toLong(), parts[2].trim(), line)
+    }
+    catch (e: Exception) {
+      throw IllegalStateException("Cannot parse PPID/PID/COMMAND from `ps` output line: '$line'", e)
+    }
+  }
+  val subtreePids = mutableSetOf<Long>()
+  fun visitProcessTree(pid: Long) {
+    if (subtreePids.add(pid)) {
+      infos.filter { it.parentPid == pid }.forEach { visitProcessTree(it.pid) }
+    }
+  }
+  visitProcessTree(shellPid.value)
+  val subtree = infos.filter { subtreePids.contains(it.pid) }
+  return buildList {
+    add("Shell pid: ${shellPid.value}")
+    add(lines.first())
+    addAll(subtree.map { it.line })
+    val defunctCount = subtree.filter { it.pid != shellPid.value }
+      .count { it.command == "<defunct>" || it.command == "[python3] <defunct>" }
+    if (defunctCount > 0 && subtree.size == defunctCount + 1) {
+      add(ONLY_DEFUNCT_CHILD_PROCESSES_DETECTED)
+    }
+  }.joinToString(separator = "\n")
+}
+
+@Throws(IllegalStateException::class)
+private suspend fun buildPsCommand(eelApi: EelPosixApi): EelExecApiHelpers.SpawnProcess {
+  val psExe = eelApi.exec.findExeFilesInPath("ps").firstOrNull() ?: throw IllegalStateException("Cannot find `ps` executable")
+  @Suppress("SpellCheckingInspection")
+  return eelApi.exec.spawnProcess(psExe).args("-e", "-o", "ppid,pid,command")
+}
+
+private const val ONLY_DEFUNCT_CHILD_PROCESSES_DETECTED: String = "!!! Only <defunct> child processes detected !!!"
 
 private val GREETING: String = ('A'..'Z').joinToString(separator = "")
