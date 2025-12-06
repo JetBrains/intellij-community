@@ -63,6 +63,7 @@ org.jetbrains.jps.dependency.DifferentiateParameters
 - a:isCompiledWithErrors():Z
 - a:isProcessConstantsIncrementally():Z
 - logConsumer():org.jetbrains.jps.dependency.LogConsumer
+- a:scopeFilter():java.util.function.Predicate
 org.jetbrains.jps.dependency.DifferentiateResult
 - s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,Z,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
 - a:getAffectedSources():java.lang.Iterable

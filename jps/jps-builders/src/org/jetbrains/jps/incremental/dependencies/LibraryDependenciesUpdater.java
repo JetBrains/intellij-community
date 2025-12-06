@@ -183,9 +183,11 @@ public final class LibraryDependenciesUpdater {
         );
       }
       Set<BuildTarget<?>> processedTargets = Collections.unmodifiableSet(getProcessedTargets(context));
+      Predicate<? super NodeSource> affectionFilter = excludedFrom(processedTargets, context, pathMapper);
       DifferentiateParameters diffParams = DifferentiateParametersBuilder.create("libraries of " + chunk.getName())
         // affect project files that do not belong to already processed targets
-        .withAffectionFilter(excludedFrom(processedTargets, context, pathMapper))
+        .withScopeFilter(affectionFilter)
+        .withAffectionFilter(affectionFilter)
         .calculateAffected(!isFullRebuild)
         .withChunkStructureFilter(includedIn(chunkTargets, context, pathMapper))
         .withLogConsumer(LogConsumer.createJULogConsumer(Level.FINE))
