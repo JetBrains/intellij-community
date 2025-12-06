@@ -242,8 +242,8 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     // Let's not load more commits than can be currently displayed.
     // E.g., for a small data pack commitCountToTry is almost always greater than the number of commits there.
     val numberOfCommitsToLoad = min(graph.allCommits.size, commitCountToTry.count)
-    val commitsFromVcs = filterWithVcs(filters, graphOptions, numberOfCommitsToLoad)
-    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= numberOfCommitsToLoad, commitCountToTry, FilterKind.Vcs)
+    val commitsFromVcs = filterWithVcs(filters, graphOptions, numberOfCommitsToLoad + 1)
+    return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size > numberOfCommitsToLoad, commitCountToTry, FilterKind.Vcs)
   }
 
   @Throws(VcsException::class)
