@@ -40,9 +40,10 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
         val positionElement = parameters.position
         when {
+            // server-side completion only
             // dependencies { juni<caret> }
-            positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
-                suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
+            //positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
+            //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
 
             // dependencies { implementation("juni<caret>", "juni", "") }
             positionElement.isPositionalOrNamedDependencyArgument(configurationNames) ->

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCas
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 @TestRoot("idea/tests/testData/")
@@ -74,6 +75,7 @@ abstract class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
+    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource(DEPENDENCY_CONFIGURATIONS_AND_NOTATIONS)
     fun `test coordinates completion configuration names`(gradleVersion: GradleVersion, dependencyConfigurationEscaped: String) {
@@ -104,6 +106,7 @@ abstract class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
+    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource("""
             org.example.p<colon>my-long-artifact-id<colon>2.7.<caret>,
@@ -179,6 +182,7 @@ abstract class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
             }
         }
     }
+
     @ParameterizedTest
     @BaseGradleVersionSource("""
             implementation(name="<caret>"),
@@ -212,6 +216,7 @@ abstract class KotlinGradleDependenciesCompletionTest: AbstractKotlinGradleCompl
         }
     }
 
+    @Disabled("server-side completion only")
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("artifactCompletionOnTopLevel.test")
