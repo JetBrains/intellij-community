@@ -195,6 +195,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "@lib//:jet_check",
     "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+    "//platform/platform-tests:tests_test_lib",
   ],
   exports = ["//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib"],
   runtime_deps = [
