@@ -10,27 +10,9 @@ import com.intellij.util.ProcessingContext
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.idea.completion.api.*
 
-/**
- * Contains dependency configurations, such as
- * `api`, `implementation`, `compileOnly` etc.:
- * *  [core](https://docs.gradle.org/current/userguide/dependency_configurations.html)
- * *  [java](https://docs.gradle.org/current/userguide/java_plugin.html)
- * *  [kotlin](https://kotlinlang.org/docs/kapt.html)
- */
-private val configurationNames: List<String> by lazy {
-    readLinesFromFile("/completion/dependencies-script-block.txt")
-}
-
-private val dependencyNotations = listOf(
-    "platform",
-    "enforcedPlatform",
-)
-
 private val exclude = setOf(
     "exclude",
 )
-
-private const val defaultConfigurationName = "implementation"
 
 internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -45,20 +27,6 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
             //positionElement.isOnTheTopLevelOfScriptBlock(DEPENDENCIES) ->
             //    suggestDependencyCompletions(result, parameters, DependencyConfigurationInsertHandler, TopLevelLookupStringProvider)
 
-            // dependencies { implementation("juni<caret>", "juni", "") }
-            positionElement.isPositionalOrNamedDependencyArgument(configurationNames) ->
-                suggestCoordinateCompletions(
-                    result,
-                    parameters,
-                    positionElement.getGroupPrefix(),
-                    positionElement.getArtifactPrefix(),
-                    positionElement.getVersionPrefix()
-                )
-
-            // dependencies { implementation("juni<caret>") }
-            positionElement.isSingleDependencyArgument(configurationNames + dependencyNotations) ->
-                suggestDependencyCompletions(result, parameters, FullStringInsertHandler, SimpleLookupStringProvider)
-
             // dependencies { implementation(...) { exclude("<caret>") } }
             positionElement.isDependencyArgument(exclude) ->
                 suggestCoordinateCompletions(
@@ -68,23 +36,27 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                     positionElement.getExcludeArtifactPrefix(),
                     ""
                 )
+
+            // dependencies { implementation("juni<caret>", "juni", "") }
+            positionElement.isPositionalOrNamedDependencyArgument() ->
+                suggestCoordinateCompletions(
+                    result,
+                    parameters,
+                    positionElement.getGroupPrefix(),
+                    positionElement.getArtifactPrefix(),
+                    positionElement.getVersionPrefix()
+                )
+
+            // dependencies { implementation("juni<caret>") }
+            positionElement.isSingleDependencyArgument() ->
+                suggestDependencyCompletions(result, parameters, FullStringInsertHandler, SimpleLookupStringProvider)
         }
     }
 
     private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {
-        val allowed = configurationNames.toMutableSet()
-
-        result.runRemainingContributors(parameters) { completionResult ->
-            val lookupString = completionResult.lookupElement.lookupString
-            // show each allowed element only once (without overloads)
-            val shouldAdd = allowed.removeIf { lookupString == it }
-            if (!shouldAdd) return@runRemainingContributors
-
-            result.passResult(completionResult)
-            if (allowed.isEmpty()) {
-                // don't call other contributors
-                result.stopHere()
-            }
+        result.runRemainingContributors(parameters) { _ ->
+            // don't call other contributors
+            result.stopHere()
         }
     }
 
@@ -178,7 +150,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     private fun String.isBeingCompleted(): Boolean = this.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)
 }
 
-private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
+/*private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> String {
     override fun invoke(it: DependencyCompletionResult): String {
         val scope = it.scope
         if (!scope.isNullOrEmpty() && scope.contains(":")) {
@@ -191,7 +163,7 @@ private object TopLevelLookupStringProvider : (DependencyCompletionResult) -> St
         val configurationName = if (scope in configurationNames) scope else defaultConfigurationName
         return "$configurationName(\"${it.groupId}:${it.artifactId}:${it.version}\")"
     }
-}
+}*/
 
 private object SimpleLookupStringProvider : (DependencyCompletionResult) -> String {
     override fun invoke(it: DependencyCompletionResult): String {

@@ -101,22 +101,16 @@ private fun Char.isAllowedInDependencyCompletion(): Boolean {
 /**
  * Checks whether the current [PsiElement] is a string literal used as an argument
  * in a Gradle dependency configuration call (e.g., `implementation("...")`, `api("...")`, etc.)
- *
- * @param dependencyConfigurations the names of supported dependency functions
- *        such as `"implementation"`, `"api"`, `"testImplementation"`, etc.
  */
-internal fun PsiElement.isSingleDependencyArgument(dependencyConfigurations: List<String>): Boolean =
-    this.isDependencyArgument(dependencyConfigurations) && this.argumentsSize == 1
+internal fun PsiElement.isSingleDependencyArgument(): Boolean =
+    this.isDependencyArgument() && this.argumentsSize == 1
 
 /**
  * Checks whether the current [PsiElement] is a string literal used as an argument
  * in a Gradle dependency configuration call (e.g., `implementation("g", "a", "v")`)
- *
- * @param dependencyConfigurations the names of supported dependency functions
- *        such as `"implementation"`, `"api"`, `"testImplementation"`, etc.
  */
-internal fun PsiElement.isPositionalOrNamedDependencyArgument(dependencyConfigurations: List<String>): Boolean {
-    if (!this.isDependencyArgument(dependencyConfigurations)) return false
+internal fun PsiElement.isPositionalOrNamedDependencyArgument(): Boolean {
+    if (!this.isDependencyArgument()) return false
 
     val argumentsSize = this.argumentsSize
 
@@ -133,6 +127,16 @@ internal fun PsiElement.isDependencyArgument(dependencyConfigurations: Collectio
         .withSuperParent(5, psiElement<KtCallExpression>().withChild(
             psiElement<KtNameReferenceExpression>().withText(string().oneOf(dependencyConfigurations))
         ))
+
+    return pattern.accepts(this)
+}
+
+internal fun PsiElement.isDependencyArgument(): Boolean {
+    val pattern = psiElement<LeafPsiElement>().withSuperParent(1, KtLiteralStringTemplateEntry::class.java)
+        .withSuperParent(2, KtStringTemplateExpression::class.java)
+        .withSuperParent(3, KtValueArgument::class.java)
+        .withSuperParent(4, psiElement<KtValueArgumentList>())
+        .withSuperParent(5, psiElement<KtCallExpression>())
 
     return pattern.accepts(this)
 }
