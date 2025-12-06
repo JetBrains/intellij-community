@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -253,7 +254,7 @@ public fun <T : Any> ListComboBox(
  */
 @Composable
 public fun ListComboBox(
-    items: List<String>,
+    @Nls items: List<String>,
     selectedIndex: Int,
     onSelectedItemChange: (Int) -> Unit,
     modifier: Modifier = Modifier,

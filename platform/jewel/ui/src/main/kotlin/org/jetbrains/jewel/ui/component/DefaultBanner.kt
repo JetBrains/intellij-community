@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.banner.BannerActionsRow
@@ -84,7 +85,7 @@ import org.jetbrains.jewel.ui.theme.defaultBannerStyle
         ),
 )
 public fun InformationDefaultBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     actions: (@Composable RowScope.() -> Unit)? = null,
@@ -145,7 +146,7 @@ public fun InformationDefaultBanner(
  */
 @Composable
 public fun DefaultInformationBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
@@ -277,7 +278,7 @@ public fun DefaultInformationBanner(
         ),
 )
 public fun SuccessDefaultBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
     actions: (@Composable RowScope.() -> Unit)? = null,
@@ -336,7 +337,7 @@ public fun SuccessDefaultBanner(
  */
 @Composable
 public fun DefaultSuccessBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
@@ -466,7 +467,7 @@ public fun DefaultSuccessBanner(
         ),
 )
 public fun WarningDefaultBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     actions: (@Composable RowScope.() -> Unit)? = null,
@@ -524,7 +525,7 @@ public fun WarningDefaultBanner(
  */
 @Composable
 public fun DefaultWarningBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
@@ -652,7 +653,7 @@ public fun DefaultWarningBanner(
         ),
 )
 public fun ErrorDefaultBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     actions: (@Composable RowScope.() -> Unit)? = null,
@@ -709,7 +710,7 @@ public fun ErrorDefaultBanner(
  */
 @Composable
 public fun DefaultErrorBanner(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     linkActions: (BannerLinkActionScope.() -> Unit)? = null,
@@ -787,7 +788,7 @@ public fun DefaultErrorBanner(
 
 @Composable
 private fun DefaultBannerImpl(
-    text: String,
+    @Nls text: String,
     style: DefaultBannerStyle,
     textStyle: TextStyle,
     icon: (@Composable () -> Unit)?,
@@ -825,7 +826,7 @@ private fun DefaultBannerImpl(
 
 @Composable
 private fun DefaultBannerImpl(
-    text: String,
+    @Nls text: String,
     style: DefaultBannerStyle,
     textStyle: TextStyle,
     icon: (@Composable () -> Unit)?,

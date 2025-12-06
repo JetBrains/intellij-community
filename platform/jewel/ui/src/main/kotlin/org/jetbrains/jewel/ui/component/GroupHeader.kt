@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
@@ -35,7 +36,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
  */
 @Composable
 public fun GroupHeader(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     startComponent: (@Composable () -> Unit)? = null,
     endComponent: (@Composable () -> Unit)? = null,

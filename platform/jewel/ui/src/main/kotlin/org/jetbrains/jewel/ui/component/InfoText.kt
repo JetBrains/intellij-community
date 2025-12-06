@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.typography
 
@@ -62,7 +63,7 @@ import org.jetbrains.jewel.ui.typography
  */
 @Composable
 public fun InfoText(
-    text: AnnotatedString,
+    @Nls text: AnnotatedString,
     modifier: Modifier = Modifier,
     color: Color = JewelTheme.globalColors.text.info,
     fontSize: TextUnit = TextUnit.Unspecified,
@@ -143,7 +144,7 @@ public fun InfoText(
  */
 @Composable
 public fun InfoText(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     color: Color = JewelTheme.globalColors.text.info,
     fontSize: TextUnit = TextUnit.Unspecified,
