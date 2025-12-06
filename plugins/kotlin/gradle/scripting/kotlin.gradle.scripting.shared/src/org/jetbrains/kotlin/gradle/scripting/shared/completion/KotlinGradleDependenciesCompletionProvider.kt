@@ -71,12 +71,31 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         }
     }
 
+    private fun filterResultsFromOtherContributors(result: CompletionResultSet, parameters: CompletionParameters) {
+        val allowed = configurationNames.toMutableSet()
+
+        result.runRemainingContributors(parameters) { completionResult ->
+            val lookupString = completionResult.lookupElement.lookupString
+            // show each allowed element only once (without overloads)
+            val shouldAdd = allowed.removeIf { lookupString == it }
+            if (!shouldAdd) return@runRemainingContributors
+
+            result.passResult(completionResult)
+            if (allowed.isEmpty()) {
+                // don't call other contributors
+                result.stopHere()
+            }
+        }
+    }
+
     private fun suggestDependencyCompletions(
         result: CompletionResultSet,
         parameters: CompletionParameters,
         insertHandler: InsertHandler<LookupElement>,
         lookupStringProvider: (DependencyCompletionResult) -> String
     ) {
+        filterResultsFromOtherContributors(result, parameters)
+
         val documentText = parameters.editor.document.text
         val offset = parameters.offset
         val startOffset = getDependencyCompletionStartOffset(documentText, offset)
@@ -111,6 +130,8 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         artifact: String,
         version: String
     ) {
+        filterResultsFromOtherContributors(result, parameters)
+
         val dummyText = parameters.position.parent.text
         val text = removeDummySuffix(dummyText)
         val completionService = service<DependencyCompletionService>()
