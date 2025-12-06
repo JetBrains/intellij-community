@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.toml.lang.psi.*
 
 internal const val DEFAULT_VERSION_CATALOG_NAME: String = "libs.versions.toml"
-
+internal const val LIBRARIES_HEADER = "[libraries]"
 internal val DEFAULT_VERSION_CATALOG_NAME_FILE_PATTERN = psiFile().withName(DEFAULT_VERSION_CATALOG_NAME)
 
 internal inline fun <reified I : PsiElement> psiElement(): PsiElementPattern.Capture<I> {
@@ -22,9 +22,14 @@ internal fun insideLibrariesTable() =
             psiElement<TomlTable>()
                 .withChild(
                     psiElement<TomlTableHeader>()
-                        .withText("[libraries]")
+                        .withText(LIBRARIES_HEADER)
                 )
         )
+
+internal fun TomlKey.isDirectlyInLibrariesTable(): Boolean {
+    val parentTable = this.parent.parent as? TomlTable ?: return false
+    return parentTable.header.text == LIBRARIES_HEADER
+}
 
 internal fun TomlLiteral.getParentKeyValue(): TomlKeyValue? {
     return this.parent as? TomlKeyValue

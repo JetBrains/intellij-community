@@ -139,6 +139,39 @@ abstract class KotlinGradleTomlCompletionTest : AbstractKotlinGradleCompletionTe
         }
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource(
+        """
+            my-lib = "<caret>",
+            my-lib-module = "<caret>"
+        """
+    )
+    fun `test coordinates completion`(gradleVersion: GradleVersion, completionEscaped: String) {
+        val textBefore = libraries + completionEscaped.unescape()
+        val textAfter = textBefore.replace("<caret>", "org.example.p:my-long-artifact-id:2.7.0")
+        application.replaceService(DependencyCompletionService::class.java, object : DependencyCompletionService {
+            override fun suggestCompletions(request: DependencyCompletionRequest): Flow<DependencyCompletionResult> {
+                return flowOf(
+                    DependencyCompletionResult("org.example.p", "my-long-artifact-id", "2.7.0"),
+                    DependencyCompletionResult("org.example.p", "my-long-artifact-id-2", "2.7.1"),
+                )
+            }
+        }, testRootDisposable)
+        test(gradleVersion, KotlinGradleProjectTestCase.KOTLIN_PROJECT) {
+            val file = writeTextAndCommit(tomlPath, textBefore)
+            runInEdtAndWait {
+                codeInsightFixture.configureFromExistingVirtualFile(file)
+                codeInsightFixture.completeBasic()
+                codeInsightFixture.lookup.currentItem =
+                    codeInsightFixture.lookupElements!!.find {
+                        it.lookupString.contains("org.example.p:my-long-artifact-id:2.7.0")
+                    }
+                codeInsightFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
+                codeInsightFixture.checkResult(textAfter)
+            }
+        }
+    }
+
     private fun String.unescape(): String = this
         .replace("<colon>", ":")
         .replace("<comma>", ",")

@@ -78,7 +78,14 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
                 }
             }
 
-            // TODO: any-key="g:a:v" at top level
+            // must be at the end of when
+            tomlKey.isDirectlyInLibrariesTable() -> {
+                val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
+                runBlockingCancellable {
+                    completionService.suggestCompletions(request)
+                        .collect { resultSet.addElement(it.groupId + ":" + it.artifactId + ":" + it.version) }
+                }
+            }
 
         }
     }
