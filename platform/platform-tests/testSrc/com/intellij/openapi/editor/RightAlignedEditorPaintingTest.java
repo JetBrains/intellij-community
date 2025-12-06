@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,8 +111,24 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   }
 
   public void testSelectionInsideLine() throws Exception {
+    Registry.get("editor.disable.new.selection").setValue(true);
     initText("first line\nsecond line");
     getEditor().getSelectionModel().setSelection(6, 12);
+    checkResult();
+  }
+
+  public void testSelectionInsideLineNewSelection() throws Exception {
+    Registry.get("editor.disable.new.selection").setValue(false);
+    initText("first longer line\nsecond line");
+    getEditor().getSelectionModel().setSelection(13, 19);
+    checkResult();
+  }
+
+  public void testSelectionInsideLineNewSelection2() throws Exception {
+    Registry.get("editor.disable.new.selection").setValue(false);
+
+    initText("first longer line\nsecond line");
+    getEditor().getSelectionModel().setSelection(18, 21);
     checkResult();
   }
 

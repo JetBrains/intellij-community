@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -109,6 +110,7 @@ public final class IterationState {
   private Color myLastBackgroundColor;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
+  private boolean myIsInSelection = false;
 
   @ApiStatus.Internal
   public IterationState(
@@ -276,6 +278,11 @@ public final class IterationState {
         : myCurrentBackgroundColor
     );
     return myMergedAttributes;
+  }
+
+  @ApiStatus.Internal
+  public boolean isInSelection() {
+    return myIsInSelection;
   }
 
   @ApiStatus.Internal
@@ -505,6 +512,7 @@ public final class IterationState {
 
   private void setAttributes(TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
+    myIsInSelection = isInSelection;
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
       myReverseIteration || (atBreak && beforeBreak)
@@ -517,6 +525,9 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
+    if (!Registry.is("editor.disable.new.selection") && selection != null) {
+      selection.setBackgroundColor(null);
+    }
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
     TextAttributes guard = isInGuardedBlock

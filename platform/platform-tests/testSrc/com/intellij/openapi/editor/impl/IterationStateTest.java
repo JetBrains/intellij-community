@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -34,6 +35,8 @@ public class IterationStateTest extends AbstractEditorTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+
+    Registry.get("editor.disable.new.selection").setValue(true);
     EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     DEFAULT_BACKGROUND = new DebugColor("DEFAULT_BACKGROUND", colorsScheme.getDefaultBackground());
     CARET_ROW_BACKGROUND = new DebugColor(EditorColors.CARET_ROW_COLOR);

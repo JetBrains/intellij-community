@@ -125,8 +125,9 @@ open class CodeVisionListPainter(
     }
     else {
       val delimiterWidth = delimiterPainter.size(editor, state).width
+      val moreWidth = if (value.isMoreLensActive()) settingsWidth + delimiterWidth else 0
       Dimension(
-        list.sum() + (delimiterWidth * list.size - 1) + theme.left + theme.right + settingsWidth,
+        list.sum() + (delimiterWidth * (list.size - 1)) + theme.left + theme.right + moreWidth,
         editor.lineHeight + theme.top + theme.bottom
       )
     }
