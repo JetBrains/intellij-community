@@ -406,7 +406,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
         allOptions,
         isLowLevelSession,
         childScope("TerminalSession"),
-      )
+      ).session
       val inputChannel = session.getInputChannel()
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()

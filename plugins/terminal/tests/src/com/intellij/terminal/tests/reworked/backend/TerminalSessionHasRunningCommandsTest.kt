@@ -21,9 +21,12 @@ import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import org.assertj.core.api.Assertions
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
+import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.session.impl.*
 import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.util.ShellNameUtil
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
@@ -58,7 +61,7 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
   @TestFactory
   fun `default scenario (no,yes,no)`() = withShellPathAndShellIntegration(eelApi, 60.seconds) { shellPath, shellIntegration ->
     TerminalOptionsProvider.instance::shellIntegration.setValueInTest(shellIntegration, this.asDisposable())
-    val session = TerminalSessionTestUtil.startTestTerminalSession(project, shellPath.toString(), null, childScope("TerminalSession"))
+    val (session) = startTerminalSession(shellPath, this)
     val outputHandler = TestTerminalOutputHandler(session, this)
     sendEchoCommandAndAwaitItsCompletion(outputHandler, shellPath, GREETING)
     Assertions.assertThat(session.isClosed).isFalse()
@@ -79,6 +82,22 @@ class TerminalSessionHasRunningCommandsTest(private val eelHolder: EelHolder) {
     awaitNoCommandRunning(outputHandler, askNameCommand)
     Assertions.assertThat(session.isClosed).isFalse()
     session.getInputChannel().send(TerminalCloseEvent())
+  }
+
+  private fun startTerminalSession(shellPath: EelPath, coroutineScope: CoroutineScope): Pair<TerminalSession, ShellEelProcess> {
+    val sessionResult = TerminalSessionTestUtil.startTestTerminalSession(
+      project,
+      shellPath.toString(),
+      null,
+      coroutineScope.childScope("TerminalSession")
+    )
+    val ttyConnector = ShellTerminalWidget.getProcessTtyConnector(sessionResult.ttyConnector) ?: run {
+      throw AssertionError("Unknown TtyConnector: ${sessionResult.ttyConnector}")
+    }
+    val shellEelProcess = (ttyConnector as LocalTerminalTtyConnector).shellEelProcess
+    Assertions.assertThat(shellEelProcess.eelApi.descriptor).isEqualTo(eelApi.descriptor)
+    TerminalSessionTestUtil.assumeTestableProcess(shellEelProcess)
+    return sessionResult.session to shellEelProcess
   }
 
   /**
