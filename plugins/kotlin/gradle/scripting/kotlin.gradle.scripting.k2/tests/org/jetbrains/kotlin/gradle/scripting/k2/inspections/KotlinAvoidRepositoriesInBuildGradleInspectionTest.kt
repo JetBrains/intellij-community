@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.params.ParameterizedTest
+import kotlin.io.path.Path
 
 class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTestCase() {
 
@@ -1112,6 +1113,46 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         }
     }
 
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testSubprojectCanFindSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_MULTI_MODULE_PROJECT) {
+            testHighlighting(
+                "subproject/build.gradle.kts",
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { mavenCentral() }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    repositories<caret> { mavenCentral() }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                """
+                include("subproject")
+                """.trimIndent(),
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                
+                include("subproject")
+                """.trimIndent(),
+                isForPlugins = true,
+                relativeBuildFilePath = Path("subproject", GradleConstants.KOTLIN_DSL_SCRIPT_NAME).toString()
+            )
+        }
+    }
+
     /**
      * tests intention effect on build.gradle.kts and settings.gradle.kts files
      * @param settingsBefore if null, then no settings.gradle.kts file will exist in the project before test
@@ -1119,14 +1160,15 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     private fun testMyIntention(
         buildBefore: String, buildAfter: String,
         settingsBefore: String?, settingsAfter: String,
-        isForPlugins: Boolean
+        isForPlugins: Boolean,
+        relativeBuildFilePath: String = GradleConstants.KOTLIN_DSL_SCRIPT_NAME
     ) {
         checkCaret(buildBefore)
-        writeTextAndCommit(GradleConstants.KOTLIN_DSL_SCRIPT_NAME, buildBefore)
+        writeTextAndCommit(relativeBuildFilePath, buildBefore)
         if (settingsBefore != null) writeTextAndCommit(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME, settingsBefore)
         else gradleFixture.fileFixture.snapshot(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
         runInEdtAndWait {
-            codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SCRIPT_NAME))
+            codeInsightFixture.configureFromExistingVirtualFile(getFile(relativeBuildFilePath))
             val repositoriesParentBlockInSettingsName = if (isForPlugins) "pluginManagement" else "dependencyResolutionManagement"
             val intentionName =
                 if (settingsBefore != null) "Move repositories to the '$repositoriesParentBlockInSettingsName' block in the 'settings.gradle.kts' file"
@@ -1136,7 +1178,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             codeInsightFixture.checkResult(buildAfter)
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
             codeInsightFixture.checkResult(settingsAfter)
-            gradleFixture.fileFixture.rollback(GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
+            gradleFixture.fileFixture.rollback(relativeBuildFilePath)
             gradleFixture.fileFixture.rollback(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
         }
     }
@@ -1163,6 +1205,16 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                     setProjectName("empty-project-with-groovy-settings-file")
                 }
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+            }
+
+        private val EMPTY_MULTI_MODULE_PROJECT =
+            GradleTestFixtureBuilder.create("empty-multi-module-project") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.GROOVY) {
+                    setProjectName("empty-multi-module-project")
+                    include("subproject")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+                withBuildFile(gradleVersion, relativeModulePath = "subproject", gradleDsl = GradleDsl.KOTLIN) {}
             }
 
         private fun repositoriesModeText(gradleVersion: GradleVersion, mode: String) =
