@@ -105,7 +105,8 @@ class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: 
       LOG.info("CACHE-CLEANUP: Deleting file/directory '$file': it's too old and marked for cleanup")
 
       // renaming the file to a temporary name to prevent deletion of currently opened files, just in case
-      val toRemove = cacheDir.resolve("$fileName.toRm.${UUID.randomUUID()}".takeLast(255))
+      // ensure file name limit is not exceeded, incl. the marker file name on the next iteration (if any)
+      val toRemove = cacheDir.resolve("$fileName.toRm.${UUID.randomUUID()}".takeLast(255 - MARKED_FOR_CLEANUP_SUFFIX.length))
       try {
         Files.move(file, toRemove)
         toRemove.deleteRecursively()
