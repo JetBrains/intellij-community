@@ -57,5 +57,6 @@
     <orderEntry type="library" exported="" name="package-search-api-client" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.document.store.mvstore" />
     <orderEntry type="module" module-name="intellij.libraries.mvstore" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
   </component>
 </module>

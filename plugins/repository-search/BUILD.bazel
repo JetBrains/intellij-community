@@ -52,6 +52,7 @@ jvm_library(
     "@lib//:package-search-api-client",
     "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
     "//libraries/mvstore",
+    "//platform/eel",
   ],
   exports = ["@lib//:package-search-api-client"]
 )
@@ -92,6 +93,7 @@ jvm_library(
     "@lib//:package-search-api-client",
     "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
     "//libraries/mvstore",
+    "//platform/eel",
   ],
   exports = ["@lib//:package-search-api-client"]
 )
