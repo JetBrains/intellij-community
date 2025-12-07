@@ -19,6 +19,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -30,6 +31,8 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
+import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -44,12 +47,14 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
     override fun visitCallExpression(expression: KtCallExpression) {
         if (!expression.isGradleRepositoriesBlock()) return
 
-        val settingsFile = expression.module?.getBuildScriptSettingsPsiFile()
         val repositoriesParentBlockKind = getRepositoriesParentBlockKind(expression)
+        val gradleVersion = GradleUtil.getGradleVersion(holder.project, holder.file)
+        if (repositoriesParentBlockKind == RepositoriesParentBlockKind.DEPENDENCY && gradleVersion < GradleVersion.version("6.8")) return
 
+        val settingsFile = expression.module?.getBuildScriptSettingsPsiFile()
         val fix = when (settingsFile) {
-            null -> LocalQuickFix.from(CreateSettingsAndMoveRepositoriesAction(repositoriesParentBlockKind))
-            is KtFile -> MoveRepositoriesToSettingsFile(settingsFile, repositoriesParentBlockKind)
+            null -> LocalQuickFix.from(CreateSettingsAndMoveRepositoriesAction(repositoriesParentBlockKind, gradleVersion))
+            is KtFile -> MoveRepositoriesToSettingsFile(settingsFile, repositoriesParentBlockKind, gradleVersion)
             else -> null
         }
 
@@ -92,7 +97,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
 }
 
 private class CreateSettingsAndMoveRepositoriesAction(
-    private val repositoriesParentBlockKind: RepositoriesParentBlockKind
+    private val repositoriesParentBlockKind: RepositoriesParentBlockKind,
+    private val gradleVersion: GradleVersion
 ) : ModCommandAction {
     override fun getFamilyName(): @IntentionFamilyName String {
         return GradleInspectionBundle.message("intention.name.create.settings.and.move.repositories", repositoriesParentBlockKind.blockName)
@@ -103,16 +109,20 @@ private class CreateSettingsAndMoveRepositoriesAction(
     override fun perform(context: ActionContext): ModCommand {
         val element = context.element ?: return ModNothing()
 
-        val settingsText = settingsScript(GradleUtil.getGradleVersion(context.project, element.containingFile), GradleDsl.KOTLIN) {
-            withFoojayPlugin()
+        val settingsText = settingsScript(gradleVersion, GradleDsl.KOTLIN) {
+            if (isFoojayPluginSupported(gradleVersion)) withFoojayPlugin()
             setProjectName(context.project.name)
             when (repositoriesParentBlockKind) {
-                RepositoriesParentBlockKind.PLUGIN -> pluginManagement { code(element.text) }
+                RepositoriesParentBlockKind.PLUGIN -> pluginManagement { code(element.text.normalizeBlockIndent().lines()) }
 
                 RepositoriesParentBlockKind.DEPENDENCY -> addCode {
                     call(RepositoriesParentBlockKind.DEPENDENCY.blockName) {
-                        assign("repositoriesMode", code("RepositoriesMode.PREFER_PROJECT"))
-                        code(element.text.lines())
+                        if (supportsValReassignment(gradleVersion)) {
+                            assign("repositoriesMode", code("RepositoriesMode.PREFER_PROJECT"))
+                        } else {
+                            code("repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)")
+                        }
+                        code(element.text.normalizeBlockIndent().lines())
                     }
                 }
             }
@@ -121,7 +131,7 @@ private class CreateSettingsAndMoveRepositoriesAction(
         val projectDir = context.project.guessProjectDir() ?: element.containingFile.virtualFile.parent
         val settingsFile = FutureVirtualFile(
             projectDir,
-            "settings.gradle.kts",
+            KOTLIN_DSL_SETTINGS_FILE_NAME,
             FileTypeRegistry.getInstance().getFileTypeByExtension("kts")
         )
 
@@ -129,11 +139,19 @@ private class CreateSettingsAndMoveRepositoriesAction(
             .andThen(ModCommand.psiUpdate(context) { updater -> updater.getWritable(element).delete() })
             .andThen(ModNavigate(settingsFile, 0, 0, 0))
     }
+
+    private fun String.normalizeBlockIndent(): String {
+        val lines = lines()
+        if (lines.size <= 1) return this
+        val withoutFirstLine = lines.drop(1).joinToString("\n").trimIndent()
+        return lines.first() + "\n" + withoutFirstLine
+    }
 }
 
 private class MoveRepositoriesToSettingsFile(
     settingsFile: KtFile,
-    private val repositoriesParentBlockKind: RepositoriesParentBlockKind
+    private val repositoriesParentBlockKind: RepositoriesParentBlockKind,
+    private val gradleVersion: GradleVersion
 ) : KotlinModCommandQuickFix<KtCallExpression>() {
     private val settingsFilePointer = settingsFile.createSmartPointer()
 
@@ -152,7 +170,10 @@ private class MoveRepositoriesToSettingsFile(
 
         val (repositoriesParentBlock, wasRepositoriesParentAdded) = when (repositoriesParentBlockKind) {
             RepositoriesParentBlockKind.PLUGIN -> settingsFileCopy.findOrAddPluginManagementBlock(psiFactory)
-            RepositoriesParentBlockKind.DEPENDENCY -> settingsFileCopy.findOrAddDependencyResolutionManagementBlock(psiFactory)
+            RepositoriesParentBlockKind.DEPENDENCY -> settingsFileCopy.findOrAddDependencyResolutionManagementBlock(
+                psiFactory,
+                gradleVersion
+            )
         }
 
         val (repositoriesBlock, wasRepositoriesAdded) = repositoriesParentBlock.findOrAddRepositoriesBlock(psiFactory)
@@ -224,7 +245,10 @@ private class MoveRepositoriesToSettingsFile(
             .asSafely<KtCallExpression>()!!.getBlock()!! to true
     }
 
-    private fun KtFile.findOrAddDependencyResolutionManagementBlock(psiFactory: KtPsiFactory): Pair<KtBlockExpression, Boolean> {
+    private fun KtFile.findOrAddDependencyResolutionManagementBlock(
+        psiFactory: KtPsiFactory,
+        gradleVersion: GradleVersion
+    ): Pair<KtBlockExpression, Boolean> {
         val dependencyResolutionManagementName = RepositoriesParentBlockKind.DEPENDENCY.blockName
         val existingBlock = this.findScriptInitializer(dependencyResolutionManagementName)?.getBlock()
         if (existingBlock != null) return existingBlock to false
@@ -232,8 +256,11 @@ private class MoveRepositoriesToSettingsFile(
         val anchor = this.findScriptInitializer("plugins")
             ?: this.findScriptInitializer(RepositoriesParentBlockKind.PLUGIN.blockName)
         val scriptBlock = this.script!!.blockExpression
+        val repositoriesModeText =
+            if (supportsValReassignment(gradleVersion)) "repositoriesMode = RepositoriesMode.PREFER_PROJECT"
+            else "repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)"
         val dependencyResolutionManagementCall = psiFactory.createExpression(
-            "$dependencyResolutionManagementName {\nrepositoriesMode = RepositoriesMode.PREFER_PROJECT\n}"
+            "$dependencyResolutionManagementName {\n$repositoriesModeText\n}"
         )
 
         return scriptBlock.addAfter(dependencyResolutionManagementCall, anchor)
@@ -249,4 +276,7 @@ private class MoveRepositoriesToSettingsFile(
             .apply { parent.addBefore(psiFactory.createNewLine(), this) }
             .asSafely<KtCallExpression>()!!.getBlock()!! to true
     }
+
 }
+
+private fun supportsValReassignment(gradleVersion: GradleVersion) = gradleVersion >= GradleVersion.version("8.2")

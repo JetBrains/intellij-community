@@ -7,11 +7,10 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -22,7 +21,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         projectFixture: GradleTestFixtureBuilder,
         test: () -> Unit
     ) {
-        assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "Best practice added in Gradle 9.0.0" }
+        assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion) // inspection requires kotlin dsl script model
         test(gradleVersion, projectFixture) {
             codeInsightFixture.enableInspections(AvoidRepositoriesInBuildGradleInspection::class.java)
             (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
@@ -32,7 +31,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
 
     @ParameterizedTest
     @AllGradleVersionsSource
-    fun testRepositoriesInBuildGradleHighlighted(gradleVersion: GradleVersion) {
+    fun testRepositoriesHighlighted(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
@@ -41,6 +41,15 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 """.trimIndent()
             )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testNoDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        assumeThatGradleIsOlderThan(gradleVersion, "6.8") { "dependencyResolutionManagement was added in Gradle 6.8" }
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
+            testHighlighting("repositories { mavenCentral() }")
         }
     }
 
@@ -63,6 +72,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToSettingsFile(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -77,7 +87,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                         gradlePluginPortal()
@@ -129,6 +139,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -141,7 +152,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 rootProject.name = "test-project"
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         gradlePluginPortal()
                     }
@@ -151,7 +162,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 rootProject.name = "test-project"
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         gradlePluginPortal()
                         mavenCentral()
@@ -206,6 +217,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -217,7 +229,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                     }
@@ -225,7 +237,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -241,6 +253,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementOverlap(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -253,7 +266,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -262,7 +275,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -316,6 +329,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingEmptyDependencyResolutionManagement(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -344,6 +358,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementEmptyRepositories(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -374,6 +389,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeWithComments(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -388,7 +404,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -397,7 +413,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -417,6 +433,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergePrefixMatch(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -429,7 +446,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -440,7 +457,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -457,6 +474,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeTotalMatch(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -469,7 +487,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -479,7 +497,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    ${repositoriesModeText(gradleVersion, "FAIL_ON_PROJECT_REPOS")}
                     repositories {
                         mavenCentral()
                         google()
@@ -563,6 +581,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesWithMultipleStatements(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
@@ -581,6 +600,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMultipleRepositoriesWithComplexContent(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -597,7 +617,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                         maven {
@@ -634,6 +654,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMultipleRepositoriesBlocks(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
@@ -656,6 +677,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginManagement(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -681,7 +703,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                     }
@@ -697,6 +719,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginsBlock(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -720,7 +743,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         maven {
                             url = uri("https://jitpack.io")
@@ -738,6 +761,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterBothPluginManagementAndPlugins(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -784,7 +808,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                         maven {
@@ -850,6 +874,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCorrectOrderingWithAllTopLevelBlocks(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -886,7 +911,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
 
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                         mavenLocal()
@@ -905,6 +930,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testEmptySettingsFile(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -917,7 +943,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 "",
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         google()
                         mavenCentral()
@@ -932,6 +958,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testBuildCacheDoesNotAffectOrdering(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
@@ -951,7 +978,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
                     repositories {
                         mavenCentral()
                     }
@@ -973,6 +1000,30 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMoveRepositoriesWithoutSettingsFile(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
+        val settingsAfter =
+            if (isFoojayPluginSupported(gradleVersion)) """
+                plugins {
+                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+                }
+                rootProject.name = "empty-project-with-only-build-file"
+                dependencyResolutionManagement {
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+            """.trimIndent()
+            else """
+                rootProject.name = "empty-project-with-only-build-file"
+                dependencyResolutionManagement {
+                    ${repositoriesModeText(gradleVersion, "PREFER_PROJECT")}
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+            """.trimIndent()
+
         runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
             testHighlighting(
                 """
@@ -989,19 +1040,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 "",
                 null,
-                """
-                plugins {
-                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-                }
-                rootProject.name = "empty-project-with-only-build-file"
-                dependencyResolutionManagement {
-                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-                """.trimIndent(),
-                false
+                settingsAfter,
+                isForPlugins = false
             )
         }
     }
@@ -1009,6 +1049,27 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMoveRepositoriesInBuildscriptWithoutSettingsFile(gradleVersion: GradleVersion) {
+        val settingsAfter =
+            if (isFoojayPluginSupported(gradleVersion)) """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                plugins {
+                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+                }
+                rootProject.name = "empty-project-with-only-build-file"
+            """.trimIndent()
+            else """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                rootProject.name = "empty-project-with-only-build-file"
+            """.trimIndent()
+
         runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
             testHighlighting(
                 """
@@ -1032,18 +1093,8 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 """.trimIndent(),
                 null,
-                """
-                pluginManagement {
-                    repositories {
-                        mavenCentral()
-                    }
-                }
-                plugins {
-                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
-                }
-                rootProject.name = "empty-project-with-only-build-file"
-                """.trimIndent(),
-                true
+                settingsAfter,
+                isForPlugins = true
             )
         }
     }
@@ -1051,6 +1102,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testNoQuickFixWithGroovySettingsFile(gradleVersion: GradleVersion) {
+        assumeThatDependencyResolutionManagementIsSupported(gradleVersion)
         runTest(gradleVersion, EMPTY_PROJECT_WITH_GROOVY_SETTINGS_FILE) {
             testHighlighting("<weak_warning>repositories</weak_warning> { mavenCentral() }")
             testNoIntentions(
@@ -1112,5 +1164,13 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
             }
+
+        private fun repositoriesModeText(gradleVersion: GradleVersion, mode: String) =
+            if (gradleVersion >= GradleVersion.version("8.2")) "repositoriesMode = RepositoriesMode.$mode"
+            else "repositoriesMode.set(RepositoriesMode.$mode)"
+
+        private fun assumeThatDependencyResolutionManagementIsSupported(gradleVersion: GradleVersion) {
+            assumeThatGradleIsAtLeast(gradleVersion, "6.8") { "dependencyResolutionManagement was added in Gradle 6.8" }
+        }
     }
 }
