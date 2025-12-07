@@ -5,6 +5,7 @@
 package org.jetbrains.idea.completion.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.eel.EelDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.annotations.ApiStatus
@@ -29,15 +30,17 @@ interface DependencyCompletionContributor {
   suspend fun getVersions(request: DependencyVersionCompletionRequest) : List<String>
 }
 
-interface DependencyCompletionContext
+interface DependencyCompletionContext {
+  val eelDescriptor: EelDescriptor
+}
 
-object GradleDependencyCompletionContext : DependencyCompletionContext
+class GradleDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
 
-object MavenDependencyCompletionContext : DependencyCompletionContext
+class MavenDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
 
-object MavenPluginDependencyCompletionContext : DependencyCompletionContext
+class MavenPluginDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
 
-object MavenExtensionDependencyCompletionContext : DependencyCompletionContext
+class MavenExtensionDependencyCompletionContext(override val eelDescriptor: EelDescriptor) : DependencyCompletionContext
 
 interface BaseDependencyCompletionRequest {
   val context: DependencyCompletionContext

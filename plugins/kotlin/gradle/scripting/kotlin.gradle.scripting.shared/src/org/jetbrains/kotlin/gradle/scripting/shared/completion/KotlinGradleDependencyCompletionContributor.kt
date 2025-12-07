@@ -21,7 +21,7 @@ private class KotlinGradleDependencyCompletionContributor : DependencyCompletion
     }
 
     override fun isApplicable(context: DependencyCompletionContext): Boolean {
-        return context == GradleDependencyCompletionContext
+        return context is GradleDependencyCompletionContext
     }
 
     override suspend fun search(request: DependencyCompletionRequest): List<DependencyCompletionResult> {

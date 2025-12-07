@@ -9,10 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.ProcessingContext
 import org.jetbrains.idea.completion.api.*
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.FullStringInsertHandler
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.KotlinGradleDependencyCompletionMatcher
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.removeDummySuffix
-import org.jetbrains.kotlin.gradle.scripting.shared.completion.useDependencyCompletionService
+import org.jetbrains.kotlin.gradle.scripting.shared.completion.*
 import org.toml.lang.psi.TomlLiteral
 
 private const val moduleKey = "module"
@@ -44,7 +41,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
 
         when {
             key == moduleKey -> {
-                val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
+                val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
                 runBlockingCancellable {
                     completionService.suggestCompletions(request)
                         .collect { resultSet.addElement(it.groupId + ":" + it.artifactId) }
@@ -53,7 +50,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
 
             key == groupKey -> {
                 val artifact = tomlLiteral.getSiblingValue(artifactKey)
-                val request = DependencyGroupCompletionRequest(text, artifact, GradleDependencyCompletionContext)
+                val request = DependencyGroupCompletionRequest(text, artifact, parameters.getCompletionContext())
                 runBlockingCancellable {
                     completionService.suggestGroupCompletions(request)
                         .collect { resultSet.addElement(it) }
@@ -62,7 +59,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
 
             key == artifactKey -> {
                 val group = tomlLiteral.getSiblingValue(groupKey)
-                val request = DependencyArtifactCompletionRequest(group, text, GradleDependencyCompletionContext)
+                val request = DependencyArtifactCompletionRequest(group, text, parameters.getCompletionContext())
                 runBlockingCancellable {
                     completionService.suggestArtifactCompletions(request)
                         .collect { resultSet.addElement(it) }
@@ -71,7 +68,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
 
             key == versionKey -> {
                 val (group, artifact) = tomlLiteral.getGroupAndArtifactForVersion()
-                val request = DependencyVersionCompletionRequest(group, artifact, text, GradleDependencyCompletionContext)
+                val request = DependencyVersionCompletionRequest(group, artifact, text, parameters.getCompletionContext())
                 runBlockingCancellable {
                     completionService.suggestVersionCompletions(request)
                         .collect { resultSet.addElement(it) }
@@ -80,7 +77,7 @@ internal class KotlinGradleTomlCompletionProvider : CompletionProvider<Completio
 
             // must be at the end of when
             tomlKey.isDirectlyInLibrariesTable() -> {
-                val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
+                val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
                 runBlockingCancellable {
                     completionService.suggestCompletions(request)
                         .collect { resultSet.addElement(it.groupId + ":" + it.artifactId + ":" + it.version) }

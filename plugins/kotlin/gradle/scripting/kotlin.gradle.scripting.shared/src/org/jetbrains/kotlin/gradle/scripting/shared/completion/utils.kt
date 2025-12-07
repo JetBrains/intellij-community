@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared.completion
 
+import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
@@ -8,10 +9,13 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.string
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.completion.api.DependencyCompletionContext
+import org.jetbrains.idea.completion.api.GradleDependencyCompletionContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import java.io.IOException
@@ -208,6 +212,10 @@ fun removeDummySuffix(value: String?): String {
     }
     return result.trim()
 }
+
+@ApiStatus.Internal
+fun CompletionParameters.getCompletionContext(): DependencyCompletionContext =
+    GradleDependencyCompletionContext(originalFile.virtualFile.toNioPath().getEelDescriptor())
 
 @ApiStatus.Internal
 fun useDependencyCompletionService() : Boolean {

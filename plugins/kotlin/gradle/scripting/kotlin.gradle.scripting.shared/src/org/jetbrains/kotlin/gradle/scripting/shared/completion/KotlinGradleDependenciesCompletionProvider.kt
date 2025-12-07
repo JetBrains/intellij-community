@@ -75,7 +75,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         if (text.isEmpty()) return
 
         val completionService = service<DependencyCompletionService>()
-        val request = DependencyCompletionRequest(text, GradleDependencyCompletionContext)
+        val request = DependencyCompletionRequest(text, parameters.getCompletionContext())
 
         val resultSet = result.withPrefixMatcher(KotlinGradleDependencyCompletionMatcher(text))
 
@@ -107,12 +107,13 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
         val dummyText = parameters.position.parent.text
         val text = removeDummySuffix(dummyText)
         val completionService = service<DependencyCompletionService>()
+        val completionContext = parameters.getCompletionContext()
         val itemFlow = when {
             group.isBeingCompleted() -> completionService.suggestGroupCompletions(
                 DependencyGroupCompletionRequest(
                     text,
                     artifact,
-                    GradleDependencyCompletionContext
+                    completionContext
                 )
             )
 
@@ -120,7 +121,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                 DependencyArtifactCompletionRequest(
                     group,
                     text,
-                    GradleDependencyCompletionContext
+                    completionContext
                 )
             )
 
@@ -129,7 +130,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
                     group,
                     artifact,
                     text,
-                    GradleDependencyCompletionContext
+                    completionContext
                 )
             )
 
