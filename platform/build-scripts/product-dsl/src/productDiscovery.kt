@@ -126,7 +126,7 @@ fun extractProductsForValidation(discoveredProducts: List<DiscoveredProduct>): L
  * @param moduleOutputProvider Module output provider for resolving module dependencies
  * @return Result containing generation statistics
  */
-suspend fun generateAllProductXmlFiles(
+internal suspend fun generateAllProductXmlFiles(
   discoveredProducts: List<DiscoveredProduct>,
   testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   projectRoot: Path,

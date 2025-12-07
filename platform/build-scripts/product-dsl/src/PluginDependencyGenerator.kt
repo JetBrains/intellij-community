@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.findFileInModuleSources
 import java.nio.file.Files
 
 /**
- * Generates dependencies for bundled plugin plugin.xml files.
+ * Generates dependencies for bundled plugin `plugin.xml` files.
  * Uses same logic as ModuleDescriptorDependencyGenerator but for plugin.xml files.
  *
  * For each bundled plugin module:
@@ -63,7 +63,7 @@ private fun generatePluginDependency(
 
   // Read file once and extract content modules (these should be excluded from dependencies)
   val pluginXmlContent = Files.readString(pluginXmlPath)
-  // null means plugin has sub-module references (modules with '/'), skip it
+  // null means plugin has content module references (modules with '/'), skip it
   val contentModules = extractContentModulesFromText(pluginXmlContent) ?: return null
 
   // Get JPS dependencies that have XML descriptors (content modules)

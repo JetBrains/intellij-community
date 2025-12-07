@@ -57,7 +57,7 @@ internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: 
  * @param isUltimateBuild Whether this is an Ultimate build (vs. Community build)
  * @return Result containing file status and statistics
  */
-fun generateProductXml(
+internal fun generateProductXml(
   pluginXmlPath: Path,
   spec: ProductModulesContentSpec,
   productName: String,
