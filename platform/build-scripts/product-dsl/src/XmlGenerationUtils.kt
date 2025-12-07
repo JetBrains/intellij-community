@@ -197,27 +197,19 @@ private fun StringBuilder.appendModules(indent: String, modules: List<String>) {
  */
 internal fun updateXmlDependencies(
   path: Path,
-  moduleDependencies: List<String>,
-  preserveExistingModule: ((String) -> Boolean)? = null,
-): FileChangeStatus {
-  if (Files.notExists(path)) return FileChangeStatus.UNCHANGED
-  return updateXmlDependencies(path = path, content = Files.readString(path), moduleDependencies = moduleDependencies, preserveExistingModule = preserveExistingModule)
-}
-
-/**
- * @param preserveExistingModule predicate to identify which existing modules should be preserved (manual deps)
- */
-internal fun updateXmlDependencies(
-  path: Path,
   content: String,
   moduleDependencies: List<String>,
   preserveExistingModule: ((String) -> Boolean)? = null,
 ): FileChangeStatus {
-  if (content.isEmpty()) return FileChangeStatus.UNCHANGED
+  if (content.isEmpty()) {
+    return FileChangeStatus.UNCHANGED
+  }
 
   val info = parseDependenciesInfo(content)
   if (info == null) {
-    if (moduleDependencies.isEmpty()) return FileChangeStatus.UNCHANGED
+    if (moduleDependencies.isEmpty()) {
+      return FileChangeStatus.UNCHANGED
+    }
     return writeIfChanged(path = path, oldContent = content, newContent = insertDependenciesSection(content, moduleDependencies))
   }
 

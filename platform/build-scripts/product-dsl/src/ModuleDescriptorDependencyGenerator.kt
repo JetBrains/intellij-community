@@ -12,6 +12,7 @@ import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.analysis.validateProductModuleSets
 import org.jetbrains.intellij.build.productLayout.analysis.validateSelfContainedModuleSets
 import java.nio.file.Files
+import java.nio.file.Files.readString
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -72,7 +73,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   val results = modulesToProcess.map { moduleName ->
     async {
       val info = cache.getOrAnalyze(moduleName) ?: return@async null
-      val status = updateModuleDescriptor(info.descriptorPath, info.dependencies)
+      val status = updateXmlDependencies(path = info.descriptorPath, content = readString(info.descriptorPath), moduleDependencies = info.dependencies)
       DependencyFileResult(
         moduleName = moduleName,
         descriptorPath = info.descriptorPath,
@@ -90,8 +91,8 @@ internal suspend fun generateModuleDescriptorDependencies(
  */
 internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOutputProvider) {
   data class DescriptorInfo(
-    val descriptorPath: Path,
-    val dependencies: List<String>,
+    @JvmField val descriptorPath: Path,
+    @JvmField val dependencies: List<String>,
   )
 
   // Wrapper to allow caching null results (ConcurrentHashMap doesn't support null values)
@@ -170,19 +171,3 @@ private fun collectModulesToProcess(moduleSets: List<ModuleSet>): Set<String> {
   }
   return result
 }
-
-/**
- * Updates module descriptor XML file with generated dependencies.
- * Uses JDOM to preserve existing content and add generated dependencies within editor-fold markers.
- * Returns the file change status.
- *
- * @param preserveExistingModule predicate to identify which existing modules should be preserved (manual deps)
- */
-internal fun updateModuleDescriptor(
-  descriptorPath: Path,
-  dependencies: List<String>,
-  preserveExistingModule: ((String) -> Boolean)? = null,
-): FileChangeStatus {
-  return updateXmlDependencies(descriptorPath, dependencies, preserveExistingModule)
-}
-

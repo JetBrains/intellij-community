@@ -19,22 +19,22 @@ import java.nio.file.Files
  * 3. Updates the `<dependencies>` section with generated `<module name="..."/>` entries
  */
 internal suspend fun generatePluginDependencies(
-  bundledPlugins: List<String>,
+  plugins: List<String>,
   moduleOutputProvider: ModuleOutputProvider,
   descriptorCache: ModuleDescriptorCache,
-  embeddedModules: Set<String>,
+  dependencyFilter: (String) -> Boolean,
 ): PluginDependencyGenerationResult = coroutineScope {
-  if (bundledPlugins.isEmpty()) {
+  if (plugins.isEmpty()) {
     return@coroutineScope PluginDependencyGenerationResult(emptyList())
   }
 
-  val results = bundledPlugins.map { pluginModuleName ->
+  val results = plugins.map { pluginModuleName ->
     async {
       generatePluginDependency(
         pluginModuleName = pluginModuleName,
         moduleOutputProvider = moduleOutputProvider,
         descriptorCache = descriptorCache,
-        embeddedModules = embeddedModules,
+        dependencyFilter = dependencyFilter,
       )
     }
   }.awaitAll().filterNotNull()
@@ -51,15 +51,11 @@ private fun generatePluginDependency(
   pluginModuleName: String,
   moduleOutputProvider: ModuleOutputProvider,
   descriptorCache: ModuleDescriptorCache,
-  embeddedModules: Set<String>,
+  dependencyFilter: (String) -> Boolean,
 ): PluginDependencyFileResult? {
   val jpsModule = moduleOutputProvider.findModule(pluginModuleName) ?: return null
 
-  val pluginXmlPath = findFileInModuleSources(
-    module = jpsModule,
-    relativePath = PLUGIN_XML_RELATIVE_PATH,
-    onlyProductionSources = true,
-  ) ?: return null
+  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
 
   // Read file once and extract content modules (these should be excluded from dependencies)
   val pluginXmlContent = Files.readString(pluginXmlPath)
@@ -69,7 +65,7 @@ private fun generatePluginDependency(
   // Get JPS dependencies that have XML descriptors (content modules)
   // Skip if:
   // 1. Module is in <content> section of this plugin.xml
-  // 2. Module is embedded AND starts with intellij.platform.
+  // 2. Module is filtered out by dependencyFilter
   // 3. Module doesn't have a descriptor
   val deps = mutableListOf<String>()
   for (dep in jpsModule.getProductionModuleDependencies(withTests = false)) {
@@ -77,7 +73,7 @@ private fun generatePluginDependency(
     if (depName in contentModules) {
       continue
     }
-    if (!shouldIncludeDependency(depName, embeddedModules)) {
+    if (!dependencyFilter(depName)) {
       continue
     }
     if (!descriptorCache.hasDescriptor(depName)) {
@@ -87,21 +83,12 @@ private fun generatePluginDependency(
   }
 
   val dependencies = deps.distinct().sorted()
-  val status = updateXmlDependencies(
-    path = pluginXmlPath,
-    content = pluginXmlContent,
-    moduleDependencies = dependencies,
-    preserveExistingModule = { !shouldIncludeDependency(it, embeddedModules) },
-  )
+  val status = updateXmlDependencies(path = pluginXmlPath, content = pluginXmlContent, moduleDependencies = dependencies, preserveExistingModule = { !dependencyFilter(it) })
 
   // Also process content modules - generate dependencies for their module descriptors
   val contentModuleResults = mutableListOf<DependencyFileResult>()
   for (contentModuleName in contentModules) {
-    val result = generateContentModuleDependencies(
-      contentModuleName = contentModuleName,
-      descriptorCache = descriptorCache,
-      embeddedModules = embeddedModules,
-    )
+    val result = generateContentModuleDependencies(contentModuleName = contentModuleName, descriptorCache = descriptorCache, dependencyFilter = dependencyFilter)
     if (result != null) {
       contentModuleResults.add(result)
     }
@@ -118,40 +105,26 @@ private fun generatePluginDependency(
 
 /**
  * Generates dependencies for a content module's descriptor file.
- * Filters out embedded intellij.platform.* modules same as for plugin.xml.
  *
  * @return DependencyFileResult or null if module has no descriptor
  */
 private fun generateContentModuleDependencies(
   contentModuleName: String,
   descriptorCache: ModuleDescriptorCache,
-  embeddedModules: Set<String>,
+  dependencyFilter: (String) -> Boolean,
 ): DependencyFileResult? {
   val info = descriptorCache.getOrAnalyze(contentModuleName) ?: return null
-
-  // Filter dependencies same as for plugin.xml - exclude embedded intellij.platform.* modules
-  val filteredDeps = info.dependencies.filter { depName ->
-    shouldIncludeDependency(depName, embeddedModules)
-  }
-
-  val status = updateModuleDescriptor(
-    descriptorPath = info.descriptorPath,
-    dependencies = filteredDeps,
-    preserveExistingModule = { !shouldIncludeDependency(it, embeddedModules) },
+  val filteredDeps = info.dependencies.filter(dependencyFilter)
+  val status = updateXmlDependencies(
+    path = info.descriptorPath,
+    content = Files.readString(info.descriptorPath),
+    moduleDependencies = filteredDeps,
+    preserveExistingModule = { !dependencyFilter(it) },
   )
-
   return DependencyFileResult(
     moduleName = contentModuleName,
     descriptorPath = info.descriptorPath,
     status = status,
-    dependencyCount = filteredDeps.size,
+    dependencyCount = filteredDeps.size
   )
-}
-
-private fun shouldIncludeDependency(depName: String, embeddedModules: Set<String>): Boolean {
-  if (depName.startsWith(LIB_MODULE_PREFIX) || depName == "intellij.java.aetherDependencyResolver") {
-    return !embeddedModules.contains(depName)
-  }
-  return false
-  //return depName in embeddedModules && depName != "intellij.platform.commercial.verifier"
 }

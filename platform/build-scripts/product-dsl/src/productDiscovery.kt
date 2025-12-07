@@ -205,6 +205,7 @@ data class ModuleSetGenerationConfig(
   @JvmField val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   @JvmField val projectRoot: Path,
   @JvmField val moduleOutputProvider: ModuleOutputProvider,
+  @JvmField val additionalPlugins: List<String> = emptyList(),
 )
 
 /**
@@ -298,22 +299,35 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
 
     // TIER 3: Plugin dependency generation for bundled plugins
     val pluginDependencyJob = async {
-      val allBundledPlugins = config.discoveredProducts
-        .mapNotNull { it.spec?.bundledPlugins }
-        .flatten()
+      val allBundledPlugins = (
+        config.discoveredProducts
+          .asSequence()
+          .mapNotNull { it.spec?.bundledPlugins }
+          .flatten() + config.additionalPlugins
+                              )
         .distinct()
+        .toList()
 
-      if (allBundledPlugins.isNotEmpty()) {
-        val cache = ModuleDescriptorCache(config.moduleOutputProvider)
-        generatePluginDependencies(
-          bundledPlugins = allBundledPlugins,
-          moduleOutputProvider = config.moduleOutputProvider,
-          descriptorCache = cache,
-          embeddedModules = embeddedModulesDeferred.await(),
-        )
+      if (allBundledPlugins.isEmpty()) {
+        null
       }
       else {
-        null
+        val cache = ModuleDescriptorCache(config.moduleOutputProvider)
+        val embeddedModules = embeddedModulesDeferred.await()
+        val dependencyFilter: (String) -> Boolean = { depName ->
+          if (depName.startsWith(LIB_MODULE_PREFIX) || depName == "intellij.java.aetherDependencyResolver") {
+            !embeddedModules.contains(depName)
+          }
+          else {
+            false
+          }
+        }
+        generatePluginDependencies(
+          plugins = allBundledPlugins,
+          moduleOutputProvider = config.moduleOutputProvider,
+          descriptorCache = cache,
+          dependencyFilter = dependencyFilter,
+        )
       }
     }
 
