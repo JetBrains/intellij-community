@@ -14,6 +14,10 @@ import java.awt.Component
 import java.awt.Container
 import java.lang.reflect.Field
 import java.lang.reflect.InaccessibleObjectException
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -301,6 +305,12 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
           else hierarchy.childrenOf(rootComponent).takeIf { it.isNotEmpty() } ?: listOf(rootComponent)
         }
         else {
+          // Add timestamp
+          rootElement.appendChild(doc.createElement("timestamp").apply {
+            val timestamp = ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault())
+              .format(DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy"))
+            appendChild(doc.createTextNode("Hierarchy collected at: $timestamp"))
+          })
           hierarchy.roots()
         }
         containers.filter { it.isShowing || !onlyVisibleComponents || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
