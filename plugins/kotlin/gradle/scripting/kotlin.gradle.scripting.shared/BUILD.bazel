@@ -53,6 +53,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/indexing-api:indexing",
     "//plugins/repository-search",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end
