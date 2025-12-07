@@ -336,38 +336,59 @@ object ByWordRt {
      * @return offsets of the nearest block, if found
      */
     private fun walkForward(start1: Int, start2: Int, end1: Int, end2: Int): IntPair? {
-      val found1 = walkSideForward(text1, start1, end1) ?: return null
-      val found2 = walkSideForward(text2, start2, end2) ?: return null
+      // match the current 'changed block' edge
+      val foundFirst1 = walkSideForward(text1, start1, end1) ?: return null
+      val foundFirst2 = walkSideForward(text2, start2, end2) ?: return null
 
-      // do not match unpaired empty lines during forward walk, if they can be used by backward walk later
-      if ((found1.second == end1 - 1 || found2.second == end2 - 1) &&
-          (found1.second != end1 - 1 || found2.second != end2 - 1)) {
-        var match1 = found1.first
-        var match2 = found2.first
-        while (true) {
-          val next1 = walkSideForwardOnce(text1, match1 + 1, end1)
-          val next2 = walkSideForwardOnce(text2, match2 + 1, end2)
-          if (next1 == null || next2 == null) break
-          match1 = next1
-          match2 = next2
-        }
-
-        markNextBlockOffset(found1.first, found2.first)
-        markNextBlockOffset(match1, match2)
-        return IntPair(match1, match2)
+      // match the paired empty lines
+      var match1 = foundFirst1
+      var match2 = foundFirst2
+      while (true) {
+        val next1 = walkSideForward(text1, match1 + 1, end1)
+        val next2 = walkSideForward(text2, match2 + 1, end2)
+        if (next1 == null || next2 == null) break
+        match1 = next1
+        match2 = next2
       }
 
-      markNextBlockOffset(found1.first, found2.first)
-      markNextBlockOffset(found1.second, found2.second)
-      return IntPair(found1.second, found2.second)
+      // do not match unpaired empty lines during the forward walk if they can be used by backward walk later
+      if (match1 == end1 - 1 || match2 == end2 - 1) {
+        // match unpaired empty lines if we fully cover the area
+        if (match1 != end1 - 1 &&
+            charAt(text1, end1 - 1) == '\n' &&
+            areAllLinesEmpty(text1, match1, end1)) {
+          match1 = end1 - 1
+        }
+        if (match2 != end2 - 1 &&
+            charAt(text2, end2 - 1) == '\n' &&
+            areAllLinesEmpty(text2, match2, end2)) {
+          match2 = end2 - 1
+        }
+      }
+
+      markNextBlockOffset(foundFirst1, foundFirst2)
+      markNextBlockOffset(match1, match2)
+      return IntPair(match1, match2)
     }
 
     private fun walkBackward(start1: Int, start2: Int, end1: Int, end2: Int) {
-      val found1 = walkSideBackward(text1, start1, end1) ?: return
-      val found2 = walkSideBackward(text2, start2, end2) ?: return
+      // match the current 'changed block' edge
+      val foundFirst1 = walkSideBackward(text1, start1, end1) ?: return
+      val foundFirst2 = walkSideBackward(text2, start2, end2) ?: return
 
-      markNextBlockOffset(found1.second, found2.second)
-      markNextBlockOffset(found1.first, found2.first)
+      // match all the remaining empty lines as a separate block
+      var foundLast1 = foundFirst1
+      while (true) {
+        foundLast1 = walkSideBackward(text1, start1, foundLast1) ?: break
+      }
+
+      var foundLast2 = foundFirst2
+      while (true) {
+        foundLast2 = walkSideBackward(text2, start2, foundLast2) ?: break
+      }
+
+      markNextBlockOffset(foundLast1, foundLast2)
+      markNextBlockOffset(foundFirst1, foundFirst2)
     }
 
     private fun markNextBlockOffset(blockEndOffset1: Int, blockEndOffset2: Int) {
@@ -385,7 +406,15 @@ object ByWordRt {
     }
 
     companion object {
-      private fun walkSideForwardOnce(text: CharSequence, start: Int, end: Int): Int? {
+      private fun areAllLinesEmpty(text: CharSequence, start: Int, end: Int): Boolean {
+        for (index in start until end) {
+          val ch = charAt(text, index)
+          if (!ch.isSpaceEnterOrTab()) return false
+        }
+        return true
+      }
+
+      private fun walkSideForward(text: CharSequence, start: Int, end: Int): Int? {
         for (index in start until end) {
           val ch = charAt(text, index)
           if (ch == '\n') return index
@@ -394,50 +423,13 @@ object ByWordRt {
         return null
       }
 
-      private fun walkSideForward(text: CharSequence, start: Int, end: Int): IntPair? {
-        var foundFirst: Int? = null
-        var foundLast: Int? = null
-
-        var index = start
-        while (index < end) {
+      private fun walkSideBackward(text: CharSequence, start: Int, end: Int): Int? {
+        for (index in end - 1 downTo start) {
           val ch = charAt(text, index)
-
-          if (ch == '\n') {
-            if (foundFirst == null) foundFirst = index
-            foundLast = index
-            index++
-            continue
-          }
-          if (!ch.isSpaceEnterOrTab()) break
-          index++
+          if (ch == '\n') return index
+          if (!ch.isSpaceEnterOrTab()) return null
         }
-
-        if (foundFirst == null || foundLast == null) return null
-
-        return IntPair(foundFirst, foundLast)
-      }
-
-      private fun walkSideBackward(text: CharSequence, start: Int, end: Int): IntPair? {
-        var foundFirst: Int? = null
-        var foundLast: Int? = null
-
-        var index = end - 1
-        while (start <= index) {
-          val ch = charAt(text, index)
-
-          if (ch == '\n') {
-            if (foundFirst == null) foundFirst = index
-            foundLast = index
-            index--
-            continue
-          }
-          if (!ch.isSpaceEnterOrTab()) break
-          index--
-        }
-
-        if (foundFirst == null || foundLast == null) return null
-
-        return IntPair(foundFirst, foundLast)
+        return null
       }
 
       private fun charAt(text: CharSequence, offset: Int): Char {
