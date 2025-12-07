@@ -18,6 +18,7 @@ class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
   val usagesFoundLabel = x { contains(byAccessibleName("usages")) }
   val previewButton = actionButton { byAccessibleName("Preview Source") }
   val openInFindTWButton = actionButton { byAccessibleName("Open in Find Tool Window") }
+  val settingsButton = actionButton { byAccessibleName("Settings…") }
   val showUsagesTable: ShowUsagesResultsTableUi = x(ShowUsagesResultsTableUi::class.java) { byClass("ShowUsagesTable") }
 
   class ShowUsagesResultsTableUi(data: ComponentData): JTableUiComponent(data) {
