@@ -112,6 +112,8 @@ open class InternalUICustomization {
 
   open fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
 
+  open fun configureEditorTopComponent(component: JComponent, top: Boolean): JComponent? = null
+
   open fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean = true
 
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color

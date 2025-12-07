@@ -13,6 +13,7 @@ import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCou
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -584,7 +585,7 @@ open class EditorComposite internal constructor(
       }
     }
     else {
-      val wrapper = NonOpaquePanel(component)
+      val wrapper = InternalUICustomization.getInstance()?.configureEditorTopComponent(component, top) ?: NonOpaquePanel(component)
       if (component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED) != true) {
         val border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER)
         selfBorder = border != null
@@ -592,6 +593,9 @@ open class EditorComposite internal constructor(
           top = top,
           borderColor = ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR),
         )
+      }
+      else {
+        selfBorder = wrapper.border != null
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
@@ -991,7 +995,7 @@ private class TopBottomPanel : JPanel() {
   }
 }
 
-private fun createTopBottomSideBorder(top: Boolean, borderColor: Color?): SideBorder {
+internal fun createTopBottomSideBorder(top: Boolean, borderColor: Color?): SideBorder {
   return object : SideBorder(null, if (top) BOTTOM else TOP) {
     override fun getLineColor(): Color {
       if (borderColor != null) {
