@@ -186,6 +186,9 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         if (version.compare("1.7.0") >= 0 || useToolchain) {
             if (targetVersionNumber < 8) {
                 targetVersion = JvmTarget.JVM_1_8.description
+            } else if (targetVersionNumber >= 25) {
+                // FIXME Should be deleted when Kotlin 2.3.0 is released and supports JVM target 25 (KTIJ-36637)
+                targetVersion = JvmTarget.JVM_24.description
             }
         }
 
