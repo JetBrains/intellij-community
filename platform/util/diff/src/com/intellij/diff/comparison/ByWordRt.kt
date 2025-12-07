@@ -5,6 +5,7 @@ package com.intellij.diff.comparison
 
 import com.intellij.diff.comparison.ByWordRt.compare
 import com.intellij.diff.comparison.ChunkOptimizer.WordChunkOptimizer
+import com.intellij.diff.comparison.ComparisonUtil.isEqualTexts
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock
 import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
@@ -207,6 +208,22 @@ object ByWordRt {
 
       val innerFragments = convertIntoDiffFragments(iterable)
       if (innerFragments.isEmpty()) continue
+
+      // workaround 'include newline' desync for the last modification in delta
+      if (lineBlock.start1 != lineBlock.end1 && lineBlock.start2 != lineBlock.end2) {
+        if (lineBlock.end1 == lineOffsets1.lineCount &&
+            lineBlock.end2 != lineOffsets2.lineCount && subtext2.last() == '\n') {
+          if (isEqualTexts(subtext1, subtext2.subSequence(0, subtext2.length - 1), policy)) {
+            continue
+          }
+        }
+        if (lineBlock.end2 == lineOffsets2.lineCount &&
+            lineBlock.end1 != lineOffsets1.lineCount && subtext1.last() == '\n') {
+          if (isEqualTexts(subtext1.subSequence(0, subtext1.length - 1), subtext2, policy)) {
+            continue
+          }
+        }
+      }
 
       val shiftedLineBlock = Range(lineBlock.start1,
                                    lineBlock.end1,

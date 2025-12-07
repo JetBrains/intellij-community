@@ -19,9 +19,8 @@ class LineUplifterTest : ComparisonUtilTestBase() {
   fun testTrickyEdgeCases() {
     word_first("_[x]", "_[x ]")
 
-    // TODO: 3rd chunk has identical words
-    word_first("[a\n$chGun]\n|[$chGun$chGun]>>",
-               "[b]\n[]\n[$chGun$chGun]\n[]\n[<]")
+    word_first("[a\n$chGun]\n|$chGun$chGun>>",
+               "[b]\n[]\n$chGun$chGun\n[]\n[<]")
 
     // TODO: 3 changed blocks instead of one, first and third compensate each other
     word_first("X_[]_||*_Z",
