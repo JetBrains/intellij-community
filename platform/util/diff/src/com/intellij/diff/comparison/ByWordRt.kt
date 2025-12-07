@@ -399,20 +399,16 @@ object ByWordRt {
         var foundLast: Int? = null
 
         var index = start
-        outer@ while (true) {
-          while (index < end) {
-            val ch = charAt(text, index)
+        while (index < end) {
+          val ch = charAt(text, index)
 
-            if (ch == '\n') {
-              break
-            }
-            if (!ch.isSpaceEnterOrTab()) break@outer
+          if (ch == '\n') {
+            if (foundFirst == null) foundFirst = index
+            foundLast = index
             index++
+            continue
           }
-          if (index == end) break@outer
-          if (foundFirst == null) foundFirst = index
-          foundLast = index
-
+          if (!ch.isSpaceEnterOrTab()) break
           index++
         }
 
@@ -426,21 +422,16 @@ object ByWordRt {
         var foundLast: Int? = null
 
         var index = end - 1
-        outer@ while (true) {
-          while (start <= index) {
-            val ch = charAt(text, index)
+        while (start <= index) {
+          val ch = charAt(text, index)
 
-            if (ch == '\n') {
-              break
-            }
-            if (!ch.isSpaceEnterOrTab()) break@outer
+          if (ch == '\n') {
+            if (foundFirst == null) foundFirst = index
+            foundLast = index
             index--
+            continue
           }
-          if (index < start) break@outer
-
-          if (foundFirst == null) foundFirst = index
-          foundLast = index
-
+          if (!ch.isSpaceEnterOrTab()) break
           index--
         }
 
