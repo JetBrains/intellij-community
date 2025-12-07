@@ -339,6 +339,24 @@ object ByWordRt {
       val found1 = walkSideForward(text1, start1, end1) ?: return null
       val found2 = walkSideForward(text2, start2, end2) ?: return null
 
+      // do not match unpaired empty lines during forward walk, if they can be used by backward walk later
+      if ((found1.second == end1 - 1 || found2.second == end2 - 1) &&
+          (found1.second != end1 - 1 || found2.second != end2 - 1)) {
+        var match1 = found1.first
+        var match2 = found2.first
+        while (true) {
+          val next1 = walkSideForwardOnce(text1, match1 + 1, end1)
+          val next2 = walkSideForwardOnce(text2, match2 + 1, end2)
+          if (next1 == null || next2 == null) break
+          match1 = next1
+          match2 = next2
+        }
+
+        markNextBlockOffset(found1.first, found2.first)
+        markNextBlockOffset(match1, match2)
+        return IntPair(match1, match2)
+      }
+
       markNextBlockOffset(found1.first, found2.first)
       markNextBlockOffset(found1.second, found2.second)
       return IntPair(found1.second, found2.second)
@@ -367,6 +385,15 @@ object ByWordRt {
     }
 
     companion object {
+      private fun walkSideForwardOnce(text: CharSequence, start: Int, end: Int): Int? {
+        for (index in start until end) {
+          val ch = charAt(text, index)
+          if (ch == '\n') return index
+          if (!ch.isSpaceEnterOrTab()) return null
+        }
+        return null
+      }
+
       private fun walkSideForward(text: CharSequence, start: Int, end: Int): IntPair? {
         var foundFirst: Int? = null
         var foundLast: Int? = null
