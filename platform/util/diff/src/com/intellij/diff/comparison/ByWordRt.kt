@@ -281,12 +281,15 @@ object ByWordRt {
     }
 
     fun execute() {
-      var lastIndex1 = 0
-      var lastIndex2 = 0
+      var lastIndex1 = -1
+      var lastIndex2 = -1
 
-      // walk from 'unchanged' deeper into the 'changed' territory,
-      // find 'closest' and 'furthest' newline, aborting walking at the first non-whitespace symbol,
-      // if found - end current block at the nearest newline, mark the furthest newline as a separate whitespaces-only block
+      // The possible offset ranges are [-1, textLength + 1) to indicate that walk has reached the text boundaries.
+      // We have imaginary '\n' at '-1' and 'textLength' offsets.
+
+      // Walk from 'unchanged' regions deeper into the 'changed' territory, searching for '\n' or text end.
+      // For each walk we find the 'closest' and 'furthest' newline, aborting the walking at the first non-whitespace symbol.
+      // We try to add two blocks - one with 'unchanged' fragment, and one that contains whitespace-only changes, if any.
 
       for (range in changes.iterateUnchanged()) {
         val pair = walkForward(lastIndex1, lastIndex2, range.start1, range.start2)
@@ -300,12 +303,14 @@ object ByWordRt {
         lastIndex2 = range.end2
       }
 
-      val pair = walkForward(lastIndex1, lastIndex2, text1.length, text2.length)
+      val textEnd1 = text1.length + 1
+      val textEnd2 = text2.length + 1
+      val pair = walkForward(lastIndex1, lastIndex2, textEnd1, textEnd2)
       if (pair != null) {
-        walkBackward(pair.first, pair.second, text1.length, text2.length)
+        walkBackward(pair.first, pair.second, textEnd1, textEnd2)
       }
       else {
-        walkBackward(lastIndex1, lastIndex2, text1.length, text2.length)
+        walkBackward(lastIndex1, lastIndex2, textEnd1, textEnd2)
       }
       markNextBlock(lineOffsets1.lineCount, lineOffsets2.lineCount)
     }
@@ -331,8 +336,8 @@ object ByWordRt {
     }
 
     private fun markNextBlockOffset(blockEndOffset1: Int, blockEndOffset2: Int) {
-      val blockEnd1 = lineOffsets1.getLineNumber(blockEndOffset1) + 1
-      val blockEnd2 = lineOffsets2.getLineNumber(blockEndOffset2) + 1
+      val blockEnd1 = getBlockEndLine(blockEndOffset1, lineOffsets1)
+      val blockEnd2 = getBlockEndLine(blockEndOffset2, lineOffsets2)
       markNextBlock(blockEnd1, blockEnd2)
     }
 
@@ -352,7 +357,7 @@ object ByWordRt {
         var index = start
         outer@ while (true) {
           while (index < end) {
-            val ch = text[index]
+            val ch = charAt(text, index)
 
             if (ch == '\n') {
               break
@@ -379,7 +384,7 @@ object ByWordRt {
         var index = end - 1
         outer@ while (true) {
           while (start <= index) {
-            val ch = text[index]
+            val ch = charAt(text, index)
 
             if (ch == '\n') {
               break
@@ -398,6 +403,18 @@ object ByWordRt {
         if (foundFirst == null || foundLast == null) return null
 
         return IntPair(foundFirst, foundLast)
+      }
+
+      private fun charAt(text: CharSequence, offset: Int): Char {
+        if (offset == -1) return '\n'
+        if (offset == text.length) return '\n'
+        return text[offset]
+      }
+
+      private fun getBlockEndLine(offset: Int, lineOffsets: LineOffsets): Int {
+        if (offset == -1) return 0
+        if (offset == lineOffsets.textLength) return lineOffsets.lineCount
+        return lineOffsets.getLineNumber(offset) + 1
       }
     }
   }
