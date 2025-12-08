@@ -2,7 +2,6 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
@@ -40,7 +39,6 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.IOException
@@ -151,7 +149,7 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private suspend fun checkRuntimeVersion() {
+  private fun checkRuntimeVersion() {
     val jreHome = SystemProperties.getJavaHome()
     if (PathManager.isUnderHomeDirectory(jreHome) || isModernJBR()) {
       return
@@ -196,23 +194,17 @@ internal object SystemHealthMonitor {
     return jbrVersion == null || currentJavaVersion() >= jbrVersion.version
   }
 
-  private suspend fun isJbrOperational(): Boolean {
+  private fun isJbrOperational(): Boolean {
     val bin = PathManager.getBundledRuntimeDir().resolve(if (OS.CURRENT == OS.Windows) "bin\\java.exe" else "bin/java")
     if (Files.isRegularFile(bin) && (OS.CURRENT == OS.Windows || Files.isExecutable(bin))) {
       try {
-        return withTimeout(30.seconds) {
-          @Suppress("UsePlatformProcessAwaitExit")
-          ProcessBuilder(bin.toString(), "-version")
-            .redirectError(ProcessBuilder.Redirect.DISCARD)
-            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-            .start()
-            .onExit()
-            .asDeferred()
-            .await()
-            .exitValue() == 0
-        }
+        val process = ProcessBuilder(bin.toString(), "-version")
+          .redirectError(ProcessBuilder.Redirect.DISCARD)
+          .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+          .start()
+        return process.waitFor(1, TimeUnit.MINUTES) && process.exitValue() == 0
       }
-      catch (e: ExecutionException) {
+      catch (e: Exception) {
         LOG.debug(e)
       }
     }
@@ -279,7 +271,8 @@ internal object SystemHealthMonitor {
         if (!process.waitFor(1, TimeUnit.MINUTES)) throw IOException("${probe} timed out")
         if (process.exitValue() != 0) throw IOException("${probe} returned ${process.exitValue()}")
       }
-      catch (_: Exception) {
+      catch (e: Exception) {
+        LOG.debug(e)
         showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempDir()))
       }
     }
