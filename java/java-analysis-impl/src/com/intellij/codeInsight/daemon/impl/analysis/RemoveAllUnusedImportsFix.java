@@ -2,16 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
-import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiImportStatementBase;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveAllUnusedImportsFix implements ModCommandAction {
+  private final List<SmartPsiElementPointer<PsiImportStatementBase>> myUnusedImportPointerList;
+
+
+  public RemoveAllUnusedImportsFix(@NotNull List<PsiImportStatementBase> unusedImportList) {
+    myUnusedImportPointerList = ContainerUtil.map(unusedImportList, SmartPointerManager::createPointer);
+  }
+
   @Override
   public @NotNull String getFamilyName() {
     return JavaErrorBundle.message("remove.unused.imports.quickfix.text");
@@ -33,22 +35,19 @@ public class RemoveAllUnusedImportsFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    if (!(context.file() instanceof PsiJavaFile javaFile)) return ModCommand.nop();
-    PsiImportList importList = javaFile.getImportList();
-    if (importList == null) return ModCommand.nop();
+    if (!(context.file() instanceof PsiJavaFile)) return ModCommand.nop();
     List<PsiImportStatementBase> importStatements = new ArrayList<>();
-    DaemonCodeAnalyzerEx.processHighlights(javaFile.getViewProvider().getDocument(), context.project(), HighlightSeverity.INFORMATION, 
-                                           importList.getTextRange().getStartOffset(), 
-                                           importList.getTextRange().getEndOffset(), info -> {
-      if (UnusedImportsVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
-        PsiImportStatementBase importStatement = PsiTreeUtil.findElementOfClassAtOffset(javaFile, info.getActualStartOffset(), PsiImportStatementBase.class, false);
-        if (importStatement != null) {
-          importStatements.add(importStatement);
-        }
+    for (SmartPsiElementPointer<PsiImportStatementBase> pointer : myUnusedImportPointerList) {
+      PsiImportStatementBase importStatement = pointer.getElement();
+      if (importStatement != null) {
+        importStatements.add(importStatement);
       }
-      return true;
-    });
+    }
 
+    return removeImports(context, importStatements);
+  }
+
+  protected static @NotNull ModCommand removeImports(@NotNull ActionContext context, List<PsiImportStatementBase> importStatements) {
     if (importStatements.isEmpty()) return ModCommand.nop();
     return ModCommand.psiUpdate(context, updater -> {
       for (PsiImportStatementBase statement : ContainerUtil.map(importStatements, updater::getWritable)) {
