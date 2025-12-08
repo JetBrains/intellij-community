@@ -828,7 +828,7 @@ open class EditorsSplitters internal constructor(
     file: VirtualFile,
     requestFocus: Boolean = true,
     forceFocus: Boolean = false,
-    explicitlySetCompositeProvider: (() -> EditorComposite?)?,
+    internalHint: FileEditorOpenOptionsHint? = null,
   ): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
@@ -843,7 +843,7 @@ open class EditorsSplitters internal constructor(
             options = FileEditorOpenOptions(requestFocus = requestFocus,
                                             waitForCompositeOpen = false,
                                             forceFocus = forceFocus,
-                                            explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
+                                            internalHint = internalHint),
           )
           return rightSplitWindow
         }
@@ -854,7 +854,7 @@ open class EditorsSplitters internal constructor(
                         virtualFile = file,
                         focusNew = requestFocus,
                         forceFocus = forceFocus,
-                        explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+                        internalHint = internalHint)
   }
 }
 

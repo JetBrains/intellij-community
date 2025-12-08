@@ -905,7 +905,7 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        openInRightSplit(file, options.requestFocus, options.forceFocus, options.explicitlyOpenCompositeProvider)?.let {
+        openInRightSplit(file, options.requestFocus, options.forceFocus, internalHint = options.internalHint)?.let {
           return it
         }
       }
@@ -961,7 +961,7 @@ open class FileEditorManagerImpl(
         openInRightSplit(file,
                          options.requestFocus,
                          options.forceFocus,
-                         explicitlySetCompositeProvider = options.explicitlyOpenCompositeProvider)
+                         internalHint = options.internalHint)
       }?.let { composite ->
         if (composite is EditorComposite) {
           composite.waitForAvailable()
@@ -1072,7 +1072,7 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     requestFocus: Boolean,
     forceFocus: Boolean,
-    explicitlySetCompositeProvider: (() -> EditorComposite?)? = null,
+    internalHint: FileEditorOpenOptionsHint? = null,
   ): FileEditorComposite? {
     val window = splitters.currentWindow ?: return null
     if (window.inSplitter()) {
@@ -1086,7 +1086,7 @@ open class FileEditorManagerImpl(
         return composite
       }
     }
-    return window.owner.openInRightSplit(file, forceFocus = forceFocus, explicitlySetCompositeProvider = explicitlySetCompositeProvider)
+    return window.owner.openInRightSplit(file, forceFocus = forceFocus, internalHint = internalHint)
       ?.composites()?.firstOrNull { it.file == file }
   }
 
@@ -1289,9 +1289,7 @@ open class FileEditorManagerImpl(
       val isNewEditor = composite == null
       if (composite == null) {
         // IJPL-183875: Explicitly set a composite to open a backend supplied composite
-        composite = options.explicitlyOpenCompositeProvider?.invoke()
-                      ?.also { LOG.info("doOpenInEdt: Using explicitly selected composite for file=${file.name}") }
-                    ?: createCompositeAndModel(file = file, window = window, fileEntry = fileEntry)
+        composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
                     ?: return@Computable null
         openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
       }
@@ -1342,6 +1340,7 @@ open class FileEditorManagerImpl(
     file: VirtualFile,
     window: EditorWindow,
     fileEntry: FileEntry? = null,
+    hint: FileEditorOpenOptionsHint? = null,
   ): EditorComposite? {
     val compositeCoroutineScope = window.owner.coroutineScope.childScope("EditorComposite(file=${file.name})")
     val model = createEditorCompositeModel(
@@ -2199,7 +2198,7 @@ open class FileEditorManagerImpl(
       val file = item.file
       // In the case of the JetBrains client, the editor composite is requested from the backend
       val composite = if (PlatformUtils.isJetBrainsClient()) {
-        createCompositeAndModel(file, window, fileEntry)
+        createCompositeAndModel(file, window, fileEntry, hint = null)
       }
       else {
         createCompositeInstance(

@@ -22,12 +22,8 @@ data class FileEditorOpenOptions(
   @Internal @JvmField val forceFocus: Boolean = false,
   /**
    * **DO NOT USE!**
-   *
-   * IJPL-183875: Workaround to open an explicitly set composite that has been supplied from the backend.
-   * Closure is used instead of `EditorComposite?`, since if the composite is created, it will start initialization.
-   * However, frontend requires showing the composite asap
    **/
-  @Internal @JvmField val explicitlyOpenCompositeProvider: (() -> EditorComposite?)? = null,
+  @Internal @JvmField val internalHint: FileEditorOpenOptionsHint? = null,
 ) {
   @Contract(pure = true)
   // no arg copying for Java
@@ -53,4 +49,8 @@ data class FileEditorOpenOptions(
   @Experimental
   @Contract(pure = true)
   fun withOpenMode(openMode: FileEditorManagerImpl.OpenMode?): FileEditorOpenOptions = copy(openMode = openMode)
+}
+
+@Internal
+interface FileEditorOpenOptionsHint {
 }
