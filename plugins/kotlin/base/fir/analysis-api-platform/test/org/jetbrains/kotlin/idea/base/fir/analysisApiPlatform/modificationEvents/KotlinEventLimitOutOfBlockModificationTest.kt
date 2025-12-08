@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvents
 
+import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
@@ -8,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPs
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.junit.Assert
 
 /**
  * The [tree change preprocessor][org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor] is
@@ -195,6 +198,58 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
             moduleTracker.assertNotModified()
             globalTracker.assertModifiedOnce()
         }
+    }
+
+    /**
+     * Every multiverse [CodeInsightContext][com.intellij.codeInsight.multiverse.CodeInsightContext] represents its own little universe.
+     * When we encounter multiple [KtFile]s with the same underlying virtual file, they can very well belong to different modules. This test
+     * checks that the tree change preprocessor treats such files separately.
+     */
+    fun `test that modification in a file with two multiverse contexts causes multiple module modification events`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText("a.kt", "fun foo(): Int<caret> = 10"),
+            )
+        }
+
+        val moduleContextA = ProjectModelContextBridge.getInstance(project).getContext(moduleA)
+            ?: error("Expected a module context to be available for module A.")
+
+        val defaultFileA = moduleA.findSourceKtFile("a.kt", defaultContext())
+        val moduleFileA = moduleA.findSourceKtFile("a.kt", moduleContextA)
+
+        Assert.assertNotEquals(
+            "`${KtFile::class.simpleName}`s of different code insight contexts must be different.",
+            defaultFileA,
+            moduleFileA,
+        )
+
+        configureByExistingFile(defaultFileA.virtualFile)
+
+        val globalTracker = createGlobalTracker(
+            "the project after modifying multiverse files",
+            expectedEventKind = KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
+            additionalAllowedEventKinds = setOf(
+                KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION
+            )
+        )
+
+        val moduleTracker = createModuleTracker(
+            moduleA.toKaSourceModuleForProduction()!!,
+            "module A after modifying multiverse files",
+            expectedEventKind = KotlinModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION,
+            additionalAllowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION),
+        )
+
+        // As we modify the document of the underlying virtual file, all multiverse `KtFile`s are changed at once. Since there are two
+        // separate `KtFile`s, we expect two modification events.
+        defaultFileA.modify(textAfterModification = "fun foo() = 10") {
+            // Delete `: Int` in `fun foo(): Int = 10`.
+            repeat(5) { backspace() }
+        }
+
+        moduleTracker.assertModifiedExactly(times = 2)
+        globalTracker.assertNotModified()
     }
 
     private val KtFile.firstTopLevelFunction: KtNamedFunction

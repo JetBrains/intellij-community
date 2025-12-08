@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
@@ -228,10 +229,19 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
         modifiableModel.commit()
     }
 
-    fun Module.findSourceKtFile(fileName: String): KtFile {
+    fun Module.findSourceVirtualFile(fileName: String): VirtualFile {
         val file = "${sourceRoots.first().url}/$fileName"
-        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        return VirtualFileManager.getInstance().findFileByUrl(file)!!
+    }
+
+    fun Module.findSourceKtFile(fileName: String): KtFile {
+        val virtualFile = findSourceVirtualFile(fileName)
         return PsiManager.getInstance(myProject).findFile(virtualFile) as KtFile
+    }
+
+    fun Module.findSourceKtFile(fileName: String, context: CodeInsightContext): KtFile {
+        val virtualFile = findSourceVirtualFile(fileName)
+        return PsiManager.getInstance(myProject).findFile(virtualFile, context) as KtFile
     }
 
     fun Module.enableMultiPlatform(additionalCompilerArguments: String = "") {

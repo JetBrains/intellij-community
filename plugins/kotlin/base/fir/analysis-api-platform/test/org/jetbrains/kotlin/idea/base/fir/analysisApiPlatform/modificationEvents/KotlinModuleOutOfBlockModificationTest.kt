@@ -7,7 +7,6 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.impl.ModuleRootEventImpl
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.junit.Assert
 
 class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationEventTest() {
     override val expectedEventKind: KotlinModificationEventKind
@@ -660,13 +658,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
     }
 
     private fun Module.configureEditorForFile(fileName: String): KtFile = findSourceKtFile(fileName).apply { configureEditor() }
-
-    private fun KtFile.modify(textAfterModification: String, targetOffset: Int? = null, edit: () -> Unit) {
-        targetOffset?.let(editor.caretModel::moveToOffset)
-        edit()
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-        Assert.assertEquals(textAfterModification, text)
-    }
 
     private fun KtFile.getSingleFunctionBodyOffset(): Int {
         val singleFunction = declarations.single() as KtNamedFunction
