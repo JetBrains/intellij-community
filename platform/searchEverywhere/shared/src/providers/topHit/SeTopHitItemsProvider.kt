@@ -60,9 +60,7 @@ open class SeTopHitItemsProvider(
     return contributor.showInFindResults()
   }
 
-  override fun getSupportedCommands(): List<SeCommandInfo> {
-    return contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
-  }
+  override fun getSupportedCommands(): List<SeCommandInfo> = getSupportedCommandsFromContributor()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

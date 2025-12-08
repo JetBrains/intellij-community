@@ -1,3 +1,16 @@
+*:com.intellij.platform.searchEverywhere.SeCommandInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeCommandInfo$Companion
+- a:getCommand():java.lang.String
+- a:getDefinition():java.lang.String
+- a:getProviderId():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SeCommandInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeCommandInfoFactory
+- <init>():V
+- f:create(com.intellij.ide.actions.searcheverywhere.SearchEverywhereCommandInfo,java.lang.String):com.intellij.platform.searchEverywhere.SeCommandInfo
+- f:create(java.lang.String,java.lang.String,java.lang.String):com.intellij.platform.searchEverywhere.SeCommandInfo
+*:com.intellij.platform.searchEverywhere.SeCommandsProviderInterface
+- a:getSupportedCommands():java.util.List
 *:com.intellij.platform.searchEverywhere.SeExtendedInfo
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeExtendedInfo$Companion
 - a:getActionDescription():java.lang.String

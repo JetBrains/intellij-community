@@ -26,8 +26,8 @@ class SeAdaptedItem(override val rawObject: Any,
 
 @ApiStatus.Internal
 @OptIn(ExperimentalAtomicApi::class)
-class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>,
-                             private val presentationProvider: SeLegacyItemPresentationProvider?) : SeItemsProvider {
+class SeAdaptedItemsProvider(override val contributor: SearchEverywhereContributor<Any>,
+                             private val presentationProvider: SeLegacyItemPresentationProvider?) : SeWrappedLegacyContributorItemsProvider() {
   override val id: String
     get() = contributorWrapper.contributor.searchProviderId
   override val displayName: @Nls String
@@ -81,9 +81,7 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>,
     return contributorWrapper.contributor.supportedCommands.isNotEmpty()
   }
 
-  fun getSupportedCommands(): List<SeCommandInfo> {
-    return contributorWrapper.contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
-  }
+  fun getSupportedCommands(): List<SeCommandInfo> = getSupportedCommandsFromContributor()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

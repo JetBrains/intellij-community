@@ -7,9 +7,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.searchEverywhere.SeItem
-import com.intellij.platform.searchEverywhere.SeItemsProvider
-import com.intellij.platform.searchEverywhere.SeLegacyItem
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -30,6 +28,10 @@ abstract class SeWrappedLegacyContributorItemsProvider: SeItemsProvider {
 
   override fun getNavigatableForItem(item: SeItem): Navigatable? =
     getDataFromElementInfo(PlatformCoreDataKeys.NAVIGATABLE.name, item) as? Navigatable
+
+  protected fun getSupportedCommandsFromContributor(): List<SeCommandInfo> {
+    return contributor.supportedCommands.map { commandInfo -> SeCommandInfoFactory().create(commandInfo, id) }
+  }
 
   private fun getDataFromElementInfo(dataId: String, item: SeItem): Any? {
     if (item !is SeLegacyItem) return null

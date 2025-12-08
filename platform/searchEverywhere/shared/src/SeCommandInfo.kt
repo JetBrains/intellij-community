@@ -6,16 +6,28 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@Serializable
+sealed interface SeCommandInfo {
+  val command: String
+  val definition: String
+  val providerId: String
+}
+
+@ApiStatus.Experimental
+class SeCommandInfoFactory {
+  fun create(searchEverywhereCommandInfo: SearchEverywhereCommandInfo, providerId: String): SeCommandInfo =
+    SeCommandInfoImpl(command = searchEverywhereCommandInfo.command,
+                      definition = searchEverywhereCommandInfo.definition,
+                      providerId = providerId)
+
+  fun create(command: String, definition: String, providerId: String): SeCommandInfo =
+    SeCommandInfoImpl(command, definition, providerId)
+}
+
 @ApiStatus.Internal
 @Serializable
-class SeCommandInfo (
-  val command: String,
-  val definition: String,
-  val providerId: String,
-) {
-  constructor(searchEverywhereCommandInfo: SearchEverywhereCommandInfo, providerId: String) : this(
-    command = searchEverywhereCommandInfo.command,
-    definition = searchEverywhereCommandInfo.definition,
-    providerId = providerId
-  )
-}
+internal class SeCommandInfoImpl internal constructor(
+  override val command: String,
+  override val definition: String,
+  override val providerId: String,
+) : SeCommandInfo
