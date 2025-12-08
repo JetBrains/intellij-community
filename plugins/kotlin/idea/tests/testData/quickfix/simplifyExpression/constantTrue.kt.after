@@ -4,7 +4,7 @@
 
 fun alwaysNull(i: Int) {
     val zeroOrNull = if (i != 15) return
-    println("Always true")
+    <caret>println("Always true")
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix
