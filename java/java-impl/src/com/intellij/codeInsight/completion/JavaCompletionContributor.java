@@ -472,22 +472,24 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         shouldAddExpressionVariants && addExpectedTypeMembers(parameters, false, expectedInfos,
                                                               item -> session.registerBatchItems(Collections.singleton(item)));
 
-      if (!smart) {
-        PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
-        if (anno != null) {
-          PsiClass annoClass = anno.resolveAnnotationType();
-          mayCompleteReference = mayCompleteValueExpression(position, annoClass);
-          if (annoClass != null && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
-            completeAnnotationAttributeName(result, position, anno, annoClass);
-            JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
+      if (!ModCompletionItemProvider.modCommandCompletionEnabled()) {
+        if (!smart) {
+          PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
+          if (anno != null) {
+            PsiClass annoClass = anno.resolveAnnotationType();
+            mayCompleteReference = mayCompleteValueExpression(position, annoClass);
+            if (annoClass != null) {
+              completeAnnotationAttributeName(result, position, anno, annoClass);
+              JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
+            }
           }
         }
-      }
 
-      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref instanceof PsiLabelReference labelRef && !ModCompletionItemProvider.modCommandCompletionEnabled()) {
-        session.registerBatchItems(processLabelReference(labelRef));
-        result.stopHere();
+        PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+        if (ref instanceof PsiLabelReference labelRef) {
+          session.registerBatchItems(processLabelReference(labelRef));
+          result.stopHere();
+        }
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();
