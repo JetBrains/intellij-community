@@ -27,7 +27,8 @@ object IdeInstance {
     private set
 
   private lateinit var currentIdeConfig: IdeStartConfig
-  private lateinit var runContext: IDERunContext
+  lateinit var runContext: IDERunContext
+    private set
 
   fun isStarted(): Boolean = _ide != null
 
@@ -77,7 +78,7 @@ object IdeInstance {
   }
 
   fun cleanup() = synchronized(this) {
-    if (!isStarted()) return@synchronized
+    if (!isStarted() || !runContext.calculateVmOptions().hasUnitTestMode()) return@synchronized
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(testSuiteSupervisorScope.coroutineContext) {

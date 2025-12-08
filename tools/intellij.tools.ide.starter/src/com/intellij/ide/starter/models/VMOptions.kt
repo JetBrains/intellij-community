@@ -217,6 +217,7 @@ data class VMOptions(
   fun hasHeadlessMode(): Boolean = data.any { it.contains("-Djava.awt.headless=true") }
 
   fun inUnitTestMode(): Unit = addSystemProperty("idea.is.unit.test", true)
+  fun hasUnitTestMode(): Boolean = data.any { it.contains("-Didea.is.unit.test=true") }
 
   fun disableStartupDialogs() {
     addSystemProperty("jb.consents.confirmation.enabled", false)
