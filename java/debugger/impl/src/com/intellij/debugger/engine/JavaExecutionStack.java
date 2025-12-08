@@ -28,6 +28,7 @@ import com.intellij.xdebugger.frame.XDescriptor;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.HiddenStackFramesItem;
 import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.jetbrains.jdi.ThreadGroupReferenceImpl;
@@ -335,7 +336,7 @@ public class JavaExecutionStack extends XExecutionStack {
       if (!XFramesView.shouldFoldHiddenFrames()) return;
 
       if (!myHiddenFrames.isEmpty()) {
-        var placeholder = new XFramesView.HiddenStackFramesItem(myHiddenFrames);
+        var placeholder = new HiddenStackFramesItem(myHiddenFrames);
         myAdded++;
         myContainer.addStackFrames(Collections.singletonList(placeholder), false);
         myHiddenFrames.clear();

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
+import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache;
 import com.intellij.pom.Navigatable;
@@ -57,8 +58,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-
-import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
 public class XDebuggerFramesList extends DebuggerFramesList implements UiCompatibleDataProvider {
   private final Project myProject;
@@ -192,7 +191,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
       setSelectedValue(toSelect, true);
       return true;
     }
-    else if (toSelect instanceof XFramesView.HiddenStackFramesItem placeholder) {
+    else if (toSelect instanceof HiddenStackFramesItem placeholder) {
       // If a user has a selected hidden frames placeholder and toggles "view library frames",
       // we should select first of hidden frames under the selected placeholder.
       var firstHiddenFrame = placeholder.hiddenFrames.get(0);
@@ -206,7 +205,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
       // we should be able to select the placeholder containing the hidden frame.
       var placeholderContainingFrameToSelect =
         ContainerUtil.find(getModel().getItems(),
-                           frame -> frame instanceof XFramesView.HiddenStackFramesItem placeholder &&
+                           frame -> frame instanceof HiddenStackFramesItem placeholder &&
                                     placeholder.hiddenFrames.contains(toSelect));
       if (placeholderContainingFrameToSelect != null) {
         setSelectedValue(placeholderContainingFrameToSelect, true);
@@ -238,7 +237,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     if (navigatable instanceof OpenFileDescriptor) {
       ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
     }
-    return navigatable != null ? wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
+    return navigatable != null ? XDebuggerUtilImplShared.wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
 
   protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {

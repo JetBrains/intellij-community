@@ -32,6 +32,10 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/lang-api:lang",
     "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/concurrency",
+    "//platform/lang-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.ui` end

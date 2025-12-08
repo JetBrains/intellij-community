@@ -29,7 +29,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -43,7 +42,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
 import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
@@ -764,58 +762,6 @@ public final class XFramesView extends XDebugView {
   @ApiStatus.Internal
   public @NotNull ComboBox<XExecutionStack> getThreadComboBox() {
     return myThreadComboBox;
-  }
-
-  /**
-   * Synthetic frame which encapsulates hidden library frames as a single fold.
-   *
-   * @see #shouldFoldHiddenFrames()
-   */
-  public static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
-                                                                           ItemWithSeparatorAbove,
-                                                                           HiddenFramesStackFrame {
-    final List<XStackFrame> hiddenFrames;
-
-    public HiddenStackFramesItem(List<XStackFrame> hiddenFrames) {
-      this.hiddenFrames = List.copyOf(hiddenFrames);
-      if (hiddenFrames.isEmpty()) {
-        throw new IllegalArgumentException();
-      }
-    }
-
-    @Override
-    public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.append(XDebuggerBundle.message("label.folded.frames", hiddenFrames.size()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      component.setIcon(EmptyIcon.ICON_16);
-    }
-
-    @Override
-    public @Nullable Color getBackgroundColor() {
-      return null;
-    }
-
-    @Override
-    public @NotNull List<XStackFrame> getHiddenFrames() {
-      return hiddenFrames;
-    }
-
-    private Optional<ItemWithSeparatorAbove> findFrameWithSeparator() {
-      // We check only the first frame; otherwise, it's not clear what to do.
-      // Might be reconsidered in the future.
-      return hiddenFrames.get(0) instanceof ItemWithSeparatorAbove frame
-             ? Optional.of(frame)
-             : Optional.empty();
-    }
-
-    @Override
-    public boolean hasSeparatorAbove() {
-      return findFrameWithSeparator().map(ItemWithSeparatorAbove::hasSeparatorAbove).orElse(false);
-    }
-
-    @Override
-    public String getCaptionAboveOf() {
-      return findFrameWithSeparator().map(ItemWithSeparatorAbove::getCaptionAboveOf).orElse(null);
-    }
   }
 
   /**

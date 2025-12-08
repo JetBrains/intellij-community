@@ -874,25 +874,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return null;
   }
 
-  /**
-   * The returned Navigatable overrides requesting focus based on whether the editor area is focused or not.
-   */
-  public static @NotNull Navigatable wrapKeepEditorAreaFocusNavigatable(@NotNull Project project, @NotNull Navigatable navigatable) {
-    return new Navigatable() {
-      @Override
-      public void navigate(boolean requestFocus) {
-        boolean isEditorAreaFocused = FileEditorManager.getInstance(project).getFocusedEditor() != null;
-        navigatable.navigate(requestFocus && isEditorAreaFocused);
-      }
-
-      @Override
-      public boolean canNavigate() { return navigatable.canNavigate(); }
-
-      @Override
-      public boolean canNavigateToSource() { return navigatable.canNavigateToSource(); }
-    };
-  }
-
   public static void rebuildAllSessionsViews(@Nullable Project project) {
     if (project == null) return;
     XDebugManagerProxy.getInstance().getSessions(project).stream()
