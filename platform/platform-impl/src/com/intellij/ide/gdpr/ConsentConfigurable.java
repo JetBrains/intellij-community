@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -18,6 +19,7 @@ public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsU
   public ConsentConfigurable() {
     super("consents", IdeBundle.message("consent.configurable"), "preferences.usage.statistics");
     myConsents = new ArrayList<>(AppUIUtil.loadConsentsForEditing());
+    myConsents.sort(Comparator.comparing(ConsentBase::getId));
   }
 
   @Override
