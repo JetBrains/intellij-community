@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil
 
 private sealed class SaveState
 private object SaveDenied : SaveState()
@@ -80,14 +81,17 @@ fun vetoDocumentSavingForPaths(project: Project, filePaths: Collection<FilePath>
 }
 
 private fun confirmSave(project: Project, files: Collection<VirtualFile>): Boolean {
-  val text = message("save.committing.files.confirmation.text", files.size, files.joinToString("\n") { it.presentableUrl })
-
-  return Messages.OK == showOkCancelDialog(
-    project,
-    text,
-    message("save.committing.files.confirmation.title"),
-    message("save.committing.files.confirmation.ok"),
-    message("save.committing.files.confirmation.cancel"),
-    getQuestionIcon()
-  )
+  var result = false
+  VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread {
+    val text = message("save.committing.files.confirmation.text", files.size, files.joinToString("\n") { it.presentableUrl })
+    result = Messages.OK == showOkCancelDialog(
+      project,
+      text,
+      message("save.committing.files.confirmation.title"),
+      message("save.committing.files.confirmation.ok"),
+      message("save.committing.files.confirmation.cancel"),
+      getQuestionIcon()
+    )
+  }
+  return result
 }
