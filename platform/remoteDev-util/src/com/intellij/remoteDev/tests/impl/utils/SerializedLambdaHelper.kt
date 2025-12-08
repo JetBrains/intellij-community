@@ -16,7 +16,7 @@ import kotlin.use
  * https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
  */
 
-fun interface SuspendingSerializableConsumer<T> : Serializable {
+fun interface SuspendingSerializableConsumer<T: LambdaIdeContext> : Serializable {
   suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable
 }
 

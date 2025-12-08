@@ -108,7 +108,11 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun findLambdaClasses(lambdaReference: String, testModuleDescriptor: PluginModuleDescriptor, ideContext: LambdaIdeContext): List<NamedLambda<*>> {
+  private fun findLambdaClasses(
+    lambdaReference: String,
+    testModuleDescriptor: PluginModuleDescriptor,
+    ideContext: LambdaIdeContext,
+  ): List<NamedLambda<*>> {
     val className = if (lambdaReference.contains(".Companion")) {
       lambdaReference.substringBeforeLast(".").removeSuffix(".Companion")
     }
@@ -123,7 +127,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
       .filter { it.isSubclassOf(NamedLambda::class) }
       .mapNotNull {
         runCatching {
-          it.constructors.single().call(ideContext, testModuleDescriptor) as NamedLambda<*> //todo maybe we can filter out constuctor in a more clever way
+          //todo maybe we can filter out constuctor in a more clever way
+          it.constructors.single().call(ideContext, testModuleDescriptor) as NamedLambda<*>
         }.getOrNull()
       }
 
@@ -203,7 +208,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           }
           try {
             val lambdaReference = parameters.reference
-            val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testModuleDescriptor = testModuleDescriptor!!, ideContext = ideContext)
+            val namedLambdas = findLambdaClasses(lambdaReference, testModuleDescriptor!!, ideContext)
 
             val ideAction = namedLambdas.singleOrNull { it.name() == lambdaReference } ?: run {
               val text = "There is no Action with reference '${lambdaReference}', something went terribly wrong, " +
@@ -233,7 +238,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
 
         // Advice for processing events
-        session.runSerializedLambda.setSuspend(sessionBgtDispatcher) { _, serializedLambda ->
+        session.runSerializedLambda.setSuspend(sessionBgtDispatcher) { _, lambda ->
           suspend fun clientIdContextToRunLambda() = if (session.rdIdeType == LambdaRdIdeType.BACKEND && AppMode.isRemoteDevHost()) {
             waitSuspendingNotNull("Got remote client id", 10.seconds) {
               ClientSessionsManager.getAppSessions(ClientKind.REMOTE).singleOrNull()?.clientId
@@ -243,25 +248,18 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             EmptyCoroutineContext
           }
 
-          try {
-            assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
-            LOG.info("'$serializedLambda': received serialized lambda execution request")
-            return@setSuspend withContext(Dispatchers.Default + CoroutineName("Lambda task: ${serializedLambda.stepName}") + clientIdContextToRunLambda()) {
-              runLogged(serializedLambda.stepName, 10.minutes) {
-                val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
-                URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
-                  withContext(ideContext.coroutineContext) {
-                    val params: List<Serializable> = serializedLambda.parametersBase64.map { SerializedLambdaLoader().loadObject(it, classLoader = cl) }
-                    val result = SerializedLambdaLoader().load<LambdaIdeContext>(serializedLambda.serializedDataBase64, classLoader = cl).accept(ideContext, params)
-                    SerializedLambdaLoader().save(serializedLambda.stepName, result)
-                  }
+          assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
+          withContext(ideContext.coroutineContext + Dispatchers.Default + CoroutineName("Lambda task: ${lambda.stepName}") + clientIdContextToRunLambda()) {
+            runLogged(lambda.stepName, 10.minutes) {
+              val urls = lambda.classPath.map { File(it).toURI().toURL() }
+              URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
+                SerializedLambdaLoader().let { loader ->
+                  val params = lambda.parametersBase64.map { loader.loadObject(it, classLoader = cl) }
+                  val result = loader.load<LambdaIdeContext>(lambda.serializedDataBase64, classLoader = cl).accept(ideContext, params)
+                  loader.save(lambda.stepName, result)
                 }
               }
             }
-          }
-          catch (ex: Throwable) {
-            LOG.warn("${session.rdIdeType}: '${serializedLambda.stepName}' hasn't finished successfully", ex)
-            throw ex
           }
         }
 
