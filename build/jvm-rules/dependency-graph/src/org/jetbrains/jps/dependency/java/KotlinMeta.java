@@ -165,6 +165,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container instanceof KmClass? ((KmClass)container).getSealedSubclasses() : Collections.emptyList();
   }
 
+  public Iterable<KmType> getSupertypes() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getSupertypes() : Collections.emptyList();
+  }
+
   public Visibility getContainerVisibility() {
     KmDeclarationContainer container = getDeclarationContainer();
     return container instanceof KmClass? Attributes.getVisibility((KmClass)container) : Visibility.PUBLIC;
