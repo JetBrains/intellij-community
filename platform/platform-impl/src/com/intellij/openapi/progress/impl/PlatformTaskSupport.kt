@@ -389,7 +389,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
  * and not to the unconfined loop as they do now.
  */
 @Suppress("INVISIBLE_REFERENCE")
-private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {
+private inline fun <T> resetThreadLocalEventLoop(action: () -> T): T {//
   val existingEventLoop = ThreadLocalEventLoop.currentOrNull()
   ThreadLocalEventLoop.resetEventLoop()
   try {
