@@ -74,14 +74,9 @@ fun EelExecApi.spawnProcess(
  */
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-fun EelExecApi.createExternalCli(
-  envVariablesToCapture: List<String>,
-  filePrefix: String,
-): EelExecApiHelpers.CreateExternalCli =
+fun EelExecApi.createExternalCli(): EelExecApiHelpers.CreateExternalCli =
   EelExecApiHelpers.CreateExternalCli(
     owner = this,
-    envVariablesToCapture = envVariablesToCapture,
-    filePrefix = filePrefix,
   )
 
 @ApiStatus.Experimental
@@ -339,21 +334,41 @@ object EelExecApiHelpers {
   @ApiStatus.Internal
   class CreateExternalCli(
     private val owner: EelExecApi,
-    private var envVariablesToCapture: List<String>,
-    private var filePrefix: String,
   ) : OwnedBuilder<EelExecApi.ExternalCliEntrypoint> {
+    private var envVariablesToCapture: List<String> = emptyList()
 
+    private var filePrefix: String = ""
 
+    private var lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Default
+
+    /**
+     * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+     * Capturing of other environment variables is not guaranteed.
+     * If no environment variables are specified, no environment variables will be captured.
+     */
     fun envVariablesToCapture(arg: List<String>): CreateExternalCli = apply {
       this.envVariablesToCapture = arg
     }
 
+    /**
+     * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+     * Capturing of other environment variables is not guaranteed.
+     * If no environment variables are specified, no environment variables will be captured.
+     */
     fun envVariablesToCapture(vararg arg: String): CreateExternalCli = apply {
       this.envVariablesToCapture = listOf(*arg)
     }
 
+    /**
+     * Prefix for an entrypoint executable file that will be created. Since the path to the entrypoint is passed to some command-line tool,
+     * using a self-explaining prefix makes the command line more readable and easier to debug.
+     */
     fun filePrefix(arg: String): CreateExternalCli = apply {
       this.filePrefix = arg
+    }
+
+    fun lifecycle(arg: EelExecApi.ExternalCliLifecycle): CreateExternalCli = apply {
+      this.lifecycle = arg
     }
 
     /**
@@ -366,6 +381,7 @@ object EelExecApiHelpers {
         ExternalCliOptionsImpl(
           envVariablesToCapture = envVariablesToCapture,
           filePrefix = filePrefix,
+          lifecycle = lifecycle,
         )
       )
   }

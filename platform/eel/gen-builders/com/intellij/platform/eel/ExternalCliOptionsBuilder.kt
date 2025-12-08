@@ -10,28 +10,48 @@ import org.jetbrains.annotations.ApiStatus
 
 @GeneratedBuilder.Result
 @ApiStatus.Internal
-class ExternalCliOptionsBuilder(
-  private var envVariablesToCapture: List<String>,
-  private var filePrefix: String,
-) {
+class ExternalCliOptionsBuilder {
+  private var envVariablesToCapture: List<String> = emptyList()
 
+  private var filePrefix: String = ""
 
+  private var lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Default
+
+  /**
+   * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+   * Capturing of other environment variables is not guaranteed.
+   * If no environment variables are specified, no environment variables will be captured.
+   */
   fun envVariablesToCapture(arg: List<String>): ExternalCliOptionsBuilder = apply {
     this.envVariablesToCapture = arg
   }
 
+  /**
+   * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+   * Capturing of other environment variables is not guaranteed.
+   * If no environment variables are specified, no environment variables will be captured.
+   */
   fun envVariablesToCapture(vararg arg: String): ExternalCliOptionsBuilder = apply {
     this.envVariablesToCapture = listOf(*arg)
   }
 
+  /**
+   * Prefix for an entrypoint executable file that will be created. Since the path to the entrypoint is passed to some command-line tool,
+   * using a self-explaining prefix makes the command line more readable and easier to debug.
+   */
   fun filePrefix(arg: String): ExternalCliOptionsBuilder = apply {
     this.filePrefix = arg
+  }
+
+  fun lifecycle(arg: EelExecApi.ExternalCliLifecycle): ExternalCliOptionsBuilder = apply {
+    this.lifecycle = arg
   }
 
   fun build(): ExternalCliOptions =
     ExternalCliOptionsImpl(
       envVariablesToCapture = envVariablesToCapture,
       filePrefix = filePrefix,
+      lifecycle = lifecycle,
     )
 }
 
@@ -39,4 +59,5 @@ class ExternalCliOptionsBuilder(
 internal class ExternalCliOptionsImpl(
   override val envVariablesToCapture: List<String>,
   override val filePrefix: String,
+  override val lifecycle: EelExecApi.ExternalCliLifecycle,
 ) : ExternalCliOptions
