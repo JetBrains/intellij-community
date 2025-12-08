@@ -21,10 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbModeBlockedFunctionality;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
@@ -574,9 +571,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     });
   }
 
-  private void addDoRefactoringAction(@NotNull UsageView usageView, @NotNull Runnable refactoringRunnable, @NotNull String canNotMakeString) {
+  private void addDoRefactoringAction(@NotNull UsageView usageView,
+                                      @NotNull Runnable refactoringRunnable,
+                                      @NotNull String canNotMakeString) {
+    boolean isDumbAware = DumbService.isDumbAware(this);
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString,
-                                        RefactoringBundle.message("usageView.doAction"), false);
+                                        RefactoringBundle.message("usageView.doAction"), false, isDumbAware);
   }
 
   /**

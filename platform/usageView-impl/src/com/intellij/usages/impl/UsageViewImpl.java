@@ -85,6 +85,7 @@ import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContex
 import static com.intellij.usages.impl.UsageFilteringRuleActions.usageFilteringRuleActions;
 
 public class UsageViewImpl implements UsageViewEx {
+  private static final String DUMB_AWARE_KEY = "DumbAware";
   private final int myUniqueIdentifier;
   private static final GroupNode.NodeComparator COMPARATOR = new GroupNode.NodeComparator();
   private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
@@ -188,7 +189,7 @@ public class UsageViewImpl implements UsageViewEx {
             UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage(),
                                                        n instanceof SimilarUsage);
           }
-      });
+        });
     }
   };
 
@@ -370,7 +371,7 @@ public class UsageViewImpl implements UsageViewEx {
     }, this);
 
     if (myPresentation.isShowCancelButton()) {
-      addButtonToLowerPane(() -> close(), UsageViewBundle.message("usage.view.cancel.button"));
+      addButtonToLowerPane(() -> close(), UsageViewBundle.message("usage.view.cancel.button"), true);
     }
 
     myTree.getSelectionModel().addTreeSelectionListener(__ -> {
@@ -1736,12 +1737,19 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text) {
-    addButtonToLowerPane(new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
+    addButtonToLowerPane(runnable, text, false);
+  }
+
+  @Override
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text, boolean dumbAware) {
+    AbstractAction action = new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
       @Override
       public void actionPerformed(ActionEvent e) {
         WriteIntentReadAction.run(runnable);
       }
-    });
+    };
+    action.putValue(DUMB_AWARE_KEY, Boolean.valueOf(dumbAware));
+    addButtonToLowerPane(action);
   }
 
   @Override
@@ -1768,8 +1776,18 @@ public class UsageViewImpl implements UsageViewEx {
                                         @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                         @NotNull @NlsContexts.Button String shortDescription,
                                         boolean checkReadOnlyStatus) {
+    addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, checkReadOnlyStatus, false);
+  }
+
+  @Override
+  public void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                        @Nullable @NlsContexts.Command String commandName,
+                                        @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                        @NotNull @NlsContexts.Button String shortDescription,
+                                        boolean checkReadOnlyStatus,
+                                        boolean dumbAware) {
     Runnable runnable = new MyPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus);
-    addButtonToLowerPane(runnable, shortDescription);
+    addButtonToLowerPane(runnable, shortDescription, dumbAware);
   }
 
   private boolean allTargetsAreValid() {
@@ -2158,14 +2176,16 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     void update() {
-      boolean globallyEnabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
+      boolean isSearchInProgress = isSearchInProgress();
+      boolean isDumb = DumbService.isDumb(myProject);
       for (int i = 0; i < getComponentCount(); ++i) {
         Component component = getComponent(i);
         if (component instanceof JButton button) {
           Action action = button.getAction();
           if (action != null) {
             if (myNeedUpdateButtons) {
-              button.setEnabled(globallyEnabled && action.isEnabled());
+              Boolean isDumbAware = (Boolean)action.getValue(DUMB_AWARE_KEY);
+              button.setEnabled(!isSearchInProgress && action.isEnabled() && (!isDumb || isDumbAware));
             }
             Object name = action.getValue(Action.NAME);
             if (name instanceof String string) {
@@ -2173,7 +2193,7 @@ public class UsageViewImpl implements UsageViewEx {
             }
           }
           else {
-            button.setEnabled(globallyEnabled);
+            button.setEnabled(!isSearchInProgress && !isDumb);
           }
         }
       }
