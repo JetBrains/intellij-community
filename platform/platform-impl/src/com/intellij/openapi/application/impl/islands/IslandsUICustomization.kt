@@ -721,7 +721,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
               val index = parent.components.indexOf(c)
               val top = if (index == 0) 7 else 4
               val bottom = if (index == parent.componentCount - 1) 7 else 4
-              return JBInsets(top, 10, bottom, 10)
+              return JBInsets(top, 11, bottom, 11)
             }
             return super.getBorderInsets(c)
           }
@@ -737,7 +737,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       if (isManyIslandEnabled) {
         val rect = Rectangle(size)
-        val w = JBUI.scale(6)
+        val w = JBUI.scale(7)
         val h = JBUI.scale(1)
         JBInsets.removeFrom(rect, Insets(insets.top - h, w, insets.bottom - h, w))
 
