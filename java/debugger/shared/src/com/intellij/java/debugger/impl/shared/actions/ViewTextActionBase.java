@@ -45,7 +45,8 @@ public abstract class ViewTextActionBase extends XFetchValueActionBase {
         String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
-          dialog.setTitle(XDebuggerImplBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
+          dialog.setTitle(node != null ? XDebuggerImplBundle.message("action.Debugger.ViewEditText.text")
+                                       : ActionsBundle.message("action.Debugger.ViewText.text"));
           dialog.show();
         }
         dialog.setText(text);
