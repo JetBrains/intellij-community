@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
@@ -168,6 +169,13 @@ open class EditorComposite internal constructor(
         model.collect {
           handleModel(it)
         }
+      }
+    }
+
+    coroutineScope.launch {
+      // listen for preview status change to update file tooltip, skip the first value as it is the initial value
+      isPreviewFlow.drop(1).collect {
+        FileEditorManagerEx.getInstanceEx(project).updateFileName(file)
       }
     }
   }

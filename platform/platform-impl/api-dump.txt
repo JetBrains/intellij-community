@@ -874,6 +874,8 @@ com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - a:setMacro(java.lang.String):V
 com.intellij.openapi.fileChooser.ex.FileLookup$LookupFilter
 - a:isAccepted(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile):Z
+a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+- updateFileName(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 - sf:Companion:com.intellij.openapi.fileEditor.ex.FileEditorProviderManager$Companion
 - a:getDumbUnawareProviders(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.Set,kotlin.coroutines.Continuation):java.lang.Object

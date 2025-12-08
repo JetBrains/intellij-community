@@ -194,6 +194,8 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   abstract fun getPrevWindow(window: EditorWindow): EditorWindow?
 
+  open fun updateFileName(file: VirtualFile) {}
+
   open fun refreshIcons() {}
 
   abstract fun getSplittersFor(component: Component): EditorsSplitters?

@@ -632,6 +632,13 @@ open class FileEditorManagerImpl(
     queueUpdateFile(file)
   }
 
+  override fun updateFileName(file: VirtualFile) {
+    if (!isFileOpen(file)) {
+      return
+    }
+    scheduleUpdateFileName(file)
+  }
+
   /**
    * Updates tab color for the specified `file`. The `file`
    * should be opened in the myEditor, otherwise the method throws an assertion.
@@ -1384,18 +1391,11 @@ open class FileEditorManagerImpl(
     model: Flow<EditorCompositeModel>,
     coroutineScope: CoroutineScope,
   ): EditorComposite? {
-    val composite = createCompositeInstance(
+    return createCompositeInstance(
       file = file,
       model = model,
       coroutineScope = coroutineScope,
-    ) ?: return null
-    coroutineScope.launch {
-      // listen for preview status change to update file tooltip, skip the first value as it is the initial value
-      composite.isPreviewFlow.drop(1).collect {
-        scheduleUpdateFileName(file)
-      }
-    }
-    return composite
+    )
   }
 
   @RequiresEdt
