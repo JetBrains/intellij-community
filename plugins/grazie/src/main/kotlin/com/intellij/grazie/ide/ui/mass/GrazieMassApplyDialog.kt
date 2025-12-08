@@ -15,7 +15,6 @@ import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.ProofreadingProblems
 import com.intellij.grazie.text.TextProblem
-import com.intellij.grazie.utils.ijRange
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -198,7 +197,7 @@ class GrazieMassApplyDialog : DialogWrapper {
     val grammarHighlightings = getHighlightings(problems.grammarErrors)
     val styleHighlightings = getHighlightings(problems.styleErrors)
     val typoHighlightings = problems.typos.map { typo ->
-      val range = typo.text.textRangeToFile(typo.range.ijRange())
+      val range = typo.text.textRangeToFile(typo.range)
       val changes = typo.fixes.map { DocumentChange(it, listOf(range to it), editor, project) }
       Highlighting(
         typo,

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine;
+import com.intellij.grazie.text.CheckerRunner;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -111,7 +112,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
           element, strategy, session,
           typo -> {
             if (hasSameNamedReferenceInFile(typo.getWord(), element, strategy)) return;
-            registerProblem(typo, holder);
+            registerProblem(typo, element, holder);
           }
         );
         if (result == SpellCheckingResult.Checked) return;
@@ -148,13 +149,35 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     holder.registerProblem(problemDescriptor);
   }
 
+  private static void registerProblem(@NotNull TypoProblem typo, @NotNull PsiElement element, @NotNull ProblemsHolder holder) {
+    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
+    CheckerRunner.fileHighlightRanges(typo)
+      .stream()
+      .reduce(TextRange::union)
+      .map(range -> range.shiftLeft(element.getTextRange().getStartOffset()))
+      .ifPresent(typoRange -> {
+        if (!holder.isOnTheFly()) {
+          addBatchDescriptor(element, typoRange, typo.getWord(), holder);
+          return;
+        }
+
+        Set<String> suggestions = typo.isCloud() ? typo.getFixes() : null;
+        LocalQuickFix[] fixes = strategy != null
+                                ? strategy.getRegularFixes(element, typoRange, false, typo.getWord(), suggestions)
+                                : SpellcheckingStrategy.getDefaultRegularFixes(false, typo.getWord(), element, typoRange, suggestions);
+
+        ProblemDescriptor problemDescriptor = createProblemDescriptor(element, typoRange, fixes, true);
+        holder.registerProblem(problemDescriptor);
+      });
+  }
+
   private static void addRegularDescriptor(@NotNull PsiElement element, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
-                                           boolean useRename, String wordWithTypo, Set<String> suggestions) {
+                                           boolean useRename, String wordWithTypo) {
     SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
 
     LocalQuickFix[] fixes = strategy != null
-                            ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo, suggestions)
-                            : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange, suggestions);
+                            ? strategy.getRegularFixes(element, textRange, useRename, wordWithTypo, null)
+                            : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element, textRange, null);
 
     ProblemDescriptor problemDescriptor = createProblemDescriptor(element, textRange, fixes, true);
     holder.registerProblem(problemDescriptor);
@@ -361,26 +384,13 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     return file.getViewProvider().getContents().subSequence(0, textStart).chars().noneMatch(Character::isLetterOrDigit);
   }
 
-  private static void registerProblem(@NotNull SpellingTypo typo, @NotNull ProblemsHolder holder) {
-    registerProblem(holder, typo.getElement(), typo.getRange(), false, typo.getWord(), typo.getFixes());
-  }
-
   private static void registerProblem(@NotNull ProblemsHolder holder,
                                       @NotNull PsiElement element,
                                       @NotNull TextRange range,
                                       boolean useRename,
                                       String word) {
-    registerProblem(holder, element, range, useRename, word, null);
-  }
-
-  private static void registerProblem(@NotNull ProblemsHolder holder,
-                                      @NotNull PsiElement element,
-                                      @NotNull TextRange range,
-                                      boolean useRename,
-                                      String word,
-                                      Set<String> suggestions) {
     if (holder.isOnTheFly()) {
-      addRegularDescriptor(element, range, holder, useRename, word, suggestions);
+      addRegularDescriptor(element, range, holder, useRename, word);
     }
     else {
       addBatchDescriptor(element, range, word, holder);

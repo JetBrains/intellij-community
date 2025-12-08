@@ -10,10 +10,7 @@ import ai.grazie.rules.common.KnownPhrases
 import ai.grazie.spell.Speller
 import ai.grazie.spell.text.TextSpeller
 import ai.grazie.spell.text.Typo
-import ai.grazie.text.TextRange
 import ai.grazie.text.exclusions.SentenceWithExclusions
-import ai.grazie.utils.LinkedSet
-import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
@@ -24,6 +21,7 @@ import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.NaturalTextDetector
 import com.intellij.grazie.utils.getProblems
+import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -46,38 +44,28 @@ class SpellingCheckerRunner(val text: TextContent) {
 
   companion object {
     private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
+
+    @JvmStatic
+    fun belongsToElement(typo: TypoProblem, element: PsiElement): Boolean {
+      val psiRange = element.textRange
+      val range = typo.text.textRangeToFile(typo.range)
+      return psiRange.contains(range)
+    }
   }
 
   fun run(): List<TypoProblem> {
     val configStamp = service<GrazieConfig>().modificationCount + SpellCheckerManager.dictionaryModificationTracker.modificationCount
     var cache = getCachedTypos(text, configStamp)
     if (cache == null) {
-      cache = findTypos(text).filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
+      cache = findTypos(text)
+        .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }
+        .filterNot { hasUnknownFragments(it) }
       text.putUserData(spellingKey, CachedResults(configStamp, cache))
     }
-    return cache.associateWithText(text)
+    return cache
   }
 
-  fun belongsToElement(typo: Typo, element: PsiElement): Boolean {
-    val psiRange = element.textRange
-    val range = text.textRangeToFile(mapRange(typo.range))
-    if (!psiRange.contains(range)) return false
-
-    val hasUnknownFragmentsInside = text.unknownOffsets().any { offset ->
-      offset > typo.range.start && offset < typo.range.endExclusive
-    }
-    return !hasUnknownFragmentsInside
-  }
-
-  fun updateRanges(typo: Typo, element: PsiElement): Typo {
-    val range = text.textRangeToFile(mapRange(typo.range))
-    val shiftedRange = range.shiftLeft(element.textRange.startOffset)
-    return object : Typo by typo {
-      override val range = TextRange(shiftedRange.startOffset, shiftedRange.endOffset)
-    }
-  }
-
-  private fun getCachedTypos(text: TextContent, configStamp: Long): List<Typo>? {
+  private fun getCachedTypos(text: TextContent, configStamp: Long): List<TypoProblem>? {
     val cache = text.getUserData(spellingKey)
     if (cache != null && cache.configStamp == configStamp) {
       return cache.problems
@@ -117,7 +105,7 @@ class SpellingCheckerRunner(val text: TextContent) {
     }
   }
 
-  private fun findTypos(text: TextContent): List<Typo> {
+  private fun findTypos(text: TextContent): List<TypoProblem> {
     val project = text.containingFile.project
     val textSpeller = getTextSpeller(project) ?: return emptyList()
     val localTypos = textSpeller.checkText(object : BombedCharSequence(text) {
@@ -128,19 +116,19 @@ class SpellingCheckerRunner(val text: TextContent) {
     return findTyposInCloud(text, localTypos, project)
   }
 
-  private fun findTyposInCloud(text: TextContent, localTypos: List<Typo>, project: Project): List<Typo> {
+  private fun findTyposInCloud(text: TextContent, localTypos: List<Typo>, project: Project): List<TypoProblem> {
     if (!Registry.`is`("spellchecker.cloud.enabled", false)
         || localTypos.isEmpty()
         || GrazieConfig.get().processing == Processing.Local
         || !GrazieCloudConnector.seemsCloudConnected()
         || GrazieCloudConnector.isAfterRecentGecError()
         || !NaturalTextDetector.seemsNatural(text)) {
-      return localTypos
+      return localTypos.map { toProblem(text, it) }
     }
 
     val context = text.toProofreadingContext()
     val cloudTypos = runBlockingCancellable { getProblems(context, SpellServerBatcherHolder::class.java) }
-    if (cloudTypos == null) return localTypos
+    if (cloudTypos == null) return localTypos.map { toProblem(text, it) }
 
     val manager = SpellCheckerManager.getInstance(project)
     return cloudTypos
@@ -153,12 +141,16 @@ class SpellingCheckerRunner(val text: TextContent) {
         val word = parts.first().range.substring(text.toString())
         if (!manager.hasProblem(word)) return@mapNotNull null
 
-        CloudTypo(word, parts.first().range, text, parts.map { part -> part.text }.toLinkedSet())
+        TypoProblem(text, parts.first().range, word, true) {
+          parts.map { part -> part.text }.toLinkedSet()
+        }
       }
   }
 
-  private fun mapRange(range: TextRange): com.intellij.openapi.util.TextRange {
-    return com.intellij.openapi.util.TextRange(range.start, range.endExclusive)
+  private fun hasUnknownFragments(typo: TypoProblem): Boolean {
+    return typo.text.unknownOffsets().any { offset ->
+      offset > typo.range.startOffset && offset < typo.range.endOffset
+    }
   }
 
   @Service
@@ -191,26 +183,6 @@ class SpellingCheckerRunner(val text: TextContent) {
   }
 }
 
-interface TypoProblem : Typo {
-  val text: TextContent
-}
+private fun toProblem(text: TextContent, typo: Typo) = TypoProblem(text, typo.range, typo.word, false) { typo.fixes }
 
-private fun List<Typo>.associateWithText(text: TextContent): List<TypoProblem> =
-  map {
-    object : TypoProblem {
-      override val text: TextContent = text
-      override val range: TextRange = it.range
-      override val word: String = it.word
-      override val fixes: LinkedSet<String>
-        get() = it.fixes
-    }
-  }
-
-class CloudTypo(
-  override val word: String,
-  override val range: TextRange,
-  override val text: TextContent,
-  override val fixes: LinkedSet<String>,
-) : TypoProblem
-
-private data class CachedResults(val configStamp: Long, val problems: List<Typo>)
+private data class CachedResults(val configStamp: Long, val problems: List<TypoProblem>)

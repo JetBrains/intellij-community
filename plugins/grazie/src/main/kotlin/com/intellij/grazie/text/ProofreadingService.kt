@@ -4,7 +4,6 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.spellcheck.SpellingCheckerRunner
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextContent.TextDomain
-import com.intellij.grazie.utils.ijRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -45,7 +44,7 @@ class ProofreadingService(private val root: PsiElement) {
 data class ProofreadingProblems(val problems: List<TextProblem>, val typos: List<TypoProblem>) {
   fun filterOutDuplicatedTypos(): ProofreadingProblems {
     val typoRanges = typos
-      .map { typo -> typo.text.textRangeToFile(typo.range.ijRange()) }
+      .map { typo -> typo.text.textRangeToFile(typo.range) }
 
     val filteredTextProblems = problems.asSequence()
       .map { problem -> problem to problem.highlightRanges.map { problem.text.textRangeToFile(it) } }

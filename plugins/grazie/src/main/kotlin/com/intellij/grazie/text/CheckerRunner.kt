@@ -279,14 +279,6 @@ class CheckerRunner(val text: TextContent) {
     return result.toTypedArray()
   }
 
-  private fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
-    return problem.highlightRanges.asSequence()
-      .map { text.textRangeToFile(it) }
-      .flatMap { range -> text.intersection(range) }
-      .filterNot { it.isEmpty }
-      .toList()
-  }
-
   // used in rider
   @ApiStatus.Experimental
   fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
@@ -300,6 +292,17 @@ class CheckerRunner(val text: TextContent) {
 
   private fun highlightSpan(problem: TextProblem) =
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
+
+  companion object {
+    @JvmStatic
+    fun fileHighlightRanges(problem: TextProblem): List<TextRange> {
+      return problem.highlightRanges.asSequence()
+        .map { problem.text.textRangeToFile(it) }
+        .flatMap { range -> problem.text.intersection(range) }
+        .filterNot { it.isEmpty }
+        .toList()
+    }
+  }
 }
 
 private data class CachedResults(val configStamp: Long, val problems: List<TextProblem>)
