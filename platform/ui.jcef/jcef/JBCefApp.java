@@ -394,11 +394,6 @@ public final class JBCefApp {
                                  ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
       }
     }
-    String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
-    if (altCefPath == null || altCefPath.isEmpty()) {
-      altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
-    }
-
 
     final String altFramework = Utils.getString("ALT_CEF_FRAMEWORK_DIR");
     final String altPipe = Utils.getString("ALT_CEF_SERVER_PIPE");
