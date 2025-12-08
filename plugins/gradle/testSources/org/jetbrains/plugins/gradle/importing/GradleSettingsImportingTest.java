@@ -432,7 +432,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testIdeaPostProcessingHook() throws Exception {
     File layoutFile = new File(getProjectPath(), "test_output.txt");
     assertThat(layoutFile).doesNotExist();
