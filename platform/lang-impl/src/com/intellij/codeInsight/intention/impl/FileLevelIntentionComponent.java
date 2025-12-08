@@ -121,20 +121,22 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
         new ClickListener() {
           @Override
           public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-            PsiFile psiFile = filePointer.getElement();
-            if (psiFile == null) return true;
-            CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
-            IntentionListStep step = WriteIntentReadAction.compute(() -> new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS));
-            HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
-            IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
-            if (step.hasSubstep(actionWithTextCaching)) {
-              step = step.getSubStep(actionWithTextCaching, null);
-            }
-            ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-            Dimension dimension = popup.getContent().getPreferredSize();
-            Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
-            popup.show(new RelativePoint(e.getComponent(), at));
-            return true;
+            return WriteIntentReadAction.compute(() -> {
+              PsiFile psiFile = filePointer.getElement();
+              if (psiFile == null) return true;
+              CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
+              IntentionListStep step = WriteIntentReadAction.compute(() -> new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS));
+              HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
+              IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
+              if (step.hasSubstep(actionWithTextCaching)) {
+                step = step.getSubStep(actionWithTextCaching, null);
+              }
+              ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+              Dimension dimension = popup.getContent().getPreferredSize();
+              Point at = new Point(-dimension.width + myGearLabel.getWidth(), FileLevelIntentionComponent.this.getHeight());
+              popup.show(new RelativePoint(e.getComponent(), at));
+              return true;
+            });
           }
         }.installOn(myGearLabel);
       }
