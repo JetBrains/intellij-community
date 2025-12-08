@@ -517,6 +517,11 @@ internal suspend fun createProductProperties(
     }
   }
 
+  @Suppress("SimpleRedundantLet")
+  (ProductConfiguration::class.java.classLoader as? PathClassLoader)?.let {
+    it.getClassPath().addFiles(classPathFiles)
+  }
+
   val classLoader = spanBuilder("create product properties classloader").use {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
