@@ -114,7 +114,12 @@ class SePopupHeaderPane(
 
   private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
     withContext(Dispatchers.EDT) {
-      val prevSelectedTabId = old.tabs.getOrNull(tabbedPane.selectedIndex)?.id
+      // Select a tab from the new configuration if the old configuration doesn't contain the newly selected tab id,
+      // or take the selected tab directly from UI
+      val tabIdToSelect = new.selectedTabOrNull?.id?.takeIf { newSelectedId ->
+        !old.tabs.any { newSelectedId == it.id }
+      } ?: old.getTabOrNull(tabbedPane.selectedIndex)?.id
+
       tabbedPane.removeAll()
 
       if (new.tabs.isEmpty()) {
@@ -126,7 +131,7 @@ class SePopupHeaderPane(
         tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
       }
 
-      new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(prevSelectedTabId)
+      new.selectedIndexFlow.value = new.tabs.indexOfTabWithIdOrZero(tabIdToSelect)
       setSelectedIndexSafe(new.selectedIndexFlow.value)
     }
 
@@ -228,6 +233,10 @@ class SePopupHeaderPane(
     val tabs: List<Tab>,
     val selectedIndexFlow: MutableStateFlow<Int>
   ) {
+    val selectedTabOrNull: Tab? get() = tabs.getOrNull(selectedIndexFlow.value)
+
+    fun getTabOrNull(index: Int): Tab? = tabs.getOrNull(index)
+
     companion object {
       fun createInitial(
         initialTabs: List<SeDummyTabVm>,

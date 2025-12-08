@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
@@ -57,15 +56,18 @@ class SePopupVm(
 
   private val _deferredTabVms = MutableSharedFlow<SeTabInitEvent>(replay = 100)
   private val _tabsModelFlow = MutableStateFlow(run {
-    val initialModel = SeTabsModel(initialDummyTabs, initialTabId)
-
     val customizer = SeTabsCustomizer.getInstance()
     val tabsVms = tabs.mapNotNull {
       val tabInfo = customizer.customizeTabInfo(it.id, SeTabInfo(it.priority, it.name)) ?: return@mapNotNull null
       SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyContributors.allTab)
     }
 
-    initialModel.newModelWithReplacedTab(tabsVms, initialTabId)
+    // Just for safety in case the initially selected tab is not in the initial tabs
+    val initialTabId =
+      if (tabsVms.containsId(initialTabId)) initialTabId
+      else tabsVms.first().tabId
+
+    SeTabsModel(tabsVms, initialTabId)
   })
   val tabsModelFlow: StateFlow<SeTabsModel> get() = _tabsModelFlow.asStateFlow()
   val tabsModel: SeTabsModel get() = tabsModelFlow.value
@@ -355,6 +357,8 @@ class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
     sortedTabVms.indexOfFirst { it.tabId == tabId }.takeIf { it != -1 }?.let { selectedTabIndexFlow.value = it }
   }
 
+  fun contains(tabId: String): Boolean = sortedTabVms.any { it.tabId == tabId }
+
   fun newModelWithReplacedTab(newTabs: List<SeTabVm>, selectedTabId: String? = null, removeDummy: Boolean = false): SeTabsModel {
     val newTabs = newTabs.associateBy { it.tabId }.toMutableMap()
 
@@ -368,3 +372,5 @@ class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
     return SeTabsModel(mergedTabs, selectedTabId ?: selectedTab.tabId)
   }
 }
+
+private fun List<SeTabVm>.containsId(tabId: String): Boolean = any { it.tabId == tabId }
