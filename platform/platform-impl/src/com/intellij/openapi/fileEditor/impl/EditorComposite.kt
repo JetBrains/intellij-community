@@ -146,6 +146,9 @@ open class EditorComposite internal constructor(
   @Internal
   val initDeferred: CompletableDeferred<Unit> = CompletableDeferred()
 
+  private val _isPreviewFlow = MutableStateFlow(false)
+  internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
+
   init {
     EDT.assertIsEdt()
 
@@ -528,9 +531,6 @@ open class EditorComposite internal constructor(
       field = pinned
       ClientProperty.put(compositePanel, JBTabsImpl.PINNED, if (field) true else null)
     }
-
-  private val _isPreviewFlow = MutableStateFlow(false)
-  internal val isPreviewFlow: StateFlow<Boolean> = _isPreviewFlow.asStateFlow()
 
   /**
    * Whether the composite is opened as a preview tab or not

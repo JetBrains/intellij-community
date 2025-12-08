@@ -1374,7 +1374,8 @@ private suspend fun initProject(
     project.registerComponents()
     registerComponentActivity?.end()
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode ||
+        ApplicationManagerEx.isInIntegrationTest()) {
       @Suppress("TestOnlyProblems")
       for (listener in ProjectServiceContainerCustomizer.getEp().extensionList) {
         listener.serviceRegistered(project)

@@ -6,15 +6,10 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.inModalContext
-import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.*
@@ -547,6 +542,9 @@ private fun CoroutineScope.showModalIndicator(
   }
 }
 
+/**
+ * See also [com.intellij.openapi.fileEditor.impl.blockingWaitForCompositeFileOpen] in [com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl]
+ */
 private suspend fun doShowModalIndicator(
   mainJob: Job,
   descriptor: ModalIndicatorDescriptor,

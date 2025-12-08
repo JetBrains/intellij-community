@@ -7,7 +7,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
@@ -93,6 +92,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.containers.toArray
+import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -408,6 +408,9 @@ open class FileEditorManagerImpl(
 
     @JvmField
     val OPEN_FILE_SET_MODIFICATION_COUNT: ModificationTracker = ModificationTracker { openFileSetModificationCount.sum() }
+
+    private val COMPOSITE_PROVIDER_EP: ExtensionPointName<EditorCompositeProvider> =
+      ExtensionPointName.create("com.intellij.editorCompositeProvider")
 
     private fun isFileOpenInWindow(file: VirtualFile, window: EditorWindow): Boolean {
       val shouldFileBeSelected = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE
@@ -728,6 +731,11 @@ open class FileEditorManagerImpl(
       val currentWindow = splitters.currentWindow
       return currentWindow != null && currentWindow.inSplitter()
     }
+
+  override fun canOpenFile(file: VirtualFile): Boolean {
+    return super.canOpenFile(file) ||
+           COMPOSITE_PROVIDER_EP.extensionList.any { it.canOpenFile(file) }
+  }
 
   override fun hasOpenedFile(): Boolean = splitters.currentWindow?.selectedComposite != null
 
@@ -1134,18 +1142,6 @@ open class FileEditorManagerImpl(
     }
 
   /**
-   * An internal hack that is used in [blockingWaitForCompositeFileOpen]: the method is called when a new modality is entered while waiting.
-   * This handler will be called if the file is opened:
-   * 1. On the EDT
-   * 2. Inside modal progress
-   * 3. Used a non-suspendable function
-   * 4. waitForComposite=true
-   *
-   * The handler is used mainly in FrontendFileEditorManager to allow protocol pumping for the new modality
-   */
-  protected open fun omNewModalityInsideBlockingWaitOnEdt() {}
-
-  /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
   @Suppress("DuplicatedCode")
@@ -1187,7 +1183,7 @@ open class FileEditorManagerImpl(
         val composite = open()
         if (composite is EditorComposite) {
           if (options.waitForCompositeOpen) {
-            blockingWaitForCompositeFileOpen(composite, this::omNewModalityInsideBlockingWaitOnEdt)
+            blockingWaitForCompositeFileOpen(composite)
             if (composite.providerSequence.none()) {
               closeFile(window = window, composite = composite, runChecks = false)
               return@Computable FileEditorComposite.EMPTY
@@ -1334,12 +1330,20 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  open fun createCompositeAndModel(
+  fun createCompositeAndModel(
     file: VirtualFile,
     window: EditorWindow,
     fileEntry: FileEntry? = null,
     hint: FileEditorOpenOptionsHint? = null,
   ): EditorComposite? {
+    val provider = COMPOSITE_PROVIDER_EP.findFirstSafe { it.canOpenFile(file) }
+    if (provider != null) {
+      val composite = provider.createComposite(project, file, window, fileEntry, hint)
+      if (composite != null) {
+        return composite
+      }
+    }
+
     val compositeCoroutineScope = window.owner.coroutineScope.childScope("EditorComposite(file=${file.name})")
     val model = createEditorCompositeModel(
       coroutineScope = compositeCoroutineScope,
@@ -2487,7 +2491,7 @@ private fun reopenVirtualFileInEditor(
 @Suppress("SSBasedInspection")
 @RequiresEdt
 @Internal
-fun blockingWaitForCompositeFileOpen(composite: EditorComposite, onNewModality: () -> Unit = {}) {
+fun blockingWaitForCompositeFileOpen(composite: EditorComposite) {
   ThreadingAssertions.assertEventDispatchThread()
 
   val job = composite.coroutineScope.launch {
@@ -2496,7 +2500,6 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite, onNewModality: 
 
   // https://youtrack.jetbrains.com/issue/IDEA-319932
   // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
-  // IJPL-196175 & IJPL-202195: `pumpEventsForHierarchy` can't be used within `runWithModalProgressBlocking`
   if (ApplicationManager.getApplication().isWriteAccessAllowed) {
     // todo silenceWriteLock instead of executeSuspendingWriteAction
     (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(
@@ -2509,8 +2512,38 @@ fun blockingWaitForCompositeFileOpen(composite: EditorComposite, onNewModality: 
     }
   }
   else if (LaterInvocator.isInModalContext()) {
+    // IJPL-196175 & IJPL-202195: if we're called under the `runWithModalProgressBlocking`, the `pumpEventsForHierarchy` might not work
+    //
+    // This block will be called if the file is opened:
+    //   1. On the EDT
+    //   2. Inside modal progress
+    //   3. Used a non-suspendable function
+    //   4. waitForComposite=true
+    //
+    // A: runWithModalProgressBlocking shows its delayed DialogWrapper later, via GlassPaneDialogWrapperPeer
+    //       In this case everything is OK
+    //       We will start our 'pumpEventsForHierarchy' loop, the progress dialog will be non-blockingly shown,
+    //       we will keep pumping the events ourselves.
+    //
+    // B: runWithModalProgressBlocking has already shown its DialogWrapper, via modal DialogWrapperPeerImpl
+    //       In this case everything is OK
+    //       We will start 'pumpEventsForHierarchy' loop inside progress dialog's event pumping loop, the loop will eventually end with the 'job',
+    //       'blockingWaitForCompositeFileOpen' will exit, the progress dialog will exit.
+    //
+    // C: runWithModalProgressBlocking shows its delayed DialogWrapper later, via modal DialogWrapperPeerImpl
+    //       In this case we will deadlock
+    //       The progress dialog will show synchronously inside our 'pumpEventsForHierarchy' loop, and will start its own event pumping loop inside.
+    //       The progress dialog will wait for 'blockingWaitForCompositeFileOpen' to exit, while 'blockingWaitForCompositeFileOpen'
+    //       will wait for an exit condition from 'pumpEventsForHierarchy'.
+    //       But the EDT events are being pumped by the progress dialog, so our 'pumpEventsForHierarchy' receives no events and never checks exit condition.
+    //
+    // We prevent [C] from ever happening by entering a new modality context (without creating a dialog).
+    // In this case the delayed progress dialog will never be able to show.
+    //
+    // NOTE: here we rely on composites being created in ModalityState.any(). For thouse that need to know an exact modality, the listener is introduced.
+    //
     inModalContext(ObjectUtils.sentinel("Opening file=${composite.file.name}")) {
-      onNewModality()
+      composite.project.messageBus.syncPublisher(EditorCompositeModalityListener.TOPIC).onNewModalityInsideBlockingWaitOnEdt()
       job.waitBlockingAndPumpEdt()
     }
   }
@@ -2608,3 +2641,27 @@ private data class ProviderChange(
   @JvmField val newProviders: List<FileEditorProvider>,
   @JvmField val editorTypeIdsToRemove: List<String>,
 )
+
+@Internal
+interface EditorCompositeProvider {
+  fun canOpenFile(file: VirtualFile): Boolean
+
+  fun createComposite(
+    project: Project, file: VirtualFile,
+    window: EditorWindow,
+    fileEntry: FileEntry?,
+    hint: FileEditorOpenOptionsHint?,
+  ): EditorComposite?
+}
+
+@Internal
+interface EditorCompositeModalityListener : EventListener {
+  fun onNewModalityInsideBlockingWaitOnEdt()
+
+  companion object {
+    @Topic.ProjectLevel
+    val TOPIC: Topic<EditorCompositeModalityListener> = Topic(EditorCompositeModalityListener::class.java,
+                                                              Topic.BroadcastDirection.NONE,
+                                                              true)
+  }
+}

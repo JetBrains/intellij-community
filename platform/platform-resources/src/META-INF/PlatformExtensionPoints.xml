@@ -164,6 +164,7 @@
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
     <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper" dynamic="true"/>
     <extensionPoint name="editorAutoClosingHandler" interface="com.intellij.openapi.fileEditor.impl.EditorAutoClosingHandler" dynamic="true"/>
+    <extensionPoint name="editorCompositeProvider" interface="com.intellij.openapi.fileEditor.impl.EditorCompositeProvider" dynamic="true"/>
 
     <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder" dynamic="true"/>
     <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider" dynamic="false"/>
