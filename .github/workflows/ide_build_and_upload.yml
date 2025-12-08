@@ -30,7 +30,7 @@ jobs:
           extension: tar.gz
           artifacts_dir: ${{inputs.artifacts_dir}}
   build-windows-x64:
-    if: ${{ false }} # IDEA-382998
+    if: ${{ inputs.product != 'intellij_idea' }} # IDEA-382998
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
