@@ -11,16 +11,13 @@ Current rules JAR version: [0.4.26](https://github.com/mrmans0n/compose-rules/re
 ## Getting findings in the IDE editor
 
 1. Install the [Detekt IntelliJ plugin](https://plugins.jetbrains.com/plugin/10761-detekt)
-2. Make sure you've built the [`detekt-plugin`](../detekt-plugin) module. You can either:
-   * Right-click the [`detekt-plugin`](../detekt-plugin) module in the _Project_ toolwindow and select _Build Module
-     'intellij.platform.jewel.detektPlugin'_, or
-   * Use the _Build | Rebuild project_ menu, or
-   * Use the _Build | Build Artifacts..._ menu, and select
-3. Open [_Settings | Tools | detekt_](jetbrains://idea/settings?name=Tools--detekt)
-4. Enable background analysis
-5. Point it to the [`detekt.yml`](../detekt.yml) configuration file
-6. Add the [`detekt-compose.jar`](detekt-compose.jar) file as a plugin
-7. Add the [`intellij.platform.jewel.detektPlugin.jar`](../../../out/artifacts/intellij_platform_jewel_detektPlugin_jar/intellij.platform.jewel.detektPlugin.jar)
+2. Run `bazel build //platform/jewel/detekt-plugin:detekt-plugin-binary_deploy.jar`
+3. Run `bazel build //libraries/detekt-compose-rules:detekt-compose-rules-binary_deploy.jar`
+4. Open [_Settings | Tools | detekt_](jetbrains://idea/settings?name=Tools--detekt)
+5. Enable background analysis
+6. Point it to the [`detekt.yml`](../detekt.yml) configuration file
+7. Add the [`detekt-compose.jar`](../../../out/bazel-bin/libraries/detekt-compose-rules/detekt-compose-rules-binary_deploy.jar) file as a plugin
+8. Add the [`detekt-plugin-binary_deploy.jar`](../../../out/bazel-bin/platform/jewel/detekt-plugin/detekt-plugin-binary_deploy.jar)
    file as a plugin
 
 ![Detekt plugin configuration example](detekt-plugin-config.png)
