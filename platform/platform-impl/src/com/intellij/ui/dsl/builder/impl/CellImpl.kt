@@ -422,24 +422,14 @@ internal class CellImpl<T : JComponent>(
       return
     }
 
-    lastAutoCalculatedAccessibleDescription = calculatedAccessibleDescription(listOfNotNull(
+    lastAutoCalculatedAccessibleDescription = AccessibleContextUtil.joinAccessibleStrings("\n",
       commentRight?.getPlainText(),
       comment?.getPlainText(),
       contextHelpInfo?.title?.stripHtml(),
       contextHelpInfo?.description?.stripHtml(),
-    ))
+    )
 
     component.accessibleContext.accessibleDescription = lastAutoCalculatedAccessibleDescription
-  }
-
-  private fun calculatedAccessibleDescription(list: List<@Nls String>): @Nls String? {
-    var result: String? = null
-
-    for (s in list) {
-      result = AccessibleContextUtil.combineAccessibleStrings(result, "\n", s)
-    }
-
-    return result
   }
 
   /**

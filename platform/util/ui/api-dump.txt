@@ -5628,6 +5628,7 @@ f:com.intellij.util.ui.accessibility.AccessibleContextUtil
 - sf:getCombinedName(java.awt.Component,java.lang.String,java.awt.Component,java.lang.String,java.awt.Component):java.lang.String
 - sf:getCombinedName(java.lang.String,java.awt.Component[]):java.lang.String
 - sf:getUniqueDescription(javax.accessibility.AccessibleContext,java.lang.String):java.lang.String
+- sf:joinAccessibleStrings(java.lang.String,java.lang.String[]):java.lang.String
 - sf:replaceLineSeparatorsWithPunctuation(java.lang.String):java.lang.String
 - sf:setCombinedDescription(java.awt.Component,java.awt.Component,java.lang.String,java.awt.Component):V
 - sf:setCombinedDescription(java.awt.Component,java.awt.Component,java.lang.String,java.awt.Component,java.lang.String,java.awt.Component):V

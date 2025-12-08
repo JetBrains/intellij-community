@@ -16,6 +16,7 @@
 package com.intellij.util.ui.accessibility
 
 import com.intellij.util.ui.accessibility.AccessibleContextUtil.combineAccessibleStrings
+import com.intellij.util.ui.accessibility.AccessibleContextUtil.joinAccessibleStrings
 import com.intellij.util.ui.accessibility.AccessibleContextUtil.replaceLineSeparatorsWithPunctuation
 import org.junit.Assert
 import org.junit.Test
@@ -55,5 +56,18 @@ class AccessibleContextUtilTest {
 
     Assert.assertEquals("first second", combineAccessibleStrings("first", "second"))
     Assert.assertEquals("first, second", combineAccessibleStrings("first", ", ", "second"))
+  }
+
+  @Test
+  fun testJoinAccessibleStrings() {
+    Assert.assertEquals("first second third", joinAccessibleStrings(" ", "first", "second", "third"))
+
+    Assert.assertEquals("first second", joinAccessibleStrings(" ", "first", null, "second"))
+    Assert.assertEquals("first second", joinAccessibleStrings(" ", "first", "", "second"))
+
+    Assert.assertNull(joinAccessibleStrings(" "))
+    Assert.assertNull(joinAccessibleStrings(" ", null, null, null))
+    Assert.assertNull(joinAccessibleStrings(" ", "", "", ""))
+    Assert.assertNull(joinAccessibleStrings(" ", null, "", null))
   }
 }

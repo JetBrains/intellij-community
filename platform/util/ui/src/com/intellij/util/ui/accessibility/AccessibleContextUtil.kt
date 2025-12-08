@@ -182,6 +182,16 @@ object AccessibleContextUtil {
     return combineAccessibleStrings(combineAccessibleStrings(s1, separator1, s2), separator2, s3)
   }
 
+  @JvmStatic
+  @Nls
+  fun joinAccessibleStrings(@NlsSafe separator: String, @Nls vararg strings: String?): String? {
+    var result: String? = null
+    for (s in strings) {
+      result = combineAccessibleStrings(result, separator, s)
+    }
+    return result
+  }
+
   /**
    * Given a multi-line string, return a single line string where new line separators
    * are replaced with a punctuation character. This is useful for returning text to
