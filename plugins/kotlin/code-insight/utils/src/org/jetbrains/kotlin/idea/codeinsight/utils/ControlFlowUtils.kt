@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -55,12 +57,30 @@ fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
     }
 
     for (loopExpression in expression.parentsOfType<KtLoopExpression>(withSelf = true)) {
-        if (expressionLabelName == null || (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName) {
+        if (loopExpression == expression)
             return loopExpression
-        }
+
+        if (expressionLabelName != null && (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName)
+            return loopExpression
+
+        if (expressionLabelName == null && expression.doesBelongToLoop(loopExpression))
+            return loopExpression
     }
 
     return null
+}
+
+@ApiStatus.Internal
+fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
+    val structureBodies = PsiTreeUtil.collectParents(
+        /* element = */ this,
+        /* parent = */ KtContainerNodeForControlStructureBody::class.java,
+        /* includeMyself = */ false
+    ) {
+        it.parent is KtDeclaration
+    }
+    // expression belongs to the loop when they are in its control structure body
+    return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
 }
 
 fun KtNamedFunction.isRecursive(): Boolean {
