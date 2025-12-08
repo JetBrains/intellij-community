@@ -37,7 +37,7 @@ suspend fun <T> runLogged(actionTitle: String, timeout: Duration? = null, action
       throw e
     }
     catch (e: Throwable) {
-      LOG.warn("'$actionTitle': failed \n\t${e::class.simpleName}: '${e.message}'", e)
+      LOG.warn("'$actionTitle': failed", e)
       throw e
     }
   }
