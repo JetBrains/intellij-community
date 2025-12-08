@@ -7,9 +7,9 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.xdebugger.frame.XValue
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.impl.proxy.asProxy
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 object JvmDebuggerUtils {
   @JvmStatic
   fun findProxyFromContext(debuggerContext: DebuggerContextImpl): XDebugSessionProxy? {
-    return debuggerContext.debuggerSession?.xDebugSession?.asProxy()
+    val session = debuggerContext.debuggerSession?.xDebugSession ?: return null
+    return XDebuggerEntityConverter.asProxy(session)
   }
 
   @JvmStatic

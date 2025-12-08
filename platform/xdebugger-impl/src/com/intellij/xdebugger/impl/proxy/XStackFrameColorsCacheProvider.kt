@@ -4,29 +4,29 @@ package com.intellij.xdebugger.impl.proxy
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import com.intellij.psi.search.scope.NonProjectFilesScope
 import com.intellij.ui.FileColorManager
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.util.concurrent.atomic.AtomicInteger
 
 
-internal class MonolithFramesColorCache(private val session: XDebugSessionImpl, onAllComputed: () -> Unit) : XStackFramesListColorsCache {
+internal class MonolithFramesColorCache(session: XDebugSessionImpl, onAllComputed: () -> Unit) : XStackFramesListColorsCache {
+  private val computer = FileColorsComputer(session.project, session.coroutineScope)
 
   private val myFileColors = mutableMapOf<VirtualFile, ColorState>()
   private val myCurrentlyComputingFiles = AtomicInteger(0)
 
   init {
     session.coroutineScope.launch {
-      session.fileColorsComputer.fileColors.collect { (file, colorState) ->
+      computer.fileColors.collect { (file, colorState) ->
         val oldState = myFileColors.put(file, colorState)
 
         if (colorState is ColorState.Computing) {
@@ -52,14 +52,13 @@ internal class MonolithFramesColorCache(private val session: XDebugSessionImpl, 
       return res.color
     }
 
-    session.fileColorsComputer.sendRequest(virtualFile)
+    computer.sendRequest(virtualFile)
 
     return null
   }
 }
 
-@ApiStatus.Internal
-class FileColorsComputer(project: Project, private val cs: CoroutineScope) {
+private class FileColorsComputer(project: Project, private val cs: CoroutineScope) {
   private val myColorsManager: FileColorManager = FileColorManager.getInstance(project)
 
   private val _fileColors = MutableSharedFlow<VirtualFileColor>(replay = 1)
@@ -78,14 +77,12 @@ class FileColorsComputer(project: Project, private val cs: CoroutineScope) {
   }
 }
 
-@ApiStatus.Internal
-data class VirtualFileColor(
+private data class VirtualFileColor(
   val file: VirtualFile,
   val colorState: ColorState,
 )
 
-@ApiStatus.Internal
-sealed interface ColorState {
+private sealed interface ColorState {
   val color: Color?
 
   object NoColor : ColorState {
@@ -101,4 +98,4 @@ sealed interface ColorState {
   data class Computed(override val color: Color) : ColorState
 }
 
-internal fun Color?.asState() = if (this == null) ColorState.NoColor else ColorState.Computed(this)
+private fun Color?.asState() = if (this == null) ColorState.NoColor else ColorState.Computed(this)

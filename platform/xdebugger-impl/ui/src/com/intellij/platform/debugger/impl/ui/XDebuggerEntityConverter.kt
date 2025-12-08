@@ -32,4 +32,12 @@ object XDebuggerEntityConverter {
   fun getSessionNonSplitOnly(proxy: XDebugSessionProxy): XDebugSession? {
     return XDebuggerMonolithAccessPoint.find { it.getSessionNonSplitOnly(proxy) }
   }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun asProxy(session: XDebugSession): XDebugSessionProxy {
+    return XDebuggerMonolithAccessPoint.find { it.asProxy(session) }
+           ?: error("No XDebuggerMonolithAccessPoint implementation that can convert $session found. " +
+                    "XDebuggerMonolithAccessPointImpl should be registered in a shared module and always be able to convert sessions.")
+  }
 }

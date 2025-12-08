@@ -70,7 +70,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
-import com.intellij.xdebugger.impl.proxy.FileColorsComputer
 import com.intellij.xdebugger.impl.proxy.asProxy
 import com.intellij.xdebugger.impl.rpc.models.XDebugTabLayouterModel
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
@@ -161,9 +160,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   // Ref is used to prevent StateFlow's equals checks
   private val topStackFrame = MutableStateFlow<Ref<XStackFrame>?>(null)
-
-  @get:ApiStatus.Internal
-  val fileColorsComputer: FileColorsComputer = FileColorsComputer(project, coroutineScope)
 
   var currentExecutionStack: XExecutionStack? = null
   private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)

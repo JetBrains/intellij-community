@@ -12,6 +12,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -42,12 +44,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.event.HyperlinkListener
 
-@ApiStatus.Internal
-class MonolithSessionProxy internal constructor(val session: XDebugSession) : XDebugSessionProxy {
+internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionProxy {
 
   val sessionImpl: XDebugSessionImpl get() = session as XDebugSessionImpl
   private val sessionImplIfAvailable get() = session as? XDebugSessionImpl
@@ -196,7 +196,9 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
   }
 
   override fun createFileColorsCache(onAllComputed: () -> Unit): XStackFramesListColorsCache {
-    return MonolithFramesColorCache(sessionImpl, onAllComputed)
+    return sessionImpl.sessionData.getOrCreateUserData(COLOR_CACHE_KEY) {
+      MonolithFramesColorCache(sessionImpl, onAllComputed)
+    }
   }
 
   override fun areBreakpointsMuted(): Boolean {
@@ -276,6 +278,9 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     return session.hashCode()
   }
 
+  companion object {
+    private val COLOR_CACHE_KEY = Key.create<XStackFramesListColorsCache>("COLOR_CACHE_KEY")
+  }
 }
 
 @Service(Service.Level.PROJECT)
@@ -297,6 +302,5 @@ private class XDebugSessionProxyKeeper {
   }
 }
 
-@ApiStatus.Internal
-fun XDebugSession.asProxy(): XDebugSessionProxy =
+internal fun XDebugSession.asProxy(): XDebugSessionProxy =
   project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)

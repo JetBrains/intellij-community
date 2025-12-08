@@ -171,6 +171,7 @@
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.proxy.MonolithXDebugManagerProxy" order="last"/>
+    <xdebugger.monolithAccessPoint implementation="com.intellij.xdebugger.impl.proxy.XDebuggerMonolithAccessPointImpl"/>
 
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
 

@@ -8,6 +8,5 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"/>
-    <xdebugger.monolithAccessPoint implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerMonolithAccessPoint"/>
   </extensions>
 </idea-plugin>
