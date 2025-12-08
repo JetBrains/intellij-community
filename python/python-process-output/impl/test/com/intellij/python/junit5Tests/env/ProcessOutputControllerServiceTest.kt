@@ -13,7 +13,9 @@ import com.intellij.python.processOutput.impl.CoroutineNames
 import com.intellij.python.processOutput.impl.ProcessOutputControllerService
 import com.intellij.python.processOutput.impl.ProcessOutputControllerServiceLimits
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.io.awaitExit
 import com.intellij.util.progress.sleepCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
@@ -41,7 +43,7 @@ class ProcessOutputControllerServiceTest {
     fun `stress and limits test`(
         @TempDir cwd: Path,
         @PythonBinaryPath python: PythonBinary,
-    ): Unit = timeoutRunBlocking(5.minutes) {
+    ): Unit = timeoutRunBlocking(15.minutes) {
         val service = projectFixture.get().service<ProcessOutputControllerService>()
 
         val newLineLen = if (SystemInfoRt.isWindows) 2 else 1
@@ -63,10 +65,11 @@ class ProcessOutputControllerServiceTest {
         // executing the file MAX_PROCESSES amount of times
         repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
             runBin(binOnEel, Args(MAIN_PY, it.toString()))
-        }
 
-        // let the service catch up with the flows
-        sleepCancellable(200)
+            waitUntil {
+                service.firstLineOfLastProcess()?.startsWith("test $it") == true
+            }
+        }
 
         // the amount of processes logged should exactly equal to MAX_PROCESSES
         assertEquals(
@@ -91,17 +94,14 @@ class ProcessOutputControllerServiceTest {
 
         // adding processes 2 times over the limit
         repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2) {
-            runBin(
-                binOnEel,
-                Args(
-                    MAIN_PY,
-                    (it + ProcessOutputControllerServiceLimits.MAX_PROCESSES).toString(),
-                ),
-            )
-        }
+            val newIt = (it + ProcessOutputControllerServiceLimits.MAX_PROCESSES)
 
-        // catching up
-        sleepCancellable(200)
+            runBin(binOnEel, Args(MAIN_PY, newIt.toString()))
+
+            waitUntil {
+                service.firstLineOfLastProcess()?.startsWith("test $newIt") == true
+            }
+        }
 
         // older processes beyond MAX_PROCESSES should be truncated
         assertEquals(
@@ -172,6 +172,15 @@ class ProcessOutputControllerServiceTest {
         )
     }
 
+    private fun ProcessOutputControllerService.firstLineOfLastProcess(): String? =
+        loggedProcesses
+            .value
+            .lastOrNull()
+            ?.lines
+            ?.replayCache
+            ?.getOrNull(0)
+            ?.text
+
     companion object {
         const val MAIN_PY = "main.py"
 
@@ -192,6 +201,8 @@ class ProcessOutputControllerServiceTest {
                             process.inputStream.readAllBytes()
                         },
                     ).awaitAll()
+
+                    process.awaitExit()
                 }
             }
         }
