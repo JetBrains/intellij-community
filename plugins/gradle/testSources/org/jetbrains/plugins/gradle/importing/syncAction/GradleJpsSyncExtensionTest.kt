@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ExModuleOptionAssertions
@@ -135,6 +138,137 @@ class GradleJpsSyncExtensionTest {
     for (moduleName in renamedModuleNames) {
       ModuleAssertions.assertModuleEntity(projectStorage, moduleName) { module ->
         Assertions.assertEquals(entitySource2, module.entitySource)
+      }
+    }
+  }
+
+  @Test
+  fun `test GradleJpsSyncExtension#removeDuplicatedContentRoots sharedSourceSetsDisabled`(): Unit = runBlocking {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("intellij.platform.shared.source.support").setValue(false, disposable)
+      val moduleNames = listOf("module1", "module2")
+      val contentRootPath = virtualFileUrl(projectPath.resolve("contentRoot"))
+
+
+      val phase = GradleSyncPhase.PROJECT_MODEL_PHASE // Any
+      val entitySource = GradleTestEntitySource(projectPath.toCanonicalPath(), phase)
+
+      val projectStorage = MutableEntityStorage.create()
+      for (moduleName in moduleNames) {
+        projectStorage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
+          contentRoots += ContentRootEntity(contentRootPath, emptyList(), NonPersistentEntitySource)
+        }
+      }
+
+      val syncStorage = MutableEntityStorage.create()
+      for (moduleName in moduleNames) {
+        syncStorage addEntity ModuleEntity(moduleName, emptyList(), entitySource) {
+          contentRoots += ContentRootEntity(contentRootPath, emptyList(), entitySource)
+        }
+      }
+
+      val context = mock<ProjectResolverContext> {
+        on { project } doReturn project
+        on { projectPath } doReturn projectPath.toCanonicalPath()
+      }
+      GradleJpsSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      GradleBaseSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      Mockito.reset(context)
+
+      ModuleAssertions.assertModules(projectStorage, moduleNames)
+      ModuleAssertions.assertModuleEntity(projectStorage, "module1") { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, listOf(contentRootPath))
+      }
+      ModuleAssertions.assertModuleEntity(projectStorage, "module2") { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, emptyList())
+      }
+    }
+  }
+
+  @Test
+  fun `test GradleJpsSyncExtension#removeDuplicatedContentRoots sharedSourceSetsEnabled`(): Unit = runBlocking {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("intellij.platform.shared.source.support").setValue(true, disposable)
+      val moduleNames = listOf("module1", "module2")
+      val contentRootPath = virtualFileUrl(projectPath.resolve("contentRoot"))
+
+
+      val phase = GradleSyncPhase.PROJECT_MODEL_PHASE // Any
+      val entitySource = GradleTestEntitySource(projectPath.toCanonicalPath(), phase)
+
+      val projectStorage = MutableEntityStorage.create()
+      for (moduleName in moduleNames) {
+        projectStorage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
+          contentRoots += ContentRootEntity(contentRootPath, emptyList(), NonPersistentEntitySource)
+        }
+      }
+
+      val syncStorage = MutableEntityStorage.create()
+      for (moduleName in moduleNames) {
+        syncStorage addEntity ModuleEntity(moduleName, emptyList(), entitySource) {
+          contentRoots += ContentRootEntity(contentRootPath, emptyList(), entitySource)
+        }
+      }
+
+      val context = mock<ProjectResolverContext> {
+        on { project } doReturn project
+        on { projectPath } doReturn projectPath.toCanonicalPath()
+      }
+      GradleJpsSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      GradleBaseSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      Mockito.reset(context)
+
+      ModuleAssertions.assertModules(projectStorage, moduleNames)
+      ModuleAssertions.assertModuleEntity(projectStorage, "module1") { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, listOf(contentRootPath))
+      }
+      ModuleAssertions.assertModuleEntity(projectStorage, "module2") { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, listOf(contentRootPath))
+      }
+    }
+  }
+
+  @Test
+  fun `test GradleJpsSyncExtension#removeDuplicatedContentRoots sharedSourceSetsEnabled duplicatesWithinSameModule`(): Unit = runBlocking {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("intellij.platform.shared.source.support").setValue(true, disposable)
+      val moduleName = "module"
+      val contentRootPath = virtualFileUrl(projectPath.resolve("contentRoot"))
+
+
+      val phase = GradleSyncPhase.PROJECT_MODEL_PHASE // Any
+      val entitySource = GradleTestEntitySource(projectPath.toCanonicalPath(), phase)
+
+      val projectStorage = MutableEntityStorage.create()
+
+      projectStorage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
+        contentRoots += ContentRootEntity(contentRootPath, emptyList(), NonPersistentEntitySource)
+      }
+
+
+      val syncStorage = MutableEntityStorage.create()
+      syncStorage addEntity ModuleEntity(moduleName, emptyList(), entitySource) {
+        contentRoots += ContentRootEntity(contentRootPath, emptyList(), entitySource)
+        contentRoots += ContentRootEntity(contentRootPath, emptyList(), entitySource)
+      }
+
+
+      val context = mock<ProjectResolverContext> {
+        on { project } doReturn project
+        on { projectPath } doReturn projectPath.toCanonicalPath()
+      }
+      GradleJpsSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      GradleBaseSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      Mockito.reset(context)
+
+      ModuleAssertions.assertModules(projectStorage, moduleName)
+      ModuleAssertions.assertModuleEntity(projectStorage, moduleName) { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, listOf(contentRootPath))
       }
     }
   }

@@ -92,14 +92,15 @@ class GradleJpsSyncExtension : GradleSyncExtension {
     projectStorage: EntityStorage,
     phase: GradleSyncPhase,
   ) {
-    if (isSharedSourceSupportEnabled(context.project)) {
-      return
-    }
+    // Duplicate source sets are allowed when shared source support is enabled, but the ones duplicated
+    // in a single module should still be removed
+    fun ContentRootEntity.key() = url to module.name.takeIf { isSharedSourceSupportEnabled(context.project) }
+
     val contentRootUrls = projectStorage.entitiesToSkip<ContentRootEntity>(context, phase)
-      .mapTo(HashSet()) { it.url }
+      .mapTo(HashSet()) { it.key() }
     val entitiesToRemove = ArrayList<WorkspaceEntity>()
     for (contentRootEntity in syncStorage.entitiesToReplace<ContentRootEntity>(context, phase)) {
-      if (!contentRootUrls.add(contentRootEntity.url)) {
+      if (!contentRootUrls.add(contentRootEntity.key())) {
         entitiesToRemove.add(contentRootEntity)
       }
     }
