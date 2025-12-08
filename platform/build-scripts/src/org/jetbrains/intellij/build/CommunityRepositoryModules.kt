@@ -87,28 +87,31 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
+      val serverDir = "intellij.maven.server"
+      val commonRt = "intellij.maven.rt"
+      val indexerDir = "intellij.maven.server.indexer"
       spec.withModule("intellij.idea.community.build.dependencies")
       spec.withModule("intellij.maven.jps")
-      spec.withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
-      spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
-      spec.withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
-      spec.withModule("intellij.maven.server.m40", "maven40-server.jar")
-      spec.withModule("intellij.maven.server.telemetry", "maven-server-telemetry.jar")
+      spec.withModule("intellij.maven.server.m3.common", "$serverDir/maven3-server-common.jar")
+      spec.withModule("intellij.maven.server.m3.impl", "$serverDir/maven3-server.jar")
+      spec.withModule("intellij.maven.server.m36.impl", "$serverDir/maven36-server.jar")
+      spec.withModule("intellij.maven.server.m40", "$serverDir/maven40-server.jar")
+      spec.withModule("intellij.maven.server.telemetry", "$serverDir/maven-server-telemetry.jar")
       spec.withModule("intellij.maven.errorProne.compiler")
-      spec.withModule("intellij.maven.server.indexer", "maven-server-indexer.jar")
+      spec.withModule("intellij.maven.server.indexer", "$indexerDir/maven-server-indexer.jar")
       spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+                             relativeOutputPath = "$indexerDir//lib")
       spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+                             relativeOutputPath = "$indexerDir//lib")
       spec.withModuleLibrary(libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+                             relativeOutputPath = "$indexerDir//lib")
       spec.withModuleLibrary(libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+                             relativeOutputPath = "$indexerDir//lib")
 
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
 
-      spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "maven-event-listener.jar")
+      spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "$commonRt/maven-event-listener.jar")
 
       spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
 
