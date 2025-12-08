@@ -33,7 +33,7 @@ public interface PsiReferenceEx extends PsiReference {
   @Nullable
   @Nls
   String getUnresolvedDescription();
-  
+
   @NotNull
   default List<@NotNull LocalQuickFix> getQuickFixes(TypeEvalContext context) {
     return Collections.emptyList();

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.inspections.RemoveListMemberFix
+import com.jetbrains.python.inspections.PyRemoveElementFix
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PsiReferenceEx
@@ -37,14 +37,14 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * Similar to [PyDunderSlotsReference], but resolves using [PyType.resolveMember]
  * to account for properties, descriptors, class members, etc.
  */
-class PyDunderMatchArgsReference(element: PyStringLiteralExpression) 
-  : PsiReferenceBase<PyStringLiteralExpression>(element, element.getStringValueTextRanges().firstOrNull()),
-    PsiReferenceEx {
-  
+class PyDunderMatchArgsReference(element: PyStringLiteralExpression) :
+  PsiReferenceBase<PyStringLiteralExpression>(element, element.getStringValueTextRanges().firstOrNull()),
+  PsiReferenceEx {
+
   override fun resolve(): PsiElement? {
     val referenceClass = myElement?.parentOfType<PyClass>() ?: return null
     val typeContext = TypeEvalContext.codeAnalysis(myElement.project, myElement.containingFile)
-    
+
     return referenceClass.getType(typeContext)
       ?.toInstance()
       ?.resolveMember(myElement.stringValue, null, AccessDirection.READ, PyResolveContext.defaultContext(typeContext))
@@ -55,12 +55,12 @@ class PyDunderMatchArgsReference(element: PyStringLiteralExpression)
   override fun getUnresolvedHighlightSeverity(context: TypeEvalContext?): HighlightSeverity = HighlightSeverity.WARNING
 
   override fun getUnresolvedDescription(): String? = null
-  
+
   override fun getQuickFixes(context: TypeEvalContext): List<LocalQuickFix> {
     val clazz = myElement?.parentOfType<PyClass>() ?: return emptyList()
     return listOf(
       AddFieldQuickFix(myElement.stringValue, PyNames.NONE, clazz.name, true),
-      LocalQuickFix.from(RemoveListMemberFix(myElement))!!
+      LocalQuickFix.from(PyRemoveElementFix(myElement))!!
     )
   }
 }

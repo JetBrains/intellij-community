@@ -100,7 +100,7 @@ class PyProtocolInspection : PyInspection() {
 
       val type = myTypeEvalContext.getType(base)
       if (type is PyClassType && type.isProtocol(myTypeEvalContext) && !type.isRuntimeCheckable(myTypeEvalContext)) {
-        registerProblem(base, 
+        registerProblem(base,
                         PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
                         GENERIC_ERROR)
       }

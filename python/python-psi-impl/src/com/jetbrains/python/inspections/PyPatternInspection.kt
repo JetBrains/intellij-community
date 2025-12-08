@@ -8,10 +8,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -38,10 +36,10 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     val pattern = element.getPattern()
     if (element.getTarget() == null) return
 
-    if (pattern is PyClassPattern && 
-        pattern.classNameReference.name in PyClassPattern.SPECIAL_BUILTINS && 
+    if (pattern is PyClassPattern &&
+        pattern.classNameReference.name in PyClassPattern.SPECIAL_BUILTINS &&
         pattern.argumentList.patterns.isEmpty()
-      ) {
+    ) {
       holder.problem(element, PyPsiBundle.message("INSP.patterns.pattern.can.be.simplified"))
         .highlight(ProblemHighlightType.WEAK_WARNING)
         .fix(SimplifyAsPatternFix(element))
@@ -49,31 +47,32 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     }
   }
 
-  
+
   override fun visitPyClassPattern(node: PyClassPattern) {
     val classType = myTypeEvalContext.getType(node.classNameReference) as? PyClassType ?: return
     val pyClass = classType.pyClass
     if (pyClass.name in PyClassPattern.SPECIAL_BUILTINS) return
-    
+
     val matchArgs = PyClassPatternImpl.getMatchArgs(classType, myTypeEvalContext) ?: run {
       node.argumentList.patterns.filterNot { it is PyKeywordPattern }.forEach { pattern ->
-        holder.problem(pattern, PyPsiBundle.message("INSP.patterns.class.does.not.support.pattern.matching.with.positional.arguments", pyClass.name))
+        holder.problem(pattern,
+                       PyPsiBundle.message("INSP.patterns.class.does.not.support.pattern.matching.with.positional.arguments", pyClass.name))
           .fix(AddMatchArgsFix(pyClass))
           .register()
       }
       return
     }
-    
+
     val (positionalPatterns, keywordPatterns) = node.argumentList.patterns.partition { it !is PyKeywordPattern }
-    
+
     for (pattern in positionalPatterns.drop(matchArgs.size)) {
       holder.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
-        .fix(RemoveListMemberFix(pattern))
+        .fix(PyRemoveElementFix(pattern))
         .register()
     }
-    
+
     if (positionalPatterns.isEmpty() || keywordPatterns.isEmpty()) return
-    
+
     // Map positional patterns to their corresponding attribute names
     val positionalAttributeNames = positionalPatterns.indices.map { index ->
       if (index < matchArgs.size) matchArgs[index] else null
@@ -84,8 +83,11 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       val keywordName = (keywordPattern as PyKeywordPattern).keyword
       val positionalIndex = positionalAttributeNames.indexOf(keywordName)
       if (positionalIndex >= 0) {
-        holder.problem(keywordPattern, PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position", keywordName, positionalIndex + 1))
-          .fix(RemoveListMemberFix(keywordPattern))
+        holder.problem(keywordPattern,
+                       PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position",
+                                           keywordName,
+                                           positionalIndex + 1))
+          .fix(PyRemoveElementFix(keywordPattern))
           .register()
       }
     }
@@ -93,20 +95,19 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
   override fun visitPyClass(node: PyClass) {
     val matchArgs = node
-      .findClassAttribute(PyNames.MATCH_ARGS, false, myTypeEvalContext)
-      ?.findAssignedValue()
-      ?.let { PyPsiUtils.flattenParens(it) } ?: return
-    
+                      .findClassAttribute(PyNames.MATCH_ARGS, false, myTypeEvalContext)
+                      ?.findAssignedValue()
+                      ?.let { PyPsiUtils.flattenParens(it) } ?: return
+
     val matchArgsType = myTypeEvalContext.getType(matchArgs) ?: return
     val strType = PyBuiltinCache.getInstance(matchArgs).strType ?: return
     val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType) ?: return
     if (PyTypeChecker.match(goodTuple, matchArgsType, myTypeEvalContext)) return
     // __match_args__ must be a tuple[str, ...]
     holder.problem(matchArgs, PyPsiBundle.message(
-      "INSP.type.checker.expected.type.got.type.instead", 
+      "INSP.type.checker.expected.type.got.type.instead",
       PythonDocumentationProvider.getTypeName(goodTuple, myTypeEvalContext),
-      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext))
-    ).register()
+      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext))).register()
   }
 }
 
@@ -116,61 +117,50 @@ private class SimplifyAsPatternFix(element: PyAsPattern) : PsiUpdateModCommandAc
   override fun invoke(context: ActionContext, element: PyAsPattern, updater: ModPsiUpdater) {
     val pattern = element.getPattern() as PyClassPattern
     val target = element.getTarget() ?: return
-    
+
     val generator = PyElementGenerator.getInstance(element.project)
     val newPattern = generator.createPatternFromText(
       LanguageLevel.forElement(element),
       "${pattern.classNameReference.text}(${target.name})"
     )
-    
+
     element.replace(newPattern)
   }
 }
 
-// Almost identical to PyRemoveDictKeyQuickFix
-class RemoveListMemberFix(element: PyElement) : PsiUpdateModCommandAction<PyElement>(element) {
-  override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.remove.list.member")
+class PyRemoveElementFix(element: PyElement) : PsiUpdateModCommandAction<PyElement>(element) {
+  override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.remove.element")
   override fun getPresentation(context: ActionContext, element: PyElement): Presentation? = when (element) {
     is PyPattern -> Presentation.of(PyPsiBundle.message("QFIX.remove.pattern"))
     else -> super.getPresentation(context, element)
   }
 
   override fun invoke(context: ActionContext, element: PyElement, updater: ModPsiUpdater) {
-    val nextSibling = PsiTreeUtil.skipWhitespacesForward(element)
-    val prevSibling = PsiTreeUtil.skipWhitespacesBackward(element)
     element.delete()
-    if (nextSibling != null && nextSibling.getNode().getElementType() == PyTokenTypes.COMMA) {
-      nextSibling.delete()
-      return
-    }
-    if (prevSibling != null && prevSibling.getNode().getElementType() == PyTokenTypes.COMMA) {
-      prevSibling.delete()
-    }
   }
 }
 
 
 class AddMatchArgsFix(element: PyClass) : PsiUpdateModCommandAction<PyClass>(element) {
-
   override fun getFamilyName(): String = PyPsiBundle.message("QFIX.NAME.add.match.args.to.class")
   override fun getPresentation(context: ActionContext, element: PyClass): Presentation {
     return Presentation.of(PyPsiBundle.message("QFIX.add.match.args.to.class", element.name))
   }
-  
+
   /**
    * Take positional arguments from `__init__`, check whether the class has an attribute with the same name,
    * and if so, add it to `__match_args__`.
    */
   override fun invoke(context: ActionContext, pyClass: PyClass, updater: ModPsiUpdater) {
     val typeEvalContext = TypeEvalContext.userInitiated(pyClass.project, pyClass.containingFile)
-    
+
     val initMethod = pyClass.findMethodByName(PyNames.INIT, false, typeEvalContext)
     val positionalArgs = initMethod?.parameterList?.parameters
-      ?.drop(1)
-      ?.mapNotNull { it.name }
-      ?.filter { pyClass.findInstanceAttribute(it, true) != null }
-      ?.toList() ?: emptyList()
-    
+                           ?.drop(1)
+                           ?.mapNotNull { it.name }
+                           ?.filter { pyClass.findInstanceAttribute(it, true) != null }
+                           ?.toList() ?: emptyList()
+
     val generator = PyElementGenerator.getInstance(pyClass.project)
     val matchArgsValue = positionalArgs.joinToString(
       prefix = "(",
@@ -186,5 +176,6 @@ class AddMatchArgsFix(element: PyClass) : PsiUpdateModCommandAction<PyClass>(ele
     val anchor = pyClass.statementList.statements.firstOrNull()
     val result = pyClass.statementList.addBefore(matchArgsAssignment, anchor) as PyAssignmentStatement
     updater.moveCaretTo(result.textRange.endOffset - 1)
+    PyPsiUtils.removeRedundantPass(pyClass.statementList)
   }
 }

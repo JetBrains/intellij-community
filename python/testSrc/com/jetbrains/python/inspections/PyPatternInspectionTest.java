@@ -102,7 +102,7 @@ def f(z):
     match z:
         case Z():
             pass
-        case Z(<warning descr=\"Too many positional patterns, expected 0\">1</warning>):
+        case Z(<warning descr="Too many positional patterns, expected 0">1</warning>):
             pass
     """);
   }
@@ -117,7 +117,7 @@ class Point:
 
 def f(p):
     match p:
-        case Point(0, 0, <warning descr=\"Attribute 'y' is already specified as positional pattern at position 2\">y=0</warning>):
+        case Point(0, 0, <warning descr="Attribute 'y' is already specified as positional pattern at position 2">y=0</warning>):
             pass
     """);
   }
@@ -194,7 +194,7 @@ class P:
 
 def f(p):
     match p:
-        case P(1, 2, <warning descr=\"Too many positional patterns, expected 2\">3</warning>, z=0):
+        case P(1, 2, <warning descr="Too many positional patterns, expected 2">3</warning>, z=0):
             pass
     """);
   }

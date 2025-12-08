@@ -9,7 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.inspections.RemoveListMemberFix;
+import com.jetbrains.python.inspections.PyRemoveElementFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,15 +116,17 @@ final class PyPatternAnnotatorVisitor extends PyElementVisitor {
       PyKeywordPattern keywordPattern = as(attrPattern, PyKeywordPattern.class);
       if (keywordPattern == null) {
         if (seenKeywordPattern) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, "Positional pattern must appear before keyword patterns")
-            .range(attrPattern).withFix(new RemoveListMemberFix(attrPattern)).create();
+          myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                 PyPsiBundle.message("ANN.patterns.positional.pattern.must.appear.before.keyword.pattern"))
+            .range(attrPattern).withFix(new PyRemoveElementFix(attrPattern)).create();
         }
         continue;
       }
       seenKeywordPattern = true;
       if (!usedAttrNames.add(keywordPattern.getKeyword())) {
-        myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.patterns.attribute.name.is.repeated", keywordPattern.getKeyword()))
-            .range(keywordPattern.getKeywordElement()).withFix(new RemoveListMemberFix(keywordPattern)).create();
+        myHolder.newAnnotation(HighlightSeverity.ERROR,
+                               PyPsiBundle.message("ANN.patterns.attribute.name.is.repeated", keywordPattern.getKeyword()))
+          .range(keywordPattern.getKeywordElement()).withFix(new PyRemoveElementFix(keywordPattern)).create();
       }
     }
   }

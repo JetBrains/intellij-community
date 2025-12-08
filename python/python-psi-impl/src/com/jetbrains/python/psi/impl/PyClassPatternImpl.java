@@ -139,7 +139,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   public static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {
     final PyClass cls = type.getPyClass();
     // TODO: change to getMemberType, when PyLiteralType can be created without PyExpression
-    
+
     List<String> matchArgs = cls.getOwnMatchArgs();
     if (matchArgs != null) return matchArgs;
 

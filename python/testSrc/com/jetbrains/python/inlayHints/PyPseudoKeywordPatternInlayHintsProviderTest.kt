@@ -20,7 +20,7 @@ def f(p: Point):
     match p:
         case Point(/*<# x= #>*/1, /*<# y= #>*/b):
             pass
-      """.trimIndent()
+      """
     )
   }
 
@@ -34,7 +34,7 @@ def f(p: Point):
     match p:
         case Point(/*<# x= #>*/1, y=2):  # second is keyword, no inlay expected there
             pass
-      """.trimIndent()
+      """
     )
   }
 
@@ -49,7 +49,7 @@ def f(p: Point):
     )
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor? {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
     return PyLightProjectDescriptor(LanguageLevel.getLatest())
   }
 }
