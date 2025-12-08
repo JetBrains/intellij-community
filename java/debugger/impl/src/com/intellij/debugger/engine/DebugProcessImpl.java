@@ -150,7 +150,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Map<Type, Object> myNodeRenderersMap = Collections.synchronizedMap(new HashMap<>());
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
-  protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
+  protected CompoundPositionManager myPositionManager = CompoundPositionManager.DISABLED;
   private volatile @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
@@ -1043,7 +1043,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (!(myConnection instanceof RemoteConnectionStub)) {
           VirtualMachineData vmData = new VirtualMachineData(myVirtualMachineProxy, myConnection, myDebuggerManagerThread);
           myVirtualMachineProxy = null;
-          myPositionManager = CompoundPositionManager.EMPTY;
+          myPositionManager = CompoundPositionManager.DISABLED;
           myReturnValueWatcher = null;
           myNodeRenderersMap.clear();
           myRenderers.clear();
