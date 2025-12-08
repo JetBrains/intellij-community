@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
@@ -425,69 +426,72 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
                                                                        StringUtil.countNewLines(builder.getText()) + 1);
 
     return () -> {
-      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+      WriteIntentReadAction.run(() -> {
 
-      LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
-      Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
+        myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+
+        LineCol oldCaretPosition = LineCol.fromOffset(myDocument, myEditor.getCaretModel().getPrimaryCaret().getOffset());
+        Pair<int[], Side> oldCaretLineTwoside = transferLineFromOneside(oldCaretPosition.line);
 
 
-      clearDiffPresentation();
+        clearDiffPresentation();
 
 
-      if (isContentsEqual &&
-          !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
-      }
-
-      IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
-      IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
-                                                              convertor1.createConvertor());
-      IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
-                                                              convertor2.createConvertor());
-      myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
-                                                  new DiffLineNumberConverter(foldingLinePredicate, merged2));
-
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myDuringOnesideDocumentModification = true;
-        try {
-          myDocument.setText(builder.getText());
+        if (isContentsEqual &&
+            !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
+          myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
         }
-        finally {
-          myDuringOnesideDocumentModification = false;
+
+        IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
+        IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
+                                                                convertor1.createConvertor());
+        IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
+                                                                convertor2.createConvertor());
+        myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
+                                                    new DiffLineNumberConverter(foldingLinePredicate, merged2));
+
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          myDuringOnesideDocumentModification = true;
+          try {
+            myDocument.setText(builder.getText());
+          }
+          finally {
+            myDuringOnesideDocumentModification = false;
+          }
+        });
+
+        DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
+
+        List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
+        if (!myEditor.isViewer()) {
+          for (UnifiedDiffChange change : builder.getChanges()) {
+            LineRange range = myMasterSide.select(change.getInsertedRange(), change.getDeletedRange());
+            if (range.isEmpty()) continue;
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
+          }
+          int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
+          guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
         }
+
+        myModel.setChanges(builder.getChanges(), isContentsEqual, guarderRangeBlocks, convertor1, convertor2, builder.getRanges());
+
+        int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
+                                                 oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
+        myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
+
+        myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
+
+        HighlightersData.apply(myProject, myEditor, highlightersData);
+        myMarkupUpdater.resumeUpdate();
+
+        myInitialScrollHelper.onRediff();
+
+        myStatusPanel.update();
+        myPanel.setGoodContent();
+
+        myEditor.getGutterComponentEx().revalidateMarkup();
       });
-
-      DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
-
-      List<RangeMarker> guarderRangeBlocks = new ArrayList<>();
-      if (!myEditor.isViewer()) {
-        for (UnifiedDiffChange change : builder.getChanges()) {
-          LineRange range = myMasterSide.select(change.getInsertedRange(), change.getDeletedRange());
-          if (range.isEmpty()) continue;
-          TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
-          guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
-        }
-        int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
-        guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
-      }
-
-      myModel.setChanges(builder.getChanges(), isContentsEqual, guarderRangeBlocks, convertor1, convertor2, builder.getRanges());
-
-      int newCaretLine = transferLineToOneside(oldCaretLineTwoside.second,
-                                               oldCaretLineTwoside.second.select(oldCaretLineTwoside.first));
-      myEditor.getCaretModel().moveToOffset(LineCol.toOffset(myDocument, newCaretLine, oldCaretPosition.column));
-
-      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
-
-      HighlightersData.apply(myProject, myEditor, highlightersData);
-      myMarkupUpdater.resumeUpdate();
-
-      myInitialScrollHelper.onRediff();
-
-      myStatusPanel.update();
-      myPanel.setGoodContent();
-
-      myEditor.getGutterComponentEx().revalidateMarkup();
     };
   }
 
