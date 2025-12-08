@@ -107,6 +107,7 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.
       eelApi.exec.serveExternalCli(childScope, scriptBody, object : EelExecApi.ExternalCliOptions {
         override val filePrefix = scriptNamePrefix
         override val envVariablesToCapture = requiredEnvVariables
+        override val lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Reusable(coroutineScope)
       }).asNioPath()
     }
   }

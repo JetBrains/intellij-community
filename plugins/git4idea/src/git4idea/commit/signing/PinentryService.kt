@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.ExternalCliOptions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.serveExternalCli
@@ -67,6 +68,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
         val options = object : ExternalCliOptions {
           override val filePrefix = "pinentry-ide"
           override val envVariablesToCapture: List<String> = listOf(PINENTRY_USER_DATA_ENV)
+          override val lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Reusable(cs)
         }
         val script = eelTarget.exec.serveExternalCli(childScope, PinentryApp(), options)
         PinentryData(publicKeyStr, address, script)
