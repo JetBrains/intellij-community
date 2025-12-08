@@ -60,6 +60,10 @@ public final class JavaTemplateUtil {
   }
 
   public static void setPackageNameAttribute(@NotNull Properties properties, @NotNull PsiDirectory directory) {
-    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, getPackageName(directory));
+    setPackageNameAttribute((Map<Object, Object>)properties, directory);
+  }
+
+  public static void setPackageNameAttribute(@NotNull Map<? super String, Object> properties, @NotNull PsiDirectory directory) {
+    properties.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, getPackageName(directory));
   }
 }
