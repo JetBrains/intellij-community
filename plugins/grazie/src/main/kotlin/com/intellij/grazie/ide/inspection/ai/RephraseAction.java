@@ -1,4 +1,4 @@
-package com.intellij.grazie.ide.inspection.rephrase;
+package com.intellij.grazie.ide.inspection.ai;
 
 import ai.grazie.nlp.langs.Language;
 import ai.grazie.nlp.tokenizer.word.StandardWordTokenizer;
