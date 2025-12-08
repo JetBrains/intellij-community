@@ -166,7 +166,7 @@ class GrazieMassApplyDialog : DialogWrapper {
         typo,
         ProblemType.Typo,
         listOf(addRangeHighlighter(editor, range, BOLD_TEXT_ATTRIBUTES)),
-        changes + IgnoreChange(typo.word, changes[0])
+        changes + IgnoreChange(typo.word, changes.firstOrNull())
       )
     }
 
@@ -235,7 +235,7 @@ class GrazieMassApplyDialog : DialogWrapper {
         DocumentChange(suggestion.presentableText, replacements, editor, project)
       }
       val type = if (problem.isStyleLike) ProblemType.Style else ProblemType.Grammar
-      Highlighting(problem, type, highlightRanges, changes + IgnoreChange(problem, changes[0]))
+      Highlighting(problem, type, highlightRanges, changes + IgnoreChange(problem, changes.firstOrNull()))
     }
 
   private fun Row.labeledIcon(icon: Icon, problemsExtractor: (HighlightedProblems) -> Int) {
@@ -302,27 +302,27 @@ private class CompositeChange(private val oldChange: Change, private val newChan
 }
 
 private class IgnoreChange : Change {
-  private val change: Change
+  private val change: Change?
   private val presentableText: String
 
-  constructor(problem: TextProblem, change: Change) {
+  constructor(problem: TextProblem, change: Change?) {
     val suppressionPattern = CheckerRunner(problem.text).defaultSuppressionPattern(problem, null)
     val errorText = StringUtil.shortenTextWithEllipsis(suppressionPattern.errorText, 50, 20)
     this.presentableText = GrazieBundle.message("grazie.grammar.quickfix.ignore.text.no.context", errorText)
     this.change = change
   }
 
-  constructor(typo: String, change: Change) {
+  constructor(typo: String, change: Change?) {
     this.presentableText = GrazieBundle.message("grazie.grammar.quickfix.ignore.text.no.context", typo)
     this.change = change
   }
 
   override fun apply() {
-    change.revert()
+    change?.revert()
   }
 
   override fun revert() {
-    change.apply()
+    change?.apply()
   }
 
   override fun toString(): String = presentableText
