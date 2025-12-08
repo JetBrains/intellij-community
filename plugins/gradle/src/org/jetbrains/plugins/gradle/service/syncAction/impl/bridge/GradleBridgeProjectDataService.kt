@@ -9,8 +9,13 @@ import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjec
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.util.Key as UserDataKey
+
+internal val SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES =
+  UserDataKey.create<ImmutableEntityStorage>("SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES")
 
 @ApiStatus.Internal
 class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeData, Unit>() {
@@ -26,6 +31,10 @@ class GradleBridgeProjectDataService : AbstractProjectDataService<GradleBridgeDa
     if (!Registry.`is`("gradle.phased.sync.bridge.disabled")) {
       removeModulesFromModelProvider(modelsProvider)
       removeEntitiesFromWorkspaceModel(modelsProvider)
+    } else {
+      // If the entities are not cleaned up, store a snapshot of the storage to be used for later post processing in.
+      // See [Int]
+      modelsProvider.putUserData(SYNC_STORAGE_SNAPSHOT_BEFORE_DATA_SERVICES, modelsProvider.actualStorageBuilder.toSnapshot())
     }
   }
 
