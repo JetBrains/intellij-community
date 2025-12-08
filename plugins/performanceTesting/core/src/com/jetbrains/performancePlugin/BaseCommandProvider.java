@@ -30,6 +30,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenFileWithTerminateCommand.PREFIX, OpenFileWithTerminateCommand::new),
       Map.entry(WaitForSmartCommand.PREFIX, WaitForSmartCommand::new),
       Map.entry(WaitForInitialRefreshCommand.PREFIX, WaitForInitialRefreshCommand::new),
+      Map.entry(RefreshFilesInVfsCommand.PREFIX, RefreshFilesInVfsCommand::new),
       Map.entry(SingleInspectionCommand.PREFIX, SingleInspectionCommand::new),
       Map.entry(StartPowerSave.PREFIX, StartPowerSave::new),
       Map.entry(StopPowerSave.PREFIX, StopPowerSave::new),
