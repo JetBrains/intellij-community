@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
@@ -27,9 +28,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,8 +69,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(dataContext);
-    XValue selectedValue = node == null ? null : node.getValueContainer();
+    XValue selectedValue = XDebuggerTreeActionBase.getSelectedValue(dataContext);
 
     getSelectedExpressionAsync(project, evaluator, editor, psiFile, selectedValue)
       .onSuccess(expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
