@@ -5,7 +5,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -1885,68 +1884,6 @@ public final class PyTypeChecker {
   }
 
   @ApiStatus.Internal
-  public static @Nullable PyType getExpectedType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    var parent = expression.getParent();
-    // Handle keyword arguments by looking at the keyword argument node instead of the expression
-    PsiElement callArgument = parent instanceof PyKeywordArgument kwArg ? kwArg : expression;
-    if (callArgument.getParent() instanceof PyArgumentList argumentList) {
-      var mappingResults = argumentList.getCallExpression().multiMapArguments(PyResolveContext.defaultContext(context));
-      if (mappingResults.isEmpty()) return null;
-      var argumentMapping = mappingResults.getFirst();
-      var mapped = argumentMapping.getMappedParameters().get(callArgument);
-      if (mapped != null) {
-        var expected = mapped.getType(context);
-        // Extract element type from *args: tuple[T, ...]
-        if (mapped.isPositionalContainer() && expected instanceof PyTupleType tupleType && tupleType.isHomogeneous()) {
-          expected = tupleType.getElementTypes().get(0);
-        }
-        // Extract value type from **kwargs: dict[str, T]
-        else if (mapped.isKeywordContainer() && expected instanceof PyCollectionType dictType &&
-                 PyNames.DICT.equals(dictType.getPyClass().getName())) {
-          expected = ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
-        }
-        if (hasGenerics(expected, context)) {
-          PyExpression receiver = argumentList.getParent() instanceof PyCallExpression callExpression
-                                  ? callExpression.getReceiver(null)
-                                  : null;
-          final var substitutions = unifyGenericCall(receiver, argumentMapping.getMappedParameters(), context);
-          if (substitutions != null) {
-            final var substitutionsWithUnresolvedReturnGenerics =
-              getSubstitutionsWithUnresolvedReturnGenerics(((PyCallable)expression).getParameters(context), expected, substitutions,
-                                                           context);
-            return substitute(expected, substitutionsWithUnresolvedReturnGenerics, context);
-          }
-        }
-        return expected;
-      }
-    }
-    // Handle unpacking in assignments: skip PyParenthesizedExpression and PyTupleExpression
-    else if (PsiTreeUtil.skipParentsOfType(expression, PyParenthesizedExpression.class,
-                                           PyTupleExpression.class) instanceof PyAssignmentStatement assignment) {
-      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-      Pair<PyExpression, PyExpression> matchingPair = ContainerUtil.find(mapping, pair -> pair.getSecond() == expression);
-      if (matchingPair != null && matchingPair.getFirst() instanceof PyTargetExpression target) {
-        // resolve declared type
-        if (target.getAnnotationValue() != null) {
-          return context.getType(target);
-        }
-
-        var result = new PyTypingTypeProvider().getReferenceType(target, context, expression);
-        if (result != null) {
-          return result.get();
-        }
-      }
-    }
-    else if (parent instanceof PyReturnStatement) {
-      var scopeOwner = ScopeUtil.getScopeOwner(expression);
-      if (scopeOwner instanceof PyFunction function && function.getAnnotationValue() != null) {
-        return context.getReturnType(function);
-      }
-    }
-    return null;
-  }
-
-  @ApiStatus.Internal
   public static class Generics {
     private final @NotNull Set<PyTypeVarType> typeVars = new LinkedHashSet<>();
 
@@ -2068,7 +2005,7 @@ public final class PyTypeChecker {
 
     MatchContext(@NotNull TypeEvalContext context, @NotNull GenericSubstitutions substitutions, boolean reversedSubstitutions) {
       this.context = context;
-      this.mySubstitutions = substitutions;
+      mySubstitutions = substitutions;
       this.reversedSubstitutions = reversedSubstitutions;
     }
 
