@@ -11,12 +11,12 @@ import com.intellij.pom.java.LanguageLevel
 abstract class JUnit3SuperTearDownInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: JUnit3SuperTearDownInspection = JUnit3SuperTearDownInspection()
 
-  protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
+  protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel = LanguageLevel.HIGHEST) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       model.addJUnit3Library()
     }
   }
 
-  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor()
 }

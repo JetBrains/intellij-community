@@ -3,10 +3,30 @@ package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnit3SuperTearDownInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase(), ExpectedPluginModeProvider {
+
+  protected open class KotlinJUnitProjectDescriptor : JUnitProjectDescriptor() {
+    override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
+      super.configureModule(module, model, contentEntry)
+      ConfigLibraryUtil.addLibrary(model, "KotlinJavaRuntime") {
+        addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+        addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
+      }
+    }
+  }
+
+  override fun getProjectDescriptor(): JUnitProjectDescriptor = KotlinJUnitProjectDescriptor()
+
   override fun setUp() {
     setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
   }

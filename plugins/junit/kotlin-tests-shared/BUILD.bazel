@@ -29,6 +29,8 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/junit/java-tests:java-tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
   exports = [
     "//plugins/kotlin/plugin/common",

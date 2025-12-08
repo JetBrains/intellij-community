@@ -2,10 +2,18 @@
 package com.intellij.devkit.workspaceModel.inspections
 
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase() {
+abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
   override fun getBasePath() = TESTDATA_PATH
 
   private fun getBeforeAndAfterFileNames(): Pair<String, String> {
@@ -20,7 +28,8 @@ abstract class WorkspaceInspectionBaseTest : LightJavaCodeInsightFixtureTestCase
   }
 
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+
     addKotlinFile("EntitySource.kt", """
       package com.intellij.platform.workspace.storage
       interface EntitySource
