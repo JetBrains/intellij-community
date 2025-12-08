@@ -140,7 +140,11 @@ open class EditorComposite internal constructor(
 
   @JvmField
   @Internal
-  val initDeferred: CompletableDeferred<Unit> = CompletableDeferred<Unit>()
+  val shownDeferred: CompletableDeferred<Unit> = CompletableDeferred()
+
+  @JvmField
+  @Internal
+  val initDeferred: CompletableDeferred<Unit> = CompletableDeferred()
 
   init {
     EDT.assertIsEdt()
@@ -260,6 +264,7 @@ open class EditorComposite internal constructor(
           selectedFileEditorProvider = selectedFileEditor,
         )
         afterFileOpen(this, model)
+        shownDeferred.complete(Unit)
 
         writeIntentReadAction {
           goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
