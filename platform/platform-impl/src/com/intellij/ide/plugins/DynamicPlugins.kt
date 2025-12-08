@@ -1251,9 +1251,14 @@ private fun optionalDependenciesOnPlugin(
   classLoaderConfigurator: ClassLoaderConfigurator,
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
-  val dependentDescriptors = ArrayList<IdeaPluginDescriptorImpl>()
+  val dependentDescriptors = ArrayList<ContentModuleDescriptor>()
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { _, module ->
-    dependentDescriptors.add(module)
+    // 'depends' descriptors are not dynamically loadable
+    if (module is ContentModuleDescriptor) {
+      dependentDescriptors.add(module)
+    } else if (module is DependsSubDescriptor) {
+      module.isMarkedForLoading = false
+    }
     true
   }
   if (dependentDescriptors.isEmpty()) {
