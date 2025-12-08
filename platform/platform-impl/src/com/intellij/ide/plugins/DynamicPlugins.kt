@@ -119,7 +119,7 @@ object DynamicPlugins {
                                     context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
     val reason = checkCanUnloadWithoutRestart(module = descriptor, parentModule = baseDescriptor, context = context)
     if (reason != null) {
-      LOG.info(reason)
+      LOG.warn(reason)
     }
     return reason == null
   }
@@ -292,10 +292,10 @@ object DynamicPlugins {
                                            checkImplementationDetailDependencies: Boolean = true): String? {
     if (parentModule == null) {
       if (module.isRequireRestart) {
-        return "Plugin ${module.pluginId} is explicitly marked as requiring restart"
+        return "Plugin '${module.pluginId}' is explicitly marked as requiring restart"
       }
       if (module.productCode != null && !module.isBundled && !PluginManagerCore.isDevelopedByJetBrains(module)) {
-        return "Plugin ${module.pluginId} is a paid plugin"
+        return "Plugin '${module.pluginId}' is a paid plugin"
       }
       if (InstalledPluginsState.getInstance().isRestartRequired) {
         return InstalledPluginsState.RESTART_REQUIRED_MESSAGE
@@ -305,10 +305,10 @@ object DynamicPlugins {
     val pluginSet = PluginManagerCore.getPluginSet()
 
     if (classloadersFromUnloadedPlugins[module.pluginId]?.isEmpty() == false) {
-      return "Not allowing load/unload of ${module.pluginId} because of incomplete previous unload operation for that plugin"
+      return "Not allowing load/unload of '${module.pluginId}' because of incomplete previous unload operation for that plugin"
     }
     findMissingRequiredDependency(module, context, pluginSet)?.let { pluginDependency ->
-      return "Required dependency ${pluginDependency} of plugin ${module.pluginId} is not currently loaded"
+      return "Required dependency '${pluginDependency}' of plugin '${module.pluginId}' is not currently loaded"
     }
 
     val app = ApplicationManager.getApplication()
@@ -331,7 +331,7 @@ object DynamicPlugins {
       if (pluginSet.findEnabledPlugin(module.pluginId) != null && module === parentModule && !module.useIdeaClassLoader) {
         val pluginClassLoader = module.pluginClassLoader
         if (pluginClassLoader != null && pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
-          return "Plugin ${module.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
+          return "Plugin '${module.pluginId}' is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
                  "For example, the IDE is started from the sources with the plugin."
         }
       }
@@ -387,7 +387,7 @@ object DynamicPlugins {
     processOptionalDependenciesOnPlugin(module, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
       if ((subDescriptor.pluginClassLoader === module.pluginClassLoader)
           || mainDescriptor.pluginId.idString == "org.jetbrains.kotlin" || mainDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
-        dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${module.pluginId}" +
+        dependencyMessage = "Plugin '${subDescriptor.pluginId}' that optionally depends on '${module.pluginId}'" +
                             " does not have a separate classloader for the dependency"
         return@processOptionalDependenciesOnPlugin false
       }
@@ -397,7 +397,7 @@ object DynamicPlugins {
         true
       }
       else {
-        dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${module.pluginId} requires restart: $dependencyMessage"
+        dependencyMessage = "Plugin '${subDescriptor.pluginId}' that optionally depends on '${module.pluginId}' requires restart: $dependencyMessage"
         false
       }
     }
@@ -495,10 +495,10 @@ object DynamicPlugins {
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
     if (!containerDescriptor.components.isEmpty()) {
-      return "Plugin $pluginId is not unload-safe because it declares components"
+      return "Plugin '$pluginId' is not unload-safe because it declares components"
     }
     if (containerDescriptor.services.any { it.overrides }) {
-      return "Plugin $pluginId is not unload-safe because it overrides services"
+      return "Plugin '$pluginId' is not unload-safe because it overrides services"
     }
     return null
   }
@@ -1424,9 +1424,13 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
   epLoop@ for (epName in extensions.keys) {
     seenPlugins.clear()
 
-    fun getNonDynamicUnloadError(optionalDependencyPluginId: PluginId?): String = optionalDependencyPluginId?.let {
-      "Plugin ${baseDescriptor?.pluginId} is not unload-safe because of use of non-dynamic EP $epName in plugin $it that optionally depends on it"
-    } ?: "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
+    fun getNonDynamicUnloadError(optionalDependencyPluginId: PluginId?): String {
+      return if (optionalDependencyPluginId != null)
+        "Plugin '${baseDescriptor?.pluginId}' is not unload-safe because of use of non-dynamic EP '$epName' " +
+        "in plugin '$optionalDependencyPluginId' that optionally depends on it"
+      else
+        "Plugin '${descriptor.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'"
+    }
 
     val result = findLoadedPluginExtensionPointRecursive(
       pluginDescriptor = baseDescriptor ?: descriptor,
@@ -1590,7 +1594,7 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
     val elementName = descriptor.name
     if (elementName != ActionElementName.action &&
         !(elementName == ActionElementName.group && canUnloadActionGroup(element)) && elementName != ActionElementName.reference) {
-      return "Plugin $module is not unload-safe because of action element $elementName"
+      return "Plugin '$module' is not unload-safe because of action element $elementName"
     }
   }
   return null

@@ -60,7 +60,7 @@ fun loadPluginWithText(
   )
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
-    DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
+    assert(DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)) { "plugin is expected to load $descriptor" }
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
   catch (e: Exception) {
@@ -81,7 +81,8 @@ fun loadDescriptorInTest(
   pluginSpec: PluginSpec,
   pluginsDir: Path
 ): PluginMainDescriptor {
-  val path = pluginSpec.buildDistribution(pluginsDir)
+  val path = pluginsDir.resolve(pluginSpec.id!!)
+  pluginSpec.buildDir(path)
   return loadDescriptorInTest(fileOrDir = path)
 }
 
