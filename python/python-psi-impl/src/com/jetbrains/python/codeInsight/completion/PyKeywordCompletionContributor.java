@@ -399,6 +399,14 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
     result.addElement(TailTypeDecorator.withTail(lookupElement, tail));
   }
 
+  private static final InsertHandler<PythonLookupElement> TRAILING_SPACE_INSERT_HANDLER =
+    new InsertHandler<>() {
+      @Override
+      public void handleInsert(@NotNull InsertionContext context, @NotNull PythonLookupElement item) {
+        TailTypes.spaceType().processTail(context.getEditor(), context.getTailOffset());
+      }
+    };
+
   private void addPreColonStatements() {
     PsiElementPattern.Capture<PsiElement> startOfLine = psiElement()
       .withLanguage(PythonLanguage.getInstance())
@@ -685,6 +693,31 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
   }
 
   private void addAsync() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY35)
+             .and(IN_BEGIN_STMT)
+             .andNot(IN_COMMENT)
+             .andNot(IN_IMPORT_STMT)
+             .andNot(IN_PARAM_LIST)
+             .andNot(AFTER_QUALIFIER)
+             .andNot(IN_STRING_LITERAL)
+             .andNot(TARGET_AFTER_QUALIFIER)
+             .andNot(IN_PATTERN),
+           new CompletionProvider<>() {
+             @Override
+             protected void addCompletions(
+               @NotNull CompletionParameters parameters,
+               @NotNull ProcessingContext context,
+               @NotNull CompletionResultSet result
+             ) {
+               putKeyword(PyNames.ASYNC + " " + PyNames.DEF, TRAILING_SPACE_INSERT_HANDLER, TailTypes.noneType(), result);
+               putKeyword(PyNames.ASYNC + " " + PyNames.FOR, TRAILING_SPACE_INSERT_HANDLER, TailTypes.noneType(), result);
+               putKeyword(PyNames.ASYNC + " " + PyNames.WITH, TRAILING_SPACE_INSERT_HANDLER, TailTypes.noneType(), result);
+             }
+           });
+
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())

@@ -183,7 +183,9 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    doTest();
+    List<String> suggested = doTestByText("asy<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "async", "async def", "async with", "async for");
   }
 
   public void testAwait() {
