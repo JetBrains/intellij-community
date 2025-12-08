@@ -1482,6 +1482,7 @@ private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.intellij.ide.RecentProjectsManagerBase",
   "org.jetbrains.android.AndroidPlugin",
   "com.intellij.remoteDev.tests.impl.DistributedTestHost",
+  "com.intellij.remoteDev.tests.impl.LambdaTestHost", // AT-3387
   "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
   // use lazy listener
   "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
