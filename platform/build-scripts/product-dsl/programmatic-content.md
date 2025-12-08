@@ -767,7 +767,8 @@ Before committing changes:
 
 ## See Also
 
-- [Module Sets Documentation](module-sets.md)
+- [Module Sets Documentation](module-sets.md) - How module sets work and composition
+- [Validation Documentation](validation.md) - Dependency validation and troubleshooting
 - `ProductModulesContentSpec` class documentation
 - `ModuleSet` and `ContentModule` classes
 - Example: `GatewayProperties.getProductContentModules()`

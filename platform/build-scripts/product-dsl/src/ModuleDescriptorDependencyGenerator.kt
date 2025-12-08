@@ -9,6 +9,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.productLayout.analysis.MissingDependenciesError
+import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
+import org.jetbrains.intellij.build.productLayout.analysis.formatProductDependencyErrorsFooter
+import org.jetbrains.intellij.build.productLayout.analysis.formatProductDependencyErrorsHeader
+import org.jetbrains.intellij.build.productLayout.analysis.formatValidationErrors
 import org.jetbrains.intellij.build.productLayout.analysis.validateProductModuleSets
 import org.jetbrains.intellij.build.productLayout.analysis.validateSelfContainedModuleSets
 import java.nio.file.Files
@@ -45,10 +50,9 @@ internal suspend fun generateModuleDescriptorDependencies(
   coreModuleSets: List<ModuleSet> = emptyList(),
   moduleOutputProvider: ModuleOutputProvider,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>> = emptyList(),
-  embeddedModulesDeferred: Deferred<Set<String>>? = null,
+  pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
-  val embeddedModules = embeddedModulesDeferred?.await() ?: emptySet()
   val modulesToProcess = collectModulesToProcess(allModuleSets)
   if (modulesToProcess.isEmpty()) {
     return@coroutineScope DependencyGenerationResult(emptyList())
@@ -56,18 +60,33 @@ internal suspend fun generateModuleDescriptorDependencies(
 
   val cache = ModuleDescriptorCache(moduleOutputProvider)
 
+  // Collect all validation errors
+  val errors = mutableListOf<ValidationError>()
+
   // Validate self-contained module sets in isolation
-  // Module sets marked with selfContained=true must be resolvable without other sets
-  validateSelfContainedModuleSets(allModuleSets, cache)
+  errors.addAll(validateSelfContainedModuleSets(allModuleSets, cache))
 
   // Tier 2: Validate product-level dependencies
-  // This ensures all products can load without missing dependency errors
-  validateProductModuleSets(
+  errors.addAll(validateProductModuleSets(
     allModuleSets = allModuleSets,
     productSpecs = productSpecs,
     descriptorCache = cache,
-    precomputedEmbeddedModules = embeddedModules,
-  )
+    pluginContentJobs = pluginContentJobs,
+  ))
+
+  // Report all errors at once
+  if (errors.isNotEmpty()) {
+    val hasMissingDependencies = errors.any { it is MissingDependenciesError }
+    error(buildString {
+      if (hasMissingDependencies) {
+        formatProductDependencyErrorsHeader(this)
+      }
+      append(formatValidationErrors(errors))
+      if (hasMissingDependencies) {
+        formatProductDependencyErrorsFooter(this)
+      }
+    })
+  }
 
   // Write XML files in parallel
   val results = modulesToProcess.map { moduleName ->

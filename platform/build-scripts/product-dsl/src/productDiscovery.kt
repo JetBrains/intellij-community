@@ -4,12 +4,16 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
@@ -33,7 +37,7 @@ data class ProductConfigurationRegistry(@JvmField val products: Map<String, Prod
 data class ProductConfiguration(
   @JvmField val modules: List<String>,
   @JvmField @SerialName("class") val className: String,
-  @JvmField val pluginXmlPath: String? = null
+  @JvmField val pluginXmlPath: String? = null,
 )
 
 /**
@@ -76,7 +80,7 @@ fun findProductPropertiesSourceFile(
   buildModules: List<String>,
   productPropertiesClass: Class<*>,
   moduleOutputProvider: ModuleOutputProvider,
-  projectRoot: Path
+  projectRoot: Path,
 ): String {
   val className = productPropertiesClass.name
 
@@ -103,17 +107,6 @@ fun findProductPropertiesSourceFile(
   }
 
   throw IllegalStateException("Cannot find source file for $productPropertiesClass (searched for $relativePath in modules: $buildModules)")
-}
-
-/**
- * Extracts product validation data from discovered products.
- * Returns list of (productName, ProductModulesContentSpec) pairs for validation.
- *
- * @param discoveredProducts List of discovered products
- * @return List of product name and spec pairs for validation
- */
-fun extractProductsForValidation(discoveredProducts: List<DiscoveredProduct>): List<Pair<String, ProductModulesContentSpec?>> {
-  return discoveredProducts.map { it.name to it.spec }
 }
 
 /**
@@ -166,13 +159,13 @@ internal suspend fun generateAllProductXmlFiles(
         val spec = discovered.spec ?: return@async null
 
         val pluginXmlPath = projectRoot.resolve(pluginXmlRelativePath)
-        
+
         // Extract ProductProperties class name (works with both ProductProperties and null)
         val productPropertiesClass = when (val props = discovered.properties) {
           null -> "test-product"
           else -> props.javaClass.name
         }
-        
+
         generateProductXml(
           pluginXmlPath = pluginXmlPath,
           spec = spec,
@@ -231,7 +224,7 @@ private fun aggregateAndCleanupOrphanedFiles(moduleSetResults: List<ModuleSetGen
       aggregatedTrackingMap.computeIfAbsent(dir) { mutableSetOf() }.addAll(files)
     }
   }
-  
+
   val deletedFiles = cleanupOrphanedModuleSetFiles(aggregatedTrackingMap)
   if (deletedFiles.isNotEmpty()) {
     println("\nDeleted ${deletedFiles.size} orphaned files")
@@ -257,7 +250,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
 
   // Discover all module sets and validate products
   val allModuleSets = discoverAllModuleSets(config.moduleSetSources)
-  val products = extractProductsForValidation(config.discoveredProducts)
+  val products = config.discoveredProducts.map { it.name to it.spec }
   validateNoRedundantModuleSets(allModuleSets = allModuleSets, productSpecs = products)
 
   // Execute all generation operations in parallel
@@ -280,6 +273,16 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       }
     }
 
+    // Collect all bundled plugins and launch content extraction jobs ONCE
+    // multiple consumers can await these Deferred values (validation + plugin dep gen)
+    val allBundledPlugins = (config.discoveredProducts.asSequence().mapNotNull { it.spec?.bundledPlugins }.flatten() + config.additionalPlugins)
+      .distinct()
+      .toList()
+
+    val pluginContentJobs = allBundledPlugins.associateWith { pluginName ->
+      async { extractPluginContent(pluginName, config.moduleOutputProvider) }
+    }
+
     // TIER 2: Parallel dependency and product generation (can run concurrently with TIER 1)
     val dependencyJob = async {
       val moduleSetsByLabel = config.moduleSetSources.mapValues { (_, source) ->
@@ -293,21 +296,12 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         coreModuleSets = moduleSetsByLabel.get("core") ?: emptyList(),
         moduleOutputProvider = config.moduleOutputProvider,
         productSpecs = products,
-        embeddedModulesDeferred = embeddedModulesDeferred,
+        pluginContentJobs = pluginContentJobs,
       )
     }
 
     // TIER 3: Plugin dependency generation for bundled plugins
     val pluginDependencyJob = async {
-      val allBundledPlugins = (
-        config.discoveredProducts
-          .asSequence()
-          .mapNotNull { it.spec?.bundledPlugins }
-          .flatten() + config.additionalPlugins
-                              )
-        .distinct()
-        .toList()
-
       if (allBundledPlugins.isEmpty()) {
         null
       }
@@ -322,12 +316,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
             false
           }
         }
-        generatePluginDependencies(
-          plugins = allBundledPlugins,
-          moduleOutputProvider = config.moduleOutputProvider,
-          descriptorCache = cache,
-          dependencyFilter = dependencyFilter,
-        )
+        generatePluginDependencies(plugins = allBundledPlugins, pluginContentJobs = pluginContentJobs, descriptorCache = cache, dependencyFilter = dependencyFilter)
       }
     }
 
@@ -357,6 +346,38 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
     productResult = productResult,
     projectRoot = config.projectRoot,
     durationMs = System.currentTimeMillis() - startTime,
+  )
+}
+
+/**
+ * Result of extracting plugin content from plugin.xml.
+ * Contains everything needed for both validation and dependency generation.
+ */
+data class PluginContentInfo(
+  @JvmField val pluginXmlPath: Path,
+  @JvmField val pluginXmlContent: String,
+  @JvmField val contentModules: Set<String>,
+  /** Lazy JPS production dependencies - only called by plugin dep gen, not validation */
+  @JvmField val jpsDependencies: () -> List<String>,
+)
+
+/**
+ * Extracts content modules from a plugin's plugin.xml.
+ * Returns null if plugin.xml not found or has module references with '/'.
+ */
+private suspend fun extractPluginContent(
+  pluginName: String,
+  moduleOutputProvider: ModuleOutputProvider,
+): PluginContentInfo? {
+  val jpsModule = moduleOutputProvider.findModule(pluginName) ?: return null
+  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
+  val content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
+  val contentModules = extractContentModulesFromText(content) ?: return null
+  return PluginContentInfo(
+    pluginXmlPath = pluginXmlPath,
+    pluginXmlContent = content,
+    contentModules = contentModules,
+    jpsDependencies = { jpsModule.getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }.toList() },
   )
 }
 

@@ -32,6 +32,18 @@ fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
   }
 }
 
+val knownMissingModuleDependencies: List<String> = listOf(
+  // todo not included into any plugin - investigate why and fix
+  "intellij.javaee.jpa",
+  "intellij.rider.plugins.fsharp",
+  // conditional xi-include
+  "kotlin.base.scripting.k1",
+  // todo special module (make it not special)
+  "intellij.platform.commercial.verifier",
+  // included using `withModule`
+  "intellij.python.frontend"
+)
+
 /**
  * Describes a distribution of an IntelliJ-based IDE hosted in the IntelliJ repository.
  */

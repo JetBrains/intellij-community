@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout
 
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleSources
 import java.nio.file.Files
 
 /**
@@ -14,13 +14,16 @@ import java.nio.file.Files
  * Uses same logic as ModuleDescriptorDependencyGenerator but for plugin.xml files.
  *
  * For each bundled plugin module:
- * 1. Finds META-INF/plugin.xml in module sources
- * 2. Gets JPS production dependencies that have XML descriptors (content modules)
+ * 1. Uses pre-extracted content from shared jobs (path, content, JPS deps - avoids duplicate lookups)
+ * 2. Filters JPS production dependencies to those with XML descriptors
  * 3. Updates the `<dependencies>` section with generated `<module name="..."/>` entries
+ *
+ * @param pluginContentJobs Pre-launched async jobs containing all plugin info.
+ *        Multiple consumers can await the same Deferred - extraction runs only once per plugin.
  */
 internal suspend fun generatePluginDependencies(
   plugins: List<String>,
-  moduleOutputProvider: ModuleOutputProvider,
+  pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
   descriptorCache: ModuleDescriptorCache,
   dependencyFilter: (String) -> Boolean,
 ): PluginDependencyGenerationResult = coroutineScope {
@@ -32,7 +35,7 @@ internal suspend fun generatePluginDependencies(
     async {
       generatePluginDependency(
         pluginModuleName = pluginModuleName,
-        moduleOutputProvider = moduleOutputProvider,
+        pluginContentJobs = pluginContentJobs,
         descriptorCache = descriptorCache,
         dependencyFilter = dependencyFilter,
       )
@@ -45,49 +48,38 @@ internal suspend fun generatePluginDependencies(
 /**
  * Generates dependencies for a single plugin module.
  *
- * @return PluginDependencyFileResult or null if plugin.xml not found
+ * @param pluginContentJobs Pre-launched async jobs containing all plugin info.
+ * @return PluginDependencyFileResult or null if plugin.xml not found or has module refs with '/'
  */
-private fun generatePluginDependency(
+private suspend fun generatePluginDependency(
   pluginModuleName: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
   descriptorCache: ModuleDescriptorCache,
   dependencyFilter: (String) -> Boolean,
 ): PluginDependencyFileResult? {
-  val jpsModule = moduleOutputProvider.findModule(pluginModuleName) ?: return null
+  // All data from shared jobs - NO additional lookups needed
+  val info = pluginContentJobs.get(pluginModuleName)?.await() ?: return null
 
-  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
-
-  // Read file once and extract content modules (these should be excluded from dependencies)
-  val pluginXmlContent = Files.readString(pluginXmlPath)
-  // null means plugin has content module references (modules with '/'), skip it
-  val contentModules = extractContentModulesFromText(pluginXmlContent) ?: return null
-
-  // Get JPS dependencies that have XML descriptors (content modules)
-  // Skip if:
-  // 1. Module is in <content> section of this plugin.xml
-  // 2. Module is filtered out by dependencyFilter
-  // 3. Module doesn't have a descriptor
-  val deps = mutableListOf<String>()
-  for (dep in jpsModule.getProductionModuleDependencies(withTests = false)) {
-    val depName = dep.moduleReference.moduleName
-    if (depName in contentModules) {
-      continue
+  // Filter JPS dependencies: exclude content modules, apply filter, require descriptor
+  val dependencies = info.jpsDependencies()
+    .filter { depName ->
+      depName !in info.contentModules &&
+      dependencyFilter(depName) &&
+      descriptorCache.hasDescriptor(depName)
     }
-    if (!dependencyFilter(depName)) {
-      continue
-    }
-    if (!descriptorCache.hasDescriptor(depName)) {
-      continue
-    }
-    deps.add(depName)
-  }
+    .distinct()
+    .sorted()
 
-  val dependencies = deps.distinct().sorted()
-  val status = updateXmlDependencies(path = pluginXmlPath, content = pluginXmlContent, moduleDependencies = dependencies, preserveExistingModule = { !dependencyFilter(it) })
+  val status = updateXmlDependencies(
+    path = info.pluginXmlPath,
+    content = info.pluginXmlContent,
+    moduleDependencies = dependencies,
+    preserveExistingModule = { !dependencyFilter(it) },
+  )
 
   // Also process content modules - generate dependencies for their module descriptors
   val contentModuleResults = mutableListOf<DependencyFileResult>()
-  for (contentModuleName in contentModules) {
+  for (contentModuleName in info.contentModules) {
     val result = generateContentModuleDependencies(contentModuleName = contentModuleName, descriptorCache = descriptorCache, dependencyFilter = dependencyFilter)
     if (result != null) {
       contentModuleResults.add(result)
@@ -96,7 +88,7 @@ private fun generatePluginDependency(
 
   return PluginDependencyFileResult(
     pluginModuleName = pluginModuleName,
-    pluginXmlPath = pluginXmlPath,
+    pluginXmlPath = info.pluginXmlPath,
     status = status,
     dependencyCount = dependencies.size,
     contentModuleResults = contentModuleResults,

@@ -71,6 +71,9 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     // Static includes
     deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
+
+    allowMissingDependencies(knownMissingModuleDependencies)
+    bundledPlugins(productLayout.bundledPluginModules.toList())
   }
 
   override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {

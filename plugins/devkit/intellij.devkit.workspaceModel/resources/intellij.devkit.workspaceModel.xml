@@ -4,6 +4,9 @@
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
+    <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <!-- end editor-fold -->
   </dependencies>
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
