@@ -13,205 +13,208 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui.accessibility;
+package com.intellij.util.ui.accessibility
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.awt.Component
+import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
 
-import javax.accessibility.Accessible;
-import javax.accessibility.AccessibleContext;
-import java.awt.*;
-
-public final class AccessibleContextUtil {
+object AccessibleContextUtil {
   @ApiStatus.Internal
-  public static final String PUNCTUATION_CHARACTER = ".";
+  const val PUNCTUATION_CHARACTER: String = "."
+
   @ApiStatus.Internal
-  public static final String PUNCTUATION_SEPARATOR = "  ";
+  const val PUNCTUATION_SEPARATOR: String = "  "
 
-  public static void setName(@NotNull Component component, @Nls String name) {
-    setAccessibleName(component, name);
+  @JvmStatic
+  fun setName(component: Component, @Nls name: String?) {
+    setAccessibleName(component, name)
   }
 
-  public static void setName(@NotNull Component component, @NotNull Component source) {
-    setName(component, getAccessibleName(source));
+  @JvmStatic
+  fun setName(component: Component, source: Component) {
+    setName(component, getAccessibleName(source))
   }
 
-  public static void setCombinedName(@NotNull Component component,
-                                     @Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
-    setAccessibleName(component,
-      combineAccessibleStrings(
-        getAccessibleName(j1),
-        separator,
-        getAccessibleName(j2)));
+  @JvmStatic
+  fun setCombinedName(component: Component, j1: Component?, @NlsSafe separator: String, j2: Component?) {
+    setAccessibleName(component, combineAccessibleStrings(
+      getAccessibleName(j1),
+      separator,
+      getAccessibleName(j2)))
   }
 
-  public static void setCombinedName(@NotNull Component component,
-                                     @Nullable Component j1, @NotNull @NlsSafe String separator1,
-                                     @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
-    setAccessibleName(component,
-      combineAccessibleStrings(
-        getAccessibleName(j1),
-        separator1,
-        getAccessibleName(j2),
-        separator2,
-        getAccessibleName(j3)));
+  @JvmStatic
+  fun setCombinedName(
+    component: Component,
+    j1: Component?, @NlsSafe separator1: String,
+    j2: Component?, @NlsSafe separator2: String, j3: Component?,
+  ) {
+    setAccessibleName(component, combineAccessibleStrings(
+      getAccessibleName(j1),
+      separator1,
+      getAccessibleName(j2),
+      separator2,
+      getAccessibleName(j3)))
   }
 
-  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
-    return combineAccessibleStrings(getAccessibleName(j1), separator, getAccessibleName(j2));
+  @JvmStatic
+  @Nls
+  fun getCombinedName(j1: Component?, @NlsSafe separator: String, j2: Component?): String? {
+    return combineAccessibleStrings(getAccessibleName(j1), separator, getAccessibleName(j2))
   }
 
-  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator1,
-                                                      @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
-    return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3));
+  @JvmStatic
+  @Nls
+  fun getCombinedName(
+    j1: Component?, @NlsSafe separator1: String,
+    j2: Component?, @NlsSafe separator2: String, j3: Component?,
+  ): String? {
+    return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3))
   }
 
-  public static @Nls @Nullable String getCombinedName(@NotNull @NlsSafe String separator, Component... components) {
-    String result = "";
-    for (Component c : components) {
-      result = combineAccessibleStrings(result, separator, getAccessibleName(c));
+  @JvmStatic
+  @Nls
+  fun getCombinedName(@NlsSafe separator: String, vararg components: Component?): String? {
+    var result: String? = ""
+    for (c in components) {
+      result = combineAccessibleStrings(result, separator, getAccessibleName(c))
     }
-    return result;
+    return result
   }
 
-  public static void setDescription(@NotNull Component component, @NotNull Component source) {
-    setAccessibleDescription(component, getAccessibleDescription(source));
+  @JvmStatic
+  fun setDescription(component: Component, source: Component) {
+    setAccessibleDescription(component, getAccessibleDescription(source))
   }
 
-  public static void setDescription(@NotNull Component component, @Nls String description) {
-    setAccessibleDescription(component, description);
+  @JvmStatic
+  fun setDescription(component: Component, @Nls description: String?) {
+    setAccessibleDescription(component, description)
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1,
-                                            @NotNull @NlsSafe String separator, @Nullable Component j2) {
+  @JvmStatic
+  fun setCombinedDescription(
+    component: Component, j1: Component?,
+    @NlsSafe separator: String, j2: Component?,
+  ) {
+    setAccessibleDescription(component, combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2)))
+  }
+
+  @JvmStatic
+  fun setCombinedDescription(
+    component: Component, j1: Component?, @NlsSafe separator1: String,
+    j2: Component?, @NlsSafe separator2: String, j3: Component?,
+  ) {
     setAccessibleDescription(component,
-      combineAccessibleStrings(
-        getAccessibleDescription(j1),
-        separator,
-        getAccessibleDescription(j2)));
+                             combineAccessibleStrings(
+                               getAccessibleDescription(j1),
+                               separator1,
+                               getAccessibleDescription(j2),
+                               separator2,
+                               getAccessibleDescription(j3)))
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1, @NotNull @NlsSafe String separator1,
-                                            @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
-    setAccessibleDescription(component,
-      combineAccessibleStrings(
-        getAccessibleDescription(j1),
-        separator1,
-        getAccessibleDescription(j2),
-        separator2,
-        getAccessibleDescription(j3)));
+  @JvmStatic
+  fun getCombinedDescription(j1: Component?, @NlsSafe separator: String, j2: Component?): String? {
+    return combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2))
   }
 
-  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
-    return combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2));
-  }
-
-  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator1,
-                                              @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
-    return combineAccessibleStrings(getAccessibleDescription(j1), separator1,
-                                    getAccessibleDescription(j2), separator2, getAccessibleDescription(j3));
+  @JvmStatic
+  fun getCombinedDescription(
+    j1: Component?, @NlsSafe separator1: String,
+    j2: Component?, @NlsSafe separator2: String, j3: Component?,
+  ): String? {
+    return combineAccessibleStrings(getAccessibleDescription(j1),
+                                    separator1,
+                                    getAccessibleDescription(j2),
+                                    separator2,
+                                    getAccessibleDescription(j3))
   }
 
   /**
-   * Returns {@code description} if it is different than the accessible
-   * name, {@code null} otherwise.
+   * Returns `description` if it is different from the accessible
+   * name, `null` otherwise.
    *
    * Calling this method is useful from custom implementations of
-   * {@link AccessibleContext@getAccessibleDescription} to ensure screen
+   * [@getAccessibleDescription][AccessibleContext] to ensure screen
    * readers don't announce the same text twice (name and description) when
    * a component receives the focus.
    */
-  public static @Nullable @Nls String getUniqueDescription(@NotNull AccessibleContext context, @Nullable @Nls String description) {
-    String name = context.getAccessibleName();
-    if (StringUtil.equals(description, name)) {
-      return null;
+  @JvmStatic
+  @Nls
+  fun getUniqueDescription(context: AccessibleContext, @Nls description: String?): String? {
+    return if (description == context.accessibleName) null else description
+  }
+
+  @JvmStatic
+  fun setParent(component: Component, newParent: Component?) {
+    component.accessibleContext.accessibleParent = newParent as? Accessible
+  }
+
+  @JvmStatic
+  @Nls
+  fun combineAccessibleStrings(@Nls s1: String?, @Nls s2: String?): String? {
+    return combineAccessibleStrings(s1, " ", s2)
+  }
+
+  @JvmStatic
+  @Nls
+  fun combineAccessibleStrings(@Nls s1: String?, @NlsSafe separator: String, @Nls s2: String?): String? {
+    return when {
+      s1.isNullOrEmpty() && s2.isNullOrEmpty() -> null
+      s1.isNullOrEmpty() -> s2
+      s2.isNullOrEmpty() -> s1
+      else -> s1 + separator + s2
     }
-    return description;
   }
 
-  public static void setParent(@NotNull Component component, @Nullable Component newParent) {
-    if (newParent instanceof Accessible) {
-      component.getAccessibleContext().setAccessibleParent((Accessible)newParent);
-      return;
-    }
-    component.getAccessibleContext().setAccessibleParent(null);
-  }
-
-  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @Nullable @Nls String s2) {
-    return combineAccessibleStrings(s1, " ", s2);
-  }
-
-  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @NlsSafe String separator, @Nullable @Nls String s2) {
-    if (StringUtil.isEmpty(s1) && StringUtil.isEmpty(s2))
-      return null;
-    if (StringUtil.isEmpty(s1))
-      return s2;
-    if (StringUtil.isEmpty(s2))
-      return s1;
-    return s1 + separator + s2;
-  }
-
-  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @Nls String separator1, @Nullable @Nls String s2,
-                                                               @NotNull @Nls String separator2, @Nullable @Nls String s3) {
-    return combineAccessibleStrings(combineAccessibleStrings(s1, separator1, s2), separator2, s3);
+  @JvmStatic
+  @Nls
+  fun combineAccessibleStrings(
+    @Nls s1: String?, @Nls separator1: String, @Nls s2: String?,
+    @Nls separator2: String, @Nls s3: String?,
+  ): String? {
+    return combineAccessibleStrings(combineAccessibleStrings(s1, separator1, s2), separator2, s3)
   }
 
   /**
-   * Given a multi-line string, return an single line string where new line separators
+   * Given a multi-line string, return a single line string where new line separators
    * are replaced with a punctuation character. This is useful for returning text to
    * screen readers, as they tend to ignore new line separators during speech, but
    * they do pause at punctuation characters.
    */
-  public static @NotNull String replaceLineSeparatorsWithPunctuation(@Nullable String text) {
-    if (StringUtil.isEmpty(text))
-      return "";
+  @JvmStatic
+  fun replaceLineSeparatorsWithPunctuation(text: String?): String {
+    if (text.isNullOrEmpty()) return ""
 
-    // Split by new line, removing empty lines and white-spaces at end of lines.
-    String[] lines = StringUtil.splitByLines(text);
-
-    // Join lines, ensuring each line end with a punctuation.
-    final StringBuilder result = new StringBuilder();
-    boolean first = true;
-    for (String line : lines) {
-      line = line.trim();
-      if (!StringUtil.isEmpty(line)) {
-        if (first)
-          first = false;
-        else
-          result.append(PUNCTUATION_SEPARATOR);
-        result.append(line);
-        if (!line.endsWith(PUNCTUATION_CHARACTER)) {
-          result.append(PUNCTUATION_CHARACTER);
-        }
+    return StringUtil.splitByLines(text)
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .joinToString(PUNCTUATION_SEPARATOR) { line ->
+        if (line.endsWith(PUNCTUATION_CHARACTER)) line else line + PUNCTUATION_CHARACTER
       }
-    }
-    return result.toString();
   }
 
-  private static @Nls @Nullable String getAccessibleName(@Nullable Component component) {
-    if (component instanceof Accessible) {
-      return component.getAccessibleContext().getAccessibleName();
-    }
-    return null;
+  @Nls
+  private fun getAccessibleName(component: Component?): String? {
+    return (component as? Accessible)?.accessibleContext?.accessibleName
   }
 
-  private static void setAccessibleName(@NotNull Component component, @Nls String name) {
-    if (component instanceof Accessible) {
-      component.getAccessibleContext().setAccessibleName(name);
-    }
+  private fun setAccessibleName(component: Component, @Nls name: String?) {
+    (component as? Accessible)?.accessibleContext?.accessibleName = name
   }
 
-  private static @Nullable @Nls String getAccessibleDescription(@Nullable Component component) {
-    if (component instanceof Accessible) {
-      return component.getAccessibleContext().getAccessibleDescription();
-    }
-    return null;
+  @Nls
+  private fun getAccessibleDescription(component: Component?): String? {
+    return (component as? Accessible)?.accessibleContext?.accessibleDescription
   }
 
-  private static void setAccessibleDescription(@NotNull Component component, @Nullable @Nls String description) {
-    if (component instanceof Accessible) {
-      component.getAccessibleContext().setAccessibleDescription(description);
-    }
+  private fun setAccessibleDescription(component: Component, @Nls description: String?) {
+    (component as? Accessible)?.accessibleContext?.accessibleDescription = description
   }
 }

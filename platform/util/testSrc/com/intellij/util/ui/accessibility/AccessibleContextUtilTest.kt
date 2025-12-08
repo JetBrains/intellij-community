@@ -13,45 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.ui.accessibility;
+package com.intellij.util.ui.accessibility
 
-import org.junit.Assert;
-import org.junit.Test;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil.combineAccessibleStrings
+import com.intellij.util.ui.accessibility.AccessibleContextUtil.replaceLineSeparatorsWithPunctuation
+import org.junit.Assert
+import org.junit.Test
 
-public class AccessibleContextUtilTest {
+class AccessibleContextUtilTest {
   @Test
-  public void testReplaceLineSeparatorsWithPunctuation() {
-    final String p = AccessibleContextUtil.PUNCTUATION_CHARACTER;
-    final String s = AccessibleContextUtil.PUNCTUATION_SEPARATOR;
+  fun testReplaceLineSeparatorsWithPunctuation() {
+    val p = AccessibleContextUtil.PUNCTUATION_CHARACTER
+    val s = AccessibleContextUtil.PUNCTUATION_SEPARATOR
 
-    Assert.assertEquals("", AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(null));
-    Assert.assertEquals("", AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(""));
-    Assert.assertEquals("", AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("  "));
+    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation(null))
+    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation(""))
+    Assert.assertEquals("", replaceLineSeparatorsWithPunctuation("  "))
 
-    Assert.assertEquals("a" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(" a "));
-    Assert.assertEquals("a" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a"));
+    Assert.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation(" a "))
+    Assert.assertEquals("a" + p, replaceLineSeparatorsWithPunctuation("a"))
 
-    Assert.assertEquals("a" + p + s + "b" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a\nb"));
-    Assert.assertEquals("a" + p + s + "b" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a.\nb"));
-    Assert.assertEquals("a" + p + s + "b" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a.\nb."));
+    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a\nb"))
+    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb"))
+    Assert.assertEquals("a" + p + s + "b" + p, replaceLineSeparatorsWithPunctuation("a.\nb."))
 
-    Assert.assertEquals("a" + p + s + "b" + p + s + "c" + p, AccessibleContextUtil.replaceLineSeparatorsWithPunctuation("a\nb\n\nc"));
+    Assert.assertEquals("a" + p + s + "b" + p + s + "c" + p, replaceLineSeparatorsWithPunctuation("a\nb\n\nc"))
   }
 
   @Test
-  public void testCombineAccessibleStrings() {
-    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings(null, null));
-    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings("", ""));
-    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings(null, ""));
-    Assert.assertNull(AccessibleContextUtil.combineAccessibleStrings("", null));
+  fun testCombineAccessibleStrings() {
+    Assert.assertNull(combineAccessibleStrings(null, null))
+    Assert.assertNull(combineAccessibleStrings("", ""))
+    Assert.assertNull(combineAccessibleStrings(null, ""))
+    Assert.assertNull(combineAccessibleStrings("", null))
 
-    Assert.assertEquals("first", AccessibleContextUtil.combineAccessibleStrings("first", null));
-    Assert.assertEquals("first", AccessibleContextUtil.combineAccessibleStrings("first", ""));
+    Assert.assertEquals("first", combineAccessibleStrings("first", null))
+    Assert.assertEquals("first", combineAccessibleStrings("first", ""))
 
-    Assert.assertEquals("second", AccessibleContextUtil.combineAccessibleStrings(null, "second"));
-    Assert.assertEquals("second", AccessibleContextUtil.combineAccessibleStrings("", "second"));
+    Assert.assertEquals("second", combineAccessibleStrings(null, "second"))
+    Assert.assertEquals("second", combineAccessibleStrings("", "second"))
 
-    Assert.assertEquals("first second", AccessibleContextUtil.combineAccessibleStrings("first", "second"));
-    Assert.assertEquals("first, second", AccessibleContextUtil.combineAccessibleStrings("first", ", ", "second"));
+    Assert.assertEquals("first second", combineAccessibleStrings("first", "second"))
+    Assert.assertEquals("first, second", combineAccessibleStrings("first", ", ", "second"))
   }
 }
