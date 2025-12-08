@@ -198,8 +198,7 @@ open class FileEditorManagerImpl(
   @JvmField
   internal val editorPropertyChangeListener: PropertyChangeListener = MyEditorPropertyChangeListener()
 
-  @Internal
-  protected data class EditorCompositeEntry(
+  private data class EditorCompositeEntry(
     @JvmField val composite: EditorComposite,
     // non-volatile - that's ok
     @JvmField var delayedState: FileEntry?,
@@ -207,8 +206,7 @@ open class FileEditorManagerImpl(
 
   private var contentFactory: DockableEditorContainerFactory? = null
 
-  @Internal
-  protected val openedCompositeEntries = CopyOnWriteArrayList<EditorCompositeEntry>()
+  private val openedCompositeEntries = CopyOnWriteArrayList<EditorCompositeEntry>()
 
   private val openedComposites: Sequence<EditorComposite>
     get() = openedCompositeEntries.asSequence().map { it.composite }

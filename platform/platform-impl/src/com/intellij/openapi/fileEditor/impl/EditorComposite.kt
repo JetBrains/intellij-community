@@ -329,14 +329,36 @@ open class EditorComposite internal constructor(
       return
     }
 
-    val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+    val messageBus = project.messageBus
+    val goodPublisher = messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC)
+    val deprecatedPublisher = messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+
+    val beforePublisher = messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
 
     val fileEditorManager = FileEditorManager.getInstance(project)
 
-    beforePublisher!!.beforeFileOpened(fileEditorManager, file)
+    computeOrLogException(
+      lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
+      errorMessage = { "exception during beforeFileOpened notification" },
+    )
 
     val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
     applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
+
+    shownDeferred.complete(Unit)
+
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      initDeferred.await()
+
+      writeIntentReadAction {
+        goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+        @Suppress("DEPRECATION")
+        deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+
+        val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+        publisher.fileOpened(fileEditorManager, file)
+      }
+    }
   }
 
   @RequiresEdt
