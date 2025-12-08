@@ -70,7 +70,8 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
   }
 
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
-    return new ValueCollector(e.getProject());
+    XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
+    return new ValueCollector(tree, e.getProject());
   }
 
   public class ValueCollector {
@@ -78,6 +79,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     private final Int2IntMap indents = new Int2IntOpenHashMap();
     private final Project myProject;
     private volatile boolean processed;
+    private XDebuggerTree myTree;
 
     /**
      * @deprecated Use {@link #ValueCollector(Project)} instead
@@ -85,6 +87,12 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     @Deprecated
     public ValueCollector(@NotNull XDebuggerTree tree) {
       this(tree.getProject());
+      myTree = tree;
+    }
+
+    ValueCollector(@Nullable XDebuggerTree tree, Project project) {
+      this(project);
+      myTree = tree;
     }
 
     public ValueCollector(Project project) {
@@ -101,7 +109,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
      */
     @Deprecated
     public @Nullable XDebuggerTree getTree() {
-      return null;
+      return myTree;
     }
 
     public void add(@NotNull String value, int indent) {
@@ -126,7 +134,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
           }
           sb.append(values.get(i));
         }
-        handleInCollector(myProject, sb.toString(), null);
+        handleInCollector(myProject, sb.toString(), myTree);
       }
     }
 
@@ -140,7 +148,7 @@ public abstract class XFetchValueActionBase extends DumbAwareAction {
     }
 
     public void handleInCollector(final Project project, final String value) {
-      handle(project, value, null);
+      handle(project, value, myTree);
     }
 
     public int acquire() {
