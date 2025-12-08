@@ -14,13 +14,6 @@ import java.util.List;
 public interface RefGroup {
 
   /**
-   * If a group is not-expanded, its references won't be displayed until
-   * Otherwise, if a group is expanded, its references will be displayed immediately,
-   * but they might be somehow visually united to indicated that they are from similar structure.
-   */
-  boolean isExpanded();
-
-  /**
    * Returns the name of the reference group. This reference will be displayed on the branches panel.
    */
   @NotNull

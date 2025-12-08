@@ -8,7 +8,6 @@ com.intellij.vcs.log.RefGroup
 - a:getColors():java.util.List
 - a:getName():java.lang.String
 - a:getRefs():java.util.List
-- a:isExpanded():Z
 com.intellij.vcs.log.TimedVcsCommit
 - com.intellij.vcs.log.graph.GraphCommit
 com.intellij.vcs.log.VcsCommitMetadata

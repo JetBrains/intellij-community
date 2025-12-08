@@ -8,10 +8,10 @@ import com.intellij.vcs.log.VcsRefType
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
-class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
-                                               private val refs: MutableList<VcsRef>,
-                                               private val isExpanded: Boolean = false) : RefGroup {
-  override fun isExpanded(): Boolean = isExpanded
+class SimpleRefGroup(
+  private val name: @Nls String,
+  private val refs: MutableList<VcsRef>,
+) : RefGroup {
   override fun getName(): String = name
   override fun getRefs(): MutableList<VcsRef> = refs
 

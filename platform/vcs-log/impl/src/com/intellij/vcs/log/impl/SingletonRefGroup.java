@@ -22,11 +22,6 @@ public final class SingletonRefGroup implements RefGroup {
   }
 
   @Override
-  public boolean isExpanded() {
-    return false;
-  }
-
-  @Override
   public @NotNull String getName() {
     return myRef.getName();
   }

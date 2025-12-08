@@ -372,13 +372,10 @@ f:com.intellij.vcs.log.impl.SimpleRefGroup
 - com.intellij.vcs.log.RefGroup
 - sf:Companion:com.intellij.vcs.log.impl.SimpleRefGroup$Companion
 - <init>(java.lang.String,java.util.List):V
-- <init>(java.lang.String,java.util.List,Z):V
-- b:<init>(java.lang.String,java.util.List,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:buildGroups(java.util.List,com.intellij.util.containers.MultiMap,Z,Z):java.util.List
 - getColors():java.util.List
 - getName():java.lang.String
 - getRefs():java.util.List
-- isExpanded():Z
 f:com.intellij.vcs.log.impl.SimpleRefGroup$Companion
 - f:buildGroups(java.util.List,com.intellij.util.containers.MultiMap,Z,Z):java.util.List
 c:com.intellij.vcs.log.impl.SimpleRefType
@@ -787,7 +784,6 @@ a:com.intellij.vcs.log.ui.filter.BranchPopupBuilder
 - p:<init>(com.intellij.vcs.log.VcsLogDataPack,java.util.Collection,java.util.List):V
 - build():com.intellij.openapi.actionSystem.ActionGroup
 - pa:createAction(java.lang.String,java.util.Collection):com.intellij.openapi.actionSystem.AnAction
-- p:createCollapsedAction(java.lang.String,java.util.Collection):com.intellij.openapi.actionSystem.AnAction
 - p:createFavoritesAction(java.util.List,java.util.List):V
 - p:createRecentAction(java.util.List,java.util.List):V
 - s:isFavorite(com.intellij.vcs.log.VcsLogDataPack,com.intellij.vcs.log.VcsRef):Z

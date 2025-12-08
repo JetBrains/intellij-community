@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,10 +40,6 @@ public abstract class BranchPopupBuilder {
   }
 
   protected void createFavoritesAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> favorites) {
-  }
-
-  protected @NotNull AnAction createCollapsedAction(@NotNull @NlsActions.ActionText String actionName, @NotNull Collection<? extends VcsRef> refs) {
-    return createAction(actionName, refs);
   }
 
   public ActionGroup build() {
@@ -92,19 +87,13 @@ public abstract class BranchPopupBuilder {
     for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : groups.favoriteGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));
     }
-    for (Map.Entry<@NlsContexts.Separator String, TreeMap<@NlsActions.ActionText String, Collection<VcsRef>>> group : groups.expandedGroups.entrySet()) {
-      actionGroup.add(Separator.create(group.getKey()));
-      for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
-        actionGroup.add(createAction(entry.getKey(), entry.getValue()));
-      }
-    }
     actionGroup.add(Separator.getInstance());
-    for (Map.Entry<@NlsActions.ActionText String, TreeMap<@NlsActions.ActionText String, Collection<VcsRef>>> group : groups.collapsedGroups.entrySet()) {
-      List<AnAction> collapsed = new ArrayList<>();
+    for (Map.Entry<@NlsActions.ActionText String, TreeMap<@NlsActions.ActionText String, Collection<VcsRef>>> group : groups.otherGroups.entrySet()) {
+      List<AnAction> otherActions = new ArrayList<>();
       for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : group.getValue().entrySet()) {
-        collapsed.add(createCollapsedAction(entry.getKey(), entry.getValue()));
+        otherActions.add(createAction(entry.getKey(), entry.getValue()));
       }
-      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), collapsed);
+      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), otherActions);
       popupGroup.setPopup(true);
       actionGroup.add(popupGroup);
     }
@@ -115,9 +104,7 @@ public abstract class BranchPopupBuilder {
     private final TreeMap<String, Collection<VcsRef>> favoriteGroups = new TreeMap<>();
     private final TreeMap<String, Collection<VcsRef>> singletonGroups = new TreeMap<>();
     private final List<List<String>> recentGroups = new ArrayList<>();
-    private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> expandedGroups =
-      new TreeMap<>();
-    private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> collapsedGroups =
+    private final TreeMap<String, TreeMap<String, Collection<VcsRef>>> otherGroups =
       new TreeMap<>();
   }
 
@@ -135,8 +122,7 @@ public abstract class BranchPopupBuilder {
         }
       }
       else {
-        TreeMap<String, TreeMap<String, Collection<VcsRef>>> groups =
-          refGroup.isExpanded() ? actions.expandedGroups : actions.collapsedGroups;
+        TreeMap<String, TreeMap<String, Collection<VcsRef>>> groups = actions.otherGroups;
         TreeMap<String, Collection<VcsRef>> groupActions =
           groups.computeIfAbsent(refGroup.getName(), key -> new TreeMap<>(NaturalComparator.INSTANCE));
         for (VcsRef ref : refGroup.getRefs()) {

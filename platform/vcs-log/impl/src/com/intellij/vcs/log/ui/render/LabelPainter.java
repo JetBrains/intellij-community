@@ -225,31 +225,7 @@ public class LabelPainter {
   }
 
   private static @NotNull String getGroupText(@NotNull RefGroup group, @NotNull FontMetrics fontMetrics, int availableWidth) {
-    if (!group.isExpanded()) {
-      return shortenRefName(group.getName(), fontMetrics, availableWidth);
-    }
-
-    StringBuilder text = new StringBuilder();
-    String remainder = ", ...";
-    String separator = ", ";
-    int remainderWidth = fontMetrics.stringWidth(remainder);
-    int separatorWidth = fontMetrics.stringWidth(separator);
-    for (int i = 0; i < group.getRefs().size(); i++) {
-      boolean lastRef = i == group.getRefs().size() - 1;
-      boolean firstRef = i == 0;
-      int width = availableWidth - (lastRef ? 0 : remainderWidth) - (firstRef ? 0 : separatorWidth);
-      String refName = shortenRefName(group.getRefs().get(i).getName(), fontMetrics, width);
-      int refNameWidth = fontMetrics.stringWidth(refName);
-      if (width - refNameWidth < 0 && !firstRef) {
-        text.append(remainder);
-        break;
-      }
-      else {
-        text.append(firstRef ? "" : separator).append(refName);
-        availableWidth -= (firstRef ? 0 : separatorWidth) + refNameWidth;
-      }
-    }
-    return text.toString();
+    return shortenRefName(group.getName(), fontMetrics, availableWidth);
   }
 
   private static @Nullable Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
@@ -259,16 +235,8 @@ public class LabelPainter {
     if (isSelected) return null;
     if (!isCompact) return BranchPresentation.getBranchPresentationBackground(background);
 
-    boolean paintGreyBackground;
     for (RefGroup group : refGroups) {
-      if (group.isExpanded()) {
-        paintGreyBackground = ContainerUtil.find(group.getRefs(), ref -> !ref.getName().isEmpty()) != null;
-      }
-      else {
-        paintGreyBackground = !group.getName().isEmpty();
-      }
-
-      if (paintGreyBackground) return BranchPresentation.getBranchPresentationBackground(background);
+      if (!group.getName().isEmpty()) return BranchPresentation.getBranchPresentationBackground(background);
     }
 
     return null;

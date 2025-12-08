@@ -66,7 +66,6 @@ class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) 
   private class StashRefGroup(private val branchName: @NlsSafe String, private val isCurrent: Boolean) : RefGroup {
     override fun getName() = branchName
     override fun getRefs() = mutableListOf<VcsRef>()
-    override fun isExpanded() = false
     override fun getColors(): List<Color> {
       if (isCurrent) return listOf(GitRefManager.HEAD.backgroundColor)
       return listOf(GitRefManager.LOCAL_BRANCH.backgroundColor)

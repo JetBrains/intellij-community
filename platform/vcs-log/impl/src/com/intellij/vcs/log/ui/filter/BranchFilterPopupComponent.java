@@ -148,11 +148,6 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     }
 
     @Override
-    protected @NotNull AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<? extends VcsRef> refs) {
-      return new BranchFilterAction(() -> actionName, refs);
-    }
-
-    @Override
     protected void createFavoritesAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> favorites) {
       actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
