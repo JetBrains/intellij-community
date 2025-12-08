@@ -19,4 +19,5 @@ public class VarargParameterFixTest extends IGQuickFixesTestCase {
   public void testEnumConstants() { doTest(); }
   public void testConstructorCall() { doTest(); }
   public void testJavadocReference() { doTest(); }
+  public void testTypeParameter() { doTest(); }
 }
