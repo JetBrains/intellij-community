@@ -65,7 +65,6 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     call("runSerializedLambda", LambdaRdSerializedLambda, string).async
     call("cleanUp", void, void).async
     call("projectsNames", void, immutableList(string)).async
-    call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async
     call("projectsAreInitialised", void, bool).async
   }
