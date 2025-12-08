@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.EelResult.Error
 import com.intellij.platform.eel.EelResult.Ok
 import com.intellij.platform.eel.fs.EelFileInfo
@@ -17,7 +18,6 @@ import com.pty4j.PtyProcess
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.fetchMinimalEnvironmentVariables
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -26,7 +26,7 @@ internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boole
     try {
       hasRunningCommands(shellEelProcess)
     }
-    catch (e: Exception) {
+    catch (e: IllegalStateException) {
       LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
       false
     }
@@ -41,6 +41,7 @@ internal fun hasRunningCommandsBlocking(shellEelProcess: ShellEelProcess): Boole
  * 
  * @see org.jetbrains.plugins.terminal.TerminalUtil.localProcessHasRunningCommands
  */
+@Throws(IllegalStateException::class)
 private suspend fun hasRunningCommands(shellEelProcess: ShellEelProcess): Boolean {
   return when (val process = shellEelProcess.eelProcess) {
     is EelPosixProcess -> hasChildProcesses(process, shellEelProcess.eelApi as EelPosixApi)
@@ -61,12 +62,15 @@ private suspend fun hasRunningCommands(shellEelProcess: ShellEelProcess): Boolea
 private suspend fun hasChildProcesses(shellProcess: EelPosixProcess, eelApi: EelPosixApi): Boolean = coroutineScope {
   val psProcess = try {
     buildPsCommand(eelApi)
-      .env(eelApi.fetchMinimalEnvironmentVariables())
+      .env(eelApi.exec.environmentVariables().minimal().eelIt().await())
       .scope(this)
       .eelIt()
   }
+  catch (e: EnvironmentVariablesException) {
+    throw IllegalStateException("Cannot get minimal environment variables to spawn `ps` command", e)
+  }
   catch (e: ExecuteProcessException) {
-    throw IllegalStateException("Cannot build `ps` command", e)
+    throw IllegalStateException("Cannot spawn `ps` command", e)
   }
   val result = withTimeoutOrNull(PS_COMMAND_TIMEOUT) {
     psProcess.awaitProcessResult()

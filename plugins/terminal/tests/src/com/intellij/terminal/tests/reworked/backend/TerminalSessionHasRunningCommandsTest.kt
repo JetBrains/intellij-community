@@ -284,7 +284,7 @@ private suspend fun getProcessSubtree(shellEelProcess: ShellEelProcess): String 
       try {
         getPosixProcessSubtree(process, shellEelProcess.eelApi as EelPosixApi)
       }
-      catch (e: Exception) {
+      catch (e: IllegalStateException) {
         "(failed to list descendant processes ($shellEelProcess): ${e.message})"
       }
     }
