@@ -78,7 +78,7 @@ object IdeInstance {
   }
 
   fun cleanup() = synchronized(this) {
-    if (!isStarted() || !runContext.calculateVmOptions().hasUnitTestMode()) return@synchronized
+    if (!isStarted()) return@synchronized
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(testSuiteSupervisorScope.coroutineContext) {
