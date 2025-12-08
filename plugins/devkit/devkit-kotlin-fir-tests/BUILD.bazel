@@ -42,6 +42,7 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/core-ui",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
   ],
   runtime_deps = [
     "//plugins/kotlin:kotlin-plugin-community-main",
