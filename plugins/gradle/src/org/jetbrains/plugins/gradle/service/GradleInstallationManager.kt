@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -141,8 +141,7 @@ open class GradleInstallationManager : Disposable.Default {
     val settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath) ?: return getAvailableJavaHome(project)
     val gradleJvm = settings.gradleJvm
     val sdkLookupProvider = getGradleJvmLookupProvider(project, settings)
-    // Android Studio: b/411744564 workaround to avoid failure assertion given method invocations from EDT
-    val sdkInfo = runBlockingMaybeCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
+    val sdkInfo = runBlockingCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
     if (sdkInfo is SdkLookupProvider.SdkInfo.Resolved) {
       return sdkInfo.homePath
     }
