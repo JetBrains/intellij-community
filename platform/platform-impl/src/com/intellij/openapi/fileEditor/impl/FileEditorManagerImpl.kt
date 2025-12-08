@@ -1351,7 +1351,7 @@ open class FileEditorManagerImpl(
       project = project,
       fileEntry = fileEntry,
     )
-    val composite = createCompositeByEditorWithModel(
+    val composite = createCompositeInstance(
       file = file,
       model = model,
       coroutineScope = compositeCoroutineScope,
@@ -1382,19 +1382,6 @@ open class FileEditorManagerImpl(
   protected fun createCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
     return EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).blockingFileEditorWithProviderFlow(
       editorsWithProviders = editorsWithProviders,
-    )
-  }
-
-  @RequiresEdt
-  fun createCompositeByEditorWithModel(
-    file: VirtualFile,
-    model: Flow<EditorCompositeModel>,
-    coroutineScope: CoroutineScope,
-  ): EditorComposite? {
-    return createCompositeInstance(
-      file = file,
-      model = model,
-      coroutineScope = coroutineScope,
     )
   }
 
@@ -2215,7 +2202,7 @@ open class FileEditorManagerImpl(
         createCompositeAndModel(file, window, fileEntry)
       }
       else {
-        createCompositeByEditorWithModel(
+        createCompositeInstance(
           file = file,
           model = item.model,
           coroutineScope = item.scope,
