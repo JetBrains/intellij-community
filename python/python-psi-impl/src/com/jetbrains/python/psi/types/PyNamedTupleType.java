@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
@@ -20,9 +21,9 @@ import java.util.*;
 
 
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
-  private static final ImmutableSet<String> PYTHON_2_ATTRIBUTES =
+  private static final ImmutableSet<@NotNull String> PYTHON_2_ATTRIBUTES =
     ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults", "_field_types");
-  private static final ImmutableSet<String> PYTHON_3_ATTRIBUTES =
+  private static final ImmutableSet<@NotNull String> PYTHON_3_ATTRIBUTES =
     ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults");
 
   public static @NotNull Set<String> getSpecialAttributes(LanguageLevel level) {
@@ -71,7 +72,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
     for (String field : myFields.keySet()) {
       result.add(
-        LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
+        LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Field)));
     }
 
     if (completionPrefix == null) {
