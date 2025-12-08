@@ -1,6 +1,9 @@
-# =======
-# <= 3.12
-# =======
+# =========
+# Temporary
+# =========
+
+# Added in Python 3.9.25 (parameter `scripting`)
+html.parser.HTMLParser.__init__
 
 # Added in Python 3.9.23 (parameter `escapable`)
 html.parser.HTMLParser.set_cdata_mode

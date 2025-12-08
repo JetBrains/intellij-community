@@ -1,3 +1,11 @@
+# =========
+# Temporary
+# =========
+
+# Added in Python 3.12.13 (parameter `scripting`)
+html.parser.HTMLParser.__init__
+
+
 # ============
 # 3.11 to 3.12
 # ============

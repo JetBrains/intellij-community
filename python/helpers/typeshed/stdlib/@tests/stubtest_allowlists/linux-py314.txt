@@ -1,6 +1,7 @@
-# =======
-# <= 3.14
-# =======
+# =========
+# 3.14 only
+# =========
 
-# Added in Python 3.14.1 (parameter `scripting`)
-html.parser.HTMLParser.__init__
+# Starting with Python 3.14.1, these methods accept None for some of their
+# parameters, but would raise a TypeError with Python 3.14.0.
+mmap.mmap.madvise

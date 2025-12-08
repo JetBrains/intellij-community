@@ -174,7 +174,8 @@ __all__ = [
     "write",
 ]
 if sys.version_info >= (3, 14):
-    __all__ += ["readinto"]
+    # reload_environ was added to __all__ in Python 3.14.1
+    __all__ += ["readinto", "reload_environ"]
 if sys.platform == "darwin" and sys.version_info >= (3, 12):
     __all__ += ["PRIO_DARWIN_BG", "PRIO_DARWIN_NONUI", "PRIO_DARWIN_PROCESS", "PRIO_DARWIN_THREAD"]
 if sys.platform == "darwin" and sys.version_info >= (3, 10):
