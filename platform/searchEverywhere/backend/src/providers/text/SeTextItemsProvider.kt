@@ -133,7 +133,7 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     val legacyItem = (item as? SeTextSearchItem)?.item ?: return null
     val navigationOffsets = legacyItem.usage.mergedInfos.map { it.navigationRange.startOffset to it.navigationRange.endOffset }
 
-    return SePreviewInfo(legacyItem.usage.file.rpcId(), navigationOffsets)
+    return SePreviewInfoFactory().create(legacyItem.usage.file.rpcId(), navigationOffsets)
   }
 
   override fun dispose() {

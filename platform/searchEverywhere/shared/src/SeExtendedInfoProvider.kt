@@ -3,5 +3,5 @@ package com.intellij.platform.searchEverywhere
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface SeExtendedInfoProvider

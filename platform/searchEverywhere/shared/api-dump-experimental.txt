@@ -39,6 +39,7 @@
 - f:withKeyCode(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 - f:withModifiers(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
 - f:withText(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+*:com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 *a:com.intellij.platform.searchEverywhere.SeFilterState
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeFilterState$Companion
 - b:<init>(I,kotlinx.serialization.internal.SerializationConstructorMarker):V
@@ -85,6 +86,8 @@
 *f:com.intellij.platform.searchEverywhere.SeItemDataFactory
 - <init>():V
 - f:createItemData(com.intellij.platform.searchEverywhere.SeSession,java.lang.String,com.intellij.platform.searchEverywhere.SeItem,com.intellij.platform.searchEverywhere.SeProviderId,java.util.Map,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+- a:getPreviewInfo(com.intellij.platform.searchEverywhere.SeItem,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.searchEverywhere.SeItemsProvider
 - com.intellij.openapi.Disposable
 - addDataForItem(com.intellij.platform.searchEverywhere.SeItem,com.intellij.openapi.actionSystem.DataSink):V
@@ -123,6 +126,15 @@
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SeParams):V
 *f:com.intellij.platform.searchEverywhere.SeParams$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.SePreviewInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SePreviewInfo$Companion
+- a:getFileUrl():com.intellij.ide.vfs.VirtualFileId
+- a:getNavigationRanges():java.util.List
+*f:com.intellij.platform.searchEverywhere.SePreviewInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SePreviewInfoFactory
+- <init>():V
+- f:create(com.intellij.ide.vfs.VirtualFileId,java.util.List):com.intellij.platform.searchEverywhere.SePreviewInfo
 *f:com.intellij.platform.searchEverywhere.SeProviderId
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeProviderId$Companion
 - <init>(java.lang.String):V

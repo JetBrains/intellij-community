@@ -5,6 +5,22 @@ import com.intellij.ide.vfs.VirtualFileId
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 @Serializable
+sealed interface SePreviewInfo {
+  val fileUrl: VirtualFileId
+  val navigationRanges: List<Pair<Int, Int>>
+}
+
+@ApiStatus.Experimental
+class SePreviewInfoFactory {
+  fun create(fileUrl: VirtualFileId, navigationRanges: List<Pair<Int, Int>>): SePreviewInfo =
+    SePreviewInfoImpl(fileUrl = fileUrl, navigationRanges = navigationRanges)
+}
+
 @ApiStatus.Internal
-class SePreviewInfo(val fileUrl: VirtualFileId, val navigationRanges: List<Pair<Int, Int>>)
+@Serializable
+internal class SePreviewInfoImpl internal constructor(
+  override val fileUrl: VirtualFileId,
+  override val navigationRanges: List<Pair<Int, Int>>,
+) : SePreviewInfo
