@@ -14,4 +14,13 @@ interface ModuleOutputProvider {
   fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>
 
   fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
+
+  /**
+   * Searches for a file across module outputs.
+   * Used for xi:include resolution where the included file may be in any module, not just dependencies.
+   * Returns the file content if found, or null if the file doesn't exist in any module output.
+   *
+   * @param moduleNamePrefix if specified, only searches in modules whose name starts with this prefix followed by '.'
+   */
+  fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null): ByteArray? = null
 }

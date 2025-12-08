@@ -370,6 +370,16 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     allowedMissingDeps.addAll(modules)
   }
 
+  /**
+   * Allow specific modules to be missing during validation.
+   * Use for modules provided by plugin layouts rather than module sets.
+   *
+   * @param modules Module names that are allowed to be missing
+   */
+  fun allowMissingDependencies(modules: List<String>) {
+    allowedMissingDeps.addAll(modules)
+  }
+
   @PublishedApi
   internal fun build(): ProductModulesContentSpec {
     return ProductModulesContentSpec(

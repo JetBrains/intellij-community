@@ -205,6 +205,67 @@ Do NOT use for:
 2. **Review periodically**: Remove entries that are no longer needed
 3. **Prefer proper fixes**: `allowMissingDependencies` is a workaround, not a solution
 
+## Performance Considerations
+
+### Caching Strategy
+
+The validation system uses multiple caching layers to minimize redundant work:
+
+1. **ModuleDescriptorCache**: Module JPS dependencies are analyzed once per module and cached.
+   - Eliminates redundant filesystem/JPS access
+   - Thread-safe using double-checked locking with `moduleName.intern()`
+   - Shared across all product validations
+
+2. **ModuleSetTraversalCache**: Module set membership is computed once.
+   - O(1) lookups instead of O(n) graph traversals
+   - Caches: module sets by name, nested set closure, module names, loading modes
+   - Thread-safe using `ConcurrentHashMap.computeIfAbsent()`
+
+3. **ProductModuleIndex**: Per-product module composition built once before validation.
+   - Collects all modules, loading modes, and source tracking
+   - Enables parallel validation without redundant collection
+
+### Per-Product vs Global Validation
+
+Each product is validated separately because the "available modules" set differs:
+
+```
+Product A: modules from ideUltimate + ssh + rd.common
+Product B: modules from ideCommunity + vcs
+```
+
+However, for **non-critical modules** (OPTIONAL, ON_DEMAND, unspecified loading), the effective "available" set is global:
+- `crossProductModules` = union of ALL product modules
+- `crossPluginModules` = all plugin content modules
+
+This means non-critical modules validate against the same global set across products. The BFS traversal stops at cross-plugin/cross-product boundaries (doesn't traverse into external modules).
+
+### Why Same Module May Be Validated Multiple Times
+
+When module X is included in multiple products:
+1. BFS traversal runs once per product
+2. Module descriptor lookup is O(1) (cached)
+3. Traversal uses in-memory data structures (fast)
+4. Per-product context matters: `allowedMissingDependencies` differs
+
+For non-critical plugin modules, a future optimization could pre-validate globally and reuse results per-product, only filtering by `allowedMissingDependencies`.
+
+### Parallel Execution
+
+Products are validated in parallel using `coroutineScope`:
+
+```kotlin
+return coroutineScope {
+  productIndices.map { (productName, productIndex) ->
+    async {
+      validateSingleProduct(productIndex = productIndex, ...)
+    }
+  }.awaitAll().flatten()
+}
+```
+
+This maximizes CPU utilization when validating many products.
+
 ## Troubleshooting
 
 ### Common Errors

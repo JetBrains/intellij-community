@@ -24,6 +24,7 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResu
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import java.nio.file.Files.readString
+import kotlin.system.exitProcess
 
 /**
  * Generates module descriptor dependencies for all modules with includeDependencies=true.
@@ -83,7 +84,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   // Report all errors at once
   if (errors.isNotEmpty()) {
     val hasMissingDependencies = errors.any { it is MissingDependenciesError }
-    error(buildString {
+    System.err.println(buildString {
       if (hasMissingDependencies) {
         formatProductDependencyErrorsHeader(this)
       }
@@ -92,6 +93,7 @@ internal suspend fun generateModuleDescriptorDependencies(
         formatProductDependencyErrorsFooter(this)
       }
     })
+    exitProcess(1)
   }
 
   // Write XML files in parallel

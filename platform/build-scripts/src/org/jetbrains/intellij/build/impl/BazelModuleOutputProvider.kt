@@ -94,4 +94,32 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHo
     val jars = jarsRelative.map { projectHome.resolve(it) }
     return jars
   }
+
+  override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?): ByteArray? {
+    return findFileInAnyModuleOutput(modules = nameToModule.values, relativePath = relativePath, provider = this, moduleNamePrefix = moduleNamePrefix)
+  }
+}
+
+/**
+ * Searches for a file across module outputs.
+ * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix followed by '.'.
+ */
+internal fun findFileInAnyModuleOutput(
+  modules: Iterable<JpsModule>,
+  relativePath: String,
+  provider: ModuleOutputProvider,
+  moduleNamePrefix: String? = null,
+): ByteArray? {
+  val filtered = if (moduleNamePrefix != null) {
+    modules.filter { it.name.startsWith("$moduleNamePrefix.") }
+  }
+  else {
+    modules
+  }
+  for (module in filtered) {
+    provider.readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)?.let {
+      return it
+    }
+  }
+  return null
 }

@@ -12,6 +12,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -59,7 +60,21 @@ fun withTracer(serviceName: String, traceFile: Path? = null, block: suspend () -
   }
 }
 
-private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
+suspend fun withoutTracer(block: suspend () -> Unit) {
+  try {
+    traceManagerInitializer = {
+      val tracer = TracerProvider.noop().get("build-script")
+      BuildDependenciesDownloader.TRACER = tracer
+      tracer to null
+    }
+    block()
+  }
+  finally {
+    traceManagerInitializer = { throw IllegalStateException("already built") }
+  }
+}
+
+private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor?> = {
   val batchSpanProcessor = BatchSpanProcessor(
     scheduleDelay = 10.seconds,
     coroutineScope = CoroutineScope(Job()),
@@ -79,7 +94,7 @@ private var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
 
 object TraceManager {
   private var tracer: Tracer
-  private val batchSpanProcessor: BatchSpanProcessor
+  private val batchSpanProcessor: BatchSpanProcessor?
   private val isEnabled = System.getProperty("intellij.build.export.opentelemetry.spans")?.toBoolean() ?: false
 
   init {
@@ -95,16 +110,16 @@ object TraceManager {
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
   suspend fun flush() {
-    batchSpanProcessor.flush()
+    batchSpanProcessor?.flush()
   }
 
   suspend fun shutdown() {
-    batchSpanProcessor.forceShutdown()
+    batchSpanProcessor?.forceShutdown()
   }
 
   suspend fun scheduleExportPendingSpans() {
     if (isEnabled) {
-      batchSpanProcessor.scheduleFlush()
+      batchSpanProcessor?.scheduleFlush()
     }
   }
 }

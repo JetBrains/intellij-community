@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout.discovery
 
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -25,6 +26,7 @@ import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Configuration for generating all module sets and products.
@@ -196,8 +198,9 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       .distinct()
       .toList()
 
+    val xIncludeCache = ConcurrentHashMap<String, LoadedXIncludeReference>()
     val pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = allBundledPlugins.associateWith { pluginName ->
-      async { extractPluginContent(pluginName, config.moduleOutputProvider) }
+      async { extractPluginContent(pluginName, config.moduleOutputProvider, xIncludeCache) }
     }
 
     // TIER 2: Parallel dependency and product generation (can run concurrently with TIER 1)

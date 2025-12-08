@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.productLayout.analysis.ProductCategory
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
+import org.jetbrains.intellij.build.telemetry.withoutTracer
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Path
@@ -85,25 +86,27 @@ fun runModuleSetMain(
   projectRoot: Path,
   generateXmlImpl: suspend (moduleOutputProvider: ModuleOutputProvider) -> Unit,
 ): Unit = runBlocking(Dispatchers.Default) {
-  // Parse `--json` arg with optional filter
-  val jsonArg = args.firstOrNull { it.startsWith("--json") }
-  val moduleOutputProvider = createModuleOutputProvider(projectRoot)
-  when {
-    jsonArg != null -> {
-      jsonResponse(
-        communityModuleSets = communityModuleSets,
-        communitySourceFile = communitySourceFile,
-        ultimateSourceFile = ultimateSourceFile,
-        ultimateModuleSets = ultimateModuleSets,
-        projectRoot = projectRoot,
-        testProducts = testProducts,
-        jsonArg = jsonArg,
-        moduleOutputProvider = moduleOutputProvider,
-      )
-    }
-    else -> {
-      // Default mode: Generate XML files
-      generateXmlImpl(moduleOutputProvider)
+  withoutTracer {
+    // Parse `--json` arg with optional filter
+    val jsonArg = args.firstOrNull { it.startsWith("--json") }
+    val moduleOutputProvider = createModuleOutputProvider(projectRoot)
+    when {
+      jsonArg != null -> {
+        jsonResponse(
+          communityModuleSets = communityModuleSets,
+          communitySourceFile = communitySourceFile,
+          ultimateSourceFile = ultimateSourceFile,
+          ultimateModuleSets = ultimateModuleSets,
+          projectRoot = projectRoot,
+          testProducts = testProducts,
+          jsonArg = jsonArg,
+          moduleOutputProvider = moduleOutputProvider,
+        )
+      }
+      else -> {
+        // Default mode: Generate XML files
+        generateXmlImpl(moduleOutputProvider)
+      }
     }
   }
 }
