@@ -1380,7 +1380,8 @@ open class FileEditorManagerImpl(
    *
    * WARNING: Utilizes [PrecomputedFlow] that is handled differently from normal [Flow<EditorCompositeModel>]
    */
-  protected fun createPrecomputedCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
+  @ApiStatus.Internal
+  fun createPrecomputedCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
     return EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).blockingFileEditorWithProviderFlow(
       editorsWithProviders = editorsWithProviders,
     )
