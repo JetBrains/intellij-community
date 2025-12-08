@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.simple.BracesTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -20,39 +19,39 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.psi.JavaTokenType.COLON;
 
 public final class JavaTailTypes {
-  public static final TailType CALL_RPARENTH = new RParenthTailType(){
+  public static final ModNavigatorTailType CALL_RPARENTH = new RParenthTailType(){
     @Override
-    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
-      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && editor.getDocument().getCharsSequence().charAt(tailOffset - 1) != '(';
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
+      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && document.getCharsSequence().charAt(tailOffset - 1) != '(';
     }
   };
-  public static final TailType RPARENTH = new RParenthTailType(){
+  public static final ModNavigatorTailType RPARENTH = new RParenthTailType(){
     @Override
-    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
       return styleSettings.SPACE_WITHIN_PARENTHESES;
     }
   };
-  public static final TailType IF_RPARENTH = new RParenthTailType(){
+  public static final ModNavigatorTailType IF_RPARENTH = new RParenthTailType(){
     @Override
-    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
       return styleSettings.SPACE_WITHIN_IF_PARENTHESES;
     }
   };
-  public static final TailType WHILE_RPARENTH = new RParenthTailType(){
+  public static final ModNavigatorTailType WHILE_RPARENTH = new RParenthTailType(){
     @Override
-    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
       return styleSettings.SPACE_WITHIN_WHILE_PARENTHESES;
     }
   };
-  public static final TailType CALL_RPARENTH_SEMICOLON = new RParenthTailType(){
+  public static final ModNavigatorTailType CALL_RPARENTH_SEMICOLON = new RParenthTailType(){
     @Override
-    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+    protected boolean isSpaceWithinParentheses(final CommonCodeStyleSettings styleSettings, final Document document, final int tailOffset) {
       return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
     }
 
     @Override
-    public int processTail(final @NotNull Editor editor, int tailOffset) {
-      return insertChar(editor, super.processTail(editor, tailOffset), ';');
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+      return insertChar(navigator, super.processTail(navigator, tailOffset), ';');
     }
   };
 

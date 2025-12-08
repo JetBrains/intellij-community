@@ -2,23 +2,21 @@
 package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.ModNavigatorTailType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class RParenthTailType extends TailType {
+public abstract class RParenthTailType extends ModNavigatorTailType {
   private static final Logger LOG = Logger.getInstance(RParenthTailType.class);
 
   private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
@@ -33,28 +31,32 @@ public abstract class RParenthTailType extends TailType {
     return element == null ? new TextRange(0, document.getTextLength()) : element.getTextRange();
   }
 
-  protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Document document, final int tailOffset);
 
   @Override
-  public int processTail(final @NotNull Editor editor, int tailOffset) {
-    return addRParenth(editor, tailOffset,
-                       isSpaceWithinParentheses(CodeStyle.getLocalLanguageSettings(editor, tailOffset), editor, tailOffset));
+  public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+    Document document = navigator.getDocument();
+    PsiFile psiFile = navigator.getPsiFile();
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
+    CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(psiFile, language);
+    return addRParenth(navigator, tailOffset,
+                       isSpaceWithinParentheses(settings, document, tailOffset));
   }
 
-  public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {
-    int existingRParenthOffset = getExistingRParenthOffset(editor, offset);
+  public static int addRParenth(ModNavigator navigator, int offset, boolean spaceWithinParens) {
+    int existingRParenthOffset = getExistingRParenthOffset(navigator, offset);
 
     if (existingRParenthOffset < 0){
       if (spaceWithinParens){
-        offset = insertChar(editor, offset, ' ');
+        offset = insertChar(navigator, offset, ' ');
       }
-      editor.getDocument().insertString(offset, ")");
-      return moveCaret(editor, offset, 1);
+      navigator.getDocument().insertString(offset, ")");
+      return moveCaret(navigator, offset, 1);
     }
     if (spaceWithinParens && offset == existingRParenthOffset) {
-      existingRParenthOffset = insertChar(editor, offset, ' ');
+      existingRParenthOffset = insertChar(navigator, offset, ' ');
     }
-    return moveCaret(editor, existingRParenthOffset, 1);
+    return moveCaret(navigator, existingRParenthOffset, 1);
   }
 
   @Override
@@ -62,32 +64,27 @@ public abstract class RParenthTailType extends TailType {
     return "RParenth";
   }
 
-  private static int getExistingRParenthOffset(final Editor editor, final int tailOffset) {
-    final Document document = editor.getDocument();
+  private static int getExistingRParenthOffset(@NotNull ModNavigator navigator, final int tailOffset) {
+    final Document document = navigator.getDocument();
     if (tailOffset >= document.getTextLength()) return -1;
-
-    final CharSequence charsSequence = document.getCharsSequence();
-    EditorHighlighter highlighter = editor.getHighlighter();
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(navigator.getProject());
+    psiDocumentManager.commitDocument(document);
+    PsiFile file = navigator.getPsiFile();
 
     int existingRParenthOffset = -1;
-    for(HighlighterIterator iterator = highlighter.createIterator(tailOffset); !iterator.atEnd(); iterator.advance()){
-      final IElementType tokenType = iterator.getTokenType();
 
-      if ((!(tokenType instanceof IJavaElementType) || !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(tokenType)) &&
-          tokenType != TokenType.WHITE_SPACE) {
-        final int start = iterator.getStart();
-        if (iterator.getEnd() == start + 1 &&  ')' == charsSequence.charAt(start)) {
-          existingRParenthOffset = start;
-        }
+    for (PsiElement element = file.findElementAt(tailOffset); element != null; element = PsiTreeUtil.nextLeaf(element)) {
+      if (PsiUtil.isJavaToken(element, JavaTokenType.RPARENTH)) {
+        existingRParenthOffset = element.getTextRange().getStartOffset();
+      }
+      if (!(element instanceof PsiComment) && !(element instanceof PsiWhiteSpace)) {
         break;
       }
     }
 
     if (existingRParenthOffset >= 0){
-      final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(editor.getProject());
-      psiDocumentManager.commitDocument(document);
-      TextRange range = getRangeToCheckParensBalance(psiDocumentManager.getPsiFile(document), document, editor.getCaretModel().getOffset());
-      int balance = calcParensBalance(document, highlighter, range.getStartOffset(), range.getEndOffset());
+      TextRange range = getRangeToCheckParensBalance(file, document, navigator.getCaretOffset());
+      int balance = calcParensBalance(document, file, range.getStartOffset(), range.getEndOffset());
       if (balance > 0){
         return -1;
       }
@@ -95,22 +92,21 @@ public abstract class RParenthTailType extends TailType {
     return existingRParenthOffset;
   }
 
-  private static int calcParensBalance(Document document, EditorHighlighter highlighter, int rangeStart, int rangeEnd){
+  private static int calcParensBalance(Document document, PsiFile file, int rangeStart, int rangeEnd) {
     LOG.assertTrue(0 <= rangeStart);
     LOG.assertTrue(rangeStart <= rangeEnd);
     LOG.assertTrue(rangeEnd <= document.getTextLength());
 
-    HighlighterIterator iterator = highlighter.createIterator(rangeStart);
     int balance = 0;
-    while(!iterator.atEnd() && iterator.getStart() < rangeEnd){
-      IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LPARENTH){
+    for (PsiElement element = file.findElementAt(rangeStart);
+         element != null && element.getTextRange().getStartOffset() < rangeEnd;
+         element = PsiTreeUtil.nextLeaf(element)) {
+      if (PsiUtil.isJavaToken(element, JavaTokenType.LPARENTH)) {
         balance++;
       }
-      else if (tokenType == JavaTokenType.RPARENTH){
+      else if (PsiUtil.isJavaToken(element, JavaTokenType.RPARENTH)) {
         balance--;
       }
-      iterator.advance();
     }
     return balance;
   }
