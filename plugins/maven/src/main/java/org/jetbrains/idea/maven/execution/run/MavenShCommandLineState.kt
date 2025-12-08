@@ -463,16 +463,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       throw IllegalStateException("$pathToMavenListener does not exist")
     }
     if (pathToMavenListener.isRegularFile()) return pathToMavenListener
-
-    if (isRunningFromSources()) {
-      val tempFile = FileUtil.createTempFile("idea", "-event-listener.jar", true).toPath()
-      MavenLog.LOG.warn("compressing maven event listener from $pathToMavenListener")
-      Compressor.Zip(tempFile)
-        .use { zip ->
-          zip.addDirectory(MavenServerManager.getInstance().getMavenEventListener().toPath())
-        }
-      return tempFile
-    }
     throw IllegalStateException("$pathToMavenListener does not exist")
   }
 

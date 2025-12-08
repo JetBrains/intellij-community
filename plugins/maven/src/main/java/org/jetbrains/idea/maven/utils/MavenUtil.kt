@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -2028,9 +2030,7 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun isRunningFromSources(): Boolean {
-    return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
-  }
+  fun isRunningFromSources(): Boolean = PluginManagerCore.isRunningFromSources()
 
   @RequiresBackgroundThread
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
