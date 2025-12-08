@@ -6203,8 +6203,8 @@ f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
-- f:createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
-- f:createDocument(Z):com.intellij.openapi.editor.Document
+- createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
+- createDocument(Z):com.intellij.openapi.editor.Document
 - createDocument(C[]):com.intellij.openapi.editor.Document
 - createEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - createEditor(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
