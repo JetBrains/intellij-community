@@ -7,6 +7,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
+import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
+import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,7 +38,7 @@ data class ContentModule(
  * @param nestedSets List of nested module sets (for xi:include generation)
  * @param alias Optional module alias for `<module value="..."/>` declaration (e.g., "com.intellij.modules.xml")
  * @param outputModule Optional module name whose resources directory should be used for generating this module set's XML
- * @param selfContained If true, this module set will be validated in isolation to ensure all dependencies are resolvable within the set itself. Use for module sets that are designed to be standalone (e.g., core.platform). Default: false.
+ * @param selfContained If true, this module set will be validated in isolation to ensure all dependencies are resolvable within the set itself. Use for module sets that are designed to be standalone (e.g., `core.platform`). Default: false.
  */
 @Serializable
 data class ModuleSet(
@@ -357,7 +362,7 @@ private fun resolveOutputDir(moduleSet: ModuleSet, defaultOutputDir: Path, modul
  * Automatically cleans up outdated module set XML files that no longer have corresponding
  * Kotlin module set functions.
  */
-suspend fun doGenerateAllModuleSetsInternal(
+internal suspend fun doGenerateAllModuleSetsInternal(
   obj: Any,
   outputDir: Path,
   label: String,

@@ -11,41 +11,7 @@ import org.jetbrains.intellij.build.productLayout.ModuleSet
  * - Optional caching for repeated queries
  * - Consistent API across all analysis functions
  */
-object ModuleSetTraversal {
-  /**
-   * Collects all nested set names (direct + transitive) from a module set.
-   * 
-   * Example: if `essential` includes `libraries`, and `libraries` includes `libraries.core`,
-   * returns `{"libraries", "libraries.core", ...}` for `essential`.
-   * 
-   * @param startSetName Name of the module set to start from
-   * @param allModuleSets All module sets to search in
-   * @param cache Optional cache for repeated queries (key = set name, value = nested set names)
-   * @return Set of all nested set names (direct and transitive)
-   * @throws IllegalStateException if a cycle is detected
-   */
-  fun collectAllNestedSets(
-    startSetName: String,
-    allModuleSets: List<ModuleSet>,
-    cache: MutableMap<String, Set<String>>? = null
-  ): Set<String> {
-    // Check cache first
-    cache?.get(startSetName)?.let { return it }
-    
-    val result = mutableSetOf<String>()
-    collectNestedSetsRecursive(
-      setName = startSetName,
-      allModuleSets = allModuleSets,
-      result = result,
-      visited = mutableSetOf(),
-      chain = mutableListOf()
-    )
-    
-    // Store in cache
-    cache?.put(startSetName, result)
-    return result
-  }
-  
+internal object ModuleSetTraversal {
   private fun collectNestedSetsRecursive(
     setName: String,
     allModuleSets: List<ModuleSet>,
@@ -150,20 +116,7 @@ object ModuleSetTraversal {
       collectModulesRecursive(nestedSet, result)
     }
   }
-  
-  /**
-   * Collects all module names into a List (preserving duplicates).
-   * Useful for detecting duplicate module declarations.
-   * 
-   * @param moduleSet The module set to collect from
-   * @return List of all module names (may contain duplicates)
-   */
-  fun collectAllModuleNamesAsList(moduleSet: ModuleSet): List<String> {
-    val result = mutableListOf<String>()
-    collectModulesIntoList(moduleSet, result)
-    return result
-  }
-  
+
   private fun collectModulesIntoList(moduleSet: ModuleSet, result: MutableList<String>) {
     for (module in moduleSet.modules) {
       result.add(module.name)
@@ -186,41 +139,4 @@ object ModuleSetTraversal {
     }
     return moduleSet.nestedSets.any { containsModule(it, moduleName) }
   }
-}
-
-/**
- * Simple cache for module set traversal results.
- * Thread-safe for read operations, not for concurrent modifications.
- */
-class TraversalCache {
-  private val nestedSetsCache = mutableMapOf<String, Set<String>>()
-  private val allModulesCache = mutableMapOf<String, Set<String>>()
-  
-  /**
-   * Gets or computes nested sets for a module set.
-   */
-  fun getNestedSets(setName: String, compute: () -> Set<String>): Set<String> {
-    return nestedSetsCache.getOrPut(setName, compute)
-  }
-  
-  /**
-   * Gets or computes all modules for a module set.
-   */
-  fun getAllModules(setName: String, compute: () -> Set<String>): Set<String> {
-    return allModulesCache.getOrPut(setName, compute)
-  }
-  
-  /**
-   * Clears all cached data.
-   */
-  fun invalidate() {
-    nestedSetsCache.clear()
-    allModulesCache.clear()
-  }
-  
-  /**
-   * Returns the underlying cache maps for use with ModuleSetTraversal functions.
-   */
-  fun nestedSetsCacheMap(): MutableMap<String, Set<String>> = nestedSetsCache
-  fun allModulesCacheMap(): MutableMap<String, Set<String>> = allModulesCache
 }

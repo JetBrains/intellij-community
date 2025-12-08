@@ -3,13 +3,14 @@ package org.jetbrains.intellij.build.productLayout.analysis
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.coroutines.Deferred
-import org.jetbrains.intellij.build.productLayout.AnsiColors
-import org.jetbrains.intellij.build.productLayout.ModuleDescriptorCache
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-
-// region Validation Result Types
+import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
+import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.stats.AnsiColors
 
 internal sealed interface ValidationError {
   val context: String
@@ -51,31 +52,36 @@ internal data class MissingDependenciesError(
  *
  * @return List of validation errors (empty if all self-contained sets are valid)
  */
-internal fun validateSelfContainedModuleSets(
+internal suspend fun validateSelfContainedModuleSets(
   allModuleSets: List<ModuleSet>,
   descriptorCache: ModuleDescriptorCache,
+  cache: ModuleSetTraversalCache,
 ): List<SelfContainedValidationError> {
   val selfContainedSets = collectSelfContainedSets(allModuleSets)
   if (selfContainedSets.isEmpty()) {
     return emptyList()
   }
 
-  val errors = mutableListOf<SelfContainedValidationError>()
+  // Validate each self-contained set in parallel
+  return coroutineScope {
+    selfContainedSets.map { moduleSet ->
+      async {
+        val allModulesInSet = cache.getModuleNames(moduleSet)
+        val missingDeps = findMissingTransitiveDependencies(
+          modules = allModulesInSet,
+          availableModules = allModulesInSet,
+          descriptorCache = descriptorCache,
+        )
 
-  for (moduleSet in selfContainedSets) {
-    val allModulesInSet = ModuleSetTraversal.collectAllModuleNames(moduleSet)
-    val missingDeps = findMissingTransitiveDependencies(
-      modules = allModulesInSet,
-      availableModules = allModulesInSet,
-      descriptorCache = descriptorCache,
-    )
-
-    if (missingDeps.isNotEmpty()) {
-      errors.add(SelfContainedValidationError(context = moduleSet.name, missingDependencies = missingDeps))
-    }
+        if (missingDeps.isNotEmpty()) {
+          SelfContainedValidationError(context = moduleSet.name, missingDependencies = missingDeps)
+        }
+        else {
+          null
+        }
+      }
+    }.awaitAll().filterNotNull()
   }
-
-  return errors
 }
 
 /**
@@ -93,67 +99,97 @@ internal suspend fun validateProductModuleSets(
   allModuleSets: List<ModuleSet>,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>>,
   descriptorCache: ModuleDescriptorCache,
+  cache: ModuleSetTraversalCache,
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
 ): List<ValidationError> {
   val allPluginModules = collectAllPluginModules(pluginContentJobs)
-  val moduleSetsByName = allModuleSets.associateBy { it.name }
+
+  // Validate each product in parallel
+  return coroutineScope {
+    productSpecs
+      .filter { (_, spec) -> spec != null }
+      .map { (productName, spec) ->
+        async {
+          validateSingleProduct(
+            productName = productName,
+            spec = spec!!,
+            cache = cache,
+            allModuleSets = allModuleSets,
+            allPluginModules = allPluginModules,
+            descriptorCache = descriptorCache,
+            pluginContentJobs = pluginContentJobs,
+          )
+        }
+      }.awaitAll().flatten()
+  }
+}
+
+/**
+ * Validates a single product and returns any errors found.
+ */
+private suspend fun validateSingleProduct(
+  productName: String,
+  spec: ProductModulesContentSpec,
+  cache: ModuleSetTraversalCache,
+  allModuleSets: List<ModuleSet>,
+  allPluginModules: Set<String>,
+  descriptorCache: ModuleDescriptorCache,
+  pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
+): List<ValidationError> {
   val errors = mutableListOf<ValidationError>()
 
-  for ((productName, spec) in productSpecs) {
-    if (spec == null) {
-      continue
-    }
+  val productIndex = buildProductModuleIndex(productName, spec, pluginContentJobs)
 
-    val productIndex = buildProductModuleIndex(productName, spec, pluginContentJobs)
+  // Check for missing module sets
+  val missingModuleSets = productIndex.referencedModuleSets.filterNot { cache.getModuleSet(it) != null }
+  if (missingModuleSets.isNotEmpty()) {
+    errors.add(MissingModuleSetsError(context = productName, missingModuleSets = missingModuleSets.toSet()))
+  }
 
-    // Check for missing module sets
-    val missingModuleSets = productIndex.referencedModuleSets.filterNot { it in moduleSetsByName }
-    if (missingModuleSets.isNotEmpty()) {
-      errors.add(MissingModuleSetsError(context = productName, missingModuleSets = missingModuleSets.toSet()))
-    }
+  // Check for duplicate content modules (single-pass detection)
+  // OPTIMIZED: O(n) single pass instead of O(n log n) groupingBy
+  val seen = mutableSetOf<String>()
+  val duplicateModules = mutableMapOf<String, Int>()
 
-    // Check for duplicate content modules
-    val allContentModules = mutableListOf<String>()
-    for (moduleSetWithOverrides in spec.moduleSets) {
-      val moduleSet = moduleSetsByName[moduleSetWithOverrides.moduleSet.name]
-      if (moduleSet != null) {
-        allContentModules.addAll(ModuleSetTraversal.collectAllModuleNamesAsList(moduleSet))
+  for (moduleSetWithOverrides in spec.moduleSets) {
+    val moduleSet = cache.getModuleSet(moduleSetWithOverrides.moduleSet.name)
+    if (moduleSet != null) {
+      for (moduleName in cache.getModuleNames(moduleSet)) {
+        if (!seen.add(moduleName)) {
+          duplicateModules[moduleName] = (duplicateModules.get(moduleName) ?: 1) + 1
+        }
       }
     }
-    for (module in spec.additionalModules) {
-      allContentModules.add(module.name)
+  }
+  for (module in spec.additionalModules) {
+    if (!seen.add(module.name)) {
+      duplicateModules[module.name] = (duplicateModules.get(module.name) ?: 1) + 1
     }
+  }
+  if (duplicateModules.isNotEmpty()) {
+    errors.add(DuplicateModulesError(context = productName, duplicates = duplicateModules))
+  }
 
-    val duplicateModules = allContentModules.groupingBy { it }.eachCount().filter { it.value > 1 }
-    if (duplicateModules.isNotEmpty()) {
-      errors.add(DuplicateModulesError(context = productName, duplicates = duplicateModules))
-    }
+  // Check for missing dependencies
+  val criticalModules = productIndex.moduleLoadings
+    .filterValues { it == ModuleLoadingRuleValue.EMBEDDED || it == ModuleLoadingRuleValue.REQUIRED }
+    .keys
 
-    // Check for missing dependencies
-    val criticalModules = productIndex.moduleLoadings
-      .filterValues { it == ModuleLoadingRuleValue.EMBEDDED || it == ModuleLoadingRuleValue.REQUIRED }
-      .keys
+  val missingDeps = findMissingTransitiveDependencies(
+    modules = productIndex.allModules,
+    availableModules = productIndex.allModules,
+    descriptorCache = descriptorCache,
+    allowedMissing = spec.allowedMissingDependencies,
+    crossPluginModules = allPluginModules,
+    criticalModules = criticalModules,
+  )
 
-    val missingDeps = findMissingTransitiveDependencies(
-      modules = productIndex.allModules,
-      availableModules = productIndex.allModules,
-      descriptorCache = descriptorCache,
-      allowedMissing = spec.allowedMissingDependencies,
-      crossPluginModules = allPluginModules,
-      criticalModules = criticalModules,
-    )
-
-    if (missingDeps.isNotEmpty()) {
-      errors.add(MissingDependenciesError(context = productName, missingModules = missingDeps, allModuleSets = allModuleSets))
-    }
+  if (missingDeps.isNotEmpty()) {
+    errors.add(MissingDependenciesError(context = productName, missingModules = missingDeps, allModuleSets = allModuleSets))
   }
 
   return errors
 }
-
-// endregion
-
-// region Helper Functions
 
 private fun collectSelfContainedSets(allModuleSets: List<ModuleSet>): List<ModuleSet> {
   val result = mutableListOf<ModuleSet>()
@@ -394,5 +430,3 @@ internal fun formatProductDependencyErrorsFooter(sb: StringBuilder) {
   sb.appendLine("${AnsiColors.BLUE}2.${AnsiColors.RESET} Or add individual modules via module()/embeddedModule()")
   sb.appendLine("${AnsiColors.BLUE}3.${AnsiColors.RESET} Or add the product to allowUnresolvableProducts if this is intentional")
 }
-
-// endregion

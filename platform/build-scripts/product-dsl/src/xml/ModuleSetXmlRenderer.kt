@@ -1,10 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.xmlValue
+import org.jetbrains.intellij.build.productLayout.ContentBlock
+import org.jetbrains.intellij.build.productLayout.ContentModule
+import org.jetbrains.intellij.build.productLayout.JETBRAINS_NAMESPACE
+import org.jetbrains.intellij.build.productLayout.MODULE_SET_PREFIX
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.ModuleSetName
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.containsOverriddenNestedSet
+import org.jetbrains.intellij.build.productLayout.findOverriddenNestedSetNames
+import org.jetbrains.intellij.build.productLayout.withEditorFold
 
 /**
  * Determines if a module set needs to be inlined (cannot use xi:include).
@@ -34,13 +44,13 @@ internal fun StringBuilder.appendInlinedModuleSet(
 ) {
   val hasOverrides = overrides.isNotEmpty()
   val directBlock = contentBlocks.find { it.source == moduleSet.name }
-  
+
   // Append direct modules if present
   if (directBlock != null && directBlock.modules.isNotEmpty()) {
     val label = if (hasOverrides) moduleSet.name else "${moduleSet.name} (selective inline)"
     withEditorFold(this, "  ", label) {
       append("  <content namespace=\"$JETBRAINS_NAMESPACE\">\n")
-      
+
       // Add explanatory comment
       if (hasOverrides) {
         val overriddenModules = overrides.entries
@@ -53,17 +63,17 @@ internal fun StringBuilder.appendInlinedModuleSet(
         val nestedNames = overriddenNested.joinToString(", ") { "'$it'" }
         append("    <!-- Module set '${moduleSet.name}' selectively inlined - nested set(s) $nestedNames referenced separately with overrides -->\n")
       }
-      
+
       // Append modules with effective overrides
       for (module in directBlock.modules) {
         val effectiveLoading = overrides[module.name] ?: module.loading
-        appendModuleLine(ModuleWithLoading(module.name, effectiveLoading, module.includeDependencies), "    ")
+        appendModuleLine(ContentModule(module.name, effectiveLoading, module.includeDependencies), "    ")
       }
-      
+
       append("  </content>\n")
     }
   }
-  
+
   // Process nested sets recursively
   appendNestedModuleSets(moduleSet.nestedSets, contentBlocks, overriddenModuleSetNames)
 }
@@ -78,7 +88,7 @@ internal fun StringBuilder.appendNestedModuleSets(
 ) {
   for (nestedSet in nestedSets) {
     val nestedSetName = ModuleSetName(nestedSet.name)
-    
+
     when {
       nestedSetName in overriddenModuleSetNames -> {
         // Skip - will be processed separately at top level with its overrides
@@ -105,7 +115,7 @@ internal fun StringBuilder.appendModuleSetInclude(moduleSetName: String) {
 
 /**
  * Recursively generates XML content for a module set, applying selective inlining when necessary.
- * 
+ *
  * When a module set has overrides or contains overridden nested sets, it cannot use xi:include
  * (which would lose the overrides). Instead, we inline the direct modules and generate
  * xi:include directives for non-overridden nested sets.
@@ -132,10 +142,10 @@ internal fun StringBuilder.appendModuleSetXml(
 /**
  * Appends a single module XML element with optional loading attribute.
  */
-internal fun StringBuilder.appendModuleLine(moduleWithLoading: ModuleWithLoading, indent: String = "    ") {
-  append("$indent<module name=\"${moduleWithLoading.name}\"")
-  if (moduleWithLoading.loading != null) {
-    append(" loading=\"${moduleWithLoading.loading.xmlValue}\"")
+internal fun StringBuilder.appendModuleLine(module: ContentModule, indent: String = "    ") {
+  append("$indent<module name=\"${module.name}\"")
+  if (module.loading != null) {
+    append(" loading=\"${module.loading.xmlValue}\"")
   }
   append("/>\n")
 }
@@ -145,7 +155,7 @@ internal fun StringBuilder.appendModuleLine(moduleWithLoading: ModuleWithLoading
  */
 internal fun StringBuilder.appendContentBlock(
   blockSource: String,
-  modules: List<ModuleWithLoading>,
+  modules: List<ContentModule>,
   indent: String = "  ",
 ) {
   withEditorFold(sb = this, indent = indent, description = blockSource) {
@@ -165,7 +175,7 @@ internal fun StringBuilder.appendModuleSetsStrategyComment(
   overriddenModuleSetNames: Set<ModuleSetName>
 ) {
   if (overriddenModuleSetNames.isEmpty()) return
-  
+
   append("  <!-- Module Set Loading Strategy:\n")
   for (moduleSetWithOverrides in spec.moduleSets) {
     if (moduleSetWithOverrides.hasOverrides) {

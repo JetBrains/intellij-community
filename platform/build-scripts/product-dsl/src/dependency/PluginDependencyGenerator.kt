@@ -1,12 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.dependency
 
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
+import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
+import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResult
+import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
+import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import java.nio.file.Files
 
 /**

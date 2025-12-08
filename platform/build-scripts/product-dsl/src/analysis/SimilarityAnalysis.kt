@@ -1,77 +1,87 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.analysis
 
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
 /**
  * Detects overlapping or redundant module sets.
- * CRITICAL FIX: Filters out intentional nested set inclusions (e.g., libraries ⊃ libraries.core).
- * ENHANCED: Now checks TRANSITIVE nested relationships (e.g., essential → libraries → libraries.core).
+ * CRITICAL FIX: Filters out intentional nested set inclusions (e.g., libraries ⊃ `libraries.core`).
+ * ENHANCED: Now checks TRANSITIVE nested relationships (e.g., essential → libraries → `libraries.core`).
  * Only reports actual duplications, not designed composition patterns.
  *
+ * OPTIMIZED: Uses [ModuleSetTraversalCache] for O(1) lookups and parallel comparison.
+ *
  * @param allModuleSets List of all module sets with metadata
+ * @param cache Pre-computed traversal cache for O(1) lookups
  * @param minOverlapPercent Minimum overlap percentage (0-100) to include in results
  * @return List of overlapping module set pairs sorted by overlap percentage (descending)
  */
-internal fun detectModuleSetOverlap(
+internal suspend fun detectModuleSetOverlap(
   allModuleSets: List<ModuleSetMetadata>,
+  cache: ModuleSetTraversalCache,
   minOverlapPercent: Int = 50
-): List<ModuleSetOverlap> {
-  val overlaps = mutableListOf<ModuleSetOverlap>()
-  val moduleSetsList = allModuleSets.map { it.moduleSet }
+): List<ModuleSetOverlap> = coroutineScope {
+  val comparisons = mutableListOf<Deferred<ModuleSetOverlap?>>()
 
   for (i in allModuleSets.indices) {
     for (j in i + 1 until allModuleSets.size) {
-      val ms1 = allModuleSets[i]
-      val ms2 = allModuleSets[j]
-
-      // ✅ CRITICAL FIX: Skip if one explicitly includes the other as a nested set
-      // This prevents false positives like "libraries overlaps with libraries.core"
-      // when libraries explicitly includes libraries.core by design
-      //
-      // ✅ ENHANCED: Now checks TRANSITIVE relationships too!
-      // Example: essential → libraries → libraries.core
-      // This prevents false positive for "essential overlaps with libraries.core"
-      val ms1AllNestedSetNames = ModuleSetTraversal.collectAllNestedSets(ms1.moduleSet.name, moduleSetsList)
-      val ms2AllNestedSetNames = ModuleSetTraversal.collectAllNestedSets(ms2.moduleSet.name, moduleSetsList)
-
-      if (ms1AllNestedSetNames.contains(ms2.moduleSet.name) ||
-          ms2AllNestedSetNames.contains(ms1.moduleSet.name)) {
-        continue  // Intentional composition via nesting (direct or transitive), not duplication!
-      }
-      
-      // Calculate overlap based on direct modules only (not nested)
-      val modules1 = ms1.moduleSet.modules.map { it.name }.toSet()
-      val modules2 = ms2.moduleSet.modules.map { it.name }.toSet()
-      
-      val intersection = modules1.intersect(modules2)
-      if (intersection.isEmpty()) continue
-      
-      val union = modules1.union(modules2)
-      val overlapPercent = (intersection.size * 100) / union.size
-      
-      if (overlapPercent >= minOverlapPercent) {
-        val relationship = when {
-          intersection.size == modules1.size -> "subset"  // ms1 ⊂ ms2
-          intersection.size == modules2.size -> "superset"  // ms1 ⊃ ms2
-          else -> "overlap"
-        }
-        
-        overlaps.add(ModuleSetOverlap(
-          moduleSet1 = ms1.moduleSet.name,
-          moduleSet2 = ms2.moduleSet.name,
-          location1 = ms1.location,
-          location2 = ms2.location,
-          relationship = relationship,
-          overlapPercent = overlapPercent,
-          sharedModules = intersection.size,
-          totalModules1 = modules1.size,
-          totalModules2 = modules2.size,
-          recommendation = generateOverlapRecommendation(ms1, ms2, relationship, overlapPercent)
-        ))
-      }
+      comparisons.add(async {
+        computeOverlap(allModuleSets[i], allModuleSets[j], cache, minOverlapPercent)
+      })
     }
   }
-  
-  return overlaps.sortedByDescending { it.overlapPercent }
+
+  comparisons.mapNotNull { it.await() }.sortedByDescending { it.overlapPercent }
+}
+
+/**
+ * Computes overlap between two module sets.
+ * Returns null if no overlap or if one set is a transitive parent of the other.
+ */
+private fun computeOverlap(
+  ms1: ModuleSetMetadata,
+  ms2: ModuleSetMetadata,
+  cache: ModuleSetTraversalCache,
+  minOverlapPercent: Int
+): ModuleSetOverlap? {
+  // Skip if one explicitly includes the other as a nested set (direct or transitive)
+  if (cache.isTransitivelyNested(ms1.moduleSet.name, ms2.moduleSet.name) ||
+      cache.isTransitivelyNested(ms2.moduleSet.name, ms1.moduleSet.name)) {
+    return null  // Intentional composition via nesting, not duplication
+  }
+
+  // Calculate overlap based on direct modules only (not nested)
+  val modules1 = ms1.moduleSet.modules.map { it.name }.toSet()
+  val modules2 = ms2.moduleSet.modules.map { it.name }.toSet()
+
+  val intersection = modules1.intersect(modules2)
+  if (intersection.isEmpty()) return null
+
+  val union = modules1.union(modules2)
+  val overlapPercent = (intersection.size * 100) / union.size
+
+  if (overlapPercent < minOverlapPercent) return null
+
+  val relationship = when (intersection.size) {
+    modules1.size -> "subset"  // ms1 ⊂ ms2
+    modules2.size -> "superset"  // ms1 ⊃ ms2
+    else -> "overlap"
+  }
+
+  return ModuleSetOverlap(
+    moduleSet1 = ms1.moduleSet.name,
+    moduleSet2 = ms2.moduleSet.name,
+    location1 = ms1.location,
+    location2 = ms2.location,
+    relationship = relationship,
+    overlapPercent = overlapPercent,
+    sharedModules = intersection.size,
+    totalModules1 = modules1.size,
+    totalModules2 = modules2.size,
+    recommendation = generateOverlapRecommendation(ms1, ms2, relationship, overlapPercent)
+  )
 }
 
 /**
@@ -97,43 +107,56 @@ private fun generateOverlapRecommendation(
 /**
  * Analyzes similarity between products based on module set overlap.
  * Used to identify products with similar compositions for potential refactoring.
- * 
+ *
+ * OPTIMIZED: Uses parallel comparison for O(n²) product pairs.
+ *
  * @param products List of all products
  * @param similarityThreshold Minimum similarity (0.0 to 1.0) to include in results
  * @return List of similar product pairs sorted by similarity (descending)
  */
-internal fun analyzeProductSimilarity(
+internal suspend fun analyzeProductSimilarity(
   products: List<ProductSpec>,
   similarityThreshold: Double = 0.7
-): List<ProductSimilarityPair> {
-  val pairs = mutableListOf<ProductSimilarityPair>()
+): List<ProductSimilarityPair> = coroutineScope {
   val productsWithContent = products.filter { it.contentSpec != null }
-  
+  val comparisons = mutableListOf<Deferred<ProductSimilarityPair?>>()
+
   for (i in productsWithContent.indices) {
     for (j in i + 1 until productsWithContent.size) {
-      val p1 = productsWithContent[i]
-      val p2 = productsWithContent[j]
-      
-      val sets1 = p1.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
-      val sets2 = p2.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
-      
-      val shared = sets1.intersect(sets2)
-      val union = sets1.union(sets2)
-      val similarity = if (union.isNotEmpty()) shared.size.toDouble() / union.size else 0.0
-      
-      if (similarity >= similarityThreshold) {
-        pairs.add(ProductSimilarityPair(
-          product1 = p1.name,
-          product2 = p2.name,
-          similarity = similarity,
-          moduleSetSimilarity = similarity,
-          sharedModuleSets = shared.toList().sorted(),
-          uniqueToProduct1 = sets1.minus(sets2).toList().sorted(),
-          uniqueToProduct2 = sets2.minus(sets1).toList().sorted()
-        ))
-      }
+      comparisons.add(async {
+        computeProductSimilarity(productsWithContent[i], productsWithContent[j], similarityThreshold)
+      })
     }
   }
-  
-  return pairs.sortedByDescending { it.similarity }
+
+  comparisons.mapNotNull { it.await() }.sortedByDescending { it.similarity }
+}
+
+/**
+ * Computes similarity between two products.
+ * Returns null if similarity is below threshold.
+ */
+private fun computeProductSimilarity(
+  p1: ProductSpec,
+  p2: ProductSpec,
+  similarityThreshold: Double
+): ProductSimilarityPair? {
+  val sets1 = p1.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
+  val sets2 = p2.contentSpec!!.moduleSets.map { it.moduleSet.name }.toSet()
+
+  val shared = sets1.intersect(sets2)
+  val union = sets1.union(sets2)
+  val similarity = if (union.isNotEmpty()) shared.size.toDouble() / union.size else 0.0
+
+  if (similarity < similarityThreshold) return null
+
+  return ProductSimilarityPair(
+    product1 = p1.name,
+    product2 = p2.name,
+    similarity = similarity,
+    moduleSetSimilarity = similarity,
+    sharedModuleSets = shared.toList().sorted(),
+    uniqueToProduct1 = sets1.minus(sets2).toList().sorted(),
+    uniqueToProduct2 = sets2.minus(sets1).toList().sorted()
+  )
 }

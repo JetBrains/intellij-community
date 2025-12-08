@@ -1,113 +1,49 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.discovery
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.findFileInModuleSources
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
+import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
+import org.jetbrains.intellij.build.productLayout.dependency.generateModuleDescriptorDependencies
+import org.jetbrains.intellij.build.productLayout.dependency.generatePluginDependencies
+import org.jetbrains.intellij.build.productLayout.doGenerateAllModuleSetsInternal
+import org.jetbrains.intellij.build.productLayout.generateProductXml
+import org.jetbrains.intellij.build.productLayout.stats.GenerationResults
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
+import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
+import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
+import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Path to the product registry JSON file.
- */
-const val PRODUCT_REGISTRY_PATH: String = "build/dev-build.json"
-
-/**
- * Product registry containing all product configurations from dev-build.json.
- */
-@Serializable
-data class ProductConfigurationRegistry(@JvmField val products: Map<String, ProductConfiguration>)
-
-/**
- * Product configuration from dev-build.json.
- */
-@Serializable
-data class ProductConfiguration(
-  @JvmField val modules: List<String>,
-  @JvmField @SerialName("class") val className: String,
-  @JvmField val pluginXmlPath: String? = null,
-)
-
-/**
- * Represents a discovered product with all its metadata.
- * Used by both XML and JSON generators to avoid code duplication.
- * Test products have properties = null (they don't have ProductProperties classes).
+ * Configuration for generating all module sets and products.
+ * Used by [generateAllModuleSetsWithProducts] to orchestrate the full generation process.
  *
- * Note: The `properties` field uses type `Any?` instead of `ProductProperties?` to avoid
- * depending on the full build-scripts module (would create circular dependency).
- * In practice, it holds ProductProperties instances or null for test products.
+ * @param moduleSetSources Map of label to (source object, output directory). The source object should contain ModuleSet functions (e.g., CommunityModuleSets, UltimateModuleSets).
+ * @param discoveredProducts Products discovered from dev-build.json (must be provided by caller)
+ * @param testProductSpecs List of test product specifications to generate alongside regular products
+ * @param projectRoot Project root path
+ * @param moduleOutputProvider Module output provider for resolving module dependencies and output directories
  */
-data class DiscoveredProduct(
-  @JvmField val name: String,
-  @JvmField val config: ProductConfiguration,
-  @JvmField val properties: Any?, // ProductProperties or null
-  @JvmField val spec: ProductModulesContentSpec?,
-  @JvmField val pluginXmlPath: String?,
+data class ModuleSetGenerationConfig(
+  @JvmField val moduleSetSources: Map<String, Pair<Any, Path>>,
+  @JvmField val discoveredProducts: List<DiscoveredProduct>,
+  @JvmField val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
+  @JvmField val projectRoot: Path,
+  @JvmField val moduleOutputProvider: ModuleOutputProvider,
+  @JvmField val additionalPlugins: List<String> = emptyList(),
 )
-
-/**
- * Map of class FQN to actual file name for cases where class name != file name.
- * Example: DotnetExternalProductProperties class is in ReSharperExternalProductProperties.kt file.
- */
-private val CLASS_TO_FILE_NAME_OVERRIDES = mapOf(
-  "com.jetbrains.rider.build.product.DotnetExternalProductProperties" to "ReSharperExternalProductProperties.kt",
-  "org.jetbrains.intellij.build.AndroidStudioWithMarketplaceProperties" to "UltimateAwareIdeaCommunityProperties.kt",
-)
-
-/**
- * Finds the actual source file for a ProductProperties class by searching JPS module source roots.
- * This replaces hardcoded path mapping with actual file system lookup.
- *
- * @param buildModules List of build module names from dev-build.json (e.g., ["intellij.goland.build"])
- * @param productPropertiesClass The ProductProperties class to find
- * @param moduleOutputProvider Provider for accessing JPS modules
- * @param projectRoot Project root path for making paths relative
- * @return Relative path to the source file
- */
-fun findProductPropertiesSourceFile(
-  buildModules: List<String>,
-  productPropertiesClass: Class<*>,
-  moduleOutputProvider: ModuleOutputProvider,
-  projectRoot: Path,
-): String {
-  val className = productPropertiesClass.name
-
-  // Handle special cases where class name != file name
-  val fileName = CLASS_TO_FILE_NAME_OVERRIDES[className] ?: "${className.substringAfterLast('.')}.kt"
-  val packagePath = className.substringBeforeLast('.').replace('.', '/')
-  val relativePath = "$packagePath/$fileName"
-
-  // Search each build module's source roots
-  for (buildModuleName in buildModules) {
-    val jpsModule = moduleOutputProvider.findModule(buildModuleName) ?: continue
-
-    // Search production source roots (not test roots)
-    val sourceFile = jpsModule.sourceRoots
-      .asSequence()
-      .filter { it.rootType == JavaSourceRootType.SOURCE }
-      .firstNotNullOfOrNull { sourceRoot ->
-        JpsJavaExtensionService.getInstance().findSourceFile(sourceRoot, relativePath)
-      }
-
-    if (sourceFile != null) {
-      return projectRoot.relativize(sourceFile).toString()
-    }
-  }
-
-  throw IllegalStateException("Cannot find source file for $productPropertiesClass (searched for $relativePath in modules: $buildModules)")
-}
 
 /**
  * Generates product XMLs for all products using programmatic content.
@@ -181,25 +117,6 @@ internal suspend fun generateAllProductXmlFiles(
 
   return ProductGenerationResult(productResults)
 }
-
-/**
- * Configuration for generating all module sets and products.
- * Used by [generateAllModuleSetsWithProducts] to orchestrate the full generation process.
- *
- * @param moduleSetSources Map of label to (source object, output directory). The source object should contain ModuleSet functions (e.g., CommunityModuleSets, UltimateModuleSets).
- * @param discoveredProducts Products discovered from dev-build.json (must be provided by caller)
- * @param testProductSpecs List of test product specifications to generate alongside regular products
- * @param projectRoot Project root path
- * @param moduleOutputProvider Module output provider for resolving module dependencies and output directories
- */
-data class ModuleSetGenerationConfig(
-  @JvmField val moduleSetSources: Map<String, Pair<Any, Path>>,
-  @JvmField val discoveredProducts: List<DiscoveredProduct>,
-  @JvmField val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
-  @JvmField val projectRoot: Path,
-  @JvmField val moduleOutputProvider: ModuleOutputProvider,
-  @JvmField val additionalPlugins: List<String> = emptyList(),
-)
 
 /**
  * Discovers all module sets from configured sources.
@@ -279,7 +196,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       .distinct()
       .toList()
 
-    val pluginContentJobs = allBundledPlugins.associateWith { pluginName ->
+    val pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = allBundledPlugins.associateWith { pluginName ->
       async { extractPluginContent(pluginName, config.moduleOutputProvider) }
     }
 
@@ -290,11 +207,12 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         discoverModuleSets(sourceObj)
       }
 
+      val cache = ModuleDescriptorCache(config.moduleOutputProvider)
       generateModuleDescriptorDependencies(
         communityModuleSets = moduleSetsByLabel.get("community") ?: emptyList(),
         ultimateModuleSets = moduleSetsByLabel.get("ultimate") ?: emptyList(),
         coreModuleSets = moduleSetsByLabel.get("core") ?: emptyList(),
-        moduleOutputProvider = config.moduleOutputProvider,
+        cache = cache,
         productSpecs = products,
         pluginContentJobs = pluginContentJobs,
       )
@@ -347,67 +265,4 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
     projectRoot = config.projectRoot,
     durationMs = System.currentTimeMillis() - startTime,
   )
-}
-
-/**
- * Result of extracting plugin content from plugin.xml.
- * Contains everything needed for both validation and dependency generation.
- */
-data class PluginContentInfo(
-  @JvmField val pluginXmlPath: Path,
-  @JvmField val pluginXmlContent: String,
-  @JvmField val contentModules: Set<String>,
-  /** Lazy JPS production dependencies - only called by plugin dep gen, not validation */
-  @JvmField val jpsDependencies: () -> List<String>,
-)
-
-/**
- * Extracts content modules from a plugin's plugin.xml.
- * Returns null if plugin.xml not found or has module references with '/'.
- */
-private suspend fun extractPluginContent(
-  pluginName: String,
-  moduleOutputProvider: ModuleOutputProvider,
-): PluginContentInfo? {
-  val jpsModule = moduleOutputProvider.findModule(pluginName) ?: return null
-  val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
-  val content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
-  val contentModules = extractContentModulesFromText(content) ?: return null
-  return PluginContentInfo(
-    pluginXmlPath = pluginXmlPath,
-    pluginXmlContent = content,
-    contentModules = contentModules,
-    jpsDependencies = { jpsModule.getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }.toList() },
-  )
-}
-
-/**
- * Collects all embedded modules from all product specs.
- * Used to filter out embedded platform modules from plugin dependencies.
- */
-private fun collectEmbeddedModulesFromProducts(products: List<DiscoveredProduct>): Set<String> {
-  val result = HashSet<String>()
-  for (discovered in products) {
-    val spec = discovered.spec ?: continue
-    for (moduleSetWithOverrides in spec.moduleSets) {
-      collectEmbeddedModules(moduleSetWithOverrides.moduleSet, result)
-    }
-    for (module in spec.additionalModules) {
-      if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
-        result.add(module.name)
-      }
-    }
-  }
-  return result
-}
-
-private fun collectEmbeddedModules(moduleSet: ModuleSet, result: MutableSet<String>) {
-  for (module in moduleSet.modules) {
-    if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
-      result.add(module.name)
-    }
-  }
-  for (nestedSet in moduleSet.nestedSets) {
-    collectEmbeddedModules(nestedSet, result)
-  }
 }

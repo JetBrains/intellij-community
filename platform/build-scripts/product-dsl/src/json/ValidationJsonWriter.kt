@@ -8,73 +8,31 @@ import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetLocationViol
 /**
  * Writes community product validation violations to JSON.
  */
-fun writeCommunityProductViolations(
+internal fun writeCommunityProductViolations(
   gen: JsonGenerator,
   violations: List<CommunityProductViolation>
 ) {
-  gen.writeArrayFieldStart("violations")
-  for (violation in violations) {
-    gen.writeStartObject()
-    gen.writeStringField("product", violation.product)
-    gen.writeStringField("productFile", violation.productFile)
-    gen.writeStringField("moduleSet", violation.moduleSet)
-    gen.writeStringField("moduleSetFile", violation.moduleSetFile)
-    
-    gen.writeStringArray("ultimateModules", violation.ultimateModules)
-    
-    gen.writeNumberField("communityModulesCount", violation.communityModulesCount)
-    gen.writeNumberField("unknownModulesCount", violation.unknownModulesCount)
-    gen.writeNumberField("totalModulesCount", violation.totalModulesCount)
-    gen.writeEndObject()
-  }
-  gen.writeEndArray()
-  
+  gen.writeFieldName("violations")
+  gen.writeRawValue(kotlinxJson.encodeToString(violations))
+
   // Summary
   gen.writeObjectFieldStart("summary")
   gen.writeNumberField("totalViolations", violations.size)
-  
   gen.writeStringArray("affectedProducts", violations.map { it.product }.distinct().sorted())
   gen.writeStringArray("affectedModuleSets", violations.map { it.moduleSet }.distinct().sorted())
-  
   gen.writeEndObject()
 }
 
 /**
  * Writes module set location validation violations to JSON.
  */
-fun writeModuleSetLocationViolations(
+internal fun writeModuleSetLocationViolations(
   gen: JsonGenerator,
   violations: List<ModuleSetLocationViolation>
 ) {
-  gen.writeArrayFieldStart("violations")
-  for (violation in violations) {
-    gen.writeStartObject()
-    gen.writeStringField("moduleSet", violation.moduleSet)
-    gen.writeStringField("file", violation.file)
-    gen.writeStringField("issue", violation.issue)
-    
-    if (violation.ultimateModules != null) {
-      gen.writeStringArray("ultimateModules", violation.ultimateModules)
-    }
+  gen.writeFieldName("violations")
+  gen.writeRawValue(kotlinxJson.encodeToString(violations))
 
-    if (violation.communityModules != null) {
-      gen.writeStringArray("communityModules", violation.communityModules)
-    }
-    
-    if (violation.communityModulesCount != null) {
-      gen.writeNumberField("communityModulesCount", violation.communityModulesCount)
-    }
-    
-    if (violation.ultimateModulesCount != null) {
-      gen.writeNumberField("ultimateModulesCount", violation.ultimateModulesCount)
-    }
-    
-    gen.writeNumberField("unknownModulesCount", violation.unknownModulesCount)
-    gen.writeStringField("suggestion", violation.suggestion)
-    gen.writeEndObject()
-  }
-  gen.writeEndArray()
-  
   // Summary
   gen.writeObjectFieldStart("summary")
   gen.writeNumberField("totalViolations", violations.size)

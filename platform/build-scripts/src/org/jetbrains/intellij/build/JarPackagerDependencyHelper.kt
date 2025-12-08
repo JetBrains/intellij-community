@@ -7,8 +7,8 @@ import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.productLayout.getProductionModuleDependencies
-import org.jetbrains.intellij.build.productLayout.isProductionRuntimeDependency
+import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
+import org.jetbrains.intellij.build.productLayout.util.isProductionRuntimeDependency
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule

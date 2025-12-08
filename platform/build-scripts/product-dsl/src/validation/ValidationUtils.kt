@@ -1,11 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.validation
+
+import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.ModuleSetWithOverrides
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 
 /**
  * Formats a validation error message with consistent structure.
- * 
+ *
  * @param title Error title (will be prefixed with ❌)
  * @param details List of detail lines to include in the message body
  * @param hint Optional hint text (will be prefixed with 💡 Hint:)
@@ -35,10 +39,10 @@ internal fun validateModuleSetOverrides(
   moduleSetWithOverrides: ModuleSetWithOverrides
 ) {
   if (moduleSetWithOverrides.loadingOverrides.isEmpty()) return
-  
+
   val directModules = moduleSetWithOverrides.moduleSet.modules.mapTo(LinkedHashSet()) { it.name }
   val invalidOverrides = moduleSetWithOverrides.loadingOverrides.keys.filter { it !in directModules }
-  
+
   if (invalidOverrides.isNotEmpty()) {
     val details = buildList {
       add("The following ${invalidOverrides.size} module(s) are not direct modules of this set:")
@@ -54,7 +58,7 @@ internal fun validateModuleSetOverrides(
     }
     val hint = """You can only override direct modules, not modules from nested sets.
    To override modules from nested sets, reference the nested set directly:
-   
+
    moduleSet(YourNestedSet()) {
      overrideAsEmbedded("module.name")
    }"""
@@ -74,7 +78,7 @@ internal fun validateModuleSetOverrides(
  */
 internal fun validateNoDuplicateModules(moduleToSets: Map<String, MutableList<String>>) {
   val duplicates = moduleToSets.filterValues { it.size > 1 }
-  
+
   if (duplicates.isNotEmpty()) {
     val details = buildList {
       for ((moduleName, sets) in duplicates.toSortedMap()) {
@@ -135,7 +139,7 @@ internal fun validateAndRecordAlias(
  * Validates that products don't reference redundant module sets.
  * A module set is redundant if it's already nested inside another module set the product uses,
  * and the product doesn't apply any overrides to it.
- * 
+ *
  * This validation ensures product specifications are correct and maintainable.
  * Redundant module set references can lead to confusion and maintenance issues.
  *
@@ -151,28 +155,28 @@ fun validateNoRedundantModuleSets(
   val moduleSetToNested = allModuleSets.associate { moduleSet ->
     moduleSet.name to moduleSet.nestedSets.map { it.name }.toSet()
   }
-  
+
   val errors = mutableListOf<String>()
-  
+
   for ((productName, contentSpec) in productSpecs) {
     if (contentSpec == null || contentSpec.moduleSets.isEmpty()) continue
-    
+
     // Get module set names the product uses
     val usedSets = contentSpec.moduleSets.map { it.moduleSet.name }
-    
+
     // Check each module set for redundancy
     for (moduleSetWithOverrides in contentSpec.moduleSets) {
       val setName = moduleSetWithOverrides.moduleSet.name
-      
+
       // Skip if this set has overrides (overrides make it non-redundant)
       if (moduleSetWithOverrides.loadingOverrides.isNotEmpty()) {
         continue
       }
-      
+
       // Check if this set is nested in any other set the product uses
       for (otherSetName in usedSets) {
         if (otherSetName == setName) continue
-        
+
         val nestedInOther = moduleSetToNested[otherSetName]
         if (nestedInOther != null && setName in nestedInOther) {
           errors.add("  ✗ Product '$productName': module set '$setName' is redundant (already nested in '$otherSetName')")
@@ -180,10 +184,10 @@ fun validateNoRedundantModuleSets(
       }
     }
   }
-  
+
   if (errors.isNotEmpty()) {
     val hint = """Remove redundant module sets from product's getProductContentDescriptor() method.
-   
+
    Example fix:
    override fun getProductContentDescriptor() = productModules {
      // moduleSet(ssh())           // ← REMOVE (already in ide.ultimate)

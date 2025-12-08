@@ -12,6 +12,8 @@ import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.analysis.ProductCategory
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
+import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
+import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Path

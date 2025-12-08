@@ -6,54 +6,17 @@ import org.jetbrains.intellij.build.productLayout.CompositionType
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 
 /**
- * Writes a single product to JSON.
- * Uses kotlinx.serialization to serialize ProductModulesContentSpec directly,
- * providing complete DSL structure with all modules, overrides, and exclusions.
+ * Writes a single product to JSON using kotlinx.serialization.
  */
-fun writeProduct(
-  gen: JsonGenerator,
-  product: ProductSpec
-) {
-  gen.writeStartObject()
-  gen.writeStringField("name", product.name)
-  gen.writeStringField("className", product.className)
-  gen.writeStringField("sourceFile", product.sourceFile)
-  
-  if (product.pluginXmlPath != null) {
-    gen.writeStringField("pluginXmlPath", product.pluginXmlPath)
-  }
-  
-  // Serialize ProductModulesContentSpec using kotlinx.serialization and write raw JSON
-  if (product.contentSpec != null) {
-    val contentSpecJson = kotlinxJson.encodeToString(product.contentSpec)
-    gen.writeFieldName("contentSpec")
-    gen.writeRawValue(contentSpecJson)
-  }
-  
-  // Build modules
-  gen.writeArrayFieldStart("buildModules")
-  for (buildModule in product.buildModules) {
-    gen.writeString(buildModule)
-  }
-  gen.writeEndArray()
-  
-  // Product category (ULTIMATE, COMMUNITY, BACKEND)
-  gen.writeStringField("category", product.category.name)
-
-  // Metrics
-  gen.writeNumberField("totalModuleCount", product.totalModuleCount)
-  gen.writeNumberField("directModuleCount", product.directModuleCount)
-  gen.writeNumberField("moduleSetCount", product.moduleSetCount)
-  gen.writeNumberField("uniqueModuleCount", product.uniqueModuleCount)
-
-  gen.writeEndObject()
+internal fun writeProduct(gen: JsonGenerator, product: ProductSpec) {
+  gen.writeRawValue(kotlinxJson.encodeToString(product))
 }
 
 /**
  * Analyzes product composition graphs and writes insights to JSON.
  * Provides statistics and recommendations for each product based on its composition.
  */
-fun writeProductCompositionAnalysis(
+internal fun writeProductCompositionAnalysis(
   gen: JsonGenerator,
   products: List<ProductSpec>
 ) {

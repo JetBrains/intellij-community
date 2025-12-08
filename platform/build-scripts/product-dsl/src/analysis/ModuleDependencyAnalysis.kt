@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.productLayout.analysis
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.buildModuleSetIndex
-import org.jetbrains.intellij.build.productLayout.getProductionModuleDependencies
+import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 
 /**
  * Result of getting module dependencies from JPS model.
@@ -175,8 +175,9 @@ internal fun checkModuleReachability(
       )
     }
 
-    // Find the module set
-    val moduleSetEntry = allModuleSets.find { it.moduleSet.name == moduleSetName }
+    // Find the module set (O(1) lookup via map)
+    val moduleSetsByName = allModuleSets.associateBy { it.moduleSet.name }
+    val moduleSetEntry = moduleSetsByName.get(moduleSetName)
     if (moduleSetEntry == null) {
       return ModuleReachabilityResult(
         moduleName = moduleName,
@@ -247,6 +248,9 @@ internal fun checkModuleReachability(
  * Finds a transitive dependency path from one module to another.
  * Uses BFS to find the shortest path through JPS module dependencies.
  *
+ * OPTIMIZED: Uses parent pointers instead of copying paths at each node,
+ * reducing memory allocations from O(depth * nodes) to O(nodes).
+ *
  * @param fromModule Starting module
  * @param toModule Target module
  * @param moduleOutputProvider Provider for accessing JPS modules
@@ -279,18 +283,19 @@ internal fun findDependencyPath(
       )
     }
 
-    // BFS to find shortest path
-    val queue = ArrayDeque<Pair<String, List<String>>>()
-    val visited = mutableSetOf<String>()
-    
-    queue.add(Pair(fromModule, listOf(fromModule)))
-    visited.add(fromModule)
+    // BFS using parent pointers (memory-efficient)
+    val queue = ArrayDeque<String>()
+    val parent = mutableMapOf<String, String?>()
+
+    queue.add(fromModule)
+    parent[fromModule] = null  // Root has no parent
 
     while (queue.isNotEmpty()) {
-      val (current, path) = queue.removeFirst()
+      val current = queue.removeFirst()
 
-      // Found target
+      // Found target - reconstruct path
       if (current == toModule) {
+        val path = reconstructPath(parent, fromModule, toModule)
         return DependencyPathResult(
           fromModule = fromModule,
           toModule = toModule,
@@ -306,10 +311,9 @@ internal fun findDependencyPath(
         .toList()
 
       for (dependency in dependencies) {
-        if (dependency !in visited) {
-          visited.add(dependency)
-          val newPath = path + dependency
-          queue.add(Pair(dependency, newPath))
+        if (dependency !in parent) {  // Not visited
+          parent[dependency] = current
+          queue.add(dependency)
         }
       }
     }
@@ -331,6 +335,24 @@ internal fun findDependencyPath(
       error = "Failed to find path: ${e.message}"
     )
   }
+}
+
+/**
+ * Reconstructs path from parent pointers.
+ * Only called once when target is found, avoiding repeated list allocations.
+ */
+private fun reconstructPath(
+  parent: Map<String, String?>,
+  fromModule: String,
+  toModule: String
+): List<String> {
+  val path = mutableListOf<String>()
+  var current: String? = toModule
+  while (current != null) {
+    path.add(current)
+    current = parent.get(current)
+  }
+  return path.reversed()
 }
 
 

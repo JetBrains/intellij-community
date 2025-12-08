@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.openapi.util.JDOMUtil
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.withEditorFold
 
 /**
  * Appends XML header comments.
@@ -37,14 +39,14 @@ internal fun StringBuilder.appendOpeningTag(
   else {
     append("<idea-plugin>\n")
   }
-  
+
   // Add id and name as child tags if PlatformLangPlugin.xml is not included
   val includesPlatformLang = spec.deprecatedXmlIncludes.any {
     it.resourcePath == "META-INF/PlatformLangPlugin.xml" ||
     it.resourcePath == "META-INF/JavaIdePlugin.xml" ||
     it.resourcePath == "META-INF/pycharm-core.xml"
   }
-  
+
   if (!includesPlatformLang) {
     append("  <id>com.intellij</id>\n")
     append("  <name>IDEA CORE</name>\n")

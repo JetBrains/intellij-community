@@ -1,13 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonEncoding
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.MergeOperation
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.analysis.ParseResult
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import org.jetbrains.intellij.build.productLayout.analysis.analyzeMergeImpact
@@ -22,25 +25,7 @@ import org.jetbrains.intellij.build.productLayout.analysis.parseModulesXml
 import org.jetbrains.intellij.build.productLayout.analysis.suggestModuleSetUnification
 import org.jetbrains.intellij.build.productLayout.analysis.validateCommunityProducts
 import org.jetbrains.intellij.build.productLayout.analysis.validateModuleSetLocations
-import org.jetbrains.intellij.build.productLayout.json.enrichProductsWithMetrics
-import org.jetbrains.intellij.build.productLayout.json.writeCommunityProductViolations
-import org.jetbrains.intellij.build.productLayout.json.writeDependencyPathResult
-import org.jetbrains.intellij.build.productLayout.json.writeDuplicateAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeMergeImpactAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeModuleDependenciesResult
-import org.jetbrains.intellij.build.productLayout.json.writeModuleDistribution
-import org.jetbrains.intellij.build.productLayout.json.writeModulePathsResult
-import org.jetbrains.intellij.build.productLayout.json.writeModuleReachabilityResult
-import org.jetbrains.intellij.build.productLayout.json.writeModuleSet
-import org.jetbrains.intellij.build.productLayout.json.writeModuleSetHierarchy
-import org.jetbrains.intellij.build.productLayout.json.writeModuleSetLocationViolations
-import org.jetbrains.intellij.build.productLayout.json.writeModuleSetOverlapAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeModuleUsageIndex
-import org.jetbrains.intellij.build.productLayout.json.writeProduct
-import org.jetbrains.intellij.build.productLayout.json.writeProductCompositionAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeProductSimilarityAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeProductUsageAnalysis
-import org.jetbrains.intellij.build.productLayout.json.writeUnificationSuggestions
+import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Path
 import java.time.Instant
 
@@ -86,8 +71,8 @@ fun streamModuleAnalysisJson(
   val productSpecs = products.map { it.name to it.contentSpec }
   validateNoRedundantModuleSets(moduleSets, productSpecs)
 
-  // Enrich products with calculated metrics
-  val enrichedProducts = enrichProductsWithMetrics(products, moduleSets)
+  // Enrich products with calculated metrics (parallelized)
+  val enrichedProducts = runBlocking { enrichProductsWithMetrics(products, moduleSets) }
 
   val generator = JsonFactory()
     .createGenerator(System.out, JsonEncoding.UTF8)
@@ -121,20 +106,23 @@ private fun applyFilter(
   projectRoot: Path,
   moduleOutputProvider: ModuleOutputProvider?
 ) {
+  // Create cache once for all filter handlers that need it
+  val cache = ModuleSetTraversalCache(moduleSets)
+  
   when (filter?.filter) {
     null -> writeAllSections(gen, allModuleSets, products, projectRoot)
     "products" -> handleProductsFilter(gen, products)
-    "moduleSets" -> handleModuleSetsFilter(gen, allModuleSets, moduleSets)
+    "moduleSets" -> handleModuleSetsFilter(gen, allModuleSets, cache)
     "composition" -> handleCompositionFilter(gen, products)
-    "duplicates" -> handleDuplicatesFilter(gen, allModuleSets, products, projectRoot)
+    "duplicates" -> handleDuplicatesFilter(gen, allModuleSets, products, projectRoot, cache)
     "product" -> handleSingleProductFilter(gen, filter.value, products)
     "moduleSet" -> handleSingleModuleSetFilter(gen, filter.value, allModuleSets)
-    "mergeImpact" -> handleMergeImpactFilter(gen, filter, allModuleSets, products)
+    "mergeImpact" -> handleMergeImpactFilter(gen, filter, allModuleSets, products, cache)
     "modulePaths" -> handleModulePathsFilter(gen, filter.module, allModuleSets, products, projectRoot)
     "moduleDependencies" -> handleModuleDependenciesFilter(gen, filter, moduleOutputProvider)
     "moduleReachability" -> handleModuleReachabilityFilter(gen, filter, allModuleSets, moduleOutputProvider)
     "dependencyPath" -> handleDependencyPathFilter(gen, filter, moduleOutputProvider)
-    "productUsage" -> handleProductUsageFilter(gen, filter.moduleSet, allModuleSets, products)
+    "productUsage" -> handleProductUsageFilter(gen, filter.moduleSet, allModuleSets, products, cache)
     else -> gen.writeStringField("error", "Unknown filter: ${filter.filter}")
   }
 }
@@ -147,10 +135,10 @@ private fun handleProductsFilter(gen: JsonGenerator, products: List<ProductSpec>
   gen.writeEndArray()
 }
 
-private fun handleModuleSetsFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, moduleSets: List<ModuleSet>) {
+private fun handleModuleSetsFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, cache: ModuleSetTraversalCache) {
   gen.writeArrayFieldStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-    writeModuleSet(gen, moduleSet, location, sourceFilePath, moduleSets)
+    writeModuleSet(gen, moduleSet, location, sourceFilePath, cache)
   }
   gen.writeEndArray()
 }
@@ -161,9 +149,9 @@ private fun handleCompositionFilter(gen: JsonGenerator, products: List<ProductSp
   gen.writeEndObject()
 }
 
-private fun handleDuplicatesFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, projectRoot: Path) {
+private fun handleDuplicatesFilter(gen: JsonGenerator, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, projectRoot: Path, cache: ModuleSetTraversalCache) {
   gen.writeObjectFieldStart("duplicateAnalysis")
-  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot)
+  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot, cache)
   gen.writeEndObject()
 }
 
@@ -199,7 +187,7 @@ private fun handleSingleModuleSetFilter(gen: JsonGenerator, moduleSetName: Strin
       gen.writeString(nestedSet)
     }
     gen.writeEndArray()
-    val moduleSetJson = org.jetbrains.intellij.build.productLayout.json.kotlinxJson.encodeToString(moduleSetEntry.moduleSet)
+    val moduleSetJson = kotlinxJson.encodeToString(moduleSetEntry.moduleSet)
     gen.writeFieldName("moduleSet")
     gen.writeRawValue(moduleSetJson)
     gen.writeEndObject()
@@ -209,14 +197,14 @@ private fun handleSingleModuleSetFilter(gen: JsonGenerator, moduleSetName: Strin
   }
 }
 
-private fun handleMergeImpactFilter(gen: JsonGenerator, filter: JsonFilter, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>) {
+private fun handleMergeImpactFilter(gen: JsonGenerator, filter: JsonFilter, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, cache: ModuleSetTraversalCache) {
   val sourceSet = filter.source
   if (sourceSet == null) {
     gen.writeStringField("error", "Source module set required for 'mergeImpact' filter")
     return
   }
   val operation = MergeOperation.fromString(filter.operation ?: "merge")
-  val impact = analyzeMergeImpact(sourceSet, filter.target, operation, allModuleSets, products)
+  val impact = analyzeMergeImpact(sourceSet, filter.target, operation, allModuleSets, products, cache)
   gen.writeFieldName("mergeImpact")
   writeMergeImpactAnalysis(gen, impact)
 }
@@ -278,12 +266,12 @@ private fun handleDependencyPathFilter(gen: JsonGenerator, filter: JsonFilter, m
   writeDependencyPathResult(gen, result)
 }
 
-private fun handleProductUsageFilter(gen: JsonGenerator, moduleSetName: String?, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>) {
+private fun handleProductUsageFilter(gen: JsonGenerator, moduleSetName: String?, allModuleSets: List<ModuleSetMetadata>, products: List<ProductSpec>, cache: ModuleSetTraversalCache) {
   if (moduleSetName == null) {
     gen.writeStringField("error", "Module set name required for 'productUsage' filter")
     return
   }
-  val usage = analyzeProductUsage(moduleSetName, products, allModuleSets)
+  val usage = analyzeProductUsage(moduleSetName, products, allModuleSets, cache)
   gen.writeFieldName("productUsage")
   writeProductUsageAnalysis(gen, usage)
 }
@@ -299,9 +287,12 @@ private fun writeAllSections(
 ) {
   // Write module sets
   val moduleSets = allModuleSets.map { it.moduleSet }
+  // Create cache for O(1) lookups during analysis (used by multiple sections below)
+  val cache = ModuleSetTraversalCache(moduleSets)
+  
   gen.writeArrayFieldStart("moduleSets")
   for ((moduleSet, location, sourceFilePath) in allModuleSets) {
-    writeModuleSet(gen = gen, moduleSet = moduleSet, location = location, sourceFilePath = sourceFilePath, allModuleSets = moduleSets)
+    writeModuleSet(gen = gen, moduleSet = moduleSet, location = location, sourceFilePath = sourceFilePath, cache = cache)
   }
   gen.writeEndArray()
 
@@ -314,7 +305,7 @@ private fun writeAllSections(
 
   // Write duplicate analysis
   gen.writeObjectFieldStart("duplicateAnalysis")
-  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot)
+  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot, cache)
   gen.writeEndObject()
 
   // Write product composition analysis
@@ -331,22 +322,19 @@ private fun writeAllSections(
       moduleLocationsResult.partial ?: emptyMap()
     }
   }
-  gen.writeObjectFieldStart("moduleDistribution")
-  writeModuleDistribution(gen, allModuleSets, products, moduleLocations)
-  gen.writeEndObject()
+  gen.writeFieldName("moduleDistribution")
+  writeModuleDistribution(gen, allModuleSets, products, moduleLocations, cache)
 
   // Write module set hierarchy
-  gen.writeObjectFieldStart("moduleSetHierarchy")
+  gen.writeFieldName("moduleSetHierarchy")
   writeModuleSetHierarchy(gen, allModuleSets)
-  gen.writeEndObject()
 
   // Write module usage index
-  gen.writeObjectFieldStart("moduleUsageIndex")
-  writeModuleUsageIndex(gen, allModuleSets, products)
-  gen.writeEndObject()
+  gen.writeFieldName("moduleUsageIndex")
+  writeModuleUsageIndex(gen, allModuleSets, products, cache)
 
   // Validate community products don't use ultimate modules
-  val communityViolations = validateCommunityProducts(products, allModuleSets, moduleLocations, projectRoot)
+  val communityViolations = validateCommunityProducts(products, allModuleSets, moduleLocations, projectRoot, cache)
   gen.writeObjectFieldStart("communityProductViolations")
   writeCommunityProductViolations(gen, communityViolations)
   gen.writeEndObject()
@@ -357,25 +345,27 @@ private fun writeAllSections(
   writeModuleSetLocationViolations(gen, locationViolations)
   gen.writeEndObject()
 
-  // Analyze product similarity for refactoring recommendations
-  val similarityPairs = analyzeProductSimilarity(products, similarityThreshold = 0.7)
+  // Analyze product similarity for refactoring recommendations (parallelized)
+  val similarityPairs = runBlocking { analyzeProductSimilarity(products, similarityThreshold = 0.7) }
   gen.writeFieldName("productSimilarity")
   writeProductSimilarityAnalysis(gen, similarityPairs, 0.7)
 
-  // Detect module set overlaps (with nested set filtering to avoid false positives)
-  val moduleSetOverlaps = detectModuleSetOverlap(allModuleSets, minOverlapPercent = 50)
+  // Detect module set overlaps with cache (parallelized)
+  val moduleSetOverlaps = runBlocking { detectModuleSetOverlap(allModuleSets, cache, minOverlapPercent = 50) }
   gen.writeFieldName("moduleSetOverlap")
   writeModuleSetOverlapAnalysis(gen, moduleSetOverlaps, 50)
 
-  // Generate unification suggestions based on overlaps and similarity
-  val unificationSuggestions = suggestModuleSetUnification(
-    allModuleSets = allModuleSets,
-    products = products,
-    overlaps = moduleSetOverlaps,
-    similarityPairs = similarityPairs,
-    maxSuggestions = 10,
-    strategy = "all"
-  )
+  // Generate unification suggestions based on overlaps and similarity (parallelized)
+  val unificationSuggestions = runBlocking {
+    suggestModuleSetUnification(
+      allModuleSets = allModuleSets,
+      products = products,
+      overlaps = moduleSetOverlaps,
+      similarityPairs = similarityPairs,
+      maxSuggestions = 10,
+      strategy = "all"
+    )
+  }
   gen.writeFieldName("unificationSuggestions")
   writeUnificationSuggestions(gen, unificationSuggestions)
 }

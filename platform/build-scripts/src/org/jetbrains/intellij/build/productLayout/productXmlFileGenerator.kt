@@ -4,6 +4,9 @@ package org.jetbrains.intellij.build.productLayout
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dev.createProductProperties
+import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
+import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
 import java.nio.file.Files
 import java.nio.file.Path
 

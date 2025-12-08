@@ -1,167 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.productLayout
+package org.jetbrains.intellij.build.productLayout.stats
 
 import java.nio.file.Path
 
 /**
- * Status of a generated file.
+ * ANSI color codes for terminal output.
  */
-enum class FileChangeStatus {
-  /** File was newly created */
-  CREATED,
-  /** File content was modified */
-  MODIFIED,
-  /** File content unchanged */
-  UNCHANGED,
-  /** File was deleted (obsolete) */
-  DELETED
+internal object AnsiColors {
+  const val RESET = "\u001B[0m"
+  const val BOLD = "\u001B[1m"
+  const val RED = "\u001B[31m"
+  const val GREEN = "\u001B[32m"
+  const val YELLOW = "\u001B[33m"
+  const val BLUE = "\u001B[34m"
+  const val CYAN = "\u001B[36m"
+  const val GRAY = "\u001B[90m"
 }
 
-/**
- * Interface for items that have a file change status.
- */
-internal sealed interface HasFileChangeStatus {
-  val status: FileChangeStatus
-}
+private val SEPARATOR = "\u2501".repeat(60)
 
-/** Count of items with CREATED status */
-internal val <T : HasFileChangeStatus> List<T>.createdCount: Int
-  get() = count { it.status == FileChangeStatus.CREATED }
-
-/** Count of items with MODIFIED status */
-internal val <T : HasFileChangeStatus> List<T>.modifiedCount: Int
-  get() = count { it.status == FileChangeStatus.MODIFIED }
-
-/** Count of items with UNCHANGED status */
-internal val <T : HasFileChangeStatus> List<T>.unchangedCount: Int
-  get() = count { it.status == FileChangeStatus.UNCHANGED }
-
-/** Count of items with DELETED status */
-internal val <T : HasFileChangeStatus> List<T>.deletedCount: Int
-  get() = count { it.status == FileChangeStatus.DELETED }
-
-/**
- * Result of generating a single module set XML file.
- */
-data class ModuleSetFileResult(
-  /** File name (e.g., "intellij.moduleSets.essential.xml") */
-  @JvmField val fileName: String,
-  /** Change status of the file */
-  override val status: FileChangeStatus,
-  /** Number of direct modules in this set (excluding nested) */
-  @JvmField val moduleCount: Int,
-) : HasFileChangeStatus
-
-/**
- * Result of generating all module sets for a label (community or ultimate).
- */
-data class ModuleSetGenerationResult(
-  /** Label ("community" or "ultimate") */
-  val label: String,
-  /** Output directory path */
-  val outputDir: Path,
-  /** Results for individual files */
-  val files: List<ModuleSetFileResult>,
-  /** Tracking map: directory -> set of generated file names (used for cleanup aggregation) */
-  val trackingMap: Map<Path, Set<String>> = emptyMap(),
-) {
-  val totalModules: Int get() = files.sumOf { it.moduleCount }
-}
-
-/**
- * Result of generating a single product XML file.
- */
-internal data class ProductFileResult(
-  /** Product name (e.g., "Gateway") */
-  val productName: String,
-  /** Relative path from project root */
-  val relativePath: String,
-  /** Change status of the file */
-  override val status: FileChangeStatus,
-  /** Number of `xi:include` directives */
-  val includeCount: Int,
-  /** Number of content blocks */
-  val contentBlockCount: Int,
-  /** Total number of modules across all content blocks */
-  val totalModules: Int,
-) : HasFileChangeStatus
-
-/**
- * Result of generating all product XML files.
- */
-internal data class ProductGenerationResult(
-  @JvmField val products: List<ProductFileResult>,
-)
-
-/**
- * Result of generating a single module descriptor dependency file.
- */
-internal data class DependencyFileResult(
-  /** Module name (e.g., "intellij.platform.core.ui") */
-  val moduleName: String,
-  /** Absolute path to the descriptor file */
-  val descriptorPath: Path,
-  /** Change status of the file */
-  override val status: FileChangeStatus,
-  /** Number of dependencies added */
-  val dependencyCount: Int,
-) : HasFileChangeStatus
-
-/**
- * Result of generating all module descriptor dependencies.
- */
-internal data class DependencyGenerationResult(
-  val files: List<DependencyFileResult>,
-) {
-  val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
-}
-
-/**
- * Result of generating a single plugin.xml dependency file.
- */
-internal data class PluginDependencyFileResult(
-  /** Plugin module name (e.g., "intellij.database.plugin") */
-  @JvmField val pluginModuleName: String,
-  /** Absolute path to the plugin.xml file */
-  @JvmField val pluginXmlPath: Path,
-  /** Change status of the file */
-  override val status: FileChangeStatus,
-  /** Number of dependencies added */
-  @JvmField val dependencyCount: Int,
-  /** Results for content module descriptor updates */
-  @JvmField val contentModuleResults: List<DependencyFileResult> = emptyList(),
-) : HasFileChangeStatus
-
-/**
- * Result of generating all plugin.xml dependencies for bundled plugins.
- */
-internal data class PluginDependencyGenerationResult(
-  @JvmField val files: List<PluginDependencyFileResult>,
-) {
-  val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
-
-  // Content module statistics
-  private val allContentModuleResults: List<DependencyFileResult>
-    get() = files.flatMap { it.contentModuleResults }
-
-  val contentModuleCount: Int get() = allContentModuleResults.size
-  val contentModuleCreatedCount: Int get() = allContentModuleResults.createdCount
-  val contentModuleModifiedCount: Int get() = allContentModuleResults.modifiedCount
-  val contentModuleUnchangedCount: Int get() = allContentModuleResults.unchangedCount
-}
-
-/**
- * Combined results from all generation operations.
- * Used to collect parallel generation results before printing summary.
- */
-internal data class GenerationResults(
-  val moduleSetResults: List<ModuleSetGenerationResult>,
-  val dependencyResult: DependencyGenerationResult,
-  val pluginDependencyResult: PluginDependencyGenerationResult?,
-  val productResult: ProductGenerationResult,
-)
-
-// ANSI color codes
 /**
  * Formats file change status to colored icon and text representation.
  * @return Pair of (coloredStatusIcon, statusText)
@@ -169,8 +26,8 @@ internal data class GenerationResults(
 private fun formatFileStatus(status: FileChangeStatus): Pair<String, String> {
   return when (status) {
     FileChangeStatus.CREATED -> "${AnsiColors.YELLOW}+${AnsiColors.RESET}" to "${AnsiColors.YELLOW}created${AnsiColors.RESET}"
-    FileChangeStatus.MODIFIED -> "${AnsiColors.BLUE}✓${AnsiColors.RESET}" to "${AnsiColors.BLUE}modified${AnsiColors.RESET}"
-    FileChangeStatus.UNCHANGED -> "${AnsiColors.GRAY}•${AnsiColors.RESET}" to "${AnsiColors.GRAY}unchanged${AnsiColors.RESET}"
+    FileChangeStatus.MODIFIED -> "${AnsiColors.BLUE}\u2713${AnsiColors.RESET}" to "${AnsiColors.BLUE}modified${AnsiColors.RESET}"
+    FileChangeStatus.UNCHANGED -> "${AnsiColors.GRAY}\u2022${AnsiColors.RESET}" to "${AnsiColors.GRAY}unchanged${AnsiColors.RESET}"
     FileChangeStatus.DELETED -> "${AnsiColors.RED}-${AnsiColors.RESET}" to "${AnsiColors.RED}deleted${AnsiColors.RESET}"
   }
 }
@@ -187,8 +44,6 @@ private fun buildChangesSummary(createdCount: Int, modifiedCount: Int, unchanged
     if (deletedCount > 0) add("${AnsiColors.RED}$deletedCount deleted${AnsiColors.RESET}")
   }.joinToString(", ")
 }
-
-private const val SEPARATOR = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 /**
  * Appends a section header with separator lines.
@@ -221,7 +76,7 @@ private inline fun <T : HasFileChangeStatus> StringBuilder.appendChangedFilesSum
   }
   if (files.unchangedCount > 0) {
     val label = fileLabel ?: fileWord(files.unchangedCount)
-    appendLine("  ${AnsiColors.GRAY}• ${files.unchangedCount} $label unchanged${AnsiColors.RESET}")
+    appendLine("  ${AnsiColors.GRAY}\u2022 ${files.unchangedCount} $label unchanged${AnsiColors.RESET}")
   }
 }
 
@@ -256,7 +111,13 @@ internal fun printGenerationSummary(
     appendDependenciesSummary(dependencyResult, projectRoot)
     appendPluginDependenciesSummary(pluginDependencyResult, projectRoot)
     appendProductsSummary(productResult)
-    appendOverallSummary(moduleSetResults, dependencyResult, pluginDependencyResult, productResult, durationMs)
+    appendOverallSummary(
+      moduleSetResults = moduleSetResults,
+      dependencyResult = dependencyResult,
+      pluginDependencyResult = pluginDependencyResult,
+      productResult = productResult,
+      durationMs = durationMs,
+    )
   })
 }
 
@@ -278,7 +139,7 @@ private fun StringBuilder.appendModuleSetsSummary(moduleSetResults: List<ModuleS
     }
 
     if (result.files.unchangedCount > 0) {
-      appendLine("  ${AnsiColors.GRAY}• ${result.files.unchangedCount} ${fileWord(result.files.unchangedCount)} unchanged${AnsiColors.RESET}")
+      appendLine("  ${AnsiColors.GRAY}\u2022 ${result.files.unchangedCount} ${fileWord(result.files.unchangedCount)} unchanged${AnsiColors.RESET}")
     }
 
     val changesSummary = buildChangesSummary(result.files.createdCount, result.files.modifiedCount, result.files.unchangedCount, result.files.deletedCount)
@@ -373,18 +234,18 @@ private fun StringBuilder.appendOverallSummary(
   val totalUnchanged = moduleSetResults.sumOf { it.files.unchangedCount }
   val totalDeleted = moduleSetResults.sumOf { it.files.deletedCount }
   val moduleSetSummary = buildChangesSummary(totalCreated, totalModified, totalUnchanged, totalDeleted)
-  appendLine("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}$totalFiles${AnsiColors.RESET} module set ${fileWord(totalFiles)} ($moduleSetSummary)")
+  appendLine("${AnsiColors.GREEN}\u2713${AnsiColors.RESET} ${AnsiColors.BOLD}$totalFiles${AnsiColors.RESET} module set ${fileWord(totalFiles)} ($moduleSetSummary)")
 
   // Module dependencies total
   if (dependencyResult != null && dependencyResult.files.isNotEmpty()) {
     val depSummary = buildChangesSummary(dependencyResult.files.createdCount, dependencyResult.files.modifiedCount, dependencyResult.files.unchangedCount)
-    appendLine("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${dependencyResult.files.size}${AnsiColors.RESET} module dependency ${fileWord(dependencyResult.files.size)} ($depSummary)")
+    appendLine("${AnsiColors.GREEN}\u2713${AnsiColors.RESET} ${AnsiColors.BOLD}${dependencyResult.files.size}${AnsiColors.RESET} module dependency ${fileWord(dependencyResult.files.size)} ($depSummary)")
   }
 
   // Plugin dependencies total
   if (pluginDependencyResult != null && pluginDependencyResult.files.isNotEmpty()) {
     val pluginDepSummary = buildChangesSummary(pluginDependencyResult.files.createdCount, pluginDependencyResult.files.modifiedCount, pluginDependencyResult.files.unchangedCount)
-    appendLine("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.files.size}${AnsiColors.RESET} plugin dependency ${fileWord(pluginDependencyResult.files.size)} ($pluginDepSummary)")
+    appendLine("${AnsiColors.GREEN}\u2713${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.files.size}${AnsiColors.RESET} plugin dependency ${fileWord(pluginDependencyResult.files.size)} ($pluginDepSummary)")
 
     // Content modules summary
     if (pluginDependencyResult.contentModuleCount > 0) {
@@ -393,16 +254,16 @@ private fun StringBuilder.appendOverallSummary(
         pluginDependencyResult.contentModuleModifiedCount,
         pluginDependencyResult.contentModuleUnchangedCount
       )
-      appendLine("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.contentModuleCount}${AnsiColors.RESET} content module dependency ${fileWord(pluginDependencyResult.contentModuleCount)} ($contentSummary)")
+      appendLine("${AnsiColors.GREEN}\u2713${AnsiColors.RESET} ${AnsiColors.BOLD}${pluginDependencyResult.contentModuleCount}${AnsiColors.RESET} content module dependency ${fileWord(pluginDependencyResult.contentModuleCount)} ($contentSummary)")
     }
   }
 
   // Products total
   if (productResult != null) {
     val prodSummary = buildChangesSummary(productResult.products.createdCount, productResult.products.modifiedCount, productResult.products.unchangedCount)
-    appendLine("${AnsiColors.GREEN}✓${AnsiColors.RESET} ${AnsiColors.BOLD}${productResult.products.size}${AnsiColors.RESET} product ${fileWord(productResult.products.size)} ($prodSummary)")
+    appendLine("${AnsiColors.GREEN}\u2713${AnsiColors.RESET} ${AnsiColors.BOLD}${productResult.products.size}${AnsiColors.RESET} product ${fileWord(productResult.products.size)} ($prodSummary)")
   }
 
-  appendLine("${AnsiColors.GREEN}⏱${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${durationMs / 1000.0}s${AnsiColors.RESET}")
+  appendLine("${AnsiColors.GREEN}\u23F1${AnsiColors.RESET} Completed in ${AnsiColors.BOLD}${durationMs / 1000.0}s${AnsiColors.RESET}")
   appendLine("${AnsiColors.CYAN}${AnsiColors.BOLD}$SEPARATOR${AnsiColors.RESET}")
 }

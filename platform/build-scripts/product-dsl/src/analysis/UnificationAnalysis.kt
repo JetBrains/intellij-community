@@ -1,12 +1,39 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout.analysis
+
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
+/**
+ * Index for O(1) lookup of products by module set name.
+ * Built once and reused across all analysis functions.
+ */
+internal class ProductModuleSetIndex(products: List<ProductSpec>) {
+  private val productsByModuleSet: Map<String, List<ProductSpec>>
+
+  init {
+    val index = mutableMapOf<String, MutableList<ProductSpec>>()
+    for (product in products) {
+      for (msRef in (product.contentSpec?.moduleSets ?: emptyList())) {
+        index.getOrPut(msRef.moduleSet.name) { mutableListOf() }.add(product)
+      }
+    }
+    productsByModuleSet = index
+  }
+
+  /** O(1) lookup of products using a module set */
+  fun getProductsUsing(moduleSetName: String): List<ProductSpec> =
+    productsByModuleSet.get(moduleSetName) ?: emptyList()
+}
 
 /**
  * Suggests module set unification opportunities based on overlap, similarity, and usage patterns.
  * 
  * Strategies:
  * - merge: Combine overlapping module sets (especially subsets/supersets)
- * - inline: Inline rarely-used small module sets directly into products
+ * - inline: Inline rarely used small module sets directly into products
  * - factor: Extract common patterns from similar products
  * - split: Split oversized module sets for better maintainability
  * 
@@ -18,127 +45,40 @@ package org.jetbrains.intellij.build.productLayout.analysis
  * @param strategy Filter by strategy: "merge", "inline", "factor", "split", or "all"
  * @return List of suggestions sorted by priority
  */
-internal fun suggestModuleSetUnification(
+internal suspend fun suggestModuleSetUnification(
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
   overlaps: List<ModuleSetOverlap>,
   similarityPairs: List<ProductSimilarityPair>,
   maxSuggestions: Int = 10,
   strategy: String = "all"
-): List<UnificationSuggestion> {
-  val suggestions = mutableListOf<UnificationSuggestion>()
-  
-  // Strategy 1: Merge overlapping module sets
-  if (strategy == "merge" || strategy == "all") {
-    for (overlap in overlaps) {
-      if (overlap.relationship == "subset" || overlap.relationship == "superset") {
-        suggestions.add(UnificationSuggestion(
-          priority = "high",
-          strategy = "merge",
-          type = overlap.relationship,
-          moduleSet = null,
-          moduleSet1 = overlap.moduleSet1,
-          moduleSet2 = overlap.moduleSet2,
-          products = null,
-          sharedModuleSets = null,
-          reason = overlap.recommendation,
-          impact = UnificationImpact(
-            moduleSetsSaved = 1,
-            overlapPercent = overlap.overlapPercent
-          )
-        ))
-      } else if (overlap.overlapPercent >= 80) {
-        suggestions.add(UnificationSuggestion(
-          priority = "medium",
-          strategy = "merge",
-          type = "high-overlap",
-          moduleSet = null,
-          moduleSet1 = overlap.moduleSet1,
-          moduleSet2 = overlap.moduleSet2,
-          products = null,
-          sharedModuleSets = null,
-          reason = overlap.recommendation,
-          impact = UnificationImpact(overlapPercent = overlap.overlapPercent)
-        ))
-      }
-    }
+): List<UnificationSuggestion> = coroutineScope {
+  // Build index for O(1) product lookups
+  val productIndex = ProductModuleSetIndex(products)
+
+  // Build cache for O(1) module name lookups
+  val cache = ModuleSetTraversalCache(allModuleSets.map { it.moduleSet })
+
+  // Run all 4 strategies in parallel
+  val mergeJob = async {
+    if (strategy == "merge" || strategy == "all") computeMergeSuggestions(overlaps) else emptyList()
   }
-  
-  // Strategy 2: Find rarely-used module sets (inline candidates)
-  if (strategy == "inline" || strategy == "all") {
-    for (msEntry in allModuleSets) {
-      val usedByProducts = products.filter { p ->
-        p.contentSpec?.moduleSets?.any { it.moduleSet.name == msEntry.moduleSet.name } == true
-      }
-      
-      // Use total module count (including nested sets) for inline candidate detection
-      val totalModuleCount = ModuleSetTraversal.collectAllModuleNames(msEntry.moduleSet).size
-      if (usedByProducts.size <= 1 && totalModuleCount <= 5) {
-        suggestions.add(UnificationSuggestion(
-          priority = "low",
-          strategy = "inline",
-          type = null,
-          moduleSet = msEntry.moduleSet.name,
-          moduleSet1 = null,
-          moduleSet2 = null,
-          products = null,
-          sharedModuleSets = null,
-          reason = "Used by only ${usedByProducts.size} product(s) and contains only $totalModuleCount modules. Consider inlining into the product directly.",
-          impact = UnificationImpact(
-            moduleSetsSaved = 1,
-            moduleCount = totalModuleCount,
-            affectedProducts = usedByProducts.map { it.name }
-          )
-        ))
-      }
-    }
+
+  val inlineJob = async {
+    if (strategy == "inline" || strategy == "all") computeInlineSuggestions(allModuleSets, productIndex, cache) else emptyList()
   }
-  
-  // Strategy 3: Find common patterns (factoring opportunities)
-  if (strategy == "factor" || strategy == "all") {
-    for (pair in similarityPairs) {
-      if (pair.sharedModuleSets.size >= 3) {
-        suggestions.add(UnificationSuggestion(
-          priority = "medium",
-          strategy = "factor",
-          type = null,
-          moduleSet = null,
-          moduleSet1 = null,
-          moduleSet2 = null,
-          products = listOf(pair.product1, pair.product2),
-          sharedModuleSets = pair.sharedModuleSets,
-          reason = "Products ${pair.product1} and ${pair.product2} share ${pair.sharedModuleSets.size} module sets (${(pair.similarity * 100).toInt()}% similarity). Consider creating a common base.",
-          impact = UnificationImpact(
-            similarity = pair.similarity,
-            sharedModuleSets = pair.sharedModuleSets.size
-          )
-        ))
-      }
-    }
+
+  val factorJob = async {
+    if (strategy == "factor" || strategy == "all") computeFactorSuggestions(similarityPairs) else emptyList()
   }
-  
-  // Strategy 4: Split large module sets
-  if (strategy == "split" || strategy == "all") {
-    for (msEntry in allModuleSets) {
-      // Use total module count (including nested sets) for split suggestions
-      val totalModuleCount = ModuleSetTraversal.collectAllModuleNames(msEntry.moduleSet).size
-      if (totalModuleCount > 200) {
-        suggestions.add(UnificationSuggestion(
-          priority = "low",
-          strategy = "split",
-          type = null,
-          moduleSet = msEntry.moduleSet.name,
-          moduleSet1 = null,
-          moduleSet2 = null,
-          products = null,
-          sharedModuleSets = null,
-          reason = "Module set contains $totalModuleCount modules. Consider splitting into smaller, more focused sets for better maintainability.",
-          impact = UnificationImpact(moduleCount = totalModuleCount)
-        ))
-      }
-    }
+
+  val splitJob = async {
+    if (strategy == "split" || strategy == "all") computeSplitSuggestions(allModuleSets, cache) else emptyList()
   }
-  
+
+  // Await all and flatten
+  val suggestions = mergeJob.await() + inlineJob.await() + factorJob.await() + splitJob.await()
+
   // Remove duplicates and sort by priority
   val uniqueSuggestions = mutableListOf<UnificationSuggestion>()
   val seen = mutableSetOf<String>()
@@ -149,12 +89,120 @@ internal fun suggestModuleSetUnification(
       uniqueSuggestions.add(suggestion)
     }
   }
-  
+
   // Sort by priority: high > medium > low
   val priorityOrder = mapOf("high" to 3, "medium" to 2, "low" to 1)
-  uniqueSuggestions.sortByDescending { priorityOrder[it.priority] ?: 0 }
-  
-  return uniqueSuggestions.take(maxSuggestions)
+  uniqueSuggestions.sortByDescending { priorityOrder.get(it.priority) ?: 0 }
+
+  uniqueSuggestions.take(maxSuggestions)
+}
+
+/** Strategy 1: Merge overlapping module sets */
+private fun computeMergeSuggestions(overlaps: List<ModuleSetOverlap>): List<UnificationSuggestion> {
+  return overlaps.mapNotNull { overlap ->
+    when {
+      overlap.relationship == "subset" || overlap.relationship == "superset" -> UnificationSuggestion(
+        priority = "high",
+        strategy = "merge",
+        type = overlap.relationship,
+        moduleSet = null,
+        moduleSet1 = overlap.moduleSet1,
+        moduleSet2 = overlap.moduleSet2,
+        products = null,
+        sharedModuleSets = null,
+        reason = overlap.recommendation,
+        impact = UnificationImpact(moduleSetsSaved = 1, overlapPercent = overlap.overlapPercent)
+      )
+      overlap.overlapPercent >= 80 -> UnificationSuggestion(
+        priority = "medium",
+        strategy = "merge",
+        type = "high-overlap",
+        moduleSet = null,
+        moduleSet1 = overlap.moduleSet1,
+        moduleSet2 = overlap.moduleSet2,
+        products = null,
+        sharedModuleSets = null,
+        reason = overlap.recommendation,
+        impact = UnificationImpact(overlapPercent = overlap.overlapPercent)
+      )
+      else -> null
+    }
+  }
+}
+
+/** Strategy 2: Find rarely used module sets (inline candidates) */
+private fun computeInlineSuggestions(
+  allModuleSets: List<ModuleSetMetadata>,
+  productIndex: ProductModuleSetIndex,
+  cache: ModuleSetTraversalCache
+): List<UnificationSuggestion> {
+  return allModuleSets.mapNotNull { msEntry ->
+    val usedByProducts = productIndex.getProductsUsing(msEntry.moduleSet.name)
+    val totalModuleCount = cache.getModuleNames(msEntry.moduleSet).size
+
+    if (usedByProducts.size <= 1 && totalModuleCount <= 5) {
+      UnificationSuggestion(
+        priority = "low",
+        strategy = "inline",
+        type = null,
+        moduleSet = msEntry.moduleSet.name,
+        moduleSet1 = null,
+        moduleSet2 = null,
+        products = null,
+        sharedModuleSets = null,
+        reason = "Used by only ${usedByProducts.size} product(s) and contains only $totalModuleCount modules. Consider inlining into the product directly.",
+        impact = UnificationImpact(
+          moduleSetsSaved = 1,
+          moduleCount = totalModuleCount,
+          affectedProducts = usedByProducts.map { it.name }
+        )
+      )
+    } else null
+  }
+}
+
+/** Strategy 3: Find common patterns (factoring opportunities) */
+private fun computeFactorSuggestions(similarityPairs: List<ProductSimilarityPair>): List<UnificationSuggestion> {
+  return similarityPairs.mapNotNull { pair ->
+    if (pair.sharedModuleSets.size >= 3) {
+      UnificationSuggestion(
+        priority = "medium",
+        strategy = "factor",
+        type = null,
+        moduleSet = null,
+        moduleSet1 = null,
+        moduleSet2 = null,
+        products = listOf(pair.product1, pair.product2),
+        sharedModuleSets = pair.sharedModuleSets,
+        reason = "Products ${pair.product1} and ${pair.product2} share ${pair.sharedModuleSets.size} module sets (${(pair.similarity * 100).toInt()}% similarity). Consider creating a common base.",
+        impact = UnificationImpact(similarity = pair.similarity, sharedModuleSets = pair.sharedModuleSets.size)
+      )
+    } else null
+  }
+}
+
+/** Strategy 4: Split large module sets */
+private fun computeSplitSuggestions(
+  allModuleSets: List<ModuleSetMetadata>,
+  cache: ModuleSetTraversalCache
+): List<UnificationSuggestion> {
+  return allModuleSets.mapNotNull { msEntry ->
+    val totalModuleCount = cache.getModuleNames(msEntry.moduleSet).size
+    if (totalModuleCount > 200) {
+      UnificationSuggestion(
+        priority = "low",
+        strategy = "split",
+        type = null,
+        moduleSet = msEntry.moduleSet.name,
+        moduleSet1 = null,
+        moduleSet2 = null,
+        products = null,
+        sharedModuleSets = null,
+        reason = "Module set contains $totalModuleCount modules. Consider splitting into smaller, more focused sets for better maintainability.",
+        impact = UnificationImpact(moduleCount = totalModuleCount)
+      )
+    } else null
+  }
 }
 
 /**
@@ -186,14 +234,12 @@ fun findProductsUsingModuleSet(
 internal fun analyzeProductUsage(
   moduleSetName: String,
   products: List<ProductSpec>,
-  allModuleSets: List<ModuleSetMetadata>
+  allModuleSets: List<ModuleSetMetadata>,
+  cache: ModuleSetTraversalCache,
 ): ProductUsageAnalysis {
   val moduleSetsList = allModuleSets.map { it.moduleSet }
   val directUsage = mutableListOf<ProductUsageEntry>()
   val indirectUsage = mutableListOf<ProductUsageEntry>()
-  
-  // Cache for nested sets to avoid repeated traversals
-  val nestedSetsCache = mutableMapOf<String, Set<String>>()
   
   for (product in products) {
     val topLevelSets = product.contentSpec?.moduleSets?.map { it.moduleSet.name } ?: emptyList()
@@ -205,11 +251,11 @@ internal fun analyzeProductUsage(
         usageType = "direct",
         inclusionChain = null
       ))
-    } else {
+    }
+    else {
       // Check if any top-level set transitively includes the target
       for (topLevelSet in topLevelSets) {
-        val allNested = ModuleSetTraversal.collectAllNestedSets(topLevelSet, moduleSetsList, nestedSetsCache)
-        if (allNested.contains(moduleSetName)) {
+        if (cache.isTransitivelyNested(topLevelSet, moduleSetName)) {
           // Build the inclusion chain
           val chain = ModuleSetTraversal.buildInclusionChain(topLevelSet, moduleSetName, moduleSetsList)
           indirectUsage.add(ProductUsageEntry(
@@ -247,11 +293,14 @@ internal fun analyzeMergeImpact(
   targetSet: String?,
   operation: MergeOperation,
   allModuleSets: List<ModuleSetMetadata>,
-  products: List<ProductSpec>
+  products: List<ProductSpec>,
+  cache: ModuleSetTraversalCache,
 ): MergeImpactResult {
   val operationStr = operation.name.lowercase()
+  // O(1) lookup for metadata by name
+  val metadataByName = allModuleSets.associateBy { it.moduleSet.name }
   // Find source module set
-  val sourceEntry = allModuleSets.firstOrNull { it.moduleSet.name == sourceSet }
+  val sourceEntry = metadataByName.get(sourceSet)
   if (sourceEntry == null) {
     return MergeImpactResult(
       operation = operationStr,
@@ -280,7 +329,7 @@ internal fun analyzeMergeImpact(
   // Find target module set (if applicable)
   var targetEntry: ModuleSetMetadata? = null
   if (targetSet != null) {
-    targetEntry = allModuleSets.firstOrNull { it.moduleSet.name == targetSet }
+    targetEntry = metadataByName.get(targetSet)
     if (targetEntry == null) {
       return MergeImpactResult(
         operation = operationStr,
@@ -343,11 +392,12 @@ internal fun analyzeMergeImpact(
     emptyList()
   }
   
-  // Calculate module changes (use ModuleSetTraversal.collectAllModuleNames to include nested sets)
-  val sourceModules = ModuleSetTraversal.collectAllModuleNames(sourceEntry.moduleSet)
+  // Calculate module changes
+  val sourceModules = cache.getModuleNames(sourceEntry.moduleSet)
   val targetModules = if (targetEntry != null) {
-    ModuleSetTraversal.collectAllModuleNames(targetEntry.moduleSet)
-  } else {
+    cache.getModuleNames(targetEntry.moduleSet)
+  }
+  else {
     emptySet()
   }
   

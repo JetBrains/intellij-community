@@ -4,6 +4,16 @@
 package org.jetbrains.intellij.build.productLayout
 
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ProductFileResult
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateUtils
+import org.jetbrains.intellij.build.productLayout.xml.appendContentBlock
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleLine
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleSetXml
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleSetsStrategyComment
+import org.jetbrains.intellij.build.productLayout.xml.appendOpeningTag
+import org.jetbrains.intellij.build.productLayout.xml.appendXmlHeader
+import org.jetbrains.intellij.build.productLayout.xml.generateXIncludes
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -32,22 +42,8 @@ import java.nio.file.Path
 internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): ModuleSetFileResult {
   val fileName = "${MODULE_SET_PREFIX}${moduleSet.name}.xml"
   val outputPath = outputDir.resolve(fileName)
-
   val buildResult = buildModuleSetXml(moduleSet, label)
-
-  // determine change status
-  val status = when {
-    !Files.exists(outputPath) -> FileChangeStatus.CREATED
-    Files.readString(outputPath) == buildResult.xml -> FileChangeStatus.UNCHANGED
-    else -> FileChangeStatus.MODIFIED
-  }
-
-  // Only write if changed
-  if (status != FileChangeStatus.UNCHANGED) {
-    Files.createDirectories(outputPath.parent)
-    Files.writeString(outputPath, buildResult.xml)
-  }
-
+  val status = FileUpdateUtils.updateIfChanged(outputPath, buildResult.xml)
   return ModuleSetFileResult(fileName, status, buildResult.directModuleCount)
 }
 
@@ -83,12 +79,8 @@ internal fun generateProductXml(
     isUltimateBuild = isUltimateBuild
   )
 
-  // Compare with existing file if it exists
   val originalContent = Files.readString(pluginXmlPath)
-  val status = if (originalContent == buildResult.xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
-  if (status != FileChangeStatus.UNCHANGED) {
-    Files.writeString(pluginXmlPath, buildResult.xml)
-  }
+  val status = FileUpdateUtils.writeIfChanged(pluginXmlPath, originalContent, buildResult.xml)
 
   // Calculate statistics using the contentBlocks from generation
   val totalModules = buildResult.contentBlocks.sumOf { it.modules.size }
