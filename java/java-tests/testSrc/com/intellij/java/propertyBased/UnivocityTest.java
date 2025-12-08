@@ -9,7 +9,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
@@ -38,7 +37,6 @@ public class UnivocityTest extends BaseUnivocityTest {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
     MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
-    Registry.get("ruby.vcs.use.project.sdk").setValue(false, getTestRootDisposable());
   }
 
   @Override
