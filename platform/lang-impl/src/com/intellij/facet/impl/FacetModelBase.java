@@ -56,8 +56,11 @@ public abstract class FacetModelBase implements FacetModel {
       }
       myChildFacets = children.freezeValues();
     }
+    Map<FacetAndType, Collection<Facet<?>>> childFacets = myChildFacets;
+    if (childFacets == null) return Collections.emptyList();
+
     //noinspection unchecked
-    Collection<F> facets = (Collection<F>)myChildFacets.get(new FacetAndType(underlyingFacet, typeId));
+    Collection<F> facets = (Collection<F>)childFacets.get(new FacetAndType(underlyingFacet, typeId));
     return facets != null ? facets : Collections.emptyList();
   }
 
