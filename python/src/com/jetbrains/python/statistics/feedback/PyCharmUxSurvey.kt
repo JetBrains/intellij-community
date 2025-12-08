@@ -57,7 +57,7 @@ private class PyCharmUxSurveyConfig : ExternalFeedbackSurveyConfig {
   }
 
   override fun checkIdeIsSuitable(): Boolean =
-    PlatformUtils.isPyCharm()
+    PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean =
     !service<PyCharmUxSurveyStore>().state.wasShown
