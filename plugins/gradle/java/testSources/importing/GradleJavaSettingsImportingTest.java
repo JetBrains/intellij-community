@@ -13,6 +13,7 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
  */
 public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testCompilerConfigurationSettingsImport() throws Exception {
 
     importProject(
@@ -67,6 +69,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testArtifactsSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
@@ -91,6 +94,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
 
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testArtifactsReferenceImport() throws Exception {
     importProject(
       createBuildScriptBuilder()
@@ -124,6 +128,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testModuleReferenceImport() throws Exception {
     importProject(
       createBuildScriptBuilder()
