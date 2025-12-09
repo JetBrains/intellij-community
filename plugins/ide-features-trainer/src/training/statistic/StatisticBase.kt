@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JOptionPane
 
 enum class LessonStartingWay {
-  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART
+  NEXT_BUTTON, PREV_BUTTON, RESTART_BUTTON, RESTORE_LINK, ONBOARDING_PROMOTER, LEARN_TAB, TIP_AND_TRICK_PROMOTER, NO_SDK_RESTART, WELCOME_SCREEN
 }
 
 internal enum class FeedbackEntryPlace {
@@ -95,7 +95,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val LOG = logger<StatisticBase>()
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 21)
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 22)
 
   var isLearnProjectCloseLogged = false
 
