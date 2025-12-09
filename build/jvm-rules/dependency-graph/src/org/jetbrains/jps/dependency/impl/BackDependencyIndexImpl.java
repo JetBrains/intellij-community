@@ -6,10 +6,7 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.Iterators;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private final String myName;
@@ -18,7 +15,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   protected BackDependencyIndexImpl(@NotNull String name, @NotNull MapletFactory cFactory) {
     myName = name;
     // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
-    Externalizer<ReferenceID> ext = Externalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new);
+    ComparableTypeExternalizer<ReferenceID> ext = ComparableTypeExternalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new, ReferenceID::compareTo);
     myMap = cFactory.createSetMultiMaplet(name, ext, ext);
   }
 

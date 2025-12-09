@@ -8,7 +8,6 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
-import org.jetbrains.jps.util.Iterators;
 
 import java.io.Closeable;
 import java.io.Flushable;
@@ -79,9 +78,9 @@ public abstract class GraphImpl implements Graph {
       myDependencyIndex = find(myIndices, idx -> NodeDependenciesIndex.NAME.equals(idx.getName()));
 
       // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
-      Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new, NodeSource[]::new);
-      myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new), srcExternalizer);
-      mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement(Node<?, ?>[]::new));
+      ComparableTypeExternalizer<NodeSource> srcExternalizer = ComparableTypeExternalizer.forGraphElement(PathSource::new, NodeSource[]::new, Comparator.comparing(NodeSource::toString));
+      myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", ComparableTypeExternalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new, ReferenceID::compareTo), srcExternalizer);
+      mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, ComparableTypeExternalizer.forAnyGraphElement(Node<?, ?>[]::new, Comparator.comparing(Node::getReferenceID)));
     }
     catch (RuntimeException e) {
       closeIgnoreErrors();
