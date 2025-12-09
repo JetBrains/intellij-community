@@ -5,12 +5,13 @@ import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.*
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 
 internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,
@@ -26,26 +27,30 @@ internal fun getChildrenStubs(stub: StubElement<*>, languageLevel: LanguageLevel
 }
 
 internal fun evaluateVersionsForElement(element: PsiElement): ImmutableRangeSet<Version> {
-  return CachedValuesManager.getCachedValue(element) {
-    val parent = element.parent
-    var result: ImmutableRangeSet<Version>
-    if (parent == null) {
-      result = ImmutableRangeSet.of(Range.all())
-    }
-    else {
-      result = evaluateVersionsForElement(parent)
-      if (parent is PyIfPart || parent is PyElsePart) {
-        val grandParent = parent.parent
-        if (grandParent is PyIfStatement && element === (parent as PyStatementPart).statementList) {
-          val versions = evaluateVersionRangeForIfStatementPart(grandParent, parent)
-          if (versions != null) {
-            result = result.intersection(versions)
-          }
+  return getCachedValueStubBuildOptimized(element, EVAL_VERSIONS_PROVIDER)
+}
+
+private val EVAL_VERSIONS_PROVIDER = StubBuildCachedValueProvider<ImmutableRangeSet<Version>, PsiElement>(
+  "python.versionsForElement"
+) { element ->
+  val parent = element.parent
+  var result: ImmutableRangeSet<Version>
+  if (parent == null) {
+    result = ImmutableRangeSet.of(Range.all())
+  }
+  else {
+    result = evaluateVersionsForElement(parent)
+    if (parent is PyIfPart || parent is PyElsePart) {
+      val grandParent = parent.parent
+      if (grandParent is PyIfStatement && element === (parent as PyStatementPart).statementList) {
+        val versions = evaluateVersionRangeForIfStatementPart(grandParent, parent)
+        if (versions != null) {
+          result = result.intersection(versions)
         }
       }
     }
-    CachedValueProvider.Result.create(result, element)
   }
+  CachedValueProvider.Result.create(result, element)
 }
 
 private fun evaluateVersionRangeForIfStatementPart(ifStatement: PyIfStatement, ifStatementPart: PsiElement): RangeSet<Version>? {

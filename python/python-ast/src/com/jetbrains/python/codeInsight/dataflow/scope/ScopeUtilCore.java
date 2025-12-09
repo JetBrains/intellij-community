@@ -4,15 +4,16 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.jetbrains.python.ast.*;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
 
@@ -33,9 +34,15 @@ public final class ScopeUtilCore {
       final PsiElement context = element.getContext();
       return context instanceof AstScopeOwner ? (AstScopeOwner)context : getScopeOwner(context);
     }
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
-      .create(calculateScopeOwner(element), PsiModificationTracker.MODIFICATION_COUNT));
+    return getCachedValueStubBuildOptimized(element, GET_SCOPE_OWNER_PROVIDER);
   }
+
+  private static final StubBuildCachedValueProvider<AstScopeOwner, PsiElement>
+    GET_SCOPE_OWNER_PROVIDER = new StubBuildCachedValueProvider<>(
+    "python.scopeOwner",
+    element -> CachedValueProvider.Result
+      .create(calculateScopeOwner(element), PsiModificationTracker.MODIFICATION_COUNT)
+  );
 
   private static @Nullable AstScopeOwner calculateScopeOwner(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement<?> stubBasedElement) {

@@ -133,7 +133,7 @@ object StubBuildCachedValuesManager {
   ): T {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
-      val node = dataHolder.getNode()
+      val node = dataHolder.getNode() ?: dataHolder
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
         myComputingCachedValue.set(true)
@@ -194,7 +194,7 @@ object StubBuildCachedValuesManager {
   ): T? {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
-      val node = dataHolder.getNode()
+      val node = dataHolder.getNode() ?: dataHolder
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
         myComputingCachedValue.set(true)
