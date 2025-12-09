@@ -68,7 +68,7 @@ interface UiPluginManagerController {
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>
-  suspend fun isModified(sessionId: String): Boolean
+  suspend fun isModified(): Boolean
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
   suspend fun isPluginEnabled(pluginId: PluginId): Boolean

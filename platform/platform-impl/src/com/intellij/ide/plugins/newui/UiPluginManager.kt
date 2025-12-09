@@ -115,8 +115,8 @@ class UiPluginManager {
     return getController().updatePluginDependencies(sessionId)
   }
 
-  suspend fun isModified(sessionId: String): Boolean {
-    return getController().isModified(sessionId)
+  suspend fun isModified(): Boolean {
+    return getController().isModified()
   }
 
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {
