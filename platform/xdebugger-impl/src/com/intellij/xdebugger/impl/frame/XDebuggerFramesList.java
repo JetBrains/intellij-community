@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
@@ -70,7 +69,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
       for (Object value : items) {
-        if (value instanceof ItemWithSeparatorAbove item) {
+        if (value instanceof XStackFrameWithSeparatorAbove item) {
           if (item.hasSeparatorAbove()) {
             String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
             plainBuf.append(caption).append('\n');
@@ -256,8 +255,8 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   Color getFrameBgColor(XStackFrame stackFrame) {
-    if (stackFrame instanceof ItemWithCustomBackgroundColor) {
-      return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+    if (stackFrame instanceof XStackFrameWithCustomBackgroundColor) {
+      return ((XStackFrameWithCustomBackgroundColor)stackFrame).getBackgroundColor();
     }
     return myFileColorsCache.get(stackFrame, myProject);
   }
@@ -274,12 +273,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
         @Override
         public @Nullable String getCaptionAboveOf(Object value) {
-          return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
+          return value instanceof XStackFrameWithSeparatorAbove ? ((XStackFrameWithSeparatorAbove)value).getCaptionAboveOf() : null;
         }
 
         @Override
         public boolean hasSeparatorAboveOf(Object value) {
-          return value instanceof ItemWithSeparatorAbove && ((ItemWithSeparatorAbove)value).hasSeparatorAbove();
+          return value instanceof XStackFrameWithSeparatorAbove && ((XStackFrameWithSeparatorAbove)value).hasSeparatorAbove();
         }
       });
       mySeparatorComponent.setCaptionCentered(false);
@@ -498,17 +497,18 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     }
   }
 
-  public interface ItemWithSeparatorAbove {
-    boolean hasSeparatorAbove();
-    @NlsContexts.Separator String getCaptionAboveOf();
-
-    default void setWithSeparator(boolean withSeparator) {
-    }
+  /**
+   * @deprecated Use {@link XStackFrameWithSeparatorAbove} directly instead.
+   */
+  @Deprecated
+  public interface ItemWithSeparatorAbove extends XStackFrameWithSeparatorAbove {
   }
 
-  public interface ItemWithCustomBackgroundColor {
-    @Nullable
-    Color getBackgroundColor();
+  /**
+   * @deprecated Use {@link XStackFrameWithCustomBackgroundColor} directly instead.
+   */
+  @Deprecated
+  public interface ItemWithCustomBackgroundColor extends XStackFrameWithCustomBackgroundColor {
   }
 
   public static class CopyStackAction extends DumbAwareAction implements SplitDebuggerAction {

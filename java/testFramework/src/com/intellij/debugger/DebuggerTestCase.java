@@ -51,7 +51,7 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.HiddenStackFramesItem;
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
@@ -506,7 +506,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     List<XStackFrame> frames = collectFrames(getDebuggerSession().getXDebugSession());
     systemPrintln("vvv stack trace vvv");
     frames.forEach(f -> {
-      if (f instanceof XDebuggerFramesList.ItemWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
+      if (f instanceof XStackFrameWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
         systemPrintln("-- " + withSeparator.getCaptionAboveOf() + " --");
       }
       if (f instanceof HiddenStackFramesItem) {

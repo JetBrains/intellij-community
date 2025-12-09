@@ -18,7 +18,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +29,7 @@ internal class FrontendXStackFrame(
   project: Project,
   private val frameDto: XStackFrameDto,
   cs: CoroutineScope,
-) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
+) : XStackFrame(), XStackFrameWithSeparatorAbove {
 
   val id: XStackFrameId get() = frameDto.stackFrameId
 

@@ -428,9 +428,6 @@ c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
-- a:getCaptionAboveOf():java.lang.String
-- a:hasSeparatorAbove():Z
-- setWithSeparator(Z):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - com.intellij.ui.components.JBList
 - com.intellij.openapi.actionSystem.UiDataProvider

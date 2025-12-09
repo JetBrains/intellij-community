@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 import com.sun.jdi.Location
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
-import java.util.Objects
 
 /**
  * Coroutine exit frame represented by a stack frames
@@ -47,7 +46,7 @@ class CreationCoroutineStackFrame(
     sourcePosition: XSourcePosition?,
     private var withSeparator: Boolean,
     location: Location? = frame.safeLocation()
-) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XDebuggerFramesList.ItemWithSeparatorAbove {
+) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XStackFrameWithSeparatorAbove {
 
     override fun getCaptionAboveOf() =
         KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")

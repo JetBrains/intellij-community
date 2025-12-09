@@ -30,7 +30,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
 import kotlinx.coroutines.flow.Flow;
@@ -240,12 +240,12 @@ public class StackFrameItem {
   }
 
   public static boolean hasSeparatorAbove(XStackFrame frame) {
-    return frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator &&
+    return frame instanceof XStackFrameWithSeparatorAbove frameWithSeparator &&
            frameWithSeparator.hasSeparatorAbove();
   }
 
   public static void setWithSeparator(XStackFrame frame) {
-    if (frame instanceof XDebuggerFramesList.ItemWithSeparatorAbove frameWithSeparator) {
+    if (frame instanceof XStackFrameWithSeparatorAbove frameWithSeparator) {
       frameWithSeparator.setWithSeparator(true);
     }
   }
@@ -255,7 +255,7 @@ public class StackFrameItem {
   }
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
-                                                                        XDebuggerFramesList.ItemWithSeparatorAbove {
+                                                                        XStackFrameWithSeparatorAbove {
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;

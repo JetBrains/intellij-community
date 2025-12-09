@@ -20,8 +20,8 @@ import java.util.Optional;
  * @see XFramesView#shouldFoldHiddenFrames()
  */
 @ApiStatus.Internal
-public class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
-                                                                  XDebuggerFramesList.ItemWithSeparatorAbove,
+public class HiddenStackFramesItem extends XStackFrame implements XStackFrameWithCustomBackgroundColor,
+                                                                  XStackFrameWithSeparatorAbove,
                                                                   HiddenFramesStackFrame {
   final List<XStackFrame> hiddenFrames;
 
@@ -48,21 +48,21 @@ public class HiddenStackFramesItem extends XStackFrame implements XDebuggerFrame
     return hiddenFrames;
   }
 
-  private Optional<XDebuggerFramesList.ItemWithSeparatorAbove> findFrameWithSeparator() {
+  private Optional<XStackFrameWithSeparatorAbove> findFrameWithSeparator() {
     // We check only the first frame; otherwise, it's not clear what to do.
     // Might be reconsidered in the future.
-    return hiddenFrames.get(0) instanceof XDebuggerFramesList.ItemWithSeparatorAbove frame
+    return hiddenFrames.get(0) instanceof XStackFrameWithSeparatorAbove frame
            ? Optional.of(frame)
            : Optional.empty();
   }
 
   @Override
   public boolean hasSeparatorAbove() {
-    return findFrameWithSeparator().map(XDebuggerFramesList.ItemWithSeparatorAbove::hasSeparatorAbove).orElse(false);
+    return findFrameWithSeparator().map(XStackFrameWithSeparatorAbove::hasSeparatorAbove).orElse(false);
   }
 
   @Override
   public String getCaptionAboveOf() {
-    return findFrameWithSeparator().map(XDebuggerFramesList.ItemWithSeparatorAbove::getCaptionAboveOf).orElse(null);
+    return findFrameWithSeparator().map(XStackFrameWithSeparatorAbove::getCaptionAboveOf).orElse(null);
   }
 }

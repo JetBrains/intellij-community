@@ -9,6 +9,12 @@ com.intellij.xdebugger.impl.XWatch
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:isPaused():Z
 - a:setPaused(Z):V
+com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
+- a:getBackgroundColor():java.awt.Color
+com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
+- a:getCaptionAboveOf():java.lang.String
+- a:hasSeparatorAbove():Z
+- setWithSeparator(Z):V
 Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - canMarkValue(com.intellij.xdebugger.frame.XValue):Z
 - clear():V

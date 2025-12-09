@@ -33,7 +33,8 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
@@ -362,7 +363,7 @@ internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDeb
 }
 
 private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
-  return if (this is XDebuggerFramesList.ItemWithSeparatorAbove) {
+  return if (this is XStackFrameWithSeparatorAbove) {
     XStackFrameCaptionInfo(hasSeparatorAbove(), captionAboveOf)
   }
   else {
@@ -371,7 +372,7 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
 }
 
 private fun XStackFrame.backgroundInfo(project: Project): XStackFrameBackgroundColor? {
-  if (this is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
+  if (this is XStackFrameWithCustomBackgroundColor) {
     return XStackFrameBackgroundColor(backgroundColor?.rpcId())
   }
   val file = sourcePosition?.file ?: return null
