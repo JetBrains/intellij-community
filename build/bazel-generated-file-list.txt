@@ -125,6 +125,7 @@ android/gradle-dsl-declarative
 android/gradle-dsl-flags
 android/gradle-dsl-groovy
 android/gradle-dsl-kotlin
+android/gradle-dsl-plugin
 android/gradle-dsl-toml
 android/gradle-tooling/studio-gradle-tooling-api
 android/gradle-tooling/studio-gradle-tooling-impl
