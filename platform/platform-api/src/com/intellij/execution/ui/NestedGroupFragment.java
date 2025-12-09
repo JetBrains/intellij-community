@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,6 +62,12 @@ public abstract class NestedGroupFragment<S extends FragmentedSettings> extends 
   @Override
   public boolean isInitiallyVisible(S s) {
     return super.isInitiallyVisible(s) || ContainerUtil.exists(getChildren(), fragment -> fragment.isInitiallyVisible(s));
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean isAvailable() {
+    return super.isAvailable() && ContainerUtil.exists(getChildren(), SettingsEditorFragment::isAvailable);
   }
 
   private void updateVisibility() {
