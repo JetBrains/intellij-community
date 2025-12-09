@@ -3583,4 +3583,19 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        x = 1
                    """);
   }
+
+  // PY-85988
+  public void testClsCallResult() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Self
+                   
+                   
+                   @dataclass
+                   class Foo:
+                       @classmethod
+                       def bar(cls) -> Self:
+                           return cls()
+                   """);
+  }
 }

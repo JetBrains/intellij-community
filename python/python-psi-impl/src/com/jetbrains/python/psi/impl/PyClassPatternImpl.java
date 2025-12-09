@@ -137,13 +137,12 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   }
 
   private static @Nullable List<@NotNull String> getMatchArgs(@NotNull PyClassType type, @NotNull TypeEvalContext context) {
-    final PyClass cls = type.getPyClass();
-    List<String> matchArgs = cls.getOwnMatchArgs();
+    List<String> matchArgs = type.getPyClass().getOwnMatchArgs();
     if (matchArgs == null) {
       matchArgs = PyNamedTupleTypeProvider.Companion.getGeneratedMatchArgs(type, context);
     }
     if (matchArgs == null) {
-      matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(cls, context);
+      matchArgs = PyDataclassTypeProvider.Companion.getGeneratedMatchArgs(type, context);
     }
 
     return matchArgs;
