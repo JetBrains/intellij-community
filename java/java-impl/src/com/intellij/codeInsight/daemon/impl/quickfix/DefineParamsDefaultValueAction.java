@@ -11,7 +11,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -32,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @see com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueTest
+ */
 public final class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
@@ -50,7 +52,8 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class, PsiCodeBlock.class);
     String message;
     if (parent instanceof PsiMethod method) {
-      if (!method.hasModifier(JvmModifier.ABSTRACT) && method.getBody() == null) return null;
+      if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && method.getBody() == null) return null;
+      if (method.getNameIdentifier() == null) return null;
       final PsiParameterList parameterList = method.getParameterList();
       if (parameterList.isEmpty()) return null;
       final PsiClass containingClass = method.getContainingClass();
