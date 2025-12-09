@@ -331,7 +331,7 @@ fun generateAllModuleSets(
       dependencyResult = null,
       productResult = null,
       projectRoot = projectRoot,
-      durationMs = System.currentTimeMillis() - startTime
+      durationMs = System.currentTimeMillis() - startTime,
     )
   }
 }
@@ -381,10 +381,10 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   }.awaitAll()
 
   // Build map of output directory -> generated file names (for cleanup aggregation)
-  val outputDirToGeneratedFiles = mutableMapOf<Path, MutableSet<String>>()
+  val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()
   for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
     val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
-    outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { mutableSetOf() }.add(fileResult.fileName)
+    outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { HashSet() }.add(fileResult.fileName)
   }
 
   // Return results with tracking map (cleanup will be done after aggregating all labels)

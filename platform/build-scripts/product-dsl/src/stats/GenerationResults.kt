@@ -65,7 +65,8 @@ internal data class ModuleSetGenerationResult(
   /** Tracking map: directory -> set of generated file names (used for cleanup aggregation) */
   @JvmField val trackingMap: Map<Path, Set<String>> = emptyMap(),
 ) {
-  val totalModules: Int get() = files.sumOf { it.moduleCount }
+  val totalModules: Int
+    get() = files.sumOf { it.moduleCount }
 }
 
 /**
