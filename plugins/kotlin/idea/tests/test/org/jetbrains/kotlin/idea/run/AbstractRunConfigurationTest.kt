@@ -54,7 +54,7 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
 
     fun testLongCommandLine() {
         configureProject()
-        ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project))
+        ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project, testRootDisposable))
 
         val kotlinRunConfiguration = createConfigurationFromMain(project, "some.test.main")
         kotlinRunConfiguration.setModule(module)
