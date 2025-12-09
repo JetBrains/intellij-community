@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -525,6 +526,7 @@ private fun createActivityScope(project: Project, aClass: Class<*>): CoroutineSc
   return scope
 }
 
+@TestOnly
 // allow `invokeAndWait` inside startup activities
 private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
   ThreadingAssertions.assertEventDispatchThread()
@@ -538,13 +540,15 @@ private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager
     startupManager.runAfterOpened(DumbAwareRunnable { ApplicationManager.getApplication().invokeLater { } })
   }
 
-  while (true) {
-    val event = eventQueue.nextEvent
-    if (event is InvocationEvent) {
-      eventQueue.dispatchEvent(event)
-    }
-    if (startupManager.postStartupActivityPassed() && eventQueue.peekEvent() == null) {
-      break
+  TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+    while (true) {
+      val event = eventQueue.nextEvent
+      if (event is InvocationEvent) {
+        eventQueue.dispatchEvent(event)
+      }
+      if (startupManager.postStartupActivityPassed() && eventQueue.peekEvent() == null) {
+        break
+      }
     }
   }
 }
