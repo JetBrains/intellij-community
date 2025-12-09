@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeD
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeParameter
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.collectRelevantConstraints
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.createExtractionEngine
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
@@ -57,6 +59,17 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
         )
         val containingClass = element.containingClass()
         val rangeMarker = editor.document.createRangeMarker(element.textRange)
+
+        // Collect type parameters only from accessible ancestor classes
+        val ancestorTypeParameters = mutableListOf<KtTypeParameter>()
+        var currentClass = containingClass
+        while (currentClass != null) {
+            currentClass.typeParameters.let { ancestorTypeParameters.addAll(it) }
+            // Stop if this class is not inner - its outer classes' type parameters are not accessible
+            if (!currentClass.isInner()) break
+            currentClass = currentClass.containingClass()
+        }
+        
         val holder = runWithModalProgressBlocking(
             project,
             KotlinBundle.message("progress.title.analyze.extraction.data")
@@ -84,7 +97,7 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
 
                 val data = ExtractionData(element.containingKtFile, element.toRange(), targetSibling)
 
-                Holder(classNames, hasMemberReference, data)
+                Holder(classNames, hasMemberReference, data, ancestorTypeParameters)
             }
         }
 
@@ -93,7 +106,13 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
 
         val objectDeclaration = element.objectDeclaration
 
-        val newClass = psiFactory.createClass("class $className")
+        val typeParamsSuffix = holder.ancestorTypeParameters
+            .mapNotNull { it.name }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(prefix = "<", postfix = ">")
+            ?: ""
+
+        val newClass = psiFactory.createClass("class $className$typeParamsSuffix")
         objectDeclaration.getSuperTypeList()?.let {
             newClass.add(psiFactory.createColon())
             newClass.add(it)
@@ -116,7 +135,19 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
                         KotlinBundle.message("progress.title.analyze.extraction.data")
                     ) {
                         readAction {
-                            descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
+                            val descriptor = descriptorWithConflicts.descriptor
+
+                            val typeParameters = descriptor.typeParameters
+                            val outerTypeParameters = holder.ancestorTypeParameters
+                                .filter { typeParam -> 
+                                    typeParameters.none { it.originalDeclaration.name == typeParam.name }
+                                }
+                                .map { TypeParameter(it, it.collectRelevantConstraints()) }
+                            
+                            descriptor.copy(
+                                suggestedNames = listOf(className),
+                                typeParameters = typeParameters + outerTypeParameters
+                            )
                         }
                     }
                     doRefactor(
@@ -141,7 +172,10 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
 
                 val introducedClass = runWriteAction {
                     val replaced = functionDeclaration.replaced(newClass)
-                    if (holder.hasMemberReference && containingClass == (replaced.parent.parent as? KtClass)) {
+                    // Should be inner if: uses outer members OR uses outer type parameters
+                    val usesOuterTypeParams = holder.ancestorTypeParameters.isNotEmpty()
+                    val shouldBeInner = holder.hasMemberReference || usesOuterTypeParams
+                    if (shouldBeInner && containingClass == (replaced.parent.parent as? KtClass)) {
                         replaced.addModifier(KtTokens.INNER_KEYWORD)
                     }
                     replaced
@@ -177,6 +211,7 @@ internal class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntentio
         val classNames: List<String>,
         val hasMemberReference: Boolean,
         val data: ExtractionData,
+        val ancestorTypeParameters: List<KtTypeParameter>,
     )
 
     override fun applyTo(element: KtObjectLiteralExpression, editor: Editor?) {

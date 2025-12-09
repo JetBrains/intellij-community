@@ -1,0 +1,10 @@
+// WITH_STDLIB
+class Bar<T> {
+    class B {
+        val iter = IntIterable()
+    }
+}
+
+class IntIterable<caret> : Iterable<Int> {
+    override fun iterator(): Iterator<Int> = TODO()
+}
