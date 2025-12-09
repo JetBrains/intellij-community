@@ -4,20 +4,24 @@ package git4idea.config
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.vcs.git.GitDisplayName
 import git4idea.i18n.GitBundle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.CalledInAny
 
 internal class GitExecutableSelectorPanel(val project: Project, val disposable: Disposable) {
@@ -94,22 +98,20 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       return
     }
 
-    object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
-      private lateinit var gitVersion: GitVersion
-
-      override fun run(indicator: ProgressIndicator) {
+    runWithModalProgressBlocking(ModalTaskOwner.component(pathSelector.mainPanel), GitBundle.message("git.executable.version.progress.title")) {
+      val gitVersion = runCatching {
         val executableManager = GitExecutableManager.getInstance()
         val executable = executableManager.getExecutable(project, pathToGit)
         executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(project, executable)
-      }
-
-      override fun onThrowable(error: Throwable) {
+        executableManager.identifyVersion(project, executable)
+      }.getOrHandleException { err ->
         val problemHandler = findGitExecutableProblemHandler(project)
-        problemHandler.showError(error, errorNotifier)
-      }
+        withContext(Dispatchers.UI) {
+          problemHandler.showError(err, errorNotifier)
+        }
+      } ?: return@runWithModalProgressBlocking
 
-      override fun onSuccess() {
+      withContext(Dispatchers.UI) {
         if (gitVersion.isSupported) {
           errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
         }
@@ -117,7 +119,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
         }
       }
-    }.queue()
+    }
   }
 
   /**
