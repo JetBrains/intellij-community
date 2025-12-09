@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -43,6 +44,10 @@ import com.intellij.python.processOutput.impl.ui.collectReplayAsState
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
+
+private object Styling {
+    val COPY_SECTION_BUTTON_SPACE_SIZE = 18.dp
+}
 
 @Composable
 internal fun OutputSection(controller: ProcessOutputController) {
@@ -89,13 +94,13 @@ internal fun OutputSection(controller: ProcessOutputController) {
             )
         }
 
-        selectedProcess?.let {
+        selectedProcess?.let { loggedProcess ->
             VerticallyScrollableContainer(
                 modifier = Modifier.fillMaxSize(),
                 scrollState = listState as ScrollableState,
             ) {
-                val lines by it.lines.collectReplayAsState()
-                val exitInfo by it.exitInfo.collectAsState()
+                val lines by loggedProcess.lines.collectReplayAsState()
+                val exitInfo by loggedProcess.exitInfo.collectAsState()
                 val isInfoExpandedState =
                     controller.processOutputUiState.isInfoExpanded.collectAsState()
                 val isOutputExpandedState =
@@ -119,19 +124,19 @@ internal fun OutputSection(controller: ProcessOutputController) {
                             infoLineItems(
                                 InfoLine.Single(
                                     message("process.output.output.sections.info.started"),
-                                    it.startedAt.formatFull(),
+                                    loggedProcess.startedAt.formatFull(),
                                 ),
                                 InfoLine.Single(
                                     message("process.output.output.sections.info.command"),
-                                    it.commandString,
+                                    loggedProcess.commandString,
                                 ),
-                                it.pid?.let { pid ->
+                                loggedProcess.pid?.let { pid ->
                                     InfoLine.Single(
                                         message("process.output.output.sections.info.pid"),
                                         pid.toString(),
                                     )
                                 },
-                                it.cwd?.let { cwd ->
+                                loggedProcess.cwd?.let { cwd ->
                                     InfoLine.Single(
                                         message("process.output.output.sections.info.cwd"),
                                         cwd,
@@ -139,11 +144,13 @@ internal fun OutputSection(controller: ProcessOutputController) {
                                 },
                                 InfoLine.Single(
                                     message("process.output.output.sections.info.target"),
-                                    it.target,
+                                    loggedProcess.target,
                                 ),
                                 InfoLine.Multi(
                                     message("process.output.output.sections.info.env"),
-                                    it.env.entries.map { (key, value) -> "$key=$value" },
+                                    loggedProcess.env.entries.map { (key, value) ->
+                                        "$key=$value"
+                                    },
                                 ),
                             )
 
@@ -167,9 +174,20 @@ internal fun OutputSection(controller: ProcessOutputController) {
 
                                 OutputLine(
                                     displayTags = isDisplayTags,
-                                    tag = line.kind.tag.takeIf { tag ->
-                                        lines.getOrNull(index - 1)?.kind?.tag != tag
-                                    },
+                                    sectionIndicator =
+                                        if (lines.getOrNull(index - 1)?.kind != line.kind) {
+                                            SectionIndicator(
+                                                line.kind.tag,
+                                                OutputSectionTestTags.COPY_OUTPUT_TAG_SECTION_BUTTON,
+                                            ) {
+                                                controller.copyOutputTagAtIndexToClipboard(
+                                                    loggedProcess,
+                                                    index,
+                                                )
+                                            }
+                                        } else {
+                                            null
+                                        },
                                     text = line.text,
                                     textStyle = SpanStyle(
                                         color = outputColor,
@@ -181,7 +199,15 @@ internal fun OutputSection(controller: ProcessOutputController) {
                                 item(key = "exit") {
                                     OutputLine(
                                         displayTags = true,
-                                        tag = Tag.EXIT,
+                                        sectionIndicator =
+                                            SectionIndicator(
+                                                Tag.EXIT,
+                                                OutputSectionTestTags.COPY_OUTPUT_EXIT_INFO_BUTTON,
+                                            ) {
+                                                controller.copyOutputExitInfoToClipboard(
+                                                    loggedProcess,
+                                                )
+                                            },
                                         text = buildString {
                                             append(exitInfo.exitValue)
 
@@ -216,12 +242,12 @@ internal fun OutputSection(controller: ProcessOutputController) {
 @Composable
 private fun OutputLine(
     displayTags: Boolean,
-    tag: String? = null,
+    sectionIndicator: SectionIndicator? = null,
     text: String,
     textStyle: SpanStyle = SpanStyle(),
 ) {
     Column {
-        if (tag != null) {
+        if (sectionIndicator != null) {
             LineSpacer()
         }
 
@@ -235,8 +261,8 @@ private fun OutputLine(
 
                 Text(
                     text =
-                        if (displayTags && tag != null) {
-                            "$tag:".padStart(padding, ' ')
+                        if (displayTags && sectionIndicator != null) {
+                            "${sectionIndicator.tag}:".padStart(padding, ' ')
                         } else {
                             " ".repeat(padding)
                         },
@@ -256,9 +282,29 @@ private fun OutputLine(
                     .weight(1f),
             )
 
+            if (sectionIndicator != null) {
+                ActionIconButton(
+                    modifier = Modifier
+                        .size(Styling.COPY_SECTION_BUTTON_SPACE_SIZE)
+                        .testTag(sectionIndicator.testTag),
+                    iconKey = Icons.Keys.Copy,
+                    tooltipText = message("process.output.output.copySection.tooltip"),
+                    onClick = sectionIndicator.onCopy,
+                )
+            } else {
+                Spacer(
+                    modifier = Modifier.size(Styling.COPY_SECTION_BUTTON_SPACE_SIZE),
+                )
+            }
         }
     }
 }
+
+private data class SectionIndicator(
+    val tag: String,
+    val testTag: String,
+    val onCopy: () -> Unit,
+)
 
 private fun LazyListScope.collapsibleSectionItem(
     title: String,
@@ -385,4 +431,6 @@ internal object OutputSectionTestTags {
     const val FILTERS_BUTTON = "ProcessOutput.Output.FiltersButton"
     const val FILTERS_MENU = "ProcessOutput.Output.FiltersMenu"
     const val COPY_OUTPUT_BUTTON = "ProcessOutput.Output.CopyButton"
+    const val COPY_OUTPUT_TAG_SECTION_BUTTON = "ProcessOutput.Output.CopyTagSectionButton"
+    const val COPY_OUTPUT_EXIT_INFO_BUTTON = "ProcessOutput.Output.CopyExitInfoButton"
 }

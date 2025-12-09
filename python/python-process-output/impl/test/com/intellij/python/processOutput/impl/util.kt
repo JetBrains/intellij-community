@@ -11,6 +11,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.intellij.python.community.execService.impl.LoggedProcess
 import com.intellij.python.community.execService.impl.LoggedProcessExe
 import com.intellij.python.community.execService.impl.LoggedProcessExitInfo
+import com.intellij.python.community.execService.impl.LoggedProcessLine
+import com.intellij.python.community.execService.impl.LoggingLimits
 import com.intellij.python.processOutput.impl.ui.toggle
 import com.jetbrains.python.TraceContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -102,6 +104,14 @@ internal abstract class ProcessOutputTest {
             controllerSpy.copyOutputToClipboard(loggedProcess)
         }
 
+        override fun copyOutputTagAtIndexToClipboard(loggedProcess: LoggedProcess, fromIndex: Int) {
+            controllerSpy.copyOutputTagAtIndexToClipboard(loggedProcess, fromIndex)
+        }
+
+        override fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess) {
+            controllerSpy.copyOutputExitInfoToClipboard(loggedProcess)
+        }
+
         override fun specifyAdditionalMessageToUser(logId: Int, message: String) {
             controllerSpy.specifyAdditionalMessageToUser(logId, message)
         }
@@ -159,6 +169,8 @@ internal abstract class ProcessOutputTest {
         traceContext: TraceContext? = null,
         startedAt: Instant = Clock.System.now(),
         cwd: String? = null,
+        lines: List<LoggedProcessLine> = listOf(),
+        exitInfo: LoggedProcessExitInfo? = null,
     ): LoggedProcess =
         LoggedProcess(
             traceContext = traceContext ?: TraceContext("some title"),
@@ -172,8 +184,26 @@ internal abstract class ProcessOutputTest {
             args = command.drop(1),
             env = mapOf(),
             target = "Local",
-            lines = MutableSharedFlow(),
-            exitInfo = MutableStateFlow(null),
+            lines = run {
+                val flow = MutableSharedFlow<LoggedProcessLine>(replay = LoggingLimits.MAX_LINES)
+
+                lines.forEach { flow.emit(it) }
+
+                flow
+            },
+            exitInfo = MutableStateFlow(exitInfo),
+        )
+
+    fun outLine(text: String): LoggedProcessLine =
+        LoggedProcessLine(
+            text = text,
+            kind = LoggedProcessLine.Kind.OUT,
+        )
+
+    fun errLine(text: String): LoggedProcessLine =
+        LoggedProcessLine(
+            text = text,
+            kind = LoggedProcessLine.Kind.ERR,
         )
 
     suspend fun TreeGeneratorScope<TreeNode>.addProcess(
