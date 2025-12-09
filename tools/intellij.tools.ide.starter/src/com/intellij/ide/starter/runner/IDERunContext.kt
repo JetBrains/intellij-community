@@ -27,6 +27,8 @@ import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.containers.ConcurrentList
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -68,7 +70,7 @@ data class IDERunContext(
   val launchDir: Path = testContext.paths.testHome.resolve(launchName).createDirectoriesIfNotExist()
   val logsDir: Path = testContext.paths.testHome.resolve(launchName).resolve("log").createDirectoriesIfNotExist()
 
-  private val patchesForVMOptions: MutableList<VMOptions.() -> Unit> = mutableListOf()
+  private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
   private fun Path.createDirectoriesIfNotExist(): Path {
     if (exists()) {
