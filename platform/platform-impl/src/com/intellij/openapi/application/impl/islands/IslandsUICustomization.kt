@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorCompositePanel
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.createTopBottomSideBorder
@@ -640,7 +641,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       if (isManyIslandEnabled) {
         val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace, 7, 0, 7))
+        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace, 6, 0, 6))
 
         g as Graphics2D
 
@@ -674,7 +675,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       @Suppress("UseDPIAwareInsets")
       val supplier = Supplier {
-        Insets(5 + searchReplaceEmptyTopSpace, 10, 5, 10)
+        Insets(5 + searchReplaceEmptyTopSpace, 9, 5, 9)
       }
       @Suppress("UNCHECKED_CAST")
       parent.border = JBUI.Borders.empty(JBInsets.create(supplier, supplier.get()))
@@ -719,9 +720,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
             val parent = c.parent
             if (parent != null) {
               val index = parent.components.indexOf(c)
-              val top = if (index == 0) 7 else 4
-              val bottom = if (index == parent.componentCount - 1) 7 else 4
-              return JBInsets(top, 11, bottom, 11)
+              val top = if (index == 0) 1 else 4
+              val bottom = if (index == parent.componentCount - 1) getBottomInsetForLastComponent(parent) else 4
+              return JBInsets(top, 10, bottom, 10)
             }
             return super.getBorderInsets(c)
           }
@@ -732,12 +733,20 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
     }
 
+    private fun getBottomInsetForLastComponent(component: Component): Int {
+      val editorCompositePanel = UIUtil.getParentOfType(EditorCompositePanel::class.java, component)
+      if (UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) != null) {
+        return 7
+      }
+      return 1
+    }
+
     override fun paintComponent(g: Graphics?) {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
         val rect = Rectangle(size)
-        val w = JBUI.scale(7)
+        val w = JBUI.scale(6)
         val h = JBUI.scale(1)
         JBInsets.removeFrom(rect, Insets(insets.top - h, w, insets.bottom - h, w))
 
@@ -754,6 +763,16 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
         RectanglePainter2D.DRAW.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
                                       arc, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+      }
+    }
+  }
+
+  override fun updateEditorHeader(editorHeaderPanel: JComponent) {
+    UIUtil.getParentOfType(EditorCompositePanel::class.java, editorHeaderPanel)?.let { editorCompositePanel ->
+      UIUtil.findComponentOfType(editorCompositePanel, EditorNotificationPanelWrapper::class.java)?.parent?.let {
+        it.doLayout()
+        it.revalidate()
+        it.repaint()
       }
     }
   }

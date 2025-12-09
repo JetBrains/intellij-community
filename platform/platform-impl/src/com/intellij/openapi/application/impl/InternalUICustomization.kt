@@ -110,6 +110,8 @@ open class InternalUICustomization {
 
   open fun installEditorBackground(component: JComponent) {}
 
+  open fun updateEditorHeader(editorHeaderPanel: JComponent) {}
+
   open fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
 
   open fun configureEditorTopComponent(component: JComponent, top: Boolean): JComponent? = null
