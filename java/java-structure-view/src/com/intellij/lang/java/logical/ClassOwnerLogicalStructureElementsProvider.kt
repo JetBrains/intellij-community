@@ -14,23 +14,23 @@ import org.jetbrains.uast.toUElement
 class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvider<PsiClassOwner, Any>, LogicalPsiDescription {
   override fun getElements(parent: PsiClassOwner): List<Any> {
     val result = mutableListOf<Any>()
-    var convertedAtLeastOne = false
     for (psiClass in parent.classes) {
       if (!psiClass.isValid) continue
-      val convertedModels = LogicalStructureElementsProvider.getProviders(psiClass)
+      val classModels = LogicalStructureElementsProvider.getProviders(psiClass)
         .filterIsInstance<PsiClassLogicalElementProvider<Any>>()
         .mapNotNull { it.convert(psiClass) }
         .toList()
-      if (convertedModels.count() > 0) {
-        convertedModels.forEach { result.add(it) }
-        convertedAtLeastOne = true
+      val methodModels = psiClass.methods.flatMap { method ->
+        val providers = LogicalStructureElementsProvider.getProviders(method).toList()
+        providers.flatMap { it.getElements(method) }
       }
-      else if (psiClass.identifyingElement != null) {
+      val allModels = classModels + methodModels
+      result.addAll(allModels)
+      if (allModels.isEmpty() && psiClass.identifyingElement != null) {
         result.add(psiClass)
       }
     }
-    if (convertedAtLeastOne) return result
-    return emptyList()
+    return result
   }
 
   override fun getSuitableElement(psiElement: PsiElement): PsiElement? {
