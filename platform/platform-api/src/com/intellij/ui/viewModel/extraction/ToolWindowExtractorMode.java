@@ -41,12 +41,12 @@ public enum ToolWindowExtractorMode {
    */
   PER_CLIENT,
   /**
-   * Create a separate ToolWindow instance in a separate window that will be sent via Projector to client
+   * Create a separate ToolWindow instance in a separate window that will be sent via LUX to client
    * Applicable only for Remote Dev controller client.
    */
   PROJECTOR_INSTANCING,
   /**
-   * Steal content from host's toolwindow to share it using Projector.
+   * Steal content from host's toolwindow to share it using LUX.
    * Applicable only for Remote Dev controller client.
    */
   PROJECTOR_STEALING,
