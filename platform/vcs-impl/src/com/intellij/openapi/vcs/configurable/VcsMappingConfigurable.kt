@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.configurable
 
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.options.BoundSearchableConfigurable
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -14,7 +15,7 @@ class VcsMappingConfigurable(private val project: Project) : BoundSearchableConf
   VcsBundle.message("configurable.VcsDirectoryConfigurationPanel.display.name"),
   HELP_ID,
   "project.propVCSSupport.DirectoryMappings"
-) {
+), Configurable.NoScroll {
 
   companion object {
     const val HELP_ID: String = "project.propVCSSupport.Mappings"
