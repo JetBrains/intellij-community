@@ -71,9 +71,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
               val manager = ExternalAnnotationsManager.getInstance(project)
               processTypeParameterRecursively(parameter, originalParameter, sink)
               parameter.extendsList.referenceElements.zip(originalParameter.extendsList.referencedTypes)
-                .forEach { pair: Pair<PsiJavaCodeReferenceElement?, PsiClassType?> ->
-                  val referenceElement = pair.first
-                  val classType = pair.second
+                .forEach { (referenceElement, classType) ->
                   if (referenceElement == null || classType == null) {
                     return@forEach
                   }
@@ -169,20 +167,8 @@ public class AnnotationInlayProvider : InlayHintsProvider {
           if (element is PsiTypeElement && originalElement is PsiTypeElement) {
             showPsiTypeElement(originalElement, element, sink)
           }
-          element.children
-            .filter {
-              it is PsiTypeElement ||
-              it is PsiJavaCodeReferenceElement ||
-              it is PsiReferenceParameterList
-            }.zip(
-              originalElement.children
-                .filter {
-                  it is PsiTypeElement ||
-                  it is PsiJavaCodeReferenceElement
-                })
-            .forEach {
-              val nestedElement = it.first
-              val nestedOriginalElement = it.second
+          element.children.zip(originalElement.children)
+            .forEach { (nestedElement, nestedOriginalElement) ->
               if (nestedElement is PsiTypeElement && nestedOriginalElement is PsiTypeElement) {
                 recursiveProcessTypeElement(nestedElement, nestedOriginalElement)
               }
@@ -204,17 +190,13 @@ public class AnnotationInlayProvider : InlayHintsProvider {
         }
 
         parameter.extendsList.referenceElements.zip(originalParameter.superTypes)
-          .forEach {
-            val referenceElement = it.first
-            val originalType = it.second
+          .forEach { (referenceElement, originalType) ->
             if (referenceElement == null || originalType !is PsiClassReferenceType) return@forEach
             val parameterList = referenceElement.parameterList
             val originalParameterList = originalType.reference.parameterList
             if (parameterList == null || originalParameterList == null) return@forEach
             parameterList.typeParameterElements.zip(originalParameterList.typeParameterElements)
-              .forEach { pair ->
-                val parameter = pair.first
-                val originalParameter = pair.second
+              .forEach { (parameter, originalParameter) ->
                 if (parameter == null || originalParameter == null) return@forEach
                 recursiveProcessTypeElement(parameter, originalParameter)
               }
