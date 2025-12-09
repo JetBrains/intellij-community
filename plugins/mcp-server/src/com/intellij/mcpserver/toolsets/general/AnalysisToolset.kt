@@ -6,8 +6,12 @@ package com.intellij.mcpserver.toolsets.general
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.*
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.annotations.McpDescription
@@ -24,19 +28,19 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.psi.PsiManager
 import com.intellij.task.ProjectTaskContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.util.asDisposable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.*
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -88,22 +92,32 @@ class AnalysisToolset : McpToolset {
         val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath)
                    ?: mcpFail("Cannot access file: $filePath")
         logger.trace { "File found in VFS: ${file.path}" }
-        readAction {
-          val document = FileDocumentManager.getInstance().getDocument(file)
-                         ?: mcpFail("Cannot read file: $filePath")
-          logger.trace { "Document obtained, text length: ${document.textLength}" }
 
-          DaemonCodeAnalyzerEx.processHighlights(
-            document,
-            project,
-            if (errorsOnly) HighlightSeverity.ERROR else HighlightSeverity.WEAK_WARNING,
-            0,
-            document.textLength
-          ) { highlightInfo ->
-            errors.add(createFileProblem(document, highlightInfo))
-            true
+        val minSeverity = if (errorsOnly) HighlightSeverity.ERROR else HighlightSeverity.WEAK_WARNING
+        logger.trace { "Running main passes with severity: $minSeverity" }
+
+        val psiFile = readAction { PsiManager.getInstance(project).findFile(file) }
+                      ?: mcpFail("Cannot find PSI file: $filePath")
+        val document = readAction { FileDocumentManager.getInstance().getDocument(file) }
+                       ?: mcpFail("Cannot get document: $filePath")
+
+        val daemonIndicator = DaemonProgressIndicator()
+        val range = ProperTextRange(0, document.textLength)
+
+        jobToIndicator(coroutineContext.job, daemonIndicator) {
+          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, defaultContext(), null, range, false) { session ->
+            (session as HighlightingSessionImpl).setMinimumSeverity(minSeverity)
+            val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
+            val highlightInfos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)
+            logger.trace { "Main passes completed, found ${highlightInfos.size} highlights" }
+
+            for (info in highlightInfos) {
+              if (info.severity.myVal >= minSeverity.myVal) {
+                errors.add(createFileProblem(document, info))
+              }
+            }
+            logger.trace { "Processed highlights, found ${errors.size} problems" }
           }
-          logger.trace { "Processed highlights, found ${errors.size} problems" }
         }
       }
     } == null
