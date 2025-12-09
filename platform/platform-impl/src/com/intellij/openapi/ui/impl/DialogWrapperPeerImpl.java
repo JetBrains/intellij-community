@@ -466,9 +466,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     if (SystemInfoRt.isMac) {
-      final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
-      if (tb != null) {
-        myDisposeActions.add(() -> Disposer.dispose(tb));
+      Container pane = myDialog.getContentPane();
+      if (pane != null) {
+        final Disposable tb = TouchbarSupport.showWindowActions(pane);
+        if (tb != null) {
+          myDisposeActions.add(() -> Disposer.dispose(tb));
+        }
       }
     }
 
