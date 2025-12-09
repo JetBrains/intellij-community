@@ -32,6 +32,8 @@ jvm_library(
     "//libraries/gson",
     "//platform/projectModel-api:projectModel",
     "//platform/markdown-utils",
+    "//platform/indexing-impl",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.polySymbols` end

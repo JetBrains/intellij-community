@@ -1037,6 +1037,9 @@
 - isEquivalentTo(com.intellij.model.Symbol):Z
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- sf:isFileIndexed(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- sf:isFileIndexed(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.ID):Z
+- bs:isFileIndexed$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.ID,I,java.lang.Object):Z
 *f:com.intellij.polySymbols.utils.MappedPolySymbol
 - com.intellij.polySymbols.query.PolySymbolWithPattern
 - *sf:Companion:com.intellij.polySymbols.utils.MappedPolySymbol$Companion
