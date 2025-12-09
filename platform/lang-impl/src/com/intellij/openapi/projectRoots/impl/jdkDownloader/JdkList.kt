@@ -39,6 +39,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
 
 /** describes vendor + product part of the UI **/
 @Internal
@@ -516,13 +517,19 @@ class JdkListDownloader : JdkListDownloaderBase() {
 
 @Internal
 abstract class JdkListDownloaderBase {
+  companion object {
+    private val CONNECT_TIMEOUT = 15.seconds
+    private val REQUEST_TIMEOUT = 60.seconds
+  }
+
   protected abstract val feedUrl: String
 
   private fun downloadJdkList(feedUrl: String, progress: ProgressIndicator?) =
     HttpRequests
       .request(feedUrl)
+      .connectTimeout(CONNECT_TIMEOUT.inWholeMilliseconds.toInt())
+      .readTimeout(REQUEST_TIMEOUT.inWholeMilliseconds.toInt())
       .productNameAsUserAgent()
-      //timeouts are handled inside
       .readBytes(progress)
 
   /**
