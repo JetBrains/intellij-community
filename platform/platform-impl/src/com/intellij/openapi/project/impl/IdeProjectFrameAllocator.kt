@@ -59,6 +59,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Rectangle
+import java.awt.event.WindowEvent
+import java.awt.event.WindowStateListener
 import java.nio.file.Path
 import java.time.Instant
 import javax.swing.JFrame
@@ -462,6 +464,15 @@ fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
     // (so the OS will "autodetect" it as already maximized).
     // Therefore, we only restore the location and use the default size (which is always computed to be less than the screen).
     applyBoundsOrDefault(frame, bounds, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
+    
+    if (isMaximized && SystemInfo.isMac) {
+      frame.isAboutToBeMaximized = true
+      installMaximizeListener(frame)
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
+        IDE_FRAME_EVENT_LOG.debug("Set about-to-be-maximized flag")
+      }
+    }
+    
     frame.extendedState = state
     frame.minimumSize = Dimension(340, frame.minimumSize.height)
 
@@ -475,6 +486,20 @@ fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
     }
     return frame
   }
+}
+
+private fun installMaximizeListener(frame: IdeFrameImpl) {
+  frame.addWindowStateListener(object : WindowStateListener {
+    override fun windowStateChanged(e: WindowEvent) {
+      if ((e.newState and Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) {
+        frame.removeWindowStateListener(this)
+        frame.isAboutToBeMaximized = false
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
+          IDE_FRAME_EVENT_LOG.debug("Frame maximized at size=${frame.size}; cleared about-to-be-maximized flag")
+        }
+      }
+    }
+  })
 }
 
 private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job) {

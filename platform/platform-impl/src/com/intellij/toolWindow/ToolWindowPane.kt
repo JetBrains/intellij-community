@@ -24,12 +24,9 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
-import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedRatio
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
-import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.ui.*
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.PaintUtil
@@ -311,9 +308,11 @@ class ToolWindowPane private constructor(
     // can be null in tests
     val rootPane = rootPane
     val size = rootPane?.size ?: Dimension()
-    if (rootPane != null && size.height == 0 && size.width == 0) {
+    val aboutToBeMaximized = (frame as? IdeFrameImpl)?.isAboutToBeMaximized ?: false
+
+    if (rootPane != null && (aboutToBeMaximized || (size.height == 0 && size.width == 0))) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("Postponing setting the weight of the anchor $anchor because the root pane size is $size")
+        LOG.debug("Postponing setting the weight of the anchor $anchor (size=$size, aboutToBeMaximized=$aboutToBeMaximized, state=${frame.extendedState})")
       }
       setAnchorWeightFutures[anchor] = UIUtil.runOnceWhenResized(rootPane) {
         if (LOG.isDebugEnabled) {
@@ -343,9 +342,7 @@ class ToolWindowPane private constructor(
         return
       }
     }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Set the size of the anchor $anchor to $anchorSize based on the root pane size $size and weight $weight")
-    }
+    LOG.debug { "Set the size of the anchor $anchor to $anchorSize based on the root pane size $size and weight $weight" }
   }
 
   internal fun setSideWeight(window: ToolWindowImpl, sideWeight: Float) {

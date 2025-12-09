@@ -108,6 +108,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
+  @JvmField
+  internal var isAboutToBeMaximized: Boolean = false
+
   private var lastInactiveMouseXAbs: Int = 0
   private var lastInactiveMouseYAbs: Int = 0
   private var mouseNotPressedYetSinceLastActivation: Boolean = false

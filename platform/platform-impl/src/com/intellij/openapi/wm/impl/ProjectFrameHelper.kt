@@ -120,7 +120,7 @@ abstract class ProjectFrameHelper internal constructor(
     rootPane.overrideGlassPane(glassPane)
 
     InternalUICustomization.getInstance()?.attachIdeFrameBackgroundPainter(this, glassPane)
-
+    
     frame.doSetRootPane(rootPane)
 
     frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, coroutineScope.childScope("IdeFrameDecorator"))
