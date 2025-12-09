@@ -4,11 +4,8 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ThreadingSupport.RunnableWithTransferredWriteAction
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
-import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
@@ -28,7 +25,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
@@ -190,6 +186,10 @@ object InternalThreading {
   fun invokeAndWaitWithTransferredWriteAction(runnable: Runnable) {
     val lock = getGlobalThreadingSupport()
     assert(lock.isWriteAccessAllowed()) { "Transferring of write action is permitted only if write lock is acquired" }
+    if (!useBackgroundWriteAction) {
+      runnable.run()
+      return
+    }
     assert(!EDT.isCurrentThreadEdt()) { "Transferring of write action is permitted only on background thread" }
     val exceptionRef = Ref.create<Throwable?>()
     val capturedRunnable = AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope {
