@@ -38,6 +38,9 @@ jvm_library(
     "//platform/lang-impl",
     "//libraries/stream",
     "//platform/statistics",
+    "//platform/execution-impl",
+    "//platform/execution",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.ui` end

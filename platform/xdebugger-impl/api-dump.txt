@@ -48,8 +48,6 @@ com.intellij.xdebugger.impl.frame.XWatchesView
 - a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
 - a:removeAllWatches():V
 - a:removeWatches(java.util.List):V
-a:com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase
-- com.intellij.openapi.Disposable
 com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
 com.intellij.xdebugger.impl.ui.XValueTextProvider

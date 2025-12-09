@@ -590,14 +590,6 @@ f:com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor
 - preprocessOnCopy(com.intellij.psi.PsiFile,I[],I[],java.lang.String):java.lang.String
 - preprocessOnPaste(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.openapi.editor.RawText):java.lang.String
 - requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
-a:com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase
-- com.intellij.execution.runners.RunTab
-- p:myConsole:com.intellij.execution.ui.ExecutionConsole
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.psi.search.GlobalSearchScope,Z):V
-- p:attachNotificationTo(com.intellij.ui.content.Content):V
-- s:getCustomizedActionGroup(java.lang.String):com.intellij.openapi.actionSystem.ActionGroup
-- p:getRunProfile():com.intellij.execution.configurations.RunProfile
-- select():V
 f:com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 - sf:FULL_VALUE_POPUP_DIMENSION_KEY:java.lang.String
 - s:addToWatches(com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
@@ -729,23 +721,6 @@ c:com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor
 - getPreferredFocusedComponent():javax.swing.JComponent
 - selectAll():V
 - setEnabled(Z):V
-f:com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
-- sf:CHANGED_VALUE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:EQ_TEXT:java.lang.String
-- sf:ERROR_MESSAGE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:ERROR_MESSAGE_ICON:javax.swing.Icon
-- sf:EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:EXCEPTION_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:INFORMATION_MESSAGE_ICON:javax.swing.Icon
-- sf:LAYOUT_VIEW_BREAKPOINT_CONDITION:java.lang.String
-- sf:LAYOUT_VIEW_FINISH_CONDITION:java.lang.String
-- sf:MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:TYPE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- sf:VALUE_NAME_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
-- s:getCollectingDataMessage():java.lang.String
-- s:getEvaluatingExpressionMessage():java.lang.String
-- s:getModifyingValueMessage():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogCollectItemsUtilKt
 - sf:collectAttachProcessItemsGroupByProcessInfo(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
