@@ -4,10 +4,7 @@ package com.intellij.tests;
 import com.intellij.tests.bazel.BazelJUnitOutputListener;
 import com.intellij.tests.bazel.IjSmTestExecutionListener;
 import com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter;
-import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.Filter;
-import org.junit.platform.engine.FilterResult;
-import org.junit.platform.engine.TestEngine;
+import org.junit.platform.engine.*;
 import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.discovery.MethodSelector;
@@ -594,6 +591,22 @@ public final class JUnit5BazelRunner {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
         System.out.println("Started: " + testIdentifier.getDisplayName());
+      }
+    }
+
+    @Override
+    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+      if (testIdentifier.isTest()) {
+        System.out.println("Finished: " + testIdentifier.getDisplayName() + " (" + testExecutionResult.getStatus() + ")");
+      }
+
+      if (testExecutionResult.getStatus() != TestExecutionResult.Status.SUCCESSFUL && testExecutionResult.getThrowable().isPresent()) {
+        Throwable t = testExecutionResult.getThrowable().get();
+        t.printStackTrace(System.err);
+        String message = t.getMessage();
+        if (message != null && !message.isBlank()) {
+          System.err.println(message);
+        }
       }
     }
 
