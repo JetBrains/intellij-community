@@ -47,7 +47,7 @@ internal class ChangesViewDelegatingInclusionModel(
    * Note that equals and hashCode of [ChangeListChange] are seemingly broken.
    * For this reason [ChangeListChange.HASHING_STRATEGY] must be used
    */
-  private var inclusionState: Set<Any> = emptySet()
+  private var inclusionState: MutableSet<Any> = mutableSetOfChangeListChanges()
 
   private val changeListsViewModel = ChangeListsViewModel.getInstance(project)
 
@@ -79,22 +79,28 @@ internal class ChangesViewDelegatingInclusionModel(
 
   override fun addInclusion(items: Collection<Any>) {
     LOG.trace { "Adding ${items.size} items to inclusion" }
-    if (items.isEmpty()) return
-    updateRequests.tryEmit {
-      ChangesViewInclusionModelApi.getInstance().add(project.projectId(), items.toDto())
+    if (inclusionState.addAll(items)) {
+      fireInclusionChanged()
+      updateRequests.tryEmit {
+        ChangesViewInclusionModelApi.getInstance().add(project.projectId(), items.toDto())
+      }
     }
   }
 
   override fun removeInclusion(items: Collection<Any>) {
     LOG.trace { "Removing ${items.size} items from inclusion" }
-    if (items.isEmpty()) return
-    updateRequests.tryEmit {
-      ChangesViewInclusionModelApi.getInstance().remove(project.projectId(), items.toDto())
+    if (inclusionState.removeAll(items.toSet())) {
+      fireInclusionChanged()
+      updateRequests.tryEmit {
+        ChangesViewInclusionModelApi.getInstance().remove(project.projectId(), items.toDto())
+      }
     }
   }
 
   override fun setInclusion(items: Collection<Any>) {
     LOG.trace { "Setting inclusion to ${items.size} items" }
+    inclusionState = mutableSetOfChangeListChanges().also { it.addAll(items) }
+    fireInclusionChanged()
     updateRequests.tryEmit {
       ChangesViewInclusionModelApi.getInstance().set(project.projectId(), items.toDto())
     }
@@ -102,15 +108,22 @@ internal class ChangesViewDelegatingInclusionModel(
 
   override fun retainInclusion(items: Collection<Any>) {
     LOG.trace { "Retaining ${items.size} items in inclusion" }
-    updateRequests.tryEmit {
-      ChangesViewInclusionModelApi.getInstance().retain(project.projectId(), items.toDto())
+    if (inclusionState.retainAll(items.toSet())) {
+      fireInclusionChanged()
+      updateRequests.tryEmit {
+        ChangesViewInclusionModelApi.getInstance().retain(project.projectId(), items.toDto())
+      }
     }
   }
 
   override fun clearInclusion() {
     LOG.trace { "Clearing inclusion" }
-    updateRequests.tryEmit {
-      ChangesViewInclusionModelApi.getInstance().clear(project.projectId())
+    if (inclusionState.isNotEmpty()) {
+      inclusionState.clear()
+      fireInclusionChanged()
+      updateRequests.tryEmit {
+        ChangesViewInclusionModelApi.getInstance().clear(project.projectId())
+      }
     }
   }
 
@@ -123,7 +136,7 @@ internal class ChangesViewDelegatingInclusionModel(
 
   private fun Collection<Any>.toDto(): List<InclusionDto> = map(InclusionDto::toDto)
 
-  private fun Collection<InclusionDto>.fromDto(): Set<Any> =
+  private fun Collection<InclusionDto>.fromDto(): MutableSet<Any> =
     mapNotNullTo(mutableSetOfChangeListChanges()) { dto ->
       when (dto) {
         is InclusionDto.Change -> changeListsViewModel.resolveChange(dto.changeId).also { change ->
