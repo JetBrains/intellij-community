@@ -37,7 +37,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",

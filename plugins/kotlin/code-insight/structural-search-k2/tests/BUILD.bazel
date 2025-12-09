@@ -30,7 +30,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/openapi:java",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/code-insight/structural-search-k2:kotlin-codeInsight-structuralSearch",

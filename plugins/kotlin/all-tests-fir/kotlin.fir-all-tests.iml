@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="RUNTIME" />
@@ -67,6 +67,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.grazie.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.test-framework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="RUNTIME" />
   </component>
 </module>

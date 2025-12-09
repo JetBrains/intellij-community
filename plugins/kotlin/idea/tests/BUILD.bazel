@@ -84,7 +84,7 @@ jvm_library(
     "//plugins/kotlin/base/fe10/code-insight",
     "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/repl",
     "//plugins/kotlin/native",
     "@lib//:kotlinc-kotlin-compiler-common",

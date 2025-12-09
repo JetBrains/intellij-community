@@ -49,7 +49,7 @@ jvm_library(
     "//plugins/kotlin/performance-tests",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/test-framework",
-    "//plugins/kotlin/tests-common",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/tests-from-compiler",
     "//plugins/kotlin/util/test-generator-api",
     "//plugins/kotlin/util/test-generator-fe10",

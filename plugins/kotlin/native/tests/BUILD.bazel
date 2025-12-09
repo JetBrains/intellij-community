@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/native",
     "@lib//:kotlinc-kotlin-jps-common",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/lang-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/compiler-configuration",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/idea-ui:ui",
     "//plugins/kotlin/base/plugin",

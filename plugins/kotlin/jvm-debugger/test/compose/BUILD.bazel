@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test_test_lib",
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//java/openapi:java",
     "//platform/lang-core",
     "//plugins/kotlin/base/plugin",

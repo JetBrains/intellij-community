@@ -29,8 +29,8 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.performance-tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />

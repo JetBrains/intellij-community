@@ -37,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils",
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",

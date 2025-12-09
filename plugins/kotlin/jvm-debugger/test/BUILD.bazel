@@ -50,7 +50,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//libraries/asm",
     "//java/execution/impl",
     "//libraries/guava",

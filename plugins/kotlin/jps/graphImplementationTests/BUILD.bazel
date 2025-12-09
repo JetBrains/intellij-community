@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
     "@lib//:kotlinc-kotlin-jps-plugin-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",

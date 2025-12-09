@@ -41,8 +41,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
-    <orderEntry type="module" module-name="kotlin.tests-common" />
-    <orderEntry type="module" module-name="kotlin.test-framework" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.gradle.tests" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />

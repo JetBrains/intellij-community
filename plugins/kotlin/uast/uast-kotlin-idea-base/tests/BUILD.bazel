@@ -19,7 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//uast/uast-common:uast",
     "//uast/testFramework",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",

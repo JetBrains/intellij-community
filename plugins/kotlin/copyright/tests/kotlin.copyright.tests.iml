@@ -17,8 +17,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" />
-    <orderEntry type="module" module-name="kotlin.test-framework" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.copyright" />

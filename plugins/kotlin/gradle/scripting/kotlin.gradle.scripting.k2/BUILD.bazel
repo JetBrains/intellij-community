@@ -141,7 +141,7 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//plugins/kotlin/base/fir/project-structure",
     "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
