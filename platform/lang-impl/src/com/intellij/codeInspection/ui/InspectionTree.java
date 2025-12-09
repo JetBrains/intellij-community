@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -92,10 +93,12 @@ public final class InspectionTree extends Tree {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getSelectionModel().addTreeSelectionListener(e -> {
         if (!myView.isDisposed()) {
-          myView.syncRightPanel();
-          if (myView.isAutoScrollMode()) {
-            OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
-          }
+          WriteIntentReadAction.run(() -> {
+            myView.syncRightPanel();
+            if (myView.isAutoScrollMode()) {
+              OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
+            }
+          });
         }
       });
 
