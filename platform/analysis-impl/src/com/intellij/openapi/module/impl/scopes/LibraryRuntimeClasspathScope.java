@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,6 +41,13 @@ public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     addAll(myEntries, entry.getRootFiles(OrderRootType.CLASSES));
     addAll(myEntries, entry.getRootFiles(OrderRootType.SOURCES));
+  }
+
+  @ApiStatus.Internal
+  public LibraryRuntimeClasspathScope(@NotNull Project project, VirtualFile[] roots) {
+    super(project);
+    myIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    addAll(myEntries, roots);
   }
 
   @Override

@@ -433,6 +433,8 @@ com.intellij.lang.parser.GeneratedParserUtilBase$Hook
 - a:run(com.intellij.lang.PsiBuilder,com.intellij.lang.PsiBuilder$Marker,java.lang.Object):com.intellij.lang.PsiBuilder$Marker
 com.intellij.lang.parser.GeneratedParserUtilBase$Parser
 - a:parse(com.intellij.lang.PsiBuilder,I):Z
+c:com.intellij.openapi.module.impl.scopes.JdkScope
+f:com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope
 f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
@@ -440,6 +442,7 @@ f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 c:com.intellij.openapi.module.impl.scopes.ModulesScope
 - com.intellij.psi.search.ActualCodeInsightContextInfo
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
+f:com.intellij.openapi.roots.impl.LibraryScopeCache
 com.intellij.packageDependencies.DependenciesBuilder$DependencyProcessor
 - a:process(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 com.intellij.profile.codeInspection.InspectionProfileManager

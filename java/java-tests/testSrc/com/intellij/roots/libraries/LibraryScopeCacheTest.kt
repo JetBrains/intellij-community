@@ -247,6 +247,35 @@ class LibraryScopeCacheTest {
     assertTrue(useScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
   }
 
+  @ParameterizedTest
+  @MethodSource("scopeAndExportedCombinations")
+  fun `library scope with three modules transitive dependency chain`(scope: DependencyScope, exported: Boolean) {
+    val libraryScopeCache = LibraryScopeCache.getInstance(projectModel.project)
+    val moduleA = projectModel.createModule("moduleA")
+    val moduleB = projectModel.createModule("moduleB")
+    val moduleC = projectModel.createModule("moduleC")
+
+    val libraryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib")
+    val library = projectModel.addProjectLevelLibrary("chainLib") {
+      it.addRoot(libraryRoot, OrderRootType.CLASSES)
+    }
+
+    ModuleRootModificationUtil.addDependency(moduleC, library, scope, exported)
+    // we should always export this dep
+    ModuleRootModificationUtil.addDependency(moduleB, moduleC, scope, true)
+    ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, exported)
+
+    val sourceRootA = projectModel.addSourceRoot(moduleA, "src", JavaSourceRootType.SOURCE)
+    val sourceRootB = projectModel.addSourceRoot(moduleB, "src", JavaSourceRootType.SOURCE)
+    val sourceRootC = projectModel.addSourceRoot(moduleC, "src", JavaSourceRootType.SOURCE)
+
+    val libraryScope = libraryScopeCache.getLibraryScope(libraryRoot)
+
+    assertTrue(libraryScope.contains(sourceRootC), "Library use scope should contain moduleC (direct dependency with scope=$scope, exported=$exported)")
+    assertTrue(libraryScope.contains(sourceRootB), "Library use scope should contain moduleB (via exported from moduleC)")
+    assertTrue(libraryScope.contains(sourceRootA), "Library use scope should contain moduleA (via exported chain)")
+  }
+
   companion object {
     @JvmStatic
     fun scopeAndExportedCombinations(): Stream<Arguments> =
@@ -255,6 +284,5 @@ class LibraryScopeCacheTest {
           Arguments.of(scope, exported)
         }
       }.stream()
-
   }
 }
