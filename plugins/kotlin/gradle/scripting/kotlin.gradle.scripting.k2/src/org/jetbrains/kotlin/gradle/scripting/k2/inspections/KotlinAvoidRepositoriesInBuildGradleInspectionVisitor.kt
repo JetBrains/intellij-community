@@ -23,6 +23,8 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
@@ -32,6 +34,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_REPOSITORY_HANDLER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
@@ -67,9 +70,20 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionVisitor(private val holder: 
     }
 
     private fun KtCallExpression.isGradleRepositoriesBlock(): Boolean = analyze(this) {
-        val callableId = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId
-        return@analyze callableId?.callableName?.asString() == "repositories" &&
-                callableId.packageName == FqName(GRADLE_KOTLIN_PACKAGE)
+        val symbol = resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return false
+        val callableId = symbol.callableId ?: return false
+        if (callableId.callableName.asString() != "repositories") return false
+        if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return false
+        // check if the call parameter is of type `RepositoryHandler.() -> Unit`
+        val params = symbol.valueParameters
+        if (params.size != 1) return false
+        val paramReturnType = params.single().returnType as? KaFunctionType ?: return false
+        if (paramReturnType.classId.asSingleFqName() != FqName("kotlin.Function1")) return false
+        val leftParam = paramReturnType.typeArguments.getOrNull(0)?.type as? KaClassType ?: return false
+        val rightParam = paramReturnType.typeArguments.getOrNull(1)?.type as? KaClassType ?: return false
+        if (leftParam.classId.asSingleFqName() != FqName(GRADLE_API_REPOSITORY_HANDLER)) return false
+        if (rightParam.classId.asSingleFqName() != FqName("kotlin.Unit")) return false
+        true
     }
 
     private fun getRepositoriesParentBlockKind(expression: KtCallExpression): RepositoriesParentBlockKind {
