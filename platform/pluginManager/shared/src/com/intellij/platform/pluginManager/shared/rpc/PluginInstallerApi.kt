@@ -30,7 +30,7 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
   suspend fun apply(projectId: ProjectId?): ApplyPluginsStateResult
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId>
-  suspend fun isModified(sessionId: String): Boolean
+  suspend fun isModified(): Boolean
   suspend fun resetSession(sessionId: String, removeSession: Boolean): Map<PluginId, Boolean>
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
