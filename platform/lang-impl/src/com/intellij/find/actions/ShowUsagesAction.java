@@ -1562,7 +1562,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
             @Override
             protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
               if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
-                showDialogAndRestart(parameters, actionHandler);
+                WriteIntentReadAction.run(() -> {
+                  showDialogAndRestart(parameters, actionHandler);
+                });
               }
             }
           };
