@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -309,6 +309,19 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     fireEditorStateChanged();
   }
 
+  /**
+   * Allows to control the visibility of the fragment for the fragmented editor.
+   * E.g., if a fragment should be displayed only when some setting or some other fragment field has some value,
+   * overriding this method allows to hide it from the editor, hints, the "Modify options" list, etc.
+   *
+   * @return whether the given fragment should be available in the fragmented editor
+   */
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  public boolean isAvailable() {
+    return true;
+  }
+
   public void toggle(boolean selected, @Nullable AnActionEvent e) {
     boolean changed = isSelected() != selected;
     setSelected(selected);
@@ -385,7 +398,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   @Override
   protected @NotNull JComponent createEditor() {
-    myComponent.setVisible(isSelected());
+    myComponent.setVisible(isSelected() && isAvailable());
     return myComponent;
   }
 
