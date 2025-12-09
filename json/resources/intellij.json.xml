@@ -25,6 +25,7 @@
     <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.psi.JsonElementTypeConverterFactory"/>
     <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.JsonFileTypeConverterFactory"/>
     <syntax.syntaxDefinition language="JSON" implementationClass="com.intellij.json.syntax.JsonLanguageDefinition"/>
+    <syntax.syntaxDefinition language="JSON5" implementationClass="com.intellij.json.syntax.json5.Json5LanguageDefinition"/>
 
 
     <!-- Highlighting -->

@@ -176,6 +176,7 @@
 *:com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
 - com.intellij.platform.syntax.LanguageSyntaxDefinition
 - getPairedBraces():java.util.Collection
+- a:parse(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime):V
 *f:com.intellij.platform.syntax.util.runtime.Modifiers
 - *sf:Companion:com.intellij.platform.syntax.util.runtime.Modifiers$Companion
 - sf:and-thSIBIw(I,I):I
