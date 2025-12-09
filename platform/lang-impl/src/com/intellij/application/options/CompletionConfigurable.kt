@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.panel
 private val EP_NAME = ExtensionPointName<EditorCompletionConfigurableEP>("com.intellij.editorCompletionConfigurable")
 
 
-class CompletionConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
+internal class CompletionConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"),
   "reference.settingsdialog.IDE.editor.code.completion",
   ID), EditorOptionsProvider, Configurable.WithEpDependencies, SearchableConfigurable.Parent {

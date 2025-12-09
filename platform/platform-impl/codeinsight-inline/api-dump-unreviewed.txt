@@ -217,7 +217,6 @@ f:com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextEl
 - startOffset():java.lang.Integer
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
 - com.intellij.openapi.options.BoundCompositeConfigurable
-- com.intellij.application.options.editor.EditorOptionsProvider
 - com.intellij.openapi.options.Configurable$WithEpDependencies
 - sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
 - sf:ID:java.lang.String
@@ -227,10 +226,6 @@ f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurabl
 - getDependencies():java.util.Collection
 - getId():java.lang.String
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
-f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP
-- com.intellij.openapi.options.ConfigurableEP
-- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
-f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
 f:com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.Disposable

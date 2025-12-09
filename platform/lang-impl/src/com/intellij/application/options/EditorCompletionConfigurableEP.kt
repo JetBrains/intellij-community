@@ -3,5 +3,7 @@ package com.intellij.application.options
 
 import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.UnnamedConfigurable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EditorCompletionConfigurableEP: ConfigurableEP<UnnamedConfigurable>()
