@@ -55,11 +55,11 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   properties.setValue("ide.islands.ab3", true)
 
   withContext(Dispatchers.EDT) {
-    enableTheme()
+    enableTheme(properties)
   }
 }
 
-private suspend fun enableTheme() {
+private suspend fun enableTheme(properties: PropertiesComponent) {
   val lafManager = serviceAsync<LafManager>()
 
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
@@ -82,10 +82,9 @@ private suspend fun enableTheme() {
 
   val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
-  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback3", "done")
+  properties.setValue("ide.islands.show.feedback3", "done")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
-  resetLafSettingsToDefault(lafManager)
 
   val editorScheme = if (PlatformUtils.isRider()) {
     if (isLight) "Rider Light" else "Rider Islands Dark"
@@ -95,6 +94,8 @@ private suspend fun enableTheme() {
   }
 
   newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
+
+  resetLafSettingsToDefault(lafManager, properties)
 
   lafManager.updateUI()
 }
@@ -117,11 +118,15 @@ private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSetting
   return true
 }
 
-private fun resetLafSettingsToDefault(lafManager: LafManager) {
+private fun resetLafSettingsToDefault(lafManager: LafManager, properties: PropertiesComponent) {
+  properties.setValue("ide.islands.debug.resetValue", "start")
+
   val defaultLightLaf = lafManager.defaultLightLaf ?: return
   val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
 
   lafManager.setPreferredLightLaf(defaultLightLaf)
   lafManager.setPreferredDarkLaf(defaultDarkLaf)
   lafManager.resetPreferredEditorColorScheme()
+
+  properties.setValue("ide.islands.debug.resetValue", "finish: ${defaultLightLaf.id} | ${defaultDarkLaf.id}")
 }
