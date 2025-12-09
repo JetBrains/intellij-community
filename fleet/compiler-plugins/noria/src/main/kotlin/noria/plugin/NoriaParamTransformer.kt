@@ -6,6 +6,7 @@ package noria.plugin
 import org.jetbrains.kotlin.backend.common.ModuleLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.util.isNullable
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
@@ -52,6 +54,9 @@ class NoriaParamTransformer(
     // up.
     irModule.patchDeclarationParents()
   }
+
+  private val transformedFunctions: MutableMap<IrSimpleFunction, IrSimpleFunction> =
+    mutableMapOf()
 
   private val transformedFunctionSet = mutableSetOf<IrSimpleFunction>()
 
@@ -218,7 +223,12 @@ class NoriaParamTransformer(
       return this
     }
 
-    return withComposerParam()
+    // we don't bother transforming expect functions. They exist only for type resolution and
+    // don't need to be transformed to have a composer parameter
+    if (isExpect) return this
+
+    // cache the transformed function with composer parameter
+    return transformedFunctions[this] ?: copyWithComposerParam()
   }
 
   private fun IrSimpleFunction.lambdaInvokeWithComposerParam(): IrSimpleFunction {
@@ -256,94 +266,118 @@ class NoriaParamTransformer(
     value
   )
 
-  private fun IrSimpleFunction.withComposerParam(): IrSimpleFunction {
+  internal inline fun <reified T : IrElement> T.deepCopyWithSymbolsAndMetadata(
+    initialParent: IrDeclarationParent? = null,
+    createTypeRemapper: (SymbolRemapper) -> TypeRemapper = ::DeepCopyTypeRemapper,
+  ): T {
+    val symbolRemapper = DeepCopySymbolRemapper()
+    acceptVoid(symbolRemapper)
+    val typeRemapper = createTypeRemapper(symbolRemapper)
+    return (transform(DeepCopyPreservingMetadata(symbolRemapper, typeRemapper), null) as T).patchDeclarationParents(initialParent)
+  }
+
+  private fun IrSimpleFunction.copyWithComposerParam(): IrSimpleFunction {
     assert(parameters.lastOrNull()?.name != NoriaContextParameterName) {
       "Attempted to add composer param to $this, but it has already been added."
     }
+    return deepCopyWithSymbolsAndMetadata(parent).also { fn ->
+      val oldFn = this
 
-    // NOTE: it's important to add these here before we recurse into the body in
-    // order to avoid an infinite loop on circular/recursive calls
-    transformedFunctionSet.add(this)
+      // NOTE: it's important to add these here before we recurse into the body in
+      // order to avoid an infinite loop on circular/recursive calls
+      transformedFunctionSet.add(fn)
+      transformedFunctions[oldFn] = fn
 
-    // The overridden symbols might also be composable functions, so we want to make sure
-    // and transform them as well
-    overriddenSymbols = overriddenSymbols.map {
-      it.owner.withNoriaContextParamIfNeeded().symbol
-    }
+      fn.metadata = oldFn.metadata
 
-    // if we are transforming a composable property, the jvm signature of the
-    // corresponding getters and setters have a composer parameter. Since Kotlin uses the
-    // lack of a parameter to determine if it is a getter, this breaks inlining for
-    // composable property getters since it ends up looking for the wrong jvmSignature.
-    // In this case, we manually add the appropriate "@JvmName" annotation so that the
-    // inliner doesn't get confused.
-    correspondingPropertySymbol?.let { propertySymbol ->
-      if (!hasAnnotation(DescriptorUtils.JVM_NAME)) {
-        val propertyName = propertySymbol.owner.name.identifier
-        val name = if (isGetter) {
-          JvmAbi.getterName(propertyName)
-        }
-        else {
-          JvmAbi.setterName(propertyName)
-        }
-        annotations += jvmNameAnnotation(name)
+      // The overridden symbols might also be composable functions, so we want to make sure
+      // and transform them as well
+      fn.overriddenSymbols = oldFn.overriddenSymbols.map {
+        it.owner.withNoriaContextParamIfNeeded().symbol
       }
-    }
 
-    parameters.fastForEach { param ->
-      // Composable lambdas will always have `IrGet`s of all of their parameters
-      // generated, since they are passed into the restart lambda. This causes an
-      // interesting corner case with "anonymous parameters" of composable functions.
-      // If a parameter is anonymous (using the name `_`) in user code, you can usually
-      // make the assumption that it is never used, but this is technically not the
-      // case in composable lambdas. The synthetic name that kotlin generates for
-      // anonymous parameters has an issue where it is not safe to dex, so we sanitize
-      // the names here to ensure that dex is always safe.
-      if (param.kind == IrParameterKind.Regular || param.kind == IrParameterKind.Context) {
-        val newName = dexSafeName(param.name)
-        param.name = newName
-      }
-      param.isAssignable = param.defaultValue != null // TODO do smth about assignable params
-    }
-
-    // $ctx
-    val ctxParam = addValueParameter {
-      name = NoriaContextParameterName
-      type = noriaContextType.makeNullable() // TODO: why nullable
-      origin = IrDeclarationOrigin.DEFINED
-      isAssignable = true
-    }
-
-    inlineLambdaInfo.scan(this)
-
-    transformChildrenVoid(object : IrElementTransformerVoid() {
-      var isNestedScope = false
-      override fun visitFunction(declaration: IrFunction): IrStatement {
-        val wasNested = isNestedScope
-        try {
-          // we don't want to pass the composer parameter in to composable calls
-          // inside of nested scopes.... *unless* the scope was inlined.
-          isNestedScope = wasNested ||
-                          !inlineLambdaInfo.isInlineLambda(declaration) ||
-                          declaration.hasComposableAnnotation
-          return super.visitFunction(declaration)
+      val propertySymbol = oldFn.correspondingPropertySymbol
+      if (propertySymbol != null) {
+        fn.correspondingPropertySymbol = propertySymbol
+        if (propertySymbol.owner.getter == oldFn) {
+          propertySymbol.owner.getter = fn
         }
-        finally {
-          isNestedScope = wasNested
+        if (propertySymbol.owner.setter == oldFn) {
+          propertySymbol.owner.setter = fn
+        }
+      }
+      // if we are transforming a composable property, the jvm signature of the
+      // corresponding getters and setters have a composer parameter. Since Kotlin uses the
+      // lack of a parameter to determine if it is a getter, this breaks inlining for
+      // composable property getters since it ends up looking for the wrong jvmSignature.
+      // In this case, we manually add the appropriate "@JvmName" annotation so that the
+      // inliner doesn't get confused.
+      fn.correspondingPropertySymbol?.let { propertySymbol ->
+        if (!fn.hasAnnotation(DescriptorUtils.JVM_NAME)) {
+          val propertyName = propertySymbol.owner.name.identifier
+          val name = if (fn.isGetter) {
+            JvmAbi.getterName(propertyName)
+          }
+          else {
+            JvmAbi.setterName(propertyName)
+          }
+          fn.annotations += jvmNameAnnotation(name)
         }
       }
 
-      override fun visitCall(expression: IrCall): IrExpression {
-        val expr = if (!isNestedScope) {
-          expression.withNoriaContextParamIfNeeded(ctxParam)
+      fn.parameters.fastForEach { param ->
+        // Composable lambdas will always have `IrGet`s of all of their parameters
+        // generated, since they are passed into the restart lambda. This causes an
+        // interesting corner case with "anonymous parameters" of composable functions.
+        // If a parameter is anonymous (using the name `_`) in user code, you can usually
+        // make the assumption that it is never used, but this is technically not the
+        // case in composable lambdas. The synthetic name that kotlin generates for
+        // anonymous parameters has an issue where it is not safe to dex, so we sanitize
+        // the names here to ensure that dex is always safe.
+        if (param.kind == IrParameterKind.Regular || param.kind == IrParameterKind.Context) {
+          val newName = dexSafeName(param.name)
+          param.name = newName
         }
-        else
-          expression
-        return super.visitCall(expr)
+        param.isAssignable = param.defaultValue != null
       }
-    })
 
-    return this
+      // $ctx
+      val ctxParam = fn.addValueParameter {
+        name = NoriaContextParameterName
+        type = noriaContextType.makeNullable() // TODO: why nullable
+        origin = IrDeclarationOrigin.DEFINED
+        isAssignable = true
+      }
+
+      inlineLambdaInfo.scan(fn)
+
+      fn.transformChildrenVoid(object : IrElementTransformerVoid() {
+        var isNestedScope = false
+        override fun visitFunction(declaration: IrFunction): IrStatement {
+          val wasNested = isNestedScope
+          try {
+            // we don't want to pass the composer parameter in to composable calls
+            // inside of nested scopes.... *unless* the scope was inlined.
+            isNestedScope = wasNested ||
+                            !inlineLambdaInfo.isInlineLambda(declaration) ||
+                            declaration.hasComposableAnnotation
+            return super.visitFunction(declaration)
+          }
+          finally {
+            isNestedScope = wasNested
+          }
+        }
+
+        override fun visitCall(expression: IrCall): IrExpression {
+          val expr = if (!isNestedScope) {
+            expression.withNoriaContextParamIfNeeded(ctxParam)
+          }
+          else
+            expression
+          return super.visitCall(expr)
+        }
+      })
+    }
   }
 
   companion object {
@@ -377,7 +411,12 @@ fun IrCall.isInvoke(): Boolean {
 
 fun IrCall.isComposableLambdaInvoke(): Boolean {
   if (!isInvoke()) return false
-  return dispatchReceiver?.type?.let {
+  // [ComposerParamTransformer] replaces composable function types of the form
+  // `@Composable Function1<T1, T2>` with ordinary functions with extra parameters, e.g.,
+  // `Function3<T1, Composer, Int, T2>`. After this lowering runs we have to check the
+  // `attributeOwnerId` to recover the original type.
+  val receiver = dispatchReceiver?.let { it.attributeOwnerId as? IrExpression ?: it }
+  return receiver?.type?.let {
     it.hasComposableAnnotation || it.isSyntheticComposableFunction()
   } ?: false
 }
