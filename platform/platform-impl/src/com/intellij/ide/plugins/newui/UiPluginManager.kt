@@ -107,8 +107,8 @@ class UiPluginManager {
     getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
-  suspend fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
-    return getController().applySession(sessionId, parent, project)
+  suspend fun apply(parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
+    return getController().apply(parent, project)
   }
 
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
