@@ -69,7 +69,7 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
   }
 
   @Test
-  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  @TargetVersions("5.0+")
   public void testArtifactsSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
