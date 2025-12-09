@@ -244,7 +244,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       PsiNamedElement variable = getVariable();
       if (variable == null) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-        if (psiFile != null) {
+        if (psiFile != null && mySubstitutedRange != null) {
           variable = PsiTreeUtil.findElementOfClassAtRange(psiFile, mySubstitutedRange.getStartOffset(), mySubstitutedRange.getEndOffset(), 
                                                            PsiNameIdentifierOwner.class);
         }
