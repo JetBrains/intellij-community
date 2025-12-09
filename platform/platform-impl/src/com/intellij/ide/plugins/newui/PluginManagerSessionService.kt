@@ -22,11 +22,15 @@ class PluginManagerSessionService {
   private val sessions: MutableMap<UUID, PluginManagerSession> = ConcurrentHashMap()
 
   fun createSession(sessionId: String): PluginManagerSession {
-    return sessions.computeIfAbsent(UUID.fromString(sessionId)) { PluginManagerSession() }
+    return sessions.computeIfAbsent(UUID.fromString(sessionId)) { PluginManagerSession(sessionId) }
   }
 
   fun getSession(sessionId: UUID): PluginManagerSession? {
     return sessions[sessionId]
+  }
+
+  fun getSessions(): List<PluginManagerSession> {
+    return sessions.values.toList()
   }
 
   fun getSession(sessionId: String): PluginManagerSession? {
@@ -48,7 +52,7 @@ class PluginManagerSessionService {
 }
 
 @ApiStatus.Internal
-class PluginManagerSession {
+class PluginManagerSession(val sessionId: String) {
   val dynamicPluginsToInstall: MutableMap<PluginId, PendingDynamicPluginInstall> = ConcurrentHashMap()
   val pluginsToRemoveOnCancel: MutableSet<IdeaPluginDescriptorImpl> = ConcurrentCollectionFactory.createConcurrentSet()
   val dynamicPluginsToUninstall: MutableSet<IdeaPluginDescriptor> = ConcurrentCollectionFactory.createConcurrentSet()
