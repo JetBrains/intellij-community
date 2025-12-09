@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-fir-tests_test_resources",
+  srcs = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 jvm_library(
   name = "kotlin-fir-tests",
@@ -12,6 +18,7 @@ jvm_library(
   module_name = "intellij.devkit.kotlin.fir.tests",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":kotlin-fir-tests_test_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",

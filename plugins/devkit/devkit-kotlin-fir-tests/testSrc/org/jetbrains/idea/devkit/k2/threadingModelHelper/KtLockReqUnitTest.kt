@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
+package org.jetbrains.idea.devkit.k2.threadingModelHelper
 
-import com.intellij.psi.PsiMethod
+import com.intellij.openapi.application.PluginPathManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -14,7 +14,6 @@ import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
 import java.util.EnumSet
-
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class KtLockReqUnitTest : BasePlatformTestCase() {
@@ -61,7 +60,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
       """.trimIndent())
   }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "threadingModelHelper/"
+  override fun getBasePath() = PluginPathManager.getPluginHomePathRelative("devkit") + "/devkit-kotlin-fir-tests/testData/threadingModelHelper/"
 
   private fun formatResult(result: AnalysisResult): List<String> {
     val actualPaths = result.paths.map { path ->
@@ -77,9 +76,9 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     val className = relativeFileName.removeSuffix(".kt")
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
     val method = SmartPointerManager.createPointer(psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!)
-    val config = AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java))
+    val config = AnalysisConfig.Companion.forProject(project, EnumSet.allOf(ConstraintType::class.java))
     return runBlocking {
-      analyzerBFS.analyzeMethod(method, config)
+        analyzerBFS.analyzeMethod(method, config)
     }
   }
 
