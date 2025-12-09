@@ -288,9 +288,20 @@ public final class IdeaTestUtil {
     IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
+  public static void addWebJarsJakartaToModule(@NotNull Module module) {
+    ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsJakartaToModule);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+  }
+
   public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, "javax.servlet.jsp:javax.servlet.jsp-api:2.3.3");
     MavenDependencyUtil.addFromMaven(model, "javax.servlet:javax.servlet-api:3.1.0");
+    IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
+  }
+
+  public static void addWebJarsJakartaToModule(@NotNull ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, "jakarta.servlet.jsp:jakarta.servlet.jsp-api:4.0.0");
+    MavenDependencyUtil.addFromMaven(model, "jakarta.servlet:jakarta.servlet-api:6.1.0");
     IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
   }
 
