@@ -243,7 +243,7 @@ def _run_jvm_builder(
             "supports-path-mapping": "1",
             "supports-multiplex-sandboxing": "1",
         },
-        arguments = ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [
+        arguments = ctx.attr.jvm_builder_jvm_flags[BuildSettingInfo].value + [
             ctx.file._jvm_builder_launcher.path,
             ctx.file.jvm_builder.path,
             args,
