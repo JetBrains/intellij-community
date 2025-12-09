@@ -17,10 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,6 +29,10 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
@@ -44,12 +45,15 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 public final class DvcsUtil {
 
@@ -462,15 +466,26 @@ public final class DvcsUtil {
    * IJPL-95268 For libraries, check VCS for the owner module
    */
   private static Set<VirtualFile> findVcsRootForModuleLibrary(@NotNull Project project, @NotNull VirtualFile file) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    var vcsManager = ProjectLevelVcsManager.getInstance(project);
+    var index = ProjectRootManager.getInstance(project).getFileIndex();
+    var currentSnapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
 
-    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
+    var libraries = index.findContainingLibraries(file).stream()
+      .map(LibraryEntity::getSymbolicId);
+    var sdks = index.findContainingSdks(file).stream()
+      .map(SdkEntity::getSymbolicId);
+    var result = Stream.concat(libraries, sdks).toList();
+
     Set<VirtualFile> modulesVcsRoots = new HashSet<>();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-        VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
-        if (moduleVcsRoot != null) {
-          modulesVcsRoots.add(moduleVcsRoot);
+    for (var id : result) {
+      var modules = SequencesKt.toList(currentSnapshot.referrers(id, ModuleEntity.class));
+      for (var module : modules) {
+        var moduleBridge = ModuleBridges.findModule(module, currentSnapshot);
+        if (moduleBridge != null) {
+          VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(moduleBridge.getModuleFile());
+          if (moduleVcsRoot != null) {
+            modulesVcsRoots.add(moduleVcsRoot);
+          }
         }
       }
     }
