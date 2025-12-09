@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
@@ -18,6 +18,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -40,10 +42,8 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
+import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -85,8 +85,12 @@ public final class XFramesView extends XDebugView {
   private boolean myThreadsCalculated;
   private boolean myRefresh;
 
+  /**
+   * Use {@link XFramesView#XFramesView(XDebugSessionProxy)} instead.
+   */
+  @ApiStatus.Obsolete
   public XFramesView(@NotNull XDebugSession session) {
-    this(MonolithSessionProxyKt.asProxy(session));
+    this(XDebuggerEntityConverter.asProxy(session));
   }
 
   public XFramesView(@NotNull XDebugSessionProxy sessionProxy) {
@@ -164,7 +168,7 @@ public final class XFramesView extends XDebugView {
     });
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myFramesList, true);
-    Component centerComponent = DebuggerUIUtil.wrapWithAntiFlickeringPanel(myScrollPane);
+    Component centerComponent = DebuggerUIUtilShared.wrapWithAntiFlickeringPanel(myScrollPane);
     myMainPanel.add(centerComponent, BorderLayout.CENTER);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
@@ -414,7 +418,7 @@ public final class XFramesView extends XDebugView {
     }
 
     if (event == SessionEvent.BEFORE_RESUME) {
-      if (DebuggerUIUtil.freezePaintingToReduceFlickering(myScrollPane.getParent())) {
+      if (DebuggerUIUtilShared.freezePaintingToReduceFlickering(myScrollPane.getParent())) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myScrollPane.getHorizontalScrollBar().setValue(0);
           myScrollPane.getVerticalScrollBar().setValue(0);
@@ -773,7 +777,8 @@ public final class XFramesView extends XDebugView {
   }
 
 
-  static void addFramesNavigationAd(JPanel parent) {
+  @ApiStatus.Internal
+  public static void addFramesNavigationAd(JPanel parent) {
     if (!(parent.getLayout() instanceof BorderLayout)) {
       return;
     }

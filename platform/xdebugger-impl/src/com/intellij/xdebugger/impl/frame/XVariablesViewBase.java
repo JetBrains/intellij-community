@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +30,6 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.*;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
@@ -85,7 +85,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected void buildTreeAndRestoreState(final @NotNull XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
-    DebuggerUIUtil.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
+    DebuggerUIUtilShared.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
     XVariablesView.InlineVariablesInfo.set(getSessionProxy(tree), new XVariablesView.InlineVariablesInfo());

@@ -39,5 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

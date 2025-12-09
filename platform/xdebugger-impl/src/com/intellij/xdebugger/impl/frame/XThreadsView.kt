@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.platform.debugger.impl.ui.DebuggerUIUtilShared
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -86,7 +87,7 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
         .debounce(200)
         .collectLatest {
           withContext(Dispatchers.EDT) {
-            DebuggerUIUtil.freezePaintingToReduceFlickering(treePanel.contentComponent)
+            DebuggerUIUtilShared.freezePaintingToReduceFlickering(treePanel.contentComponent)
             if (panel.isShowing) {
               tree.setRoot(XThreadsRootNode(tree, session), false)
             }

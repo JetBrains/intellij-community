@@ -74,5 +74,6 @@
     <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.ui" />
   </component>
 </module>

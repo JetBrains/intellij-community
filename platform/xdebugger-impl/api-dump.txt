@@ -38,16 +38,8 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:getDebuggerDisplayName():java.lang.String
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
-c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
-- com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
-com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithSeparatorAbove
-- com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
-com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
-- com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
-- a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - com.intellij.openapi.Disposable
 - pF:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode

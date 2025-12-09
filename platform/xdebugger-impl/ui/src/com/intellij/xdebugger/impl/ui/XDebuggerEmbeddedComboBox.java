@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder;
@@ -34,12 +34,8 @@ public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
   }
 
   public void setExtension(JComponent component) {
-    getUI().setEmbeddedComponent(myEmbeddedComponent = component);
-  }
-
-  @Override
-  public EmbeddedComboBoxUI getUI() {
-    return (EmbeddedComboBoxUI)ui;
+    var comboBoxUI = (EmbeddedComboBoxUI)getUI();
+    comboBoxUI.setEmbeddedComponent(myEmbeddedComponent = component);
   }
 }
 

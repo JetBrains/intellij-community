@@ -50,7 +50,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.frame.HiddenStackFramesItem;
+import com.intellij.xdebugger.impl.frame.HiddenFramesStackFrame;
 import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
@@ -509,7 +509,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       if (f instanceof XStackFrameWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
         systemPrintln("-- " + withSeparator.getCaptionAboveOf() + " --");
       }
-      if (f instanceof HiddenStackFramesItem) {
+      if (f instanceof HiddenFramesStackFrame) {
         systemPrintln("  <hidden frames>");
       }
       else {

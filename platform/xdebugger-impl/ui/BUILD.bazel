@@ -36,6 +36,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/util/concurrency",
     "//platform/lang-impl",
+    "//libraries/stream",
+    "//platform/statistics",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.ui` end

@@ -6,7 +6,6 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.nls.NlsMessages;
-import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -30,7 +29,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
@@ -593,26 +591,5 @@ public final class DebuggerUIUtil {
     else {
       e.getPresentation().setVisible(enable);
     }
-  }
-
-  private static boolean shouldUseAntiFlickeringPanel() {
-    return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull JComponent wrapWithAntiFlickeringPanel(@NotNull JComponent component) {
-    return shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(component) : component;
-  }
-
-  @ApiStatus.Internal
-  public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
-    if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
-      int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
-      if (delay > 0) {
-        ApplicationManager.getApplication().invokeAndWait(() -> antiFlickeringPanel.freezePainting(delay), ModalityState.any());
-        return true;
-      }
-    }
-    return false;
   }
 }

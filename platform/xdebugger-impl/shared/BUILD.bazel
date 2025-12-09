@@ -38,6 +38,8 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/lang-api:lang",
     "//platform/execution",
+    "//platform/statistics",
+    "//platform/platform-impl/internal",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

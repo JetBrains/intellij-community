@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -19,6 +19,7 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.platform.debugger.impl.shared.proxy.XStackFramesListColorsCache;
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -42,7 +43,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.proxy.MonolithSessionProxyKt;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -105,8 +105,12 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     this(project, (XDebugSessionProxy)null);
   }
 
+  /**
+   * Please use constructor with {@link XDebugSessionProxy} instead.
+   */
+  @ApiStatus.Obsolete
   public XDebuggerFramesList(@NotNull Project project, @NotNull XDebugSession session) {
-    this(project, MonolithSessionProxyKt.asProxy(session));
+    this(project, XDebuggerEntityConverter.asProxy(session));
   }
 
   @ApiStatus.Internal
