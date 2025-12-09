@@ -105,7 +105,7 @@ private suspend fun generatePluginDependency(
  *
  * @return DependencyFileResult or null if module has no descriptor
  */
-private fun generateContentModuleDependencies(
+private suspend fun generateContentModuleDependencies(
   contentModuleName: String,
   descriptorCache: ModuleDescriptorCache,
   dependencyFilter: (String) -> Boolean,

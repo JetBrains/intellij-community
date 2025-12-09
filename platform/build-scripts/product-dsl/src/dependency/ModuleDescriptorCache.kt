@@ -3,6 +3,11 @@
 
 package org.jetbrains.intellij.build.productLayout.dependency
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
@@ -12,33 +17,41 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Cache for module descriptor information to avoid redundant file system lookups.
+ * 
+ * Uses a coroutine-friendly Deferred-based cache pattern:
+ * - First caller for a module creates a Deferred via async
+ * - Subsequent callers await the same Deferred without blocking
+ * - File I/O runs on Dispatchers.IO to avoid blocking coroutine threads
  */
-internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOutputProvider) {
+internal class ModuleDescriptorCache(
+  private val moduleOutputProvider: ModuleOutputProvider,
+  private val scope: CoroutineScope,
+) {
   data class DescriptorInfo(
     @JvmField val descriptorPath: Path,
     @JvmField val dependencies: List<String>,
   )
 
-  // Wrapper to allow caching null results (ConcurrentHashMap doesn't support null values)
-  private class CacheValue(@JvmField val info: DescriptorInfo?)
-
-  private val cache = ConcurrentHashMap<String, CacheValue>()
+  private val cache = ConcurrentHashMap<String, Deferred<DescriptorInfo?>>()
 
   /**
    * Gets cached descriptor info or analyzes the module if not yet cached.
    * Caches both positive (has descriptor) and negative (no descriptor) results.
-   * Thread-safe: ensures exactly one analysis per module using double-checked locking.
+   * 
+   * Coroutine-friendly: uses Deferred so concurrent callers await without blocking threads.
    */
-  fun getOrAnalyze(moduleName: String): DescriptorInfo? {
-    return (cache.get(moduleName) ?: synchronized(moduleName.intern()) {
-      cache.getOrPut(moduleName) { CacheValue(analyzeModule(moduleName)) }
-    }).info
+  suspend fun getOrAnalyze(moduleName: String): DescriptorInfo? {
+    return cache.computeIfAbsent(moduleName) {
+      scope.async(Dispatchers.IO) {
+        analyzeModule(moduleName)
+      }
+    }.await()
   }
 
   /**
    * Analyzes a module to find its descriptor and production dependencies.
    */
-  private fun analyzeModule(moduleName: String): DescriptorInfo? {
+  private suspend fun analyzeModule(moduleName: String): DescriptorInfo? {
     val jpsModule = moduleOutputProvider.findRequiredModule(moduleName)
     val descriptorPath = findFileInModuleSources(
       module = jpsModule,
@@ -65,13 +78,13 @@ internal class ModuleDescriptorCache(private val moduleOutputProvider: ModuleOut
     return DescriptorInfo(descriptorPath, deps.distinct().sorted())
   }
 
-  private fun shouldSkipDescriptor(descriptorPath: Path): Boolean {
-    val content = Files.readString(descriptorPath)
+  private suspend fun shouldSkipDescriptor(descriptorPath: Path): Boolean {
+    val content = withContext(Dispatchers.IO) { Files.readString(descriptorPath) }
     return content.contains("<!-- todo: register this as a content module (IJPL-210868)")
   }
 
   /**
    * Checks if a module has a descriptor XML file.
    */
-  fun hasDescriptor(moduleName: String): Boolean = getOrAnalyze(moduleName) != null
+  suspend fun hasDescriptor(moduleName: String): Boolean = getOrAnalyze(moduleName) != null
 }

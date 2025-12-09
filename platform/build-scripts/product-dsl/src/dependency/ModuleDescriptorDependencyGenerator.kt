@@ -56,6 +56,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   cache: ModuleDescriptorCache,
   productSpecs: List<Pair<String, ProductModulesContentSpec?>> = emptyList(),
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
+  additionalPlugins: Map<String, String> = emptyMap(),
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
   val modulesToProcess = collectModulesToProcess(allModuleSets)
@@ -79,6 +80,7 @@ internal suspend fun generateModuleDescriptorDependencies(
     descriptorCache = cache,
     cache = traversalCache,
     pluginContentJobs = pluginContentJobs,
+    additionalPlugins = additionalPlugins,
   ))
 
   // Report all errors at once

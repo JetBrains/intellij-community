@@ -103,20 +103,21 @@ The solution depends on the content module's **loading attribute**:
 
 ### Configuration
 
-Non-bundled plugins for validation are configured in `UltimateModuleSets.kt`:
+Non-bundled plugins for validation are configured in `ultimateGenerator.kt` via `additionalPlugins`:
 
 ```kotlin
-/**
- * Non-bundled plugins whose content modules should be available for cross-plugin
- * dependency validation. These are plugins that bundled plugins may optionally depend on.
- *
- * When a bundled plugin's content module (with non-critical loading like optional/on_demand)
- * depends on a module from these plugins, the dependency is considered valid.
- */
-val NON_BUNDLED_PLUGINS_FOR_VALIDATION: List<String> = listOf(
-  "intellij.c",  // C/C++ support - needed by intellij.fullLine.cpp
+generateAllModuleSetsWithProducts(
+  ModuleSetGenerationConfig(
+    // ...
+    additionalPlugins = loadNonBundledPluginsForValidation(projectRoot) + listOf(
+      "intellij.c",  // C/C++ support - needed by intellij.fullLine.cpp
+      "kotlin.frontend.split",
+    ),
+  )
 )
 ```
+
+The `loadNonBundledPluginsForValidation()` function loads plugins from expected content YAML files (e.g., `ultimate-content-platform.yaml`, `rider-content.yaml`).
 
 ### Adding a New Non-Bundled Plugin
 
@@ -128,9 +129,9 @@ When you encounter a validation error for a cross-plugin dependency:
    # Find the .iml file for the plugin
    find . -name "*.iml" | xargs grep -l "plugin-descriptor-xml"
    ```
-3. **Add to the list**:
+3. **Add to `additionalPlugins`** in `ultimateGenerator.kt`:
    ```kotlin
-   val NON_BUNDLED_PLUGINS_FOR_VALIDATION: List<String> = listOf(
+   additionalPlugins = loadNonBundledPluginsForValidation(projectRoot) + listOf(
      "intellij.c",
      "intellij.new.plugin",  // Description of why it's needed
    )
@@ -195,7 +196,7 @@ Use `allowMissingDependencies` sparingly for:
 ### When NOT to Use
 
 Do NOT use for:
-- **Cross-plugin dependencies** - use `NON_BUNDLED_PLUGINS_FOR_VALIDATION` instead
+- **Cross-plugin dependencies** - use `additionalPlugins` in `ultimateGenerator.kt` instead
 - **Avoiding validation errors** - fix the root cause
 - **Optional features** - use proper loading attributes instead
 
@@ -287,7 +288,7 @@ Product: GoLand
 **Fix options**:
 1. Add the suggested module set to the product
 2. Add the individual module via `module()` or `embeddedModule()`
-3. If it's a cross-plugin dependency with non-critical loading, add the plugin to `NON_BUNDLED_PLUGINS_FOR_VALIDATION`
+3. If it's a cross-plugin dependency with non-critical loading, add the plugin to `additionalPlugins` in `ultimateGenerator.kt`
 
 #### 2. Self-Contained Set with Unresolvable Dependencies
 
@@ -363,7 +364,7 @@ When you encounter a validation error:
 3. **Find the right fix level**:
    - Missing module set in hierarchy → add the nested set
    - Product missing required set → add to product
-   - Cross-plugin dep with non-critical loading → add to `NON_BUNDLED_PLUGINS_FOR_VALIDATION`
+   - Cross-plugin dep with non-critical loading → add to `additionalPlugins` in `ultimateGenerator.kt`
    - Truly missing infrastructure → add to appropriate module set
 
 4. **Verify the fix**: Run "Generate Product Layouts" again

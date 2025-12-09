@@ -44,7 +44,7 @@ data class ModuleSetGenerationConfig(
   @JvmField val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   @JvmField val projectRoot: Path,
   @JvmField val moduleOutputProvider: ModuleOutputProvider,
-  @JvmField val additionalPlugins: List<String> = emptyList(),
+  @JvmField val additionalPlugins: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -194,7 +194,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
 
     // Collect all bundled plugins and launch content extraction jobs ONCE
     // multiple consumers can await these Deferred values (validation + plugin dep gen)
-    val allBundledPlugins = (config.discoveredProducts.asSequence().mapNotNull { it.spec?.bundledPlugins }.flatten() + config.additionalPlugins)
+    val allBundledPlugins = (config.discoveredProducts.asSequence().mapNotNull { it.spec?.bundledPlugins }.flatten() + config.additionalPlugins.keys)
       .distinct()
       .toList()
 
@@ -210,7 +210,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         discoverModuleSets(sourceObj)
       }
 
-      val cache = ModuleDescriptorCache(config.moduleOutputProvider)
+      val cache = ModuleDescriptorCache(config.moduleOutputProvider, this)
       generateModuleDescriptorDependencies(
         communityModuleSets = moduleSetsByLabel.get("community") ?: emptyList(),
         ultimateModuleSets = moduleSetsByLabel.get("ultimate") ?: emptyList(),
@@ -218,6 +218,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         cache = cache,
         productSpecs = products,
         pluginContentJobs = pluginContentJobs,
+        additionalPlugins = config.additionalPlugins,
       )
     }
 
@@ -227,7 +228,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         null
       }
       else {
-        val cache = ModuleDescriptorCache(config.moduleOutputProvider)
+        val cache = ModuleDescriptorCache(config.moduleOutputProvider, this)
         val embeddedModules = embeddedModulesDeferred.await()
         val dependencyFilter: (String) -> Boolean = { depName ->
           if (depName.startsWith(LIB_MODULE_PREFIX) || depName == "intellij.java.aetherDependencyResolver") {

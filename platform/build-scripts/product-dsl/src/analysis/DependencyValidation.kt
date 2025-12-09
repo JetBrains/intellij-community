@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.productLayout.analysis
 
@@ -39,6 +39,8 @@ internal data class MissingDependenciesError(
   val allModuleSets: List<ModuleSet>,
   /** Metadata about modules that have missing dependencies (loading mode, source plugin, etc.) */
   val moduleMetadata: Map<String, ModuleMetadata> = emptyMap(),
+  /** Full traceability info for all plugin modules (for looking up missing dep info) */
+  val moduleTraceInfo: Map<String, ModuleTraceInfo> = emptyMap(),
 ) : ValidationError
 
 /**
@@ -52,6 +54,22 @@ internal data class ModuleMetadata(
   val sourcePlugin: String?,
   /** Name of the module set that contributed this module, or null if from bundled plugin */
   val sourceModuleSet: String?,
+  /** Products that contain this module (for global validation error messages) */
+  val sourceProducts: Set<String>? = null,
+)
+
+/**
+ * Complete traceability info for a plugin content module.
+ * Single lookup provides all context for error messages.
+ * Built once and shared across all validation lookups.
+ */
+internal data class ModuleTraceInfo(
+  /** Plugin containing this module */
+  @JvmField val sourcePlugin: String,
+  /** Products that bundle this plugin (empty for additional/non-bundled plugins) */
+  @JvmField val bundledInProducts: Set<String>,
+  /** Source description if plugin is in additionalPlugins, null otherwise */
+  @JvmField val additionalPluginSource: String?,
 )
 
 // endregion
@@ -138,6 +156,7 @@ internal suspend fun validateProductModuleSets(
   descriptorCache: ModuleDescriptorCache,
   cache: ModuleSetTraversalCache,
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
+  additionalPlugins: Map<String, String> = emptyMap(),
 ): List<ValidationError> {
   val allPluginModules = collectAllPluginModules(pluginContentJobs)
 
@@ -153,9 +172,62 @@ internal suspend fun validateProductModuleSets(
   // Collect cross-product modules from pre-built indices
   val crossProductModules = productIndices.values.flatMapTo(HashSet()) { it.allModules }
 
-  // Validate each product in parallel using pre-built indices
+  // Collect union of all per-product allowedMissingDependencies for global validation
+  val globalAllowedMissing = productSpecs
+    .mapNotNull { it.second?.allowedMissingDependencies }
+    .flatten()
+    .toSet()
+
+  // Build module traceability info for error messages (single lookup per module)
+  // Step 1: plugin -> products that bundle it
+  val pluginToProducts = HashMap<String, MutableSet<String>>()
+  for ((productName, spec) in productSpecs) {
+    spec?.bundledPlugins?.forEach { pluginName ->
+      pluginToProducts.computeIfAbsent(pluginName) { HashSet() }.add(productName)
+    }
+  }
+  // Step 2: module -> full trace info (single pass through all plugins)
+  val moduleTraceInfo = HashMap<String, ModuleTraceInfo>()
+  for ((pluginName, job) in pluginContentJobs) {
+    val products = pluginToProducts[pluginName] ?: emptySet()
+    val info = ModuleTraceInfo(
+      sourcePlugin = pluginName,
+      bundledInProducts = products,
+      additionalPluginSource = additionalPlugins[pluginName],
+    )
+    job.await()?.contentModules?.forEach { moduleName ->
+      moduleTraceInfo[moduleName] = info
+    }
+  }
+
+  // Identify non-critical plugin modules BEFORE any validation (just module names, O(n) filter)
+  // A module is non-critical globally only if it's NOT critical (EMBEDDED/REQUIRED) in ANY product
+  val nonCriticalPluginModules = allPluginModules.filterTo(HashSet()) { moduleName ->
+    productIndices.values.none { productIndex ->
+      val loading = productIndex.moduleLoadings[moduleName]
+      loading == ModuleLoadingRuleValue.EMBEDDED || loading == ModuleLoadingRuleValue.REQUIRED
+    }
+  }
+
+  // FULLY PARALLEL: Run global validation and per-product validation concurrently
+  // No dependency because per-product validation uses module NAMES (computed above),
+  // not validation RESULTS
   return coroutineScope {
-    productIndices.map { (productName, productIndex) ->
+    // Global: validate all non-critical plugin modules once
+    val globalValidationJob = async {
+      preValidateNonCriticalPluginModules(
+        nonCriticalPluginModules = nonCriticalPluginModules,
+        allPluginModules = allPluginModules,
+        crossProductModules = crossProductModules,
+        descriptorCache = descriptorCache,
+        allModuleSets = allModuleSets,
+        allowedMissing = globalAllowedMissing,
+        moduleTraceInfo = moduleTraceInfo,
+      )
+    }
+
+    // Per-product: validate everything EXCEPT non-critical plugin modules
+    val productValidationJobs = productIndices.map { (productName, productIndex) ->
       async {
         validateSingleProduct(
           productIndex = productIndex,
@@ -165,16 +237,25 @@ internal suspend fun validateProductModuleSets(
           allPluginModules = allPluginModules,
           crossProductModules = crossProductModules,
           descriptorCache = descriptorCache,
+          nonCriticalPluginModules = nonCriticalPluginModules,
         )
       }
-    }.awaitAll().flatten()
+    }
+
+    // Await all and merge
+    val globalErrors = globalValidationJob.await()
+    val productErrors = productValidationJobs.awaitAll().flatten()
+    globalErrors + productErrors
   }
 }
 
 /**
  * Validates a single product and returns any errors found.
+ *
+ * @param nonCriticalPluginModules Modules to skip (they're validated globally in parallel).
+ *        These are non-critical plugin modules that can depend on cross-plugin/cross-product modules.
  */
-private fun validateSingleProduct(
+private suspend fun validateSingleProduct(
   productIndex: ProductModuleIndex,
   spec: ProductModulesContentSpec,
   cache: ModuleSetTraversalCache,
@@ -182,6 +263,7 @@ private fun validateSingleProduct(
   allPluginModules: Set<String>,
   crossProductModules: Set<String>,
   descriptorCache: ModuleDescriptorCache,
+  nonCriticalPluginModules: Set<String>,
 ): List<ValidationError> {
   val errors = mutableListOf<ValidationError>()
   val productName = productIndex.productName
@@ -194,26 +276,26 @@ private fun validateSingleProduct(
 
   // Check for duplicate content modules (single-pass detection)
   // OPTIMIZED: O(n) single pass instead of O(n log n) groupingBy
-  val seen = mutableSetOf<String>()
-  val duplicateModules = mutableMapOf<String, Int>()
+  val seen = HashSet<String>()
+  val duplicateModules = HashMap<String, Int>()
 
   for (moduleSetWithOverrides in spec.moduleSets) {
     val moduleSet = cache.getModuleSet(moduleSetWithOverrides.moduleSet.name)
     if (moduleSet != null) {
       for (moduleName in cache.getModuleNames(moduleSet)) {
         if (!seen.add(moduleName)) {
-          duplicateModules[moduleName] = (duplicateModules.get(moduleName) ?: 1) + 1
+          duplicateModules.put(moduleName, (duplicateModules.get(moduleName) ?: 1) + 1)
         }
       }
     }
   }
   for (module in spec.additionalModules) {
     if (!seen.add(module.name)) {
-      duplicateModules[module.name] = (duplicateModules.get(module.name) ?: 1) + 1
+      duplicateModules.put(module.name, (duplicateModules.get(module.name) ?: 1) + 1)
     }
   }
   if (duplicateModules.isNotEmpty()) {
-    errors.add(DuplicateModulesError(context = productName, duplicates = duplicateModules))
+    errors.add(DuplicateModulesError(context = productName, duplicates = duplicateModules.toSortedMap()))
   }
 
   // Check for missing dependencies
@@ -221,8 +303,12 @@ private fun validateSingleProduct(
     .filterValues { it == ModuleLoadingRuleValue.EMBEDDED || it == ModuleLoadingRuleValue.REQUIRED }
     .keys
 
+  // Skip ALL non-critical plugin modules (they're validated globally in parallel)
+  val modulesToValidate = productIndex.allModules
+    .filterNotTo(HashSet()) { it in nonCriticalPluginModules }
+
   val missingDeps = findMissingTransitiveDependencies(
-    modules = productIndex.allModules,
+    modules = modulesToValidate,
     availableModules = productIndex.allModules,
     descriptorCache = descriptorCache,
     allowedMissing = spec.allowedMissingDependencies,
@@ -279,6 +365,83 @@ private suspend fun collectAllPluginModules(pluginContentJobs: Map<String, Defer
 }
 
 /**
+ * Pre-validates non-critical plugin modules globally against the union of all product/plugin modules.
+ *
+ * This runs IN PARALLEL with per-product validation (no dependency between them).
+ * Non-critical modules can depend on any module in [crossProductModules] or [allPluginModules],
+ * so their validation result is the same across all products.
+ *
+ * Each module is validated in parallel for maximum throughput.
+ *
+ * @param nonCriticalPluginModules Pre-computed set of non-critical plugin module names
+ * @return List of validation errors for modules with missing dependencies
+ */
+private suspend fun preValidateNonCriticalPluginModules(
+  nonCriticalPluginModules: Set<String>,
+  allPluginModules: Set<String>,
+  crossProductModules: Set<String>,
+  descriptorCache: ModuleDescriptorCache,
+  allModuleSets: List<ModuleSet>,
+  allowedMissing: Set<String>,
+  moduleTraceInfo: Map<String, ModuleTraceInfo>,
+): List<ValidationError> {
+  if (nonCriticalPluginModules.isEmpty()) {
+    return emptyList()
+  }
+
+  // PARALLEL: Validate each module independently
+  // Each BFS traversal is independent and uses thread-safe descriptorCache
+  val perModuleResults = coroutineScope {
+    nonCriticalPluginModules.map { moduleName ->
+      async {
+        val missingDeps = findMissingTransitiveDependencies(
+          modules = setOf(moduleName),
+          availableModules = crossProductModules,
+          descriptorCache = descriptorCache,
+          allowedMissing = allowedMissing,
+          crossPluginModules = allPluginModules,
+          crossProductModules = crossProductModules,
+          criticalModules = emptySet(),
+        )
+        moduleName to missingDeps
+      }
+    }.awaitAll()
+  }
+
+  // Merge results: collect all missing dependencies
+  val globallyMissingDeps = HashMap<String, MutableSet<String>>()
+  for ((_, missingDeps) in perModuleResults) {
+    for ((dep, needers) in missingDeps) {
+      globallyMissingDeps.computeIfAbsent(dep) { HashSet() }.addAll(needers)
+    }
+  }
+
+  if (globallyMissingDeps.isEmpty()) {
+    return emptyList()
+  }
+
+  // Build error with full traceability from moduleTraceInfo
+  val affectedModules = globallyMissingDeps.values.flatMapTo(HashSet()) { it }
+  val moduleMetadata = affectedModules.associateWith { moduleName ->
+    val traceInfo = moduleTraceInfo[moduleName]
+    ModuleMetadata(
+      loadingMode = null, // Non-critical by definition
+      sourcePlugin = traceInfo?.sourcePlugin,
+      sourceModuleSet = null,
+      sourceProducts = traceInfo?.bundledInProducts,
+    )
+  }
+
+  return listOf(MissingDependenciesError(
+    context = "Non-critical plugin modules (global validation)",
+    missingModules = globallyMissingDeps,
+    allModuleSets = allModuleSets,
+    moduleMetadata = moduleMetadata,
+    moduleTraceInfo = moduleTraceInfo, // Pass for missing dep lookup
+  ))
+}
+
+/**
  * Finds missing transitive dependencies using BFS traversal.
  *
  * ## Performance Characteristics
@@ -315,7 +478,7 @@ private suspend fun collectAllPluginModules(pluginContentJobs: Map<String, Defer
  * @param criticalModules Modules with EMBEDDED or REQUIRED loading that cannot depend on cross-plugin modules
  * @return Map of missing dependency → set of modules that need it
  */
-internal fun findMissingTransitiveDependencies(
+internal suspend fun findMissingTransitiveDependencies(
   modules: Set<String>,
   availableModules: Set<String>,
   descriptorCache: ModuleDescriptorCache,
@@ -490,46 +653,68 @@ private fun formatMissingDependenciesError(sb: StringBuilder, error: MissingDepe
 
   // error.missingModules is already Map<missingDep, Set<needingModules>>
   for ((missingDep, needingModules) in error.missingModules.entries.sortedByDescending { it.value.size }) {
-    sb.appendLine("  ${AnsiColors.RED}*${AnsiColors.RESET} Missing: ${AnsiColors.BOLD}'$missingDep'${AnsiColors.RESET}")
-
-    // Show needing modules with metadata if available
-    val modulesWithMeta = needingModules.sorted().take(5).map { moduleName ->
-      val meta = error.moduleMetadata[moduleName]
-      buildString {
-        append(moduleName)
-        if (meta != null) {
-          val parts = mutableListOf<String>()
-          meta.sourcePlugin?.let { parts.add("plugin: $it") }
-          meta.loadingMode?.let { parts.add("loading: ${it.name.lowercase()}") }
-          if (parts.isNotEmpty()) {
-            append(" (${parts.joinToString(", ")})")
-          }
-        }
+    // Show missing dep info with full traceability
+    val missingDepInfo = error.moduleTraceInfo[missingDep]
+    if (missingDepInfo != null) {
+      sb.appendLine("  ${AnsiColors.RED}*${AnsiColors.RESET} Missing: ${AnsiColors.BOLD}'$missingDep'${AnsiColors.RESET}")
+      sb.appendLine("    From plugin: ${missingDepInfo.sourcePlugin}")
+      if (missingDepInfo.additionalPluginSource != null) {
+        sb.appendLine("    Source: ${missingDepInfo.additionalPluginSource}")
+      }
+      else if (missingDepInfo.bundledInProducts.isNotEmpty()) {
+        sb.appendLine("    Bundled in: ${missingDepInfo.bundledInProducts.sorted().joinToString(", ")}")
       }
     }
-    sb.appendLine("    Needed by: ${modulesWithMeta.joinToString(", ")}")
-
-    if (needingModules.size > 5) {
-      sb.appendLine("    ... and ${needingModules.size - 5} more modules")
+    else {
+      sb.appendLine("  ${AnsiColors.RED}*${AnsiColors.RESET} Missing: ${AnsiColors.BOLD}'$missingDep'${AnsiColors.RESET} (not in any known plugin)")
     }
 
-    // Contextual suggestion based on loading mode
-    val hasOptionalNeeders = needingModules.any { moduleName ->
-      val loading = error.moduleMetadata[moduleName]?.loadingMode
-      loading == null || loading == ModuleLoadingRuleValue.OPTIONAL || loading == ModuleLoadingRuleValue.ON_DEMAND
+    // Show needing modules grouped by plugin as tree
+    val byPlugin = needingModules.groupBy { error.moduleTraceInfo[it]?.sourcePlugin }
+    sb.appendLine("    Needed by:")
+    val pluginEntries = byPlugin.entries.sortedBy { it.key ?: "" }
+    for ((pluginIdx, pluginEntry) in pluginEntries.withIndex()) {
+      val (pluginName, modules) = pluginEntry
+      val isLastPlugin = pluginIdx == pluginEntries.lastIndex
+      val pluginPrefix = if (isLastPlugin) "└─" else "├─"
+      val traceInfo = pluginName?.let { error.moduleTraceInfo[modules.first()] }
+
+      // Plugin line with source info
+      val sourceDesc = when {
+        traceInfo?.bundledInProducts?.isNotEmpty() == true ->
+          "bundled in: ${traceInfo.bundledInProducts.sorted().joinToString(", ")}"
+        traceInfo?.additionalPluginSource != null -> traceInfo.additionalPluginSource
+        else -> null
+      }
+      val pluginDesc = pluginName ?: "unknown"
+      sb.appendLine("      $pluginPrefix ${AnsiColors.BOLD}$pluginDesc${AnsiColors.RESET}${sourceDesc?.let { " ($it)" } ?: ""}")
+
+      // Module lines under plugin
+      val sortedModules = modules.sorted()
+      val childPrefix = if (isLastPlugin) "   " else "│  "
+      for ((modIdx, mod) in sortedModules.withIndex()) {
+        val modPrefix = if (modIdx == sortedModules.lastIndex) "└─" else "├─"
+        sb.appendLine("      $childPrefix $modPrefix $mod")
+      }
     }
-    val allFromBundledPlugins = needingModules.all { error.moduleMetadata[it]?.sourcePlugin != null }
 
-    if (hasOptionalNeeders && allFromBundledPlugins) {
-      sb.appendLine("    ${AnsiColors.BLUE}Suggestion:${AnsiColors.RESET} If '$missingDep' is from a non-bundled plugin, add the plugin to NON_BUNDLED_PLUGINS_FOR_VALIDATION")
+    // Actionable suggestion based on missing dep status
+    if (missingDepInfo != null && missingDepInfo.additionalPluginSource == null && missingDepInfo.bundledInProducts.isEmpty()) {
+      // Plugin exists but not bundled anywhere - suggest adding to additionalPlugins
+      sb.appendLine("    ${AnsiColors.BLUE}Fix:${AnsiColors.RESET} Add '${missingDepInfo.sourcePlugin}' to additionalPlugins in ultimateGenerator.kt")
     }
+    else if (missingDepInfo == null) {
+      // Not in any known plugin - check module sets
+      val containingSets = error.allModuleSets
+        .filter { ModuleSetTraversal.containsModule(it, missingDep) }
+        .map { it.name }
 
-    val containingSets = error.allModuleSets
-      .filter { ModuleSetTraversal.containsModule(it, missingDep) }
-      .map { it.name }
-
-    if (containingSets.isNotEmpty()) {
-      sb.appendLine("    ${AnsiColors.BLUE}Suggestion:${AnsiColors.RESET} Add module set: ${containingSets.joinToString(" or ")}")
+      if (containingSets.isNotEmpty()) {
+        sb.appendLine("    ${AnsiColors.BLUE}Fix:${AnsiColors.RESET} Add module set: ${containingSets.joinToString(" or ")}")
+      }
+      else {
+        sb.appendLine("    ${AnsiColors.BLUE}Fix:${AnsiColors.RESET} Find plugin containing '$missingDep' and add to additionalPlugins")
+      }
     }
     sb.appendLine()
   }
