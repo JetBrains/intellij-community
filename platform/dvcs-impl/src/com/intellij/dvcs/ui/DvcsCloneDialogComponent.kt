@@ -81,6 +81,7 @@ abstract class DvcsCloneDialogComponent @ApiStatus.Internal constructor(
     val insets = UIUtil.PANEL_REGULAR_INSETS
     mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
 
+    urlEditor.isUsePreferredSizeAsMinimum = false
     urlEditor.history = rememberedInputs.visitedUrls
     urlEditor.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {

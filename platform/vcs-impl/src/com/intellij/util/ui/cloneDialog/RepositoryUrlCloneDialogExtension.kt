@@ -12,9 +12,9 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -64,7 +64,7 @@ internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
       val northPanel = panel {
         row(VcsBundle.message("vcs.common.labels.version.control")) {
-          comboBox = comboBox(providers.asList(), SimpleListCellRenderer.create("") { UIUtil.removeMnemonic(it.vcsName) })
+          comboBox = comboBox(providers.asList(), textListCellRenderer("") { UIUtil.removeMnemonic(it.vcsName) })
             .applyToComponent {
               selectedItem = null
             }
