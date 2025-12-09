@@ -11,7 +11,6 @@ import com.intellij.diff.requests.ProxySimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.util.BooleanGetter
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Action
@@ -22,28 +21,12 @@ open class TextMergeViewer(
   private val mergeContext: MergeContext,
   private val mergeRequest: TextMergeRequest,
 ) : MergeViewer {
-  val viewer: MergeThreesideViewer
+  val viewer: MergeThreesideViewer = createMergeThreesideViewer(mergeContext, mergeRequest)
 
-  private val cancelResolveAction: Action?
-  private val leftResolveAction: Action?
-  private val rightResolveAction: Action?
-  private val acceptResolveAction: Action?
-
-  init {
-    val diffContext: DiffContext = ProxyDiffContext(mergeContext)
-    val diffRequest: ContentDiffRequest = ProxySimpleDiffRequest(mergeRequest.getTitle(),
-                                                                 getDiffContents(mergeRequest),
-                                                                 getDiffContentTitles(mergeRequest),
-                                                                 mergeRequest)
-    diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, booleanArrayOf(true, false, true))
-
-    viewer = loadThreeSideViewer(diffContext, diffRequest, mergeContext, mergeRequest, this)
-
-    cancelResolveAction = viewer.getLoadedResolveAction(MergeResult.CANCEL)
-    leftResolveAction = viewer.getLoadedResolveAction(MergeResult.LEFT)
-    rightResolveAction = viewer.getLoadedResolveAction(MergeResult.RIGHT)
-    acceptResolveAction = viewer.getLoadedResolveAction(MergeResult.RESOLVED)
-  }
+  private val cancelResolveAction = viewer.getLoadedResolveAction(MergeResult.CANCEL)
+  private val leftResolveAction = viewer.getLoadedResolveAction(MergeResult.LEFT)
+  private val rightResolveAction = viewer.getLoadedResolveAction(MergeResult.RIGHT)
+  private val acceptResolveAction = viewer.getLoadedResolveAction(MergeResult.RESOLVED)
 
   //
   // Impl
@@ -59,10 +42,10 @@ open class TextMergeViewer(
     components.statusPanel = init.statusPanel
     components.toolbarActions = init.toolbarActions
 
-    components.closeHandler = BooleanGetter {
-      val exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, mergeRequest, mergeContext, viewer.isContentModified)
-      viewer.logMergeCancelled(viewer.myContentModified, exit)
-      exit
+    components.closeHandler = {
+      MergeUtil.showExitWithoutApplyingChangesDialog(this, mergeRequest, mergeContext, viewer.isContentModified).also {
+        viewer.logMergeCancelled(viewer.myContentModified, it)
+      }
     }
 
     return components
@@ -94,8 +77,19 @@ open class TextMergeViewer(
     return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer)
   }
 
+  private fun createMergeThreesideViewer(mergeContext: MergeContext, mergeRequest: TextMergeRequest): MergeThreesideViewer {
+    val diffContext = ProxyDiffContext(mergeContext)
+    val diffRequest = ProxySimpleDiffRequest(mergeRequest.getTitle(),
+                                             getDiffContents(mergeRequest),
+                                             getDiffContentTitles(mergeRequest),
+                                             mergeRequest)
+    diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, booleanArrayOf(true, false, true))
+
+    return loadThreeSideViewer(diffContext, diffRequest, mergeContext, mergeRequest, this)
+  }
+
   companion object {
-    private fun getDiffContents(mergeRequest: TextMergeRequest): List<DiffContent?> {
+    private fun getDiffContents(mergeRequest: TextMergeRequest): List<DiffContent> {
       val contents = mergeRequest.getContents()
 
       val left = ThreeSide.LEFT.select<DocumentContent>(contents)
@@ -105,7 +99,7 @@ open class TextMergeViewer(
       return listOf<DiffContent>(left, output, right)
     }
 
-    private fun getDiffContentTitles(mergeRequest: TextMergeRequest): MutableList<String?> {
+    private fun getDiffContentTitles(mergeRequest: TextMergeRequest): List<String> {
       val titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles())
       titles[ThreeSide.BASE.index] = DiffBundle.message("merge.version.title.merged.result")
       return titles

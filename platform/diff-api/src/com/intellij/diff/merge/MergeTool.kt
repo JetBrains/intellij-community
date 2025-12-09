@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
-import com.intellij.openapi.util.BooleanGetter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.Action
 import javax.swing.JComponent
@@ -64,11 +63,11 @@ interface MergeTool {
      * Return false if a merge window should be prevented from closing and canceling resolve.
      */
     @JvmField
-    var closeHandler: BooleanGetter? = null
+    var closeHandler: (() -> Boolean)? = null
   }
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<MergeTool> = create<MergeTool>("com.intellij.diff.merge.MergeTool")
+    val EP_NAME: ExtensionPointName<MergeTool> = create("com.intellij.diff.merge.MergeTool")
   }
 }

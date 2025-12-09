@@ -12,9 +12,9 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
   private val highlighters: MutableList<RangeHighlighter> = mutableListOf()
 
   @JvmField
-  protected val myInnerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
+  protected val innerHighlighters: MutableList<RangeHighlighter> = mutableListOf()
   @JvmField
-  protected val myOperations: MutableList<DiffGutterOperation> = mutableListOf()
+  protected val operations: MutableList<DiffGutterOperation> = mutableListOf()
 
   protected abstract val innerFragments: MergeInnerDifferences?
 
@@ -36,7 +36,7 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   @RequiresEdt
   protected fun installInnerHighlighters() {
-    assert(myInnerHighlighters.isEmpty())
+    assert(innerHighlighters.isEmpty())
 
     createInnerHighlighter(ThreeSide.BASE)
     if (isChange(Side.LEFT)) createInnerHighlighter(ThreeSide.LEFT)
@@ -53,10 +53,10 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   @RequiresEdt
   protected fun destroyInnerHighlighters() {
-    for (highlighter in myInnerHighlighters) {
+    for (highlighter in innerHighlighters) {
       highlighter.dispose()
     }
-    myInnerHighlighters.clear()
+    innerHighlighters.clear()
   }
 
   @RequiresEdt
@@ -65,14 +65,14 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
 
   @RequiresEdt
   protected fun destroyOperations() {
-    for (operation in myOperations) {
+    for (operation in operations) {
       operation.dispose()
     }
-    myOperations.clear()
+    operations.clear()
   }
 
   fun updateGutterActions(force: Boolean) {
-    for (operation in myOperations) {
+    for (operation in operations) {
       operation.update(force)
     }
   }
@@ -136,7 +136,7 @@ abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
     for (fragment in ranges) {
       val innerStart = start + fragment.startOffset
       val innerEnd = start + fragment.endOffset
-      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, diffType))
+      innerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, diffType))
     }
   }
 }

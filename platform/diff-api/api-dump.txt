@@ -332,7 +332,7 @@ com.intellij.diff.merge.MergeTool$MergeViewer
 - a:getResolveAction(com.intellij.diff.merge.MergeResult):javax.swing.Action
 - a:init():com.intellij.diff.merge.MergeTool$ToolbarComponents
 f:com.intellij.diff.merge.MergeTool$ToolbarComponents
-- closeHandler:com.intellij.openapi.util.BooleanGetter
+- closeHandler:kotlin.jvm.functions.Function0
 - statusPanel:javax.swing.JComponent
 - toolbarActions:java.util.List
 - <init>():V

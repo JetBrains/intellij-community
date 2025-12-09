@@ -396,7 +396,7 @@ class ApplyPatchViewer implements Disposable {
     @Override
     protected void restoreChangeState(@NotNull ApplyPatchChange.State state) {
       super.restoreChangeState(state);
-      ApplyPatchChange change = myModelChanges.get(state.index);
+      ApplyPatchChange change = myModelChanges.get(state.getIndex());
 
       boolean wasResolved = change.isResolved();
       change.restoreState(state);

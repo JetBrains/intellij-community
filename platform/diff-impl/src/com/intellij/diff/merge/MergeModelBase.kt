@@ -27,7 +27,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   private val project: Project?,
   private val document: Document,
 ) : Disposable {
-  private val undoManager: UndoManager? = createUndoManager(project)
+  private val undoManager: UndoManager = if (project != null) UndoManager.getInstance(project) else UndoManager.getGlobalInstance()
 
   private val startLines: IntList = IntArrayList()
   private val endLines: IntList = IntArrayList()
@@ -145,7 +145,7 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
     val rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2)
 
     val rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2)
-    if (rangeManuallyEdit && !isInsideCommand && (undoManager != null && !undoManager.isUndoOrRedoInProgress)) {
+    if (rangeManuallyEdit && !isInsideCommand && !undoManager.isUndoOrRedoInProgress) {
       onRangeManuallyEdit(index)
     }
 
@@ -180,10 +180,10 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
         if (!isInsideCommand) corruptedStates.add(oldState)
       }
 
-      if (undoManager != null && !corruptedStates.isEmpty()) {
+      if (!corruptedStates.isEmpty()) {
         // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
         // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-        undoManager.undoableActionPerformed(MyUndoableAction(this@MergeModelBase, corruptedStates, true))
+        undoManager.undoableActionPerformed(UndoableAction(this@MergeModelBase, corruptedStates, true))
       }
     }
 
@@ -226,8 +226,6 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   }
 
   private fun registerUndoRedo(undo: Boolean, affectedChanges: IntList) {
-    if (undoManager == null) return
-
     val states: MutableList<S>
     if (affectedChanges.isNotEmpty()) {
       states = ArrayList(affectedChanges.size)
@@ -241,10 +239,10 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
         states.add(storeChangeState(index))
       }
     }
-    undoManager.undoableActionPerformed(MyUndoableAction(this, states, undo))
+    undoManager.undoableActionPerformed(UndoableAction(this, states, undo))
   }
 
-  private class MyUndoableAction(
+  private class UndoableAction(
     model: MergeModelBase<*>,
     private val states: List<State>,
     private val isUndo: Boolean,
@@ -393,11 +391,10 @@ abstract class MergeModelBase<S : MergeModelBase.State>(
   //
   // Helpers
   //
-  open class State(@JvmField val index: Int, val startLine: Int, val endLine: Int)
+  open class State(val index: Int, val startLine: Int, val endLine: Int)
 
   companion object {
     private val LOG = Logger.getInstance(MergeModelBase::class.java)
   }
 }
 
-private fun createUndoManager(project: Project?): UndoManager? = if (project != null) UndoManager.getInstance(project) else UndoManager.getGlobalInstance()

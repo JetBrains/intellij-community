@@ -20,18 +20,18 @@ class SimpleThreesideDiffChange(
   fragment: MergeLineFragment,
   conflictType: MergeConflictType,
   override val innerFragments: MergeInnerDifferences?,
-  private val myViewer: SimpleThreesideDiffViewer
+  private val viewer: SimpleThreesideDiffViewer,
 ) : ThreesideDiffChangeBase(conflictType) {
-  private val myLineStarts = IntArray(3)
-  private val myLineEnds = IntArray(3)
+  private val lineStarts = IntArray(3)
+  private val lineEnds = IntArray(3)
 
   var isValid: Boolean = true
     private set
 
   init {
     for (side in ThreeSide.entries) {
-      myLineStarts[side.index] = fragment.getStartLine(side)
-      myLineEnds[side.index] = fragment.getEndLine(side)
+      lineStarts[side.index] = fragment.getStartLine(side)
+      lineEnds[side.index] = fragment.getEndLine(side)
     }
 
     reinstallHighlighters()
@@ -50,21 +50,21 @@ class SimpleThreesideDiffChange(
   }
 
   override fun installOperations() {
-    myOperations.add(createAcceptOperation(ThreeSide.LEFT, ThreeSide.BASE))
-    myOperations.add(createAcceptOperation(ThreeSide.RIGHT, ThreeSide.BASE))
-    myOperations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.LEFT))
-    myOperations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.RIGHT))
+    operations.add(createAcceptOperation(ThreeSide.LEFT, ThreeSide.BASE))
+    operations.add(createAcceptOperation(ThreeSide.RIGHT, ThreeSide.BASE))
+    operations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.LEFT))
+    operations.add(createAcceptOperation(ThreeSide.BASE, ThreeSide.RIGHT))
   }
 
   //
   // Getters
   //
-  override fun getStartLine(side: ThreeSide): Int = side.select(myLineStarts)
-  override fun getEndLine(side: ThreeSide): Int = side.select(myLineEnds)
+  override fun getStartLine(side: ThreeSide): Int = side.select(lineStarts)
+  override fun getEndLine(side: ThreeSide): Int = side.select(lineEnds)
 
   override fun isResolved(side: ThreeSide): Boolean = false
 
-  override fun getEditor(side: ThreeSide): Editor = myViewer.getEditor(side)
+  override fun getEditor(side: ThreeSide): Editor = viewer.getEditor(side)
 
   fun markInvalid() {
     this.isValid = false
@@ -81,30 +81,30 @@ class SimpleThreesideDiffChange(
     val sideIndex = side.index
 
     val newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift)
-    myLineStarts[sideIndex] = newRange.startLine
-    myLineEnds[sideIndex] = newRange.endLine
+    lineStarts[sideIndex] = newRange.startLine
+    lineEnds[sideIndex] = newRange.endLine
 
     return newRange.damaged
   }
 
   private fun createAcceptOperation(sourceSide: ThreeSide, modifiedSide: ThreeSide): DiffGutterOperation {
-    val editor = myViewer.getEditor(sourceSide)
+    val editor = viewer.getEditor(sourceSide)
     val offset = DiffGutterOperation.lineToOffset(editor, getStartLine(sourceSide))
 
     return DiffGutterOperation.Simple(editor, offset, DiffGutterOperation.RendererBuilder {
-      val isOtherEditable = myViewer.isEditable(modifiedSide)
+      val isOtherEditable = viewer.isEditable(modifiedSide)
       if (!isOtherEditable) return@RendererBuilder null
 
       val isChanged = sourceSide != ThreeSide.BASE && isChange(sourceSide) ||
                       modifiedSide != ThreeSide.BASE && isChange(modifiedSide)
       if (!isChanged) return@RendererBuilder null
 
-      val text: String = getApplyActionText(myViewer, sourceSide, modifiedSide)
+      val text: String = getApplyActionText(viewer, sourceSide, modifiedSide)
       val arrowDirection = fromLeft(sourceSide == ThreeSide.LEFT ||
                                     modifiedSide == ThreeSide.RIGHT)
       val icon = DiffUtil.getArrowIcon(arrowDirection)
       createIconRenderer(modifiedSide, text, icon,
-                         Runnable { myViewer.replaceChange(this, sourceSide, modifiedSide) })
+                         Runnable { viewer.replaceChange(this, sourceSide, modifiedSide) })
     })
   }
 
@@ -112,13 +112,13 @@ class SimpleThreesideDiffChange(
     modifiedSide: ThreeSide,
     tooltipText: @NlsContexts.Tooltip String,
     icon: Icon,
-    perform: Runnable
+    perform: Runnable,
   ): GutterIconRenderer {
     return object : DiffGutterRenderer(icon, tooltipText) {
       override fun handleMouseClick() {
         if (!isValid) return
-        val project = myViewer.project
-        val document: Document = myViewer.getEditor(modifiedSide).getDocument()
+        val project = viewer.project
+        val document: Document = viewer.getEditor(modifiedSide).getDocument()
         DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.replace.change.command"), perform)
       }
     }
@@ -132,7 +132,7 @@ class SimpleThreesideDiffChange(
     fun getApplyActionText(
       viewer: DiffViewerBase,
       sourceSide: ThreeSide,
-      modifiedSide: ThreeSide
+      modifiedSide: ThreeSide,
     ): @Nls String {
       val key: Key<String>? = when {
         sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.LEFT -> {

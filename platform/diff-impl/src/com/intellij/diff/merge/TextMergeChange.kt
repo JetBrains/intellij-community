@@ -29,7 +29,7 @@ class TextMergeChange @RequiresEdt constructor(
   private val viewer: MergeThreesideViewer,
 ) : ThreesideDiffChangeBase(conflictType) {
 
-  private val myResolved: BooleanArray = BooleanArray(2)
+  private val resolved: BooleanArray = BooleanArray(2)
 
   var isOnesideAppliedConflict: Boolean = false
     private set
@@ -51,7 +51,7 @@ class TextMergeChange @RequiresEdt constructor(
 
   @RequiresEdt
   fun setResolved(side: Side, value: Boolean) {
-    myResolved[side.index] = value
+    resolved[side.index] = value
 
     if (isResolved) {
       destroyInnerHighlighters()
@@ -59,7 +59,7 @@ class TextMergeChange @RequiresEdt constructor(
     else {
       // Destroy only resolved side to reduce blinking
       val document = viewer.getEditor(side.select(ThreeSide.LEFT, ThreeSide.RIGHT)).getDocument()
-      for (highlighter in myInnerHighlighters) {
+      for (highlighter in innerHighlighters) {
         if (document == highlighter.getDocument()) {
           highlighter.dispose() // it's OK to call dispose() few times
         }
@@ -68,10 +68,10 @@ class TextMergeChange @RequiresEdt constructor(
   }
 
   val isResolved: Boolean
-    get() = myResolved[0] && myResolved[1]
+    get() = resolved[0] && resolved[1]
 
   fun isResolved(side: Side): Boolean {
-    return side.select(myResolved)
+    return side.select(resolved)
   }
 
   fun markOnesideAppliedConflict() {
@@ -110,7 +110,7 @@ class TextMergeChange @RequiresEdt constructor(
       val baseType = super.diffType
       if (!isResolvedWithAI) return baseType
 
-      return MyAIResolvedDiffType(baseType)
+      return AIResolvedDiffType(baseType)
     }
 
   override fun getEditor(side: ThreeSide): Editor {
@@ -136,7 +136,7 @@ class TextMergeChange @RequiresEdt constructor(
   override fun installOperations() {
     if (viewer.isExternalOperationInProgress) return
 
-    myOperations.addAllIfNotNull(
+    operations.addAllIfNotNull(
       createResolveOperation(),
       createAcceptOperation(Side.LEFT, OperationType.APPLY),
       createAcceptOperation(Side.LEFT, OperationType.IGNORE),
@@ -230,25 +230,25 @@ class TextMergeChange @RequiresEdt constructor(
       startLine,
       endLine,
 
-      myResolved[0],
-      myResolved[1],
+      resolved[0],
+      resolved[1],
 
       isOnesideAppliedConflict,
       isResolvedWithAI)
   }
 
   fun restoreState(state: State) {
-    myResolved[0] = state.myResolved1
-    myResolved[1] = state.myResolved2
+    resolved[0] = state.resolved1
+    resolved[1] = state.resolved2
 
-    isOnesideAppliedConflict = state.myOnesideAppliedConflict
-    isResolvedWithAI = state.myIsResolvedByAI
+    isOnesideAppliedConflict = state.onesideAppliedConflict
+    isResolvedWithAI = state.isResolvedByAI
   }
 
   @ApiStatus.Internal
   fun resetState() {
-    myResolved[0] = false
-    myResolved[1] = false
+    resolved[0] = false
+    resolved[1] = false
     isOnesideAppliedConflict = false
     isResolvedWithAI = false
   }
@@ -257,19 +257,19 @@ class TextMergeChange @RequiresEdt constructor(
     index: Int,
     startLine: Int,
     endLine: Int,
-    val myResolved1: Boolean,
-    val myResolved2: Boolean,
-    val myOnesideAppliedConflict: Boolean,
-    val myIsResolvedByAI: Boolean,
+    val resolved1: Boolean,
+    val resolved2: Boolean,
+    val onesideAppliedConflict: Boolean,
+    val isResolvedByAI: Boolean,
   ) : MergeModelBase.State(index, startLine, endLine)
 
   init {
     reinstallHighlighters()
   }
 
-  private class MyAIResolvedDiffType(private val myBaseType: TextDiffType) : TextDiffType {
+  private class AIResolvedDiffType(private val baseType: TextDiffType) : TextDiffType {
     override fun getName(): String {
-      return myBaseType.getName()
+      return baseType.getName()
     }
 
     override fun getColor(editor: Editor?): Color {
@@ -277,11 +277,11 @@ class TextMergeChange @RequiresEdt constructor(
     }
 
     override fun getIgnoredColor(editor: Editor?): Color {
-      return myBaseType.getIgnoredColor(editor)
+      return baseType.getIgnoredColor(editor)
     }
 
     override fun getMarkerColor(editor: Editor?): Color? {
-      return myBaseType.getMarkerColor(editor)
+      return baseType.getMarkerColor(editor)
     }
   }
 

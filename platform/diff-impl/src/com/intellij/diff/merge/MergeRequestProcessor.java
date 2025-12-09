@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,6 +46,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
@@ -75,7 +75,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   private @Nullable MergeRequest myRequest;
 
   private @NotNull MergeTool.MergeViewer myViewer;
-  private @Nullable BooleanGetter myCloseHandler;
+  private @Nullable BooleanSupplier myCloseHandler;
   private boolean myConflictResolved = false;
 
   public MergeRequestProcessor(@Nullable Project project) {
@@ -174,7 +174,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     buildToolbar(toolbarComponents.toolbarActions);
     myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-    myCloseHandler = toolbarComponents.closeHandler;
+    myCloseHandler = toolbarComponents.closeHandler == null ? null : () -> toolbarComponents.closeHandler.invoke();
 
     updateBottomActions();
   }
@@ -446,7 +446,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @RequiresEdt
   public boolean checkCloseAction() {
-    return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
+    return myConflictResolved || myCloseHandler == null || myCloseHandler.getAsBoolean();
   }
 
   //

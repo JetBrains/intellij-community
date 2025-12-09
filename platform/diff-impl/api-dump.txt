@@ -1047,8 +1047,8 @@ pa:com.intellij.diff.tools.simple.SimpleThreesideDiffViewer$SelectedChangesActio
 - pa:isVisible(com.intellij.diff.util.ThreeSide):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.diff.tools.simple.ThreesideDiffChangeBase
-- pf:myInnerHighlighters:java.util.List
-- pf:myOperations:java.util.List
+- pf:innerHighlighters:java.util.List
+- pf:operations:java.util.List
 - <init>(com.intellij.diff.util.MergeConflictType):V
 - pf:createHighlighter(com.intellij.diff.util.ThreeSide):V
 - pf:createInnerHighlighter(com.intellij.diff.util.ThreeSide):V
