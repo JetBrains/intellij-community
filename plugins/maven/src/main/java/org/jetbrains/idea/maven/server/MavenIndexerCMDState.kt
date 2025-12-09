@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.idea.maven.MavenClasspathBuilder
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -83,15 +84,16 @@ class MavenIndexerCMDState(
       val dependenciesUrls = parseDependenciesUrls(mavenIndexerIml) ?: throw RuntimeException("Cannot parse maven.server.indexer.iml")
       val pathMacros = PathMacros.getInstance()
       val pathToRepo = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY)
-        ?.replace('\\', '/')
-        ?.let {
-        if (FileUtil.isAbsolute(it) && SystemInfo.isWindows) {
-          // absolute paths on windows (e.g. 'C:/dir') require additional '`'/` char in the front to be a valid file:// URI.
-          "/$it"
-        } else {
-          it
-        }
-      } ?: throw RuntimeException("Cannot find maven repo")
+                         ?.replace('\\', '/')
+                         ?.let {
+                           if (FileUtil.isAbsolute(it) && SystemInfo.isWindows) {
+                             // absolute paths on windows (e.g. 'C:/dir') require additional '`'/` char in the front to be a valid file:// URI.
+                             "/$it"
+                           }
+                           else {
+                             it
+                           }
+                         } ?: throw RuntimeException("Cannot find maven repo")
 
       for (depTemplate in dependenciesUrls) {
         val url = depTemplate.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', pathToRepo)
@@ -116,18 +118,16 @@ class MavenIndexerCMDState(
       val classpath = ArrayList<Path>()
       addMavenLibs(classpath, distribution.mavenHome)
       addIndexerRTLibs(classpath)
-      val pathToClass = PathManager.getJarForClass(MavenServerManager::class.java)
-                        ?: throw IllegalStateException("Cannot find path to maven server manager code")
-
       if (MavenUtil.isRunningFromSources()) {
         // we are running from some kind of sources build, packed or not.
         MavenLog.LOG.debug("collecting classpath for local run")
         prepareClassPathForLocalRunAndUnitTests(classpath)
         addDependenciesFromMavenRepo(classpath)
-      } else {
+      }
+      else {
         // we are running in production
         MavenLog.LOG.debug("collecting classpath for production")
-        prepareClassPathForProduction(distribution.version!!, classpath, pathToClass.parent)
+        prepareClassPathForProduction(distribution.version!!, classpath)
       }
       MavenLog.LOG.debug("Collected classpath = ", classpath)
       return classpath
@@ -139,7 +139,8 @@ class MavenIndexerCMDState(
       if (!libDir.isDirectory()) {
         try {
           libDir.createDirectories()
-        } catch (e: IOException) {
+        }
+        catch (e: IOException) {
           throw PluginException("Cannot create cache directory for maven", e, PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID))
         }
       }
@@ -183,13 +184,8 @@ class MavenIndexerCMDState(
     private fun prepareClassPathForProduction(
       mavenVersion: String,
       classpath: MutableList<Path>,
-      root: Path,
     ) {
-      classpath.add(PathManager.getJarForClass(MavenId::class.java)!!)
-      classpath.add(PathManager.getJarForClass(MavenServer::class.java)!!)
-      classpath.add( root.resolve("maven-server-indexer.jar"))
-      addDir(classpath, root.resolve("maven-server-indexer"))
-      addDir(classpath, root.resolve("intellij.maven.server.indexer").resolve("lib"))
+      MavenClasspathBuilder.addMavenServerLibraries(classpath, "intellij.maven.server3", "intellij.maven.server.indexer")
     }
 
     private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<Path>) {

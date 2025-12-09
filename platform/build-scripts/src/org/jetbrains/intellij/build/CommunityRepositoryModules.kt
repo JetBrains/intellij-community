@@ -87,65 +87,97 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
-      val serverDir = "intellij.maven.server"
-      val commonRt = "intellij.maven.rt"
-      val indexerDir = "intellij.maven.server.indexer"
-      spec.withModule("intellij.idea.community.build.dependencies")
-      spec.withModule("intellij.maven.jps")
-      spec.withModule("intellij.maven.server.m3.common", "$serverDir/maven3-server-common.jar")
-      spec.withModule("intellij.maven.server.m3.impl", "$serverDir/maven3-server.jar")
-      spec.withModule("intellij.maven.server.m36.impl", "$serverDir/maven36-server.jar")
-      spec.withModule("intellij.maven.server.m40", "$serverDir/maven40-server.jar")
-      spec.withModule("intellij.maven.server.telemetry", "$serverDir/maven-server-telemetry.jar")
-      spec.withModule("intellij.maven.errorProne.compiler")
-      spec.withModule("intellij.maven.server.indexer", "$indexerDir/maven-server-indexer.jar")
-      spec.withModuleLibrary(libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "$indexerDir//lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "$indexerDir//lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "$indexerDir//lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
-                             relativeOutputPath = "$indexerDir//lib")
 
-      spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
-      spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
-
-      spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "$commonRt/maven-event-listener.jar")
-
-      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
-
-      spec.doNotCopyModuleLibrariesAutomatically(listOf(
-        "intellij.maven.artifactResolver.common",
-        "intellij.maven.artifactResolver.m31",
-        "intellij.maven.server.m3.common",
-        "intellij.maven.server.m3.impl",
-        "intellij.maven.server.m36.impl",
-        "intellij.maven.server.m40",
-        "intellij.maven.server.indexer",
-      ))
+      spec.doNotCopyModuleLibrariesAutomatically(
+        listOf(
+          "intellij.maven.artifactResolver.common",
+          "intellij.maven.artifactResolver.m31",
+          "intellij.maven.server.m3.common",
+          "intellij.maven.server.m3.impl",
+          "intellij.maven.server.m36.impl",
+          "intellij.maven.server.m40",
+          "intellij.maven.server.indexer",
+        )
+      )
 
       spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
-        val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-        copyDir(maven4Libs, targetLib.resolve("maven4-server-lib"))
-
-        val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-        copyDir(maven3Libs, targetLib.resolve("maven3-server-lib"))
-
-        val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
-        copyDir(mavenTelemetryDependencies, targetLib.resolve("maven-telemetry-lib"))
-
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
       }
+
+      with("intellij.maven.server3") {
+        spec.withModule("intellij.maven.server.m3.common", "$this/maven3-server-common.jar")
+        spec.withModule("intellij.maven.server.m3.impl", "$this/maven3-server.jar")
+        spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
+
+
+        spec.withGeneratedResources { targetDir, context ->
+          val targetLib = targetDir.resolve("lib")
+          val maven3Libs = BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+          copyDir(maven3Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+        }
+      }
+
+      with("intellij.maven.server36") {
+        spec.withModule("intellij.maven.server.m36.impl", "$this/maven36-server.jar")
+      }
+
+      with("intellij.maven.server4") {
+        spec.withModule("intellij.maven.server.m40", "$this/maven40-server.jar")
+        spec.withModule("intellij.maven.server.telemetry", "$this/maven-server-telemetry.jar")
+
+
+        spec.withGeneratedResources { targetDir, context ->
+          val targetLib = targetDir.resolve("lib")
+          val maven4Libs = BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+          copyDir(maven4Libs, targetLib.resolve(this))
+          val mavenTelemetryDependencies = BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+          copyDir(mavenTelemetryDependencies, targetLib.resolve(this))
+        }
+      }
+
+      with("intellij.maven.rt") {
+        spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "$this/maven-event-listener.jar")
+      }
+
+      with("intellij.maven.server.indexer") {
+        spec.withModule("intellij.maven.server.indexer", "$this/maven-server-indexer.jar")
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.core:3.8.3", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+        spec.withModuleLibrary(
+          libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
+          relativeOutputPath = this
+        )
+      }
+
+      spec.withModule("intellij.idea.community.build.dependencies")
+      spec.withModule("intellij.maven.jps")
+      spec.withModule("intellij.maven.errorProne.compiler")
+      spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
+      spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
+      spec.withModule("intellij.maven.server", relativeJarPath = "maven-server.jar")
     },
-    pluginAuto(listOf(
-      "intellij.gradle",
-      "intellij.gradle.common",
-      "intellij.gradle.toolingProxy",
-    )) { spec ->
+    pluginAuto(
+      listOf(
+        "intellij.gradle",
+        "intellij.gradle.common",
+        "intellij.gradle.toolingProxy",
+      )
+    ) { spec ->
       spec.withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       spec.withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       spec.withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
@@ -278,10 +310,12 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun androidPlugin(additionalModulesToJars: Map<String, String> = emptyMap(),
-                    mainModuleName: String = "intellij.android.plugin.descriptor",
-                    allPlatforms: Boolean = false,
-                    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,): PluginLayout {
+  fun androidPlugin(
+    additionalModulesToJars: Map<String, String> = emptyMap(),
+    mainModuleName: String = "intellij.android.plugin.descriptor",
+    allPlatforms: Boolean = false,
+    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null,
+  ): PluginLayout {
     return createAndroidPluginLayout(mainModuleName, additionalModulesToJars, allPlatforms, addition)
   }
 
@@ -492,7 +526,6 @@ object CommunityRepositoryModules {
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
 
 
-
       // We do not bundle Google Login API
       //spec.withModuleLibrary("javax-servlet", "google-login-as", "")
       //spec.withModuleLibrary("jsr305-2.0.1", "google-login-as", "")
@@ -511,7 +544,7 @@ object CommunityRepositoryModules {
       val javacppVersion = "1.5.9"
 
       // Add ffmpeg and javacpp
-      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-$ffmpegVersion.jar")
+      spec.withModuleLibrary("ffmpeg", "intellij.android.streaming", "ffmpeg-$ffmpegVersion.jar")
       spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
 
       // include only required as platform-dependent binaries
@@ -638,11 +671,13 @@ object CommunityRepositoryModules {
     return plugin("intellij.groovy") { spec ->
       spec.directoryName = "Groovy"
       spec.mainJarName = "Groovy.jar"
-      spec.withModules(listOf(
-        "intellij.groovy.psi",
-        "intellij.groovy.structuralSearch",
-        "intellij.groovy.git",
-      ))
+      spec.withModules(
+        listOf(
+          "intellij.groovy.psi",
+          "intellij.groovy.structuralSearch",
+          "intellij.groovy.git",
+        )
+      )
       spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
       spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
       spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
