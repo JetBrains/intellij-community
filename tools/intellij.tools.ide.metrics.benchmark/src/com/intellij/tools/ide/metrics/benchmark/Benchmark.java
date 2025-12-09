@@ -27,8 +27,7 @@ public final class Benchmark {
   /// Most important of them is `logLevel=DEBUG` - this makes benchmark results inadequate.
   ///
   /// @see BenchmarkTestInfo#start()
-  // to warn about not calling .assertTiming() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static @NotNull BenchmarkTestInfoImpl newBenchmark(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
     return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
