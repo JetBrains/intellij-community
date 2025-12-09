@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
@@ -24,27 +23,37 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.testFramework.*
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
-import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
-import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
-import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.TestFixtureExtension
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
+import org.jetbrains.kotlin.idea.test.configureRegistryAndRun
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
 import java.nio.file.Paths
-import java.util.*
+import java.util.HashSet
+import java.util.Locale
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -83,9 +92,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
         val loggerProvider = FilterableTestStatisticsEventLoggerProvider("FUS") { it == "called" }
         statisticsEventLoggerProvider = loggerProvider
-        StatisticsEventLoggerProvider.EP_NAME.point.registerExtension(
+        StatisticsEventLoggerProvider.Companion.EP_NAME.point.registerExtension(
             loggerProvider,
-            LoadingOrder.FIRST,
+            LoadingOrder.Companion.FIRST,
             newDisposable
         )
         (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
@@ -222,12 +231,12 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         var fixtureClasses = emptyList<String>()
         try {
             fileText = FileUtil.loadFile(testFile, CharsetToolkit.UTF8)
-            TestCase.assertTrue("\"<caret>\" is missing in file \"${testFile.path}\"", fileText.contains("<caret>"))
+            assertTrue("\"<caret>\" is missing in file \"${testFile.path}\"", fileText.contains("<caret>"))
 
             fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $FIXTURE_CLASS_DIRECTIVE: ")
             runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
-                    TestFixtureExtension.loadFixture(fixtureClass, module)
+                    TestFixtureExtension.Companion.loadFixture(fixtureClass, module)
                 }
             }
 
@@ -273,7 +282,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
                 runReadAction {
                     if (intention.isAvailable(project, myFixture.editor, file)) {
-                        IntentionManagerSettings.getInstance().isShowLightBulb(intention)
+                        IntentionManagerSettings.Companion.getInstance().isShowLightBulb(intention)
                     }
                 }
 
@@ -293,7 +302,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 TestCase.assertEquals(compilerArgumentsAfter, compilerSettings?.additionalArguments)
             }
 
-            UsefulTestCase.assertEmpty(expectedErrorMessage)
+            assertEmpty(expectedErrorMessage)
         } catch (e: AssertionError) {
             throw e
         } catch (e: Throwable) {
@@ -305,16 +314,14 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         } finally {
             runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
-                    TestFixtureExtension.unloadFixture(fixtureClass)
+                    TestFixtureExtension.Companion.unloadFixture(fixtureClass)
                 }
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(myFixture.module, fileText)
             }
         }
     }
 
-    private fun loadScriptConfiguration(file: KtFile) {
-        ScriptConfigurationManager.getInstanceSafe(project)?.getConfiguration(file)
-    }
+    protected open fun loadScriptConfiguration(file: KtFile) {}
 
     private fun PsiFile.actionHint(contents: String): ActionHint {
       return ActionHint.parse(this, contents,
@@ -330,7 +337,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val writeActionResolveHandler: () -> Unit = {
             val intentionClassName = unwrappedIntention.javaClass.name
             if (!quickFixesAllowedToResolveInWriteAction.isWriteActionAllowed(intentionClassName)) {
-                throw ResolveInDispatchThreadException("Resolve is not allowed under the write action for `$intentionClassName`!")
+                throw AssertionError("Resolve is not allowed under the write action for `$intentionClassName`!")
             }
         }
 
@@ -339,14 +346,12 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         if (applyQuickFix) {
             val element = PsiUtilBase.getElementAtCaret(editor)
             stubComparisonFailure = try {
-                forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
-                    val expectedPreviewText = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, TEST_PREVIEW).singleOrNull()
-                    if (expectedPreviewText != null && isFirPlugin) {
-                        val text = myFixture.getIntentionPreviewText(intention)
-                        assertEquals("Different preview found:", expectedPreviewText, text)
-                    }
-                    myFixture.launchAction(intention)
+                val expectedPreviewText = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, TEST_PREVIEW).singleOrNull()
+                if (expectedPreviewText != null && isFirPlugin) {
+                    val text = myFixture.getIntentionPreviewText(intention)
+                    assertEquals("Different preview found:", expectedPreviewText, text)
                 }
+                myFixture.launchAction(intention)
                 null
             } catch (comparisonFailure: ComparisonFailure) {
                 comparisonFailure
@@ -387,7 +392,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         } ?: return
 
         myFixture.doHighlighting()
-        val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
+        val cachedIntentions = ShowIntentionActionsHandler.Companion.calcCachedIntentions(project, editor, file)
         cachedIntentions.wrapAndUpdateGutters()
         val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
@@ -453,9 +458,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         )
     }
 
-    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, DirectiveBasedActionUtils.ERROR_DIRECTIVE, k1DiagnosticsProvider)
-    }
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {}
 
     override val additionalToolDirectives: Array<String>
         get() = arrayOf(if (isFirPlugin) K2_TOOL_DIRECTIVE else K1_TOOL_DIRECTIVE)

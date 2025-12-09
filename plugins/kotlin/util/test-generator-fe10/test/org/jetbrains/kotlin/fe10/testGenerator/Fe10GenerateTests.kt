@@ -92,6 +92,8 @@ import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHa
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.projectView.AbstractKotlinProjectViewTest
+import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiFileTest
+import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
@@ -496,11 +498,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             )
         }
 
-        testClass<AbstractQuickFixMultiFileTest> {
+        testClass<AbstractK1QuickFixMultiFileTest>(generatedClassName = "org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated") {
             model("quickfix", pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$"""), testMethodName = "doTestWithExtraFile")
         }
 
-        testClass<AbstractQuickFixMultiModuleTest> {
+        testClass<AbstractK1QuickFixMultiModuleTest>(generatedClassName = "org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated") {
             model("multiModuleQuickFix", pattern = DIRECTORY, depth = 1)
         }
     }

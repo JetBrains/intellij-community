@@ -42,6 +42,11 @@ jvm_library(
     "//libraries/guava",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
+    "//plugins/kotlin/base/facet",
+    "//platform/lang-core",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/code-insight/utils",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
