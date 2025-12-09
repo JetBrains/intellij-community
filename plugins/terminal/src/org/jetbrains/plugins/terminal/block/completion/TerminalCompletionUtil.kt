@@ -2,10 +2,13 @@
 package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.*
 import com.intellij.terminal.completion.spec.ShellSuggestionType.*
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -72,5 +75,18 @@ object TerminalCompletionUtil {
 
   fun ShellType.toShellName(): ShellName {
     return ShellName(this.toString().lowercase())
+  }
+
+  suspend fun <T : Any> doExecuteGenerator(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
+    return try {
+      generator.generate(context)
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      logger<ShellDataGeneratorsExecutor>().error("Failed to execute generator: $generator in context: $context", e)
+      null
+    }
   }
 }

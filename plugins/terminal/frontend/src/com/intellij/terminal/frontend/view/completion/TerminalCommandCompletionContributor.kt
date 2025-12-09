@@ -116,7 +116,10 @@ private suspend fun computeSuggestions(tokens: List<String>, parameters: Termina
   val commandExecutable = tokens.first()
   val commandArguments = tokens.subList(1, tokens.size)
 
-  val fileProducer = suspend { parameters.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator()) }
+  val fileProducer = suspend {
+    parameters.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator())
+    ?: emptyList()
+  }
   val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
     completion.computeCompletionItems(commandName, commandArguments)
   }

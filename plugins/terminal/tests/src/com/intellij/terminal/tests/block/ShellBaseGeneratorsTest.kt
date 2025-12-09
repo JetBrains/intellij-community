@@ -80,8 +80,8 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
 
     // fileSuggestionsGenerator is using 'typedPrefix' property of ShellRuntimeContext to determine the location
     val typedPrefix = testDirectory.toString() + File.separatorChar
-    val suggestions = runGenerator(session, fileSuggestionsGenerator(), typedPrefix).filter { !it.isHidden }
-    val actualNames = suggestions.map { it.name }.filter { it.isNotEmpty() }
+    val suggestions = runGenerator(session, fileSuggestionsGenerator(), typedPrefix) ?: emptyList()
+    val actualNames = suggestions.filter { !it.isHidden }.map { it.name }.filter { it.isNotEmpty() }
     val expectedNames = expected.map { it.toString() }
     UsefulTestCase.assertSameElements(actualNames, expectedNames)
   }
@@ -112,15 +112,15 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
     assertEquals("Add alias command failed: $commandResult", 0, commandResult.exitCode)
 
     // Check that we are able to retrieve the created alias
-    val aliases = runGenerator(session, aliasesGenerator())
+    val aliases = runGenerator(session, aliasesGenerator()) ?: emptyMap()
     assertTrue("Created alias is not found: $aliases", aliases.contains(aliasName))
   }
 
   private fun <T : Any> runGenerator(
     session: BlockTerminalSession,
     generator: ShellRuntimeDataGenerator<T>,
-    typedPrefix: String = ""
-  ) = runBlocking {
+    typedPrefix: String = "",
+  ): T? = runBlocking {
     val executor = ShellDataGeneratorsExecutorImpl(session)
     val commandExecutor = object : ShellCommandExecutor {
       override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
@@ -134,7 +134,7 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
       shellName = session.shellIntegration.shellType.toShellName(),
       generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
     )
-    val deferred: Deferred<T> = async(Dispatchers.Default) {
+    val deferred: Deferred<T?> = async(Dispatchers.Default) {
       executor.execute(context, generator)
     }
     withTimeout(5.seconds) { deferred.await() }

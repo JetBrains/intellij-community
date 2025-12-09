@@ -11,6 +11,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.doExecuteGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
@@ -28,7 +29,7 @@ internal class ShellDataGeneratorsExecutorReworkedImpl(
   shellIntegration: TerminalShellIntegration,
   private val coroutineScope: CoroutineScope,
 ) : ShellDataGeneratorsExecutor {
-  private val cache: Cache<String, Deferred<Any>> = Caffeine.newBuilder()
+  private val cache: Cache<String, Deferred<Any?>> = Caffeine.newBuilder()
     .maximumSize(10)
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
@@ -43,33 +44,31 @@ internal class ShellDataGeneratorsExecutorReworkedImpl(
     })
   }
 
-  override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
+  override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
     return if (generator is ShellCacheableDataGenerator) {
       executeCacheableGenerator(context, generator)
     }
-    else generator.generate(context)
+    else doExecuteGenerator(context, generator)
   }
 
-  private suspend fun <T : Any> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T {
+  private suspend fun <T : Any> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T? {
     val key = generator.getCacheKey(context)
     if (key == null) {
-      return generator.generate(context)
+      return doExecuteGenerator(context, generator)
     }
 
-    val deferred: Deferred<Any> = cache.get(key) {
+    val deferred: Deferred<Any?> = cache.get(key) {
       coroutineScope.async {
         LOG.debug { "Executing cacheable generator with key '$key' in context: $context" }
-        generator.generate(context).also {
+        doExecuteGenerator(context, generator).also {
           LOG.debug { "Finished executing generator with key '$key'" }
         }
       }
     }
-    val result: Any = deferred.await()
 
+    val result: Any? = deferred.await()
     @Suppress("UNCHECKED_CAST")
     return result as? T
-           ?: error("Incorrect type of the cached generator result with key '$key', result: '$result'\n" +
-                    "There are two generators with the same cache keys and different return types.")
   }
 
   /** Clears the stored results and cancels all running generators */

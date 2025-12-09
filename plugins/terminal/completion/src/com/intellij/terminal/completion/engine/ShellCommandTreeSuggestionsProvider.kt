@@ -123,7 +123,7 @@ internal class ShellCommandTreeSuggestionsProvider(
   private suspend fun getArgumentSuggestions(arg: ShellArgumentSpec): List<ShellCompletionSuggestion> {
     val suggestions = mutableListOf<ShellCompletionSuggestion>()
     for (generator in arg.generators) {
-      val result = generatorsExecutor.execute(context, generator)
+      val result = generatorsExecutor.execute(context, generator) ?: emptyList()
       // Wrap ordinary completion suggestions into ShellArgumentSuggestion to be able to get the argument spec in ShellCommandTreeBuilder
       val adjustedSuggestions = result.map { if (it !is ShellCommandSpec && it !is ShellAliasSuggestion) ShellArgumentSuggestion(it, arg) else it }
       suggestions.addAll(adjustedSuggestions)
@@ -147,10 +147,10 @@ internal class ShellCommandTreeSuggestionsProvider(
   }
 
   private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
-    return generatorsExecutor.execute(context, subcommandsGenerator)
+    return generatorsExecutor.execute(context, subcommandsGenerator) ?: emptyList()
   }
 
   private suspend fun ShellCommandSpec.getAllOptions(): List<ShellOptionSpec> {
-    return generatorsExecutor.execute(context, allOptionsGenerator)
+    return generatorsExecutor.execute(context, allOptionsGenerator) ?: emptyList()
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.doExecuteGenerator
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
@@ -31,21 +32,21 @@ class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellData
     })
   }
 
-  override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
+  override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
     return if (generator is ShellCacheableDataGenerator) {
       executeCacheableGenerator(context, generator)
     }
-    else generator.generate(context)
+    else doExecuteGenerator(context, generator)
   }
 
-  private suspend fun <T : Any> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T {
+  private suspend fun <T : Any> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T? {
     val key = generator.getCacheKey(context)
-              ?: return generator.generate(context)
+              ?: return doExecuteGenerator(context, generator)
     val cachedResult = getCachedResult<T>(key)
     if (cachedResult != null) {
       return cachedResult
     }
-    val result = generator.generate(context)
+    val result = doExecuteGenerator(context, generator) ?: return null
     cache.put(key, result)
     return result
   }
