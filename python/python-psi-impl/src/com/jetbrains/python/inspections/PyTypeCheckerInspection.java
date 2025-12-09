@@ -421,7 +421,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         .nonNull()
         .toList();
 
-      if (!matchedCalleeResultsExist(calleesResults)) {
+      if (!ContainerUtil.exists(calleesResults, calleeResults -> isMatched(calleeResults))) {
         PyTypeCheckerInspectionProblemRegistrar
           .registerProblem(this, callSite, getArgumentTypes(calleesResults), calleesResults, myTypeEvalContext);
       }
@@ -472,6 +472,22 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       final var receiver = callSite.getReceiver(callableType.getCallable());
       final var substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
+
+      // When a constructor call resolves to `__init__` method,
+      // match the class being constructed against the type of `self` parameter.
+      if (PyUtil.isInitMethod(callableType.getCallable()) &&
+          receiver != null &&
+          myTypeEvalContext.getType(receiver) instanceof PyClassType receiverType &&
+          receiverType.isDefinition()) {
+        PyCallableParameter selfParameter = ContainerUtil.getFirstItem(mapping.getImplicitParameters());
+        if (selfParameter != null) {
+          final PyType actual = receiverType.toInstance();
+          final PyType expected = selfParameter.getArgumentType(myTypeEvalContext);
+          final boolean matched = matchParameterAndArgument(expected, actual, receiver, substitutions);
+          result.add(new AnalyzeArgumentResult(receiver, expected, substituteGenerics(expected, substitutions), actual, matched));
+        }
+      }
+
       final var mappedParameters = mapping.getMappedParameters();
       final var regularMappedParameters = getRegularMappedParameters(mappedParameters);
 
@@ -668,13 +684,11 @@ public class PyTypeCheckerInspection extends PyInspection {
              : null;
     }
 
-    private static boolean matchedCalleeResultsExist(@NotNull List<AnalyzeCalleeResults> calleesResults) {
-      return ContainerUtil.exists(calleesResults, calleeResults ->
-        ContainerUtil.all(calleeResults.getResults(), AnalyzeArgumentResult::isMatched) &&
-        calleeResults.getUnmatchedArguments().isEmpty() &&
-        calleeResults.getUnmatchedParameters().isEmpty() &&
-        calleeResults.getUnfilledPositionalVarargs().isEmpty()
-      );
+    private static boolean isMatched(@NotNull AnalyzeCalleeResults calleeResults) {
+      return ContainerUtil.all(calleeResults.getResults(), AnalyzeArgumentResult::isMatched) &&
+             calleeResults.getUnmatchedArguments().isEmpty() &&
+             calleeResults.getUnmatchedParameters().isEmpty() &&
+             calleeResults.getUnfilledPositionalVarargs().isEmpty();
     }
 
     private static @NotNull List<PyType> getArgumentTypes(@NotNull List<AnalyzeCalleeResults> calleesResults) {
