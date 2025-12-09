@@ -29,7 +29,7 @@ import java.nio.file.Path
 private class ConversionServiceImpl : ConversionService() {
   override suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
-      val context = ConversionContextImpl(projectPath = projectPath)
+      val context = ConversionContextImpl(projectIdentityFile = projectPath)
       val (_, runners) = isConversionNeeded(context)
       if (runners.isEmpty()) {
         return ConversionResultImpl.CONVERSION_NOT_NEEDED
@@ -76,7 +76,7 @@ private class ConversionServiceImpl : ConversionService() {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
 
-    val context = ConversionContextImpl(projectPath = projectPath)
+    val context = ConversionContextImpl(projectIdentityFile = projectPath)
     val (conversionResult, converters) = isConversionNeeded(context)
     if (converters.isEmpty()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
