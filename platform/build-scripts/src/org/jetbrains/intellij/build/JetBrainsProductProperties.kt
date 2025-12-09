@@ -38,10 +38,13 @@ val knownMissingModuleDependencies: List<String> = listOf(
   "intellij.rider.plugins.fsharp",
   // conditional xi-include
   "kotlin.base.scripting.k1",
+  "kotlin.plugin.k2",
+  "kotlin-ultimate.common-native",
+  "kotlin-ultimate.native-debugger",
   // todo special module (make it not special)
   "intellij.platform.commercial.verifier",
   // included using `withModule`
-  "intellij.python.frontend"
+  "intellij.python.frontend",
 )
 
 /**
