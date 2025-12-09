@@ -1989,7 +1989,6 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   public void cancel() {
     myPluginModelFacade.getModel().cancel(myCardPanel, true);
-    myPluginModelFacade.closeSession();
   }
 
   public boolean isModified() {

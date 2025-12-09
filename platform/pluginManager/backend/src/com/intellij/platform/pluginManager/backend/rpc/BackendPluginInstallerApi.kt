@@ -104,9 +104,9 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return DefaultUiPluginManagerController.updatePluginDependencies(sessionId)
   }
 
-  override suspend fun applyPluginSession(sessionId: String, projectId: ProjectId?): ApplyPluginsStateResult {
+  override suspend fun apply(projectId: ProjectId?): ApplyPluginsStateResult {
     return withContext(Dispatchers.EDT) {
-      DefaultUiPluginManagerController.applySession(sessionId, null, projectId?.findProjectOrNull())
+      DefaultUiPluginManagerController.apply(project = projectId?.findProjectOrNull())
     }
   }
 
