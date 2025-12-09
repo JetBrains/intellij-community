@@ -85,6 +85,7 @@ private suspend fun enableTheme() {
   PropertiesComponent.getInstance().setValue("ide.islands.show.feedback3", "done")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
+  resetLafSettingsToDefault(lafManager)
 
   val editorScheme = if (PlatformUtils.isRider()) {
     if (isLight) "Rider Light" else "Rider Islands Dark"
@@ -114,4 +115,13 @@ private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSetting
   lafManager.updateUI()
 
   return true
+}
+
+private fun resetLafSettingsToDefault(lafManager: LafManager) {
+  val defaultLightLaf = lafManager.defaultLightLaf ?: return
+  val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
+
+  lafManager.setPreferredLightLaf(defaultLightLaf)
+  lafManager.setPreferredDarkLaf(defaultDarkLaf)
+  lafManager.resetPreferredEditorColorScheme()
 }
