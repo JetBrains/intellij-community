@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -10,18 +10,48 @@ import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isRegularFile
 
 internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHome: Path, val bazelOutputRoot: Path) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+
+  // cache for XML entries: module -> (entry name -> content)
+  private val moduleXmlCache = ConcurrentHashMap<JpsModule, Map<String, ByteArray>>()
 
   private val bazelTargetsMap: BazelCompilationContext.BazelTargetsInfo.TargetsFile by lazy {
     BazelCompilationContext.BazelTargetsInfo.loadBazelTargetsJson(projectHome)
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    if (!forTests && relativePath.endsWith(".xml")) {
+      moduleXmlCache.get(module)?.let {
+        return it.get(relativePath)
+      }
+
+      // build index of ALL XML entries from ALL production jars for this module
+      val entries = HashMap<String, ByteArray>()
+      for (moduleOutput in getModuleOutputRootsImpl(module, forTests = false)) {
+        if (Files.notExists(moduleOutput)) {
+          continue
+        }
+        readZipFile(moduleOutput) { name, data ->
+          if (name.endsWith(".xml")) {
+            if (entries.put(name, data().toByteArray()) != null) {
+              error("More than one '$name' file for module '${module.name}' in output roots")
+            }
+          }
+          ZipEntryProcessorResult.CONTINUE
+        }
+      }
+      moduleXmlCache.putIfAbsent(module, entries)
+      return entries.get(relativePath)
+    }
+
     val result = getModuleOutputRootsImpl(module, forTests).mapNotNull { moduleOutput ->
-      if (Files.notExists(moduleOutput)) return@mapNotNull null
+      if (Files.notExists(moduleOutput)) {
+        return@mapNotNull null
+      }
       var fileContent: ByteArray? = null
       readZipFile(moduleOutput) { name, data ->
         if (name == relativePath) {
@@ -32,7 +62,7 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHo
           ZipEntryProcessorResult.CONTINUE
         }
       }
-      return@mapNotNull fileContent
+      fileContent
     }
     check(result.size < 2) {
       "More than one '$relativePath' file for module '${module.name}' in output roots"
