@@ -811,15 +811,7 @@ fun <T> Map<T, PyCallableParameter>.getArgumentsMappedToKeywordContainer(): List
 }
 
 fun <T> Map<T, PyCallableParameter>.getRegularMappedParameters(): Map<T, PyCallableParameter> {
-  val result = LinkedHashMap<T, PyCallableParameter>()
-  for (entry in entries) {
-    val argument = entry.key
-    val parameter: PyCallableParameter = entry.value
-    if (!parameter.isPositionalContainer() && !parameter.isKeywordContainer()) {
-      result.put(argument, parameter)
-    }
-  }
-  return result
+  return filterValues { !it.isPositionalContainer() && !it.isKeywordContainer() }
 }
 
 fun <T> Map<T, PyCallableParameter>.getMappedPositionalContainer(): PyCallableParameter? {
