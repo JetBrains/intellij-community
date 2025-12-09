@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
@@ -312,7 +311,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         return true;
       }
       return type instanceof PyCollectionType collectionType &&
-             exists(collectionType.getElementTypes(), Visitor::requiresTypeSpecialization);
+             ContainerUtil.exists(collectionType.getElementTypes(), Visitor::requiresTypeSpecialization);
     }
 
     private @Nullable Ref<PyType> getClassAttributeType(@NotNull PyTargetExpression attribute) {
@@ -361,7 +360,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
         if (expected != null && !returnsOptional && !PyUtil.isEmptyFunction(node)) {
           final List<PyStatement> returnPoints = node.getReturnPoints(myTypeEvalContext);
-          final boolean hasImplicitReturns = exists(returnPoints, it -> !(it instanceof PyReturnStatement));
+          final boolean hasImplicitReturns = ContainerUtil.exists(returnPoints, it -> !(it instanceof PyReturnStatement));
 
           if (hasImplicitReturns) {
             final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
@@ -670,7 +669,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private static boolean matchedCalleeResultsExist(@NotNull List<AnalyzeCalleeResults> calleesResults) {
-      return exists(calleesResults, calleeResults ->
+      return ContainerUtil.exists(calleesResults, calleeResults ->
         ContainerUtil.all(calleeResults.getResults(), AnalyzeArgumentResult::isMatched) &&
         calleeResults.getUnmatchedArguments().isEmpty() &&
         calleeResults.getUnmatchedParameters().isEmpty() &&
