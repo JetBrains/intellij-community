@@ -59,7 +59,8 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
                         @NotNull Set<? super String> feedback) {
     MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
-    new VcsFreezingProcess(mySvnVcs.getProject(), SvnBundle.message("progress.title.commit"), () -> {
+    try {
+      ApplicationManager.getApplication().invokeAndWait(() -> VcsFreezingProcess.saveAndBlock(mySvnVcs.getProject()));
       for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
         try {
           doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
@@ -69,7 +70,9 @@ public final class SvnCheckinEnvironment implements CheckinEnvironment {
           exception.add(e);
         }
       }
-    }).execute();
+    } finally {
+      ApplicationManager.getApplication().invokeAndWait(() -> VcsFreezingProcess.unblock(mySvnVcs.getProject()));
+    }
   }
 
   private void doCommitOneRepo(@NotNull Collection<? extends FilePath> committables,
