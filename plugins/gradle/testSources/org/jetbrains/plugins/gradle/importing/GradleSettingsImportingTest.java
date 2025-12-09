@@ -476,7 +476,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
@@ -535,7 +537,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportFileEncodingSettings() throws IOException {
     VirtualFile aDir = createProjectSubDir("src/main/java/a");
     VirtualFile bDir = createProjectSubDir("src/main/java/b");
@@ -804,7 +808,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
-  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
