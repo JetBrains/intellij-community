@@ -4,9 +4,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -45,9 +47,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrMethod[] getCodeMethods() {
-    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    )).clone();
+    return StubBuildCachedValuesManager.getCachedValueStubBuildOptimized(
+      myDefinition,
+      GET_CODE_METHODS_STUB_BUILDING_KEY,
+      () -> CachedValueProvider.Result.create(myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies)
+    ).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
@@ -113,4 +117,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));
   }
+
+  private static final Key<StubBuildCachedValuesManager.StubBuildCachedValue<GrMethod[]>>
+    GET_CODE_METHODS_STUB_BUILDING_KEY = Key.create("groovy.codeMethods.stub.building");
 }

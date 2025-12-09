@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -32,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.*;
+
+import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
 
 @SuppressWarnings("StaticFieldReferencedViaSubclass")
 public final class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
@@ -124,15 +127,21 @@ public final class GrModifierListImpl extends GrStubElementBase<GrModifierListSt
       return stub.getModifiersFlags();
     }
     else {
-      return CachedValuesManager.getCachedValue(this, () -> {
-        int flags = 0;
-        for (PsiElement modifier : findChildrenByType(TokenSets.MODIFIERS)) {
-          flags |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier.getText());
-        }
-        return Result.create(flags, this);
-      });
+      return getCachedValueStubBuildOptimized(this, GET_MODIFIER_FLAGS_PROVIDER_NEW);
     }
   }
+
+  private static final StubBuildCachedValueProvider<Integer, GrModifierListImpl>
+    GET_MODIFIER_FLAGS_PROVIDER_NEW = new StubBuildCachedValueProvider<>(
+    "groovy.modifierFlags",
+    list -> {
+      int flags = 0;
+      for (PsiElement modifier : list.findChildrenByType(TokenSets.MODIFIERS)) {
+        flags |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier.getText());
+      }
+      return Result.create(flags, list);
+    }
+  );
 
   @Override
   public PsiElement @NotNull [] getModifiers() {
