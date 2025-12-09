@@ -77,6 +77,7 @@ public abstract class CachedValuesManager {
                                               P parameter) {
     ParameterizedCachedValue<T, P> value;
     if (StubBuildCachedValuesManager.isBuildingStubs()
+        && !StubBuildCachedValuesManager.isComputingCachedValue()
         && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())) {
       Logger.getInstance(getClass()).error("StubBuildCachedValuesManager should be used during stub building to improve performance");
     }

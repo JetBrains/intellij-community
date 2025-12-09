@@ -41,6 +41,7 @@ import java.util.function.Function
 object StubBuildCachedValuesManager {
 
   private val myStubBuildId = ThreadLocal<Long?>()
+  private val myComputingCachedValue = ThreadLocal<Boolean?>()
   private val ourStubBuildIdCounter = AtomicLong()
 
   @JvmStatic
@@ -59,6 +60,11 @@ object StubBuildCachedValuesManager {
   val isBuildingStubs: Boolean
     get() = myStubBuildId.get() != null
 
+  @JvmStatic
+  @get:ApiStatus.Internal
+  val isComputingCachedValue: Boolean
+    get() = myComputingCachedValue.get() == true
+
   private val stubBuildId: Long?
     get() = myStubBuildId.get()
 
@@ -74,7 +80,12 @@ object StubBuildCachedValuesManager {
       val node = dataHolder.getNode()
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
-        current = StubBuildCachedValue<T>(stubBuildId, provider.apply(parameter))
+        myComputingCachedValue.set(true)
+        current = try {
+          StubBuildCachedValue<T>(stubBuildId, provider.apply(parameter))
+        } finally {
+          myComputingCachedValue.remove()
+        }
         node.putUserData<StubBuildCachedValue<T>>(stubBuildingKey, current)
       }
       return current.value
@@ -95,7 +106,12 @@ object StubBuildCachedValuesManager {
     if (stubBuildId != null) {
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
-        val value = provider.compute(parameter)
+        myComputingCachedValue.set(true)
+        val value = try {
+          provider.compute(parameter)
+        } finally {
+          myComputingCachedValue.remove()
+        }
         current = StubBuildCachedValue(stubBuildId, value.getValue())
         node.putUserData(stubBuildingKey, current)
       }
@@ -120,8 +136,12 @@ object StubBuildCachedValuesManager {
       val node = dataHolder.getNode()
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
-
-        val value = provider.compute(parameter)
+        myComputingCachedValue.set(true)
+        val value =  try {
+          provider.compute(parameter)
+        } finally {
+          myComputingCachedValue.remove()
+        }
         current = StubBuildCachedValue(stubBuildId, value.getValue())
         node.putUserData(stubBuildingKey, current)
       }
@@ -177,8 +197,12 @@ object StubBuildCachedValuesManager {
       val node = dataHolder.getNode()
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
-
-        val value = provider.compute()
+        myComputingCachedValue.set(true)
+        val value =  try {
+          provider.compute()
+        } finally {
+          myComputingCachedValue.remove()
+        }
         current = StubBuildCachedValue(stubBuildId, value?.getValue())
         node.putUserData(stubBuildingKey, current)
       }
