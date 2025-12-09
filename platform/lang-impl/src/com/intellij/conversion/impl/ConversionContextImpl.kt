@@ -5,13 +5,14 @@ package com.intellij.conversion.impl
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.configurationStore.ProjectStoreDescriptor
+import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.conversion.*
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -21,7 +22,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -29,20 +29,21 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.Volatile
 
 private val LOG = logger<ConversionContextImpl>()
 
-class ConversionContextImpl(projectPath: Path) : ConversionContext {
+class ConversionContextImpl(private val projectIdentityFile: Path) : ConversionContext {
+  private val descriptor: ProjectStoreDescriptor
+  private val storageScheme: ProjectScheme
+
   private val fileToSettings = HashMap<Path, SettingsXmlFile>()
-  private var storageScheme: StorageScheme
-  private val projectBaseDir: Path
-  private val projectFile = SettingsXmlFile(projectPath)
-  private val workspaceFile: SettingsXmlFile
 
   @Volatile
   private var moduleFiles: List<Path>? = null
@@ -50,29 +51,29 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   private val fileToModuleSettings = HashMap<Path, ModuleSettingsImpl>()
   private val nameToModuleSettings = HashMap<String, ModuleSettingsImpl>()
   private var runManagerSettings: RunManagerSettingsImpl? = null
-  private val settingsBaseDir: Path?
   private var compilerManagerSettings: ComponentManagerSettings? = null
   private var projectRootManagerSettings: ComponentManagerSettings? = null
   private var projectLibrariesSettings: MultiFilesSettings? = null
   private var artifactSettings: MultiFilesSettings? = null
 
-  private var moduleListFile: Path
-
   init {
-    if (projectPath.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      storageScheme = StorageScheme.DEFAULT
-      projectBaseDir = projectPath.parent
-      moduleListFile = projectPath
-      workspaceFile = SettingsXmlFile(projectPath.parent.resolve(
-        projectPath.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION))
-      settingsBaseDir = null
-    }
-    else {
-      storageScheme = StorageScheme.DIRECTORY_BASED
-      projectBaseDir = projectPath
-      settingsBaseDir = projectPath.resolve(Project.DIRECTORY_STORE_FOLDER)
-      moduleListFile = projectPath.resolve("modules.xml")
-      workspaceFile = SettingsXmlFile(settingsBaseDir!!.resolve("workspace.xml"))
+    descriptor = ProjectStorePathManager.getInstance().getStoreDescriptor(projectIdentityFile)
+
+    val dotIdea = descriptor.dotIdea
+    storageScheme = when {
+      dotIdea != null -> {
+        val workspaceFile = SettingsXmlFile(dotIdea.resolve("workspace.xml"))
+        ProjectScheme.Directory(dotIdea, workspaceFile)
+      }
+      else -> {
+        val projectFileSettings = SettingsXmlFile(projectIdentityFile)
+
+        val iwsFileName = projectIdentityFile.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION) +
+                          WorkspaceFileType.DOT_DEFAULT_EXTENSION
+        val workspaceFile = SettingsXmlFile(projectIdentityFile.parent.resolve(iwsFileName))
+
+        ProjectScheme.IprFile(projectFileSettings, workspaceFile)
+      }
     }
   }
 
@@ -86,7 +87,7 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
 
   fun loadConversionResult(): CachedConversionResult {
     try {
-      return loadCachedConversionResult(CachedConversionResult.getConversionInfoFile(projectFile.path), projectBaseDir)
+      return loadCachedConversionResult(CachedConversionResult.getConversionInfoFile(projectIdentityFile), projectBaseDir)
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -126,73 +127,77 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     }
 
     withContext(Dispatchers.IO) {
-      JDOMUtil.write(root, CachedConversionResult.getConversionInfoFile(projectFile.path))
+      JDOMUtil.write(root, CachedConversionResult.getConversionInfoFile(projectIdentityFile))
     }
   }
 
   suspend fun getAllProjectFiles(): Object2LongMap<String> {
-    if (storageScheme == StorageScheme.DEFAULT) {
-      val moduleFiles = modulePaths
-      val totalResult = Object2LongOpenHashMap<String>(moduleFiles.size + 2)
-      collectLastModifiedTme(projectFile.path, totalResult)
-      collectLastModifiedTme(workspaceFile.path, totalResult)
-      addLastModifiedTime(moduleFiles, totalResult)
-      return totalResult
-    }
+    when (storageScheme) {
+      is ProjectScheme.IprFile -> {
+        val moduleFiles = modulePaths
+        val totalResult = Object2LongOpenHashMap<String>(moduleFiles.size + 2)
+        collectLastModifiedTme(storageScheme.projectFilePath, totalResult)
+        collectLastModifiedTme(storageScheme.workspaceFile.path, totalResult)
+        addLastModifiedTime(moduleFiles, totalResult)
+        return totalResult
+      }
+      is ProjectScheme.Directory -> {
+        val dotIdeaDirectory = storageScheme.dotIdea
+        val dirs = listOf(
+          dotIdeaDirectory,
+          dotIdeaDirectory.resolve("libraries"),
+          dotIdeaDirectory.resolve("artifacts"),
+          dotIdeaDirectory.resolve("runConfigurations")
+        )
 
-    val dotIdeaDirectory = settingsBaseDir!!
-    val dirs = listOf(
-      dotIdeaDirectory,
-      dotIdeaDirectory.resolve("libraries"),
-      dotIdeaDirectory.resolve("artifacts"),
-      dotIdeaDirectory.resolve("runConfigurations")
-    )
+        val tasks = withContext(CoroutineName("Conversion: Project Files Collecting") + Dispatchers.IO) {
+          val tasks = ArrayList<Deferred<Object2LongMap<String>>>(dirs.size + 1)
+          modulePaths.asSequence()
+            .chunked(500)
+            .mapTo(tasks) {
+              async { computeModuleFilesTimestamp(it) }
+            }
 
-    val tasks = withContext(CoroutineName("Conversion: Project Files Collecting") + Dispatchers.IO) {
-      val tasks = ArrayList<Deferred<Object2LongMap<String>>>(dirs.size + 1)
-      modulePaths.asSequence()
-        .chunked(500)
-        .mapTo(tasks) {
-          async { computeModuleFilesTimestamp(it) }
+          dirs.mapTo(tasks) { subDirName ->
+            async {
+              val result = Object2LongOpenHashMap<String>()
+              result.defaultReturnValue(-1)
+              collectXmlFilesFromDirectory(subDirName, result)
+              result
+            }
+          }
         }
 
-      dirs.mapTo(tasks) { subDirName ->
-        async {
-          val result = Object2LongOpenHashMap<String>()
-          result.defaultReturnValue(-1)
-          collectXmlFilesFromDirectory(subDirName, result)
-          result
+        val totalResult = Object2LongOpenHashMap<String>()
+        totalResult.defaultReturnValue(-1)
+        try {
+          @Suppress("OPT_IN_USAGE")
+          for (future in tasks) {
+            totalResult.putAll(future.getCompleted())
+          }
         }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          throw CannotConvertException(e)
+        }
+        return totalResult
       }
     }
-
-    val totalResult = Object2LongOpenHashMap<String>()
-    totalResult.defaultReturnValue(-1)
-    try {
-      @Suppress("OPT_IN_USAGE")
-      for (future in tasks) {
-        totalResult.putAll(future.getCompleted())
-      }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      throw CannotConvertException(e)
-    }
-    return totalResult
   }
 
-  override fun getProjectBaseDir(): Path = projectBaseDir
+  override fun getProjectBaseDir(): Path = descriptor.historicalProjectBasePath
 
   @Throws(CannotConvertException::class)
   override fun getModulePaths(): List<Path> {
     var result = moduleFiles
     if (result == null) {
+      val moduleListFile = createProjectSettings("modules.xml")
       result = try {
-        findModuleFiles(JDOMUtil.load(moduleListFile))
+        findModuleFiles(moduleListFile.rootElement)
       }
-      catch (e: NoSuchFileException) {
+      catch (_: NoSuchFileException) {
         emptyList()
       }
       catch (e: JDOMException) {
@@ -203,7 +208,7 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       }
       moduleFiles = result
     }
-    return result!!
+    return result
   }
 
   private fun findModuleFiles(root: Element): List<Path> {
@@ -285,11 +290,13 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   }
 
   override fun createProjectSettings(fileName: String): ComponentManagerSettings {
-    return if (storageScheme == StorageScheme.DEFAULT) {
-      projectFile
-    }
-    else {
-      SettingsXmlFile(settingsBaseDir!!.resolve(fileName))
+    when (storageScheme) {
+      is ProjectScheme.IprFile -> {
+        return storageScheme.projectFileSettings
+      }
+      is ProjectScheme.Directory -> {
+        return SettingsXmlFile(storageScheme.dotIdea.resolve(fileName))
+      }
     }
   }
 
@@ -301,26 +308,34 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     return macros
   }
 
-  override fun getSettingsBaseDir(): Path? = settingsBaseDir
+  override fun getProjectFile(): Path = descriptor.projectIdentityFile
 
-  override fun getProjectFile(): Path = projectFile.path
+  override fun getSettingsBaseDir(): Path? = when (storageScheme) {
+    is ProjectScheme.Directory -> storageScheme.dotIdea
+    else -> null
+  }
 
-  override fun getProjectSettings(): ComponentManagerSettings = projectFile
+  override fun getProjectSettings(): ComponentManagerSettings? = when (storageScheme) {
+    is ProjectScheme.IprFile -> storageScheme.projectFileSettings
+    else -> null
+  }
 
   @Throws(CannotConvertException::class)
   internal fun getRunManagerSettings(): RunManagerSettingsImpl {
     if (runManagerSettings == null) {
-      runManagerSettings = if (storageScheme == StorageScheme.DEFAULT) {
-        RunManagerSettingsImpl(workspaceFile, projectFile, null, this)
-      }
-      else {
-        RunManagerSettingsImpl(workspaceFile, null, settingsBaseDir!!.resolve("runConfigurations"), this)
+      runManagerSettings = when (storageScheme) {
+        is ProjectScheme.IprFile -> {
+          RunManagerSettingsImpl(storageScheme.workspaceFile, storageScheme.projectFileSettings, null, this)
+        }
+        is ProjectScheme.Directory -> {
+          RunManagerSettingsImpl(storageScheme.workspaceFile, null, storageScheme.dotIdea.resolve("runConfigurations"), this)
+        }
       }
     }
     return runManagerSettings!!
   }
 
-  override fun getWorkspaceSettings(): WorkspaceSettings = workspaceFile
+  override fun getWorkspaceSettings(): WorkspaceSettings = storageScheme.workspaceFile
 
   @Throws(CannotConvertException::class)
   override fun getModuleSettings(moduleFile: Path): ModuleSettings {
@@ -339,14 +354,17 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
         try {
           getModuleSettings(moduleFile)
         }
-        catch (ignored: CannotConvertException) {
+        catch (_: CannotConvertException) {
         }
       }
     }
     return nameToModuleSettings.get(moduleName)
   }
 
-  override fun getStorageScheme(): StorageScheme = storageScheme
+  override fun getStorageScheme(): StorageScheme = when (storageScheme) {
+    is ProjectScheme.IprFile -> StorageScheme.DEFAULT
+    is ProjectScheme.Directory -> StorageScheme.DIRECTORY_BASED
+  }
 
   fun saveFiles(files: Collection<Path>) {
     for (file in files) {
@@ -356,11 +374,11 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       }
       xmlFile?.save()
     }
-    if (files.contains(workspaceFile.path)) {
-      workspaceFile.save()
+    if (files.contains(storageScheme.workspaceFile.path)) {
+      storageScheme.workspaceFile.save()
     }
-    if (files.contains(projectFile.path)) {
-      projectFile.save()
+    if (storageScheme is ProjectScheme.IprFile && files.contains(storageScheme.projectFileSettings.path)) {
+      storageScheme.projectFileSettings.save()
     }
   }
 
@@ -374,11 +392,9 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   @Throws(CannotConvertException::class)
   internal fun doGetProjectLibrarySettings(): MultiFilesSettings {
     if (projectLibrariesSettings == null) {
-      projectLibrariesSettings = if (storageScheme == StorageScheme.DEFAULT) {
-        MultiFilesSettings(projectFile, null, this)
-      }
-      else {
-        MultiFilesSettings(null, settingsBaseDir!!.resolve("libraries"), this)
+      projectLibrariesSettings = when (storageScheme) {
+        is ProjectScheme.IprFile -> MultiFilesSettings(storageScheme.projectFileSettings, null, this)
+        is ProjectScheme.Directory -> MultiFilesSettings(null, storageScheme.dotIdea.resolve("libraries"), this)
       }
     }
     return projectLibrariesSettings!!
@@ -387,11 +403,9 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   @Throws(CannotConvertException::class)
   internal fun getArtifactSettings(): MultiFilesSettings {
     if (artifactSettings == null) {
-      artifactSettings = if (storageScheme == StorageScheme.DEFAULT) {
-        MultiFilesSettings(projectFile, null, this)
-      }
-      else {
-        MultiFilesSettings(null, settingsBaseDir!!.resolve("artifacts"), this)
+      artifactSettings = when (storageScheme) {
+        is ProjectScheme.IprFile -> MultiFilesSettings(storageScheme.projectFileSettings, null, this)
+        is ProjectScheme.Directory -> MultiFilesSettings(null, storageScheme.dotIdea.resolve("artifacts"), this)
       }
     }
     return artifactSettings!!
@@ -415,7 +429,7 @@ private fun collectLastModifiedTme(file: Path, files: Object2LongOpenHashMap<Str
   try {
     files.put(file.toString(), Files.getLastModifiedTime(file).to(TimeUnit.SECONDS))
   }
-  catch (ignore: IOException) {
+  catch (_: IOException) {
   }
 }
 
@@ -435,7 +449,7 @@ private fun collectXmlFilesFromDirectory(dir: Path, result: Object2LongOpenHashM
             continue
           }
         }
-        catch (ignore: IOException) {
+        catch (_: IOException) {
           continue
         }
 
@@ -443,9 +457,9 @@ private fun collectXmlFilesFromDirectory(dir: Path, result: Object2LongOpenHashM
       }
     }
   }
-  catch (ignore: NotDirectoryException) {
+  catch (_: NotDirectoryException) {
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
   }
   catch (e: IOException) {
     LOG.warn(e)
@@ -463,7 +477,7 @@ private fun loadCachedConversionResult(infoFile: Path, baseDir: Path): CachedCon
   val root = try {
     readXmlAsModel(infoFile)
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return CachedConversionResult.createEmpty()
   }
 
@@ -507,10 +521,26 @@ private fun loadCachedConversionResult(infoFile: Path, baseDir: Path): CachedCon
             projectFilesTimestamps.put(path, timestamp.toLong())
           }
         }
-        catch (ignore: NumberFormatException) {
+        catch (_: NumberFormatException) {
         }
       }
     }
   }
   return CachedConversionResult(appliedConverters, projectFilesTimestamps)
+}
+
+private sealed interface ProjectScheme {
+  val workspaceFile: SettingsXmlFile
+
+  class Directory(
+    val dotIdea: Path,
+    override val workspaceFile: SettingsXmlFile,
+  ) : ProjectScheme
+
+  class IprFile(
+    val projectFileSettings: SettingsXmlFile,
+    override val workspaceFile: SettingsXmlFile,
+  ) : ProjectScheme {
+    val projectFilePath: Path = projectFileSettings.path
+  }
 }
