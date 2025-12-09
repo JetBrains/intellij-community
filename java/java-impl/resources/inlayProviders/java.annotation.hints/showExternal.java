@@ -1,5 +1,7 @@
 /*<# block fmt:fontSize=ABitSmallerThanInEditor,marginPadding=OnlyPadding #>*/
+/*<# @Deprecated #>*/
 class Test {
-  /*<# block [@Deprecated] [@NotNull] #>*/
-  public void perform() {}
+  public int getSize(String/*<# ! #>*/ s) {
+    return s.length();
+  }
 }

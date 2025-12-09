@@ -1291,7 +1291,8 @@
                                           group="ANNOTATIONS_GROUP"
                                           providerId="java.annotation.hints"
                                           bundle="messages.JavaBundle"
-                                          nameKey="settings.inlay.java.annotations">
+                                          nameKey="settings.inlay.java.annotations"
+                                          descriptionKey="settings.inlay.java.annotations.description">
       <option bundle="messages.JavaBundle"
               optionId="showInferred"
               enabledByDefault="false"
@@ -1302,8 +1303,10 @@
               enabledByDefault="true"
               nameKey="settings.inlay.java.external.annotations"
               descriptionKey="inlay.annotation.hints.external.annotations" />
-
     </codeInsight.declarativeInlayProvider>
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider 
+      language="JAVA" providerId="java.annotation.hints" 
+      implementationClass="com.intellij.codeInsight.hints.AnnotationInlaySettingsProvider"/>
 
     <codeInsight.declarativeInlayProvider language="JAVA"
                                           implementationClass="com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider"

@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.codeInsight.ExternalAnnotationsManager
-import com.intellij.codeInsight.InferredAnnotationsManager
-import com.intellij.codeInsight.MakeInferredAnnotationExplicit
-import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.*
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
@@ -21,7 +17,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
@@ -121,7 +116,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                 (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(annotation))) {
               val hintPos = (if (isTypeAnno(annotation)) typeHintPos else modifierListHintPos) ?: return
               val suffixText = getTypeSuffixText(annotation)
-              if (suffixText != null && Registry.`is`("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")) {
+              if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
                 if (!shownAnnotations.add(suffixText)) return // to prevent duplicates when external and inferred annotations use different @NotNull classes
                 val suffixOffset = calculateSuffixOffset(element)
                 sink.addPresentation(InlineInlayPosition(suffixOffset, false), inlayPayloads, 
@@ -212,7 +207,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
     anchor: PsiElement,
   ) {
     val suffixText = getTypeSuffixText(annotation)
-    if (suffixText != null && Registry.`is`("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")) {
+    if (suffixText != null && AnnotationInlaySettings.getInstance().shortenNotNull) {
       val offset = calculateSuffixOffset(anchor)
       sink.addPresentation(InlineInlayPosition(offset, false), TYPE_ANNOTATION_PAYLOADS,
                            hintFormat = HintFormat.default, tooltip = "@${annotation.nameReferenceElement?.referenceName}") {
