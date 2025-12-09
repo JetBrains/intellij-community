@@ -188,7 +188,7 @@ com.intellij.openapi.vcs.CheckinProjectPanel
 com.intellij.openapi.vcs.CheckoutProvider
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - buildVcsCloneComponent(com.intellij.openapi.project.Project,com.intellij.openapi.application.ModalityState,com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener):com.intellij.openapi.vcs.ui.VcsCloneComponent
-- a:doCheckout(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.CheckoutProvider$Listener):V
+- doCheckout(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.CheckoutProvider$Listener):V
 - a:getVcsName():java.lang.String
 c:com.intellij.openapi.vcs.CheckoutProvider$CheckoutProviderComparator
 - java.util.Comparator
