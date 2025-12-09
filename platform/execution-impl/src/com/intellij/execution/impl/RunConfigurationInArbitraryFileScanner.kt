@@ -1,6 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,6 +12,8 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 /**
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
@@ -21,7 +26,11 @@ private class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
       if (it is ContentOrigin || it is ProjectFileOrDirOrigin) {
         IndexableFileScanner.IndexableFileVisitor { fileOrDir ->
           if (isFileWithRunConfigs(fileOrDir)) {
-            runManager.updateRunConfigsFromArbitraryFiles(emptyList(), listOf(fileOrDir.path))
+            project.service<ScopeService>().scope.launch {
+              readAction {
+                runManager.updateRunConfigsFromArbitraryFiles(emptyList(), listOf(fileOrDir.path))
+              }
+            }
           }
         }
       }
@@ -31,6 +40,9 @@ private class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class ScopeService(val scope: CoroutineScope)
 
 internal fun loadFileWithRunConfigs(project: Project): List<String> = if (project.isDefault) listOf() else 
   FilenameIndex.getAllFilesByExt(project, "run.xml", ProjectScope.getContentScope(project)).filter { isFileWithRunConfigs(it) }.map { it.path }
