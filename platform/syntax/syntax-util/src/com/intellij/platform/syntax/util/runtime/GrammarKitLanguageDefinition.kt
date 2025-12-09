@@ -2,9 +2,13 @@
 package com.intellij.platform.syntax.util.runtime
 
 import com.intellij.platform.syntax.LanguageSyntaxDefinition
+import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface GrammarKitLanguageDefinition : LanguageSyntaxDefinition {
+  
+  fun parse(elementType: SyntaxElementType, runtime: SyntaxGeneratedParserRuntime)
+  
   fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = emptyList()
 }
