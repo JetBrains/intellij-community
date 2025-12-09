@@ -290,13 +290,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     PluginManagerSessionService.getInstance().removeSession(sessionId)
   }
 
-  override suspend fun isModified(sessionId: String): Boolean {
-    val session = findSession(sessionId) ?: return false
-    return session.dynamicPluginsToInstall.isNotEmpty() ||
-           session.dynamicPluginsToUninstall.isNotEmpty() ||
-           session.pluginsToRemoveOnCancel.isNotEmpty() ||
-           session.statesDiff.isNotEmpty()
+  override suspend fun isModified(): Boolean {
+    return PluginManagerSessionService.getInstance().getSessions().any { isSingleSessionModified(it) }
   }
+
+  private fun isSingleSessionModified(session: PluginManagerSession): Boolean = session.dynamicPluginsToInstall.isNotEmpty() ||
+                                                                                session.dynamicPluginsToUninstall.isNotEmpty() ||
+                                                                                session.pluginsToRemoveOnCancel.isNotEmpty() ||
+                                                                                session.statesDiff.isNotEmpty()
 
   override suspend fun apply(parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     val context = parent?.let { (Dispatchers.EDT + ModalityState.stateForComponent(it).asContextElement()) } ?: Dispatchers.EDT

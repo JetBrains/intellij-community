@@ -32,8 +32,8 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return DefaultUiPluginManagerController.resetSession(sessionId, removeSession)
   }
 
-  override suspend fun isModified(sessionId: String): Boolean {
-    return DefaultUiPluginManagerController.isModified(sessionId)
+  override suspend fun isModified(): Boolean {
+    return DefaultUiPluginManagerController.isModified()
   }
 
   override suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult {
