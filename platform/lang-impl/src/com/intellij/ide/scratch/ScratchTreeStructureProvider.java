@@ -38,6 +38,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -130,10 +131,10 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     Disposable rootDisposable = disposables.get(rootType);
     Disposer.register(parentDisposable, rootDisposable);
 
-    ReadAction.run(() -> {
-      if (project.isDisposed()) return;
-
-      rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+    NonUrgentExecutor.getInstance().execute(() -> {
+      ReadAction.run(() -> {
+        rootType.registerTreeUpdater(project, parentDisposable, onUpdate);
+      });
     });
   }
 
