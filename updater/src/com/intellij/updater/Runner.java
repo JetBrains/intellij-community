@@ -571,14 +571,14 @@ public final class Runner {
   }
 
   private static void postUpdateTasks(UpdaterUI ui, Path targetDir, @Nullable String newVersion) {
+    LOG.info("Running post-update tasks (ver=" + newVersion + " mac=" + Utils.IS_MAC + " win=" + Utils.IS_WINDOWS + ')');
     if (Utils.IS_MAC) {
       PostUpdateTasks.refreshAppBundleIcon(targetDir);
     }
     else if (newVersion != null) {
       var parts = Utils.splitVersionString(newVersion);
       if (parts.length == 2) {
-        var p = parts[1].indexOf('.');
-        var united = p > 0 && Integer.parseInt(parts[1].substring(0, p)) >= 253;
+        var united = Utils.majorVersion(parts[1]) >= 253;
         if (Utils.IS_WINDOWS) {
           ui.startProcess(UpdaterUI.message("updating.shortcuts"));
           ui.setProgressIndeterminate();

@@ -7,6 +7,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -339,5 +340,18 @@ public final class Utils {
     else {
       return new String[]{version};
     }
+  }
+
+  public static int majorVersion(String buildNumber) {
+    var p = buildNumber.indexOf('.');
+    if (p > 0) {
+      try {
+        return Integer.parseInt(buildNumber.substring(0, p));
+      }
+      catch (NumberFormatException e) {
+        LOG.log(Level.WARNING, "invalid build number: " + buildNumber, e);
+      }
+    }
+    return 0;
   }
 }
