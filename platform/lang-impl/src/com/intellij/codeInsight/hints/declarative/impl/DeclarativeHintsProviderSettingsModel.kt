@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.ImmediateConfigurable
@@ -85,6 +85,7 @@ class DeclarativeHintsProviderSettingsModel(
       row {
         cell(customSettingsProvider.createComponent(project, language))
       }
+      savedSettings = customSettingsProvider.getSettingsCopy()
     }
 
   override val description: String?
