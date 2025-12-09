@@ -14,6 +14,11 @@ public class JvmIncBuilderTest extends BazelIncBuildTest {
     performTest("kotlin/convertJavaToKotlinGetterUsages").assertFailure();
   }
 
+  @Test
+  void testInlineFunctionImplementationChanged() throws Exception {
+    performTest("kotlin/inlineFunctionImplementationChanged").assertSuccessful();
+  }
+
   @Disabled("Until kotlinc 2.3 is used for compilation")
   @Test
   void testAssignJavaFieldFromKotlinSubclass() throws Exception {
