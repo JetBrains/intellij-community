@@ -476,10 +476,22 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   @Override
   protected void toggleExpandState(TreePath path) {
-    if (!tree.isExpanded(path) && tree instanceof Tree) {
+    boolean wasCollapsed = !tree.isExpanded(path);
+    if (wasCollapsed && tree instanceof Tree) {
       ((Tree)tree).startMeasuringExpandDuration(path);
     }
     super.toggleExpandState(path);
+    if (wasCollapsed && tree instanceof Tree) {
+      ((Tree)tree).onPathExpanded(path);
+    }
+  }
+
+  @Override
+  protected void selectPathForEvent(TreePath path, MouseEvent event) {
+    super.selectPathForEvent(path, event);
+    if (tree instanceof Tree && path != null) {
+      ((Tree)tree).onPathSelected(path);
+    }
   }
 
   @ApiStatus.Internal

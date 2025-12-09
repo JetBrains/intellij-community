@@ -194,6 +194,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     else {
       tree.setSelectionPath(path);
     }
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(path);
+    }
     TreeUtil.scrollToVisible(tree, path, false);
   }
 
@@ -212,6 +215,9 @@ final class TreeAction extends AbstractAction implements UIResource {
         ((Tree)tree).startMeasuringExpandDuration(lead);
       }
       tree.expandPath(lead);
+      if (tree instanceof Tree) {
+        ((Tree)tree).onPathExpanded(lead);
+      }
     }
   }
 
@@ -261,6 +267,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath sibling = TreeUtil.nextVisibleSibling(tree, tree.getLeadSelectionPath());
     if (sibling == null) return; // next sibling is not found
     tree.setSelectionPath(sibling);
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(sibling);
+    }
     TreeUtil.scrollToVisible(tree, sibling, false);
   }
 
@@ -268,6 +277,9 @@ final class TreeAction extends AbstractAction implements UIResource {
     TreePath sibling = TreeUtil.previousVisibleSibling(tree, tree.getLeadSelectionPath());
     if (sibling == null) return; // previous sibling is not found
     tree.setSelectionPath(sibling);
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(sibling);
+    }
     TreeUtil.scrollToVisible(tree, sibling, false);
   }
 

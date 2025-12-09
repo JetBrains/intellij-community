@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -34,7 +35,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -217,6 +217,9 @@ public abstract class ProjectViewPaneSupport {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Selected the only path: " + path);
     }
+    if (tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(path);
+    }
     return true;
   }
 
@@ -226,6 +229,9 @@ public abstract class ProjectViewPaneSupport {
     TreeUtil.selectPaths(tree, adjustedPaths);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Selected paths adjusted according to " + selectionDescriptor + ": " + adjustedPaths);
+    }
+    if (!adjustedPaths.isEmpty() && tree instanceof Tree) {
+      ((Tree)tree).onPathSelected(adjustedPaths.getFirst());
     }
     return true;
   }

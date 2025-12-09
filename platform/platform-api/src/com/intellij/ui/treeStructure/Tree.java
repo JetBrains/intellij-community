@@ -99,6 +99,63 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private boolean initialized = false;
 
   @ApiStatus.Internal
+  protected boolean isHorizontalAutoAlignEnabled() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public void onPathExpanded(@NotNull TreePath path) {
+    if (isHorizontalAutoAlignEnabled()) {
+      alignTreePathToTheLeft(path);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void onPathSelected(@NotNull TreePath path) {
+    if (isHorizontalAutoAlignEnabled()) {
+      alignTreePathToTheLeft(path);
+    }
+  }
+
+  private void alignTreePathToTheLeft(@Nullable TreePath path) {
+    SwingUtilities.invokeLater(() -> {
+      if (path == null) return;
+      JScrollPane scrollPane = ComponentUtil.getScrollPane(this);
+      if (scrollPane == null) return;
+
+      Rectangle pathBounds = getPathBounds(path);
+      if (pathBounds == null) return;
+
+      TreeModel model = getModel();
+      if (model == null) return;
+      Object node = path.getLastPathComponent();
+      if (model.getChildCount(node) > 0) {
+        int iconWidth = UIUtil.getTreeExpandedIcon().getIconWidth();
+        pathBounds.x = Math.max(pathBounds.x - iconWidth, 0);
+        pathBounds.width += iconWidth;
+      }
+
+      JViewport viewport = scrollPane.getViewport();
+      if (viewport == null) return;
+      Rectangle viewRect = viewport.getViewRect();
+      if (pathBounds.x >= viewRect.x && pathBounds.x + pathBounds.width <= viewRect.x + viewRect.width) return;
+
+      int targetX = pathBounds.x;
+      if (pathBounds.x >= viewRect.x) {
+        int scrollToAlignLeft = pathBounds.x - viewRect.x;
+        int scrollToAlignRight = (pathBounds.x + pathBounds.width) - (viewRect.x + viewRect.width);
+
+        if (scrollToAlignLeft > scrollToAlignRight) {
+          targetX = Math.max(0, pathBounds.x + pathBounds.width - viewRect.width);
+        }
+      }
+
+      Rectangle targetBounds = new Rectangle(targetX, viewRect.y, viewRect.width, viewRect.height);
+      scrollRectToVisible(targetBounds);
+    });
+  }
+
+  @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {
     return true;
   }

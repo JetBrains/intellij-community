@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -175,5 +176,11 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
     }
     Project project = psi.getProject();
     return FilePresentationService.getInstance(project).getFileBackgroundColor(psi);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected boolean isHorizontalAutoAlignEnabled() {
+    return Registry.is("ide.project.view.auto.align.horizontally");
   }
 }

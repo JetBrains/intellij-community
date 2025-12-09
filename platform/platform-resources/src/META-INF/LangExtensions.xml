@@ -997,6 +997,10 @@
                  key="ide.project.view.show.new.element.button" />
     <registryKey defaultValue="[Off|RemDev*|On]" description="Show the new file or directory button in the project view title"
                  key="ide.project.view.preload.mode" />
+    <registryKey
+            key="ide.project.view.auto.align.horizontally"
+            defaultValue="false"
+            description="Auto-align Project View horizontally on selection/expansion so that a node is aligned by its left edge"/>
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
 

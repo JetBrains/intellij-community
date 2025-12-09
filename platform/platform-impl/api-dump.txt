@@ -1720,6 +1720,7 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:isLocationInExpandControl(javax.swing.tree.TreePath,I,I):Z
 - p:isToggleEvent(java.awt.event.MouseEvent):Z
 - paint(java.awt.Graphics,javax.swing.JComponent):V
+- p:selectPathForEvent(javax.swing.tree.TreePath,java.awt.event.MouseEvent):V
 - p:setLargeModel(Z):V
 - p:setModel(javax.swing.tree.TreeModel):V
 - p:setRootVisible(Z):V
