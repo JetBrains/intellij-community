@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.ifExpressionVisitor
 
 internal class IfThenToElvisInspection @JvmOverloads constructor(
     @JvmField var highlightStatement: Boolean = false
-) : KotlinApplicableInspectionBase.Simple<KtIfExpression, IfThenToElvisInspectionData>(), CleanupLocalInspectionTool {
+) : KotlinApplicableInspectionBase.Simple<KtIfExpression, IfThenToElvisInspectionData>() {
 
     override fun getProblemDescription(element: KtIfExpression, context: IfThenToElvisInspectionData): String =
         KotlinBundle.message("if.then.foldable.to")

@@ -67,7 +67,7 @@
                      enabledByDefault="true"
                      level="INFORMATION"
                      language="kotlin"
-                     cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="call.is.replaceable.with.another.scope.function" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantCompanionReferenceInspection"
@@ -124,7 +124,6 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     cleanupTool="true"
                      level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.kotlin.unused.variable.display.name" bundle="messages.KotlinBundle"/>
@@ -225,7 +224,6 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     cleanupTool="true"
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.elvis.return.null.display.name"
