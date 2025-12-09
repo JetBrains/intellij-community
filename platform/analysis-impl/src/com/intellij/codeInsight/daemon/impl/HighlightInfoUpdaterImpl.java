@@ -1410,8 +1410,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     // this list must be sorted by BY_OFFSETS_AND_HASH
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo info = sorted.get(i);
-      //todo fails because of ProblemDescriptorWithReporterName
-      //assert toolId.equals(info.toolId) : info + "; " + toolId + "(" + toolId.getClass() + ")";
+      assert toolId.equals(info.toolId) : info + "; " + toolId + "(" + toolId.getClass() + ")";
       assert info.getHighlighter() != null : info;
       assert info.getHighlighter().isValid() : info;
       HighlightInfo assignedInfo = HighlightInfo.fromRangeHighlighter(info.getHighlighter());
