@@ -135,7 +135,7 @@ object ErrorReporterToCI: ErrorReporter {
                                             linkToLogs = urlToLogs)
         AllureReport.reportFailure(runContext.contextName, messageText,
                                    stackTraceContent,
-                                   link = failureDetailsProvider.getLinkToCIArtifacts(runContext))
+                                   links = listOf("Link to CI" to failureDetailsProvider.getLinkToCIArtifacts(runContext)))
       }
     }
   }
