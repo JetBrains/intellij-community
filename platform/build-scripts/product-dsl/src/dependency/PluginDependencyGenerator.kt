@@ -30,7 +30,7 @@ internal suspend fun generatePluginDependencies(
   plugins: List<String>,
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
   descriptorCache: ModuleDescriptorCache,
-  dependencyFilter: (String) -> Boolean,
+  dependencyFilter: (moduleName: String, depName: String) -> Boolean,
 ): PluginDependencyGenerationResult = coroutineScope {
   if (plugins.isEmpty()) {
     return@coroutineScope PluginDependencyGenerationResult(emptyList())
@@ -60,7 +60,7 @@ private suspend fun generatePluginDependency(
   pluginModuleName: String,
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
   descriptorCache: ModuleDescriptorCache,
-  dependencyFilter: (String) -> Boolean,
+  dependencyFilter: (moduleName: String, depName: String) -> Boolean,
 ): PluginDependencyFileResult? {
   // All data from shared jobs - NO additional lookups needed
   val info = pluginContentJobs.get(pluginModuleName)?.await() ?: return null
@@ -69,7 +69,7 @@ private suspend fun generatePluginDependency(
   val dependencies = info.jpsDependencies()
     .filter { depName ->
       depName !in info.contentModules &&
-      dependencyFilter(depName) &&
+      dependencyFilter(pluginModuleName, depName) &&
       descriptorCache.hasDescriptor(depName)
     }
     .distinct()
@@ -79,13 +79,13 @@ private suspend fun generatePluginDependency(
     path = info.pluginXmlPath,
     content = info.pluginXmlContent,
     moduleDependencies = dependencies,
-    preserveExistingModule = { !dependencyFilter(it) },
+    preserveExistingModule = { !dependencyFilter(pluginModuleName, it) },
   )
 
   // Also process content modules - generate dependencies for their module descriptors
   val contentModuleResults = mutableListOf<DependencyFileResult>()
   for (contentModuleName in info.contentModules) {
-    val result = generateContentModuleDependencies(contentModuleName = contentModuleName, descriptorCache = descriptorCache, dependencyFilter = dependencyFilter)
+    val result = generateContentModuleDependencies(contentModuleName = contentModuleName, descriptorCache = descriptorCache, dependencyFilter = { dependencyFilter(contentModuleName, it) })
     if (result != null) {
       contentModuleResults.add(result)
     }

@@ -9,7 +9,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
@@ -45,6 +44,7 @@ data class ModuleSetGenerationConfig(
   @JvmField val projectRoot: Path,
   @JvmField val moduleOutputProvider: ModuleOutputProvider,
   @JvmField val additionalPlugins: Map<String, String> = emptyMap(),
+  @JvmField val dependencyFilter: (embeddedModules: Set<String>, moduleName: String, depName: String) -> Boolean,
 )
 
 /**
@@ -230,15 +230,12 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       else {
         val cache = ModuleDescriptorCache(config.moduleOutputProvider, this)
         val embeddedModules = embeddedModulesDeferred.await()
-        val dependencyFilter: (String) -> Boolean = { depName ->
-          if (depName.startsWith(LIB_MODULE_PREFIX) || depName == "intellij.java.aetherDependencyResolver") {
-            !embeddedModules.contains(depName)
-          }
-          else {
-            false
-          }
-        }
-        generatePluginDependencies(plugins = allBundledPlugins, pluginContentJobs = pluginContentJobs, descriptorCache = cache, dependencyFilter = dependencyFilter)
+        generatePluginDependencies(
+          plugins = allBundledPlugins,
+          pluginContentJobs = pluginContentJobs,
+          descriptorCache = cache,
+          dependencyFilter = { moduleName, depName -> config.dependencyFilter(embeddedModules, moduleName, depName) },
+        )
       }
     }
 
