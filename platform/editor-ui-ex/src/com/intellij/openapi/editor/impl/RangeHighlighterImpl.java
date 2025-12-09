@@ -278,8 +278,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setThinErrorStripeMark(boolean value) {
     boolean old = isThinErrorStripeMark();
-    setFlag(ERROR_STRIPE_IS_THIN_MASK, value);
     if (old != value) {
+      setFlag(ERROR_STRIPE_IS_THIN_MASK, value);
       fireChanged(false, false, false);
     }
   }
@@ -331,8 +331,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setAfterEndOfLine(boolean afterEndOfLine) {
     boolean old = isAfterEndOfLine();
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
     if (old != afterEndOfLine) {
+      setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
       fireChanged(false, false, false);
     }
   }
@@ -340,8 +340,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setGreedyToLeft(boolean greedy) {
     boolean old = isGreedyToLeft();
-    super.setGreedyToLeft(greedy);
     if (old != greedy) {
+      super.setGreedyToLeft(greedy);
       fireChanged(false, false, false);
     }
   }
@@ -349,8 +349,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setGreedyToRight(boolean greedy) {
     boolean old = isGreedyToRight();
-    super.setGreedyToRight(greedy);
     if (old != greedy) {
+      super.setGreedyToRight(greedy);
       fireChanged(false, false, false);
     }
   }
@@ -358,8 +358,8 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public void setStickingToRight(boolean value) {
     boolean old = isStickingToRight();
-    super.setStickingToRight(value);
     if (old != value) {
+      super.setStickingToRight(value);
       fireChanged(false, false, false);
     }
   }
@@ -480,7 +480,11 @@ public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements Rang
   @Override
   public @NonNls String toString() {
     return "RangeHighlighter: " +
-           (isValid() ? "" : "(invalid)") +
-           "("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip();
+           (isValid() ? "" : "(invalid)")
+           +"("+getStartOffset()+","+getEndOffset()+")"
+           +"; layer:"+getLayer()
+           +(getErrorStripeTooltip() == null ? "" : "; tooltip: "+getErrorStripeTooltip())
+           +(getTextAttributesKey() == null ? "" : "; textAttributeKey: "+getTextAttributesKey())
+      ;
   }
 }
