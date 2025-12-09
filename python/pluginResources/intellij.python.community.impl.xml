@@ -16,6 +16,7 @@
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.sdk.ui"/>
+    <module name="intellij.python.externalIndex"/>
     <module name="intellij.regexp"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.python.pyproject"/>

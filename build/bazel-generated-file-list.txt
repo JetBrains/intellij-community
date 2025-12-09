@@ -1506,6 +1506,7 @@ python/python-copyright
 python/python-core-impl
 python/python-exec-service
 python/python-exec-service/execService.python
+python/python-external-index
 python/python-features-trainer
 python/python-grazie
 python/python-hatch

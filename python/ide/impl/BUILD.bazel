@@ -74,6 +74,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-external-index:externalIndex",
   ],
   runtime_deps = ["//python/python-features-trainer:featuresTrainer"],
   plugins = ["@lib//:compose-plugin"]
@@ -153,6 +154,7 @@ jvm_library(
     "//python/python-exec-service/execService.python",
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
+    "//python/python-external-index:externalIndex",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
