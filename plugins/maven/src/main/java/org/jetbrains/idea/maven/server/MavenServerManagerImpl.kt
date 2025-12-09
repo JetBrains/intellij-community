@@ -281,10 +281,10 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
 
   override fun getMavenEventListener(): File {
-    return getEventListenerJar().toFile()
+    return getMavenEventListenerPath().toFile()
   }
 
-  private fun getEventListenerJar(): Path {
+  override fun getMavenEventListenerPath(): Path {
     val alreadyCalculatedEventListenerJar = eventListenerJar
     if (alreadyCalculatedEventListenerJar != null) {
       return alreadyCalculatedEventListenerJar
