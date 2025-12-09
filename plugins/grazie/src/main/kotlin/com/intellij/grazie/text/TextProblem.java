@@ -109,10 +109,18 @@ public abstract class TextProblem {
   }
 
   /**
-   * @return True if a problem isn't a grammar problem, but a style one.
-   * In this case it should be highlighted differently. {@link com.intellij.grazie.ide.TextProblemSeverities}
+   * @return True if a problem is a style problem.
+   * In this case it should be highlighted differently. {@link com.intellij.grazie.ide.TextProblemSeverities}.
    */
   public boolean isStyleLike() {
+    return false;
+  }
+
+  /**
+   * @return True if a problem is a spelling problem.
+   * In this case it should be highlighted differently. {@link com.intellij.spellchecker.SpellCheckerSeveritiesProvider}.
+   */
+  public boolean isSpellingProblem() {
     return false;
   }
 

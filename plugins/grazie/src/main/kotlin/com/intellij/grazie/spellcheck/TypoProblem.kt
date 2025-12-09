@@ -30,10 +30,15 @@ class TypoProblem : TextProblem {
 
   override fun getSuggestions(): List<Suggestion> = fixes.map { Suggestion.replace(highlightRanges.first(), it) }
 
-  /** Note: Potentially expensive operation. */
+  /**
+   * Note: Potentially expensive operation.
+   * It's "free" to call it in case if [isCloud] is true, because it means that computation was already performed somewhere in on the servers.
+   */
   val fixes: Set<String> by lazy { fixesSupplier.get() }
 
   val range: TextRange get() = highlightRanges.first()
+
+  override fun isSpellingProblem(): Boolean = true
 }
 
 object SpellingRule : Rule(

@@ -178,6 +178,14 @@ object GrazieReplaceTypoQuickFix {
   }
 
   @JvmStatic
+  fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, problem: TextProblem): List<Pair<TextRange, String>> =
+    if (problem.isSpellingProblem) {
+      listOf(problem.text.textRangeToFile(replacementRange) to suggestion.toString())
+    } else {
+      toRangeReplacements(replacementRange, suggestion, problem.text)
+    }
+
+  @JvmStatic
   fun toRangeReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<TextRange, String>> {
     val replacedText = replacementRange.subSequence(text)
     if (replacedText.contains(Regex("(- *\n)|(\n *-)"))) {

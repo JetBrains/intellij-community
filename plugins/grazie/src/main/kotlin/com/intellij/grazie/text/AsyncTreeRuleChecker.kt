@@ -22,7 +22,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     }
 
     override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
-      return super.checkExternally(context).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
+      return super.checkExternally(context).filter { !it.isStyleLike && !it.isSpellingProblem && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
@@ -30,7 +30,7 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
     override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
-      return super.checkExternally(context).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
+      return super.checkExternally(context).filter { !it.isStyleLike && !it.isSpellingProblem && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
