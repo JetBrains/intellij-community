@@ -95,6 +95,7 @@ public final class ThreadLeakTracker {
       "InnocuousThreadGroup",
       "Java2D Disposer",
       "JNA Cleaner",
+      "Jndi-Dns-address-change-listener",
       "JobScheduler FJ pool ",
       "JPS thread pool",
       JVMResponsivenessMonitor.MONITOR_THREAD_NAME,
