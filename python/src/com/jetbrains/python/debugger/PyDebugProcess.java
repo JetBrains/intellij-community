@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.configurations.RunProfile;
@@ -24,8 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -34,16 +31,12 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.remote.RemoteSdkException;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -72,10 +65,6 @@ import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTy
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.remote.RemoteProcessControl;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
@@ -422,7 +411,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     try {
       return handler.getRemoteSocket(localPort);
     }
-    catch (Exception e) {
+    catch (RemoteSdkException e) {
       throw new IOException(e);
     }
   }
@@ -1321,18 +1310,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return CONNECTION_TIMEOUT;
   }
 
-
-  protected @Nullable XSourcePosition getCurrentFrameSourcePosition() {
-    try {
-      PyStackFrame frame = currentFrame();
-
-      return frame.getSourcePosition();
-    }
-    catch (PyDebuggerException e) {
-      return null;
-    }
-  }
-
   @Override
   public @NotNull Project getProject() {
     return getSession().getProject();
@@ -1340,87 +1317,26 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public @Nullable XSourcePosition getSourcePositionForName(String name, String parentType) {
-    if (name == null) return null;
-    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
-
-    final PsiFile file = getPsiFile(currentPosition);
-
-    if (file == null) return null;
-
-    if (Strings.isNullOrEmpty(parentType)) {
-      final Ref<PsiElement> elementRef = resolveInCurrentFrame(name, currentPosition, file);
-      return elementRef.isNull() ? null : XDebuggerUtil.getInstance().createPositionByElement(elementRef.get());
-    }
-    else {
-      final PyType parentDef = resolveTypeFromString(parentType, file);
-      if (parentDef == null) {
-        return null;
-      }
-      final var context = TypeEvalContext.codeInsightFallback(file.getProject());
-      List<? extends RatedResolveResult> results =
-        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
-      if (results != null && !results.isEmpty()) {
-        return XDebuggerUtil.getInstance().createPositionByElement(results.getFirst().getElement());
-      }
-      else {
-        return typeToPosition(parentDef); // at least try to return parent
-      }
-    }
-  }
-
-
-  private static @NotNull Ref<PsiElement> resolveInCurrentFrame(final String name, XSourcePosition currentPosition, PsiFile file) {
-    final Ref<PsiElement> elementRef = Ref.create();
-    PsiElement currentElement = file.findElementAt(currentPosition.getOffset());
-
-    if (currentElement == null) {
-      return elementRef;
-    }
-
-
-    PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if ((element instanceof PyImportElement importElement)) {
-          if (name.equals(importElement.getVisibleName())) {
-            if (elementRef.isNull()) {
-              elementRef.set(element);
-            }
-            return false;
-          }
-          return true;
-        }
-        else {
-          if (elementRef.isNull()) {
-            elementRef.set(element);
-          }
-          return false;
-        }
-      }
-    }, currentElement, name, null);
-    return elementRef;
-  }
-
-  private @Nullable PsiFile getPsiFile(XSourcePosition currentPosition) {
-    if (currentPosition == null) {
+    try {
+      PyStackFrame frame = currentFrame();
+      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
+      return resolver.getSourcePositionForName(name, parentType);
+    } catch (PyDebuggerException e) {
+      LOG.warn("Could not retrieve current frame for source position resolution", e);
       return null;
     }
-
-    return PsiManager.getInstance(getProject()).findFile(currentPosition.getFile());
   }
-
 
   @Override
   public @Nullable XSourcePosition getSourcePositionForType(String typeName) {
-    XSourcePosition currentPosition = getCurrentFrameSourcePosition();
-
-    final PsiFile file = getPsiFile(currentPosition);
-
-    if (typeName == null || !(file instanceof PyFile)) return null;
-
-
-    final PyType pyType = resolveTypeFromString(typeName, file);
-    return pyType == null ? null : typeToPosition(pyType);
+    try {
+      PyStackFrame frame = currentFrame();
+      PySourcePositionResolver resolver = new PySourcePositionResolver(frame, getProject());
+      return resolver.getSourcePositionForType(typeName);
+    } catch (PyDebuggerException e) {
+      LOG.warn("Could not retrieve current frame for source position resolution", e);
+      return null;
+    }
   }
 
   @Override
@@ -1436,39 +1352,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public boolean isSimplifiedView() {
     return PyDebuggerSettings.getInstance().isSimplifiedView();
-  }
-
-  private static @Nullable XSourcePosition typeToPosition(PyType pyType) {
-    final PyClassType classType = PyUtil.as(pyType, PyClassType.class);
-
-    if (classType != null) {
-      return XDebuggerUtil.getInstance().createPositionByElement(classType.getPyClass());
-    }
-
-    final PyModuleType moduleType = PyUtil.as(pyType, PyModuleType.class);
-    if (moduleType != null) {
-      return XDebuggerUtil.getInstance().createPositionByElement(moduleType.getModule());
-    }
-    return null;
-  }
-
-  private PyType resolveTypeFromString(String typeName, PsiFile file) {
-    typeName = typeName.replace("__builtin__.", "");
-    PyType pyType = null;
-    if (!typeName.contains(".")) {
-
-      pyType = PyTypeParser.getTypeByName(file, typeName);
-    }
-    if (pyType == null) {
-      PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
-      PyPsiFacade psiFacade = PyPsiFacade.getInstance(getProject());
-      PsiFile dummyFile = generator.createDummyFile((LanguageLevel.forElement(file)), "");
-      Module moduleForFile = ModuleUtilCore.findModuleForPsiElement(file);
-      dummyFile.putUserData(ModuleUtilCore.KEY_MODULE, moduleForFile);
-
-      pyType = psiFacade.parseTypeAnnotation(typeName, dummyFile);
-    }
-    return pyType;
   }
 
   boolean isFailedTestStop(@NotNull PyThreadInfo threadInfo) {
