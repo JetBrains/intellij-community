@@ -91,14 +91,7 @@ open class TextMergeViewer(
     mergeRequest: TextMergeRequest,
     mergeViewer: TextMergeViewer,
   ): MergeThreesideViewer {
-    val conflictResolver = LangSpecificMergeConflictResolverWrapper(context.getProject(), mergeRequest.getContents())
-
-    val project = context.getProject()
-    val model = MergeConflictModel(project, mergeRequest, conflictResolver)
-    val builder = MergeDiffBuilder(project, mergeRequest, conflictResolver)
-
-    Disposer.register(this, model)
-    return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer, builder, conflictResolver, model)
+    return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer)
   }
 
   companion object {

@@ -174,7 +174,7 @@ public final class ApplyPatchUtil {
         String yesText = VcsBundle.message("patch.apply.abort.and.rollback.action");
         String noText = VcsBundle.message("patch.apply.skip.action");
         String cancelText = VcsBundle.message("patch.apply.continue.resolve.action");
-        int result1 = Messages.showYesNoCancelDialog(viewer.component.getRootPane(), message, title, yesText, noText, cancelText,
+        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(), message, title, yesText, noText, cancelText,
                                                      Messages.getQuestionIcon());
         if (result1 == Messages.YES) {
           applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
