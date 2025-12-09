@@ -168,7 +168,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @RequiresEdt
   private void initViewer() {
-    myContentPanel.setContent(myViewer.getComponent());
+    myContentPanel.setContent(myViewer.component);
 
     MergeTool.ToolbarComponents toolbarComponents = myViewer.init();
 
@@ -432,7 +432,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   }
 
   public @Nullable JComponent getPreferredFocusedComponent() {
-    JComponent component = myViewer.getPreferredFocusedComponent();
+    JComponent component = myViewer.preferredFocusedComponent;
     return component != null ? component : myToolbarPanel.getTargetComponent();
   }
 

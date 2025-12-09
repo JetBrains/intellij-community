@@ -1,134 +1,117 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.merge;
+package com.intellij.diff.merge
 
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.ProxySimpleDiffRequest;
-import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
+import com.intellij.diff.DiffContext
+import com.intellij.diff.contents.DiffContent
+import com.intellij.diff.contents.DocumentContent
+import com.intellij.diff.merge.MergeTool.MergeViewer
+import com.intellij.diff.merge.MergeUtil.ProxyDiffContext
+import com.intellij.diff.requests.ContentDiffRequest
+import com.intellij.diff.requests.ProxySimpleDiffRequest
+import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.ThreeSide
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.util.BooleanGetter
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import javax.swing.Action
+import javax.swing.JComponent
 
 @ApiStatus.Internal
-public class TextMergeViewer implements MergeTool.MergeViewer {
-  private final @NotNull MergeContext myMergeContext;
-  private final @NotNull TextMergeRequest myMergeRequest;
-
-  protected final @NotNull MergeThreesideViewer myViewer;
-
-  private final Action myCancelResolveAction;
-  private final Action myLeftResolveAction;
-  private final Action myRightResolveAction;
-  private final Action myAcceptResolveAction;
-
-  public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
-    myMergeContext = context;
-    myMergeRequest = request;
-
-    DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    ContentDiffRequest diffRequest = new ProxySimpleDiffRequest(myMergeRequest.getTitle(),
-                                                                getDiffContents(myMergeRequest),
-                                                                getDiffContentTitles(myMergeRequest),
-                                                                myMergeRequest);
-    diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
-
-    myViewer = loadThreeSideViewer(diffContext, diffRequest, myMergeContext, myMergeRequest, this);
-
-    myCancelResolveAction = myViewer.getLoadedResolveAction(MergeResult.CANCEL);
-    myLeftResolveAction = myViewer.getLoadedResolveAction(MergeResult.LEFT);
-    myRightResolveAction = myViewer.getLoadedResolveAction(MergeResult.RIGHT);
-    myAcceptResolveAction = myViewer.getLoadedResolveAction(MergeResult.RESOLVED);
-  }
-
-  private static @NotNull List<DiffContent> getDiffContents(@NotNull TextMergeRequest mergeRequest) {
-    List<DocumentContent> contents = mergeRequest.getContents();
-
-    final DocumentContent left = ThreeSide.LEFT.select(contents);
-    final DocumentContent right = ThreeSide.RIGHT.select(contents);
-    final DocumentContent output = mergeRequest.getOutputContent();
-
-    return Arrays.asList(left, output, right);
-  }
-
-  private static @NotNull List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
-    List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
-    titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
-    return titles;
-  }
-
-  //
-  // Impl
-  //
-
-  @Override
-  public @NotNull JComponent getComponent() {
-    return myViewer.getComponent();
-  }
-
-  @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
-    return myViewer.getPreferredFocusedComponent();
-  }
-
-  @Override
-  public @NotNull MergeTool.ToolbarComponents init() {
-    MergeTool.ToolbarComponents components = new MergeTool.ToolbarComponents();
-
-    FrameDiffTool.ToolbarComponents init = myViewer.init();
-    components.statusPanel = init.statusPanel;
-    components.toolbarActions = init.toolbarActions;
-
-    components.closeHandler = () -> {
-      boolean exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
-      myViewer.logMergeCancelled(myViewer.myContentModified, exit);
-      return exit;
-    };
-
-    return components;
-  }
-
-  @Override
-  public @Nullable Action getResolveAction(@NotNull MergeResult result) {
-    return switch (result) {
-      case CANCEL -> myCancelResolveAction;
-      case LEFT -> myLeftResolveAction;
-      case RIGHT -> myRightResolveAction;
-      case RESOLVED -> myAcceptResolveAction;
-    };
-  }
-
-  @Override
-  public void dispose() {
-    Disposer.dispose(myViewer);
-  }
-
+open class TextMergeViewer(private val myMergeContext: MergeContext, private val myMergeRequest: TextMergeRequest) : MergeViewer {
   //
   // Getters
   //
+  val viewer: MergeThreesideViewer
 
-  public @NotNull MergeThreesideViewer getViewer() {
-    return myViewer;
+  private val myCancelResolveAction: Action?
+  private val myLeftResolveAction: Action?
+  private val myRightResolveAction: Action?
+  private val myAcceptResolveAction: Action?
+
+  init {
+    val diffContext: DiffContext = ProxyDiffContext(myMergeContext)
+    val diffRequest: ContentDiffRequest = ProxySimpleDiffRequest(
+      myMergeRequest.getTitle(),
+      getDiffContents(myMergeRequest),
+      getDiffContentTitles(myMergeRequest),
+      myMergeRequest
+    )
+    diffRequest.putUserData<BooleanArray?>(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, booleanArrayOf(true, false, true))
+
+    this.viewer = loadThreeSideViewer(diffContext, diffRequest, myMergeContext, myMergeRequest, this)
+
+    myCancelResolveAction = viewer.getLoadedResolveAction(MergeResult.CANCEL)
+    myLeftResolveAction = viewer.getLoadedResolveAction(MergeResult.LEFT)
+    myRightResolveAction = viewer.getLoadedResolveAction(MergeResult.RIGHT)
+    myAcceptResolveAction = viewer.getLoadedResolveAction(MergeResult.RESOLVED)
+  }
+
+  val component: JComponent
+    //
+    get() = viewer.getComponent()
+
+  val preferredFocusedComponent: JComponent?
+    get() = viewer.getPreferredFocusedComponent()
+
+  override fun init(): MergeTool.ToolbarComponents {
+    val components = MergeTool.ToolbarComponents()
+
+    val init = viewer.init()
+    components.statusPanel = init.statusPanel
+    components.toolbarActions = init.toolbarActions
+
+    components.closeHandler = BooleanGetter {
+      val exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, viewer.isContentModified())
+      viewer.logMergeCancelled(viewer.myContentModified, exit)
+      exit
+    }
+
+    return components
+  }
+
+  override fun getResolveAction(result: MergeResult): Action? {
+    return when (result) {
+      MergeResult.CANCEL -> myCancelResolveAction
+      MergeResult.LEFT -> myLeftResolveAction
+      MergeResult.RIGHT -> myRightResolveAction
+      MergeResult.RESOLVED -> myAcceptResolveAction
+    }
+  }
+
+  override fun dispose() {
+    Disposer.dispose(this.viewer)
   }
 
   //
   // Viewer
   //
+  protected open fun loadThreeSideViewer(
+    context: DiffContext,
+    request: ContentDiffRequest,
+    mergeContext: MergeContext,
+    mergeRequest: TextMergeRequest,
+    mergeViewer: TextMergeViewer,
+  ): MergeThreesideViewer {
+    return MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer)
+  }
 
-  protected MergeThreesideViewer loadThreeSideViewer(@NotNull DiffContext context,
-                                                     @NotNull ContentDiffRequest request,
-                                                     @NotNull MergeContext mergeContext,
-                                                     @NotNull TextMergeRequest mergeRequest,
-                                                     @NotNull TextMergeViewer mergeViewer) {
-    return new MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer);
+  companion object {
+    private fun getDiffContents(mergeRequest: TextMergeRequest): MutableList<DiffContent?> {
+      val contents = mergeRequest.getContents()
+
+      val left = ThreeSide.LEFT.select<DocumentContent?>(contents)
+      val right = ThreeSide.RIGHT.select<DocumentContent?>(contents)
+      val output = mergeRequest.getOutputContent()
+
+      return Arrays.asList<DiffContent?>(left, output, right)
+    }
+
+    private fun getDiffContentTitles(mergeRequest: TextMergeRequest): MutableList<String?> {
+      val titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles())
+      titles.set(ThreeSide.BASE.index, DiffBundle.message("merge.version.title.merged.result"))
+      return titles
+    }
   }
 }

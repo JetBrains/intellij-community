@@ -1,158 +1,141 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.tools.simple;
+package com.intellij.diff.tools.simple
 
-import com.intellij.diff.tools.util.text.MergeInnerDifferences;
-import com.intellij.diff.util.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.tools.util.text.MergeInnerDifferences
+import com.intellij.diff.util.*
+import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
-import java.util.ArrayList;
-import java.util.List;
+abstract class ThreesideDiffChangeBase(var conflictType: MergeConflictType) {
+  protected val myHighlighters: MutableList<RangeHighlighter> = ArrayList<RangeHighlighter>()
+  protected val myInnerHighlighters: MutableList<RangeHighlighter> = ArrayList<RangeHighlighter>()
+  protected val myOperations: MutableList<DiffGutterOperation> = ArrayList<DiffGutterOperation>()
 
-public abstract class ThreesideDiffChangeBase {
-  protected @NotNull MergeConflictType myType;
-
-  protected final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  protected final @NotNull List<RangeHighlighter> myInnerHighlighters = new ArrayList<>();
-  protected final @NotNull List<DiffGutterOperation> myOperations = new ArrayList<>();
-
-  public ThreesideDiffChangeBase(@NotNull MergeConflictType type) {
-    myType = type;
+  @RequiresEdt
+  fun destroy() {
+    destroyHighlighters()
+    destroyInnerHighlighters()
+    destroyOperations()
   }
 
   @RequiresEdt
-  public void destroy() {
-    destroyHighlighters();
-    destroyInnerHighlighters();
-    destroyOperations();
+  protected fun installHighlighters() {
+    assert(myHighlighters.isEmpty())
+
+    createHighlighter(ThreeSide.BASE)
+    if (isChange(Side.LEFT)) createHighlighter(ThreeSide.LEFT)
+    if (isChange(Side.RIGHT)) createHighlighter(ThreeSide.RIGHT)
   }
 
   @RequiresEdt
-  protected void installHighlighters() {
-    assert myHighlighters.isEmpty();
+  protected fun installInnerHighlighters() {
+    assert(myInnerHighlighters.isEmpty())
 
-    createHighlighter(ThreeSide.BASE);
-    if (isChange(Side.LEFT)) createHighlighter(ThreeSide.LEFT);
-    if (isChange(Side.RIGHT)) createHighlighter(ThreeSide.RIGHT);
+    createInnerHighlighter(ThreeSide.BASE)
+    if (isChange(Side.LEFT)) createInnerHighlighter(ThreeSide.LEFT)
+    if (isChange(Side.RIGHT)) createInnerHighlighter(ThreeSide.RIGHT)
   }
 
   @RequiresEdt
-  protected void installInnerHighlighters() {
-    assert myInnerHighlighters.isEmpty();
-
-    createInnerHighlighter(ThreeSide.BASE);
-    if (isChange(Side.LEFT)) createInnerHighlighter(ThreeSide.LEFT);
-    if (isChange(Side.RIGHT)) createInnerHighlighter(ThreeSide.RIGHT);
-  }
-
-  @RequiresEdt
-  protected void destroyHighlighters() {
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.dispose();
+  protected fun destroyHighlighters() {
+    for (highlighter in myHighlighters) {
+      highlighter.dispose()
     }
-    myHighlighters.clear();
+    myHighlighters.clear()
   }
 
   @RequiresEdt
-  protected void destroyInnerHighlighters() {
-    for (RangeHighlighter highlighter : myInnerHighlighters) {
-      highlighter.dispose();
+  protected fun destroyInnerHighlighters() {
+    for (highlighter in myInnerHighlighters) {
+      highlighter.dispose()
     }
-    myInnerHighlighters.clear();
+    myInnerHighlighters.clear()
   }
 
   @RequiresEdt
-  protected void installOperations() {
+  protected open fun installOperations() {
   }
 
   @RequiresEdt
-  protected void destroyOperations() {
-    for (DiffGutterOperation operation : myOperations) {
-      operation.dispose();
+  protected fun destroyOperations() {
+    for (operation in myOperations) {
+      operation.dispose()
     }
-    myOperations.clear();
+    myOperations.clear()
   }
 
-  public void updateGutterActions(boolean force) {
-    for (DiffGutterOperation operation : myOperations) {
-      operation.update(force);
+  fun updateGutterActions(force: Boolean) {
+    for (operation in myOperations) {
+      operation.update(force)
     }
   }
 
   //
   // Getters
   //
+  abstract fun getStartLine(side: ThreeSide): Int
 
-  public abstract int getStartLine(@NotNull ThreeSide side);
+  abstract fun getEndLine(side: ThreeSide): Int
 
-  public abstract int getEndLine(@NotNull ThreeSide side);
+  abstract fun isResolved(side: ThreeSide): Boolean
 
-  public abstract boolean isResolved(@NotNull ThreeSide side);
+  protected abstract fun getEditor(side: ThreeSide): Editor
 
-  protected abstract @NotNull Editor getEditor(@NotNull ThreeSide side);
+  protected abstract val innerFragments: MergeInnerDifferences?
 
-  protected abstract @Nullable MergeInnerDifferences getInnerFragments();
+  open val diffType: TextDiffType
+    get() = DiffUtil.getDiffType(this.conflictType)
 
-  public @NotNull TextDiffType getDiffType() {
-    return DiffUtil.getDiffType(myType);
+  val isConflict: Boolean
+    get() = conflictType.type == MergeConflictType.Type.CONFLICT
+
+  fun isChange(side: Side): Boolean {
+    return conflictType.isChange(side)
   }
 
-  public @NotNull MergeConflictType getConflictType() {
-    return myType;
-  }
-
-  public boolean isConflict() {
-    return myType.getType() == MergeConflictType.Type.CONFLICT;
-  }
-
-  public boolean isChange(@NotNull Side side) {
-    return myType.isChange(side);
-  }
-
-  public boolean isChange(@NotNull ThreeSide side) {
-    return myType.isChange(side);
+  fun isChange(side: ThreeSide): Boolean {
+    return conflictType.isChange(side)
   }
 
   //
   // Highlighters
   //
+  protected fun createHighlighter(side: ThreeSide) {
+    val editor = getEditor(side)
 
-  protected void createHighlighter(@NotNull ThreeSide side) {
-    Editor editor = getEditor(side);
+    val type = this.diffType
+    val startLine = getStartLine(side)
+    val endLine = getEndLine(side)
 
-    TextDiffType type = getDiffType();
-    int startLine = getStartLine(side);
-    int endLine = getEndLine(side);
-
-    boolean resolved = isResolved(side);
-    boolean ignored = !resolved && getInnerFragments() != null;
-    boolean shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT);
-    myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
-                            .withIgnored(ignored)
-                            .withResolved(resolved)
-                            .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
-                            .withHideStripeMarkers(side == ThreeSide.BASE)
-                            .done());
+    val resolved = isResolved(side)
+    val ignored = !resolved && this.innerFragments != null
+    val shouldHideWithoutLineNumbers = side == ThreeSide.BASE && !isChange(Side.LEFT) && isChange(Side.RIGHT)
+    myHighlighters.addAll(
+      LineHighlighterBuilder(editor, startLine, endLine, type)
+        .withIgnored(ignored)
+        .withResolved(resolved)
+        .withHideWithoutLineNumbers(shouldHideWithoutLineNumbers)
+        .withHideStripeMarkers(side == ThreeSide.BASE)
+        .done()
+    )
   }
 
-  protected void createInnerHighlighter(@NotNull ThreeSide side) {
-    if (isResolved(side)) return;
-    MergeInnerDifferences innerFragments = getInnerFragments();
-    if (innerFragments == null) return;
+  protected fun createInnerHighlighter(side: ThreeSide) {
+    if (isResolved(side)) return
+    val innerFragments = this.innerFragments
+    if (innerFragments == null) return
 
-    List<TextRange> ranges = innerFragments.get(side);
-    if (ranges == null) return;
+    val ranges = innerFragments.get(side)
+    if (ranges == null) return
 
-    Editor editor = getEditor(side);
-    int start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset();
-    for (TextRange fragment : ranges) {
-      int innerStart = start + fragment.getStartOffset();
-      int innerEnd = start + fragment.getEndOffset();
-      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, getDiffType()));
+    val editor = getEditor(side)
+    val start = DiffUtil.getLinesRange(editor.getDocument(), getStartLine(side), getEndLine(side)).getStartOffset()
+    for (fragment in ranges) {
+      val innerStart = start + fragment.getStartOffset()
+      val innerEnd = start + fragment.getEndOffset()
+      myInnerHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, innerStart, innerEnd, this.diffType))
     }
   }
 }

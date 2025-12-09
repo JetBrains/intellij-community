@@ -1,74 +1,78 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.merge;
+package com.intellij.diff.merge
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.openapi.util.BooleanGetter
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import javax.swing.Action
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.util.List;
-
-public interface MergeTool {
-  ExtensionPointName<MergeTool> EP_NAME = ExtensionPointName.create("com.intellij.diff.merge.MergeTool");
-
+interface MergeTool {
   /**
-   * Creates viewer for the given request. Clients should call {@link #canShow(MergeContext, MergeRequest)} first.
+   * Creates viewer for the given request. Clients should call [.canShow] first.
    */
   @RequiresEdt
-  @NotNull
-  MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request);
+  fun createComponent(context: MergeContext, request: MergeRequest): MergeViewer
 
-  boolean canShow(@NotNull MergeContext context, @NotNull MergeRequest request);
+  fun canShow(context: MergeContext, request: MergeRequest): Boolean
 
   /**
-   * Merge viewer should call {@link MergeContext#finishMerge(MergeResult)} when processing is over.
-   * <p>
-   * {@link MergeRequest#applyResult(MergeResult)} will be performed by the caller, so it shouldn't be called by MergeViewer directly.
+   * Merge viewer should call [MergeContext.finishMerge] when processing is over.
+   *
+   *
+   * [MergeRequest.applyResult] will be performed by the caller, so it shouldn't be called by MergeViewer directly.
    */
-  interface MergeViewer extends Disposable {
+  interface MergeViewer : Disposable {
     /**
-     * The component will be used for {@link com.intellij.openapi.actionSystem.ActionToolbar#setTargetComponent(JComponent)}
-     * and might want to implement {@link com.intellij.openapi.actionSystem.UiDataProvider} for {@link ToolbarComponents#toolbarActions}.
+     * The component will be used for [com.intellij.openapi.actionSystem.ActionToolbar.setTargetComponent]
+     * and might want to implement [com.intellij.openapi.actionSystem.UiDataProvider] for [ToolbarComponents.toolbarActions].
      */
-    @NotNull
-    JComponent getComponent();
+    @JvmField
+    val component: JComponent
 
-    @Nullable
-    JComponent getPreferredFocusedComponent();
+    @JvmField
+    val preferredFocusedComponent: JComponent?
 
     /**
      * @return Action that should be triggered on the corresponding action.
-     * <p/>
+     *
+     *
      * Typical implementation can perform some checks and either call finishMerge(result) or do nothing
-     * <p/>
+     *
+     *
      * return null if action is not available
      */
-    @Nullable
-    Action getResolveAction(@NotNull MergeResult result);
+    fun getResolveAction(result: MergeResult): Action?
 
     /**
-     * Should be called after adding {@link #getComponent()} to the components hierarchy.
+     * Should be called after adding [.getComponent] to the components hierarchy.
      */
-    @NotNull
     @RequiresEdt
-    ToolbarComponents init();
+    fun init(): ToolbarComponents
 
-    @Override
     @RequiresEdt
-    void dispose();
+    override fun dispose()
   }
 
   class ToolbarComponents {
-    public @Nullable List<AnAction> toolbarActions;
-    public @Nullable JComponent statusPanel;
+    @JvmField
+    var toolbarActions: MutableList<AnAction?>? = null
+
+    @JvmField
+    var statusPanel: JComponent? = null
 
     /**
      * return false if merge window should be prevented from closing and canceling resolve.
      */
-    public @Nullable BooleanGetter closeHandler;
+    @JvmField
+    var closeHandler: BooleanGetter? = null
+  }
+
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<MergeTool> = create<MergeTool>("com.intellij.diff.merge.MergeTool")
   }
 }

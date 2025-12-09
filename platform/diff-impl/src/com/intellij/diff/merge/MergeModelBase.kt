@@ -1,319 +1,294 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.merge;
+package com.intellij.diff.merge
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.LineRange;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.BasicUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.IntConsumer;
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.LineRange
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.SmartList
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
+import java.util.function.IntConsumer
+import kotlin.math.max
+import kotlin.math.min
 
 @ApiStatus.Internal
-public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
-  private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
+abstract class MergeModelBase<S : MergeModelBase.State?>(private val myProject: Project?, private val myDocument: Document) : Disposable {
+  private val myUndoManager: UndoManager?
 
-  private final @Nullable Project myProject;
-  private final @NotNull Document myDocument;
-  private final @Nullable UndoManager myUndoManager;
+  private val myStartLines: IntList = IntArrayList()
+  private val myEndLines: IntList = IntArrayList()
 
-  private final @NotNull IntList myStartLines = new IntArrayList();
-  private final @NotNull IntList myEndLines = new IntArrayList();
+  private val myChangesToUpdate: IntSet = IntOpenHashSet()
+  private var myBulkChangeUpdateDepth = 0
 
-  private final @NotNull IntSet myChangesToUpdate = new IntOpenHashSet();
-  private int myBulkChangeUpdateDepth;
+  @get:RequiresEdt
+  var isInsideCommand: Boolean = false
+    private set
 
-  private boolean myInsideCommand;
+  var isDisposed: Boolean = false
+    private set
 
-  private boolean myDisposed;
+  init {
+    myUndoManager = if (myProject != null) UndoManager.getInstance(myProject) else UndoManager.getGlobalInstance()
 
-  public MergeModelBase(@Nullable Project project, @NotNull Document document) {
-    myProject = project;
-    myDocument = document;
-    myUndoManager = myProject != null ? UndoManager.getInstance(myProject) : UndoManager.getGlobalInstance();
-
-    myDocument.addDocumentListener(new MyDocumentListener(), this);
+    myDocument.addDocumentListener(MergeModelBase.MyDocumentListener(), this)
   }
 
-  @Override
   @RequiresEdt
-  public void dispose() {
-    if (myDisposed) return;
-    myDisposed = true;
+  override fun dispose() {
+    if (this.isDisposed) return
+    this.isDisposed = true
 
-    LOG.assertTrue(myBulkChangeUpdateDepth == 0);
+    LOG.assertTrue(myBulkChangeUpdateDepth == 0)
 
-    myStartLines.clear();
-    myEndLines.clear();
+    myStartLines.clear()
+    myEndLines.clear()
   }
 
-  public boolean isDisposed() {
-    return myDisposed;
+  val changesCount: Int
+    get() = myStartLines.size
+
+  fun getLineStart(index: Int): Int {
+    return myStartLines.getInt(index)
   }
 
-  public int getChangesCount() {
-    return myStartLines.size();
+  fun getLineEnd(index: Int): Int {
+    return myEndLines.getInt(index)
   }
 
-  public int getLineStart(int index) {
-    return myStartLines.getInt(index);
-  }
+  fun setChanges(changes: MutableList<out LineRange>) {
+    myStartLines.clear()
+    myEndLines.clear()
 
-  public int getLineEnd(int index) {
-    return myEndLines.getInt(index);
-  }
-
-  public void setChanges(@NotNull List<? extends LineRange> changes) {
-    myStartLines.clear();
-    myEndLines.clear();
-
-    for (LineRange range : changes) {
-      myStartLines.add(range.start);
-      myEndLines.add(range.end);
+    for (range in changes) {
+      myStartLines.add(range.start)
+      myEndLines.add(range.end)
     }
   }
 
-  @RequiresEdt
-  public boolean isInsideCommand() {
-    return myInsideCommand;
+  private fun setLineStart(index: Int, line: Int) {
+    myStartLines.set(index, line)
   }
 
-  private void setLineStart(int index, int line) {
-    myStartLines.set(index, line);
-  }
-
-  private void setLineEnd(int index, int line) {
-    myEndLines.set(index, line);
+  private fun setLineEnd(index: Int, line: Int) {
+    myEndLines.set(index, line)
   }
 
   //
   // Repaint
   //
-
   @RequiresEdt
-  public void invalidateHighlighters(int index) {
+  fun invalidateHighlighters(index: Int) {
     if (myBulkChangeUpdateDepth > 0) {
-      myChangesToUpdate.add(index);
+      myChangesToUpdate.add(index)
     }
     else {
-      reinstallHighlighters(index);
+      reinstallHighlighters(index)
     }
   }
 
   @RequiresEdt
-  public void enterBulkChangeUpdateBlock() {
-    myBulkChangeUpdateDepth++;
+  fun enterBulkChangeUpdateBlock() {
+    myBulkChangeUpdateDepth++
   }
 
   @RequiresEdt
-  public void exitBulkChangeUpdateBlock() {
-    myBulkChangeUpdateDepth--;
-    LOG.assertTrue(myBulkChangeUpdateDepth >= 0);
+  fun exitBulkChangeUpdateBlock() {
+    myBulkChangeUpdateDepth--
+    LOG.assertTrue(myBulkChangeUpdateDepth >= 0)
 
     if (myBulkChangeUpdateDepth == 0) {
-      myChangesToUpdate.forEach((IntConsumer)index -> {
-        reinstallHighlighters(index);
-      });
-      myChangesToUpdate.clear();
-      postInstallHighlighters();
+      myChangesToUpdate.forEach(IntConsumer { index: Int ->
+        reinstallHighlighters(index)
+      })
+      myChangesToUpdate.clear()
+      postInstallHighlighters()
     }
   }
 
   @RequiresEdt
-  protected abstract void reinstallHighlighters(int index);
+  protected abstract fun reinstallHighlighters(index: Int)
 
   @RequiresEdt
-  protected void postInstallHighlighters() {
+  protected open fun postInstallHighlighters() {
   }
 
   //
   // Undo
   //
+  @RequiresEdt
+  protected abstract fun storeChangeState(index: Int): S?
 
   @RequiresEdt
-  protected abstract @Nullable S storeChangeState(int index);
-
-  @RequiresEdt
-  protected void restoreChangeState(@NotNull S state) {
-    setLineStart(state.myIndex, state.myStartLine);
-    setLineEnd(state.myIndex, state.myEndLine);
+  protected open fun restoreChangeState(state: S) {
+    setLineStart(state!!.myIndex, state.myStartLine)
+    setLineEnd(state.myIndex, state.myEndLine)
   }
 
   @RequiresEdt
-  protected @Nullable S processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
-    int line1 = getLineStart(index);
-    int line2 = getLineEnd(index);
+  protected open fun processDocumentChange(index: Int, oldLine1: Int, oldLine2: Int, shift: Int): S? {
+    val line1 = getLineStart(index)
+    val line2 = getLineEnd(index)
 
-    DiffUtil.UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
+    val newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift)
 
     // RangeMarker can be updated in a different way
-    boolean rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2);
+    val rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2)
 
-    boolean rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2);
-    if (rangeManuallyEdit && !isInsideCommand() && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
-      onRangeManuallyEdit(index);
+    val rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2)
+    if (rangeManuallyEdit && !this.isInsideCommand && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
+      onRangeManuallyEdit(index)
     }
 
-    S oldState = rangeAffected ? storeChangeState(index) : null;
+    val oldState = if (rangeAffected) storeChangeState(index) else null
 
-    setLineStart(index, newRange.startLine);
-    setLineEnd(index, newRange.endLine);
+    setLineStart(index, newRange.startLine)
+    setLineEnd(index, newRange.endLine)
 
-    return oldState;
+    return oldState
   }
 
   @ApiStatus.Internal
-  protected void onRangeManuallyEdit(int index) {
-
+  protected open fun onRangeManuallyEdit(index: Int) {
   }
 
-  private class MyDocumentListener implements DocumentListener {
-    @Override
-    public void beforeDocumentChange(@NotNull DocumentEvent e) {
-      if (isDisposed()) return;
-      enterBulkChangeUpdateBlock();
+  private inner class MyDocumentListener : DocumentListener {
+    override fun beforeDocumentChange(e: DocumentEvent) {
+      if (this.isDisposed) return
+      enterBulkChangeUpdateBlock()
 
-      if (getChangesCount() == 0) return;
+      if (this.changesCount == 0) return
 
-      LineRange lineRange = DiffUtil.getAffectedLineRange(e);
-      int shift = DiffUtil.countLinesShift(e);
+      val lineRange = DiffUtil.getAffectedLineRange(e)
+      val shift = DiffUtil.countLinesShift(e)
 
-      List<S> corruptedStates = new SmartList<>();
-      for (int index = 0; index < getChangesCount(); index++) {
-        S oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift);
-        if (oldState == null) continue;
+      val corruptedStates: MutableList<S?> = SmartList<S?>()
+      for (index in 0..<this.changesCount) {
+        val oldState = processDocumentChange(index, lineRange.start, lineRange.end, shift)
+        if (oldState == null) continue
 
-        invalidateHighlighters(index);
-        if (!isInsideCommand()) corruptedStates.add(oldState);
+        invalidateHighlighters(index)
+        if (!this.isInsideCommand) corruptedStates.add(oldState)
       }
 
       if (myUndoManager != null && !corruptedStates.isEmpty()) {
         // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
         // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-        myUndoManager.undoableActionPerformed(new MyUndoableAction(MergeModelBase.this, corruptedStates, true));
+        myUndoManager.undoableActionPerformed(MergeModelBase.MyUndoableAction(this@MergeModelBase, corruptedStates, true))
       }
     }
 
-    @Override
-    public void documentChanged(@NotNull DocumentEvent e) {
-      if (isDisposed()) return;
-      exitBulkChangeUpdateBlock();
+    override fun documentChanged(e: DocumentEvent) {
+      if (this.isDisposed) return
+      exitBulkChangeUpdateBlock()
     }
   }
 
 
-
-  public boolean executeMergeCommand(@Nullable @NlsContexts.Command String commandName,
-                                     @Nullable String commandGroupId,
-                                     @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                     boolean underBulkUpdate,
-                                     @Nullable IntList affectedChanges,
-                                     @NotNull Runnable task) {
-    IntList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
-    return DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
-      LOG.assertTrue(!myInsideCommand);
-
-      // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
-      // Undo actions are performed in backward order, while redo actions are performed in forward order.
-      // Thus we should register two UndoableActions.
-
-      myInsideCommand = true;
-      enterBulkChangeUpdateBlock();
-      try {
-        registerUndoRedo(true, allAffectedChanges);
+  fun executeMergeCommand(
+    @NlsContexts.Command commandName: @NlsContexts.Command String?,
+    commandGroupId: String?,
+    confirmationPolicy: UndoConfirmationPolicy,
+    underBulkUpdate: Boolean,
+    affectedChanges: IntList?,
+    task: Runnable,
+  ): Boolean {
+    val allAffectedChanges = if (affectedChanges != null) collectAffectedChanges(affectedChanges) else null
+    return DiffUtil.executeWriteCommand(
+      myProject,
+      myDocument,
+      commandName,
+      commandGroupId,
+      confirmationPolicy,
+      underBulkUpdate,
+      Runnable {
+        LOG.assertTrue(!this.isInsideCommand)
+        // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()
+        // Undo actions are performed in backward order, while redo actions are performed in forward order.
+        // Thus we should register two UndoableActions.
+        this.isInsideCommand = true
+        enterBulkChangeUpdateBlock()
         try {
-          task.run();
+          registerUndoRedo(true, allAffectedChanges)
+          try {
+            task.run()
+          }
+          finally {
+            registerUndoRedo(false, allAffectedChanges)
+          }
         }
         finally {
-          registerUndoRedo(false, allAffectedChanges);
+          exitBulkChangeUpdateBlock()
+          this.isInsideCommand = false
         }
-      }
-      finally {
-        exitBulkChangeUpdateBlock();
-        myInsideCommand = false;
-      }
-    });
+      })
   }
 
-  private void registerUndoRedo(boolean undo, @Nullable IntList affectedChanges) {
-    if (myUndoManager == null) return;
+  private fun registerUndoRedo(undo: Boolean, affectedChanges: IntList?) {
+    if (myUndoManager == null) return
 
-    List<S> states;
+    val states: MutableList<S?>?
     if (affectedChanges != null) {
-      states = new ArrayList<>(affectedChanges.size());
-      affectedChanges.forEach((IntConsumer)(index) -> {
-        states.add(storeChangeState(index));
-      });
+      states = ArrayList<S?>(affectedChanges.size)
+      affectedChanges.forEach(IntConsumer { index: Int ->
+        states.add(storeChangeState(index))
+      })
     }
     else {
-      states = new ArrayList<>(getChangesCount());
-      for (int index = 0; index < getChangesCount(); index++) {
-        states.add(storeChangeState(index));
+      states = ArrayList<S?>(this.changesCount)
+      for (index in 0..<this.changesCount) {
+        states.add(storeChangeState(index))
       }
     }
-    myUndoManager.undoableActionPerformed(new MyUndoableAction(this, states, undo));
+    myUndoManager.undoableActionPerformed(MergeModelBase.MyUndoableAction(this, states, undo))
   }
 
-  private static final class MyUndoableAction extends BasicUndoableAction {
-    private final @NotNull WeakReference<MergeModelBase<?>> myModelRef;
-    private final @NotNull List<? extends State> myStates;
-    private final boolean myUndo;
+  private class MyUndoableAction(model: MergeModelBase<*>, private val myStates: MutableList<out State>, private val myUndo: Boolean) :
+    BasicUndoableAction(model.myDocument) {
+    private val myModelRef: WeakReference<MergeModelBase<*>?>
 
-    MyUndoableAction(@NotNull MergeModelBase<?> model, @NotNull List<? extends State> states, boolean undo) {
-      super(model.myDocument);
-      myModelRef = new WeakReference<>(model);
-
-      myStates = states;
-      myUndo = undo;
+    init {
+      myModelRef = WeakReference<MergeModelBase<*>?>(model)
     }
 
-    @Override
-    public void undo() {
-      MergeModelBase<?> model = myModelRef.get();
-      if (model != null && myUndo) restoreStates(model);
+    override fun undo() {
+      val model = myModelRef.get()
+      if (model != null && myUndo) restoreStates(model)
     }
 
-    @Override
-    public void redo() {
-      MergeModelBase<?> model = myModelRef.get();
-      if (model != null && !myUndo) restoreStates(model);
+    override fun redo() {
+      val model = myModelRef.get()
+      if (model != null && !myUndo) restoreStates(model)
     }
 
-    private void restoreStates(@NotNull MergeModelBase model) {
-      if (model.isDisposed()) return;
-      if (model.getChangesCount() == 0) return;
+    fun restoreStates(model: MergeModelBase<*>) {
+      if (model.isDisposed) return
+      if (model.changesCount == 0) return
 
-      model.enterBulkChangeUpdateBlock();
+      model.enterBulkChangeUpdateBlock()
       try {
-        for (State state : myStates) {
-          //noinspection unchecked
-          model.restoreChangeState(state);
-          model.invalidateHighlighters(state.myIndex);
+        for (state in myStates) {
+          model.restoreChangeState(state)
+          model.invalidateHighlighters(state.myIndex)
         }
       }
       finally {
-        model.exitBulkChangeUpdateBlock();
+        model.exitBulkChangeUpdateBlock()
       }
     }
   }
@@ -321,127 +296,121 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   //
   // Actions
   //
-
   @RequiresWriteLock
-  public void replaceChange(int index, @NotNull List<? extends CharSequence> newContent) {
-    LOG.assertTrue(isInsideCommand());
-    int outputStartLine = getLineStart(index);
-    int outputEndLine = getLineEnd(index);
+  fun replaceChange(index: Int, newContent: MutableList<out CharSequence?>) {
+    LOG.assertTrue(this.isInsideCommand)
+    val outputStartLine = getLineStart(index)
+    val outputEndLine = getLineEnd(index)
 
-    DiffUtil.applyModification(myDocument, outputStartLine, outputEndLine, newContent);
+    DiffUtil.applyModification(myDocument, outputStartLine, outputEndLine, newContent)
 
     if (outputStartLine == outputEndLine) { // onBeforeDocumentChange() should process other cases correctly
-      int newOutputEndLine = outputStartLine + newContent.size();
-      moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
+      val newOutputEndLine = outputStartLine + newContent.size
+      moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine)
     }
   }
 
   @RequiresWriteLock
-  public void appendChange(int index, @NotNull List<? extends CharSequence> newContent) {
-    LOG.assertTrue(isInsideCommand());
-    int outputStartLine = getLineStart(index);
-    int outputEndLine = getLineEnd(index);
+  fun appendChange(index: Int, newContent: MutableList<out CharSequence?>) {
+    LOG.assertTrue(this.isInsideCommand)
+    val outputStartLine = getLineStart(index)
+    val outputEndLine = getLineEnd(index)
 
-    DiffUtil.applyModification(myDocument, outputEndLine, outputEndLine, newContent);
+    DiffUtil.applyModification(myDocument, outputEndLine, outputEndLine, newContent)
 
-    int newOutputEndLine = outputEndLine + newContent.size();
-    moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine);
+    val newOutputEndLine = outputEndLine + newContent.size
+    moveChangesAfterInsertion(index, outputStartLine, newOutputEndLine)
   }
 
   /*
-   * We want to include inserted block into change, so we are updating endLine(BASE).
-   *
-   * It could break order of changes if there are other changes that starts/ends at this line.
-   * So we should check all other changes and shift them if necessary.
-   */
-  private void moveChangesAfterInsertion(int index,
-                                         int newOutputStartLine,
-                                         int newOutputEndLine) {
-    LOG.assertTrue(isInsideCommand());
+ * We want to include inserted block into change, so we are updating endLine(BASE).
+ *
+ * It could break order of changes if there are other changes that starts/ends at this line.
+ * So we should check all other changes and shift them if necessary.
+ */
+  private fun moveChangesAfterInsertion(
+    index: Int,
+    newOutputStartLine: Int,
+    newOutputEndLine: Int,
+  ) {
+    LOG.assertTrue(this.isInsideCommand)
 
     if (getLineStart(index) != newOutputStartLine ||
-        getLineEnd(index) != newOutputEndLine) {
-      setLineStart(index, newOutputStartLine);
-      setLineEnd(index, newOutputEndLine);
-      invalidateHighlighters(index);
+        getLineEnd(index) != newOutputEndLine
+    ) {
+      setLineStart(index, newOutputStartLine)
+      setLineEnd(index, newOutputEndLine)
+      invalidateHighlighters(index)
     }
 
-    boolean beforeChange = true;
-    for (int otherIndex = 0; otherIndex < getChangesCount(); otherIndex++) {
-      int startLine = getLineStart(otherIndex);
-      int endLine = getLineEnd(otherIndex);
-      if (endLine < newOutputStartLine) continue;
-      if (startLine > newOutputEndLine) break;
+    var beforeChange = true
+    for (otherIndex in 0..<this.changesCount) {
+      val startLine = getLineStart(otherIndex)
+      val endLine = getLineEnd(otherIndex)
+      if (endLine < newOutputStartLine) continue
+      if (startLine > newOutputEndLine) break
       if (index == otherIndex) {
-        beforeChange = false;
-        continue;
+        beforeChange = false
+        continue
       }
 
-      int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : newOutputEndLine;
-      int newEndLine = beforeChange ? Math.min(endLine, newOutputStartLine) : Math.max(endLine, newOutputEndLine);
+      val newStartLine = if (beforeChange) min(startLine, newOutputStartLine) else newOutputEndLine
+      val newEndLine = if (beforeChange) min(endLine, newOutputStartLine) else max(endLine, newOutputEndLine)
       if (startLine != newStartLine || endLine != newEndLine) {
-        setLineStart(otherIndex, newStartLine);
-        setLineEnd(otherIndex, newEndLine);
-        invalidateHighlighters(otherIndex);
+        setLineStart(otherIndex, newStartLine)
+        setLineEnd(otherIndex, newEndLine)
+        invalidateHighlighters(otherIndex)
       }
     }
   }
 
   /*
-   * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
-   *
-   * null means all changes could be affected
-   */
+ * Nearby changes could be affected as well (ex: by moveChangesAfterInsertion)
+ *
+ * null means all changes could be affected
+ */
   @RequiresEdt
-  private @NotNull IntList collectAffectedChanges(@NotNull IntList directChanges) {
-    IntList result = new IntArrayList(directChanges.size());
+  private fun collectAffectedChanges(directChanges: IntList): IntList {
+    val result: IntList = IntArrayList(directChanges.size)
 
-    int directArrayIndex = 0;
-    int otherIndex = 0;
-    while (directArrayIndex < directChanges.size() && otherIndex < getChangesCount()) {
-      int directIndex = directChanges.getInt(directArrayIndex);
+    var directArrayIndex = 0
+    var otherIndex = 0
+    while (directArrayIndex < directChanges.size && otherIndex < this.changesCount) {
+      val directIndex = directChanges.getInt(directArrayIndex)
 
       if (directIndex == otherIndex) {
-        result.add(directIndex);
-        otherIndex++;
-        continue;
+        result.add(directIndex)
+        otherIndex++
+        continue
       }
 
-      int directStart = getLineStart(directIndex);
-      int directEnd = getLineEnd(directIndex);
-      int otherStart = getLineStart(otherIndex);
-      int otherEnd = getLineEnd(otherIndex);
+      val directStart = getLineStart(directIndex)
+      val directEnd = getLineEnd(directIndex)
+      val otherStart = getLineStart(otherIndex)
+      val otherEnd = getLineEnd(otherIndex)
 
       if (otherEnd < directStart) {
-        otherIndex++;
-        continue;
+        otherIndex++
+        continue
       }
       if (otherStart > directEnd) {
-        directArrayIndex++;
-        continue;
+        directArrayIndex++
+        continue
       }
 
-      result.add(otherIndex);
-      otherIndex++;
+      result.add(otherIndex)
+      otherIndex++
     }
 
-    LOG.assertTrue(directChanges.size() <= result.size());
-    return result;
+    LOG.assertTrue(directChanges.size <= result.size)
+    return result
   }
 
   //
   // Helpers
   //
-
-  public static class State {
-    public final int myIndex;
-    public final int myStartLine;
-    public final int myEndLine;
-
-    public State(int index, int startLine, int endLine) {
-      myIndex = index;
-      myStartLine = startLine;
-      myEndLine = endLine;
-    }
+  open class State(@JvmField val myIndex: Int, val myStartLine: Int, val myEndLine: Int)
+  companion object {
+    private val LOG = Logger.getInstance(MergeModelBase::class.java)
   }
 }

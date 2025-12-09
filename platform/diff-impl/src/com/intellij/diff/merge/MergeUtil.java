@@ -117,7 +117,7 @@ public final class MergeUtil {
       return customHandler.value(viewer);
     }
 
-    return !contentWasModified || showExitWithoutApplyingChangesDialog(viewer.getComponent(), request, context);
+    return !contentWasModified || showExitWithoutApplyingChangesDialog(viewer.component, request, context);
   }
 
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
