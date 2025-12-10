@@ -4,8 +4,8 @@ import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
-import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaLoader
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
+import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaHelper
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import kotlin.reflect.full.createInstance
@@ -13,14 +13,12 @@ import kotlin.reflect.full.createInstance
 private val logger = logger<InjectedLambda>()
 
 // TODO: Looks like JUnit test discovery and initialization should be reused here (probably from the monorepo source code)
-class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
-  : LambdaTestHost.Companion.NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
+class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor) :
+  LambdaTestHost.Companion.NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
 
-  override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any? {
-    val className: String = args.singleOrNull { it.key == "testClass" }?.value
-                            ?: error("Test class either not specified or specified multiple times. Args: $args")
-    val methodName: String = args.singleOrNull { it.key == "testMethod" }?.value
-                             ?: error("Test method either not specified or specified multiple times. Args: $args")
+  override suspend fun LambdaFrontendContext.lambda(args: LambdaRdTestActionParameters): Any? {
+    val className: String = args.testClass
+    val methodName: String = args.testMethod
 
     // Verify method exists by reading bytecode directly
     val methodInfo = findMethodInBytecode(className, methodName, plugin.pluginClassLoader!!)
@@ -28,8 +26,9 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
 
     val testClass = Class.forName(className, true, plugin.pluginClassLoader)
     val testContainer = testClass.kotlin.createInstance()
-    val serializedArgs = args.singleOrNull { it.key == "methodArguments" }?.value ?: ""
-    val methodArgs: List<Any> = deserializeArguments(serializedArgs, plugin.pluginClassLoader!!)
+    val methodArgs: List<Any> = args.methodArgumentssBase64.map {
+      SerializedLambdaHelper().decodeObject(it, plugin.pluginClassLoader!!) ?: error("Failed to deserialize argument $it")
+    }
 
     logger.info("Starting test $className#$methodName inside ${lambdaIdeContext::class.simpleName} with args: $methodArgs")
 
@@ -261,23 +260,5 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
       ((bytes[offset + 1].toInt() and 0xFF) shl 16) or
       ((bytes[offset + 2].toInt() and 0xFF) shl 8) or
       (bytes[offset + 3].toInt() and 0xFF)
-  }
-}
-
-internal fun serializeArguments(methodName: String, arguments: List<Any>): String {
-  if (arguments.isEmpty()) return ""
-
-  // Reuse the SerializedLambdaLoader.save() logic
-  val loader = SerializedLambdaLoader()
-  return loader.save(methodName, arguments)
-}
-
-internal fun deserializeArguments(serializedArgs: String, classLoader: ClassLoader): List<Any> {
-  if (serializedArgs.isEmpty()) return emptyList()
-
-  val inputStream = java.util.Base64.getDecoder().decode(serializedArgs).inputStream()
-  return SerializedLambdaLoader.ClassLoaderObjectInputStream(inputStream, classLoader).use { ois ->
-    @Suppress("UNCHECKED_CAST")
-    ois.readObject() as? List<Any> ?: error("Failed to deserialize arguments")
   }
 }

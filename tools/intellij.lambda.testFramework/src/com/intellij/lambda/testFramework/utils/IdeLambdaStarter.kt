@@ -10,7 +10,6 @@ import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType.*
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
 import com.intellij.remoteDev.util.executeSyncNonNullable
@@ -26,7 +25,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 object IdeLambdaStarter {
-  internal fun Map<String, String>.toLambdaParams(): List<LambdaRdKeyValueEntry> = map { LambdaRdKeyValueEntry(it.key, it.value) }
 
   fun IDETestContext.runIdeWithLambda(
     runTimeout: Duration = 10.minutes,

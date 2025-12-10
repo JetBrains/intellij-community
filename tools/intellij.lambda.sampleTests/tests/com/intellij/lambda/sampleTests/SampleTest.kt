@@ -57,6 +57,9 @@ class SampleTest {
         text
       }
 
+      assert(returnResult is String) { "Expected String, but got ${returnResult::class.java.name}"}
+      assert(returnResult == text) { "Expected '$text', but got '$returnResult'" }
+
       runInFrontend("Print serializable received from backend", listOf(returnResult)) { param ->
         thisLogger().warn("Got parameter: ${param.single()}")
         assert(param.single() == text) { "Expected '$text', but got '${param.single()}'" }

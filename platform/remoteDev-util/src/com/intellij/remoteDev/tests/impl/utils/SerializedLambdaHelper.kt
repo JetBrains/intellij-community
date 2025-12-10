@@ -1,8 +1,5 @@
 package com.intellij.remoteDev.tests.impl.utils
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.PathManager
-import com.intellij.remoteDev.tests.LambdaIdeContext
 import java.io.*
 import java.util.*
 import kotlin.io.inputStream
@@ -12,45 +9,30 @@ import kotlin.use
  * Executes a given lambda (it must be serializable) inside
  * IntelliJ-based IDE process with a special classloader,
  * where all classes of all plugins are visible.
- * 
- * https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
  */
-
-fun interface SuspendingSerializableConsumer<T : LambdaIdeContext, R: Any> : Serializable {
-  suspend fun T.runSerializedLambda(parameters: List<Serializable>): R
-}
 
 data class SerializedLambda(
   val clazzName: String,
   val methodName: String,
   val serializedDataBase64: String,
+  val parametersBase64: List<String>,
   val classPath: Set<File>,
-) {
-  companion object {
-    init {
-      System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
-    }
-
-    fun <T : LambdaIdeContext, R: Any> fromSuspendingSerializableConsumer(
-      name: String?,
-      lambdaConsumer: SuspendingSerializableConsumer<T, R>,
-    ): SerializedLambda {
-      return wrapLambda(name, lambdaConsumer)
-    }
-  }
-}
-
+)
 
 //this class is used from IntelliJ process
-class SerializedLambdaLoader {
-  fun save(name: String?, obj: Any): String = try {
+open class SerializedLambdaHelper {
+  init {
+    System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
+  }
+
+  fun serialize(obj: Serializable): String = try {
     ByteArrayOutputStream().use {
       ObjectOutputStream(it).writeObject(obj)
       Base64.getEncoder().encodeToString(it.toByteArray())
     }
   }
   catch (t: Throwable) {
-    throw Error("Failed to save/load the lambda${name?.let { " '$it'" }}. Most likely, " +
+    throw Error("Failed to save/load the lambda. Most likely, " +
                 "the current lambda was more complex and so Kotlin compiler decided " +
                 "to generate a more complicated constructor for a wrapper class. " +
                 "Try to add java.io.Serializable, simplify the code, cleanup variables from the closure, copy parameters to the local scope. ${t.message}",
@@ -67,40 +49,10 @@ class SerializedLambdaLoader {
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun <T : LambdaIdeContext, R: Any> load(
-    stringToDecode: String,
-    classLoader: ClassLoader = javaClass.classLoader,
-  ): SuspendingSerializableConsumer<T, R> {
-    return loadObjectAsSerializable(stringToDecode, classLoader) as? SuspendingSerializableConsumer<T, R>
-           ?: error("Failed to load Consumer<T : LambdaIdeContext> from the lambda")
-  }
-
-  fun loadObjectAsSerializable(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): Serializable? {
+  fun <R : Serializable> decodeObject(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): R? {
     val inputStream = Base64.getDecoder().decode(stringToDecode).inputStream()
     val obj = ClassLoaderObjectInputStream(inputStream, classLoader).readObject()
-    return obj as? Serializable
+    return obj as? Serializable as? R
   }
-}
-
-fun <T : LambdaIdeContext, R: Any> wrapLambda(name: String?, obj: SuspendingSerializableConsumer<T, R>): SerializedLambda {
-  val clazzPath = setOf(SerializedLambdaLoader::class.java, obj.javaClass, Application::class.java)
-    .mapNotNull { PathManager.getJarPathForClass(it) }
-    .map { File(it) }
-    .toSet()
-
-  val persistedLambda = SerializedLambdaLoader().save(name, obj)
-  val reloadedLambda = SerializedLambdaLoader().load<T, R>(persistedLambda)
-  require(reloadedLambda.javaClass == obj.javaClass) {
-    "The reloaded lambda should have the same type as the original one. " +
-    "Reloaded Type is ${reloadedLambda.javaClass.name}, expected type is ${obj.javaClass.name}"
-  }
-
-  return SerializedLambda(
-    clazzName = obj.javaClass.name,
-    methodName = "runSerializedLambda",
-    serializedDataBase64 = persistedLambda,
-    classPath = clazzPath
-  )
 }
 
