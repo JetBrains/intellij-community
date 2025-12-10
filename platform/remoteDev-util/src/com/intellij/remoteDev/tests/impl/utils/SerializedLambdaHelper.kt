@@ -16,8 +16,8 @@ import kotlin.use
  * https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html
  */
 
-fun interface SuspendingSerializableConsumer<T: LambdaIdeContext> : Serializable {
-  suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable
+fun interface SuspendingSerializableConsumer<T : LambdaIdeContext> : Serializable {
+  suspend fun runSerializedLambda(lambdaIdeContext: T, parameters: List<Serializable>): Serializable
 }
 
 data class SerializedLambda(
@@ -31,14 +31,16 @@ data class SerializedLambda(
       System.setProperty("sun.io.serialization.extendedDebugInfo", "true")
     }
 
-    inline fun <T : LambdaIdeContext> fromLambdaWithCoroutineScope(name: String?, crossinline code: suspend T.(List<Serializable>) -> Serializable): SerializedLambda {
-      val obj = object : SuspendingSerializableConsumer<T>, Serializable {
-        override suspend fun accept(lambdaIdeContext: T, parameters: List<Serializable>): Serializable {
-          return code(lambdaIdeContext, parameters)
-        }
-      }
+    inline fun <T : LambdaIdeContext> fromLambdaWithIdeContext(
+      name: String?,
+      crossinline serializedLambda: suspend T.(List<Serializable>) -> Serializable,
+    ): SerializedLambda {
 
-      return wrapLambda(name, obj)
+      return wrapLambda(name,
+                        SuspendingSerializableConsumer<T> { lambdaIdeContext, parameters ->
+                          serializedLambda(lambdaIdeContext,
+                                           parameters)
+                        })
     }
   }
 }
@@ -56,7 +58,8 @@ class SerializedLambdaLoader {
     throw Error("Failed to save/load the lambda${name?.let { " '$it'" }}. Most likely, " +
                 "the current lambda was more complex and so Kotlin compiler decided " +
                 "to generate a more complicated constructor for a wrapper class. " +
-                "Try to add java.io.Serializable, simplify the code, cleanup variables from the closure, copy parameters to the local scope. ${t.message}", t)
+                "Try to add java.io.Serializable, simplify the code, cleanup variables from the closure, copy parameters to the local scope. ${t.message}",
+                t)
   }
 
   class ClassLoaderObjectInputStream(
@@ -70,8 +73,12 @@ class SerializedLambdaLoader {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : LambdaIdeContext> load(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): SuspendingSerializableConsumer<T> {
-    return loadObject(stringToDecode, classLoader) as? SuspendingSerializableConsumer<T> ?: error("Failed to load Consumer<T : LambdaIdeContext> from the lambda")
+  fun <T : LambdaIdeContext> load(
+    stringToDecode: String,
+    classLoader: ClassLoader = javaClass.classLoader,
+  ): SuspendingSerializableConsumer<T> {
+    return loadObject(stringToDecode, classLoader) as? SuspendingSerializableConsumer<T>
+           ?: error("Failed to load Consumer<T : LambdaIdeContext> from the lambda")
   }
 
   fun loadObject(stringToDecode: String, classLoader: ClassLoader = javaClass.classLoader): Serializable {
@@ -96,7 +103,7 @@ fun <T : LambdaIdeContext> wrapLambda(name: String?, obj: SuspendingSerializable
 
   return SerializedLambda(
     clazzName = obj.javaClass.name,
-    methodName = obj::accept.name,
+    methodName = obj::runSerializedLambda.name,
     serializedDataBase64 = persistedLambda,
     classPath = clazzPath
   )

@@ -26,7 +26,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   ): Serializable {
     val protocol = this@run.protocol
                    ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
-    val exec = SerializedLambda.fromLambdaWithCoroutineScope(name, lambda)
+    val exec = SerializedLambda.fromLambdaWithIdeContext(name, lambda)
     val parametersBase64 = parameters.map { SerializedLambdaLoader().save(name, it) }
     val lambda = LambdaRdSerializedLambda("${protocol.name}: ${
       name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))

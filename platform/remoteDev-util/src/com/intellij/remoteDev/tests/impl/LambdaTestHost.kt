@@ -33,7 +33,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
-import java.io.Serializable
 import java.net.InetAddress
 import java.net.URLClassLoader
 import kotlin.coroutines.EmptyCoroutineContext
@@ -255,7 +254,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
                 SerializedLambdaLoader().let { loader ->
                   val params = lambda.parametersBase64.map { loader.loadObject(it, classLoader = cl) }
-                  val result = loader.load<LambdaIdeContext>(lambda.serializedDataBase64, classLoader = cl).accept(ideContext, params)
+                  val result = loader.load<LambdaIdeContext>(lambda.serializedDataBase64, classLoader = cl)
+                    .runSerializedLambda(ideContext, params)
                   loader.save(lambda.stepName, result)
                 }
               }
