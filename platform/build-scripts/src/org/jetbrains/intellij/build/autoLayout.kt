@@ -108,7 +108,7 @@ internal suspend fun computeModuleSourcesByContent(
       val descriptorFileName = contentModuleNameToDescriptorFileName(moduleName)
       var descriptorData = pluginCachedDescriptorContainer.getCachedFileData(descriptorFileName)
       if (descriptorData == null) {
-        descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, context = context)) {
+        descriptorData = requireNotNull(findUnprocessedDescriptorContent(module = module, path = descriptorFileName, provider = context)) {
           "$descriptorFileName not found in module $moduleName"
         }
         descriptorCacheWriter.put(descriptorFileName, descriptorData)

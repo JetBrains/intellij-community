@@ -4,50 +4,63 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.toByteArray
+import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isRegularFile
 
-internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHome: Path, val bazelOutputRoot: Path) : ModuleOutputProvider {
+internal class BazelModuleOutputProvider(
+  modules: List<JpsModule>,
+  private val projectHome: Path,
+  val bazelOutputRoot: Path,
+  scope: CoroutineScope,
+) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 
-  // cache for XML entries: module -> (entry name -> content)
-  private val moduleXmlCache = ConcurrentHashMap<JpsModule, Map<String, ByteArray>>()
+  // pool of opened ImmutableZipFile instances for efficient O(1) lookups
+  private val zipFileCache = AsyncCache<Path, ZipFile?>(scope)
+
+  private suspend fun getZipFile(file: Path): ZipFile? {
+    return zipFileCache.getOrPut(file) {
+      withContext(Dispatchers.IO) {
+        try {
+          ImmutableZipFile.load(file)
+        }
+        catch (e: IOException) {
+          if (Files.notExists(file)) {
+            return@withContext null
+          }
+          throw e
+        }
+      }
+    }
+  }
+
+  /**
+   * Suspend version of [readFileContentFromModuleOutput] using cached [ImmutableZipFile] instances.
+   */
+  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
+      getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
+    }
+    return null
+  }
 
   private val bazelTargetsMap: BazelCompilationContext.BazelTargetsInfo.TargetsFile by lazy {
     BazelCompilationContext.BazelTargetsInfo.loadBazelTargetsJson(projectHome)
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    if (!forTests && relativePath.endsWith(".xml")) {
-      moduleXmlCache.get(module)?.let {
-        return it.get(relativePath)
-      }
-
-      // build index of ALL XML entries from ALL production jars for this module
-      val entries = HashMap<String, ByteArray>()
-      for (moduleOutput in getModuleOutputRootsImpl(module, forTests = false)) {
-        if (Files.notExists(moduleOutput)) {
-          continue
-        }
-        readZipFile(moduleOutput) { name, data ->
-          if (name.endsWith(".xml")) {
-            if (entries.put(name, data().toByteArray()) != null) {
-              error("More than one '$name' file for module '${module.name}' in output roots")
-            }
-          }
-          ZipEntryProcessorResult.CONTINUE
-        }
-      }
-      moduleXmlCache.putIfAbsent(module, entries)
-      return entries.get(relativePath)
-    }
-
     val result = getModuleOutputRootsImpl(module, forTests).mapNotNull { moduleOutput ->
       if (Files.notExists(moduleOutput)) {
         return@mapNotNull null
@@ -125,29 +138,42 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHo
     return jars
   }
 
-  override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?): ByteArray? {
-    return findFileInAnyModuleOutput(modules = nameToModule.values, relativePath = relativePath, provider = this, moduleNamePrefix = moduleNamePrefix)
+  override suspend fun findFileInAnyModuleOutput(
+    relativePath: String,
+    moduleNamePrefix: String?,
+    processedModules: MutableSet<String>?,
+  ): ByteArray? {
+    return findFileInAnyModuleOutput(
+      modules = nameToModule.values,
+      relativePath = relativePath,
+      provider = this,
+      moduleNamePrefix = moduleNamePrefix,
+      processedModules = processedModules,
+    )
   }
 }
 
 /**
  * Searches for a file across module outputs.
  * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix followed by '.'.
+ * If [processedModules] is specified, skips modules already in the set and adds searched modules to it.
  */
-internal fun findFileInAnyModuleOutput(
+internal suspend fun findFileInAnyModuleOutput(
   modules: Iterable<JpsModule>,
   relativePath: String,
   provider: ModuleOutputProvider,
   moduleNamePrefix: String? = null,
+  processedModules: MutableSet<String>? = null,
 ): ByteArray? {
-  val filtered = if (moduleNamePrefix != null) {
-    modules.filter { it.name.startsWith("$moduleNamePrefix.") }
-  }
-  else {
-    modules
-  }
-  for (module in filtered) {
-    provider.readFileContentFromModuleOutput(module = module, relativePath = relativePath, forTests = false)?.let {
+  for (module in modules) {
+    val name = module.name
+    if (moduleNamePrefix != null && !name.startsWith("$moduleNamePrefix.")) {
+      continue
+    }
+    if (processedModules != null && !processedModules.add(name)) {
+      continue
+    }
+    provider.readFileContentFromModuleOutputAsync(module = module, relativePath = relativePath, forTests = false)?.let {
       return it
     }
   }

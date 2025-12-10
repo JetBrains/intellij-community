@@ -13,13 +13,13 @@ import java.util.concurrent.ConcurrentHashMap
  * Thread-safe async cache that deduplicates concurrent requests for the same key.
  *
  * **Important**: Both successful values AND failures are cached permanently.
- * If a loader throws an exception, that failed computation is cached, and all subsequent
+ * If a loader throws an exception, that failed computation is cached, and all later
  * calls for the same key will receive the same exception without retrying.
  *
  * This prevents expensive repeated computations and thundering herd scenarios when
  * operations fail.
  */
-internal class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
+class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
   private val cache = ConcurrentHashMap<K, Any>()
 
   @Suppress("UNCHECKED_CAST")

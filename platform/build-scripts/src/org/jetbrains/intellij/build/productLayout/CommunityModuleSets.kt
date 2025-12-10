@@ -37,13 +37,15 @@ object CommunityModuleSets {
     @Suppress("TestOnlyProblems")
     val projectRoot = Path.of(PathManager.getHomePathFor(CommunityModuleSets::class.java)!!)
 
-    generateAllModuleSets(
-      obj = CommunityModuleSets,
-      outputDir = projectRoot.resolve("community/platform/platform-resources/generated/META-INF"),
-      label = "community",
-      projectRoot = projectRoot,
-      moduleOutputProvider = createModuleOutputProvider(projectRoot)
-    )
+    kotlinx.coroutines.runBlocking {
+      generateAllModuleSets(
+        obj = CommunityModuleSets,
+        outputDir = projectRoot.resolve("community/platform/platform-resources/generated/META-INF"),
+        label = "community",
+        projectRoot = projectRoot,
+        moduleOutputProvider = createModuleOutputProvider(projectRoot, this)
+      )
+    }
   }
 
   // region Essential and Debugger

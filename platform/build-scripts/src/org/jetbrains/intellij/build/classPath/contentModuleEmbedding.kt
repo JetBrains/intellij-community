@@ -257,7 +257,7 @@ private fun resolveContentModuleDescriptor(
   val data = descriptorCache.getCachedFileData(descriptorFilename)
   val element = if (data == null) {
     val jpsModuleName = moduleName.substringBeforeLast('/')
-    val data = requireNotNull(findUnprocessedDescriptorContent(module = context.findRequiredModule(jpsModuleName), path = descriptorFilename, context = context)) {
+    val data = requireNotNull(findUnprocessedDescriptorContent(module = context.findRequiredModule(jpsModuleName), path = descriptorFilename, provider = context)) {
       "Cannot find file $descriptorFilename in module $jpsModuleName"
     }
     descriptorCache.putIfAbsent(descriptorFilename, data)

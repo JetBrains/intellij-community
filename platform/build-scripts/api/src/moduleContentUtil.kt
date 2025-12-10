@@ -23,16 +23,16 @@ const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
 val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 fun getUnprocessedPluginXmlContent(module: JpsModule, context: ModuleOutputProvider): ByteArray {
-  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, context = context)) {
+  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, provider = context)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
 }
 
-fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: ModuleOutputProvider): ByteArray? {
+fun findUnprocessedDescriptorContent(module: JpsModule, path: String, provider: ModuleOutputProvider): ByteArray? {
   try {
-    val result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+    val result = provider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
     if (result == null && useTestSourceEnabled) {
-      return context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+      return provider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
     }
     return result
   }
@@ -83,8 +83,8 @@ fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String,
   return null
 }
 
-fun findProductModulesFile(clientMainModuleName: String, context: ModuleOutputProvider): Path? {
-  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
+fun findProductModulesFile(clientMainModuleName: String, provider: ModuleOutputProvider): Path? {
+  return findFileInModuleSources(provider.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
 fun findFileInModuleDependencies(
@@ -101,7 +101,7 @@ fun findFileInModuleDependencies(
   return findFileInModuleDependenciesRecursive(
     module = module,
     relativePath = relativePath,
-    context = context,
+    provider = context,
     processedModules = processedModules,
     recursiveModuleExclude = recursiveModuleExclude,
   )
@@ -110,9 +110,9 @@ fun findFileInModuleDependencies(
 private fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
-  context: ModuleOutputProvider,
+  provider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
-  recursiveModuleExclude: String?,
+  recursiveModuleExclude: String? = null,
 ): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency !is JpsModuleDependency) {
@@ -124,8 +124,8 @@ private fun findFileInModuleDependenciesRecursive(
       continue
     }
 
-    val dependentModule = context.findRequiredModule(moduleName)
-    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, context = context)?.let {
+    val dependentModule = provider.findRequiredModule(moduleName)
+    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, provider = provider)?.let {
       return it
     }
 
@@ -134,12 +134,36 @@ private fun findFileInModuleDependenciesRecursive(
       findFileInModuleDependenciesRecursive(
         module = dependentModule,
         relativePath = relativePath,
-        context = context,
+        provider = provider,
         recursiveModuleExclude = recursiveModuleExclude,
         processedModules = processedModules,
       )?.let {
         return it
       }
+    }
+  }
+  return null
+}
+
+suspend fun findFileInModuleDependenciesRecursiveAsync(
+  module: JpsModule,
+  relativePath: String,
+  provider: ModuleOutputProvider,
+  processedModules: MutableSet<String>,
+): ByteArray? {
+  for (dependency in module.dependenciesList.dependencies) {
+    if (dependency !is JpsModuleDependency) {
+      continue
+    }
+
+    val moduleName = dependency.moduleReference.moduleName
+    if (!processedModules.add(moduleName)) {
+      continue
+    }
+
+    val dependentModule = provider.findRequiredModule(moduleName)
+    provider.readFileContentFromModuleOutputAsync(dependentModule, relativePath)?.let {
+      return it
     }
   }
   return null

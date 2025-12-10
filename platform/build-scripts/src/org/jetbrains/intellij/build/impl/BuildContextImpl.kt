@@ -457,7 +457,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
-    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, context = this)
+    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = this)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {

@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -34,9 +36,9 @@ import kotlin.io.path.pathString
 class BazelCompilationContext(
   private val delegate: CompilationContext,
 ) : CompilationContext {
-
   private val moduleOutputProvider by lazy {
-    BazelModuleOutputProvider(delegate.project.modules, delegate.paths.projectHome, bazelOutputRoot!!)
+    @OptIn(DelicateCoroutinesApi::class)
+    BazelModuleOutputProvider(modules = delegate.project.modules, projectHome = delegate.paths.projectHome, bazelOutputRoot = bazelOutputRoot!!, scope = GlobalScope)
   }
 
   override val options: BuildOptions
