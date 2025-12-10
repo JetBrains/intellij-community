@@ -366,10 +366,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private void updateFoldingOutlineVisibility() {
+    var service = EditorSettingsExternalizable.getInstance();
+    var isFoldingOutlineShownOnlyOnHover = service != null && service.isFoldingOutlineShownOnlyOnHover();
+
     myAlphaContext.setVisible(
       !ExperimentalUI.isNewUI() ||
       myHovered ||
-      !EditorSettingsExternalizable.getInstance().isFoldingOutlineShownOnlyOnHover()
+      !isFoldingOutlineShownOnlyOnHover
     );
   }
 
