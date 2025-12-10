@@ -14,4 +14,6 @@ echo "Bazel output base: $output_base"
 ./bazel-build-all-community.cmd
 
 cd "$script_dir/../platform/build-scripts/bazel"
-exec /bin/bash "../../../bazel.cmd" run "$@" //:jps-to-bazel -- "--assert-all-outputs-exist-with-output-base=$output_base"
+exec /bin/bash "../../../bazel.cmd" run "$@" //:jps-to-bazel -- \
+  "--assert-all-library-roots-exist-with-output-base=$output_base" \
+  --assert-all-module-outputs-exist

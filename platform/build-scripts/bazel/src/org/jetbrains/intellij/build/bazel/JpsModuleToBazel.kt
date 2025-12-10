@@ -41,6 +41,7 @@ internal class JpsModuleToBazel {
       var runWithoutUltimateRoot = System.getenv(RUN_WITHOUT_ULTIMATE_ROOT_ENV) ?: "false"
       var defaultCustomModules = "true"
       var bazelOutputBase: Path? = null
+      var assertAllModuleOutputsExist = false
       var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
 
       for (arg in args) {
@@ -51,12 +52,13 @@ internal class JpsModuleToBazel {
             workspaceDir = arg.substringAfter("=")
           arg.startsWith("--default-custom-modules=") ->
             defaultCustomModules = arg.substringAfter("=")
-          arg.startsWith("--assert-all-outputs-exist-with-output-base=") -> {
+          arg.startsWith("--assert-all-library-roots-exist-with-output-base=") -> {
             bazelOutputBase = Path.of(arg.substringAfter("="))
             check(bazelOutputBase.isAbsolute) { "Output base $bazelOutputBase must be absolute" }
             check(bazelOutputBase.normalize() == bazelOutputBase) { "Output base $bazelOutputBase must be normalized" }
             check(bazelOutputBase.exists()) { "Output base $bazelOutputBase must exist" }
           }
+          arg == "--assert-all-module-outputs-exist" -> assertAllModuleOutputsExist = true
           arg.startsWith("--m2-repo=") ->
             m2Repo = arg.substringAfter("=")
           else -> error("Unknown argument: $arg")
@@ -137,19 +139,9 @@ internal class JpsModuleToBazel {
         )
       }
 
-      val communityTargetsFile = communityRoot.resolve("build/bazel-targets.json")
-      saveTargets(
-        file = communityTargetsFile,
-        targets = communityResult.moduleTargets,
-        moduleList = moduleList,
-        libs = generator.communityOnlyLibraries,
-        communityRoot = communityRoot,
-        ultimateRoot = null,
-        projectRoot = communityRoot,
-        bazelOutputBase = if (bazelWorkspaceRoot == communityRoot) bazelOutputBase else null,
-      )
-
       if (ultimateRoot != null) {
+        check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == ultimateRoot) { "Bazel workspace ($bazelWorkspaceRoot) root must be ultimate root ($ultimateRoot)" }
+
         val ultimateTargetsFile = ultimateRoot.resolve("build/bazel-targets.json")
         saveTargets(
           file = ultimateTargetsFile,
@@ -159,7 +151,24 @@ internal class JpsModuleToBazel {
           communityRoot = communityRoot,
           ultimateRoot = ultimateRoot,
           projectRoot = ultimateRoot,
+          assertAllModuleOutputsExist = assertAllModuleOutputsExist,
           bazelOutputBase = if (bazelWorkspaceRoot == ultimateRoot) bazelOutputBase else null,
+        )
+      }
+      else {
+        check(bazelWorkspaceRoot == null || bazelWorkspaceRoot == communityRoot) { "Bazel workspace root ($bazelWorkspaceRoot) must be community root ($communityRoot)" }
+
+        val communityTargetsFile = communityRoot.resolve("build/bazel-targets.json")
+        saveTargets(
+          file = communityTargetsFile,
+          targets = communityResult.moduleTargets,
+          moduleList = moduleList,
+          libs = generator.communityOnlyLibraries,
+          communityRoot = communityRoot,
+          ultimateRoot = null,
+          projectRoot = communityRoot,
+          assertAllModuleOutputsExist = assertAllModuleOutputsExist,
+          bazelOutputBase = if (bazelWorkspaceRoot == communityRoot) bazelOutputBase else null,
         )
       }
     }
@@ -217,7 +226,8 @@ internal class JpsModuleToBazel {
       communityRoot: Path,
       ultimateRoot: Path?,
       projectRoot: Path,
-      bazelOutputBase: Path?
+      assertAllModuleOutputsExist: Boolean,
+      bazelOutputBase: Path?,
     ) {
       @Serializable
       data class LibraryDescription(
@@ -309,6 +319,16 @@ internal class JpsModuleToBazel {
         }
       }
 
+      // When generating community-only file (ultimateRoot == null), strip the external/community+/ prefix
+      // because community is the main workspace, not an external repository
+      fun adjustJarPath(path: String): String {
+        return if (ultimateRoot == null) {
+          path.replace("external/community+/", "")
+        } else {
+          path
+        }
+      }
+
       val skippedModules = moduleList.skippedModules
       val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
       val module2Libraries = libs
@@ -322,13 +342,20 @@ internal class JpsModuleToBazel {
             val moduleName = moduleTarget.moduleDescriptor.module.name
             moduleName to TargetsFileModuleDescription(
               productionTargets = moduleTarget.productionTargets,
-              productionJars = moduleTarget.productionJars,
+              productionJars = moduleTarget.productionJars.map { adjustJarPath(it) },
               testTargets = moduleTarget.testTargets,
-              testJars = moduleTarget.testJars,
+              testJars = moduleTarget.testJars.map { adjustJarPath(it) },
               exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
               moduleLibraries = module2Libraries[moduleName]
                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
-            )
+            ).also {
+              if (assertAllModuleOutputsExist) {
+                for (outputPath in it.productionJars + it.testJars) {
+                  val absolutePath = projectRoot.resolve(outputPath)
+                  check(absolutePath.exists()) { "Production target output does not exist: $absolutePath" }
+                }
+              }
+            }
           } + skippedModules.associateWith { emptyModule },
           projectLibraries = libs.asSequence().mapNotNull {
             if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
