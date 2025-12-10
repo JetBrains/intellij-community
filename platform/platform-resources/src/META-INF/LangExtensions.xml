@@ -820,7 +820,7 @@
     <search.topHitProvider implementation="com.intellij.application.options.editor.CodeFoldingOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding"
                            key="group.code.folding" bundle="messages.ApplicationBundle"/>
-    <editorOptionsProvider dynamic="true" instance="com.intellij.application.options.CompletionConfigurable" id="editor.preferences.completion"
+    <editorOptionsProvider dynamic="true" instance="com.intellij.application.options.editor.completion.CompletionConfigurable" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
     <!-- Editor | Code Completion subpages registered via EP instead of direct instantiation -->
     <editorCompletionConfigurable

@@ -1,17 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application.options
+package com.intellij.application.options.editor.completion
 
+import com.intellij.application.options.EditorCompletionConfigurableEP
 import com.intellij.application.options.editor.EditorOptionsProvider
+import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.JComponent
 
 private val EP_NAME = ExtensionPointName<EditorCompletionConfigurableEP>("com.intellij.editorCompletionConfigurable")
 
@@ -42,9 +44,31 @@ internal class CompletionConfigurable : BoundCompositeSearchableConfigurable<Unn
   override fun hasOwnContent(): Boolean = true
 
   override fun createPanel(): DialogPanel = panel {
+    row {
+      label(CompletionMessageBundle.message("completion.description.label"))
+    }
+    indent {
+      createConfigurableLinkPanel()
+    }
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
     }
+  }
+
+
+  private fun Panel.createConfigurableLinkPanel(): Panel = panel {
+    allConfigurables.filterIsInstance<BoundConfigurable>().forEach { configurable ->
+      row {
+         link(configurable.displayName) { e ->
+          val component = e.source as? JComponent ?: return@link
+          openLink(component, configurable) }
+      }
+    }
+  }
+
+  private fun openLink(mainPanel: JComponent, configurable: Configurable) {
+    val dataContext = DataManager.getInstance().getDataContext(mainPanel)
+    Settings.KEY.getData(dataContext)?.select(configurable)
   }
 
   companion object {
