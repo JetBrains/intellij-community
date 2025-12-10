@@ -81,8 +81,11 @@ object SeActionPresentationProvider {
         presentation = presentation.run { copy(shortcut = it) }
       }
 
-      val decoratedText = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val decoratedText: String = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
+      } ?: run {
+        SeLog.log(ITEM_EMIT) { "Couldn't generate an action presentation. Action text is null: ${matchedValue.value}" }
+        ""
       }
       val displayText = if (decoratedText.startsWith("<html>")) StringUtil.removeHtmlTags(decoratedText) else decoratedText
 
