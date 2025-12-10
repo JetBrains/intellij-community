@@ -5,7 +5,9 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.python.externalIndex.PyExternalFilesIndexService
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -18,7 +20,9 @@ internal open class InstallPackageQuickFix(open val packageName: String) : Local
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val sdk = PythonSdkUtil.findPythonSdk(descriptor.psiElement) ?: return
+    val sdk = PythonSdkUtil.findPythonSdk(descriptor.psiElement)
+              ?: project.service<PyExternalFilesIndexService>().findSdkForExternallyIndexedFile(descriptor.psiElement.containingFile.virtualFile)
+              ?: return
     PyPackageCoroutine.launch(project) {
       PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(listOf(packageName)) ?: return@launch
       onSuccess(descriptor)

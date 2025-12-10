@@ -101,6 +101,13 @@ class PyExternalFilesIndexService(private val project: Project, private val coro
     }
   }
 
+  fun findSdkForExternallyIndexedFile(file: VirtualFile): Sdk? {
+    if (!isFileAddedToNonProjectIndex(file)) {
+      return null
+    }
+    return ProjectRootManager.getInstance(project).getProjectSdk()
+  }
+
   fun isFileAddedToNonProjectIndex(file: VirtualFile): Boolean {
     val virtualFileManager = project.workspaceModel.getVirtualFileUrlManager()
     val storage = project.workspaceModel.currentSnapshot
