@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.StackOverflowPreventedException;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -3726,6 +3728,95 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        def bar(cls) -> Self:
                            return cls()
                    """);
+  }
+
+  // PY-85997
+  public void testBuiltinMapTypeIsIterator() {
+    //RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTestByText("""
+                   from typing import Iterator
+                   
+                   
+                   def foo() -> Iterator[str]:
+                       return map(str, range(5))
+                   """);
+  }
+
+  // PY-85997
+  public void testRecursiveIteratorProtocol() {
+    //RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    // It simulates how the `builtins.map` type is declared using Self.
+    doTestByText("""
+                   from typing import Iterator, Self
+                   
+                   class MyIterable[T]:
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> Self: ...
+                   
+                   ys: MyIterable[str]
+                   xs: Iterator[str] = ys
+                   """);
+  }
+
+  public void testIdenticalGenericProtocolAndImplementationUsingSelf() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    doTestByText("""
+                   
+                   from typing import Self, Protocol
+                   
+                   class MyProtocol[T](Protocol):
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> Self: ...
+                   
+                   class MyIterable[T]:
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> Self: ...
+                   
+                   ys: MyIterable[str] = MyIterable[str]()
+                   xs: MyProtocol[str] = ys
+                   """);
+  }
+
+  // PY-85997
+  public void testRecursiveProtocolAndImplementationUsingSelf() {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+      doTestByText("""
+                   from typing import Self, Protocol
+                   
+                   class MyProtocol[T](Protocol):
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> MyProtocol[T]: ...
+                   
+                   class MyIterable[T]:
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> Self: ...
+                   
+                   ys: MyIterable[str] = MyIterable[str]()
+                   xs: MyProtocol[str] = ys
+                   """);
+    });
+  }
+
+  // PY-85997
+  public void testRecursiveProtocolAndImplementationReferringToItself() {
+    fixme("Recursive protocol definitions cause infinite recursion during matching", StackOverflowPreventedException.class, () -> {
+      RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+      doTestByText("""
+                   from typing import Self, Protocol
+                   
+                   class MyProtocol[T](Protocol):
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> MyProtocol[T]: ...
+                   
+                   class MyIterable[T]:
+                       def __next__(self) -> T: ...
+                       def __iter__(self) -> MyIterable[T]: ...
+                   
+                   ys: MyIterable[str] = MyIterable[str]()
+                   xs: MyProtocol[str] = ys
+                   """);
+    });
   }
 }
 
