@@ -3,7 +3,10 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -66,7 +69,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun toolWindowShown(toolWindow: ToolWindow) {
         if (toolWindow.id == TerminalToolWindowFactory.TOOL_WINDOW_ID) {
-          coroutineScope.launch(Dispatchers.UiWithModelAccess) {
+          coroutineScope.launch(Dispatchers.EDT) {
             createNewTabIfEmpty(toolWindow)
           }
         }
@@ -159,7 +162,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       terminal.sessionState.collect { state ->
         if (state == TerminalViewSessionState.Terminated) {
           // Execute in the manager scope, because closing of the tab may dispose the content and cancel the current coroutine.
-          coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+          coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             if (TerminalOptionsProvider.instance.closeSessionOnLogout) {
               val tab = findTabByContent(content) ?: return@launch
               closeTab(tab)
@@ -178,7 +181,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     // Let's try to hide the tool window tab right on terminal scope cancellation,
     // but do not store strong reference to the content to avoid leaks.
     val tabReference = WeakReference(content)
-    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       val content = tabReference.get() ?: return@awaitCancellationAndInvoke
       val manager = content.manager ?: return@awaitCancellationAndInvoke
       manager.removeContent(content, true)
@@ -383,7 +386,7 @@ internal class TerminalToolWindowTabsManagerImpl(
         val tabs: List<TerminalSessionTab> = durable {
           TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
         }
-        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           restoreTabs(tabs, manager)
         }
       }

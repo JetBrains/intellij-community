@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.asDisposable
@@ -47,7 +47,7 @@ class TerminalLookupPrefixUpdater private constructor(
       }
     })
 
-    coroutineScope.launch(Dispatchers.UiWithModelAccess) {
+    coroutineScope.launch(Dispatchers.EDT) {
       for (request in prefixUpdateRequests) {
         // Logic inside can attempt to close the lookup.
         // In this case the coroutine will be canceled.
