@@ -23,19 +23,16 @@ import java.util.Set;
  * A simple completion item to insert text with an optional tail.
  */
 @NotNullByDefault
-public final class CommonCompletionItem extends PsiUpdateCompletionItem {
-  private final String myText;
+public final class CommonCompletionItem extends PsiUpdateCompletionItem<Object> {
   private final Set<String> myAdditionalStrings;
-  private final Object myObject;
   private final ModCompletionItemPresentation myPresentation;
   private final ModNavigatorTailType myTail;
   private final InsertionAwareUpdateHandler myAdditionalUpdater;
   private final AutoCompletionPolicy myPolicy;
   private final double myPriority;
 
-  public CommonCompletionItem(@NlsSafe String text) { 
-    myText = text; 
-    myObject = text;
+  public CommonCompletionItem(@NlsSafe String text) {
+    super(text, text);
     myPresentation = new ModCompletionItemPresentation(MarkupText.plainText(text));
     myAdditionalStrings = Set.of();
     myTail = (ModNavigatorTailType)TailTypes.noneType();
@@ -47,9 +44,8 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, ModCompletionItemPresentation presentation,
                                ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater,
                                AutoCompletionPolicy policy) {
-    myText = text;
+    super(text, object);
     myAdditionalStrings = additionalStrings;
-    myObject = object;
     myPresentation = presentation;
     myTail = tail;
     myPriority = priority;
@@ -62,7 +58,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given tail type
    */
   public CommonCompletionItem withTail(ModNavigatorTailType tail) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, tail, myPriority,
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, tail, myPriority,
                                     myAdditionalUpdater, myPolicy);
   }
 
@@ -79,7 +75,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given presentation
    */
   public CommonCompletionItem withPresentation(ModCompletionItemPresentation presentation) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, presentation, myTail, myPriority,
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), presentation, myTail, myPriority,
                                     myAdditionalUpdater, myPolicy);
   }
 
@@ -88,7 +84,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given context object
    */
   public CommonCompletionItem withObject(Object object) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, object, myPresentation, myTail, myPriority,
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, object, myPresentation, myTail, myPriority,
                                     myAdditionalUpdater, myPolicy);
   }
 
@@ -97,7 +93,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given priority
    */
   public CommonCompletionItem withPriority(double priority) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, priority,
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, priority,
                                     myAdditionalUpdater, myPolicy);
   }
 
@@ -107,7 +103,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(InsertionAwareUpdateHandler updater) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater, myPolicy);
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy);
   }
 
   /**
@@ -115,7 +111,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(UpdateHandler updater) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater, myPolicy);
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority, updater, myPolicy);
   }
 
   /**
@@ -132,7 +128,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given additional lookup string (previously added strings are not removed)
    */
   public CommonCompletionItem addLookupString(String string) {
-    return new CommonCompletionItem(myText, StreamEx.of(myAdditionalStrings).append(string).toSet(), myObject, myPresentation, myTail,
+    return new CommonCompletionItem(mainLookupString(), StreamEx.of(myAdditionalStrings).append(string).toSet(), contextObject(), myPresentation, myTail,
                                     myPriority, myAdditionalUpdater, myPolicy);
   }
 
@@ -141,18 +137,8 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given completion policy
    */
   public CommonCompletionItem withAutoCompletionPolicy(AutoCompletionPolicy policy) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority,
+    return new CommonCompletionItem(mainLookupString(), myAdditionalStrings, contextObject(), myPresentation, myTail, myPriority,
                                     myAdditionalUpdater, policy);
-  }
-
-  @Override
-  public String mainLookupString() {
-    return myText;
-  }
-
-  @Override
-  public Object contextObject() {
-    return myObject;
   }
 
   @Override

@@ -11,9 +11,29 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 /**
  * A {@link ModCompletionItem} that performs an update via {@link ModCommand#psiUpdate} API. The overwrite mode is handled automatically.
+ * 
+ * @param <T> type of context object
  */
 @NotNullByDefault
-public abstract class PsiUpdateCompletionItem implements ModCompletionItem {
+public abstract class PsiUpdateCompletionItem<T> implements ModCompletionItem {
+  private final String myLookupString;
+  private final T myContext;
+
+  protected PsiUpdateCompletionItem(String lookupString, T context) {
+    myLookupString = lookupString;
+    myContext = context; 
+  }
+
+  @Override
+  public T contextObject() {
+    return myContext;
+  }
+
+  @Override
+  public String mainLookupString() {
+    return myLookupString;
+  }
+
   @Override
   public ModCommand perform(ActionContext actionContext, InsertionContext insertionContext) {
     String lookupString = mainLookupString();
