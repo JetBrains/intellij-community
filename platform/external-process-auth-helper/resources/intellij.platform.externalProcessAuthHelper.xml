@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
@@ -9,7 +9,7 @@
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.impl"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="com.intellij.externalProcessAuthHelper.NativeSshExternalProcessRest"/>
   </extensions>

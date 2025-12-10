@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
@@ -23,7 +21,7 @@ import java.nio.file.Path
  * Determines product category based on module sets included in the content spec.
  * 
  * @param contentSpec Product's module content specification
- * @return ProductCategory based on which core module sets are used
+ * @return ProductCategory, based on which core module sets are used
  */
 private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): ProductCategory {
   if (contentSpec == null) return ProductCategory.BACKEND
@@ -76,7 +74,7 @@ fun parseJsonArgument(arg: String): JsonFilter? {
  * @param projectRoot Project root path
  * @param generateXmlImpl Lambda to generate XML files (default mode implementation)
  */
-fun runModuleSetMain(
+suspend fun runModuleSetMain(
   args: Array<String>,
   communityModuleSets: List<ModuleSet>,
   ultimateModuleSets: List<ModuleSet>,
@@ -85,7 +83,7 @@ fun runModuleSetMain(
   ultimateSourceFile: String?,
   projectRoot: Path,
   generateXmlImpl: suspend (moduleOutputProvider: ModuleOutputProvider) -> Unit,
-): Unit = runBlocking(Dispatchers.Default) {
+) {
   withoutTracer {
     // Parse `--json` arg with optional filter
     val jsonArg = args.firstOrNull { it.startsWith("--json") }

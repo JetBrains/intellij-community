@@ -1,5 +1,5 @@
 <idea-plugin>
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.libraries.commons.text"/>
@@ -7,5 +7,5 @@
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.lucene.common"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

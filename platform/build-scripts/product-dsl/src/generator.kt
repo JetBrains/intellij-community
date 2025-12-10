@@ -64,7 +64,7 @@ internal fun generateProductXml(
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not
-  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateModuleSets") + GENERATOR_SUFFIX
+  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
 
   // Build complete plugin.xml file
   // inlineModuleSets = false means: use xi:include to reference module set XML files in product XML

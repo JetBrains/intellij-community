@@ -4,9 +4,9 @@
       <module name="intellij.platform.jewel.markdown.core"/>
       <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
       <module name="intellij.platform.jewel.markdown.extensions.images"/>
-      <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+      <!-- region Generated dependencies - do not edit manually -->
       <module name="intellij.libraries.compose.foundation.desktop"/>
       <module name="intellij.libraries.skiko"/>
-      <!-- end editor-fold -->
+      <!-- endregion -->
     </dependencies>
 </idea-plugin>

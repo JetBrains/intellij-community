@@ -13,11 +13,13 @@ import javax.xml.stream.XMLStreamConstants
  * Preserves formatting outside `<dependencies>` section.
  */
 
-private const val EDITOR_FOLD_START = "<!-- editor-fold desc=\"Generated dependencies - do not edit manually\" -->"
-private const val EDITOR_FOLD_END = "<!-- end editor-fold -->"
-private const val EDITOR_FOLD_MARKER = "editor-fold desc=\"Generated dependencies"
+private const val REGION_START = "<!-- region Generated dependencies - do not edit manually -->"
+private const val REGION_END = "<!-- endregion -->"
+private const val REGION_MARKER = "region Generated dependencies"
+// Legacy marker for backward compatibility with existing files
+private const val LEGACY_MARKER = "editor-fold desc=\"Generated dependencies"
 
-private enum class EditorFoldType { NONE, WRAPS_ENTIRE_SECTION, INSIDE_SECTION }
+private enum class RegionType { NONE, WRAPS_ENTIRE_SECTION, INSIDE_SECTION }
 
 private sealed class DepEntry {
   data class Plugin(val id: String) : DepEntry()
@@ -29,25 +31,31 @@ private class DependenciesInfo(
   @JvmField val endOffset: Int,
   @JvmField val entries: List<DepEntry>,  // All entries in original order
   @JvmField val indent: String,
-  @JvmField val editorFoldType: EditorFoldType,
+  @JvmField val regionType: RegionType,
 )
 
-private class EditorFoldRegion(
+private class FoldRegion(
   @JvmField val startOffset: Int,
   @JvmField val endOffset: Int,
   @JvmField val indent: String,
 )
 
-private fun findEditorFoldRegion(content: String, markerStart: Int): EditorFoldRegion? {
-  val endIndex = content.indexOf(EDITOR_FOLD_END, markerStart)
+private fun findFoldRegion(content: String, markerStart: Int): FoldRegion? {
+  // Try new region end marker first, then legacy
+  var endIndex = content.indexOf(REGION_END, markerStart)
+  var endMarkerLength = REGION_END.length
+  if (endIndex == -1) {
+    endIndex = content.indexOf("<!-- end editor-fold -->", markerStart)
+    endMarkerLength = "<!-- end editor-fold -->".length
+  }
   if (endIndex == -1) return null
 
   val lineStart = content.lastIndexOf('\n', markerStart).let { if (it == -1) 0 else it + 1 }
   val indent = content.substring(lineStart, markerStart).takeWhile { it == ' ' || it == '\t' }
-  var endOffset = endIndex + EDITOR_FOLD_END.length
+  var endOffset = endIndex + endMarkerLength
   if (endOffset < content.length && content[endOffset] == '\n') endOffset++
 
-  return EditorFoldRegion(lineStart, endOffset, indent)
+  return FoldRegion(lineStart, endOffset, indent)
 }
 
 private fun StringBuilder.appendModules(indent: String, modules: List<String>) {
@@ -95,17 +103,19 @@ internal fun updateXmlDependencies(
 
   val autoModules = moduleDependencies.sorted()
 
-  // Skip writing if the module set is unchanged (avoid formatting-only changes like adding editor-fold markers)
-  if (moduleNames.sorted() == (autoModules + manualModuleNames).distinct().sorted()) {
+  // Skip writing if the module set is unchanged AND file already uses new region format
+  // (force rewrite if file uses legacy editor-fold markers to convert to new format)
+  val usesLegacyMarkers = content.contains(LEGACY_MARKER) && !content.contains(REGION_MARKER)
+  if (moduleNames.sorted() == (autoModules + manualModuleNames).distinct().sorted() && !usesLegacyMarkers) {
     return FileChangeStatus.UNCHANGED
   }
 
   val replacement = when {
     autoModules.isEmpty() && manualEntries.isEmpty() -> ""
-    else -> when (info.editorFoldType) {
-      EditorFoldType.WRAPS_ENTIRE_SECTION -> buildFullBlock(info.indent, manualEntries, autoModules)
-      EditorFoldType.INSIDE_SECTION -> buildFoldOnly(info.indent, autoModules)  // No manual deps - they're in prefix
-      EditorFoldType.NONE -> buildWithEntries(info.indent, manualEntries, autoModules)
+    else -> when (info.regionType) {
+      RegionType.WRAPS_ENTIRE_SECTION -> buildFullBlock(info.indent, manualEntries, autoModules)
+      RegionType.INSIDE_SECTION -> buildFoldOnly(info.indent, autoModules)  // No manual deps - they're in prefix
+      RegionType.NONE -> buildWithEntries(info.indent, manualEntries, autoModules)
     }
   }
 
@@ -157,22 +167,25 @@ private fun parseDependenciesInfo(content: String): DependenciesInfo? {
 
   if (depsStart == -1) return null
 
-  // Check editor-fold position relative to <dependencies>
-  val foldStart = content.indexOf(EDITOR_FOLD_MARKER)
+  // Check region/editor-fold position relative to <dependencies>
+  var foldStart = content.indexOf(REGION_MARKER)
   if (foldStart == -1) {
-    return DependenciesInfo(depsLineStart, depsEnd, entries, depsIndent, EditorFoldType.NONE)
+    foldStart = content.indexOf(LEGACY_MARKER)
+  }
+  if (foldStart == -1) {
+    return DependenciesInfo(depsLineStart, depsEnd, entries, depsIndent, RegionType.NONE)
   }
 
-  val fold = findEditorFoldRegion(content, foldStart)
-    ?: return DependenciesInfo(depsLineStart, depsEnd, entries, depsIndent, EditorFoldType.NONE)
+  val fold = findFoldRegion(content, foldStart)
+             ?: return DependenciesInfo(depsLineStart, depsEnd, entries, depsIndent, RegionType.NONE)
 
   return if (foldStart < depsStart) {
     // Editor-fold wraps entire section (module descriptors)
-    DependenciesInfo(fold.startOffset, fold.endOffset, entries, fold.indent, EditorFoldType.WRAPS_ENTIRE_SECTION)
+    DependenciesInfo(fold.startOffset, fold.endOffset, entries, fold.indent, RegionType.WRAPS_ENTIRE_SECTION)
   }
   else {
     // Editor-fold inside section (plugin.xml)
-    DependenciesInfo(fold.startOffset, fold.endOffset, entries, fold.indent, EditorFoldType.INSIDE_SECTION)
+    DependenciesInfo(fold.startOffset, fold.endOffset, entries, fold.indent, RegionType.INSIDE_SECTION)
   }
 }
 
@@ -186,26 +199,26 @@ private fun insertDependenciesSection(content: String, modules: List<String>): S
   return content.substring(0, pos + 1) + "\n" + buildFullBlock(indent, emptyList(), modules) + suffix
 }
 
-/** Editor-fold only with auto-generated modules (for INSIDE_SECTION - replacing fold content) */
+/** Region only with auto-generated modules (for INSIDE_SECTION - replacing fold content) */
 private fun buildFoldOnly(indent: String, autoModules: List<String>): String {
   if (autoModules.isEmpty()) return ""
   return StringBuilder().apply {
-    append(indent).append(EDITOR_FOLD_START).append("\n")
+    append(indent).append(REGION_START).append("\n")
     appendModules(indent, autoModules)
-    append(indent).append(EDITOR_FOLD_END).append("\n")
+    append(indent).append(REGION_END).append("\n")
   }.toString()
 }
 
-/** Full editor-fold block with <dependencies> (for WRAPS_ENTIRE_SECTION - module descriptors) */
+/** Full region block with <dependencies> (for WRAPS_ENTIRE_SECTION - module descriptors) */
 private fun buildFullBlock(indent: String, manualEntries: List<DepEntry>, autoModules: List<String>): String {
   val manualModules = manualEntries.filterIsInstance<DepEntry.Module>().map { it.name }
   return StringBuilder().apply {
-    append(indent).append(EDITOR_FOLD_START).append("\n")
+    append(indent).append(REGION_START).append("\n")
     append(indent).append("<dependencies>\n")
     appendModules("$indent  ", manualModules)
     appendModules("$indent  ", autoModules)
     append(indent).append("</dependencies>\n")
-    append(indent).append(EDITOR_FOLD_END).append("\n")
+    append(indent).append(REGION_END).append("\n")
   }.toString()
 }
 
@@ -220,9 +233,9 @@ private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, auto
       }
     }
     if (autoModules.isNotEmpty()) {
-      append(indent).append("  ").append(EDITOR_FOLD_START).append("\n")
+      append(indent).append("  ").append(REGION_START).append("\n")
       appendModules("$indent  ", autoModules)
-      append(indent).append("  ").append(EDITOR_FOLD_END).append("\n")
+      append(indent).append("  ").append(REGION_END).append("\n")
     }
     append(indent).append("</dependencies>\n")
   }.toString()
@@ -231,5 +244,5 @@ private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, auto
 private fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
   if (newContent == oldContent) return FileChangeStatus.UNCHANGED
   Files.writeString(path, newContent)
-  return if (oldContent.contains(EDITOR_FOLD_MARKER)) FileChangeStatus.MODIFIED else FileChangeStatus.CREATED
+  return if (oldContent.contains(REGION_MARKER) || oldContent.contains(LEGACY_MARKER)) FileChangeStatus.MODIFIED else FileChangeStatus.CREATED
 }

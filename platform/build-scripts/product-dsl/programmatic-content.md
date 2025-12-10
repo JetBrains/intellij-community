@@ -735,7 +735,7 @@ Before committing changes:
    execute_run_configuration(name="Generate Product Layouts")
    
    # Or directly
-   bazel run //platform/buildScripts:product-model-tool
+   bazel run //platform/buildScripts:plugin-model-tool
    ```
 
 2. **Check for duplicate content modules**

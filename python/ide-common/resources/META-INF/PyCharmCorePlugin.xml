@@ -18,11 +18,11 @@
   <xi:include href="/META-INF/pycharm-core-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
-  <!-- <editor-fold desc="additional"> -->
+  <!-- region additional -->
   <content namespace="jetbrains">
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
   </content>
-  <!-- </editor-fold> -->
+  <!-- endregion -->
 </idea-plugin>

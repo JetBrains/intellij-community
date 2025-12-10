@@ -4,16 +4,14 @@
 package org.jetbrains.intellij.build.productLayout.dependency
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Cache for module descriptor information to avoid redundant file system lookups.
@@ -25,27 +23,26 @@ import java.util.concurrent.ConcurrentHashMap
  */
 internal class ModuleDescriptorCache(
   private val moduleOutputProvider: ModuleOutputProvider,
-  private val scope: CoroutineScope,
+  scope: CoroutineScope,
 ) {
   data class DescriptorInfo(
     @JvmField val descriptorPath: Path,
     @JvmField val dependencies: List<String>,
+    @JvmField val content: String,
   )
 
-  private val cache = ConcurrentHashMap<String, Deferred<DescriptorInfo?>>()
+  private val cache = AsyncCache<String, DescriptorInfo?>(scope)
 
   /**
    * Gets cached descriptor info or analyzes the module if not yet cached.
    * Caches both positive (has descriptor) and negative (no descriptor) results.
-   * 
+   *
    * Coroutine-friendly: uses Deferred so concurrent callers await without blocking threads.
    */
   suspend fun getOrAnalyze(moduleName: String): DescriptorInfo? {
-    return cache.computeIfAbsent(moduleName) {
-      scope.async(Dispatchers.IO) {
-        analyzeModule(moduleName)
-      }
-    }.await()
+    return cache.getOrPut(moduleName) {
+      analyzeModule(moduleName)
+    }
   }
 
   /**
@@ -53,19 +50,18 @@ internal class ModuleDescriptorCache(
    */
   private suspend fun analyzeModule(moduleName: String): DescriptorInfo? {
     val jpsModule = moduleOutputProvider.findRequiredModule(moduleName)
-    val descriptorPath = findFileInModuleSources(
-      module = jpsModule,
-      relativePath = "$moduleName.xml",
-      onlyProductionSources = true
-    ) ?: return null
+    val descriptorPath = findFileInModuleSources(module = jpsModule, relativePath = "$moduleName.xml", onlyProductionSources = true) ?: return null
+
+    // Read file content once and reuse it
+    val content = withContext(Dispatchers.IO) { Files.readString(descriptorPath) }
 
     // Skip modules with IJPL-210868 marker (not registered as content modules)
-    if (shouldSkipDescriptor(descriptorPath)) {
+    if (content.contains("<!-- todo: register this as a content module (IJPL-210868)")) {
       return null
     }
 
     val deps = mutableListOf<String>()
-    for (dep in jpsModule.getProductionModuleDependencies(withTests = false)) {
+    for (dep in jpsModule.getProductionModuleDependencies()) {
       val depName = dep.moduleReference.moduleName
       if (hasDescriptor(depName)) {
         deps.add(depName)
@@ -75,12 +71,7 @@ internal class ModuleDescriptorCache(
     // Deduplicate MODULE DEPENDENCIES (not content modules!) before sorting.
     // Handles cases where the same dependency appears multiple times in JPS module graph.
     // Note: Content module duplicates are caught by validateProductModuleSets() during generation.
-    return DescriptorInfo(descriptorPath, deps.distinct().sorted())
-  }
-
-  private suspend fun shouldSkipDescriptor(descriptorPath: Path): Boolean {
-    val content = withContext(Dispatchers.IO) { Files.readString(descriptorPath) }
-    return content.contains("<!-- todo: register this as a content module (IJPL-210868)")
+    return DescriptorInfo(descriptorPath, deps.distinct().sorted(), content)
   }
 
   /**

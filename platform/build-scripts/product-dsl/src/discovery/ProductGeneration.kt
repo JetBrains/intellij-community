@@ -22,10 +22,10 @@ import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
+import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Configuration for generating all module sets and products.
@@ -121,15 +121,17 @@ internal suspend fun generateAllProductXmlFiles(
 }
 
 /**
- * Discovers all module sets from configured sources.
+ * Discovers all module sets from configured sources in parallel.
  */
-private fun discoverAllModuleSets(moduleSetSources: Map<String, Pair<Any, Path>>): List<ModuleSet> {
-  val allModuleSets = mutableListOf<ModuleSet>()
-  for ((_, source) in moduleSetSources) {
-    val (sourceObj, _) = source
-    allModuleSets.addAll(discoverModuleSets(sourceObj))
+private suspend fun discoverAllModuleSets(moduleSetSources: Map<String, Pair<Any, Path>>): List<ModuleSet> {
+  return coroutineScope {
+    moduleSetSources.map { (_, source) ->
+      async {
+        val (sourceObj, _) = source
+        discoverModuleSets(sourceObj)
+      }
+    }.awaitAll().flatten()
   }
-  return allModuleSets
 }
 
 /**
@@ -183,12 +185,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
     val moduleSetJobs = config.moduleSetSources.map { (label, source) ->
       val (sourceObj, outputDir) = source
       async {
-        doGenerateAllModuleSetsInternal(
-          obj = sourceObj,
-          outputDir = outputDir,
-          label = label,
-          moduleOutputProvider = config.moduleOutputProvider
-        )
+        doGenerateAllModuleSetsInternal(obj = sourceObj, outputDir = outputDir, label = label, moduleOutputProvider = config.moduleOutputProvider)
       }
     }
 
@@ -198,9 +195,11 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
       .distinct()
       .toList()
 
-    val xIncludeCache = ConcurrentHashMap<String, LoadedXIncludeReference>()
+    val xIncludeCache = AsyncCache<String, LoadedXIncludeReference?>(this)
     val pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = allBundledPlugins.associateWith { pluginName ->
-      async { extractPluginContent(pluginName, config.moduleOutputProvider, xIncludeCache) }
+      async {
+        extractPluginContent(pluginName = pluginName, moduleOutputProvider = config.moduleOutputProvider, xIncludeCache = xIncludeCache)
+      }
     }
 
     // TIER 2: Parallel dependency and product generation (can run concurrently with TIER 1)

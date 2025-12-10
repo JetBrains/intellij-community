@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
-import java.nio.file.Files.readString
 import kotlin.system.exitProcess
 
 /**
@@ -102,7 +101,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   val results = modulesToProcess.map { moduleName ->
     async {
       val info = cache.getOrAnalyze(moduleName) ?: return@async null
-      val status = updateXmlDependencies(path = info.descriptorPath, content = readString(info.descriptorPath), moduleDependencies = info.dependencies)
+      val status = updateXmlDependencies(path = info.descriptorPath, content = info.content, moduleDependencies = info.dependencies)
       DependencyFileResult(
         moduleName = moduleName,
         descriptorPath = info.descriptorPath,

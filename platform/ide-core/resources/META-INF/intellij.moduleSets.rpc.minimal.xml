@@ -4,7 +4,7 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="nested: fleet"> -->
+    <!-- region nested: fleet -->
     <module name="fleet.bifurcan" loading="embedded"/>
     <module name="fleet.fastutil" loading="embedded"/>
     <module name="fleet.kernel" loading="embedded"/>
@@ -18,11 +18,11 @@
     <module name="fleet.util.logging.api" loading="embedded"/>
     <module name="fleet.util.serialization" loading="embedded"/>
     <module name="fleet.rpc.server" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="direct modules"> -->
+    <!-- region direct modules -->
     <module name="intellij.platform.rpc" loading="embedded"/>
     <module name="intellij.platform.kernel" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
   </content>
 </idea-plugin>

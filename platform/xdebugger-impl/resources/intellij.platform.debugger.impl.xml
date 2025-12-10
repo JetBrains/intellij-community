@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.jackson"/>
@@ -28,7 +28,7 @@
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <applicationListeners>
     <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"

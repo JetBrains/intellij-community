@@ -22,7 +22,7 @@ The validation system catches these errors during `Generate Product Layouts`, pr
 Validation runs automatically when you execute:
 - **IDE**: Run configuration "Generate Product Layouts"
 - **CLI**: `UltimateModuleSets.main()` or `CommunityModuleSets.main()`
-- **Bazel**: `bazel run //platform/buildScripts:product-model-tool`
+- **Bazel**: `bazel run //platform/buildScripts:plugin-model-tool`
 
 ## Two-Tier Validation System
 

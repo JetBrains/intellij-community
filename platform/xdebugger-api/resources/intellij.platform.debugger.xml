@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -10,7 +10,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>

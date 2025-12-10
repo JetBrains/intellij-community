@@ -22,7 +22,7 @@
   <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
-  <!-- <editor-fold desc="additional"> -->
+  <!-- region additional -->
   <content namespace="jetbrains">
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
@@ -35,5 +35,5 @@
     <module name="intellij.idea.customization.backend"/>
     <module name="intellij.platform.tips"/>
   </content>
-  <!-- </editor-fold> -->
+  <!-- endregion -->
 </idea-plugin>

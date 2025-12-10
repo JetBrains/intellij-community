@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
@@ -17,5 +17,5 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

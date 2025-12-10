@@ -533,27 +533,38 @@ internal suspend fun createProductProperties(
     else {
       productConfiguration.className
     }
-    val productPropertiesClass = try {
-      classLoader.loadClass(className)
-    }
-    catch (e: ClassNotFoundException) {
-      val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
-        "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
-      }
-      val projectPropertiesPath = getProductPropertiesPath(projectDir)
-      throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
-    }
-
-    val lookup = MethodHandles.lookup()
-    try {
-      lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
-    }
-    catch (_: NoSuchMethodException) {
-      lookup
-        .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
-    } as ProductProperties
+    doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
   }
+}
+
+private val lookup = MethodHandles.lookup()
+
+private fun doCreateProductProperties(
+  classLoader: PathClassLoader,
+  className: String,
+  classPathFiles: List<Path>,
+  projectDir: Path,
+  platformPrefix: String?,
+): ProductProperties {
+  val productPropertiesClass = try {
+    classLoader.loadClass(className)
+  }
+  catch (e: ClassNotFoundException) {
+    val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
+      "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
+    }
+    val projectPropertiesPath = getProductPropertiesPath(projectDir)
+    throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
+  }
+
+  return try {
+    lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
+  }
+  catch (_: NoSuchMethodException) {
+    lookup
+      .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
+      .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
+  } as ProductProperties
 }
 
 private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> = sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()

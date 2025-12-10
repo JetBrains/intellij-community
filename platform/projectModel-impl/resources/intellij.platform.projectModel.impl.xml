@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
@@ -12,7 +12,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="workspaceModel.update.under.wa" defaultValue="false" restartRequired="false"
                  description="Disable workspace model initial 2 attempts to execute updater without write action"/>

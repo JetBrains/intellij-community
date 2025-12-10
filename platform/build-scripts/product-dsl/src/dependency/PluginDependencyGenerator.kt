@@ -12,7 +12,6 @@ import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.PluginDependencyGenerationResult
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
-import java.nio.file.Files
 
 /**
  * Generates dependencies for bundled plugin `plugin.xml` files.
@@ -114,7 +113,7 @@ private suspend fun generateContentModuleDependencies(
   val filteredDeps = info.dependencies.filter(dependencyFilter)
   val status = updateXmlDependencies(
     path = info.descriptorPath,
-    content = Files.readString(info.descriptorPath),
+    content = info.content,
     moduleDependencies = filteredDeps,
     preserveExistingModule = { !dependencyFilter(it) },
   )

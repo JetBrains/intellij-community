@@ -163,10 +163,14 @@ internal suspend fun validateProductModuleSets(
   // Build product indices once and reuse for both cross-product collection and validation
   val productIndices: Map<String, ProductModuleIndex> = coroutineScope {
     productSpecs
-      .filter { (_, spec) -> spec != null }
-      .map { (productName, spec) ->
-        async { productName to buildProductModuleIndex(productName, spec!!, cache, pluginContentJobs) }
-      }.awaitAll().toMap()
+      .mapNotNull { (productName, spec) ->
+        val spec = spec ?: return@mapNotNull null
+        async {
+          productName to buildProductModuleIndex(productName = productName, spec = spec, cache = cache, pluginContentJobs = pluginContentJobs)
+        }
+      }
+      .awaitAll()
+      .toMap()
   }
 
   // Collect cross-product modules from pre-built indices
@@ -189,14 +193,10 @@ internal suspend fun validateProductModuleSets(
   // Step 2: module -> full trace info (single pass through all plugins)
   val moduleTraceInfo = HashMap<String, ModuleTraceInfo>()
   for ((pluginName, job) in pluginContentJobs) {
-    val products = pluginToProducts[pluginName] ?: emptySet()
-    val info = ModuleTraceInfo(
-      sourcePlugin = pluginName,
-      bundledInProducts = products,
-      additionalPluginSource = additionalPlugins[pluginName],
-    )
+    val products = pluginToProducts.get(pluginName) ?: emptySet()
+    val info = ModuleTraceInfo(sourcePlugin = pluginName, bundledInProducts = products, additionalPluginSource = additionalPlugins.get(pluginName))
     job.await()?.contentModules?.forEach { moduleName ->
-      moduleTraceInfo[moduleName] = info
+      moduleTraceInfo.put(moduleName, info)
     }
   }
 
@@ -204,7 +204,7 @@ internal suspend fun validateProductModuleSets(
   // A module is non-critical globally only if it's NOT critical (EMBEDDED/REQUIRED) in ANY product
   val nonCriticalPluginModules = allPluginModules.filterTo(HashSet()) { moduleName ->
     productIndices.values.none { productIndex ->
-      val loading = productIndex.moduleLoadings[moduleName]
+      val loading = productIndex.moduleLoadings.get(moduleName)
       loading == ModuleLoadingRuleValue.EMBEDDED || loading == ModuleLoadingRuleValue.REQUIRED
     }
   }
@@ -442,11 +442,12 @@ private suspend fun preValidateNonCriticalPluginModules(
 }
 
 /**
- * Finds missing transitive dependencies using BFS traversal.
+ * Finds missing transitive dependencies using parallel BFS traversal.
  *
  * ## Performance Characteristics
  *
- * - **Module analysis is cached**: Uses [descriptorCache] for O(1) dependency lookups
+ * - **Parallel validation**: Each module is validated concurrently via coroutines
+ * - **Module analysis is cached**: Uses [descriptorCache] with thread-safe AsyncCache
  * - **BFS traversal stops at boundaries**: Does not traverse into cross-plugin/cross-product modules
  * - **Per-product context**: Result depends on [availableModules] and [allowedMissing]
  *
@@ -459,19 +460,9 @@ private suspend fun preValidateNonCriticalPluginModules(
  * 4. If in [crossProductModules] and source is NOT critical → valid, don't traverse (external responsibility)
  * 5. Otherwise → missing dependency error
  *
- * ## Why Same Module May Be Validated Multiple Times
- *
- * When the same module appears in multiple products, BFS runs once per product because:
- * - [availableModules] differs per product
- * - [allowedMissing] can differ per product (configured via `allowMissingDependencies`)
- * - A module might be "critical" in one product but not another
- *
- * For non-critical modules, the effective "available" set is global ([crossPluginModules] ∪ [crossProductModules]),
- * which could enable future optimization to pre-validate globally and reuse results.
- *
  * @param modules Modules to check dependencies for
  * @param availableModules Modules that are available within this product/context
- * @param descriptorCache Cache for module descriptor information (shared across all validations)
+ * @param descriptorCache Cache for module descriptor information (thread-safe, shared across all validations)
  * @param allowedMissing Dependencies explicitly allowed to be missing (per-product configuration)
  * @param crossPluginModules Modules from other plugins (valid for non-critical modules)
  * @param crossProductModules Modules from other products (valid for non-critical modules)
@@ -487,44 +478,85 @@ internal suspend fun findMissingTransitiveDependencies(
   crossProductModules: Set<String> = emptySet(),
   criticalModules: Set<String> = emptySet(),
 ): Map<String, Set<String>> {
-  val missingDeps = HashMap<String, MutableSet<String>>()
+  if (modules.isEmpty()) {
+    return emptyMap()
+  }
 
-  for (moduleName in modules) {
-    val info = descriptorCache.getOrAnalyze(moduleName) ?: continue
-    val isCritical = criticalModules.contains(moduleName)
-    val visited = HashSet<String>()
-    visited.add(moduleName)
-    val queue = ArrayDeque(info.dependencies)
-
-    while (queue.isNotEmpty()) {
-      val dep = queue.removeFirst()
-      if (!visited.add(dep)) {
-        continue
+  // PARALLEL: Each module's BFS is independent, cache is thread-safe
+  val perModuleResults = coroutineScope {
+    modules.map { moduleName ->
+      async {
+        validateModuleDependencies(
+          moduleName = moduleName,
+          availableModules = availableModules,
+          descriptorCache = descriptorCache,
+          allowedMissing = allowedMissing,
+          crossPluginModules = crossPluginModules,
+          crossProductModules = crossProductModules,
+          isCritical = criticalModules.contains(moduleName),
+        )
       }
+    }.awaitAll()
+  }
 
-      when {
-        availableModules.contains(dep) -> {
-          // Present - traverse into its deps
-          descriptorCache.getOrAnalyze(dep)?.dependencies?.let { queue.addAll(it) }
-        }
-        allowedMissing.contains(dep) -> {
-          // Explicitly allowed to be missing - skip
-        }
-        !isCritical && crossPluginModules.contains(dep) -> {
-          // Valid cross-plugin optional dependency - skip
-        }
-        !isCritical && crossProductModules.contains(dep) -> {
-          // Module exists in another product - valid for optional deps
-        }
-        else -> {
-          // Missing dependency
-          missingDeps.computeIfAbsent(dep) { HashSet() }.add(moduleName)
-        }
+  // Merge results
+  val missingDeps = HashMap<String, MutableSet<String>>()
+  for ((moduleName, moduleMissingDeps) in perModuleResults) {
+    for (dep in moduleMissingDeps) {
+      missingDeps.computeIfAbsent(dep) { HashSet() }.add(moduleName)
+    }
+  }
+  return missingDeps
+}
+
+/**
+ * Validates a single module's transitive dependencies via BFS.
+ * Thread-safe: uses only thread-safe cache and local state.
+ */
+private suspend fun validateModuleDependencies(
+  moduleName: String,
+  availableModules: Set<String>,
+  descriptorCache: ModuleDescriptorCache,
+  allowedMissing: Set<String>,
+  crossPluginModules: Set<String>,
+  crossProductModules: Set<String>,
+  isCritical: Boolean,
+): Pair<String, Set<String>> {
+  val info = descriptorCache.getOrAnalyze(moduleName) ?: return moduleName to emptySet()
+
+  val missingDeps = HashSet<String>()
+  val visited = HashSet<String>()
+  visited.add(moduleName)
+  val queue = ArrayDeque(info.dependencies)
+
+  while (queue.isNotEmpty()) {
+    val dep = queue.removeFirst()
+    if (!visited.add(dep)) {
+      continue
+    }
+
+    when {
+      availableModules.contains(dep) -> {
+        // Present - traverse into its deps (cache handles deduplication)
+        descriptorCache.getOrAnalyze(dep)?.dependencies?.let { queue.addAll(it) }
+      }
+      allowedMissing.contains(dep) -> {
+        // Explicitly allowed to be missing - skip
+      }
+      !isCritical && crossPluginModules.contains(dep) -> {
+        // Valid cross-plugin optional dependency - skip
+      }
+      !isCritical && crossProductModules.contains(dep) -> {
+        // Module exists in another product - valid for optional deps
+      }
+      else -> {
+        // Missing dependency
+        missingDeps.add(dep)
       }
     }
   }
 
-  return missingDeps
+  return moduleName to missingDeps
 }
 
 private data class ProductModuleIndex(

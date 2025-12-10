@@ -4,18 +4,18 @@
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="nested: vcs.shared"> -->
+    <!-- region nested: vcs.shared -->
     <module name="intellij.platform.vcs.core" loading="embedded"/>
     <module name="intellij.platform.vcs.shared" loading="embedded"/>
     <module name="intellij.platform.vcs.impl.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="nested: vcs.frontend"> -->
+    <!-- region nested: vcs.frontend -->
     <module name="intellij.platform.vcs.impl.frontend"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="direct modules"> -->
+    <!-- region direct modules -->
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.impl.lang"/>
@@ -27,6 +27,6 @@
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
   </content>
 </idea-plugin>

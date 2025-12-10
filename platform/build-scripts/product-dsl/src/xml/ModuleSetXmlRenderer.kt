@@ -174,7 +174,9 @@ internal fun StringBuilder.appendModuleSetsStrategyComment(
   spec: ProductModulesContentSpec,
   overriddenModuleSetNames: Set<ModuleSetName>
 ) {
-  if (overriddenModuleSetNames.isEmpty()) return
+  if (overriddenModuleSetNames.isEmpty()) {
+    return
+  }
 
   append("  <!-- Module Set Loading Strategy:\n")
   for (moduleSetWithOverrides in spec.moduleSets) {

@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.cli.parser"/>
@@ -46,7 +46,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.canBeSelectedInProjectPaneProvider"

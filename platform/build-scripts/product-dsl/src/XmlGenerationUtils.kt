@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversal
-
 /**
  * Shared utilities for generating plugin.xml content for both products and module sets.
  * Both products and module sets are "content containers" that:
@@ -57,7 +55,7 @@ internal fun buildModuleAliasesXml(aliases: List<String>): String {
 }
 
 /**
- * Wraps content with editor-fold comments for collapsible sections in IDE.
+ * Wraps content with region comments for collapsible sections in IDE.
  * Uses try-finally to ensure the closing tag is always written, even if block throws.
  *
  * @param sb StringBuilder to append to
@@ -66,12 +64,12 @@ internal fun buildModuleAliasesXml(aliases: List<String>): String {
  * @param block Lambda that generates the content between fold tags
  */
 internal inline fun withEditorFold(sb: StringBuilder, indent: String, description: String, block: () -> Unit) {
-  sb.append("$indent<!-- <editor-fold desc=\"$description\"> -->\n")
+  sb.append("$indent<!-- region $description -->\n")
   try {
     block()
   }
   finally {
-    sb.append("$indent<!-- </editor-fold> -->\n")
+    sb.append("$indent<!-- endregion -->\n")
   }
 }
 
@@ -89,24 +87,6 @@ internal fun visitAllModules(moduleSet: ModuleSet, visitor: (ContentModule) -> U
   for (nestedSet in moduleSet.nestedSets) {
     visitAllModules(nestedSet, visitor)
   }
-}
-
-/**
- * Finds a module set by name and collects all module names from it and its nested sets.
- * Delegates to [ModuleSetTraversal.collectAllModuleNames] for the actual traversal.
- *
- * @param moduleSets List of all module sets to search in
- * @param setName Name of the module set to start collecting from
- * @return Set of all module names found in the module set hierarchy, or empty set if not found
- * @deprecated Use [ModuleSetTraversalCache.getModuleNames] for O(1) cached lookups instead
- */
-@Deprecated("Use ModuleSetTraversalCache.getModuleNames() for O(1) cached lookups", ReplaceWith("cache.getModuleNames(setName)"))
-internal fun collectAllModuleNamesFromSet(
-  moduleSets: List<ModuleSet>,
-  setName: String,
-): Set<String> {
-  val moduleSet = moduleSets.firstOrNull { it.name == setName } ?: return emptySet()
-  return ModuleSetTraversal.collectAllModuleNames(moduleSet)
 }
 
 /**

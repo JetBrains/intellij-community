@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
@@ -7,5 +7,5 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

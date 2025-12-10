@@ -1,8 +1,8 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+    <!-- region Generated dependencies - do not edit manually -->
     <module name="intellij.libraries.grpc"/>
     <module name="intellij.platform.core"/>
-    <!-- end editor-fold -->
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

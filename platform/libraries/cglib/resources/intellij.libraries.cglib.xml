@@ -1,9 +1,9 @@
 <idea-plugin>
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - do not edit manually -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>
