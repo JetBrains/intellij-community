@@ -80,13 +80,12 @@ final class AnnotationAttributeItemProvider implements ModCompletionItemProvider
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(annoMethod.getContainingFile());
     String space = styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS ? " " : "";
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
-    PsiType returnType = annoMethod.getReturnType();
     ModCompletionItemPresentation presentation = new ModCompletionItemPresentation(
       MarkupText.plainText(lookupString)
         .highlightAll(JavaDeprecationUtils.isDeprecated(annoMethod, position) ? MarkupText.Kind.STRIKEOUT : MarkupText.Kind.NORMAL)
         .concat(grayTail, MarkupText.Kind.GRAYED))
       .withMainIcon(annoMethod.getIcon(0))
-      .withDetailText(MarkupText.plainText(returnType == null ? "" : returnType.getPresentableText()));
+      .withDetailText(JavaModCompletionUtils.typeMarkup(annoMethod.getReturnType()));
     return new CommonCompletionItem(lookupString)
       .withObject(annoMethod)
       .withPresentation(presentation)
