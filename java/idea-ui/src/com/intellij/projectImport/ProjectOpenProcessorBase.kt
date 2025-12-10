@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport
 
 import com.intellij.CommonBundle
@@ -94,7 +94,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected c
       }
       wizardContext.setProjectFileDirectory(resolvedVirtualFile.parent.toNioPath(), false)
 
-      if (!doQuickImport(resolvedVirtualFile, wizardContext)) {
+      if (!withContext(Dispatchers.EDT) { doQuickImport(resolvedVirtualFile, wizardContext) }) {
         return null
       }
 
