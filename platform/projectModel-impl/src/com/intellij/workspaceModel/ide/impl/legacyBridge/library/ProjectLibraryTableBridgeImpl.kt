@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -173,7 +173,7 @@ open class ProjectLibraryTableBridgeImpl(
             it.mutableLibraryMap.addIfAbsent(entity, library)
           }
         }
-        edtWriteAction {
+        backgroundWriteAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)
           }

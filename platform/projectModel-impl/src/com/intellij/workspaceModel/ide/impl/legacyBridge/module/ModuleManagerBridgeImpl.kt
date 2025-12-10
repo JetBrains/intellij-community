@@ -10,10 +10,9 @@ import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -33,6 +32,7 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
@@ -100,11 +100,9 @@ import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.Arrays
@@ -454,15 +452,13 @@ abstract class ModuleManagerBridgeImpl(
     }
 
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal
-    withContext(Dispatchers.EDT) {
-      edtWriteAction {
-        ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
-          workspaceModel.updateProjectModel("Update unloaded modules") { builder ->
-            addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
-          }
-          workspaceModel.updateUnloadedEntities("Update unloaded modules") { builder ->
-            addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
-          }
+    backgroundWriteAction {
+      ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
+        workspaceModel.updateProjectModel("Update unloaded modules") { builder ->
+          addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
+        }
+        workspaceModel.updateUnloadedEntities("Update unloaded modules") { builder ->
+          addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
         }
       }
     }
@@ -496,9 +492,7 @@ abstract class ModuleManagerBridgeImpl(
     }
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
-      val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(modalityState.asContextElement()) {
+      runBlockingCancellable {
         setUnloadedModules(unloadedModuleNames)
       }
     }, "", true, project)

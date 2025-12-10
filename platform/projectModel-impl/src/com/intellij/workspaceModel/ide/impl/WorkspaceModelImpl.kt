@@ -5,7 +5,7 @@ import com.intellij.concurrency.ThreadContextAwareReentrantLock
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -278,7 +278,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         checkCanceled()
         val replacement = builderSnapshot.getStorageReplacement()
         log.info("Workspace model update attempt $attempt/$maxRetryAttempts, updater took $updaterTime ms: $description  (project=${project.name}, locationHash=${project.locationHash})")
-        success = edtWriteAction { replaceWorkspaceModel(description, replacement) }
+        success = backgroundWriteAction { replaceWorkspaceModel(description, replacement) }
         if (success) {
           break
         }
@@ -296,7 +296,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   }
 
   suspend fun updateUnderWriteAction(description: String, updater: (MutableEntityStorage) -> Unit) {
-    edtWriteAction { updateProjectModel(description, updater) }
+    backgroundWriteAction { updateProjectModel(description, updater) }
   }
 
   override suspend fun update(description: String, updater: (MutableEntityStorage) -> Unit) {

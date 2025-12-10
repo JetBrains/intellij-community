@@ -2,10 +2,11 @@
 package com.intellij.testFramework.utils.coroutines
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
@@ -21,14 +22,19 @@ fun waitCoroutinesBlocking(cs: CoroutineScope) {
   waitCoroutinesBlocking(cs, -1)
 }
 
-@RequiresBackgroundThread(generateAssertion = false)
-@RequiresBlockingContext
 fun waitCoroutinesBlocking(cs: CoroutineScope, timeoutMs: Long) {
+  if (EDT.isCurrentThreadEdt()) {
+    while (cs.coroutineContext.job.children.toList().isNotEmpty()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      Thread.sleep(1)
+    }
+    return
+  }
   runBlockingMaybeCancellable {
     val job = cs.coroutineContext.job
     val start = System.currentTimeMillis()
     while (true) {
-      runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
+      runInEdtAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
       yield()
       delay(1) //prevent too frequent pooling, otherwise may load cpu with billions of context switches
 

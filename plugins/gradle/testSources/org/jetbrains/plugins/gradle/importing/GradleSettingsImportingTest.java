@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -703,10 +702,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   public void testSourceFolderIsDisposedAfterProjectDisposing() throws IOException {
     importProject(createBuildScriptBuilder().generate());
-    Application application = ApplicationManager.getApplication();
-    Ref<Project> projectRef = new Ref<>();
-    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(getMyProjectRoot().toNioPath())));
-    Project project = projectRef.get();
+    Project project = ProjectUtil.openOrImport(getMyProjectRoot().toNioPath());
     SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(project);
     try {
       assertFalse(project.isDisposed());
