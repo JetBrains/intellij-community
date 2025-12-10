@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.dvcs.impl.shared.ui
+package com.intellij.dvcs.ui
 
+import com.intellij.dvcs.rpc.VcsRepositoryColor.Companion.toAwtColor
+import com.intellij.dvcs.rpc.VcsRepositoryColorsApi
+import com.intellij.dvcs.rpc.VcsRepositoryColorsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColor.Companion.toAwtColor
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColorsApi
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColorsState
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.util.PlatformIcons

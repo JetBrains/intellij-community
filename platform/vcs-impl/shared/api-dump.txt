@@ -558,6 +558,16 @@ f:com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
 - com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 - sf:INSTANCE:com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
 - createGroupingPolicy(com.intellij.openapi.project.Project,javax.swing.tree.DefaultTreeModel):com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy
+a:com.intellij.openapi.vcs.changes.ui.RepositoryChangesBrowserNodeBase
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$NodeWithFilePath
+- <init>(java.lang.Object):V
+- p:getBranchText(java.lang.Object):java.lang.String
+- p:getBranchTooltipText(java.lang.Object):java.lang.String
+- p:getCurrentBranch(java.lang.Object):java.lang.Object
+- pa:getIcon():javax.swing.Icon
+- getSortWeight():I
+- render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 a:com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 - com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy$Companion

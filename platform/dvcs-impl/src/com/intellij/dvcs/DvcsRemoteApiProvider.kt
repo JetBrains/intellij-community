@@ -2,7 +2,7 @@
 package com.intellij.dvcs
 
 import com.intellij.dvcs.repo.VcsRepositoryColorsApiImpl
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColorsApi
+import com.intellij.dvcs.rpc.VcsRepositoryColorsApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 

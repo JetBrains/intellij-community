@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.isSyncOptionEnabled
 import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -21,7 +22,6 @@ import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
 import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.platform.dvcs.impl.shared.ui.VcsRepositoryIconsProvider
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.builder.*

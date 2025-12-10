@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo
 
+import com.intellij.dvcs.rpc.VcsRepositoryColor
+import com.intellij.dvcs.rpc.VcsRepositoryColorsApi
+import com.intellij.dvcs.rpc.VcsRepositoryColorsState
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColor
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColorsApi
-import com.intellij.platform.dvcs.impl.shared.rpc.VcsRepositoryColorsState
 import com.intellij.platform.project.ProjectId
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow

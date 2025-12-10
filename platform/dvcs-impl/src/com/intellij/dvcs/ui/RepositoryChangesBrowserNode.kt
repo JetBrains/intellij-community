@@ -6,17 +6,10 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.ui.BranchPresentation
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
-import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
-import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.intellij.openapi.vcs.changes.ui.RepositoryChangesBrowserNodeBase
 import com.intellij.util.ui.CheckboxIcon
-import com.intellij.util.ui.JBUI.insets
-import com.intellij.util.ui.UIUtil.getTreeBackground
+import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
 import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -24,40 +17,20 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcsUtil.VcsUtil
-import java.awt.Color
+import javax.swing.Icon
 
-private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
+open class RepositoryChangesBrowserNode(
+  repository: Repository,
+  private val colorManager: VcsLogColorManager = getColorManager(repository.project)
+) : RepositoryChangesBrowserNodeBase<Repository, BranchData>(repository) {
 
-private fun getBranchLabelAttributes(background: Color) =
-  SimpleTextAttributes(BranchPresentation.getBranchPresentationBackground(background), BranchPresentation.TEXT_COLOR, null, STYLE_OPAQUE)
+  override fun getIcon(): Icon = CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
 
-open class RepositoryChangesBrowserNode(repository: Repository,
-                                        private val colorManager: VcsLogColorManager = getColorManager(repository.project))
-  : ChangesBrowserNode<Repository>(repository), ChangesBrowserNode.NodeWithFilePath {
+  final override fun getCurrentBranch(repository: Repository): BranchData? = getCurrentBranch(repository.project, repository.root)
 
-  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.icon = CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
-    renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
-    appendCount(renderer)
+  final override fun getBranchText(branch: BranchData): String = getPresentableText(branch)
 
-    if (renderer.isShowingLocalChanges) {
-      appendCurrentBranch(renderer)
-    }
-  }
-
-  private fun appendCurrentBranch(renderer: ChangesBrowserNodeRenderer) {
-    val repository = getUserObject()
-    val branch = getCurrentBranch(repository.project, repository.root)
-
-    if (branch != null) {
-      renderer.append(spaceAndThinSpace())
-      renderer.append(" ${getPresentableText(branch)} ", getBranchLabelAttributes(renderer.background ?: getTreeBackground()))
-      renderer.setBackgroundInsets(BRANCH_BACKGROUND_INSETS)
-      renderer.toolTipText = getSingleTooltip(branch)
-    }
-  }
-
-  override fun getSortWeight(): Int = REPOSITORY_SORT_WEIGHT
+  final override fun getBranchTooltipText(branch: BranchData): String = getSingleTooltip(branch).orEmpty()
 
   override fun compareUserObjects(o2: Repository): Int =
     compareFileNames(getShortRepositoryName(getUserObject()), getShortRepositoryName(o2))

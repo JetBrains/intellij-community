@@ -82,10 +82,6 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
-    <action id="ChangesView.GroupBy.Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
-      <add-to-group group-id="ChangesView.GroupBy"/>
-    </action>
-
     <action id="CheckIgnoredAndNotExcludedDirectories" class="com.intellij.dvcs.ignore.CheckIgnoredToExcludeAction"/>
   </actions>
 

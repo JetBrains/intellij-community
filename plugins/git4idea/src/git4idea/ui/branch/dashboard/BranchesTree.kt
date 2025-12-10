@@ -4,6 +4,7 @@ package git4idea.ui.branch.dashboard
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.repo.rpcId
+import com.intellij.dvcs.ui.VcsRepositoryIconsProvider
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.dvcs.impl.shared.ui.VcsRepositoryIconsProvider
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
