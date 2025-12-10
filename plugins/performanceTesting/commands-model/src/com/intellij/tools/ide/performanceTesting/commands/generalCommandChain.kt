@@ -1123,9 +1123,9 @@ fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
  * Wait for background procedures on project opening
  */
 fun <T : CommandChain> T.waitForProjectOpenProcedures(): T = apply {
+  refreshFilesInVfs()
   waitForSmartMode()
   waitForVcsLogUpdate()
-  refreshFilesInVfs()
 }
 
 /**
