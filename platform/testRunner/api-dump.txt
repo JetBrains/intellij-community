@@ -122,6 +122,7 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:HIDE_SUCCESSFUL_CONFIG:com.intellij.util.config.BooleanProperty
 - sf:INCLUDE_NON_STARTED_IN_RERUN_FAILED:com.intellij.util.config.BooleanProperty
 - sf:OPEN_FAILURE_LINE:com.intellij.util.config.BooleanProperty
+- sf:SCROLL_TO_BOTTOM:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
 - sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
