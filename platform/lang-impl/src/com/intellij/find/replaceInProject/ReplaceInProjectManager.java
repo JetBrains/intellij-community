@@ -260,18 +260,20 @@ public class ReplaceInProjectManager {
       }
       @Override
       public void actionPerformed(ActionEvent e) {
-        UsageView usageView = replaceContext.getUsageView();
-        Set<Usage> usages = new HashSet<>(usageView.getUsages());
-        usages.removeAll(usageView.getExcludedUsages());
-        if (usages.isEmpty()) return;
-        Set<VirtualFile> files = getFiles(usages);
-        if (files.size() < 2 || showReplaceAllConfirmDialog(
-          String.valueOf(usages.size()),
-          replaceContext.getFindModel().getStringToFind(),
-          String.valueOf(files.size()),
-          replaceContext.getFindModel().getStringToReplace())) {
-          replaceUsagesUnderCommand(replaceContext, usages, true, false);
-        }
+        WriteIntentReadAction.run(() -> {
+          UsageView usageView = replaceContext.getUsageView();
+          Set<Usage> usages = new HashSet<>(usageView.getUsages());
+          usages.removeAll(usageView.getExcludedUsages());
+          if (usages.isEmpty()) return;
+          Set<VirtualFile> files = getFiles(usages);
+          if (files.size() < 2 || showReplaceAllConfirmDialog(
+            String.valueOf(usages.size()),
+            replaceContext.getFindModel().getStringToFind(),
+            String.valueOf(files.size()),
+            replaceContext.getFindModel().getStringToReplace())) {
+            replaceUsagesUnderCommand(replaceContext, usages, true, false);
+          }
+        });
       }
 
       @Override
