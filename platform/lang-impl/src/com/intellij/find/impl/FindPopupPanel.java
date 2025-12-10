@@ -1244,9 +1244,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages,
                                    !myResultsPreviewTable.isEmpty(), myDisposable, (adapter) -> {
             ApplicationManager.getApplication().invokeLater(() -> {
-              Map<Integer, Usage> selectedUsages = getSelectedUsages();
-              if (selectedUsages != null && selectedUsages.containsValue(adapter)) {
-                myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
+              if (!myPreviewUpdater.isDisposed()) {
+                Map<Integer, Usage> selectedUsages = getSelectedUsages();
+                if (selectedUsages != null && selectedUsages.containsValue(adapter)) {
+                  myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
+                }
               }
             });
           }, (usage) -> {
