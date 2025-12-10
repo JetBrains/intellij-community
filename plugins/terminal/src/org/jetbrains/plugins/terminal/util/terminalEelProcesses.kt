@@ -66,7 +66,7 @@ private fun guessContextProject(): Project {
   }
   val openProjects = ProjectManager.getInstance().openProjects
   return openProjects.singleOrNull() ?: run {
-    LOG.warn("No project detected (open projects: $openProjects), using the default project")
+    LOG.warn("No project detected (open projects: ${openProjects.size}), using the default project to show the progress")
     ProjectManager.getInstance().defaultProject
   }
 }
