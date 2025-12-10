@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
@@ -26,10 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
-import java.util.List;
 import java.util.*;
-
-import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
+import java.util.List;
 
 public class LabelPainter {
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -258,7 +257,7 @@ public class LabelPainter {
                                                          boolean isSelected,
                                                          boolean isCompact) {
     if (isSelected) return null;
-    if (!isCompact) return getBranchPresentationBackground(background);
+    if (!isCompact) return BranchPresentation.getBranchPresentationBackground(background);
 
     boolean paintGreyBackground;
     for (RefGroup group : refGroups) {
@@ -269,7 +268,7 @@ public class LabelPainter {
         paintGreyBackground = !group.getName().isEmpty();
       }
 
-      if (paintGreyBackground) return getBranchPresentationBackground(background);
+      if (paintGreyBackground) return BranchPresentation.getBranchPresentationBackground(background);
     }
 
     return null;

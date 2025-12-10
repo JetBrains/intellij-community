@@ -165,6 +165,10 @@ a:com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 - addInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
 - pf:fireInclusionChanged():V
 - removeInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
+f:com.intellij.openapi.vcs.changes.ui.BranchPresentation
+- sf:INSTANCE:com.intellij.openapi.vcs.changes.ui.BranchPresentation
+- sf:TEXT_COLOR:com.intellij.ui.JBColor
+- sf:getBranchPresentationBackground(java.awt.Color):java.awt.Color
 f:com.intellij.openapi.vcs.changes.ui.ChangeListRemoteState
 - <init>():V
 - f:allUpToDate():Z

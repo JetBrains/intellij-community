@@ -6,10 +6,9 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -30,7 +29,7 @@ import java.awt.Color
 private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
 
 private fun getBranchLabelAttributes(background: Color) =
-  SimpleTextAttributes(getBranchPresentationBackground(background), TEXT_COLOR, null, STYLE_OPAQUE)
+  SimpleTextAttributes(BranchPresentation.getBranchPresentationBackground(background), BranchPresentation.TEXT_COLOR, null, STYLE_OPAQUE)
 
 open class RepositoryChangesBrowserNode(repository: Repository,
                                         private val colorManager: VcsLogColorManager = getColorManager(repository.project))

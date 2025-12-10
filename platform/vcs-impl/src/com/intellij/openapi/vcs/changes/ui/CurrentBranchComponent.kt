@@ -10,9 +10,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI.emptySize
@@ -25,7 +23,6 @@ import java.awt.Color
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
 import javax.swing.JTree.TREE_MODEL_PROPERTY
-import javax.swing.UIManager
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.properties.Delegates.observable
@@ -55,7 +52,7 @@ class CurrentBranchComponent(private val tree: ChangesTree,
   init {
     isVisible = false
     icon = AllIcons.Vcs.Branch
-    foreground = TEXT_COLOR
+    foreground = BranchPresentation.TEXT_COLOR
 
     val treeChangeListener = PropertyChangeListener { e ->
       if (e.propertyName == TREE_MODEL_PROPERTY) {
@@ -84,23 +81,9 @@ class CurrentBranchComponent(private val tree: ChangesTree,
   }
 
   companion object {
-    private val BACKGROUND_BALANCE
-      get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
-
-    private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
-
     @JvmField
-    val TEXT_COLOR: JBColor = namedColor("VersionControl.RefLabel.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
-
-    @Suppress("SameParameterValue")
-    private fun namedDouble(name: String, default: Double): Double {
-      return when (val value = UIManager.get(name)) {
-        is Double -> value
-        is Int -> value.toDouble()
-        is String -> value.toDoubleOrNull() ?: default
-        else -> default
-      }
-    }
+    @Deprecated("Use com.intellij.openapi.vcs.changes.ui.BranchPresentation.TEXT_COLOR.")
+    val TEXT_COLOR: JBColor = BranchPresentation.TEXT_COLOR
 
     fun getCurrentBranch(project: Project, change: Change) = getCurrentBranch(project, getFilePath(change))
 
@@ -110,7 +93,8 @@ class CurrentBranchComponent(private val tree: ChangesTree,
       getProviders(project).asSequence().mapNotNull { it.getCurrentBranch(path) }.firstOrNull()
 
     @JvmStatic
-    fun getBranchPresentationBackground(background: Color) = ColorUtil.mix(background, BACKGROUND_BASE_COLOR, BACKGROUND_BALANCE)
+    @Deprecated("Use com.intellij.openapi.vcs.changes.ui.BranchPresentation.getBranchPresentationBackground(Color)")
+    fun getBranchPresentationBackground(background: Color): Color = BranchPresentation.getBranchPresentationBackground(background)
 
     private fun getProviders(project: Project) = BranchStateProvider.EP_NAME.getExtensionList(project)
   }

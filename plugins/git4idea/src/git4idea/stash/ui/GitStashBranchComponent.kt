@@ -2,8 +2,8 @@
 package git4idea.stash.ui
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getBackground
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ExperimentalUI
@@ -46,9 +46,9 @@ class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) 
   private fun getLabelForeground(selected: Boolean): Color {
     if (selected) return UIUtil.getLabelForeground()
     if (ExperimentalUI.isNewUI()) {
-      return JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR)
+      return JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", BranchPresentation.TEXT_COLOR)
     }
-    return CurrentBranchComponent.TEXT_COLOR
+      return BranchPresentation.TEXT_COLOR
   }
 
   override fun paintComponent(g: Graphics?) {

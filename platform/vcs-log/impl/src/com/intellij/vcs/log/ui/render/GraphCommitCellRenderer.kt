@@ -5,7 +5,7 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.openapi.vcs.changes.ui.BranchPresentation
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredRenderer
@@ -213,11 +213,12 @@ class GraphCommitCellRenderer(
       val bookmarks = cell.bookmarksToThisCommit
       val labelForeground = if (isNewUI()) {
         JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground",
-                           CurrentBranchComponent.TEXT_COLOR)
+            BranchPresentation.TEXT_COLOR
+        )
       }
       else {
         if (isSelected) table.getBaseStyle(row, column, hasFocus, isSelected).foreground!!
-        else CurrentBranchComponent.TEXT_COLOR
+        else BranchPresentation.TEXT_COLOR
       }
 
       append("") // appendTextPadding wont work without this
