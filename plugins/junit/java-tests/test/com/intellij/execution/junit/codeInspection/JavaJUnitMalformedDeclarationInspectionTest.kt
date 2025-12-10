@@ -947,6 +947,23 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       )
     }
 
+    fun `test @NullSource with parameter resolver`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.junit.jupiter.api.extension.ExtendWith;
+        import org.junit.jupiter.api.extension.ParameterResolver;
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.NullSource;
+        import org.junit.jupiter.params.provider.ValueSource;
+        
+        @ExtendWith(ParameterResolver.class)
+        class SimpleTest {
+            @ParameterizedTest
+            @NullSource
+            void testWithNullSrc(Object o) { }
+        }
+      """.trimIndent())
+    }
+
     fun `test malformed parameterized @EmptySource no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MyTest {
