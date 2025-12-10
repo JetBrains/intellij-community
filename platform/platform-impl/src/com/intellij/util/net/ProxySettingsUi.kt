@@ -33,7 +33,6 @@ import com.intellij.util.proxy.JavaProxyProperty
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
@@ -44,8 +43,7 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
 // TODO: shouldn't accept services, should instead accept UI model or some temporary mutable representation of the settings
 @Suppress("DEPRECATION")
-@ApiStatus.Internal
-class ProxySettingsUi(
+internal class ProxySettingsUi(
   proxySettings: ProxySettings,
   private val credentialStore: ProxyCredentialStore,
   private val disabledPromptsManager: DisabledProxyAuthPromptsManager
@@ -74,9 +72,9 @@ class ProxySettingsUi(
   private lateinit var pluginOverrideCheckbox: JCheckBox
 
   private var lastOverriderProvidedConfiguration: ProxyConfiguration? =
-    if (proxySettings is OverrideCapableProxySettings) proxySettings.overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration() else null
+    (proxySettings as? OverrideCapableProxySettings)?.overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration()
   private var lastUserConfiguration: ProxyConfiguration =
-    if (proxySettings is OverrideCapableProxySettings) proxySettings.originalProxySettings.getProxyConfiguration() else proxySettings.getProxyConfiguration()
+    (proxySettings as? OverrideCapableProxySettings)?.originalProxyConfiguration ?: proxySettings.getProxyConfiguration()
 
   private var checkConnectionUrl = "https://"
   private var lastProxyError: @NlsSafe String = ""
@@ -356,13 +354,13 @@ class ProxySettingsUi(
   override fun reset(settings: ProxySettings) {
     if (settings is OverrideCapableProxySettings) {
       lastOverriderProvidedConfiguration = settings.overrideProvider?.proxyConfigurationProvider?.getProxyConfiguration()
-      lastUserConfiguration = settings.originalProxySettings.getProxyConfiguration()
+      lastUserConfiguration = settings.originalProxyConfiguration
 
       val overrideProvider = settings.overrideProvider
       pluginOverrideCheckbox.isVisible = overrideProvider != null
       pluginOverrideCheckbox.isSelected = overrideProvider != null && settings.isOverrideEnabled
       if (overrideProvider != null) {
-        val pluginName = ProxySettingsOverrideProvider.getPluginDescriptorForProvider(overrideProvider)?.name ?: "<unknown>".also {
+        val pluginName = settings.getProviderPluginName(overrideProvider) ?: "<unknown>".also {
           logger<ProxySettingsUi>().error("couldn't find plugin descriptor for $overrideProvider")
         }
         pluginOverrideCheckbox.text = UIBundle.message("proxy.settings.override.by.plugin.checkbox", pluginName)

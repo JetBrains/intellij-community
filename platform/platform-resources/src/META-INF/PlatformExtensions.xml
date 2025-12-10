@@ -131,7 +131,7 @@
     <applicationInitializedListener implementation="com.intellij.util.net.OverrideDefaultJdkProxy"/>
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
     <applicationService serviceInterface="com.intellij.util.net.ProxySettings"
-                        serviceImplementation="com.intellij.util.net.OverrideCapableProxySettingsImpl"/>
+                        serviceImplementation="com.intellij.util.net.OverrideCapableProxySettings"/>
     <applicationService serviceInterface="com.intellij.util.net.internal.ProxyMigrationService"
                         serviceImplementation="com.intellij.util.net.internal.ProxyMigrationServiceImpl"/>
 

@@ -9285,7 +9285,6 @@ c:com.intellij.util.net.HttpProxyConfigurable
 - com.intellij.openapi.options.ConfigurableBase
 - com.intellij.openapi.options.Configurable$NoMargin
 - <init>():V
-- <init>(com.intellij.util.net.HttpConfigurable):V
 - <init>(com.intellij.util.net.ProxySettings):V
 - p:createUi():com.intellij.openapi.options.ConfigurableUi
 - p:getSettings():com.intellij.util.net.ProxySettings
@@ -9357,8 +9356,6 @@ f:com.intellij.util.net.ProxySettings$Companion
 - f:getInstance():com.intellij.util.net.ProxySettings
 f:com.intellij.util.net.ProxySettingsKt
 - sf:asConfigurationProvider(com.intellij.util.net.ProxySettings):com.intellij.util.net.ProxyConfigurationProvider
-f:com.intellij.util.net.ProxySettingsOverrideProvider$Companion
-- f:areProxySettingsOverridden():Z
 f:com.intellij.util.net.ProxyUtils
 - sf:NO_PROXY_LIST:java.util.List
 - sf:asJavaProxy(com.intellij.util.net.ProxyConfiguration$StaticProxyConfiguration):java.net.Proxy

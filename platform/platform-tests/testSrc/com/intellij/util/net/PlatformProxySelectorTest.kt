@@ -3,6 +3,7 @@ package com.intellij.util.net
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.net.*
@@ -14,6 +15,13 @@ import kotlin.test.assertTrue
 
 @TestApplication
 class PlatformProxySelectorTest {
+  private lateinit var originalProxyConfiguration: ProxyConfiguration
+
+  @BeforeEach
+  fun setUp() {
+    originalProxyConfiguration = ProxySettings.getInstance().getProxyConfiguration()
+  }
+
   @Test
   fun testJdkProxySelectorIsOverridden() {
     assertEquals(ProxySelector.getDefault(), JdkProxyProvider.getInstance().proxySelector)
@@ -80,18 +88,22 @@ class PlatformProxySelectorTest {
 
   @Test
   fun testProxySettingsOverride() {
+    fun areProxySettingsOverridden(): Boolean = ProxySettings.getInstance().let {
+      ProxySettings.getInstance().getProxyConfiguration() !== originalProxyConfiguration
+    }
+
     val proxySelector = JdkProxyProvider.getInstance().proxySelector
     withProxyConfiguration(ProxyConfiguration.direct) {
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://example.com")))
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
-      assertFalse(ProxySettingsOverrideProvider.areProxySettingsOverridden())
+      assertFalse(areProxySettingsOverridden())
       withProxySettingsOverride(object : ProxySettingsOverrideProvider {
         override val shouldUserSettingsBeOverriden: Boolean = true
         override val proxyConfigurationProvider: ProxyConfigurationProvider = ProxyConfigurationProvider {
           ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "another.domain.com", 502, "sub.example.com")
         }
       }) {
-        assertTrue(ProxySettingsOverrideProvider.areProxySettingsOverridden())
+        assertTrue(areProxySettingsOverridden())
         assertEquals(listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("another.domain.com", 502))), proxySelector.select(URI.create("http://example.com")))
         assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
       }
@@ -104,7 +116,7 @@ class PlatformProxySelectorTest {
           ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "another.domain.com", 502, "sub.example.com")
         }
       }) {
-        assertFalse(ProxySettingsOverrideProvider.areProxySettingsOverridden())
+        assertFalse(areProxySettingsOverridden())
         assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://example.com")))
         assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
       }
@@ -126,7 +138,7 @@ class PlatformProxySelectorTest {
           // only the first override is effective
           assertEquals(listOf(Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("another.domain.com", 502))), proxySelector.select(URI.create("http://example.com")))
           assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://sub.example.com")))
-          assertTrue(ProxySettingsOverrideProvider.areProxySettingsOverridden())
+          assertTrue(areProxySettingsOverridden())
         }
       }
       assertEquals(NO_PROXY_LIST, proxySelector.select(URI.create("http://example.com")))
