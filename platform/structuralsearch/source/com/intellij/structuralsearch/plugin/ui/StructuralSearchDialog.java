@@ -21,10 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -746,21 +743,23 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
   @Override
   protected void doOKAction() {
-    if (!getOKAction().isEnabled()) return;
-    if (!myPinned) close(OK_EXIT_CODE);
-    removeMatchHighlights();
-    myAlarm.cancelAllRequests();
-    myConfiguration.removeUnusedVariables();
-    if (myEditConfigOnly) return;
+    WriteIntentReadAction.run(() -> {
+      if (!getOKAction().isEnabled()) return;
+      if (!myPinned) close(OK_EXIT_CODE);
+      removeMatchHighlights();
+      myAlarm.cancelAllRequests();
+      myConfiguration.removeUnusedVariables();
+      if (myEditConfigOnly) return;
 
-    final SearchScope scope = myScopePanel.getScope();
-    if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
-      FindInProjectSettings.getInstance(myProject).addDirectory(directoryScope.getDirectory().getPresentableUrl());
-    }
+      final SearchScope scope = myScopePanel.getScope();
+      if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
+        FindInProjectSettings.getInstance(myProject).addDirectory(directoryScope.getDirectory().getPresentableUrl());
+      }
 
-    FindSettings.getInstance().setShowResultsInSeparateView(myOpenInNewTab.isSelected());
-    ConfigurationManager.getInstance(myProject).addHistoryConfiguration(getConfiguration());
-    startSearching();
+      FindSettings.getInstance().setShowResultsInSeparateView(myOpenInNewTab.isSelected());
+      ConfigurationManager.getInstance(myProject).addHistoryConfiguration(getConfiguration());
+      startSearching();
+    });
   }
 
   public Configuration getConfiguration() {
