@@ -5,4 +5,6 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object SearchEverywhereFrontendBundle : DynamicBundle("messages.searchEverywhereFrontendBundle")
+object SearchEverywhereFrontendBundle {
+  val bundle: DynamicBundle = DynamicBundle(SearchEverywhereFrontendBundle::class.java, "messages.searchEverywhereFrontendBundle")
+}

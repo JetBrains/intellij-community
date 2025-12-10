@@ -389,7 +389,7 @@ class SePopupContentPane(
             }
           }
           else if (semanticWarning) {
-            val noExactMatchesText = SearchEverywhereFrontendBundle.getMessage("search.everywhere.no.exact.matches")
+            val noExactMatchesText = SearchEverywhereFrontendBundle.bundle.getMessage("search.everywhere.no.exact.matches")
             hintHelper.setHint(noExactMatchesText)
           }
           else {

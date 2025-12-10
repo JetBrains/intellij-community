@@ -3,11 +3,9 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.searchEverywhere"/>
   </dependencies>
-  <actions>
-    <action id="SeNewSearchToggleAction"
-            class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
-            text="Use Split Search Everywhere"
-            internal="true"/>
+
+  <actions resource-bundle="messages.searchEverywhereFrontendBundle">
+    <action id="SeNewSearchToggleAction" class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"/>
   </actions>
 
   <extensionPoints>
