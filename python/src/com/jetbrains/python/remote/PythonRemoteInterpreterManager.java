@@ -52,6 +52,11 @@ public abstract class PythonRemoteInterpreterManager {
     exeGroup.addParameter("-u");
   }
 
+  /**
+   * @deprecated  use {@link java.nio.file.Path}
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public static String toSystemDependent(@NotNull String path, boolean isWin) {
     char separator = isWin ? '\\' : '/';
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
