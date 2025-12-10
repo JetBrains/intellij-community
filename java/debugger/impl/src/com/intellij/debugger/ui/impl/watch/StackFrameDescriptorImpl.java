@@ -18,6 +18,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -302,7 +303,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myFrame.isObsolete()
         .thenAccept(res -> {
           if (res) {
-            myIcon = AllIcons.Debugger.Db_obsolete;
+            // TODO: make Db_obsolete icon 16x16
+            myIcon = IconUtil.scaleByIconWidth(AllIcons.Debugger.Db_obsolete, null, EmptyIcon.ICON_16);
             descriptorLabelListener.labelChanged();
           }
         })
