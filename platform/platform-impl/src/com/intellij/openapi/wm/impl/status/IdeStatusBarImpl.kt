@@ -11,7 +11,10 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Stat
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -302,7 +305,7 @@ open class IdeStatusBarImpl @Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.UiWithModelAccess) {
+    withContext(Dispatchers.EDT) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
@@ -330,7 +333,7 @@ open class IdeStatusBarImpl @Internal constructor(
     // Create components in parallel (performance optimization)
     val beans: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.UiWithModelAccess + anyModality) {
+        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
           val c = wrap(widget)
           if (c is StatusBarWidgetWrapper) {
             c.beforeUpdate()
@@ -341,7 +344,7 @@ open class IdeStatusBarImpl @Internal constructor(
       }
     }
 
-    withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
       // Add all to self
       for (bean in beans) {
         addWidgetToSelf(bean, parentDisposable)
@@ -358,14 +361,14 @@ open class IdeStatusBarImpl @Internal constructor(
 
     // Fire events
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.UiWithModelAccess + anyModality) {
+      withContext(Dispatchers.EDT + anyModality) {
         for (bean in beans) {
           fireWidgetAdded(bean.widget, bean.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.UiWithModelAccess) {
+    withContext(Dispatchers.EDT) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
