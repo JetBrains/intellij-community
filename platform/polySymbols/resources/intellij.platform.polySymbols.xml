@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- region Generated dependencies - do not edit manually -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.commons.compress"/>
     <module name="intellij.libraries.fastutil"/>

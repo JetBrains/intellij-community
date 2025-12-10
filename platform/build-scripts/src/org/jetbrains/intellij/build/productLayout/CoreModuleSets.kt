@@ -24,6 +24,10 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcMinimal
  *
  * CommunityModuleSets builds on top of these with IDE features (essential, debugger, vcs, xml, etc.)
  * and has a one-way dependency on CoreModuleSets.
+ *
+ * **How to regenerate XML files:**
+ * - IDE: Run configuration "Generate Product Layouts"
+ * - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
  */
 object CoreModuleSets {
   // region Libraries

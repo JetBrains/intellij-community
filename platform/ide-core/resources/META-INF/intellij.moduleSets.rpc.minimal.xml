@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
-<!-- To regenerate, run: UltimateModuleSets.main() -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
 <!-- Source: see moduleSet("rpc.minimal") function in UltimateModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>

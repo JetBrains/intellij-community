@@ -4,7 +4,7 @@
       <module name="intellij.platform.jewel.markdown.core"/>
       <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
       <module name="intellij.platform.jewel.markdown.extensions.images"/>
-      <!-- region Generated dependencies - do not edit manually -->
+      <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
       <module name="intellij.libraries.compose.foundation.desktop"/>
       <module name="intellij.libraries.skiko"/>
       <!-- endregion -->

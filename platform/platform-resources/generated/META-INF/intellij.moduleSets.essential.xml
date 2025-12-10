@@ -1,5 +1,5 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
-<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
 <!-- Source: see moduleSet("essential") function in CommunityModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>

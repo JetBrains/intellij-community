@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- region Generated dependencies - do not edit manually -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.util.core"/>
   </dependencies>

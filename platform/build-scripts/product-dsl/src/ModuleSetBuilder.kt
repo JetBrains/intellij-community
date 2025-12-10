@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
-import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -195,7 +194,7 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBu
     // Add generated file header
     val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
     append("<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->\n")
-    append("<!-- To regenerate, run: ${mainClass}.main() -->\n")
+    append("<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->\n")
     append("<!-- Source: see moduleSet(\"${moduleSet.name}\") function in ${mainClass}.kt -->\n")
     append("<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->\n")
 
@@ -276,64 +275,6 @@ internal fun cleanupOrphanedModuleSetFiles(
   }
 
   return deletedFiles
-}
-
-/**
- * Generates all module set XMLs for the given object.
- * Discovers all ModuleSet functions via reflection, generates XML files, and prints results.
- *
- * Automatically cleans up outdated module set XML files that no longer have corresponding
- * Kotlin module set functions.
- *
- * @param obj The object containing module set functions (e.g., CommunityModuleSets, UltimateModuleSets)
- * @param outputDir Directory where XML files will be generated
- * @param label Description label for logging (e.g., "community", "ultimate")
- * @param projectRoot Project root path for relativizing paths in output
- * @param moduleOutputProvider Optional provider for resolving module output directories (required if module sets use outputModule)
- * @param printSummary Whether to print generation summary (default: true)
- */
-fun generateAllModuleSets(
-  obj: Any,
-  outputDir: Path,
-  label: String,
-  projectRoot: Path,
-  moduleOutputProvider: ModuleOutputProvider? = null,
-  printSummary: Boolean = true,
-) {
-  val startTime = System.currentTimeMillis()
-  Files.createDirectories(outputDir)
-
-  val moduleSets = discoverModuleSets(obj)
-
-  // Generate all module set XML files first
-  val fileResults = moduleSets.map { moduleSet ->
-    val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
-    generateModuleSetXml(moduleSet, targetOutputDir, label)
-  }
-
-  // Build map of output directory -> generated file names for cleanup (from generation results)
-  val outputDirToGeneratedFiles = mutableMapOf<Path, MutableSet<String>>()
-  for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
-    val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
-    outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { mutableSetOf() }.add(fileResult.fileName)
-  }
-
-  // Clean up orphaned files after generation (safe for standalone runs)
-  val deletedFiles = cleanupOrphanedModuleSetFiles(outputDirToGeneratedFiles)
-
-  // Combine generated files and deleted files
-  val allResults = fileResults + deletedFiles
-
-  if (printSummary) {
-    val result = ModuleSetGenerationResult(label, outputDir, allResults, outputDirToGeneratedFiles)
-    printGenerationSummary(
-      moduleSetResults = listOf(result),
-      dependencyResult = null,
-      productResult = null,
-      projectRoot = projectRoot,
-      durationMs = System.currentTimeMillis() - startTime,
-    )
-  }
 }
 
 /**

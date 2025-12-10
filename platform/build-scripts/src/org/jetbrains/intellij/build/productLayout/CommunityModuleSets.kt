@@ -3,13 +3,11 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.essential
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesKtor
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesMisc
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
-import java.nio.file.Path
 
 /**
  * Community module sets for IDE features that build on CoreModuleSets.
@@ -24,30 +22,14 @@ import java.nio.file.Path
  *
  * Has a one-way dependency on CoreModuleSets (libraries, platform infrastructure, RPC).
  *
+ * **How to regenerate XML files:**
+ * - IDE: Run configuration "Generate Product Layouts"
+ * - Bazel: `bazel run //platform/buildScripts:plugin-model-tool`
+ *
  * @see CoreModuleSets for platform infrastructure (libraries, corePlatform, coreIde, coreLang, rpc, fleet)
  * @see <a href="../product-dsl/module-sets.md">Module Sets Documentation</a>
  */
 object CommunityModuleSets {
-  /**
-   * Main method to regenerate all community module set XML files from Kotlin definitions.
-   * Run this whenever module sets are modified to keep XML files in sync.
-   */
-  @JvmStatic
-  fun main(args: Array<String>) {
-    @Suppress("TestOnlyProblems")
-    val projectRoot = Path.of(PathManager.getHomePathFor(CommunityModuleSets::class.java)!!)
-
-    kotlinx.coroutines.runBlocking {
-      generateAllModuleSets(
-        obj = CommunityModuleSets,
-        outputDir = projectRoot.resolve("community/platform/platform-resources/generated/META-INF"),
-        label = "community",
-        projectRoot = projectRoot,
-        moduleOutputProvider = createModuleOutputProvider(projectRoot, this)
-      )
-    }
-  }
-
   // region Essential and Debugger
 
   /**

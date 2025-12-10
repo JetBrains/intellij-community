@@ -2,6 +2,8 @@
 package org.jetbrains.intellij.build.productLayout.xml
 
 import com.intellij.util.xml.dom.createXmlStreamReaderWithLocation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import java.io.StringReader
 import java.nio.file.Files
@@ -13,7 +15,7 @@ import javax.xml.stream.XMLStreamConstants
  * Preserves formatting outside `<dependencies>` section.
  */
 
-private const val REGION_START = "<!-- region Generated dependencies - do not edit manually -->"
+private const val REGION_START = "<!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->"
 private const val REGION_END = "<!-- endregion -->"
 private const val REGION_MARKER = "region Generated dependencies"
 // Legacy marker for backward compatibility with existing files
@@ -71,7 +73,7 @@ private fun StringBuilder.appendModules(indent: String, modules: List<String>) {
  * @param preserveExistingModule Predicate to identify which existing modules should be preserved (manual deps)
  * @return FileChangeStatus indicating what changed
  */
-internal fun updateXmlDependencies(
+internal suspend fun updateXmlDependencies(
   path: Path,
   content: String,
   moduleDependencies: List<String>,
@@ -103,10 +105,11 @@ internal fun updateXmlDependencies(
 
   val autoModules = moduleDependencies.sorted()
 
-  // Skip writing if the module set is unchanged AND file already uses new region format
-  // (force rewrite if file uses legacy editor-fold markers to convert to new format)
+  // Skip writing if the module set is unchanged AND file already uses current region format
+  // Force rewrite if file uses legacy editor-fold markers or old region text without re-gen instructions
   val usesLegacyMarkers = content.contains(LEGACY_MARKER) && !content.contains(REGION_MARKER)
-  if (moduleNames.sorted() == (autoModules + manualModuleNames).distinct().sorted() && !usesLegacyMarkers) {
+  val usesOldRegionText = content.contains(REGION_MARKER) && !content.contains(REGION_START)
+  if (moduleNames.sorted() == (autoModules + manualModuleNames).distinct().sorted() && !usesLegacyMarkers && !usesOldRegionText) {
     return FileChangeStatus.UNCHANGED
   }
 
@@ -222,7 +225,7 @@ private fun buildFullBlock(indent: String, manualEntries: List<DepEntry>, autoMo
   }.toString()
 }
 
-/** Full <dependencies> section preserving original order of plugins + manual modules (for NONE case) */
+/** Full <dependencies> section preserving original order of plugins and manual modules (for `NONE` case) */
 private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, autoModules: List<String>): String {
   return StringBuilder().apply {
     append(indent).append("<dependencies>\n")
@@ -241,8 +244,12 @@ private fun buildWithEntries(indent: String, manualEntries: List<DepEntry>, auto
   }.toString()
 }
 
-private fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
-  if (newContent == oldContent) return FileChangeStatus.UNCHANGED
-  Files.writeString(path, newContent)
+private suspend fun writeIfChanged(path: Path, oldContent: String, newContent: String): FileChangeStatus {
+  if (newContent == oldContent) {
+    return FileChangeStatus.UNCHANGED
+  }
+  withContext(Dispatchers.IO) {
+    Files.writeString(path, newContent)
+  }
   return if (oldContent.contains(REGION_MARKER) || oldContent.contains(LEGACY_MARKER)) FileChangeStatus.MODIFIED else FileChangeStatus.CREATED
 }

@@ -1,6 +1,6 @@
 <!-- depends on jettison (https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration)  -->
 <idea-plugin visibility="internal">
-  <!-- region Generated dependencies - do not edit manually -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.jettison"/>
   </dependencies>

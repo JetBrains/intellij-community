@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
-  <!-- region Generated dependencies - do not edit manually -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.fastutil"/>
