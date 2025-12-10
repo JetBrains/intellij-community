@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.ui.icons.IconWithOverlay;
@@ -139,7 +140,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
 
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     VirtualFile vFile = createChildData(vDir, "X.txt");
-
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     PsiDirectory psiDir = PsiManager.getInstance(getProject()).findDirectory(vDir);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
 
