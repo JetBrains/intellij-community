@@ -8,6 +8,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.managed.cache"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
