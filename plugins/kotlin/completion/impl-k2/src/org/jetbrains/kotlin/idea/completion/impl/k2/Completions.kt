@@ -52,7 +52,8 @@ internal object Completions {
     )
 
     /**
-     * Returns whether any elements were added to the [resultSet].
+     * Returns a [K2CompletionRunnerResult] containing information about how many elements
+     * were added to the [resultSet] and which [K2ChainCompletionContributor]s were registered.
      */
     fun <T : KotlinRawPositionContext> complete(
         parameters: KotlinFirCompletionParameters,
