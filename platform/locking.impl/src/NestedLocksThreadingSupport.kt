@@ -15,7 +15,6 @@ import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvi
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -1641,7 +1640,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     val state = getComputationState()
     val permit = state.getThisThreadPermit()
     if (permit !is ParallelizablePermit.WriteIntent) {
-      throw IllegalStateException("This function expects the Write-Intent read action to be acquired")
+      throw IllegalStateException("This function expects the Write-Intent read action to be acquired; current permit: $permit")
     }
     // for now, we release only the top-level WI lock.
     // There is no evidence that this method is called in deep parallelization stacks
