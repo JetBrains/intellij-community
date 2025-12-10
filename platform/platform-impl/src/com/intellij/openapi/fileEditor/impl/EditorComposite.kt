@@ -198,7 +198,7 @@ open class EditorComposite internal constructor(
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
-      withContext(Dispatchers.UiWithModelAccess) {
+      withContext(Dispatchers.EDT) {
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
@@ -901,7 +901,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+        composite.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }
