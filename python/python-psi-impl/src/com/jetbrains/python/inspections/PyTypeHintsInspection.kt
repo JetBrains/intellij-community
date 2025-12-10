@@ -400,10 +400,10 @@ class PyTypeHintsInspection : PyInspection() {
         }
       }
 
-
       checkTypeCommentAndParameters(node)
       checkTypeVarsInFunctionAnnotations(node)
       reportTypeParametersUsedByOuterScope(node)
+      checkInitSelfParameterAnnotation(node)
     }
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
@@ -1435,7 +1435,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
       else if (hasSelf && actualParametersSize == commentParametersSize) {
         val actualSelfType =
-          (myTypeEvalContext.getType(cls!!) as? PyInstantiableType<*>)
+          (myTypeEvalContext.getType(cls) as? PyInstantiableType<*>)
             ?.let { if (modifier == PyAstFunction.Modifier.CLASSMETHOD) it.toClass() else it.toInstance() }
           ?: return
 
@@ -1475,6 +1475,27 @@ class PyTypeHintsInspection : PyInspection() {
         if (type is PyTypeVarType && type.variance == Variance.CONTRAVARIANT) {
           registerProblem(returnAnnotation, PyPsiBundle.message("INSP.type.hints.cannot.use.contravariant.in.return.type"))
         }
+      }
+    }
+
+    private fun checkInitSelfParameterAnnotation(function: PyFunction) {
+      // Report the use of class-scoped type vars in a type hint for `self` parameter of the `__init__` method,
+      // which is not allowed
+      if (function.name != PyNames.INIT) return
+
+      val method = function.asMethod() ?: return
+      val containingClass = method.containingClass ?: return
+
+      val selfParameter = function.parameterList.parameters.firstOrNull()
+      if (selfParameter !is PyNamedParameter) return
+
+      val selfAnnotationValue = selfParameter.annotation?.value ?: return
+      val selfAnnotationType = PyTypingTypeProvider.getType(selfAnnotationValue, myTypeEvalContext) ?: return
+
+      val generics = PyTypeChecker.collectGenerics(selfAnnotationType.get(), myTypeEvalContext)
+      if (generics.typeVars.any { it.scopeOwner === containingClass }) {
+        registerProblem(selfAnnotationValue,
+                        PyPsiBundle.message("INSP.type.hints.cannot.use.class.scope.type.variables.in.annotation.for.self.parameter.of__init__"))
       }
     }
 
