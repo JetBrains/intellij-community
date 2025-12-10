@@ -387,5 +387,12 @@
 
     <virtualFileCustomDataProvider implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
     <virtualFileCustomDataProvider implementation="com.intellij.xml.XmlCodeStyleSettingsCustomDataSynchronizer"/>
+
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.XslZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.CommentZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.EscapeZenCodingFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter"/>
+    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.TrimZenCodingFilter"/>
   </extensions>
 </idea-plugin>
