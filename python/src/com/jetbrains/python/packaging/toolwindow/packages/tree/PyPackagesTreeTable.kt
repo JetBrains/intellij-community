@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.packages.tree
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ide.CopyProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Key
@@ -22,6 +23,7 @@ import com.jetbrains.python.sdk.isReadOnly
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Point
+import java.awt.datatransfer.StringSelection
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -39,7 +41,7 @@ class PyPackagesTreeTable(
   val project: Project,
   private val controller: PyPackagingToolWindowPanel,
   private var treeListener: PyPackagesTreeListener? = null,
-) : JBTreeTable(PyPackagesTreeTableModel()), PackageTreeTableOperations {
+) : JBTreeTable(PyPackagesTreeTableModel()), PackageTreeTableOperations, UiDataProvider, CopyProvider {
 
   companion object {
     private const val COLUMN_PROPORTION = 0.3f
@@ -73,6 +75,7 @@ class PyPackagesTreeTable(
   private fun initializeUI() {
     initializeTreeTableProperties()
     initializeTreeProperties()
+    initializeTableProperties()
     initializeCellRenderers()
     setupTreeInteractions()
     setupContextMenu()
@@ -101,6 +104,13 @@ class PyPackagesTreeTable(
       isRootVisible = false
       showsRootHandles = true
       selectionModel.selectionMode = SINGLE_TREE_SELECTION
+      transferHandler = null
+    }
+  }
+
+  private fun initializeTableProperties() {
+    table.apply {
+      transferHandler = null
     }
   }
 
@@ -266,6 +276,25 @@ class PyPackagesTreeTable(
       val node = tree.getPathForRow(row)?.lastPathComponent ?: return@mapNotNull null
       treeTableModel.getValueAt(node, 0) as? DisplayablePackage
     } ?: emptySequence()
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.COPY_PROVIDER] = this
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun performCopy(dataContext: DataContext) {
+    getTextForCopy()?.let { CopyPasteManager.getInstance().setContents(StringSelection(it)) }
+  }
+
+  override fun isCopyEnabled(dataContext: DataContext): Boolean = getTextForCopy() != null
+
+  override fun isCopyVisible(dataContext: DataContext): Boolean = true
+
+  private fun getTextForCopy(): String? = when (val pkg = selectedItem()) {
+    is InstalledPackage, is InstallablePackage, is RequirementPackage -> pkg.name
+    is ErrorNode, is ExpandResultNode, null -> null
+  }
 }
 
 private interface PackageTreeTableOperations {
