@@ -323,6 +323,22 @@
         ]
       }
     },
+    "//build:jps_dynamic_deps_community.bzl%jps_dynamic_deps_community_extension": {
+      "general": {
+        "bzlTransitiveDigest": "Lnw0mBm4CPLM7BMtupRfNpexeE+eJotek73WSnMpOLs=",
+        "usagesDigest": "OSsQY2hkpxdAkgfVzTh+Q1KLtzAuQDVI0/8sRki7FfU=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "jps_dynamic_deps_community": {
+            "repoRuleId": "@@//build:jps_dynamic_deps_community.bzl%targets_repo",
+            "attributes": {}
+          }
+        },
+        "recordedRepoMappingEntries": []
+      }
+    },
     "@@pybind11_bazel+//:python_configure.bzl%extension": {
       "general": {
         "bzlTransitiveDigest": "4rSUGWibZDYLhHR+8eMwTNwAwdIv+xjVrtQ+gHtWHq4=",

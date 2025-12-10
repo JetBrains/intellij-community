@@ -1,5 +1,18 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+load("//build:intellij_dev_community.bzl", "intellij_dev_binary_community")
+
+# Dev-build targets for running IDEs locally via `bazel run //build:<target>`
+intellij_dev_binary_community(
+    name = "idea_community",
+    platform_prefix = "community",
+)
+
+intellij_dev_binary_community(
+    name = "android_studio",
+    platform_prefix = "AndroidStudio",
+)
+
 # production intellij.platform.jps.build.dependencyGraph; cannot use @rules_jvm//dependency-graph:dependency-graph directly because it's mainly
 # used to bootstrap jvm_library rule (from rules_jvm) via kt_jvm_library rule (from rules_kotlin) and @rules_jvm//:rules_jvm_bootstrap_kotlinc_options flags
 jvm_library(
