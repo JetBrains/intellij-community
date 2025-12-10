@@ -265,7 +265,7 @@ private fun StringBuilder.renderEnumSpecialSymbol(
         val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
         val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
             val navigationElement = superClass.psi?.navigationElement
-            if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
+            if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled || navigationElement is PsiCompiledElement) {
                 null //no need to search documentation in decompiled code
             } else {
                 navigationElement?.findDescendantOfType<KDoc> { doc ->
