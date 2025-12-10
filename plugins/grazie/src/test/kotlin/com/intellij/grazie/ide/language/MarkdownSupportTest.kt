@@ -76,9 +76,25 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
-  fun `test no typos in chinese texts with text-level spellchecker`() {
+  fun `test no typos in asian-english mixed texts with text-level spellchecker`() {
     // It may look like a synthetic example that has nothing to do with the real world,
     // but this is exactly what [androidDictionary] looks like
+    val mixedText = """
+      文件不存在时应返回错误
+      相对路径不存在
+      期望返回错误但未返回
+      不应返回错误
+      Hello不应返回错误
+      不应返回错误hello
+      不应HELLO返回错误
+      "文件'Love'文件", "Love'文件", "文件'Love" ,"文件\"Love\"文件", "文件`Love`文件", "文件Love", "Love文件",
+      
+      // Some Japanese too
+      次のprojectのdeadlineは来週の金曜日なので、急いでfinishしなければなりません。
+    """.trimIndent()
+    myFixture.configureByText("a.md", mixedText)
+    myFixture.checkHighlighting()
+
     val name = "androidDictionary"
     val words = setOf("foldable", "rollable", "wearable")
     getInstance(project).spellChecker!!.addDictionary(object : Dictionary {
@@ -87,13 +103,11 @@ class MarkdownSupportTest : GrazieTestBase() {
       override fun getWords(): Set<String> = words
     })
     Disposer.register(testRootDisposable) { getInstance(project).spellChecker!!.removeDictionary(name) }
+    myFixture.configureByText("a.md", mixedText)
+    myFixture.checkHighlighting()
 
-    enableProofreadingFor(setOf(Lang.CHINESE))
-    myFixture.configureByText("a.md", """
-      文件不存在时应返回错误
-      相对路径不存在
-      期望返回错误但未返回
-      不应返回错误
+    enableProofreadingFor(setOf(Lang.CHINESE, Lang.JAPANESE))
+    myFixture.configureByText("a.md", mixedText + """
 
       <!-- 将文本粘贴在此，或者检测以下文本 我和她去看了<GRAMMAR_ERROR descr="wa5">二部</GRAMMAR_ERROR>电影。-->
     """.trimIndent())
