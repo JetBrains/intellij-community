@@ -80,6 +80,13 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
         }
 
         val containingFile = rootElement.containingFile
+        if (containingFile == null) {
+            // When the element doesn't have a containing file, we cannot use it as a key and have to bypass the processing state handling.
+            // We still have to process the modification itself since the element could have a meaningful module.
+            processElementModification(event, rootElement, containingFile, processingState = null)
+
+            return
+        }
 
         if (containingFile is KtCodeFragment && containingFile.context?.isValid == false) {
             // There is no need to invalidate caches for already invalid code fragments.
@@ -166,8 +173,8 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
     private fun processElementModification(
         event: PsiTreeChangeEventImpl,
         rootElement: PsiElement,
-        containingFile: PsiFile,
-        processingState: TreeChangeProcessingState.Accepting,
+        containingFile: PsiFile?,
+        processingState: TreeChangeProcessingState.Accepting?,
     ) {
         val modificationType = when (event.code) {
             PsiEventType.CHILD_ADDED -> KaElementModificationType.ElementAdded
@@ -195,7 +202,7 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
 
         sourceModificationService.handleInvalidation(targetElement, locality)
 
-        if (locality is KaSourceModificationLocality.OutOfBlock) {
+        if (containingFile != null && processingState != null && locality is KaSourceModificationLocality.OutOfBlock) {
             processingState.fileStates[containingFile] = TreeChangeFileState.ModuleEventPublished
         }
     }
