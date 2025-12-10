@@ -27,6 +27,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.io.path.div
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
@@ -727,7 +729,7 @@ internal class BazelBuildFileGenerator(
           else -> false
         }
       })) {
-      println("Expected no module/library non-runtime dependencies for resource-only module for ${module.module.name}")
+      LOG.log(Level.FINE, "Expected no module/library non-runtime dependencies for resource-only module for ${module.module.name}")
     }
 
     val resources = if (forTests) module.testResources else module.resources
@@ -1287,3 +1289,5 @@ private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
     }.filter { it.isNotEmpty() }.joinToString("_")
   }
 }
+
+private val LOG = Logger.getLogger("build-files")
