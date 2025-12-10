@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.productLayout.analysis.validateSelfContained
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResult
+import org.jetbrains.intellij.build.productLayout.util.ValidationErrorCollector
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
 import kotlin.system.exitProcess
@@ -56,6 +57,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   productSpecs: List<Pair<String, ProductModulesContentSpec?>> = emptyList(),
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
   additionalPlugins: Map<String, String> = emptyMap(),
+  errorCollector: ValidationErrorCollector? = null,
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
   val modulesToProcess = collectModulesToProcess(allModuleSets)
@@ -85,7 +87,7 @@ internal suspend fun generateModuleDescriptorDependencies(
   // Report all errors at once
   if (errors.isNotEmpty()) {
     val hasMissingDependencies = errors.any { it is MissingDependenciesError }
-    System.err.println(buildString {
+    val errorMessage = buildString {
       if (hasMissingDependencies) {
         formatProductDependencyErrorsHeader(this)
       }
@@ -93,8 +95,14 @@ internal suspend fun generateModuleDescriptorDependencies(
       if (hasMissingDependencies) {
         formatProductDependencyErrorsFooter(this)
       }
-    })
-    exitProcess(1)
+    }
+    if (errorCollector == null) {
+      System.err.println(errorMessage)
+      exitProcess(1)
+    }
+    else {
+      errorCollector.record(errorMessage)
+    }
   }
 
   // Write XML files in parallel

@@ -1,22 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
-import com.intellij.platform.buildScripts.testFramework.runTestBuild
+import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
+import com.intellij.platform.buildScripts.testFramework.doRunTestBuild
 import com.intellij.platform.buildScripts.testFramework.spanName
 import com.intellij.platform.distributionContent.testFramework.FileEntry
 import com.intellij.platform.distributionContent.testFramework.PluginContentReport
 import com.intellij.platform.distributionContent.testFramework.deserializeContentData
 import com.intellij.platform.distributionContent.testFramework.deserializeModuleList
 import com.intellij.platform.distributionContent.testFramework.deserializePluginData
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.lang.HashMapZipFile
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.productLayout.util.ModelValidationResult
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
@@ -38,8 +47,15 @@ private data class ContentReportList(
   @JvmField val moduleSets: Map<String, List<String>>,
 )
 
+/**
+ * Type alias for a generator validation function.
+ * The function takes the project home path and returns validation result
+ * containing file diffs and validation errors.
+ */
+typealias GeneratorValidator = suspend (projectHome: Path) -> ModelValidationResult
+
 @ApiStatus.Internal
-fun createContentCheckTests(
+suspend fun createContentCheckTests(
   projectHomePath: Path,
   productProperties: ProductProperties,
   contentYamlPath: String,
@@ -47,23 +63,66 @@ fun createContentCheckTests(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   checkPlugins: Boolean = true,
   suggestedReviewer: String? = null,
+  modelValidator: GeneratorValidator? = null,
 ): Iterator<DynamicTest> {
-  val packageResult by lazy {
-    lateinit var result: PackageResult
-    computePackageResult(
-      productProperties = productProperties,
-      testInfo = testInfo,
-      contentConsumer = {
-        result = it
-      },
-      homePath = projectHomePath,
-      buildTools = buildTools,
-    )
-    result
+  val (validationResult, packageResult) = coroutineScope {
+    // validate that generated files are up to date (if validator is provided)
+    val validationDeferred = async {
+      modelValidator?.invoke(projectHomePath) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
+    }
+
+    val packageDeferred = async {
+      var result: PackageResult? = null
+      computePackageResult(
+        productProperties = productProperties,
+        testInfo = testInfo,
+        contentConsumer = {
+          result = it
+        },
+        homePath = projectHomePath,
+        buildTools = buildTools,
+      )
+      result!!
+    }
+
+    // wait for validation first - if it has errors, cancel packaging and return early
+    val validation = validationDeferred.await()
+    if (validation.diffs.isNotEmpty() || validation.errors.isNotEmpty()) {
+      packageDeferred.cancel()
+      validation to null
+    }
+    else {
+      validation to packageDeferred.await()
+    }
   }
 
+  // if model validation failed, only report those errors (skip packaging tests to avoid confusing cascading failures)
+  if (packageResult == null) {
+    return sequence {
+      for (diff in validationResult.diffs) {
+        val relativePath = projectHomePath.relativize(diff.path)
+        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-sync: $relativePath)") {
+          throw FileComparisonFailedError(
+            message = """Generated file is out of sync: $relativePath
+                          |Run 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update.
+                          """.trimMargin(),
+            expected = diff.expectedContent,
+            actual = diff.actualContent,
+            expectedFilePath = diff.path.toString(),
+          )
+        })
+      }
+
+      for ((index, error) in validationResult.errors.withIndex()) {
+        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation-error-${index + 1})") {
+          throw IllegalStateException(error)
+        })
+      }
+    }.iterator()
+  }
+
+  val projectHome = packageResult.projectHome
   return sequence {
-    val projectHome = packageResult.projectHome
     val contentList = packageResult.content
 
     yield(DynamicTest.dynamicTest("${testInfo.spanName}(platform)") {
@@ -169,7 +228,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
 
 private fun getPluginContentKey(item: PluginContentReport): String = item.mainModule + (if (item.os == null) "" else " (os=${item.os})")
 
-private fun computePackageResult(
+private suspend fun computePackageResult(
   productProperties: ProductProperties,
   testInfo: TestInfo,
   contentConsumer: (PackageResult) -> Unit,
@@ -177,96 +236,114 @@ private fun computePackageResult(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
 ) {
   productProperties.buildDocAuthoringAssets = false
-  runTestBuild(
-    homeDir = homePath,
-    productProperties = productProperties,
-    buildTools = buildTools,
-    testInfo = testInfo,
-    isReproducibilityTestAllowed = false,
+  val buildOptionsCustomizer = { it: BuildOptions ->
+    // reproducible content report
+    it.randomSeedNumber = 42
+    it.skipCustomResourceGenerators = true
+    it.targetOs = OsFamily.ALL
+    it.targetArch = null
+    it.buildStepsToSkip += listOf(
+      BuildOptions.MAVEN_ARTIFACTS_STEP,
+      BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
+      BuildOptions.BROKEN_PLUGINS_LIST_STEP,
+      BuildOptions.FUS_METADATA_BUNDLE_STEP,
+      BuildOptions.SCRAMBLING_STEP,
+      BuildOptions.PREBUILD_SHARED_INDEXES,
+      BuildOptions.SOURCES_ARCHIVE_STEP,
+      BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
+      BuildOptions.ARCHIVE_PLUGINS,
+      BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
+      BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
+      SoftwareBillOfMaterials.STEP_ID,
+      BuildOptions.LINUX_ARTIFACTS_STEP,
+      BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
+      BuildOptions.LOCALIZE_STEP,
+      BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
+      "JupyterFrontEndResourcesGenerator",
+    )
+    it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
+  }
+  doRunTestBuild(
+    context = BuildContextImpl.createContext(
+      projectHome = homePath,
+      productProperties = productProperties,
+      setupTracer = false,
+      proprietaryBuildTools = buildTools,
+      options = createBuildOptionsForTest(
+        productProperties = productProperties,
+        homeDir = homePath,
+        testInfo = testInfo,
+        customizer = buildOptionsCustomizer,
+      ),
+    ),
+    writeTelemetry = true,
     checkIntegrityOfEmbeddedFrontend = false,
-    onSuccess = { context ->
-      val file = context.paths.artifactDir.resolve("content-report.zip")
-
-      HashMapZipFile.load(file).use { zip ->
-        fun getString(zip: HashMapZipFile, name: String): String {
-          return Charsets.UTF_8.decode(requireNotNull(zip.getByteBuffer(name)) { "Cannot find $name in $file" }).toString()
-        }
-
-        fun getPlatformData(name: String): List<FileEntry> {
-          val data = getString(zip, name)
-          try {
-            return deserializeContentData(data)
-          }
-          catch (e: SerializationException) {
-            throw RuntimeException("Cannot parse $name in $file\ndata:$data", e)
-          }
-        }
-
-        fun getData(name: String): List<PluginContentReport> {
-          val data = getString(zip, name)
-          try {
-            return deserializePluginData(data)
-          }
-          catch (e: SerializationException) {
-            throw RuntimeException("Cannot parse $name in $file\ndata:$data", e)
-          }
-        }
-
-        val moduleSets = zip.entries
-          .asSequence()
-          .filter { it.name.startsWith("moduleSets/") && it.name.endsWith(".yaml") }
-          .associate {
-            val moduleSetName = it.name.removePrefix("moduleSets/").removeSuffix(".yaml")
-            val yamlData = it.getData(zip).decodeToString()
-            moduleSetName to try {
-              deserializeModuleList(yamlData)
-            }
-            catch (e: SerializationException) {
-              throw RuntimeException("Cannot parse module set $moduleSetName in $file\ndata:$yamlData", e)
-            }
-          }
-
-        contentConsumer(
-          PackageResult(
-            content = ContentReportList(
-              platform = getPlatformData("platform.yaml"),
-              productModules = getData("product-modules.yaml"),
-              bundled = getData("bundled-plugins.yaml"),
-              nonBundled = getData("non-bundled-plugins.yaml"),
-              moduleSets = moduleSets,
-            ),
-            jpsProject = context.project,
-            projectHome = context.paths.projectHome,
-          )
-        )
-      }
+    checkThatBundledPluginInFrontendArePresent = false,
+    traceSpanName = testInfo.spanName,
+    build = { context ->
+      buildDistributions(context)
+      extraValidatePackageResult(context, contentConsumer)
     },
-    buildOptionsCustomizer = {
-      // reproducible content report
-      it.randomSeedNumber = 42
-      it.skipCustomResourceGenerators = true
-      it.targetOs = OsFamily.ALL
-      it.targetArch = null
-      it.buildStepsToSkip += listOf(
-        BuildOptions.MAVEN_ARTIFACTS_STEP,
-        BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
-        BuildOptions.BROKEN_PLUGINS_LIST_STEP,
-        BuildOptions.FUS_METADATA_BUNDLE_STEP,
-        BuildOptions.SCRAMBLING_STEP,
-        BuildOptions.PREBUILD_SHARED_INDEXES,
-        BuildOptions.SOURCES_ARCHIVE_STEP,
-        BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
-        BuildOptions.ARCHIVE_PLUGINS,
-        BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
-        BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
-        SoftwareBillOfMaterials.STEP_ID,
-        BuildOptions.LINUX_ARTIFACTS_STEP,
-        BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
-        BuildOptions.LOCALIZE_STEP,
-        BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
-        "JupyterFrontEndResourcesGenerator",
-      )
-      it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
-    }
   )
+}
+
+private fun extraValidatePackageResult(
+  context: BuildContext,
+  contentConsumer: (PackageResult) -> Unit,
+) {
+  val file = context.paths.artifactDir.resolve("content-report.zip")
+
+  HashMapZipFile.load(file).use { zip ->
+    fun getString(zip: HashMapZipFile, name: String): String {
+      return Charsets.UTF_8.decode(requireNotNull(zip.getByteBuffer(name)) { "Cannot find $name in $file" }).toString()
+    }
+
+    fun getPlatformData(name: String): List<FileEntry> {
+      val data = getString(zip, name)
+      try {
+        return deserializeContentData(data)
+      }
+      catch (e: SerializationException) {
+        throw RuntimeException("Cannot parse $name in $file\ndata:$data", e)
+      }
+    }
+
+    fun getData(name: String): List<PluginContentReport> {
+      val data = getString(zip, name)
+      try {
+        return deserializePluginData(data)
+      }
+      catch (e: SerializationException) {
+        throw RuntimeException("Cannot parse $name in $file\ndata:$data", e)
+      }
+    }
+
+    val moduleSets = zip.entries
+      .asSequence()
+      .filter { it.name.startsWith("moduleSets/") && it.name.endsWith(".yaml") }
+      .associate {
+        val moduleSetName = it.name.removePrefix("moduleSets/").removeSuffix(".yaml")
+        val yamlData = it.getData(zip).decodeToString()
+        moduleSetName to try {
+          deserializeModuleList(yamlData)
+        }
+        catch (e: SerializationException) {
+          throw RuntimeException("Cannot parse module set $moduleSetName in $file\ndata:$yamlData", e)
+        }
+      }
+
+    contentConsumer(
+      PackageResult(
+        content = ContentReportList(
+          platform = getPlatformData("platform.yaml"),
+          productModules = getData("product-modules.yaml"),
+          bundled = getData("bundled-plugins.yaml"),
+          nonBundled = getData("non-bundled-plugins.yaml"),
+          moduleSets = moduleSets,
+        ),
+        jpsProject = context.project,
+        projectHome = context.paths.projectHome,
+      )
+    )
+  }
 }

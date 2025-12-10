@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.productLayout
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ProductFileResult
+import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
 import org.jetbrains.intellij.build.productLayout.util.FileUpdateUtils
 import org.jetbrains.intellij.build.productLayout.xml.appendContentBlock
 import org.jetbrains.intellij.build.productLayout.xml.appendModuleLine
@@ -39,11 +40,11 @@ import java.nio.file.Path
  * @param label Description label ("community" or "ultimate") for header generation
  * @return Result containing file status and statistics
  */
-internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): ModuleSetFileResult {
+internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String, dryRunCollector: DryRunCollector? = null): ModuleSetFileResult {
   val fileName = "${MODULE_SET_PREFIX}${moduleSet.name}.xml"
   val outputPath = outputDir.resolve(fileName)
   val buildResult = buildModuleSetXml(moduleSet, label)
-  val status = FileUpdateUtils.updateIfChanged(outputPath, buildResult.xml)
+  val status = FileUpdateUtils.updateIfChanged(outputPath, buildResult.xml, dryRunCollector)
   return ModuleSetFileResult(fileName, status, buildResult.directModuleCount)
 }
 
@@ -61,6 +62,7 @@ internal fun generateProductXml(
   moduleOutputProvider: ModuleOutputProvider,
   projectRoot: Path,
   isUltimateBuild: Boolean,
+  dryRunCollector: DryRunCollector? = null,
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not
@@ -80,7 +82,7 @@ internal fun generateProductXml(
   )
 
   val originalContent = Files.readString(pluginXmlPath)
-  val status = FileUpdateUtils.writeIfChanged(pluginXmlPath, originalContent, buildResult.xml)
+  val status = FileUpdateUtils.writeIfChanged(pluginXmlPath, originalContent, buildResult.xml, dryRunCollector)
 
   // Calculate statistics using the contentBlocks from generation
   val totalModules = buildResult.contentBlocks.sumOf { it.modules.size }

@@ -191,7 +191,7 @@ private suspend fun jsonResponse(
   )
 }
 
-internal fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
+fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
   val project = JpsSerializationManager.getInstance().loadProject(
     projectRoot.toString(),
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),

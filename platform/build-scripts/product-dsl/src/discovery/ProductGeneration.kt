@@ -23,6 +23,8 @@ import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResul
 import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
+import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
+import org.jetbrains.intellij.build.productLayout.util.ValidationErrorCollector
 import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -62,6 +64,7 @@ internal suspend fun generateAllProductXmlFiles(
   testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   projectRoot: Path,
   moduleOutputProvider: ModuleOutputProvider,
+  dryRunCollector: DryRunCollector? = null,
 ): ProductGenerationResult {
   // Convert test product specs to DiscoveredProduct instances
   val testProducts = testProductSpecs.mapNotNull { (name, spec) ->
@@ -112,6 +115,7 @@ internal suspend fun generateAllProductXmlFiles(
           productPropertiesClass = productPropertiesClass,
           projectRoot = projectRoot,
           isUltimateBuild = isUltimateBuild,
+          dryRunCollector = dryRunCollector,
         )
       }
     }.awaitAll().filterNotNull()
@@ -166,7 +170,7 @@ private fun aggregateAndCleanupOrphanedFiles(moduleSetResults: List<ModuleSetGen
  *
  * @param config Configuration specifying module set sources, discovered products, test products, and other parameters
  */
-suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig) {
+suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig, dryRunCollector: DryRunCollector? = null, errorCollector: ValidationErrorCollector? = null) {
   val startTime = System.currentTimeMillis()
 
   // Discover all module sets and validate products
@@ -185,7 +189,13 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
     val moduleSetJobs = config.moduleSetSources.map { (label, source) ->
       val (sourceObj, outputDir) = source
       async {
-        doGenerateAllModuleSetsInternal(obj = sourceObj, outputDir = outputDir, label = label, moduleOutputProvider = config.moduleOutputProvider)
+        doGenerateAllModuleSetsInternal(
+          obj = sourceObj,
+          outputDir = outputDir,
+          label = label,
+          moduleOutputProvider = config.moduleOutputProvider,
+          dryRunCollector = dryRunCollector,
+        )
       }
     }
 
@@ -218,6 +228,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         productSpecs = products,
         pluginContentJobs = pluginContentJobs,
         additionalPlugins = config.additionalPlugins,
+        errorCollector = errorCollector,
       )
     }
 
@@ -243,7 +254,8 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig)
         discoveredProducts = config.discoveredProducts,
         testProductSpecs = config.testProductSpecs,
         projectRoot = config.projectRoot,
-        moduleOutputProvider = config.moduleOutputProvider
+        moduleOutputProvider = config.moduleOutputProvider,
+        dryRunCollector = dryRunCollector,
       )
     }
 

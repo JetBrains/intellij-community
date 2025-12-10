@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.discoverModuleSets
 import org.jetbrains.intellij.build.productLayout.stats.FileChangeStatus
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
 import org.jetbrains.intellij.build.productLayout.stats.ModuleSetGenerationResult
+import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.nio.file.Files
 import java.nio.file.Path
@@ -308,6 +309,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   outputDir: Path,
   label: String,
   moduleOutputProvider: ModuleOutputProvider? = null,
+  dryRunCollector: DryRunCollector? = null,
 ): ModuleSetGenerationResult = coroutineScope {
   Files.createDirectories(outputDir)
 
@@ -317,7 +319,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   val fileResults = moduleSets.map { moduleSet ->
     async {
       val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
-      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label)
+      generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, dryRunCollector = dryRunCollector)
     }
   }.awaitAll()
 

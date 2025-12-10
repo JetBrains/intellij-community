@@ -63,7 +63,7 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
+internal inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
   val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
@@ -213,7 +213,7 @@ suspend fun runTestBuild(
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(
+internal suspend fun doRunTestBuild(
   context: BuildContext,
   traceSpanName: String,
   writeTelemetry: Boolean,
@@ -234,7 +234,7 @@ private suspend fun doRunTestBuild(
       span.setAttribute("outDir", outDir.toString())
       if (writeTelemetry) {
         traceFile = buildLogsDir.resolve("trace.json").also {
-          JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
+          JaegerJsonSpanExporterManager.setOutput(file = it, addShutDownHook = false)
         }
       }
       try {
