@@ -21,12 +21,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
+ * Any mutating method throws {@link ProcessCanceledException}
  */
 @ApiStatus.Internal
-public final class EmptyMarkupModel implements MarkupModelEx {
+public final class EmptyImmutableMarkupModel implements MarkupModelEx {
   private final Document myDocument;
 
-  public EmptyMarkupModel(final Document document) {
+  public EmptyImmutableMarkupModel(@NotNull Document document) {
     myDocument = document;
   }
 

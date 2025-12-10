@@ -1697,7 +1697,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     @Override
     public @NotNull MarkupModel getMarkupModel() {
-      return new EmptyMarkupModel(getDocument());
+      return new EmptyImmutableMarkupModel(getDocument());
     }
 
     @Override
