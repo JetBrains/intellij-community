@@ -9,5 +9,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
   </component>
 </module>
