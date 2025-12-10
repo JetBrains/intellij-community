@@ -90,8 +90,11 @@ object JvmUtils {
   }
 
   fun resolveInstalledJdk(): Path {
-    val jdkEnv = listOf("JDK_21_0_x64", "JDK_17_0_x64", "JDK_11_X64", "JDK_HOME", "JAVA_HOME")
-                   .firstNotNullOfOrNull { System.getenv(it) } ?: System.getProperty("java.home")
+    val jdkEnv = listOf("JDK_21_0", "JDK_17_0", "JDK_11_0", "JDK_HOME", "JAVA_HOME")
+                   .mapNotNull { System.getenv(it) }
+                   .filterNot { it.startsWith("%") && it.endsWith("%") } // sometimes TeamCity have unresolved references in JAVA_HOME
+                   .firstOrNull()
+                 ?: System.getProperty("java.home")
 
     val javaHome = jdkEnv?.let {
       val path = Path(it)
