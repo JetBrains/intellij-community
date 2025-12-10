@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ public class LocalChangesListView extends ChangesListView {
   public LocalChangesListView(@NotNull Project project) {
     super(project, false);
     putClientProperty(LOG_COMMIT_SESSION_EVENTS, true);
+    putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
 
     setTreeExpander(new MyTreeExpander(this));
     setSelectionModel(new NonSelectableNodeFilteringSelectionModel());
