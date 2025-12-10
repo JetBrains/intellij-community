@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.tokens;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
+import com.intellij.codeInsight.template.emmet.XmlEmmetConstants;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,7 +115,7 @@ public class TemplateToken extends ZenCodingToken {
 
   private static void addMissingAttributes(@NotNull XmlTag tag, @NotNull Map<String, String> attributes) {
     for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-      if (!XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME.equals(attribute.getKey()) && tag.getAttribute(attribute.getKey()) == null) {
+      if (!XmlEmmetConstants.DEFAULT_ATTRIBUTE_NAME.equals(attribute.getKey()) && tag.getAttribute(attribute.getKey()) == null) {
         XmlTag htmlTag = XmlElementFactory.getInstance(tag.getProject()).createHTMLTagFromText("<dummy " + attribute.getKey() + "=\"\"/>");
         final XmlAttribute newAttribute = ArrayUtil.getFirstElement(htmlTag.getAttributes());
         if (newAttribute != null) {
