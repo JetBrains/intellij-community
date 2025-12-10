@@ -96,6 +96,8 @@ public final class JUnit5BazelRunner {
       // set intellij.test.jars.location as a temporary workaround for debugger-agent.jar downloading
       System.setProperty("intellij.test.jars.location", bazelTestTestSrcDir);
 
+      System.setProperty("idea.is.unit.test", "true");
+
       if (Boolean.parseBoolean(System.getenv(jbEnvPrintSortedClasspath))) {
         Arrays.stream(System.getProperty("java.class.path")
           .split(Pattern.quote(File.pathSeparator)))
