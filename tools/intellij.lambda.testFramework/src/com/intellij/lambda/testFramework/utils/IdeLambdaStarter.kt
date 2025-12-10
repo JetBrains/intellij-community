@@ -4,12 +4,14 @@ import com.intellij.ide.starter.driver.driver.remoteDev.RemDevDriverRunner
 import com.intellij.ide.starter.driver.engine.LocalDriverRunner
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.ide.onRemDevContext
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType.*
+import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
 import com.intellij.remoteDev.util.executeSyncNonNullable
@@ -24,83 +26,100 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-object IdeLambdaStarter {
+internal fun Map<String, String>.toLambdaParams(): List<LambdaRdKeyValueEntry> = map { LambdaRdKeyValueEntry(it.key, it.value) }
 
-  fun IDETestContext.runIdeWithLambda(
-    runTimeout: Duration = 10.minutes,
-    launchName: String = "",
-    expectedKill: Boolean = false,
-    expectedExitCode: Int = 0,
-    collectNativeThreads: Boolean = false,
-    configure: IDERunContext.() -> Unit = {},
-  ): IdeWithLambda {
-    if (this is IDERemDevTestContext) {
-      val driverRunner = RemDevDriverRunner()
-      LambdaTestPluginHolder.additionalPluginDirNames().forEach { addCustomFrontendPlugin(it) }
-      val backendRdSession = setUpRdTestSession(BACKEND)
-      val frontendRdSession = frontendIDEContext.setUpRdTestSession(FRONTEND)
+internal fun IDETestContext.runIdeWithLambda(
+  runTimeout: Duration = 10.minutes,
+  launchName: String = "",
+  expectedKill: Boolean = false,
+  expectedExitCode: Int = 0,
+  collectNativeThreads: Boolean = false,
+  configure: IDERunContext.() -> Unit = {},
+): IdeWithLambda {
+  this.onRemDevContext { remDev ->
+    val driverRunner = RemDevDriverRunner()
+    LambdaTestPluginHolder.additionalPluginDirNames().forEach { remDev.addCustomFrontendPlugin(it) }
+    val backendRdSession = setUpRdTestSession(BACKEND)
+    val frontendRdSession = remDev.frontendIDEContext.setUpRdTestSession(FRONTEND)
 
-      val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
-      listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
-      return IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
-    }
+    val backgroundRun = driverRunner.runIdeWithDriver(this,
+                                                      determineDefaultCommandLineArguments(),
+                                                      emptyList(),
+                                                      runTimeout,
+                                                      useStartupScript = true,
+                                                      launchName,
+                                                      expectedKill,
+                                                      expectedExitCode,
+                                                      collectNativeThreads,
+                                                      configure)
+    listOf(backendRdSession, frontendRdSession).forEach { it.awaitSessionReady() }
+    IdeWithLambda(backgroundRun, rdSession = frontendRdSession, backendRdSession = backendRdSession)
+  }?.let { return it }
 
-    val driverRunner = LocalDriverRunner()
-    val monolithRdSession = setUpRdTestSession(MONOLITH)
-    val backgroundRun = driverRunner.runIdeWithDriver(this, determineDefaultCommandLineArguments(), emptyList(), runTimeout, useStartupScript = true, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
-    monolithRdSession.awaitSessionReady()
-    return IdeWithLambda(backgroundRun, monolithRdSession, null)
+  val driverRunner = LocalDriverRunner()
+  val monolithRdSession = setUpRdTestSession(MONOLITH)
+  val backgroundRun = driverRunner.runIdeWithDriver(this,
+                                                    determineDefaultCommandLineArguments(),
+                                                    emptyList(),
+                                                    runTimeout,
+                                                    useStartupScript = true,
+                                                    launchName,
+                                                    expectedKill,
+                                                    expectedExitCode,
+                                                    collectNativeThreads,
+                                                    configure)
+  monolithRdSession.awaitSessionReady()
+  return IdeWithLambda(backgroundRun, monolithRdSession, null)
+}
+
+private fun LambdaRdTestSession.awaitSessionReady() {
+  val timeStarted = System.currentTimeMillis()
+  val timeout = 15.seconds
+  while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
+    Thread.sleep(500)
+  }
+  if (ready.value != true) {
+    error("Lambda test session '${this}' is not ready after $timeout")
+  }
+}
+
+private fun IDETestContext.setUpRdTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {
+  val testProtocolLifetimeDef = EternalLifetime.createNested()
+  EventsBus.subscribe("testProtocolLifetimeDef-${lambdaRdIdeType.name}") { _: IdeAfterLaunchEvent ->
+    testProtocolLifetimeDef.terminate()
   }
 
-  private fun LambdaRdTestSession.awaitSessionReady() {
-    val timeStarted = System.currentTimeMillis()
-    val timeout = 15.seconds
-    while (ready.value != true && timeStarted + timeout.inWholeMilliseconds > System.currentTimeMillis()) {
-      Thread.sleep(500)
-    }
-    if (ready.value != true) {
-      error("Lambda test session '${this}' is not ready after $timeout")
+  val scheduler = SynchronousScheduler
+  val protocolName = LambdaTestsConstants.protocolName + "-" + lambdaRdIdeType.name.lowercase()
+  // allow remote connections for docker hosts/clients
+  val wire = SocketWire.Server(testProtocolLifetimeDef, scheduler, null, protocolName, true)
+  val protocol = Protocol(protocolName, Serializers(), Identities(IdKind.Server), scheduler, wire, testProtocolLifetimeDef)
+
+  val (model, testProtocolPort) = scheduler.executeSyncNonNullable(logErrors = false) {
+    protocol.lambdaTestModel to wire.port
+  }
+
+  applyVMOptionsPatch {
+    addSystemProperty(LambdaTestsConstants.protocolPortPropertyName, testProtocolPort)
+    LambdaTestPluginHolder.testModuleId()?.let {
+      addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, it)
     }
   }
 
-  private fun IDETestContext.setUpRdTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {
-    val testProtocolLifetimeDef = EternalLifetime.createNested()
-    EventsBus.subscribe("testProtocolLifetimeDef-${lambdaRdIdeType.name}") { _: IdeAfterLaunchEvent ->
-      testProtocolLifetimeDef.terminate()
-    }
-
-    val scheduler = SynchronousScheduler
-    val protocolName = LambdaTestsConstants.protocolName + "-" + lambdaRdIdeType.name.lowercase()
-    // allow remote connections for docker hosts/clients
-    val wire = SocketWire.Server(testProtocolLifetimeDef, scheduler, null, protocolName, true)
-    val protocol = Protocol(protocolName, Serializers(), Identities(IdKind.Server), scheduler, wire, testProtocolLifetimeDef)
-
-    val (model, testProtocolPort) = scheduler.executeSyncNonNullable(logErrors = false) {
-      protocol.lambdaTestModel to wire.port
-    }
-
-    applyVMOptionsPatch {
-      addSystemProperty(LambdaTestsConstants.protocolPortPropertyName, testProtocolPort)
-      LambdaTestPluginHolder.testModuleId()?.let {
-        addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, it)
-      }
-    }
-
-    val rdSession = LambdaRdTestSession(lambdaRdIdeType)
-    scheduler.queue {
-      model.session.value = rdSession
-    }
-    return rdSession
+  val rdSession = LambdaRdTestSession(lambdaRdIdeType)
+  scheduler.queue {
+    model.session.value = rdSession
   }
+  return rdSession
+}
 
-  //todo
-  private fun IDERemDevTestContext.addCustomFrontendPlugin(additionalFrontendPluginModuleName: String) {
-    val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
-    if (!frontendCustomPluginsDir.exists()) {
-      frontendCustomPluginsDir.createDirectories()
-    }
-    frontendIDEContext.ide.installationPath
-      .resolve("plugins").resolve(additionalFrontendPluginModuleName)
-      .copyRecursively(frontendCustomPluginsDir.resolve(additionalFrontendPluginModuleName))
+//todo
+private fun IDERemDevTestContext.addCustomFrontendPlugin(additionalFrontendPluginModuleName: String) {
+  val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
+  if (!frontendCustomPluginsDir.exists()) {
+    frontendCustomPluginsDir.createDirectories()
   }
+  frontendIDEContext.ide.installationPath
+    .resolve("plugins").resolve(additionalFrontendPluginModuleName)
+    .copyRecursively(frontendCustomPluginsDir.resolve(additionalFrontendPluginModuleName))
 }

@@ -9,8 +9,8 @@ import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
-import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
+import com.intellij.lambda.testFramework.utils.runIdeWithLambda
 import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -50,6 +50,8 @@ object IdeInstance {
       val testContext = Starter.newContextWithLambda(runMode.name, IdeStartConfig.current)
       _ide = testContext.runIdeWithLambda(configure = {
         IdeStartConfig.current.configureRunContext(this)
+        // Artifacts will be published after each test by invoking IdeInstance.publishArtifacts
+        this.artifactsPublishingEnabled = false
         runContext = this
       })
       return ide
@@ -74,7 +76,7 @@ object IdeInstance {
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
-    runContext.publishArtifacts()
+    runContext.publishArtifacts(true)
   }
 
   fun cleanup() = synchronized(this) {

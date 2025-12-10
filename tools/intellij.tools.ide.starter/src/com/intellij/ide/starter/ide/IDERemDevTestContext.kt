@@ -15,6 +15,15 @@ import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
 
+fun IDETestContext.isRemDevContext() = this is IDERemDevTestContext
+fun IDETestContext.asRemDevContext(): IDERemDevTestContext = this as IDERemDevTestContext
+
+/** Returns result or null if the context isn't of RemDev type */
+fun <T> IDETestContext.onRemDevContext(action: (IDERemDevTestContext) -> T): T? {
+  val remDevContext = if (this.isRemDevContext()) this.asRemDevContext() else return null
+
+  return action(remDevContext)
+}
 
 class IDERemDevTestContext private constructor(
   paths: IDEDataPaths,
@@ -62,7 +71,7 @@ class IDERemDevTestContext private constructor(
         ide = backendContext.ide,
         testCase = backendContext.testCase,
         testName = backendContext.testName,
-        _resolvedProjectHome =  backendContext._resolvedProjectHome,
+        _resolvedProjectHome = backendContext._resolvedProjectHome,
         profilerType = backendContext.profilerType,
         publishers = backendContext.publishers,
         isReportPublishingEnabled = backendContext.isReportPublishingEnabled,
@@ -101,7 +110,7 @@ val IDETestContext.frontendTestCase: TestCase<out ProjectInfoSpec>
  * @param path The path to the event log metadata directory. Defaults to the same folder from the backend.
  * @return The updated `IDERemDevTestContext` instance.
  */
-fun IDERemDevTestContext.setFrontendEventLogsMetadataCustomPath(path: Path = paths.eventLogMetadataDir) : IDERemDevTestContext {
+fun IDERemDevTestContext.setFrontendEventLogsMetadataCustomPath(path: Path = paths.eventLogMetadataDir): IDERemDevTestContext {
   frontendIDEContext.applyVMOptionsPatch {
     addSystemProperty("intellij.fus.custom.schema.dir", path.toString())
   }

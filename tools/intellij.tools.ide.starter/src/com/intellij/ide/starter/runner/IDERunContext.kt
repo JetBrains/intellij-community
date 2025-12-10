@@ -72,6 +72,8 @@ data class IDERunContext(
 
   private val patchesForVMOptions: ConcurrentList<VMOptions.() -> Unit> = ContainerUtil.createConcurrentList()
 
+  var artifactsPublishingEnabled: Boolean = true
+
   private fun Path.createDirectoriesIfNotExist(): Path {
     if (exists()) {
       logOutput("Reports dir '${this.fileName}' is already created")
@@ -90,7 +92,9 @@ data class IDERunContext(
     }
   }
 
-  fun publishArtifacts() {
+  fun publishArtifacts(publish: Boolean = artifactsPublishingEnabled) {
+    if (!publish) return
+
     testContext.publishArtifact(
       source = logsDir,
       artifactPath = contextName,

@@ -1,7 +1,8 @@
 package com.intellij.lambda.testFramework.starter
 
-import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.ide.asRemDevContext
+import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.AdditionalModulesForDevBuildServer
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
@@ -13,7 +14,7 @@ fun Starter.newContextWithLambda(testName: String, config: IdeStartConfig): IDET
     return newTestContainer().newContext(testName = testName, testCase = config.testCase, preserveSystemDir = false).apply {
       config.configureTestContext(this)
 
-      val contextToApplyHeadless = if (this is IDERemDevTestContext) frontendIDEContext else this
+      val contextToApplyHeadless = if (this.isRemDevContext()) this.asRemDevContext().frontendIDEContext else this
       //backend can't be started in headless mode, would fail
       contextToApplyHeadless.applyVMOptionsPatch {
         inHeadlessMode()
