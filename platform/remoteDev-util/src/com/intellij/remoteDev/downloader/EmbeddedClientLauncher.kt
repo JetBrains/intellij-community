@@ -222,6 +222,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "jna.noclasspath", 
       "idea.is.internal",
       "intellij.test.jars.location",
+      "skiko.library.path"
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))
