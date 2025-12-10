@@ -11,6 +11,7 @@ import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.tools.ide.util.common.starterLogger
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -30,9 +31,10 @@ fun <T : HttpRequest> T.withAuth(): T = this.apply {
   addHeader(BasicScheme().authenticate(UsernamePasswordCredentials(teamCityCI.userName, teamCityCI.password), this, null))
 }
 
+private val LOG = starterLogger<TeamCityClient>()
+
 // TODO: move on to use TeamCityRest client library or stick with Okhttp
 object TeamCityClient {
-  private val logger = com.intellij.openapi.diagnostic.logger<TeamCityClient>()
   private val teamCityURI by lazy { di.direct.instance<URI>(tag = "teamcity.uri") }
 
   // temporary directory, where artifact will be moved for preparation for publishing
@@ -48,7 +50,7 @@ object TeamCityClient {
       additionalRequestActions(this)
     }
 
-    logger.debug("Request to TeamCity: $fullUrl")
+    LOG.debug("Request to TeamCity: $fullUrl")
 
     val result = withRetryBlocking(messageOnFailure = "Failure during request to TeamCity") {
       HttpClient.sendRequest(request) {
@@ -90,7 +92,7 @@ object TeamCityClient {
   }
 
   private fun printTcArtifactsPublishMessage(spec: String) {
-    logger.debug(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
+    LOG.debug(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
     logOutput(" ##teamcity[publishArtifacts '$spec'] ")
   }
 
@@ -107,12 +109,12 @@ object TeamCityClient {
     zipContent: Boolean = true,
     artifactForPublishingDir: Path = TeamCityClient.artifactForPublishingDir,
   ) {
-    logger.debug("TeamCity publishTeamCityArtifacts ${source.fileName}")
+    LOG.debug("TeamCity publishTeamCityArtifacts ${source.fileName}")
     val sanitizedArtifactPath = artifactPath.replaceSpecialCharactersWithHyphens()
     val sanitizedArtifactName = artifactName.replaceSpecialCharactersWithHyphens()
 
     if (!source.exists()) {
-      logger.debug("TeamCity artifact $source does not exist")
+      LOG.debug("TeamCity artifact $source does not exist")
       return
     }
     var suffix: String
@@ -131,7 +133,7 @@ object TeamCityClient {
     }
     while (artifactDir.exists())
 
-    logger.debug("Creating directories for artifact publishing ${artifactDir.toUri()}")
+    LOG.debug("Creating directories for artifact publishing ${artifactDir.toUri()}")
     artifactDir.deleteRecursivelyQuietly()
     artifactDir.createDirectories()
 
