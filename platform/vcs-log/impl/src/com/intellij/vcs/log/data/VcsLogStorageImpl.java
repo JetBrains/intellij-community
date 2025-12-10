@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -123,7 +124,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-    checkDisposed();
+    if (checkDisposed()) return NO_INDEX;
     try {
       return getOrPut(hash, root);
     }
@@ -135,7 +136,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public @Nullable CommitId getCommitId(int commitIndex) {
-    checkDisposed();
+    if (checkDisposed()) return null;
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
@@ -151,7 +152,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public boolean containsCommit(@NotNull CommitId id) {
-    checkDisposed();
+    if (checkDisposed()) return false;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -166,7 +167,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
-    checkDisposed();
+    if (checkDisposed()) return;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -185,7 +186,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getRefIndex(@NotNull VcsRef ref) {
-    checkDisposed();
+    if (checkDisposed()) return NO_INDEX;
     if (myRefsEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -200,7 +201,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public @Nullable VcsRef getVcsRef(int refIndex) {
-    checkDisposed();
+    if (checkDisposed()) return null;
     if (myRefsEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -215,7 +216,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void flush() {
-    checkDisposed();
+    if (checkDisposed()) return;
     if (myCommitIdEnumerator == null) {
       throw new IllegalStateException(STORAGE_CLOSED_MESSAGE);
     }
@@ -235,8 +236,9 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     return myRefsStorageId;
   }
 
-  private void checkDisposed() {
-    if (myDisposed) throw new ProcessCanceledException();
+  private boolean checkDisposed() {
+    ProgressManager.checkCanceled();
+    return myDisposed;
   }
 
   @ApiStatus.Internal
