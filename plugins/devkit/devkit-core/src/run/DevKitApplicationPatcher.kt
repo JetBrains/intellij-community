@@ -195,6 +195,7 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     val libDir = runDir.resolve("lib")
     return mapOf(
       "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
+      "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
       "pty4j.preferred.native.folder" to "$libDir/pty4j",
       // require bundled JNA dispatcher lib
       "jna.nosys" to "true",

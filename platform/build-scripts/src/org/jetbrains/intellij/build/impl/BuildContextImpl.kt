@@ -379,6 +379,9 @@ class BuildContextImpl internal constructor(
     jvmArgs += "-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it }
     jvmArgs += "-Dio.netty.allocator.type=pooled"
 
+    // require bundled Skiko
+    jvmArgs.add("-Dskiko.library.path=${macroName}/lib/skiko-awt-runtime-all")
+
     if (useModularLoader || generateRuntimeModuleRepository) {
       jvmArgs += "-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".let { if (isScript) '"' + it + '"' else it }
     }
