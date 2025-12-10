@@ -10,6 +10,7 @@
     <module name="intellij.libraries.markdown"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.impl"/>

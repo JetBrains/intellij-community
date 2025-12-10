@@ -632,7 +632,7 @@ productLayout.productImplementationModules = listOf(
 override fun getProductContentDescriptor() = productModules {
   module("fleet.andel")
   // Or better: use module set that already includes it
-  moduleSet(CoreModuleSets.essential())
+  moduleSet(CommunityModuleSets.essential())
 }
 ```
 
@@ -683,7 +683,7 @@ productLayout.productImplementationModules = listOf(
 )
 
 override fun getProductContentDescriptor() = productModules {
-  moduleSet(CoreModuleSets.essential())  // Includes fleet.rpc
+  moduleSet(CommunityModuleSets.essential())  // Includes fleet.rpc
 }
 // Result: Duplicate content module declaration!
 ```

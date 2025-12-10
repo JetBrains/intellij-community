@@ -3,17 +3,11 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.librariesIde
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.librariesKtor
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.librariesMisc
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.librariesPlatform
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.librariesTemporaryBundled
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreIde
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.coreLang
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.corePlatform
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.essential
-import org.jetbrains.intellij.build.productLayout.CoreModuleSets.essentialMinimal
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.fleet
+import org.jetbrains.intellij.build.productLayout.CoreModuleSets.librariesIde
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcBackend
 import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcMinimal
 
@@ -21,18 +15,202 @@ import org.jetbrains.intellij.build.productLayout.CoreModuleSets.rpcMinimal
  * Core platform module sets forming the foundation of IntelliJ products.
  *
  * This file contains the base module sets that provide the platform infrastructure:
+ * - **libraries***: Library modules (platform, IDE, ktor, misc)
  * - **corePlatform**: Base platform without IDE (for analysis tools)
  * - **coreIde**: Platform + basic IDE functionality
  * - **coreLang**: Platform + IDE + language support
- * - **essentialMinimal**: Lightweight IDE with editing
- * - **essential**: Full essential IDE with debugging and navigation
- * - **debugger**: Debugger platform
- * - **rpc/rpcMinimal**: RPC infrastructure
+ * - **fleet**: Fleet kernel and RPC modules
+ * - **rpc***: RPC infrastructure
  *
- * **Separated from CommunityModuleSets** to reduce file size and improve organization.
- * Library module sets remain in CommunityModuleSets.
+ * CommunityModuleSets builds on top of these with IDE features (essential, debugger, vcs, xml, etc.)
+ * and has a one-way dependency on CoreModuleSets.
  */
 object CoreModuleSets {
+  // region Libraries
+
+  /**
+   * Core platform library modules required by ALL products including analysis tools.
+   * Contains universal utilities: serialization, compression, collections, parsing, networking.
+   *
+   * **Typical users:** All products (CodeServer, IDEA, PyCharm, etc.)
+   *
+   * **Note:** UI/IDE-specific libraries (JCEF, Jediterm, PTY4J, SSH) have been moved to `librariesIde()`
+   *
+   * @see librariesIde for UI and IDE-specific libraries
+   */
+  fun librariesPlatform(): ModuleSet = moduleSet("libraries.platform") {
+    embeddedModule("intellij.libraries.kotlin.reflect")
+    // intellij.platform.wsl.impl and intellij.platform.util.http uses it
+    embeddedModule("intellij.libraries.kotlinx.io")
+
+    // todo - JB Client should not embed intellij.platform.split
+    embeddedModule("intellij.libraries.kotlinx.serialization.cbor")
+
+    embeddedModule("intellij.libraries.kotlinx.serialization.core")
+    embeddedModule("intellij.libraries.kotlinx.serialization.json")
+    embeddedModule("intellij.libraries.kotlinx.serialization.protobuf")
+    embeddedModule("intellij.libraries.kotlinx.collections.immutable")
+    embeddedModule("intellij.libraries.kotlinx.datetime")
+    embeddedModule("intellij.libraries.kotlinx.html")
+    // kotlinx-coroutines libraries
+    embeddedModule("intellij.libraries.kotlinx.coroutines.core")
+    embeddedModule("intellij.libraries.kotlinx.coroutines.debug")
+    module("intellij.libraries.kotlinx.coroutines.guava")
+    @Suppress("GrazieInspection")
+    // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
+    // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
+    // note 2: despite what we use as "used by", AIA tests broken —
+    //   com.intellij.ml.llm.end2end.tests.agent.AiAgentSmokeTest.No error in AI agents communication
+    //     java.lang.NoClassDefFoundError: kotlinx/coroutines/slf4j/MDCContext
+    //      at io.ktor.client.plugins.observer.ResponseObserverContextJvmKt.getResponseObserverContext(ResponseObserverContextJvm.kt:11)
+    // so, we embed it
+    embeddedModule("intellij.libraries.kotlinx.coroutines.slf4j")
+    embeddedModule("intellij.libraries.aalto.xml")
+    embeddedModule("intellij.libraries.asm")
+    embeddedModule("intellij.libraries.asm.tools")
+    embeddedModule("intellij.libraries.automaton")
+    embeddedModule("intellij.libraries.bouncy.castle.provider")
+    embeddedModule("intellij.libraries.bouncy.castle.pgp")
+    embeddedModule("intellij.libraries.blockmap")
+    embeddedModule("intellij.libraries.caffeine")
+    embeddedModule("intellij.libraries.classgraph")
+    embeddedModule("intellij.libraries.cli.parser")
+    embeddedModule("intellij.libraries.commons.cli")
+    embeddedModule("intellij.libraries.commons.codec")
+    embeddedModule("intellij.libraries.commons.compress")
+    embeddedModule("intellij.libraries.commons.io")
+    embeddedModule("intellij.libraries.commons.imaging")
+    embeddedModule("intellij.libraries.commons.lang3")
+    embeddedModule("intellij.libraries.commons.logging")
+    embeddedModule("intellij.libraries.fastutil")
+    embeddedModule("intellij.libraries.gson")
+    embeddedModule("intellij.libraries.guava")
+    embeddedModule("intellij.libraries.hash4j")
+    embeddedModule("intellij.libraries.hdr.histogram")
+    embeddedModule("intellij.libraries.http.client")
+    embeddedModule("intellij.libraries.icu4j")
+    embeddedModule("intellij.libraries.imgscalr")
+    embeddedModule("intellij.libraries.ini4j")
+    embeddedModule("intellij.libraries.ion")
+    embeddedModule("intellij.libraries.jackson")
+    embeddedModule("intellij.libraries.jackson.jr.objects")
+    embeddedModule("intellij.libraries.jackson.databind")
+    embeddedModule("intellij.libraries.jackson.dataformat.yaml")
+    embeddedModule("intellij.libraries.jackson.module.kotlin")
+    embeddedModule("intellij.libraries.java.websocket")
+    embeddedModule("intellij.libraries.javax.annotation")
+    // used by intellij.platform.util.jdom, so, embedded
+    embeddedModule("intellij.libraries.jaxen")
+    embeddedModule("intellij.libraries.jbr")
+    embeddedModule("intellij.libraries.jcip")
+    embeddedModule("intellij.libraries.jsoup")
+    embeddedModule("intellij.libraries.jsonpath")
+    embeddedModule("intellij.libraries.jsvg")
+    embeddedModule("intellij.libraries.jvm.native.trusted.roots")
+    embeddedModule("intellij.libraries.jzlib")
+    embeddedModule("intellij.libraries.kryo5")
+    embeddedModule("intellij.libraries.lz4")
+    embeddedModule("intellij.libraries.markdown")
+    embeddedModule("intellij.libraries.mvstore")
+    embeddedModule("intellij.libraries.netty.buffer")
+    embeddedModule("intellij.libraries.netty.codec.compression")
+    embeddedModule("intellij.libraries.netty.codec.http")
+    embeddedModule("intellij.libraries.netty.handler.proxy")
+    embeddedModule("intellij.libraries.oro.matcher")
+    embeddedModule("intellij.libraries.protobuf")
+    embeddedModule("intellij.libraries.proxy.vole")
+    embeddedModule("intellij.libraries.rhino")
+    embeddedModule("intellij.libraries.snakeyaml")
+    embeddedModule("intellij.libraries.snakeyaml.engine")
+    embeddedModule("intellij.libraries.stream")
+    embeddedModule("intellij.libraries.velocity")
+    embeddedModule("intellij.libraries.xtext.xbase")
+    embeddedModule("intellij.libraries.xz")
+  }
+
+  /**
+   * UI and IDE-specific library modules.
+   * Contains libraries for browser embedding, terminal UI, SSH, and other IDE features.
+   *
+   * **Typical use cases:** Full IDEs with user interface (IDEA, PyCharm, WebStorm, etc.)
+   * **Typical NON-users:** CodeServer (analysis-only tool), headless tools, pure analysis products
+   *
+   * **Note:** Image libraries (imgscalr, jsvg) are in `librariesPlatform()` as they're needed by `platform.util.ui`
+   */
+  fun librariesIde(): ModuleSet = moduleSet("libraries.ide") {
+    embeddedModule("intellij.libraries.jcef")
+    embeddedModule("intellij.libraries.jediterm.core")
+    embeddedModule("intellij.libraries.jediterm.ui")
+    embeddedModule("intellij.libraries.jgoodies.common")
+    embeddedModule("intellij.libraries.jgoodies.forms")
+    embeddedModule("intellij.libraries.miglayout.swing")
+    embeddedModule("intellij.libraries.pty4j")
+    embeddedModule("intellij.libraries.sshj")
+    embeddedModule("intellij.libraries.swingx")
+    embeddedModule("intellij.libraries.winp")
+
+    embeddedModule("intellij.libraries.rd.core")
+    embeddedModule("intellij.libraries.rd.framework")
+    embeddedModule("intellij.libraries.rd.swing")
+    embeddedModule("intellij.libraries.rd.text")
+  }
+
+  /**
+   * Ktor library modules for HTTP client communication.
+   *
+   * **Typical use cases:** RPC infrastructure, Remote Dev, Fleet backend, HTTP-based integrations
+   * **Typical NON-users:** CodeServer (analysis-only, no RPC), minimal IDEs without remote features
+   */
+  fun librariesKtor(): ModuleSet = moduleSet("libraries.ktor") {
+    embeddedModule("intellij.libraries.ktor.io")
+    embeddedModule("intellij.libraries.ktor.utils")
+    embeddedModule("intellij.libraries.ktor.network.tls")
+    embeddedModule("intellij.libraries.ktor.client")
+    embeddedModule("intellij.libraries.ktor.client.cio")
+  }
+
+  /**
+   * Miscellaneous library modules for specialized use cases.
+   *
+   * **Note:** All libs here must NOT be embedded. If embedded, move to `librariesPlatform()` or `librariesIde()`.
+   *
+   * **Typical use cases:** XML-RPC communication, CSV parsing, document storage
+   * **Usage pattern:** Product-specific, not universally needed by all products
+   */
+  fun librariesMisc(): ModuleSet = moduleSet("libraries.misc") {
+    // all libs here must not be embedded, if it is embedded, it should be moved to libs-core.xml
+    module("intellij.libraries.javax.activation")
+    module("intellij.libraries.xml.rpc")
+    module("intellij.libraries.kotlinx.document.store.mvstore")
+    module("intellij.libraries.opencsv")
+    module("intellij.libraries.lucene.common")
+    module("intellij.libraries.plexus.utils")
+    module("intellij.libraries.maven.resolver.provider")
+  }
+
+  /**
+   * Temporarily bundled library modules (planned to be removed).
+   *
+   * **⚠️ WARNING:** These are product-specific dependencies that should NOT be in core platform.
+   *
+   * **Current users:** Only DBE (DataGrip) - see jettison/xstream comments below
+   * **Goal:** Remove from `corePlatform` and move to specific products that need them
+   * **Typical NON-users:** Most products don't need these legacy libraries
+   */
+  fun librariesTemporaryBundled(): ModuleSet = moduleSet("libraries.temporaryBundled") {
+    // Currently used only by DBE (see https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration).
+    // Declared as a dependency of xstream because xstream technically depends on it.
+    // Marked as `embedded`: since xstream depends on it, this module must be embedded as well.
+    // No other module should require jettison when using xstream; in general, avoid using xstream at all.
+    embeddedModule("intellij.libraries.jettison")
+    // lang-impl should not use it and embedded should be removed
+    embeddedModule("intellij.libraries.xstream")
+    module("intellij.libraries.commons.text")
+  }
+
+  // endregion
+
+  // region Platform
   /**
    * Core platform modules without IDE or language support.
    * Contains base infrastructure for analysis and inspection tools.
@@ -157,174 +335,9 @@ object CoreModuleSets {
     moduleSet(librariesTemporaryBundled())
   }
 
-  /**
-   * Minimal essential platform modules required by lightweight IDE products WITH editing capabilities.
-   *
-   * **Contents:**
-   * - `coreLang()` (nested) - Includes corePlatform + language support + ide.impl
-   * - `rpcBackend()` - RPC backend/frontend split and topics (base RPC from corePlatform)
-   * - Backend/frontend split modules (settings, backend, project.backend, etc.)
-   * - Editor modules (editor, editor.backend)
-   * - Search modules (searchEverywhere with backend/frontend)
-   * - Inline completion
-   *
-   * **Use when:** Building lightweight IDE products that provide code editing functionality
-   *
-   * **Example products:**
-   * - **GitClient**: Lightweight VCS IDE with editing - uses `essentialMinimal()` + `vcs()`
-   * - **Gateway**: Remote development gateway - uses `essentialMinimal()` + `vcs()` + `ssh()`
-   *
-   * **Don't use for:**
-   * - Analysis-only tools without editing (e.g., CodeServer) → Use `corePlatform()` instead
-   *
-   * **Hierarchy:**
-   * ```
-   * essentialMinimal
-   *   └─ coreLang
-   *       └─ corePlatform
-   *           └─ libraries
-   * ```
-   *
-   * **Note:** Most IDE products should start with this module set or `essential()` (which includes this).
-   * Nested by `essential()` to avoid duplication.
-   *
-   * @see essential for full IDE with navigation, debugging, and more features
-   * @see coreLang for just language support without editor/search/RPC
-   * @see corePlatform for analysis tools without editing
-   */
-  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal", includeDependencies = true) {
-    // Lang includes corePlatform (which includes librariesPlatform) as nested set
-    moduleSet(coreLang())
+  // endregion
 
-    // RPC backend functionality (base RPC/kernel already in corePlatform via rpcMinimal)
-    moduleSet(rpcBackend())
-
-    // Additional library sets not in corePlatform but needed by essentialMinimal+
-    moduleSet(librariesKtor())  // For RPC/Remote Dev
-    moduleSet(librariesMisc())  // For specialized uses (XML-RPC, CSV, document store)
-
-    // Credential store (needed by 36 products)
-    embeddedModule("intellij.platform.credentialStore.ui")
-    embeddedModule("intellij.platform.credentialStore.impl")
-
-    // Core platform backend/frontend split
-    module("intellij.platform.settings.local")
-    module("intellij.platform.backend")
-    module("intellij.platform.project.backend")
-    module("intellij.platform.progress.backend")
-    module("intellij.platform.lang.impl.backend")
-
-    // Frontend/monolith
-    module("intellij.platform.frontend")
-    module("intellij.platform.monolith")
-
-    // Editor
-    module("intellij.platform.editor")
-    module("intellij.platform.editor.backend")
-
-    // Search
-    module("intellij.platform.searchEverywhere")
-    module("intellij.platform.searchEverywhere.backend")
-    module("intellij.platform.searchEverywhere.frontend")
-
-    // Completion
-    module("intellij.platform.inline.completion")
-  }
-
-  /**
-   * Recent files support (both backend and frontend).
-   * Provides recently opened files UI and persistence.
-   */
-  fun recentFiles(): ModuleSet = moduleSet("recentFiles") {
-    module("intellij.platform.recentFiles")
-    module("intellij.platform.recentFiles.frontend")
-    module("intellij.platform.recentFiles.backend")
-  }
-
-  /**
-   * Essential platform modules required by most IDE products.
-   */
-  fun essential(): ModuleSet = moduleSet("essential", includeDependencies = true) {
-    // Include minimal essential modules (core backend/frontend, editor, search)
-    moduleSet(essentialMinimal())
-
-    // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
-    moduleSet(debugger())
-
-    // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
-    // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
-    // this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
-    // This ensures proper classloader hierarchy is maintained for modules that depend on intellij.platform.scopes.
-    // This attribute should be removed once the find module no longer needs to be embedded.
-    embeddedModule("intellij.platform.scopes")
-    module("intellij.platform.scopes.backend")
-
-    // todo navbar is not essential
-    module("intellij.platform.navbar")
-    module("intellij.platform.navbar.backend")
-    module("intellij.platform.navbar.frontend")
-    module("intellij.platform.navbar.monolith")
-    module("intellij.platform.clouds")
-
-    module("intellij.platform.execution.serviceView")
-    module("intellij.platform.execution.serviceView.frontend")
-    module("intellij.platform.execution.serviceView.backend")
-    module("intellij.platform.execution.dashboard")
-    module("intellij.platform.execution.dashboard.frontend")
-    module("intellij.platform.execution.dashboard.backend")
-
-    // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
-    // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
-    // the find module must also be marked as embedded to maintain proper dependency loading order.
-    // This attribute can be removed once ThinClientFindAndReplaceExecutor is removed.
-    embeddedModule("intellij.platform.find")
-    module("intellij.platform.find.backend")
-    module("intellij.platform.editor.frontend")
-    embeddedModule("intellij.platform.managed.cache")
-    module("intellij.platform.managed.cache.backend")
-
-    module("intellij.platform.bookmarks.backend")
-    module("intellij.platform.bookmarks.frontend")
-
-    moduleSet(recentFiles())
-
-    module("intellij.platform.pluginManager.shared")
-    module("intellij.platform.pluginManager.backend")
-    module("intellij.platform.pluginManager.frontend")
-
-    module("intellij.platform.execution.impl.frontend")
-    module("intellij.platform.execution.impl.backend")
-    module("intellij.platform.eel.tcp")
-
-    module("intellij.platform.completion.common")
-    module("intellij.platform.completion.frontend")
-    module("intellij.platform.completion.backend")
-
-    embeddedModule("intellij.platform.polySymbols")
-
-    // Platform language modules (moved from platformLangBase for consolidation)
-    // These provide core IDE functionality needed by all full IDE products
-    embeddedModule("intellij.platform.builtInServer.impl")
-    embeddedModule("intellij.platform.smRunner")
-    embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
-    embeddedModule("intellij.platform.externalSystem.impl")
-    embeddedModule("intellij.platform.externalProcessAuthHelper")
-
-    module("intellij.java.aetherDependencyResolver")
-  }
-
-  /**
-   * Provides the platform for implementing Debugger functionality.
-   */
-  fun debugger(): ModuleSet = moduleSet("debugger", includeDependencies = true) {
-    module("intellij.platform.debugger.impl.frontend")
-    module("intellij.platform.debugger.impl.backend")
-    embeddedModule("intellij.platform.debugger.impl.shared")
-    embeddedModule("intellij.platform.debugger.impl.rpc")
-    embeddedModule("intellij.platform.debugger.impl.ui")
-    embeddedModule("intellij.platform.debugger")
-    embeddedModule("intellij.platform.debugger.impl")
-  }
+  // region Fleet and RPC
 
   fun fleet(): ModuleSet = moduleSet("fleet", includeDependencies = true) {
     // Same modules as fleet() - all are required
@@ -389,4 +402,6 @@ object CoreModuleSets {
     module("intellij.platform.rpc.topics.backend")
     module("intellij.platform.rpc.topics.frontend")
   }
+
+  // endregion
 }
