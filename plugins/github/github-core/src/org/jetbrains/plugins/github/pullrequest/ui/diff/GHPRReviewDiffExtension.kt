@@ -184,6 +184,8 @@ private class DiffEditorModel(
     val end =
       if (startLineIdx == endLineIdx) start
       else locationToLine(side to endLineIdx.dec())?.inc() ?: return null
+
+    check(start <= end) { "Start line of range $range is greater than end line: $start > $end" }
     return LineRange(start, end)
   }
 
