@@ -12,6 +12,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableConvertor;
@@ -25,8 +28,6 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -279,7 +280,7 @@ public class XDebuggerTestUtil {
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.
   private static void flushEventQueue() {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     else {
       UIUtil.pump();
