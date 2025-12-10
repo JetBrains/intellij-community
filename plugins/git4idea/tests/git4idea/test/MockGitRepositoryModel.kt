@@ -3,7 +3,6 @@ package git4idea.test
 
 import com.intellij.dvcs.repo.rpcId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
@@ -27,7 +26,7 @@ internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel 
   override val state: GitRepositoryState = MockGitRepositoryState(repo)
   override val favoriteRefs: GitFavoriteRefs
     get() = throw UnsupportedOperationException()
-  override val root: VirtualFile = repo.root
+  override val root = VcsUtil.getFilePath(repo.root)
 
   private class MockGitRepositoryState(repo: GitRepository) : GitRepositoryState {
     override val currentRef: GitCurrentRef? = GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repo))

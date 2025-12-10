@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.rpcId
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.repo.GitRepositoryModel
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitWorkingTree
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.git
@@ -34,7 +35,7 @@ abstract class GitRepositoriesFrontendHolderTestBase : GitSingleRepoTest() {
 
   protected fun GitRepositoriesHolder.getTestRepo(): GitRepositoryModel {
     val holderRepo = checkNotNull(get(repo.rpcId()))
-    assertEquals(holderRepo.root, repo.root)
+    assertEquals(holderRepo.root, getFilePath(repo.root))
     return holderRepo
   }
 

@@ -3,8 +3,8 @@ package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.rpcId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.service
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.vcs.git.ref.GitCurrentRef
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import com.intellij.vcs.git.repo.GitHash
@@ -28,7 +28,7 @@ internal object GitRepositoryToDtoConverter {
       shortName = VcsUtil.getShortVcsRootName(repository.project, repository.root),
       state = convertRepositoryState(repository),
       favoriteRefs = collectFavorites(repository),
-      root = repository.root.rpcId(),
+      root = FilePathDto.toDto(VcsUtil.getFilePath(repository.root)),
     )
   }
 

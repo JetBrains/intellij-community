@@ -2,7 +2,7 @@
 package com.intellij.vcs.git.repo
 
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.ref.GitFavoriteRefs
 import org.jetbrains.annotations.ApiStatus
@@ -13,7 +13,7 @@ interface GitRepositoryModel: Comparable<GitRepositoryModel> {
   val shortName: String
   val state: GitRepositoryState
   val favoriteRefs: GitFavoriteRefs
-  val root: VirtualFile?
+  val root: FilePath
 
   override fun compareTo(other: GitRepositoryModel): Int =
     NaturalComparator.INSTANCE.compare(shortName, other.shortName)
