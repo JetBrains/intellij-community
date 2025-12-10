@@ -214,7 +214,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
       is RescheduledMavenDownloadJobException -> null
       // a normal cancellation happened
       is CancellationException -> {
-        val message = MavenProjectBundle.message("maven.downloading.sources.cancelled")
+        val message = MavenProjectBundle.message("maven.downloading.cancelled")
         MessageEventImpl(mySyncId, MessageEvent.Kind.INFO, SyncBundle.message("build.event.title.error"), message, message)
       }
       else -> {

@@ -40,6 +40,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -52,7 +54,6 @@ import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
-import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest.ProgressIndicatorSettings
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.*
@@ -734,7 +735,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return downloadArtifactMutex.withLock {
       tracer.spanBuilder("downloadArtifacts")
         .useWithScope {
-          withDownloadArtifactsProgress(request.progressIndicatorSettings) { reporter ->
+          withDownloadArtifactsProgress(request) { reporter ->
             doDownloadArtifacts(request, reporter)
           }
         }
@@ -742,10 +743,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private suspend fun <T> CoroutineScope.withDownloadArtifactsProgress(
-    settings: ProgressIndicatorSettings,
+    request: MavenDownloadSourcesRequest,
     action: suspend (reporter: RawProgressReporter) -> T,
   ): T {
-    val title = settings.title ?: MavenProjectBundle.message("maven.downloading.short")
+    val settings = request.progressIndicatorSettings
+    val title = request.getLocalizedTitle()
     return if (settings.progressIndicatorDelay != null) {
       withLazyProgressIndicator(myProject, settings.progressIndicatorDelay, title, settings.visibleInStatusBar) { reporter ->
         action(reporter)
@@ -870,6 +872,19 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       return ApplicationManager.getApplication().getService(VirtualFileManager::class.java)
     }
     return VirtualFileManager.getInstance()
+  }
+
+  companion object {
+    @VisibleForTesting
+    fun MavenDownloadSourcesRequest.getLocalizedTitle(): @Nls String {
+      return when {
+        progressIndicatorSettings.title != null -> progressIndicatorSettings.title
+        sources && docs -> MavenProjectBundle.message("maven.downloading")
+        sources -> MavenProjectBundle.message("maven.downloading.sources")
+        docs -> MavenProjectBundle.message("maven.downloading.documentation")
+        else -> MavenProjectBundle.message("maven.downloading.short")
+      }
+    }
   }
 }
 

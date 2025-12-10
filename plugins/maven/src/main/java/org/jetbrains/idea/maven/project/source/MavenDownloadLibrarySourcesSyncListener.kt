@@ -28,7 +28,6 @@ class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
           .withSources()
           .withProgressDelay(1.seconds)
           .withProgressVisibility(false)
-          .withProgressTitle(MavenProjectBundle.message("maven.downloading"))
           .build()
       )
     }
