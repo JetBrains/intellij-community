@@ -37,18 +37,21 @@ import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.actions.RemoveUsageAction;
 import com.intellij.usages.impl.rules.UsageType;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class UsageViewTest extends BasePlatformTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
@@ -241,10 +244,15 @@ public class UsageViewTest extends BasePlatformTestCase {
   }
 
   @NotNull
-  private UsageViewImpl createUsageView(Usage @NotNull ... usages) {
+  private UsageViewImpl createUsageView(Usage... usages) {
+    return createUsageView(null, usages);
+  }
+
+  @NotNull
+  private UsageViewImpl createUsageView(@Nullable UsageTarget target, Usage... usages) {
     UsageViewImpl usageView =
       (UsageViewImpl)UsageViewManager.getInstance(getProject())
-        .createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
+        .createUsageView(target == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{target}, usages, new UsageViewPresentation(), null);
     Disposer.register(myFixture.getTestRootDisposable(), usageView);
     waitForUsages(usageView);
     UIUtil.dispatchAllInvocationEvents();
@@ -342,5 +350,121 @@ public class UsageViewTest extends BasePlatformTestCase {
     usage.getUsageInfo().getRangeInElement();
     usage.getUsageInfo().getElement();
     usage.getUsageInfo().getNavigationOffset();
+  }
+
+  private static String getPresentableText(Node node) {
+    final var presentation = node.getCachedPresentation();
+    if (presentation == null) return "";
+    return Arrays.stream(presentation.getText())
+      .map(it -> it.getText())
+      .collect(Collectors.joining());
+  }
+
+  // If the presentation changes, it also needs to be updated here
+  private static List<Usage> lookupUsagesWithPresentationsContainingString(UsageViewImpl usageView, String lookup) {
+    final var usageNodesList = new ArrayList<Usage>();
+    for (TreeNode node : TreeUtil.treeNodeTraverser(usageView.getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS)) {
+      if (!(node instanceof UsageNode nodeNode)) continue;
+      final var nodePresentedText = getPresentableText(nodeNode);
+      if (nodePresentedText.contains(lookup)) {
+        usageNodesList.add(nodeNode.getUsage());
+      }
+    }
+    return usageNodesList;
+  }
+
+  public void testDoubleRemovalRemovesThingsOk() {
+    final var identifierString = "xxx";
+    @Language("JAVA")
+    final var text = """
+      class X {
+        public int xxx;
+      
+        void usage1() {
+            System.out.println("Usage 1 " + xxx);
+        }
+      
+        void usage2() {
+            System.out.println("Usage 2 " + xxx);
+        }
+      }
+      """;
+
+    final var psiFile = myFixture.addFileToProject("X.java", text);
+    final var psiFileText = psiFile.getText();
+    final var firstOccurenceStart = psiFileText.indexOf(identifierString);
+    final var secondOccurenceStart = psiFileText.indexOf(identifierString, firstOccurenceStart + identifierString.length());
+    final var thirdOccurenceStart = psiFileText.indexOf(identifierString, secondOccurenceStart + identifierString.length());
+
+    final var usageOne = new UsageInfo2UsageAdapter(
+      new UsageInfo(psiFile, secondOccurenceStart, secondOccurenceStart + identifierString.length())
+    );
+    final var usageTwo = new UsageInfo2UsageAdapter(
+      new UsageInfo(psiFile, thirdOccurenceStart, thirdOccurenceStart + identifierString.length())
+    );
+
+    UsageViewImpl usageView = createUsageView(usageOne, usageTwo);
+
+    final var usageNodesListInitial = lookupUsagesWithPresentationsContainingString(usageView, "xxx);");
+
+    assertEquals(2, usageNodesListInitial.size());
+
+    final var firstNode = usageNodesListInitial.getFirst();
+    RemoveUsageAction.process(new Usage[]{firstNode}, usageView);
+
+    final var usageNodeListAfterRemove = lookupUsagesWithPresentationsContainingString(usageView, "xxx);");
+
+    assertEquals(1, usageNodeListAfterRemove.size());
+    // Assert on the structure of the tree after the remove
+    // Must have a node with a presentation containing "Usage"
+    // All nodes must be of the Node type
+    // There must be a single leaf; The tree must be linear
+    // The leaf must be of type UsageNode, and it must contain the correct usage
+    boolean foundProjectFileUsagesRoot = false;
+    for (TreeNode node : TreeUtil.treeNodeTraverser(usageView.getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS)) {
+      if (!(node instanceof Node nodeNode)) continue;
+      final var nodeText = getPresentableText(nodeNode);
+
+      if (nodeText.contains("Usages")) {
+        foundProjectFileUsagesRoot = true;
+        var traversalNode = nodeNode;
+
+        while (traversalNode.getChildCount() != 0) {
+          assertEquals(1, node.getChildCount());
+          final var onlyChild = traversalNode.getChildAt(0);
+          if (!(onlyChild instanceof Node)) {
+            fail("Expected all nodes to be of type Node, got type " + onlyChild.getClass().getName());
+            return;
+          }
+          traversalNode = (Node)onlyChild;
+        }
+
+        if (!(traversalNode instanceof UsageNode usageNode)) {
+          fail("Expected the leaf node to be a UsageNode, got type " + traversalNode.getClass().getName());
+          return;
+        }
+
+        assertTrue(getPresentableText(usageNode).contains("\"Usage 2 \""));
+        break;
+      }
+    }
+    assertTrue(foundProjectFileUsagesRoot);
+
+    final var firstNodeAfterRemove = usageNodeListAfterRemove.getFirst();
+    RemoveUsageAction.process(new Usage[]{firstNodeAfterRemove}, usageView);
+
+    final var usageNodeListAfterDoubleRemove = lookupUsagesWithPresentationsContainingString(usageView, "xxx);");
+    assertEquals(0, usageNodeListAfterDoubleRemove.size());
+
+    boolean foundProjectFileUsagesRootAfterDoubleRemove = false;
+    for (TreeNode node : TreeUtil.treeNodeTraverser(usageView.getRoot()).traverse(TreeTraversal.PRE_ORDER_DFS)) {
+      if (!(node instanceof Node nodeNode)) continue;
+      final var nodePresentableText = getPresentableText(nodeNode);
+      if (nodePresentableText.contains("Usages")) {
+        foundProjectFileUsagesRootAfterDoubleRemove = true;
+        break;
+      }
+    }
+    assertFalse(foundProjectFileUsagesRootAfterDoubleRemove);
   }
 }
