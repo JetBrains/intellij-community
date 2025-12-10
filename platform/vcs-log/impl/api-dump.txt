@@ -960,7 +960,6 @@ c:com.intellij.vcs.log.ui.render.LabelPainter
 - sf:RIGHT_PADDING:com.intellij.util.ui.JBValue
 - sf:TOP_TEXT_PADDING:com.intellij.util.ui.JBValue
 - p:myBackground:java.awt.Color
-- p:myLabels:java.util.List
 - clear():V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List):V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List,java.util.List):V
