@@ -193,7 +193,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         if (workingDir == null) {
           workingDir = System.getProperty("user.dir");
         }
-        throw new MavenConfigParseException(cause.getMessage(), workingDir);
+        throw new MavenConfigParseException(cause.getMessage(), workingDir, e);
       }
       throw new RuntimeException(e);
     }
