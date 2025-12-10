@@ -31,7 +31,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.repo.GitRepositoryIconsProvider
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -212,7 +212,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(GitBranchesTreeIconProvider.forRepository(project, repo.rpcId))
+          icon(GitRepositoryIconsProvider.getInstance(project).getIcon(repo.rpcId))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

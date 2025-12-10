@@ -46,10 +46,4 @@
 
     <postStartupActivity implementation="com.intellij.vcs.git.GitDataHoldersInitializer"/>
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="Git4Idea.gitRepoIconProvider"
-                    interface="com.intellij.vcs.git.ui.GitRepoIconProvider"
-                    dynamic="true"/>
-  </extensionPoints>
 </idea-plugin>

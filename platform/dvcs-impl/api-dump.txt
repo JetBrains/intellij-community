@@ -643,8 +643,6 @@ c:com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 - render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
 f:com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion
 - f:getColorManager(com.intellij.openapi.project.Project):com.intellij.vcs.log.ui.VcsLogColorManager
-- f:getRepositoryIcon(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager):com.intellij.util.ui.ColorIcon
-- bs:getRepositoryIcon$default(com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion,com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager,I,java.lang.Object):com.intellij.util.ui.ColorIcon
 f:com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer
 - com.intellij.ui.SimpleListCellRenderer
 - <init>():V
