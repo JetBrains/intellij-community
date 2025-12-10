@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.isSyncOptionEnabled
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -212,7 +213,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(GitRepositoryIconsProvider.getInstance(project).getIcon(repo.rpcId))
+          icon(GitRepositoryIconsProvider.getInstance(project).getIcon(repo.rpcId()))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

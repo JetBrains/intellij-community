@@ -3,6 +3,7 @@ package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -58,7 +59,7 @@ internal class GitRepositoryColorsApiImpl : GitRepositoryColorsApi {
 
     for (gitRepository in gitRepositories) {
       val color = colorManager.getRootColor(gitRepository.root)
-      repositoryColors[gitRepository.rpcId] = GitRepositoryColor.of(color)
+      repositoryColors[gitRepository.rpcId()] = GitRepositoryColor.of(color)
     }
 
     return GitRepositoryColorsState(repositoryColors)

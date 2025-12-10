@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.test
 
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
@@ -21,7 +22,7 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
 internal class MockGitRepositoryModel(repo: GitRepository) : GitRepositoryModel {
-  override val repositoryId: RepositoryId = repo.rpcId
+  override val repositoryId: RepositoryId = repo.rpcId()
   override val shortName: String = VcsUtil.getShortVcsRootName(repo.project, repo.root)
   override val state: GitRepositoryState = MockGitRepositoryState(repo)
   override val favoriteRefs: GitFavoriteRefs
