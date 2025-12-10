@@ -12,6 +12,7 @@ jvm_library(
   module_name = "intellij.xml.emmet",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = [":emmet_resources"]
+  resources = [":emmet_resources"],
+  deps = ["@lib//:jetbrains-annotations"]
 )
 ### auto-generated section `build intellij.xml.emmet` end
