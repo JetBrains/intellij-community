@@ -23,9 +23,8 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.isCondaVirtualEnv
-import com.jetbrains.python.orLogException
+import com.jetbrains.python.orLogExceptionAsWarn
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
@@ -353,7 +352,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
     .getAllSdks()
     .filter { sdk ->
       if (sdk.isCondaVirtualEnv) return@filter false
-      if (sdk.targetAdditionalData != null) return@filter false
+      if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false
 
       try {
         val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
@@ -367,7 +366,11 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       val languageLevel = sdk.versionString?.let {
         PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
-        ExecService().validatePythonAndGetInfo(sdk.asBinToExecute()).getOrLogException(LOG)?.languageLevel
+        val binToExecute = sdk.asBinToExecute().orLogExceptionAsWarn(LOG)
+        val pythonInfo = binToExecute?.let {
+          ExecService().validatePythonAndGetInfo(binToExecute).orLogExceptionAsWarn(LOG)
+        }
+        pythonInfo?.languageLevel
       }
 
       languageLevel?.let {
