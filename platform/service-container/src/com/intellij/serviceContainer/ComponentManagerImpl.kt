@@ -1043,7 +1043,7 @@ abstract class ComponentManagerImpl(
 
           val impl = getServiceImplementation(service, this)
           val message = "`preload=${service.preload.name}` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
-          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl)
+          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl.replace("\$", "."))
 
           if (service.preload == PreloadMode.AWAIT && !isKnown) {
             LOG.error(PluginException(message, plugin.pluginId))
@@ -1500,9 +1500,44 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   // use lazy listener
   "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
   "org.jetbrains.idea.maven.tasks.MavenShortcutsManager",
-  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
   "com.jetbrains.rider.protocol.RiderProtocolProjectSessionsManager",
   "com.jetbrains.rider.workspaceModel.RiderWorkspaceModel",
+  "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
+
+  // Remote Development
+  "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
+  "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
+  "com.intellij.cwm.plugin.following.FollowMeManagerService",
+  "com.intellij.cwm.plugin.following.GuestFollowMeManager",
+  "com.intellij.cwm.plugin.ports.CwmPortForwardingToolWindowManager",
+  "com.intellij.cwm.plugin.users.BackendUserManager",
+  "com.intellij.platform.vcs.backend.split.BackendLocalChangesHost",
+  "com.jetbrains.rdserver.BackendFileStructureHost",
+  "com.jetbrains.rdserver.build.BuildHost",
+  "com.jetbrains.rdserver.codeInsight.BackendCtrlClickHost",
+  "com.jetbrains.rdserver.daemon.BackendDaemonStatusHost",
+  "com.jetbrains.rdserver.daemon.BackendHighlighterRegistrationsHost",
+  "com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost.Settings",
+  "com.jetbrains.rdserver.debugger.BackendBreakpointHost",
+  "com.jetbrains.rdserver.debugger.BackendConsoleInfoHost",
+  "com.jetbrains.rdserver.debugger.BackendDebuggerHost",
+  "com.jetbrains.rdserver.execution.BackendExternalSystemHost",
+  "com.jetbrains.rdserver.execution.configurations.BackendRunContentHost",
+  "com.jetbrains.rdserver.filters.BackendConsoleFilterHost",
+  "com.jetbrains.rdserver.internal.BackendWriteLocksMonitor",
+  "com.jetbrains.rdserver.lux.services.LuxHostConnection",
+  "com.jetbrains.rdserver.pluginsSync.BackendLanguagePluginsSyncManager",
+  "com.jetbrains.rdserver.portForwarding.internal.BackendPortForwardingModelHost",
+  "com.jetbrains.rdserver.portForwarding.internal.PerClientPortForwardingManagerImpl",
+  "com.jetbrains.rdserver.problems.BackendProblemFileHost",
+  "com.jetbrains.rdserver.projectView.BackendProjectViewHost",
+  "com.jetbrains.rdserver.quickDoc.BackendEditorMouseHoverPopupHost",
+  "com.jetbrains.rdserver.settings.BackendPerClientSettingsStorageService",
+  "com.jetbrains.rdserver.status.BackendStatusBarHost",
+  "com.jetbrains.rdserver.tests.BackendTestsContentHost",
+  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
+  "com.jetbrains.rdserver.toolWindow.BackendToolWindowHost",
+  "com.jetbrains.rdserver.ui.BackendUserFocusHost",
 )
 
 private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, createIfNeeded: Boolean): Any? {
