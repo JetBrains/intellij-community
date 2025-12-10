@@ -3262,6 +3262,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/CallLocalLambda.kt");
             }
 
+            @TestMetadata("chainCompletionDontDuplicate.kt")
+            public void testChainCompletionDontDuplicate() throws Exception {
+                runTest("../../completion/testData/basic/common/chainCompletionDontDuplicate.kt");
+            }
+
             @TestMetadata("classObjectElementsInClass.kt")
             public void testClassObjectElementsInClass() throws Exception {
                 runTest("../../completion/testData/basic/common/classObjectElementsInClass.kt");

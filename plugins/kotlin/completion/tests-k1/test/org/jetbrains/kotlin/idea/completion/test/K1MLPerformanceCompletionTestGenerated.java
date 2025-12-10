@@ -3262,6 +3262,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/CallLocalLambda.kt");
             }
 
+            @TestMetadata("chainCompletionDontDuplicate.kt")
+            public void testChainCompletionDontDuplicate() throws Exception {
+                runTest("../testData/basic/common/chainCompletionDontDuplicate.kt");
+            }
+
             @TestMetadata("classObjectElementsInClass.kt")
             public void testClassObjectElementsInClass() throws Exception {
                 runTest("../testData/basic/common/classObjectElementsInClass.kt");

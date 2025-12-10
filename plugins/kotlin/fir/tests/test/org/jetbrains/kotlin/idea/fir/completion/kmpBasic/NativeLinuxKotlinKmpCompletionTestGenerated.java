@@ -3456,6 +3456,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/CallLocalLambda.kt");
         }
 
+        @TestMetadata("chainCompletionDontDuplicate.kt")
+        public void testChainCompletionDontDuplicate() throws Exception {
+            runTest("../../completion/testData/basic/common/chainCompletionDontDuplicate.kt");
+        }
+
         @TestMetadata("classObjectElementsInClass.kt")
         public void testClassObjectElementsInClass() throws Exception {
             runTest("../../completion/testData/basic/common/classObjectElementsInClass.kt");
