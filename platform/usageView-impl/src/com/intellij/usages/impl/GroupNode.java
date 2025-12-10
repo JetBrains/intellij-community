@@ -211,10 +211,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         }
       }
       children.subList(newIdx, children.size()).clear();
-
-      if (!children.isEmpty()) {
-        removeNodesFromParent(treeModel, this, removedNodes);
-      }
+      removeNodesFromParent(treeModel, this, removedNodes);
     }
 
     if (removed > 0 && (myRecursiveUsageCount -= removed) != 0) {
