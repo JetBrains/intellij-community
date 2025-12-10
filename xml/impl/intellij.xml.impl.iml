@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.xml.syntax" />
     <orderEntry type="module" module-name="intellij.xml.analysis" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.xml.emmet" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>

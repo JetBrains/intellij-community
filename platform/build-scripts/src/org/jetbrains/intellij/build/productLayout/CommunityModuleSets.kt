@@ -269,6 +269,7 @@ object CommunityModuleSets {
     embeddedModule("intellij.xml.psi")
     embeddedModule("intellij.xml.psi.impl")
     embeddedModule("intellij.xml.analysis")
+    embeddedModule("intellij.xml.emmet")
     embeddedModule("intellij.xml.ui.common")
     embeddedModule("intellij.xml.parser")
     embeddedModule("intellij.xml.syntax")

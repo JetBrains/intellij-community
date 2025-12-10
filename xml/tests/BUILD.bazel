@@ -68,6 +68,7 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:jet_check",
     "//xml/xml-analysis-api:analysis",
+    "//xml/emmet",
   ],
   runtime_deps = ["//xml/langInjection"]
 )

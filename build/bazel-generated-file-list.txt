@@ -1544,6 +1544,7 @@ wintools
 xml/dom-impl
 xml/dom-openapi
 xml/dom-tests
+xml/emmet
 xml/impl
 xml/langInjection
 xml/langInjection/xpath

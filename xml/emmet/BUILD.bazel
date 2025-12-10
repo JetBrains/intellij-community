@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.xml.emmet` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "emmet_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "emmet",
+  module_name = "intellij.xml.emmet",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":emmet_resources"]
+)
+### auto-generated section `build intellij.xml.emmet` end

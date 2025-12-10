@@ -1,7 +1,7 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.xml.analysis.impl"/>
-    <module name="intellij.xml.structureView.impl"/>/>
+    <module name="intellij.xml.structureView.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.psi"/>
     <module name="intellij.xml.psi.impl"/>
@@ -10,6 +10,7 @@
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.ui.common"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.xml.emmet"/>
   </dependencies>
 
   <extensionPoints>
