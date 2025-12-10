@@ -22,6 +22,11 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/project/shared:project",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//platform/vcs-impl/shared",
+    "//platform/kernel/shared:kernel",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.shared` end

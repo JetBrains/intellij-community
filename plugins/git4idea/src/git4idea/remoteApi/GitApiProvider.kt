@@ -18,9 +18,6 @@ internal class GitApiProvider : RemoteApiProvider {
     remoteApi(remoteApiDescriptor<GitIncomingOutgoingStateApi>()) {
       GitIncomingOutgoingStateApiImpl()
     }
-    remoteApi(remoteApiDescriptor<GitRepositoryColorsApi>()) {
-      GitRepositoryColorsApiImpl()
-    }
     remoteApi(remoteApiDescriptor<GitUiSettingsApi>()) {
       GitUiSettingsApiImpl()
     }

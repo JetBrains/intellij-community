@@ -45,6 +45,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
+    "//platform/kernel/backend",
   ]
 )
 
@@ -93,6 +94,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/workspace/storage",
     "//platform/dvcs-impl/shared",
+    "//platform/kernel/backend",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end

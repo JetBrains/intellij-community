@@ -110,5 +110,7 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.dvcs.DvcsRemoteApiProvider"/>
   </extensions>
 </idea-plugin>

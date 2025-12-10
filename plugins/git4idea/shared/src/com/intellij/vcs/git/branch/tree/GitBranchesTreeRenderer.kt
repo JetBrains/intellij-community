@@ -4,6 +4,7 @@ package com.intellij.vcs.git.branch.tree
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.platform.dvcs.impl.shared.ui.VcsRepositoryIconsProvider
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleColoredComponent
@@ -22,7 +23,6 @@ import com.intellij.vcs.git.branch.popup.GitBranchesPopupBase
 import com.intellij.vcs.git.branch.popup.GitBranchesPopupStepBase
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil.canHighlight
-import com.intellij.vcs.git.repo.GitRepositoryIconsProvider
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranch
@@ -74,7 +74,7 @@ abstract class GitBranchesTreeRenderer(
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-        is GitBranchesTreeModel.RepositoryNode -> GitRepositoryIconsProvider.getInstance(treePopupStep.project)
+        is GitBranchesTreeModel.RepositoryNode -> VcsRepositoryIconsProvider.getInstance(treePopupStep.project)
             .getIcon(value.repository.repositoryId)
       else -> null
     }
