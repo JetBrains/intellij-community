@@ -251,7 +251,9 @@ class KotlinBytecodeToolWindow(
 
         listOfNotNull(enableInline, enableOptimization, enableAssertions, showOffsets).forEach { checkBox ->
             checkBox.addActionListener {
-                updateToolWindowOnOptionChange()
+                WriteIntentReadAction.run {
+                    updateToolWindowOnOptionChange()
+                }
             }
         }
 
