@@ -215,6 +215,10 @@ com.intellij.build.output.BuildOutputInstantReader
 - a:pushBack():V
 - a:pushBack(I):V
 - a:readLine():java.lang.String
+com.intellij.build.output.BuildOutputMulticaster
+- sf:Companion:com.intellij.build.output.BuildOutputMulticaster$Companion
+- a:notifyBuildEvent(com.intellij.build.events.BuildEvent):V
+f:com.intellij.build.output.BuildOutputMulticaster$Companion
 com.intellij.build.output.BuildOutputParser
 - a:parse(java.lang.String,com.intellij.build.output.BuildOutputInstantReader,java.util.function.Consumer):Z
 a:com.intellij.build.process.BuildProcessHandler
