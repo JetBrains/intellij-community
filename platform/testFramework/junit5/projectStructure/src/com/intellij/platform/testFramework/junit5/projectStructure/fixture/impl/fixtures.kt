@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -102,6 +103,13 @@ internal fun TestFixture<Path>.subDirFixture(name: String): TestFixture<Path> = 
 @TestOnly
 internal fun TestFixture<Path>.fileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
   fileFixture(fileName) { it.writeText(content) }
+
+@TestOnly
+fun TestFixture<Path>.executableFileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
+  fileFixture(fileName) {
+    it.writeText(content)
+    NioFiles.setExecutable(it)
+  }
 
 @TestOnly
 internal fun TestFixture<Path>.fileFixture(fileName: String, content: ByteArray): TestFixture<Path> =
