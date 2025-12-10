@@ -109,16 +109,41 @@ public class LabelPainter {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
     int height = fontMetrics.getHeight();
 
+    int bookmarksWidth = addBookmarkLabels(labels, bookmarks, refGroups.isEmpty(), background, height, compact);
+    width += bookmarksWidth;
+
+    int referencesWidth = addReferenceLabels(labels, refGroups, fontMetrics, availableWidth - width,
+                                             background, height, compact);
+    width += referencesWidth;
+
+    return Pair.create(labels, width);
+  }
+
+  private int addBookmarkLabels(@NotNull List<Pair<String, Icon>> labels,
+                                @NotNull List<VcsBookmarkRef> bookmarks,
+                                boolean isLast,
+                                @NotNull Color background,
+                                int height,
+                                boolean compact) {
+    int bookmarkWidth = 0;
     int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
     for (int i = 0; i < bookmarks.size(); i++) {
-      VcsBookmarkRef bookmark = bookmarks.get(i);
-      Icon icon = new BookmarkIcon(myComponent, height, background, bookmark);
-      boolean isLast = refGroups.isEmpty() && i == bookmarks.size() - 1;
-      int newWidth = width + icon.getIconWidth() + (isLast ? 0 : middlePadding);
+      Icon icon = new BookmarkIcon(myComponent, height, background, bookmarks.get(i));
+      bookmarkWidth += icon.getIconWidth() + (isLast && i == bookmarks.size() - 1 ? 0 : middlePadding);
       labels.add(Pair.create("", icon));
-      width = newWidth;
     }
+    return bookmarkWidth;
+  }
 
+  private int addReferenceLabels(@NotNull List<Pair<String, Icon>> labels,
+                                 @NotNull List<? extends RefGroup> refGroups,
+                                 @NotNull FontMetrics fontMetrics,
+                                 int availableForReferencesWidth,
+                                 @NotNull Color background,
+                                 int height,
+                                 boolean compact) {
+    int referencesWidth = 0;
+    int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
     for (int i = 0; i < refGroups.size(); i++) {
       RefGroup group = refGroups.get(i);
 
@@ -131,27 +156,26 @@ public class LabelPainter {
       List<Color> colors = group.getColors();
       LabelIcon labelIcon = getIcon(height, background, colors);
       boolean isLast = i == refGroups.size() - 1;
-      int newWidth = width + labelIcon.getIconWidth() + (isLast ? 0 : middlePadding);
+      int newWidth = referencesWidth + labelIcon.getIconWidth() + (isLast ? 0 : middlePadding);
 
-      String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
+      String text = getGroupText(group, fontMetrics, availableForReferencesWidth - newWidth - doNotFitWidth);
       newWidth += fontMetrics.stringWidth(text);
       newWidth += getIconTextPadding();
 
       // for compact case all references are already combined to one, no need to combine them again
-      if (!compact && availableWidth - newWidth - doNotFitWidth < 0) {
+      if (!compact && availableForReferencesWidth - newWidth - doNotFitWidth < 0) {
         LabelIcon lastIcon = getIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
         String name = labels.isEmpty() ? text : "";
         labels.add(Pair.create(name, lastIcon));
-        width += fontMetrics.stringWidth(name) + lastIcon.getIconWidth();
+        referencesWidth += fontMetrics.stringWidth(name) + lastIcon.getIconWidth();
         break;
       }
       else {
         labels.add(Pair.create(text, labelIcon));
-        width = newWidth;
+        referencesWidth = newWidth;
       }
     }
-
-    return Pair.create(labels, width);
+    return referencesWidth;
   }
 
   private @NotNull LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
