@@ -4,7 +4,6 @@ package git4idea.update;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -49,6 +48,8 @@ import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
+import static git4idea.update.GitUpdateNotificationsKt.notifyDetachedHeadError;
+import static git4idea.update.GitUpdateNotificationsKt.notifyNoTrackedBranchError;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -382,7 +383,7 @@ public final class GitUpdateProcess {
     }
 
     if (!detachedHeads.isEmpty() && (currentBranches.isEmpty() || isSyncControl())) {
-      notifyDetachedHeadError(detachedHeads.get(0));
+      notifyDetachedHeadError(VcsNotifier.getInstance(myProject), detachedHeads.get(0));
       return null;
     }
     else {
@@ -409,7 +410,7 @@ public final class GitUpdateProcess {
     if (myCheckForTrackedBranchExistence &&
         !noTrackedBranch.isEmpty() && (trackedBranches.isEmpty() || isSyncControl())) {
       GitRepository repo = noTrackedBranch.get(0);
-      notifyNoTrackedBranchError(repo, currentBranches.get(repo));
+      notifyNoTrackedBranchError(VcsNotifier.getInstance(myProject), repo, currentBranches.get(repo));
       return null;
     }
     else {
@@ -419,37 +420,6 @@ public final class GitUpdateProcess {
     }
 
     return trackedBranches;
-  }
-
-  private void notifyNoTrackedBranchError(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
-    VcsNotifier.getInstance(repository.getProject())
-      .notifyError(
-        UPDATE_NO_TRACKED_BRANCH, GitBundle.message("update.notification.update.error"),
-        getNoTrackedBranchError(repository, currentBranch.getName()),
-        NotificationAction.createSimple(
-          GitBundle.message("update.notification.choose.upstream.branch"),
-          () -> {
-            showUpdateDialog(repository);
-          })
-      );
-  }
-
-  private void showUpdateDialog(@NotNull GitRepository repository) {
-    FixTrackedBranchDialog updateDialog = new FixTrackedBranchDialog(repository.getProject());
-
-    if (updateDialog.showAndGet()) {
-      GitUpdateExecutionProcess.launchUpdate(repository.getProject(),
-                                             myRepositories,
-                                             updateDialog.getUpdateConfig(),
-                                             updateDialog.getUpdateMethod(),
-                                             updateDialog.shouldSetAsTrackedBranch());
-    }
-  }
-
-  private static void notifyDetachedHeadError(@NotNull GitRepository repository) {
-    VcsNotifier.getInstance(repository.getProject())
-      .notifyError(UPDATE_DETACHED_HEAD_ERROR, GitBundle.message("notification.title.can.t.update.no.current.branch"),
-                         getDetachedHeadErrorNotificationContent(repository));
   }
 
   @VisibleForTesting
