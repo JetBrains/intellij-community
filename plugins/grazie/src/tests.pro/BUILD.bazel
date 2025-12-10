@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.grazie.tests.pro` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tests.pro",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
+  name = "tests.pro_test_lib",
+  module_name = "intellij.grazie.tests.pro",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+  ]
+)
+### auto-generated section `build intellij.grazie.tests.pro` end
+
+### auto-generated section `test intellij.grazie.tests.pro` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "tests.pro_test",
+  runtime_deps = [":tests.pro_test_lib"]
+)
+### auto-generated section `test intellij.grazie.tests.pro` end

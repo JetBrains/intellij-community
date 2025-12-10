@@ -982,6 +982,7 @@ plugins/grazie/markdown
 plugins/grazie/properties
 plugins/grazie/src
 plugins/grazie/src/test
+plugins/grazie/src/tests.pro
 plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy
