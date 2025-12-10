@@ -16,7 +16,10 @@ import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase.*
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import javax.swing.Icon
+import javax.swing.tree.TreePath
 
 private const val MAX_DEPTH = 20
 
@@ -78,18 +81,9 @@ fun assertLogicalStructure(
     }
     if (selectedElement != null) {
       val expectedSelectedPath = expectedRoot.getSelectedNodePath().let { it.subList(1, it.size) }
-      var actualPaths: List<Any> = emptyList()
-      for (i in 0..5) {
-        val select = (structureView as StructureViewComponent).select(selectedElement, true)
-        try {
-          val treePath = PlatformTestUtil.waitForPromise(select)
-          if (treePath == null) continue
-          actualPaths = treePath.path.toList().let { it.subList(1, it.size) }
-        } catch (e: Throwable) {
-          e.printStackTrace()
-          throw e
-        }
-      }
+      val select = (structureView as StructureViewComponent).select(selectedElement, true)
+      val treePath = PlatformTestUtil.assertPromiseSucceeds(select) ?: throw AssertionError("No tree path found")
+      val actualPaths = treePath.path.toList().let { it.subList(1, it.size) }
       if (actualPaths.isEmpty()) throw AssertionError("No selected node found")
       val nodePaths = nodePath?.split("/") ?: emptyList()
       for ((index, any) in actualPaths.withIndex()) {
