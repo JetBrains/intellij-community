@@ -18,7 +18,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 21);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 22);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -115,6 +115,11 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
 
   public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
   public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
+
+  public static final EventId1<Boolean> SPLIT_SWITCHED =
+    GROUP.registerEvent("splitSwitched", IS_SPLIT,
+                        "The event is supposed to be triggered when a user runs an action for switching on/off the split Search Everywhere implementation. " +
+                        "The property isSplit reflects the state after the switch had happened.");
 
   public enum FuzzySearchResult {
     PROCESS_COMPLETE, PROCESS_STOPPED, EMPTY_PATTERN
