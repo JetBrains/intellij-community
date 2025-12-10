@@ -253,10 +253,14 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               val urls = lambda.classPath.map { File(it).toURI().toURL() }
               URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use { cl ->
                 SerializedLambdaLoader().let { loader ->
-                  val params = lambda.parametersBase64.map { loader.loadObject(it, classLoader = cl) }
-                  val result = loader.load<LambdaIdeContext>(lambda.serializedDataBase64, classLoader = cl)
-                    .runSerializedLambda(ideContext, params)
-                  loader.save(lambda.stepName, result)
+                  val params = lambda.parametersBase64.map { loader.loadObjectAsSerializable(it, classLoader = cl) ?: error("Parameter $it is not serializable") }
+                  val serializableConsumer = loader.load<LambdaIdeContext, Any>(lambda.serializedDataBase64, classLoader = cl)
+                  with(serializableConsumer) {
+                    with(ideContext) {
+                      runSerializedLambda(params)
+                    }
+                  }
+                  loader.save(lambda.stepName, serializableConsumer)
                 }
               }
             }

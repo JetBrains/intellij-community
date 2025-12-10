@@ -24,7 +24,7 @@ class SampleTest {
         openNewProjectAndEditor("/src/com/example/$editorName")
       }
 
-      run("Open File in Project") {
+      runInFrontend("Open File in Project") {
         waitForExpectedSelectedFile(editorName, project = waitForProject("Test")).editorImplOrThrow.apply {
           moveTo(2, 1)
           typeWithLatency(toType)
@@ -47,7 +47,7 @@ class SampleTest {
       runInBackend("get projects") {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
-      run("get projects") {
+      runInFrontend("get projects") {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
     }

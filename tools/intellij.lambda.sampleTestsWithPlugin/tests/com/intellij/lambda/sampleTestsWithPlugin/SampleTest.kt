@@ -44,7 +44,7 @@ class SampleTest {
         waitForProject(20.seconds)
       }
 
-      run {
+      runInFrontend {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
 
@@ -69,7 +69,7 @@ class SampleTest {
   // BackgroundRunWithLambda must be the last parameter
   fun `simple parameterized test`(param: Int, str: String, ide: IdeWithLambda) = runBlocking {
     ide.apply {
-      run {
+      runInFrontend {
         Logger.getInstance("test")
           .warn("Param: $param $str Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }
@@ -96,7 +96,7 @@ class SampleTest {
   // BackgroundRunWithLambda must be the last parameter
   fun `custom parameterized test`(param: CustomParam, ide: IdeWithLambda) = runBlocking {
     ide.apply {
-      run {
+      runInFrontend {
         Logger.getInstance("test")
           .warn("Param: $param Projects: " + ProjectManager.getInstance().getOpenProjects().joinToString { it.name })
       }

@@ -34,7 +34,7 @@ class BackgroundLambdaCleanupAfterEach : AfterEachCallback {
           if (!IdeInstance.isStarted() || !IdeInstance.runContext.calculateVmOptions().hasUnitTestMode()) return@catchAll
 
           IdeInstance.ide.apply {
-            run("IDE test application cleanup") {
+            runInFrontend("IDE test application cleanup") {
               ApplicationManager.getApplication().cleanApplicationState()
             }
             runInBackend("IDE test application cleanup") {
