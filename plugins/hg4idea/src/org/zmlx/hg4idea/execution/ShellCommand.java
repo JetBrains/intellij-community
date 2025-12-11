@@ -16,6 +16,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -81,10 +82,12 @@ public final class ShellCommand {
       processHandler.addProcessListener(outputAdapter);
       processHandler.startNotify();
       while (!processHandler.waitFor(300)) {
-        if (indicator != null && indicator.isCanceled()) {
+        try {
+          ProgressManager.checkCanceled();
+        } catch (ProcessCanceledException pce) {
           processHandler.destroyProcess();
           listener.setExitCode(255);
-          break;
+          throw pce;
         }
       }
       if (isBinary) {
