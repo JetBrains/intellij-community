@@ -182,7 +182,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     document.replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
     context.commitDocument();
 
-    if (variable instanceof PsiField) {
+    if (variable instanceof PsiField field) {
       if (willBeImported()) {
         RangeMarker toDelete = JavaCompletionUtil.insertTemporary(context.getTailOffset(), document, " ");
         context.commitDocument();
@@ -191,7 +191,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
           if (ref.isQualified()) {
             return; // shouldn't happen, but sometimes we see exceptions because of this
           }
-          ref.bindToElementViaStaticImport(((PsiField)variable).getContainingClass());
+          ref.bindToElementViaStaticImport(field.getContainingClass());
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
         if (toDelete != null && toDelete.isValid()) {
@@ -199,8 +199,8 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         }
         context.commitDocument();
       }
-      else if (shouldQualify((PsiField)variable, context)) {
-        qualifyFieldReference(context, (PsiField)variable);
+      else if (shouldQualify(field, context)) {
+        qualifyFieldReference(context, field);
       }
     }
 
