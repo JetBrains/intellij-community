@@ -81,11 +81,33 @@ suspend fun createBuildContext(
     options = options,
     setupTracer = setupTracer
   ).asBazelIfNeeded
-  return BuildContextImpl.createContext(
+  return createBuildContext(
     compilationContext = compilationContext,
     projectHome = projectHome,
     productProperties = productProperties,
     proprietaryBuildTools = proprietaryBuildTools,
+  )
+}
+
+fun createBuildContext(
+  compilationContext: CompilationContext,
+  projectHome: Path,
+  productProperties: ProductProperties,
+  proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+): BuildContextImpl {
+  val projectHomeAsString = projectHome.invariantSeparatorsPathString
+  val jarCacheManager = compilationContext.options.jarCacheDir?.let {
+    LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
+  } ?: NonCachingJarCacheManager
+  return BuildContextImpl(
+    compilationContext = compilationContext.asArchivedIfNeeded,
+    productProperties = productProperties,
+    windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome),
+    linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
+    macDistributionCustomizer = productProperties.createMacCustomizer(projectHome),
+    proprietaryBuildTools = proprietaryBuildTools,
+    applicationInfo = ApplicationInfoPropertiesImpl(project = compilationContext.project, productProperties = productProperties, buildOptions = compilationContext.options),
+    jarCacheManager = jarCacheManager,
   )
 }
 
@@ -211,28 +233,6 @@ class BuildContextImpl internal constructor(
         setupTracer = setupTracer,
         proprietaryBuildTools = proprietaryBuildTools,
         options = options,
-      )
-    }
-
-    fun createContext(
-      compilationContext: CompilationContext,
-      projectHome: Path,
-      productProperties: ProductProperties,
-      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-    ): BuildContextImpl {
-      val projectHomeAsString = projectHome.invariantSeparatorsPathString
-      val jarCacheManager = compilationContext.options.jarCacheDir?.let {
-        LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
-      } ?: NonCachingJarCacheManager
-      return BuildContextImpl(
-        compilationContext = compilationContext.asArchivedIfNeeded,
-        productProperties = productProperties,
-        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome),
-        linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
-        macDistributionCustomizer = productProperties.createMacCustomizer(projectHome),
-        proprietaryBuildTools = proprietaryBuildTools,
-        applicationInfo = ApplicationInfoPropertiesImpl(project = compilationContext.project, productProperties = productProperties, buildOptions = compilationContext.options),
-        jarCacheManager = jarCacheManager,
       )
     }
   }
