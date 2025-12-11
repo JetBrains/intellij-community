@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -59,9 +58,8 @@ import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
@@ -371,16 +369,11 @@ internal class GitStagePanel(
       }, this@GitStagePanel)
 
       GitDisposable.getInstance(project).coroutineScope.launch {
-        ChangesViewWorkflowManager.getInstance(project).editedCommit.collect { editedCommitPresentation ->
+        ChangesViewWorkflowManager.getInstance(project).editedCommit.collectLatest { editedCommitPresentation ->
           if (editedCommitPresentation != null) {
             requestRefresh {
-              launch {
-                withContext(Dispatchers.UiWithModelAccess) {
-                  TreeUtil.findNodeWithObject(root, editedCommitPresentation)?.let {
-                    expandPath(TreeUtil.getPathFromRoot(it))
-                  }
-                }
-              }
+              val node = TreeUtil.findNodeWithObject(root, editedCommitPresentation)
+              node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
             }
           } else {
             requestRefresh()
