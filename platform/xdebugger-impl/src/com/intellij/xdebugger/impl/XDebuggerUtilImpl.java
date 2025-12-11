@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.DebuggerAsyncActionUtilsKt;
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared;
 import com.intellij.platform.debugger.impl.shared.proxy.*;
 import com.intellij.pom.Navigatable;
@@ -610,8 +611,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
    * @see DebuggerAsyncActionUtilsKt#performDebuggerActionAsync
    */
   public static void performDebuggerAction(@NotNull AnActionEvent e, @NotNull Runnable action) {
-    action.run();
-    reshowInlayRunToCursor(e);
+    DebuggerAsyncActionUtilsKt.performDebuggerAction(e.getProject(), e.getDataContext(), () -> {
+      action.run();
+      return Unit.INSTANCE;
+    });
   }
 
   public static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {

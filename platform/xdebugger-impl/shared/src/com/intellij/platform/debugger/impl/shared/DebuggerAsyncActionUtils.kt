@@ -7,16 +7,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.project.projectId
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.intellij.util.ui.EDT
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-
 
 @ApiStatus.Internal
 fun performDebuggerActionAsync(e: AnActionEvent, action: suspend () -> Unit) {
@@ -29,17 +27,33 @@ fun performDebuggerActionAsync(
   dataContext: DataContext,
   action: suspend () -> Unit,
 ) {
-  val coroutineScope = project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
-                       ?: service<FrontendDebuggerActionCoroutineScope>().cs
-
-  coroutineScope.launch {
+  getFrontendDebuggerActionCoroutineScope(project).launch {
     action()
-    val editor = dataContext.getData(CommonDataKeys.EDITOR)
-    if (project != null && editor != null) {
-      withContext(Dispatchers.EDT) {
-        XDebuggerManagerApi.Companion.getInstance().reshowInlays(project.projectId(), editor.editorId())
-      }
-    }
+    reshowInlays(project, dataContext)
+  }
+}
+
+@ApiStatus.Internal
+fun performDebuggerAction(
+  project: Project?,
+  dataContext: DataContext,
+  action: () -> Unit,
+) {
+  EDT.assertIsEdt()
+  action()
+  getFrontendDebuggerActionCoroutineScope(project).launch {
+    reshowInlays(project, dataContext)
+  }
+}
+
+private fun getFrontendDebuggerActionCoroutineScope(project: Project?): CoroutineScope =
+  project?.service<FrontendDebuggerActionProjectCoroutineScope>()?.cs
+         ?: service<FrontendDebuggerActionCoroutineScope>().cs
+
+private suspend fun reshowInlays(project: Project?, dataContext: DataContext) {
+  val editor = dataContext.getData(CommonDataKeys.EDITOR)
+  if (project != null && editor != null) {
+    XDebuggerManagerApi.getInstance().reshowInlays(project.projectId(), editor.editorId())
   }
 }
 

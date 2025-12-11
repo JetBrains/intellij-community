@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.shared.performDebuggerActionAsync
+import com.intellij.platform.debugger.impl.shared.performDebuggerAction
 import com.intellij.xdebugger.impl.DebuggerSupport
 
 /**
@@ -59,7 +59,7 @@ abstract class XDebuggerActionBase protected constructor(private val myHideDisab
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    performDebuggerActionAsync(e) { performWithHandler(e) }
+    performDebuggerAction(e.project, e.dataContext) { performWithHandler(e) }
   }
 
   protected fun performWithHandler(e: AnActionEvent): Boolean {
