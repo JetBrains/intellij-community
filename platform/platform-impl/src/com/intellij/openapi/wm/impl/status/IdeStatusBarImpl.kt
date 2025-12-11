@@ -926,7 +926,9 @@ private class StatusBarWidgetClickListener(private val clickConsumer: (MouseEven
   override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
     if (!e.isPopupTrigger && MouseEvent.BUTTON1 == e.button) {
       StatusBarWidgetClicked.log(clickConsumer.javaClass)
-      clickConsumer(e)
+      WriteIntentReadAction.run {
+        clickConsumer(e)
+      }
     }
     return true
   }
