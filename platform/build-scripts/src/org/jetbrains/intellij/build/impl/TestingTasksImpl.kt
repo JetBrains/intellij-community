@@ -91,29 +91,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     )
   }
 
-  private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
-    val projectHome = context.paths.projectHome
-    val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
-    val configuration = RunConfigurationProperties.getConfiguration(file)
-    return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
-      JUnitRunConfigurationProperties.TYPE -> {
-        listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
-      }
-      CompoundRunConfigurationProperties.TYPE -> {
-        val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
-        runConfiguration.toRun.flatMap(::loadRunConfigurations)
-      }
-      else -> {
-        throw RuntimeException("Unsupported run configuration type '${type}' in run configuration '${name}' of project '${projectHome}'")
-      }
-    }
-  }
-
   private val runConfigurations: List<JUnitRunConfigurationProperties> by lazy {
     options.testConfigurations
       ?.splitToSequence(';')
       ?.filter(String::isNotEmpty)
-      ?.flatMap(::loadRunConfigurations)
+      ?.flatMap { loadRunConfigurations(name = it, projectHome = context.paths.projectHome) }
       ?.toList() ?: emptyList()
   }
 
@@ -362,7 +344,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         testPatterns = options.testPatterns,
         jvmArgs = additionalJvmOptions,
         systemProperties = systemProperties,
-        remoteDebugging = false
+        remoteDebugging = false,
       )
     }
     catch (e: NoTestsFound) {
