@@ -20,13 +20,12 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class XCompareWithClipboardAction extends XFetchValueActionBase implements SplitDebuggerAction {
+public class XCompareWithClipboardAction extends XFetchValueSplitActionBase {
 
   @Override
   protected void handle(final Project project, final String value) {

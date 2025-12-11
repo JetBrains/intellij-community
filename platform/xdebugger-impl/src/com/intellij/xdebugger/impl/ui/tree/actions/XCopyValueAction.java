@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -31,7 +30,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
 @ApiStatus.Internal
-public abstract class XCopyValueAction extends XFetchValueActionBase {
+public abstract class XCopyValueAction extends XFetchValueSplitActionBase {
   @Override
   protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
@@ -61,6 +60,6 @@ public abstract class XCopyValueAction extends XFetchValueActionBase {
     return ActionUpdateThread.BGT;
   }
 
-  static class Simple extends XCopyValueAction implements SplitDebuggerAction {
+  static class Simple extends XCopyValueAction {
   }
 }

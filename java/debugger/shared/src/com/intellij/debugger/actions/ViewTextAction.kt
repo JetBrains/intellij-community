@@ -4,12 +4,11 @@ package com.intellij.debugger.actions
 import com.intellij.java.debugger.impl.shared.actions.ViewTextActionBase
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.annotations.ApiStatus
 
-class ViewTextAction : ViewTextActionBase(), SplitDebuggerAction {
+class ViewTextAction : ViewTextActionBase() {
   @ApiStatus.Internal
   override fun getStringNode(e: AnActionEvent): XValueNodeImpl? {
     val node = XDebuggerTreeActionBase.getSelectedNodes(e.dataContext).singleOrNull() ?: return null

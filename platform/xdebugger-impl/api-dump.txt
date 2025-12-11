@@ -69,6 +69,15 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - rebuild():V
 c:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
 - com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
+a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+- sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
+- sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
+- f:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- f:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- f:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
 a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
 - p:handle(com.intellij.openapi.project.Project,java.lang.String):V
 - p:handle(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V

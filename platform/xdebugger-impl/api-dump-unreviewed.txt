@@ -960,7 +960,6 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - getProject():com.intellij.openapi.project.Project
 - getRoot():com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
-- s:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - getSourcePosition():com.intellij.xdebugger.XSourcePosition
 - s:getTree(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - s:getTree(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
@@ -1058,9 +1057,6 @@ a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-- s:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
-- s:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
 - p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
