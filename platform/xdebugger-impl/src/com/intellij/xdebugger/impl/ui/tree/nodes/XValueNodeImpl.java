@@ -15,13 +15,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValuePlace;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XSourceKind;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
@@ -36,10 +30,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XRendererDecoratorPresentation;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -79,6 +70,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
       myText.append(XDebuggerUIConstants.getCollectingDataMessage(), XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
     }
+  }
+
+  XValueNodeImpl(XValueNodeImpl node, @NotNull XValue value) {
+    super(node.getTree(), (XDebuggerTreeNode)node.getParent(), true, value);
+    myName = node.getName();
   }
 
   @Override

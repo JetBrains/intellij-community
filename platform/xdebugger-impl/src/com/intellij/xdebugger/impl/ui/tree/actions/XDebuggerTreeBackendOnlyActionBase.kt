@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  * Supported UI: [com.intellij.openapi.ui.DialogWrapper.show]
  *
  * Use this base class for backend-only actions, which do not operate on the frontend.
- * If you need to create an action which operates on the frontend, use [XDebuggerTreeActionBase] instead.
+ * If you need to create an action which operates on the frontend, use [XDebuggerTreeSplitActionBase] instead.
  */
 @ApiStatus.Experimental
 abstract class XDebuggerTreeBackendOnlyActionBase : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
