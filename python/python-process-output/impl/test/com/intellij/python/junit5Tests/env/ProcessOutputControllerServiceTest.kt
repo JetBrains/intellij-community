@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.impl.LoggedProcess
 import com.intellij.python.community.execService.impl.LoggingLimits
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
@@ -35,6 +36,7 @@ import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.io.TempDir
 
 @PyEnvTestCase
@@ -67,10 +69,14 @@ class ProcessOutputControllerServiceTest {
         // executing the file MAX_PROCESSES amount of times
         repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
             runBin(binOnEel, Args(MAIN_PY, it.toString()))
+        }
 
-            waitUntil {
-                service.firstLineOfLastProcess()?.startsWith("test $it") == true
-            }
+        waitUntil {
+            val processMap = service.processMap()
+            val index = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 1
+
+            processMap.contains("test $index")
+                && processMap["test $index"]!!.lines.replayCache.size == 3
         }
 
         // the amount of processes logged should exactly equal to MAX_PROCESSES
@@ -79,18 +85,26 @@ class ProcessOutputControllerServiceTest {
             service.loggedProcesses.value.size,
         )
 
-        repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
-            with(service.loggedProcesses.value[it].lines.replayCache) {
-                // line 1 (stdout): test $it
-                // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $it" + 1
-                // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
-                assertEquals(3, size)
-                assertEquals("test $it", get(0).text)
-                assertEquals(
-                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen),
-                    get(1).text.length,
-                )
-                assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+        run {
+            val processMap = service.processMap()
+
+            repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
+                val process = processMap["test $it"]
+
+                assertNotNull(process)
+
+                with(process.lines.replayCache) {
+                    // line 1 (stdout): test $it
+                    // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $it" + 1
+                    // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
+                    assertEquals(3, size)
+                    assertEquals("test $it", get(0).text)
+                    assertEquals(
+                        LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen),
+                        get(1).text.length,
+                    )
+                    assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+                }
             }
         }
 
@@ -99,10 +113,14 @@ class ProcessOutputControllerServiceTest {
             val newIt = (it + ProcessOutputControllerServiceLimits.MAX_PROCESSES)
 
             runBin(binOnEel, Args(MAIN_PY, newIt.toString()))
+        }
 
-            waitUntil {
-                service.firstLineOfLastProcess()?.startsWith("test $newIt") == true
-            }
+        waitUntil {
+            val processMap = service.processMap()
+            val index = (ProcessOutputControllerServiceLimits.MAX_PROCESSES * 3) - 1
+
+            processMap.contains("test $index")
+                && processMap["test $index"]!!.lines.replayCache.size == 3
         }
 
         // older processes beyond MAX_PROCESSES should be truncated
@@ -111,20 +129,28 @@ class ProcessOutputControllerServiceTest {
             service.loggedProcesses.value.size,
         )
 
-        repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
-            with(service.loggedProcesses.value[it].lines.replayCache) {
-                val newIt = it + ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2
+        run {
+            val processMap = service.processMap()
 
-                // line 1 (stdout): test $newIt
-                // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $newIt" + 1
-                // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
-                assertEquals(3, size)
-                assertEquals("test $newIt", get(0).text)
-                assertEquals(
-                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen),
-                    get(1).text.length,
-                )
-                assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+            repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
+                val newIt = it + ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2
+                val process = processMap["test $newIt"]
+
+                assertNotNull(process)
+
+                with(process.lines.replayCache) {
+
+                    // line 1 (stdout): test $newIt
+                    // line 2 (stdout): x repeated MAX_OUTPUT_SIZE times minus the length of "test $newIt" + 1
+                    // line 3 (stderr): y repeated MAX_OUTPUT_SIZE times
+                    assertEquals(3, size)
+                    assertEquals("test $newIt", get(0).text)
+                    assertEquals(
+                        LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen),
+                        get(1).text.length,
+                    )
+                    assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
+                }
             }
         }
     }
@@ -277,6 +303,16 @@ class ProcessOutputControllerServiceTest {
             ?.replayCache
             ?.getOrNull(0)
             ?.text
+
+    private fun ProcessOutputControllerService.processMap(): Map<String, LoggedProcess> =
+        mapOf(
+            *loggedProcesses
+                .value
+                .map {
+                    it.lines.replayCache[0].text to it
+                }
+                .toTypedArray(),
+        )
 
     companion object {
         const val MAIN_PY = "main.py"
