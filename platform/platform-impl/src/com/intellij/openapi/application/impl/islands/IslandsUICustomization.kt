@@ -697,6 +697,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return null
   }
 
+  override fun configureEditorTopContainer(container: JComponent) {
+    if (isManyIslandEnabled) {
+      UIUtil.getParentOfType(JBEditorTabs::class.java, container)?.repaint()
+    }
+  }
+
   @Suppress("UseDPIAwareInsets")
   private inner class EditorNotificationPanelWrapper(private val component: JComponent, private val top: Boolean) : Wrapper(component) {
     var borderColor: Color? = null
