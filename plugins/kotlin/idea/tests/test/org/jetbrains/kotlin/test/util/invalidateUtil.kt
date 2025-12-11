@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 
-fun Project.invalidateCaches() {
+fun Project.invalidateK1ModeCaches() {
     runWriteAction {
         // see Fe10KotlinGlobalModificationService
         KotlinCodeBlockModificationListener.getInstance(this).incModificationCount()
