@@ -389,18 +389,18 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                        name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
                      } ?: throw RuntimeException("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
-    additionalJvmOptions += "-javaagent:${agentJar}"
+    additionalJvmOptions.add("-javaagent:${agentJar}")
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
       .mapTo(LinkedHashSet()) { FileUtilRt.toSystemDependentName(it.properties.homePath) }
-    excludeRoots += context.paths.buildOutputDir.toString()
-    excludeRoots += context.paths.projectHome.resolve("out").toString()
+    excludeRoots.add(context.paths.buildOutputDir.toString())
+    excludeRoots.add(context.paths.projectHome.resolve("out").toString())
 
-    systemProperties["test.discovery.listener"] = "com.intellij.TestDiscoveryBasicListener"
-    systemProperties["test.discovery.data.listener"] = "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener"
-    systemProperties["org.jetbrains.instrumentation.trace.file"] = testDiscoveryTraceFilePath
+    systemProperties.put("test.discovery.listener", "com.intellij.TestDiscoveryBasicListener")
+    systemProperties.put("test.discovery.data.listener", "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener")
+    systemProperties.put("org.jetbrains.instrumentation.trace.file", testDiscoveryTraceFilePath)
 
-    options.testDiscoveryIncludePatterns?.let { systemProperties["test.discovery.include.class.patterns"] = it }
-    options.testDiscoveryExcludePatterns?.let { systemProperties["test.discovery.exclude.class.patterns"] = it }
+    options.testDiscoveryIncludePatterns?.let { systemProperties.put("test.discovery.include.class.patterns", it) }
+    options.testDiscoveryExcludePatterns?.let { systemProperties.put("test.discovery.exclude.class.patterns", it) }
 
     systemProperties.put("test.discovery.excluded.roots", excludeRoots.joinToString(separator = ";"))
   }
@@ -695,11 +695,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG] = options.bucketIndex.toString()
     systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG] = options.bucketsCount.toString()
 
-    System.getProperties().forEach { (key, value) ->
+    for ((key, value) in System.getProperties()) {
       key as String
 
       if (key.startsWith("pass.")) {
-        systemProperties[key.substring("pass.".length)] = value as String
+        systemProperties.put(key.substring("pass.".length), value as String)
       }
 
       /**
