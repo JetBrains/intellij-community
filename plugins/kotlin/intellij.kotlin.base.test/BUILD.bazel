@@ -53,6 +53,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//plugins/kotlin/formatter/minimal",
     "//jvm/jvm-analysis-impl:analysis-impl",
+    "//libraries/gson",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
