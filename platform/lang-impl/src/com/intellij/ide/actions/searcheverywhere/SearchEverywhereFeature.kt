@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -20,7 +21,8 @@ object SearchEverywhereFeature {
     else PLATFORM_KEY
 
   var isSplit: Boolean
-    get() = Registry.`is`(registryKey, true)
+    get() =
+      Registry.`is`(registryKey, true) || ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
     set(value) {
       Registry.get(registryKey).setValue(value)
     }

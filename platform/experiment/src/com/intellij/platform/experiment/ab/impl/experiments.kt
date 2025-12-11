@@ -25,6 +25,7 @@ enum class ABExperimentOption {
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
   TYPESCRIPT_SERVICE_TYPES,
+  SPLIT_SEARCH_EVERYWHERE,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -68,6 +69,15 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
     controlBuckets = (512 until 1024).toSet(),
     majorVersion = "2025.3 EAP",
     products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
+  ),
+  ExperimentAssignment(
+    experiment = ABExperimentOption.SPLIT_SEARCH_EVERYWHERE,
+    experimentBuckets = (0 until 512).toSet(),
+    controlBuckets = (512 until 1024).toSet(),
+    majorVersion = "2026.1 EAP",
+    products = EnumSet.of(IntelliJPlatformProduct.IDEA,
+                          IntelliJPlatformProduct.PYCHARM,
+                          IntelliJPlatformProduct.RIDER),
   ),
   // the rest belongs to the "unassigned" experiment
 )
@@ -133,6 +143,9 @@ private val LOG = logger<ABExperimentOption>()
  */
 internal enum class IntelliJPlatformProduct {
   WEBSTORM,
+  IDEA,
+  PYCHARM,
+  RIDER,
   OTHER,
   ;
 
@@ -140,6 +153,9 @@ internal enum class IntelliJPlatformProduct {
     fun get(): IntelliJPlatformProduct =
       when {
         PlatformUtils.isWebStorm() -> WEBSTORM
+        PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate() -> IDEA
+        PlatformUtils.isPyCharm() -> PYCHARM
+        PlatformUtils.isRider() -> RIDER
         else -> OTHER
       }
   }
