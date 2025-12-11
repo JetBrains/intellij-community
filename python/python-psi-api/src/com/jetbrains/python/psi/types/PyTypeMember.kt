@@ -14,13 +14,14 @@ import org.jetbrains.annotations.ApiStatus
  * For a property, one member represents its getter, setter and deleter
  */
 @ApiStatus.Experimental
-class PyTypeMember @JvmOverloads constructor(
+class PyTypeMember @JvmOverloads @ApiStatus.Internal constructor(
   val mainElement: PsiElement?,
   val type: PyType?,
   val isClassVar: Boolean = false,
   val getter: PsiElement? = mainElement,
   val setter: PsiElement? = mainElement,
   val deleter: PsiElement? = mainElement,
+  val isProperty: Boolean = false,
 ) : RatedResolveResult(0, mainElement) {
 
   constructor(property: Property, type: PyType?) : this(
@@ -29,6 +30,7 @@ class PyTypeMember @JvmOverloads constructor(
     getter = property.getter.value(),
     setter = property.setter.valueOrNull(),
     deleter = property.deleter.valueOrNull(),
+    isProperty = true
   )
 
   val isWritable: Boolean get() = setter != null
