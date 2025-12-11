@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.diff.impl.patch
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.diff.impl.patch
 
 import com.intellij.diff.HeavyDiffTestCase
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
+import com.intellij.openapi.diff.impl.patch.PatchReader
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.SimpleContentRevision
