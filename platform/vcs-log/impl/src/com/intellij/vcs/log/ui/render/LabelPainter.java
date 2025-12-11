@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -10,12 +11,10 @@ import com.intellij.openapi.vcs.changes.ui.BranchPresentation;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.impl.DetachedHeadRefGroup;
 import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,6 +36,7 @@ public class LabelPainter {
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(6);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
   public static final JBValue ICON_TEXT_PADDING = JBVG.value(1);
+  public static final JBValue ICON_ADDITIONAL_PADDING = JBVG.value(3);
   public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String TWO_DOTS = "..";
@@ -116,26 +116,33 @@ public class LabelPainter {
       int width = getPresentationsWidth(bookmarkLabels, middlePadding);
       return new Presentations(bookmarkLabels, width > 0 ? width + sidePaddingsWidth : 0);
     }
+    Presentation detachedHeadLabel = processDetachedHead(refGroups, fontMetrics);
 
-    int remainingWidth = availableWidth - getCurrentWidth(bookmarkLabels, middlePadding) - sidePaddingsWidth;
+    var detachedHeadWidth = detachedHeadLabel != null ? detachedHeadLabel.width + middlePadding : 0;
+    int remainingWidth = availableWidth - getCurrentWidth(bookmarkLabels, middlePadding) - detachedHeadWidth - sidePaddingsWidth;
     List<Presentation> referenceLabels = processReferenceLabels(refGroups, fontMetrics, remainingWidth, background, height, compact);
 
-    List<Presentation> result = getPresentations(bookmarkLabels, referenceLabels);
+    List<Presentation> result = getPresentations(bookmarkLabels, referenceLabels, detachedHeadLabel);
     int width = getPresentationsWidth(result, middlePadding);
     return new Presentations(result, width > 0 ? width + sidePaddingsWidth : 0);
   }
 
   private @NotNull List<Presentation> getPresentations(@NotNull List<Presentation> bookmarkLabels,
-                                                       @NotNull List<Presentation> referenceLabels) {
-    if (bookmarkLabels.isEmpty()) return referenceLabels;
+                                                       @NotNull List<Presentation> referenceLabels,
+                                                       @Nullable Presentation detachedHeadLabel) {
+    if (bookmarkLabels.isEmpty() && detachedHeadLabel == null) return referenceLabels;
 
-    List<Presentation> result = new ArrayList<>(bookmarkLabels.size() + referenceLabels.size());
+    int detachedHeadCount = detachedHeadLabel != null ? 1 : 0;
+
+    List<Presentation> result = new ArrayList<>(bookmarkLabels.size() + referenceLabels.size() + detachedHeadCount);
     if (isLeftAligned()) {
       result.addAll(bookmarkLabels);
-      result.addAll(referenceLabels);
     }
-    else {
-      result.addAll(referenceLabels);
+    if (detachedHeadLabel != null) {
+      result.add(detachedHeadLabel);
+    }
+    result.addAll(referenceLabels);
+    if (!isLeftAligned()) {
       result.addAll(bookmarkLabels);
     }
     return result;
@@ -151,12 +158,23 @@ public class LabelPainter {
     return presentations.stream().mapToInt(Presentation::width).sum() + middlePadding * (presentations.size() - 1);
   }
 
+  private static @Nullable Presentation processDetachedHead(@NotNull List<? extends RefGroup> refGroups,
+                                                            @NotNull FontMetrics fontMetrics) {
+    if (refGroups.isEmpty()) return null;
+    RefGroup firstRef = refGroups.getFirst();
+    if (firstRef instanceof DetachedHeadRefGroup) {
+      return getIconTextPresentation(fontMetrics, firstRef.getName(), AllIcons.General.Warning,
+                                     JBUI.CurrentTheme.Label.warningForeground(), ICON_ADDITIONAL_PADDING.get());
+    }
+    return null;
+  }
+
   private @NotNull List<Presentation> processBookmarkLabels(@NotNull List<VcsBookmarkRef> bookmarks,
                                                             @NotNull Color background,
                                                             int height) {
     return bookmarks.stream()
       .map(it -> new BookmarkIcon(myComponent, height, background, it))
-      .map(icon -> new Presentation("", icon, icon.getIconWidth()))
+      .map(icon -> new Presentation("", icon, icon.getIconWidth(), 0, null))
       .toList();
   }
 
@@ -171,6 +189,10 @@ public class LabelPainter {
     int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
     for (int i = 0; i < refGroups.size(); i++) {
       RefGroup group = refGroups.get(i);
+
+      if (group instanceof DetachedHeadRefGroup) {
+        continue;
+      }
 
       int doNotFitWidth = 0;
       if (!compact && i < refGroups.size() - 1) {
@@ -202,8 +224,16 @@ public class LabelPainter {
   }
 
   private static @NotNull Presentation getIconTextPresentation(@NotNull FontMetrics fontMetrics, @NotNull String text, @NotNull Icon icon) {
-    int iconTextWidth = icon.getIconWidth() + getTextWidth(fontMetrics, text);
-    return new Presentation(text, icon, iconTextWidth);
+    return getIconTextPresentation(fontMetrics, text, icon, null, 0);
+  }
+
+  private static @NotNull Presentation getIconTextPresentation(@NotNull FontMetrics fontMetrics,
+                                                               @NotNull String text,
+                                                               @NotNull Icon icon,
+                                                               @Nullable Color color,
+                                                               int iconPadding) {
+    int iconTextWidth = icon.getIconWidth() + iconPadding + getTextWidth(fontMetrics, text);
+    return new Presentation(text, icon, iconTextWidth, iconPadding, color);
   }
 
   private static int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String name) {
@@ -312,7 +342,8 @@ public class LabelPainter {
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
       x += icon.getIconWidth();
       x += getIconTextPadding();
-      g2.setColor(myForeground);
+      x += label.iconPadding;
+      g2.setColor(label.textColor != null ? label.textColor : myForeground);
       g2.drawString(text, x, y + baseLine);
       x += fontMetrics.stringWidth(text) + (myCompact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get());
     }
@@ -378,7 +409,7 @@ public class LabelPainter {
   private record Presentations(@NotNull List<Presentation> list, int width) {
   }
 
-  private record Presentation(@NotNull String text, @NotNull Icon icon, int width) {
+  private record Presentation(@NotNull String text, @NotNull Icon icon, int width, int iconPadding, @Nullable Color textColor) {
   }
 }
 

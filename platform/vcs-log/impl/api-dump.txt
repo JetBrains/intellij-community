@@ -953,6 +953,7 @@ c:com.intellij.vcs.log.ui.render.LabelIcon
 c:com.intellij.vcs.log.ui.render.LabelPainter
 - sf:BOTTOM_TEXT_PADDING:com.intellij.util.ui.JBValue
 - sf:COMPACT_MIDDLE_PADDING:com.intellij.util.ui.JBValue
+- sf:ICON_ADDITIONAL_PADDING:com.intellij.util.ui.JBValue
 - sf:ICON_TEXT_PADDING:com.intellij.util.ui.JBValue
 - sf:LABEL_ARC:com.intellij.util.ui.JBValue
 - sf:LEFT_PADDING:com.intellij.util.ui.JBValue

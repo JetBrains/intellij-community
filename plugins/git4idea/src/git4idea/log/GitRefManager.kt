@@ -11,6 +11,7 @@ import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.impl.DetachedHeadRefGroup
 import com.intellij.vcs.log.impl.SimpleRefGroup
 import com.intellij.vcs.log.impl.SimpleRefGroup.Companion.buildGroups
 import com.intellij.vcs.log.impl.SimpleRefType
@@ -114,7 +115,7 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
     val result = ArrayList<RefGroup>()
     result.addAll(refGroups)
     if (repository != null && !repository.isOnBranch) {
-      result.add(0, SimpleRefGroup("!", headRefs.toMutableList()))
+      result.add(0, DetachedHeadRefGroup(headRefs.toMutableList()))
     }
     else {
       if (!result.isEmpty()) {
