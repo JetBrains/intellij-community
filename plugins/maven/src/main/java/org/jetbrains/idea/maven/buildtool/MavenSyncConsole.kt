@@ -5,10 +5,7 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.FilePosition
 import com.intellij.build.SyncViewManager
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.EventResult
-import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.MessageEventResult
+import com.intellij.build.events.*
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
@@ -70,7 +67,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
     shownIssues.clear()
     mySyncId = createTaskId()
 
-    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!, System.currentTimeMillis())
+    val descriptor =
+      DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!, System.currentTimeMillis())
     descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
     descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.NO
@@ -110,7 +108,13 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
 
   @Synchronized
   fun addBuildEvent(buildEvent: BuildEvent) = doIfImportInProcess {
-    mySyncView.onEvent(mySyncId, buildEvent)
+    if (buildEvent is BuildIssueEvent) {
+      addBuildIssue(buildEvent.issue, buildEvent.kind)
+    }
+    else {
+      mySyncView.onEvent(mySyncId, buildEvent)
+    }
+
   }
 
 
@@ -289,7 +293,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
     try {
       mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
         override val title: String = "Sync Finished"
-        override val description: String = "Sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">reload all projects</a>\n"
+        override val description: String =
+          "Sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">reload all projects</a>\n"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(MavenFullSyncQuickFix())
         override fun getNavigatable(project: Project): Navigatable? = null
       }, MessageEvent.Kind.INFO))
@@ -341,7 +346,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
 
   @Synchronized
   fun showBuildIssue(buildIssue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
-    hasErrors =  hasErrors || kind == MessageEvent.Kind.ERROR
+    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR
     val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
     startTask(mySyncId, key)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, kind))
@@ -398,10 +403,12 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
 
 
   @Synchronized
-  private fun downloadEventFailed(keyPrefix: String,
-                                  @NlsSafe dependency: String,
-                                  @NlsSafe error: String,
-                                  @NlsSafe stackTrace: String?) = doIfImportInProcess {
+  private fun downloadEventFailed(
+    keyPrefix: String,
+    @NlsSafe dependency: String,
+    @NlsSafe error: String,
+    @NlsSafe stackTrace: String?,
+  ) = doIfImportInProcess {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
 
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)

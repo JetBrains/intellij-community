@@ -7,11 +7,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
+import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -26,7 +28,8 @@ public final class MavenResolveResultProblemProcessor {
     if (message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
       BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, problem.getDescription());
       syncConsole.showBuildIssue(buildIssue);
-    } else if (problem.getMavenArtifact() == null) {
+    }
+    else if (problem.getMavenArtifact() == null) {
       MavenProjectsManager.getInstance(project).getSyncConsole()
         .addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message);
     }
@@ -42,9 +45,23 @@ public final class MavenResolveResultProblemProcessor {
     MavenSyncConsole syncConsole = projectsManager.getSyncConsole();
     for (MavenProject mavenProject : projectsManager.getProjects()) {
       for (MavenProjectProblem problem : mavenProject.getProblems()) {
-        syncConsole.showProblem(problem);
+        if (!processedWithErrorParsers(problem, project, syncConsole)) {
+          syncConsole.showProblem(problem);
+        }
       }
     }
+  }
+
+  private static boolean processedWithErrorParsers(MavenProjectProblem problem, @NotNull Project project, MavenSyncConsole console) {
+    List<MavenImportLoggedEventParser> list = MavenImportLoggedEventParser.EP_NAME.getExtensionList();
+    for (MavenImportLoggedEventParser parser : list) {
+      var description = problem.getDescription();
+      if (description == null) continue;
+      if (parser.processProjectProblem(project, problem)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static class MavenResolveProblemHolder {

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenImportEventProcessor;
 import org.jetbrains.idea.maven.importing.output.MavenImportOutputParser;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport;
 
 import java.util.function.Consumer;
@@ -26,9 +27,10 @@ public interface MavenImportLoggedEventParser {
 
   /**
    * Processing log line from vm process - maven server.
-   * @param project - project
-   * @param logLine - log line
-   * @param reader - log reader
+   *
+   * @param project         - project
+   * @param logLine         - log line
+   * @param reader          - log reader
    * @param messageConsumer - message consumer (MavenSyncConsole)
    * @return true if log line consumed by messageConsumer
    */
@@ -38,5 +40,11 @@ public interface MavenImportLoggedEventParser {
     @Nullable BuildOutputInstantReader reader,
     @NotNull Consumer<? super BuildEvent> messageConsumer);
 
+  default boolean processProjectProblem(
+    @NotNull Project project,
+    @NotNull MavenProjectProblem problem
+  ) {
+    return false;
+  }
 }
 
