@@ -27,7 +27,7 @@ public abstract class ZenCodingFilter {
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    return isSystem() || EmmetOptions.getInstance().isFilterEnabledByDefault(this);
+    return isSystem() || EmmetOptions.getInstance().isFilterEnabledByDefault(getSuffix());
   }
 
   /**

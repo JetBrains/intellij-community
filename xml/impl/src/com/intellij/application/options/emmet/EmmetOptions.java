@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.emmet;
 
-import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -41,8 +40,8 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myFiltersEnabledByDefault = filtersEnabledByDefault;
   }
 
-  public boolean isFilterEnabledByDefault(@NotNull ZenCodingFilter filter) {
-    return myFiltersEnabledByDefault.contains(filter.getSuffix());
+  public boolean isFilterEnabledByDefault(@NotNull String filterSuffix) {
+    return myFiltersEnabledByDefault.contains(filterSuffix);
   }
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
