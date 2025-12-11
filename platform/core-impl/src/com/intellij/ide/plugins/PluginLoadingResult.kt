@@ -124,14 +124,6 @@ class PluginLoadingResult {
 
   private fun PluginMainDescriptor.initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     content.modules.forEach { it.requireDescriptor() }
-    if (content.modules.size > 1) {
-      val duplicates = HashSet<PluginModuleId>()
-      for (item in content.modules) {
-        if (!duplicates.add(item.moduleId)) {
-          return PluginHasDuplicateContentModuleDeclaration(this, item.moduleId)
-        }
-      }
-    }
     if (context.isPluginDisabled(pluginId)) {
       return PluginIsMarkedDisabled(this)
     }

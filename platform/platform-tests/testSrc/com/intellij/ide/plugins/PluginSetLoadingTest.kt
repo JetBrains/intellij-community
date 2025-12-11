@@ -442,7 +442,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].htmlMessage.toString()).contains("foo", "duplicate", "content module")
+    assertThat(errors[0].htmlMessage.toString()).contains("foo", "invalid plugin descriptor")
   }
 
   @Test
