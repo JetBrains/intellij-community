@@ -53,9 +53,9 @@ sealed interface JdkProxyProvider {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun showProxyAuthNotification(): Boolean {
-      val app = ApplicationManager.getApplication() ?: return false
-      if (proxyAuthNotificationActive.getAndSet(true)) return false
+    fun showProxyAuthNotification() {
+      val app = ApplicationManager.getApplication() ?: return
+      if (proxyAuthNotificationActive.getAndSet(true)) return
       val title = UIBundle.message("proxy.auth.notification.title")
       val content = UIBundle.message("proxy.auth.notification.text")
       val notification = Notification("proxy.auth.failed", title, content, NotificationType.WARNING)
@@ -64,7 +64,6 @@ sealed interface JdkProxyProvider {
         }))
         .whenExpired { proxyAuthNotificationActive.set(false) }
       app.invokeLater({ notification.notify(null) }, ModalityState.nonModal())
-      return true
     }
   }
 }

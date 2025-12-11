@@ -698,8 +698,10 @@ public final class HttpRequests {
     connection.disconnect();
     if (statusCode == HttpURLConnection.HTTP_PROXY_AUTH) {
       var uiService = getIdeUiService();
-      var notificationShown = uiService != null && uiService.showProxyAuthNotification();
-      if (notificationShown && LOG.isDebugEnabled()) LOG.debug(
+      if (uiService != null) {
+        uiService.showProxyAuthNotification();
+      }
+      if (LOG.isDebugEnabled()) LOG.debug(
         "proxy auth failed for " + request.getURL() + "; Proxy-Authenticate=" + connection.getHeaderField("Proxy-Authenticate"),
         new Exception()
       );

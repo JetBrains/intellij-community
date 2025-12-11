@@ -216,7 +216,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public boolean showProxyAuthNotification() {
-    return JdkProxyProvider.showProxyAuthNotification();
+  public void showProxyAuthNotification() {
+    JdkProxyProvider.showProxyAuthNotification();
   }
 }

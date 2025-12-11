@@ -160,7 +160,5 @@ public class IdeUiService {
   }
 
   @ApiStatus.Internal
-  public boolean showProxyAuthNotification() {
-    return false;
-  }
+  public void showProxyAuthNotification() { }
 }
