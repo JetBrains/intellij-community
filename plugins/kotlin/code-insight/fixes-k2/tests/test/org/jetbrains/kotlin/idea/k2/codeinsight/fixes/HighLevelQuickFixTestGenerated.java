@@ -6158,6 +6158,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/createLabel/continueNoLoop.kt");
         }
 
+        @TestMetadata("exisitingLabel.kt")
+        public void testExisitingLabel() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/exisitingLabel.kt");
+        }
+
+        @TestMetadata("exisitingLabelLambda.kt")
+        public void testExisitingLabelLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createLabel/exisitingLabelLambda.kt");
+        }
+
         @TestMetadata("returnInLambda.kt")
         public void testReturnInLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/createLabel/returnInLambda.kt");

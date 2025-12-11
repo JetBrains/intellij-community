@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 sealed class CreateLabelFix(
     expression: KtLabelReferenceExpression
@@ -70,12 +71,35 @@ sealed class CreateLabelFix(
             return parents
                 .takeWhile { !(it is KtDeclarationWithBody || it is KtClassBody || it is KtFile) }
                 .filterIsInstance<KtLoopExpression>()
+                .filterAvailableForLabel(getReferencedName())
         }
 
         fun KtLabelReferenceExpression.getContainingLambdas(): Sequence<KtLambdaExpression> {
             return parents
                 .takeWhile { !(it is KtDeclarationWithBody && it !is KtFunctionLiteral || it is KtClassBody || it is KtFile) }
                 .filterIsInstance<KtLambdaExpression>()
+                .filterAvailableForLabel(getReferencedName())
+        }
+
+        private fun <T : KtExpression> Sequence<T>.filterAvailableForLabel(labelName: String): Sequence<T> {
+            // Optimization: To prevent doubly parsing a PSI tree, we create a list and iterate on a cached list
+            val allExpressions = this.toList()
+
+            val existingLabels = mutableSetOf<String>()
+            for (expr in allExpressions) {
+                val parent = expr.parent
+                if (parent is KtLabeledExpression && parent.baseExpression == expr) {
+                    existingLabels.addIfNotNull(parent.getLabelName())
+                }
+            }
+
+            return sequence{
+                for (expr in allExpressions) {
+                    if (labelName !in existingLabels) {
+                        yield(expr)
+                    }
+                }
+            }
         }
     }
 }

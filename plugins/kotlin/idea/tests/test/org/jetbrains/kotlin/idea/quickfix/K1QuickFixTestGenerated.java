@@ -7842,6 +7842,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/createLabel/continueNoLoop.kt");
         }
 
+        @TestMetadata("exisitingLabel.kt")
+        public void testExisitingLabel() throws Exception {
+            runTest("testData/quickfix/createLabel/exisitingLabel.kt");
+        }
+
+        @TestMetadata("exisitingLabelLambda.kt")
+        public void testExisitingLabelLambda() throws Exception {
+            runTest("testData/quickfix/createLabel/exisitingLabelLambda.kt");
+        }
+
         @TestMetadata("returnInLambda.kt")
         public void testReturnInLambda() throws Exception {
             runTest("testData/quickfix/createLabel/returnInLambda.kt");
