@@ -73,6 +73,7 @@ import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.swing.*
 import kotlin.math.abs
@@ -85,10 +86,12 @@ import kotlin.math.abs
   component: JComponent?,
   private val parentDisposable: Disposable,
   windowInfo: WindowInfo,
-  private var contentFactory: ToolWindowFactory?,
+  contentFactory: ToolWindowFactory?,
   private var isAvailable: Boolean = true,
   private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
 ) : ToolWindowEx {
+  private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
+
   @JvmField
   var windowInfoDuringInit: WindowInfoImpl? = null
 
@@ -714,10 +717,8 @@ import kotlin.math.abs
   }
 
   internal fun scheduleContentInitializationIfNeeded() {
-    if (contentFactory != null) {
-      // todo use lazy loading (e.g. JBLoadingPanel)
-      createContentIfNeeded()
-    }
+    // todo use lazy loading (e.g. JBLoadingPanel)
+    createContentIfNeeded()
   }
 
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
@@ -727,9 +728,10 @@ import kotlin.math.abs
   }
 
   private fun createContentIfNeeded() {
-    val currentContentFactory = contentFactory ?: return
-    // clear it first to avoid SOE
-    this.contentFactory = null
+    val currentContentFactory = contentFactory.get() ?: return
+    if (!contentFactory.compareAndSet(currentContentFactory, null)) {
+      return
+    }
 
     ThreadingAssertions.softAssertEventDispatchThread()
 
