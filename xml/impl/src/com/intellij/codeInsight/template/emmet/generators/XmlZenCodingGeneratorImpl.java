@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Map;
 
 public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
-  public static final XmlZenCodingGeneratorImpl INSTANCE = new XmlZenCodingGeneratorImpl();
+
+  public static @NotNull XmlZenCodingGeneratorImpl getInstance() {
+    return getInstance(XmlZenCodingGeneratorImpl.class);
+  }
 
   private static boolean isTrueXml(FileType type) {
     return type == XHtmlFileType.INSTANCE || JspFileTypeUtil.isJspX(type) || type == XmlFileType.INSTANCE;

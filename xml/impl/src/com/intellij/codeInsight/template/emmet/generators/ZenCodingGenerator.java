@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -40,6 +40,10 @@ public abstract class ZenCodingGenerator {
 
   public static @NotNull List<ZenCodingGenerator> getInstances() {
     return EP_NAME.getExtensionList();
+  }
+
+  public static <T extends ZenCodingGenerator> @NotNull T getInstance(Class<T> clazz) {
+    return EP_NAME.findExtensionOrFail(clazz);
   }
 
   public @Nullable String computeTemplateKey(@NotNull CustomTemplateCallback callback) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -123,7 +123,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
 
   private static @Nullable String expandTemplate(@NotNull String abbreviation, @NotNull PsiFile file, @NotNull Editor editor) throws EmmetException {
     final CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
-    ZenCodingTemplate.expand(abbreviation, callback, XmlZenCodingGeneratorImpl.INSTANCE, Collections.emptyList(),
+    ZenCodingTemplate.expand(abbreviation, callback, XmlZenCodingGeneratorImpl.getInstance(), Collections.emptyList(),
                              true, Registry.intValue("emmet.segments.limit"));
     TemplateImpl template = callback.getGeneratedTemplate();
     return template != null ? template.getTemplateText() : null;

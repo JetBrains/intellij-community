@@ -32,6 +32,21 @@ jvm_provided_library(
   lib = "//platform/projectModel-api:projectModel"
 )
 
+jvm_provided_library(
+  name = "platform_editor-ui_provided",
+  lib = "//platform/editor-ui-api:editor-ui"
+)
+
+jvm_provided_library(
+  name = "platform_codeStyle_provided",
+  lib = "//platform/code-style-api:codeStyle"
+)
+
+jvm_provided_library(
+  name = "xml_psi-impl_provided",
+  lib = "//xml/xml-psi-impl:psi-impl"
+)
+
 jvm_library(
   name = "emmet",
   module_name = "intellij.xml.emmet",
@@ -46,6 +61,9 @@ jvm_library(
     ":xml_psi_provided",
     ":platform_lang-impl_provided",
     ":platform_projectModel_provided",
+    ":platform_editor-ui_provided",
+    ":platform_codeStyle_provided",
+    ":xml_psi-impl_provided",
   ]
 )
 ### auto-generated section `build intellij.xml.emmet` end

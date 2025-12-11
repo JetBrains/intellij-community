@@ -244,7 +244,7 @@ public class GenerationNode extends UserDataHolderBase {
                                          CustomTemplateCallback callback,
                                          @Nullable ZenCodingGenerator generator,
                                          final boolean hasChildren) {
-    ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
+    ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.getInstance());
 
     Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
