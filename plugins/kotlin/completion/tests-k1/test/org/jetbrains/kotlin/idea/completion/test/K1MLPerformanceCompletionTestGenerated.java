@@ -3312,6 +3312,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/DataClassMembers2.kt");
             }
 
+            @TestMetadata("DebounceDurationPreferringCompletion.kt")
+            public void testDebounceDurationPreferringCompletion() throws Exception {
+                runTest("../testData/basic/common/DebounceDurationPreferringCompletion.kt");
+            }
+
+            @TestMetadata("DelayDurationPreferringCompletion.kt")
+            public void testDelayDurationPreferringCompletion() throws Exception {
+                runTest("../testData/basic/common/DelayDurationPreferringCompletion.kt");
+            }
+
             @TestMetadata("DoWhile.kt")
             public void testDoWhile() throws Exception {
                 runTest("../testData/basic/common/DoWhile.kt");
