@@ -374,6 +374,7 @@ object CommunityModuleSets {
     module("intellij.rd.ide.model.generated")
     module("intellij.rd.platform")
     module("intellij.rd.ui")
+    module("intellij.platform.split.protocol")
   }
 
   /**
