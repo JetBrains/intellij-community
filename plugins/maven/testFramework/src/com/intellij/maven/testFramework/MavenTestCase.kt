@@ -147,7 +147,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
     mavenGeneralSettings.isAlwaysUpdateSnapshots = true
 
-    MavenUtil.cleanAllRunnables()
     MavenSettingsCache.getInstance(project).reload()
 
     EdtTestUtil.runInEdtAndWait<IOException> {
@@ -186,12 +185,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         jdkTable.removeJdk(myJdk!!)
       }
     }
-  }
-
-  protected fun waitForMavenUtilRunnablesComplete() {
-    PlatformTestUtil.waitWithEventsDispatching(
-      { "Waiting for MavenUtils runnables completed" + MavenUtil.uncompletedRunnables },
-      { MavenUtil.noUncompletedRunnables() }, 15)
   }
 
   private fun isNetworkNameError(t: Throwable, message: String): Boolean {

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -31,13 +30,6 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
       myNavigator.initForTests()
     }
     myNavigator.groupModules = true
-  }
-
-  public override fun tearDown() {
-    RunAll.runAll({
-                    waitForMavenUtilRunnablesComplete()
-                  },
-                  { super.tearDown() })
   }
 
   @Test
