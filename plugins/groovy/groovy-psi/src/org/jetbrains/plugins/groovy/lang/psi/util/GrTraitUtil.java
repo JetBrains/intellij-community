@@ -22,6 +22,7 @@ import com.intellij.util.gist.VirtualFileGist;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -62,7 +63,12 @@ public final class GrTraitUtil {
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
     return method.getModifierList().hasExplicitModifier(ABSTRACT) ||
-           isInterface(method.getContainingClass()) && !method.hasModifierProperty(PsiModifier.DEFAULT);
+           isInterface(method.getContainingClass()) && !method.hasModifierProperty(PsiModifier.DEFAULT) && !isGroovy5Method(method);
+  }
+
+  private static boolean isGroovy5Method(@NotNull PsiMethod method) {
+    if (!GroovyConfigUtils.isAtLeastGroovy50(method)) return false;
+    return method.hasModifierProperty(PsiModifier.DEFAULT) || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
