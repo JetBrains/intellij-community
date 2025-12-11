@@ -962,6 +962,7 @@ c:com.intellij.vcs.log.ui.render.LabelPainter
 - sf:TOP_TEXT_PADDING:com.intellij.util.ui.JBValue
 - p:myBackground:java.awt.Color
 - clear():V
+- createTooltip(com.intellij.vcs.log.data.VcsLogData,java.util.Collection,java.util.Collection,D):javax.swing.JComponent
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List):V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List,java.util.List):V
 - s:getReferenceFont():java.awt.Font

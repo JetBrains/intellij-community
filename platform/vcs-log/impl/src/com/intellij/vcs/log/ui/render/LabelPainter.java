@@ -10,10 +10,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.BranchPresentation;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Range;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.DetachedHeadRefGroup;
 import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -56,6 +61,7 @@ public class LabelPainter {
 
   private boolean myCompact;
   private boolean myLeftAligned;
+  private @Nullable Range<Integer> myWarningRange;
 
   @ApiStatus.Internal
   public LabelPainter(@NotNull JComponent component,
@@ -89,6 +95,7 @@ public class LabelPainter {
     updateHeight();
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
     myGreyBackground = ExperimentalUI.isNewUI() ? null : calculateGreyBackground(refGroups, background, isSelected, myCompact);
+    myWarningRange = null;
     Presentations presentation =
       calculatePresentation(refGroups, bookmarks, metrics, myGreyBackground != null ? myGreyBackground : myBackground,
                             availableWidth, myCompact);
@@ -122,14 +129,15 @@ public class LabelPainter {
     int remainingWidth = availableWidth - getCurrentWidth(bookmarkLabels, middlePadding) - detachedHeadWidth - sidePaddingsWidth;
     List<Presentation> referenceLabels = processReferenceLabels(refGroups, fontMetrics, remainingWidth, background, height, compact);
 
-    List<Presentation> result = getPresentations(bookmarkLabels, referenceLabels, detachedHeadLabel);
+    List<Presentation> result = getPresentations(bookmarkLabels, referenceLabels, detachedHeadLabel, middlePadding);
     int width = getPresentationsWidth(result, middlePadding);
     return new Presentations(result, width > 0 ? width + sidePaddingsWidth : 0);
   }
 
   private @NotNull List<Presentation> getPresentations(@NotNull List<Presentation> bookmarkLabels,
                                                        @NotNull List<Presentation> referenceLabels,
-                                                       @Nullable Presentation detachedHeadLabel) {
+                                                       @Nullable Presentation detachedHeadLabel,
+                                                       int middlePadding) {
     if (bookmarkLabels.isEmpty() && detachedHeadLabel == null) return referenceLabels;
 
     int detachedHeadCount = detachedHeadLabel != null ? 1 : 0;
@@ -139,6 +147,7 @@ public class LabelPainter {
       result.addAll(bookmarkLabels);
     }
     if (detachedHeadLabel != null) {
+      myWarningRange = getSectionRange(result, middlePadding, detachedHeadLabel);
       result.add(detachedHeadLabel);
     }
     result.addAll(referenceLabels);
@@ -146,6 +155,11 @@ public class LabelPainter {
       result.addAll(bookmarkLabels);
     }
     return result;
+  }
+
+  private static @NotNull Range<Integer> getSectionRange(List<Presentation> addedLabels, int middlePadding, Presentation section) {
+    int currentWidth = getCurrentWidth(addedLabels, middlePadding) + LEFT_PADDING.get();
+    return new Range<>(currentWidth, currentWidth + section.width);
   }
 
   private static int getCurrentWidth(@NotNull List<Presentation> result, int middlePadding) {
@@ -404,6 +418,19 @@ public class LabelPainter {
 
   public void clear() {
     myLabels.clear();
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
+  public JComponent createTooltip(VcsLogData logData, Collection<VcsRef> refs, Collection<VcsBookmarkRef> bookmarks, double x) {
+    if (myWarningRange != null && x >= myWarningRange.getFrom() && x < myWarningRange.getTo()) {
+      JBLabel label = new JBLabel(String.format("<html><body><div style='width: %s;'>%s</div></body></html>",
+                                                JBUI.scale(250),
+                                                VcsLogBundle.message("vcs.log.references.detached.head.tooltip")));
+      label.setForeground(UIUtil.getToolTipForeground());
+      label.setFont(UIUtil.getToolTipFont());
+      return label;
+    }
+    return new TooltipReferencesPanel(logData, refs, bookmarks);
   }
 
   private record Presentations(@NotNull List<Presentation> list, int width) {
