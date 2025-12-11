@@ -5,9 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class MagicResolvedConflictsAction(private val viewer: MergeThreesideViewer) : DumbAwareAction() {
   init {
     copyFrom(this, "Diff.MagicResolveConflicts")

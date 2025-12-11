@@ -19,7 +19,7 @@ import java.awt.Graphics
 import java.awt.Point
 import kotlin.math.min
 
-internal class LineStatusMarkerRenderer(private val tracker: LineStatusTrackerBase<*>, private val viewer: MergeThreesideViewer) :
+internal class MergeThreesideLineStatusMarkerRenderer(private val tracker: LineStatusTrackerBase<*>, private val viewer: MergeThreesideViewer) :
   LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilter { editor: Editor? -> editor === viewer.editor }) {
 
   override fun scrollAndShow(editor: Editor, range: Range) {
@@ -46,12 +46,12 @@ internal class LineStatusMarkerRenderer(private val tracker: LineStatusTrackerBa
     range: Range,
     mousePosition: Point?,
   ): List<AnAction> = buildList {
-    add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this@LineStatusMarkerRenderer))
-    add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this@LineStatusMarkerRenderer))
+    add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this@MergeThreesideLineStatusMarkerRenderer))
+    add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this@MergeThreesideLineStatusMarkerRenderer))
     add(RollbackLineStatusRangeAction(editor, tracker, range))
     add(LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, tracker, range))
     add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
-    add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this@LineStatusMarkerRenderer))
+    add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this@MergeThreesideLineStatusMarkerRenderer))
   }
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {

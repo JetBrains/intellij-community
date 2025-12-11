@@ -1636,7 +1636,7 @@ a:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 - p:onDocumentChange(com.intellij.openapi.editor.event.DocumentEvent):V
 - p:onInit():V
 - p:scrollToLine(com.intellij.diff.util.ThreeSide,I):V
-- p:transferPosition(com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide,com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
+- transferPosition(com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide,com.intellij.openapi.editor.LogicalPosition):com.intellij.openapi.editor.LogicalPosition
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 pc:com.intellij.diff.tools.util.side.ThreesideTextDiffViewer$MyToggleAutoScrollAction
 - com.intellij.openapi.project.DumbAwareToggleAction

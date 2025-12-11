@@ -15,11 +15,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Condition
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-@ApiStatus.Internal
 internal abstract class ApplySelectedChangesActionBase protected constructor(
   protected val viewer: MergeThreesideViewer
 ) : AnAction(), DumbAware {

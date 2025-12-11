@@ -138,7 +138,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myInnerDiffWorker = new MyInnerDiffWorker();
 
     myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), (tracker) -> {
-      return new LineStatusMarkerRenderer(tracker, this);
+      return new MergeThreesideLineStatusMarkerRenderer(tracker, this);
     });
 
     myTextDiffProvider = new TextDiffProviderBase(
@@ -209,16 +209,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
-    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.LEFT));
-    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.BASE));
-    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.RIGHT));
+    diffGroup.add(new com.intellij.diff.merge.ShowDiffWithBaseAction(this, ThreeSide.LEFT));
+    diffGroup.add(new com.intellij.diff.merge.ShowDiffWithBaseAction(this, ThreeSide.BASE));
+    diffGroup.add(new com.intellij.diff.merge.ShowDiffWithBaseAction(this, ThreeSide.RIGHT));
     group.add(diffGroup);
 
     group.add(new Separator(DiffBundle.messagePointer("action.Anonymous.text.apply.non.conflicting.changes")));
-    group.add(new ApplyNonConflictsAction(this, ThreeSide.LEFT, DiffBundle.message("action.merge.apply.non.conflicts.left.text")));
-    group.add(new ApplyNonConflictsAction(this, ThreeSide.BASE, DiffBundle.message("action.merge.apply.non.conflicts.all.text")));
-    group.add(new ApplyNonConflictsAction(this, ThreeSide.RIGHT, DiffBundle.message("action.merge.apply.non.conflicts.right.text")));
-    group.add(new MagicResolvedConflictsAction(this));
+    group.add(new com.intellij.diff.merge.ApplyNonConflictsAction(this, ThreeSide.LEFT, DiffBundle.message("action.merge.apply.non.conflicts.left.text")));
+    group.add(new com.intellij.diff.merge.ApplyNonConflictsAction(this, ThreeSide.BASE, DiffBundle.message("action.merge.apply.non.conflicts.all.text")));
+    group.add(new com.intellij.diff.merge.ApplyNonConflictsAction(this, ThreeSide.RIGHT, DiffBundle.message("action.merge.apply.non.conflicts.right.text")));
+    group.add(new com.intellij.diff.merge.MagicResolvedConflictsAction(this));
 
     group.add(Separator.getInstance());
     group.addAll(myTextDiffProvider.getToolbarActions());
@@ -238,15 +238,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(new ApplySelectedChangesAction(this, Side.LEFT));
-    group.add(new ApplySelectedChangesAction(this, Side.RIGHT));
-    group.add(new ResolveSelectedChangesAction(this, Side.LEFT));
-    group.add(new ResolveSelectedChangesAction(this, Side.RIGHT));
-    group.add(new IgnoreSelectedChangesSideAction(this, Side.LEFT));
-    group.add(new IgnoreSelectedChangesSideAction(this, Side.RIGHT));
-    group.add(new ResolveSelectedConflictsAction(this));
-    group.add(new IgnoreSelectedChangesAction(this));
-    group.add(new ResetResolvedChangeAction(this));
+    group.add(new com.intellij.diff.merge.ApplySelectedChangesAction(this, Side.LEFT));
+    group.add(new com.intellij.diff.merge.ApplySelectedChangesAction(this, Side.RIGHT));
+    group.add(new com.intellij.diff.merge.ResolveSelectedChangesAction(this, Side.LEFT));
+    group.add(new com.intellij.diff.merge.ResolveSelectedChangesAction(this, Side.RIGHT));
+    group.add(new com.intellij.diff.merge.IgnoreSelectedChangesSideAction(this, Side.LEFT));
+    group.add(new com.intellij.diff.merge.IgnoreSelectedChangesSideAction(this, Side.RIGHT));
+    group.add(new com.intellij.diff.merge.ResolveSelectedConflictsAction(this));
+    group.add(new com.intellij.diff.merge.IgnoreSelectedChangesAction(this));
+    group.add(new com.intellij.diff.merge.ResetResolvedChangeAction(this));
 
     group.add(Separator.getInstance());
     group.add(ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions"));

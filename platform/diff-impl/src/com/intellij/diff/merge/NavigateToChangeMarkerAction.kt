@@ -27,7 +27,7 @@ internal class NavigateToChangeMarkerAction(private val viewer: MergeThreesideVi
     val line = viewer.editor.getCaretModel().logicalPosition.line
     val targetRange = if (goToNext) viewer.myLineStatusTracker.getNextRange(line) else viewer.myLineStatusTracker.getPrevRange(line)
     if (targetRange != null) {
-      LineStatusMarkerRenderer(viewer.myLineStatusTracker, viewer).scrollAndShow(viewer.editor, targetRange)
+      MergeThreesideLineStatusMarkerRenderer(viewer.myLineStatusTracker, viewer).scrollAndShow(viewer.editor, targetRange)
     }
   }
 }

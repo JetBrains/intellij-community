@@ -65,12 +65,12 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
 
-    for (ThreeSide side : ThreeSide.values()) {
+    for (ThreeSide side : ThreeSide.getEntries()) {
       DiffUtil.installLineConvertor(getEditor(side), getContent(side));
     }
 
     if (getProject() != null) {
-      for (ThreeSide side : ThreeSide.values()) {
+      for (ThreeSide side : ThreeSide.getEntries()) {
         myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
       }
     }
@@ -230,10 +230,9 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   protected abstract @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
   @RequiresEdt
-  @NotNull
-  public LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
-                                          @NotNull ThreeSide targetSide,
-                                          @NotNull LogicalPosition position) {
+  public @NotNull LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
+                                                   @NotNull ThreeSide targetSide,
+                                                   @NotNull LogicalPosition position) {
     if (mySyncScrollSupport == null) return position;
     if (baseSide == targetSide) return position;
 
@@ -275,7 +274,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return ThreesideDiffViewer.canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
+    return canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
   }
 
   //

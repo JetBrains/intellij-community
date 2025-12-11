@@ -7,10 +7,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-@ApiStatus.Internal
 internal class ApplyNonConflictsAction(
   private val viewer: MergeThreesideViewer,
   private val side: ThreeSide,
