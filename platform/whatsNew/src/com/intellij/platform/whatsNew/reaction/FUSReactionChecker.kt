@@ -4,7 +4,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 
-class FUSReactionChecker(private val stateKey: String) : ReactionChecker {
+open class FUSReactionChecker(private val stateKey: String) : ReactionChecker {
   override fun onLike(project: Project?, place: String?) {
     ThreadingAssertions.assertEventDispatchThread()
     val value = if (getLikenessState() == ReactionChecker.State.Liked) {
@@ -31,12 +31,12 @@ class FUSReactionChecker(private val stateKey: String) : ReactionChecker {
                                        else ReationAction.Set)
   }
 
-  internal fun putValue(value: Int) {
+  fun putValue(value: Int) {
     val propertiesComponent = PropertiesComponent.getInstance()
     propertiesComponent.setValue(stateKey, value, 0)
   }
 
-  private fun getLikenessState(): ReactionChecker.State {
+  fun getLikenessState(): ReactionChecker.State {
     ThreadingAssertions.assertEventDispatchThread()
     val propertiesComponent = PropertiesComponent.getInstance()
 
