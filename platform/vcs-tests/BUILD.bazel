@@ -78,6 +78,7 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/core-impl",
+    "@lib//:app-cash-turbine-jvm",
   ],
   exports = ["//platform/vcs-tests:vcs-testFramework"]
 )

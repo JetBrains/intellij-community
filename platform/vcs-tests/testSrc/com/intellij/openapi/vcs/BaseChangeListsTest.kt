@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
@@ -256,15 +257,21 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       markerSemaphore.release()
       semaphore.acquireOrThrow()
       try {
-        for ((filePath, beforeRevision) in changes) {
+        val changesToProcess = changes.map { (filePath, beforeRevision) ->
           val afterContent: ContentRevision? =
             if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
               null
             else CurrentContentRevision(filePath)
+          Change(beforeRevision, afterContent)
+        }
 
-          val change = Change(beforeRevision, afterContent)
+        changesToProcess.forEach { change -> builder.processChange(change, MockAbstractVcs.getKey()) }
 
-          builder.processChange(change, MockAbstractVcs.getKey())
+        for (file in files) {
+          val path = VcsUtil.getFilePath(file)
+          if (changesToProcess.none { ChangesUtil.matches(it, path) }) {
+            builder.processUnversionedFile(path)
+          }
         }
       }
       finally {

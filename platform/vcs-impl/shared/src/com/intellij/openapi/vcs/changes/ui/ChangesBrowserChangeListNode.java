@@ -9,9 +9,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.platform.vcs.changes.ChangeListManagerState;
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport;
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -119,7 +119,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
 
   @ApiStatus.Internal
   @Override
-  public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
+  public void acceptDrop(final ChangeListDnDSupport dragOwner, final ChangeListDragBean dragBean) {
     if (!(userObject instanceof LocalChangeList)) {
       return;
     }
@@ -131,7 +131,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     addIfNotNull(toUpdate, dragBean.getUnversionedFiles());
     addIfNotNull(toUpdate, dragBean.getIgnoredFiles());
     if (!toUpdate.isEmpty()) {
-      dragOwner.addUnversionedFiles(dropList, ContainerUtil.mapNotNull(toUpdate, FilePath::getVirtualFile));
+      dragOwner.addUnversionedFiles(dropList, toUpdate);
     }
   }
 

@@ -3,14 +3,13 @@ package com.intellij.vcs.changes
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.changes.ChangeListManagerState
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
-import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
-import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
+import com.intellij.platform.vcs.impl.shared.rpc.*
 import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
+import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -48,6 +47,23 @@ internal class ChangeListsApiImpl : ChangeListsApi {
 
   override suspend fun getIgnoredFiles(projectId: ProjectId): Flow<List<FilePathDto>> =
     observeUnchangedFiles(projectId) { it.ignoredFilePaths }
+
+  override suspend fun moveChanges(projectId: ProjectId, changes: List<ChangeId>, changeListId: String) =
+    projectScoped(projectId) { project ->
+      val changeListManager = ChangeListManager.getInstance(project)
+      val targetChangeList = changeListManager.getChangeList(changeListId) ?: return@projectScoped
+      val changeIdCache = ChangesViewChangeIdCache.getInstance(project)
+      val resolvedChanges = changes.mapNotNull { changeIdCache.getChangeListChange(it) }
+      changeListManager.moveChangesTo(targetChangeList, resolvedChanges)
+    }
+
+  override suspend fun addUnversionedFiles(projectId: ProjectId, files: List<FilePathDto>, changeListId: String) =
+    projectScoped(projectId) { project ->
+      val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+      val targetChangeList = changeListManager.getChangeList(changeListId)
+      val virtualFiles = files.mapNotNull { it.filePath.virtualFile }
+      ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(project, targetChangeList, virtualFiles)
+    }
 
   private suspend fun observeUnchangedFiles(projectId: ProjectId, onUpdate: (ChangeListManager) -> List<FilePath>): Flow<List<FilePathDto>> =
     projectScopedCallbackFlow(projectId) { project, _ ->

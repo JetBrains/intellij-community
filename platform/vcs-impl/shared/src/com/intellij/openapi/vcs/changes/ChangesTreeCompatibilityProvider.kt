@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
@@ -32,7 +33,7 @@ interface ChangesTreeCompatibilityProvider {
 
   fun getSwitchedBranch(project: Project, file: VirtualFile): @NlsSafe String?
 
-  fun acceptIgnoredFilesDrop(project: Project, dragOwner: ChangeListOwner, dragBean: ChangeListDragBean)
+  fun acceptIgnoredFilesDrop(project: Project, dragOwner: ChangeListDnDSupport, dragBean: ChangeListDragBean)
 
   fun showIgnoredViewDialog(project: Project)
 

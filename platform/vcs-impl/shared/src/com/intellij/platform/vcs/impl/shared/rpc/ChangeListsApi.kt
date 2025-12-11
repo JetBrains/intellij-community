@@ -23,6 +23,10 @@ interface ChangeListsApi : RemoteApi<Unit> {
 
   suspend fun getIgnoredFiles(projectId: ProjectId): Flow<List<FilePathDto>>
 
+  suspend fun moveChanges(projectId: ProjectId, changes: List<ChangeId>, changeListId: String)
+
+  suspend fun addUnversionedFiles(projectId: ProjectId, files: List<FilePathDto>, changeListId: String)
+
   companion object {
     suspend fun getInstance(): ChangeListsApi = RemoteApiProviderService.Companion.resolve(remoteApiDescriptor<ChangeListsApi>())
   }

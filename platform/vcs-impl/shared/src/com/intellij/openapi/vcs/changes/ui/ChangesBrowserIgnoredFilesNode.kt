@@ -4,8 +4,8 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ChangeListOwner
 import com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -27,7 +27,7 @@ class ChangesBrowserIgnoredFilesNode(private val project: Project,
   override fun canAcceptDrop(dragBean: ChangeListDragBean) = dragBean.unversionedFiles.isNotEmpty()
 
   @ApiStatus.Internal
-  override fun acceptDrop(dragOwner: ChangeListOwner, dragBean: ChangeListDragBean) {
+  override fun acceptDrop(dragOwner: ChangeListDnDSupport, dragBean: ChangeListDragBean) {
     ChangesTreeCompatibilityProvider.getInstance().acceptIgnoredFilesDrop(project, dragOwner, dragBean)
   }
 
