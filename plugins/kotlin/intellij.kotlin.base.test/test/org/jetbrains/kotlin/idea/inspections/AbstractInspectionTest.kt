@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.test.util.invalidateK1ModeCaches
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.junit.runner.Description
 import java.io.File
@@ -47,8 +46,6 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
         runAll(
             {
                 EntryPointsManagerBase.getInstance(project).ADDITIONAL_ANNOTATIONS.remove(ENTRY_POINT_ANNOTATION)
-            }, {
-                runInEdtAndWait { project.invalidateK1ModeCaches() }
             },
             { super.tearDown() }
         )
