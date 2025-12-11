@@ -84,6 +84,7 @@ internal class ComponentAreaPopupContext(
           popup.cancel()
           return@Runnable
         }
+        popup.setRequestFocus(false)
         popup.show(position)
         relocatePopupIfNeeded(popup)
         val window = SwingUtilities.getWindowAncestor(popup.content)
