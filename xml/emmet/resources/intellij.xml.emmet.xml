@@ -4,6 +4,7 @@
     <module name="intellij.xml.psi.impl"/>
     <module name="intellij.xml.parser"/>
     <module name="intellij.xml.ui.common"/>
+    <module name="intellij.libraries.xerces"/>
   </dependencies>
 
   <extensionPoints>
