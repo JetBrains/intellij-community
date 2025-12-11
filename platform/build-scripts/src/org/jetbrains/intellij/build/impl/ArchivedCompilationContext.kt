@@ -16,7 +16,6 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.File
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -103,8 +102,8 @@ class ArchivedCompilationContext(
     return doReplace(files, inputMapper = { it }, resultMapper = { it })
   }
 
-  suspend fun replaceWithCompressedIfNeededLF(files: List<File>): List<File> {
-    return doReplace(files, inputMapper = { it.toPath() }, resultMapper = { it.toFile() })
+  suspend fun replaceWithCompressedIfNeededLF(files: List<Path>): List<Path> {
+    return doReplace(files, inputMapper = { it }, resultMapper = { it })
   }
 
   private suspend inline fun <I : Any, R : Any> doReplace(

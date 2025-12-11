@@ -56,8 +56,8 @@ internal class BazelModuleOutputProvider(
     return null
   }
 
-  private val bazelTargetsMap: BazelCompilationContext.BazelTargetsInfo.TargetsFile by lazy {
-    BazelCompilationContext.BazelTargetsInfo.loadBazelTargetsJson(projectHome)
+  private val bazelTargetsMap: BazelTargetsInfo.TargetsFile by lazy {
+    BazelTargetsInfo.loadBazelTargetsJson(projectHome)
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {

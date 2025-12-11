@@ -10,7 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -25,14 +25,13 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
-@ApiStatus.Internal
+@Internal
 class BazelCompilationContext(
   private val delegate: CompilationContext,
 ) : CompilationContext {
@@ -133,63 +132,62 @@ class BazelCompilationContext(
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
 
-  fun replaceWithCompressedIfNeededLF(files: List<File>): List<File> {
-    val out = ArrayList<File>(files.size)
-    for (file in files) {
-      val path = file.toPath()
+  fun replaceWithCompressedIfNeededLF(files: List<Path>): List<Path> {
+    val out = ArrayList<Path>(files.size)
+    for (path in files) {
       if (!path.startsWith(classesOutputDirectory)) {
-        out.add(file)
+        out.add(path)
         continue
       }
 
       val module = findModule(path.name)
       if (module == null) {
-        out.add(file)
+        out.add(path)
         continue
       }
 
       val roots = moduleOutputProvider.getModuleOutputRoots(module, path.parent.name == "test")
-      roots.mapTo(out, Path::toFile)
+      out.addAll(roots)
     }
     return out
   }
-
-  class BazelTargetsInfo {
-    companion object {
-      fun bazelTargetsJsonFile(projectHome: Path): Path = projectHome.resolve("build").resolve("bazel-targets.json")
-
-      fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
-        val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { Json.decodeFromStream<TargetsFile>(it) }
-        return targetsFile
-      }
-    }
-
-    @Serializable
-    data class TargetsFileModuleDescription(
-      val productionTargets: List<String>,
-      val productionJars: List<String>,
-      val testTargets: List<String>,
-      val testJars: List<String>,
-      val exports: List<String>,
-      val moduleLibraries: Map<String, LibraryDescription>,
-    )
-
-    @Serializable
-    data class LibraryDescription(
-      val target: String,
-      val jars: List<String>,
-      val sourceJars: List<String>,
-    )
-
-    @Serializable
-    data class TargetsFile(
-      val modules: Map<String, TargetsFileModuleDescription>,
-      val projectLibraries: Map<String, LibraryDescription>,
-    )
-  }
 }
 
-@ApiStatus.Internal
+internal class BazelTargetsInfo {
+  companion object {
+    fun bazelTargetsJsonFile(projectHome: Path): Path = projectHome.resolve("build").resolve("bazel-targets.json")
+
+    fun loadBazelTargetsJson(projectRoot: Path): TargetsFile {
+      val targetsFile = bazelTargetsJsonFile(projectRoot).inputStream().use { Json.decodeFromStream<TargetsFile>(it) }
+      return targetsFile
+    }
+  }
+
+  @Serializable
+  data class TargetsFileModuleDescription(
+    val productionTargets: List<String>,
+    val productionJars: List<String>,
+    val testTargets: List<String>,
+    val testJars: List<String>,
+    val exports: List<String>,
+    val moduleLibraries: Map<String, LibraryDescription>,
+  )
+
+  @Serializable
+  data class LibraryDescription(
+    val target: String,
+    val jars: List<String>,
+    val sourceJars: List<String>,
+  )
+
+  @Serializable
+  data class TargetsFile(
+    val modules: Map<String, TargetsFileModuleDescription>,
+    val projectLibraries: Map<String, LibraryDescription>,
+  )
+}
+
+@Internal
 fun isRunningFromBazelOut(): Boolean = bazelOutputRoot != null
 
 internal val bazelOutputRoot: Path? by lazy {

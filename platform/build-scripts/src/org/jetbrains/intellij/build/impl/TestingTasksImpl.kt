@@ -463,25 +463,22 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                       jvmArgs.contains("-Didea.kotlin.plugin.use.k1=false")
     val mainJpsModule = context.findRequiredModule(mainModule)
     val testRoots = context.getModuleRuntimeClasspath(mainJpsModule, forTests = true)
-      .map(Path::toFile)
       .toMutableList()
       .apply {
         if (!useKotlinK2) {
           val kotlinPluginK2Module = context.findRequiredModule("kotlin.plugin.k2")
-          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = false).map(Path::toFile))
-          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = true).map(Path::toFile))
+          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = false))
+          removeAll(context.getModuleOutputRoots(kotlinPluginK2Module, forTests = true))
         }
       }
 
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkCoreModuleOutputRoots = context
-        .getModuleOutputRoots(testFrameworkCoreModule)
-        .map(Path::toFile)
+      val testFrameworkCoreModuleOutputRoots = context.getModuleOutputRoots(testFrameworkCoreModule)
       for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
         if (!testRoots.contains(testFrameworkOutput)) {
-          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map { it.toFile() } )
+          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false) )
         }
       }
     }
@@ -490,12 +487,15 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val modulePath: List<String>?
 
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
-    val toExistingAbsolutePathConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
+    val toExistingAbsolutePathConverter: (Path) -> String? = { if (Files.exists(it)) it.toAbsolutePath().normalize().toString() else null }
     if (moduleInfoFile != null) {
       val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
-      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), HashSet(testRoots))
-      modulePath = replaceWithArchivedIfNeededLF(pair.first.path.toList()).mapNotNull(toExistingAbsolutePathConverter)
-      testClasspath = replaceWithArchivedIfNeededLF(pair.second.toList()).mapNotNull(toExistingAbsolutePathConverter)
+      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), testRoots.map {
+        @Suppress("IO_FILE_USAGE")
+        it.toFile()
+      })
+      modulePath = replaceWithArchivedIfNeededLF(pair.first.path.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceWithArchivedIfNeededLF(pair.second.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
@@ -572,7 +572,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>, context: CompilationContext = this.context): List<File> {
+  private suspend fun replaceWithArchivedIfNeededLF(files: List<Path>, context: CompilationContext = this.context): List<Path> {
     return when (context) {
       is BuildContextImpl -> replaceWithArchivedIfNeededLF(files, context.compilationContext)
       is ArchivedCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
