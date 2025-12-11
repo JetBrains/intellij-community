@@ -19,20 +19,7 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
 
   fun getOrCreateStackFrame(project: Project, scope: CoroutineScope, frameDto: XStackFrameDto): FrontendXStackFrame {
     return cache.computeIfAbsent(frameDto.stackFrameId) {
-      with(frameDto) {
-        FrontendXStackFrame(
-          stackFrameId,
-          project,
-          scope,
-          sourcePosition,
-          backgroundColor,
-          equalityObject,
-          evaluator,
-          captionInfo,
-          textPresentation,
-          canDrop,
-        )
-      }
+      FrontendXStackFrame(project, frameDto, scope)
     }
   }
 }

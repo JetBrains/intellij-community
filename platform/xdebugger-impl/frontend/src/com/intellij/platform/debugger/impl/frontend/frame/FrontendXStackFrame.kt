@@ -7,7 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
-import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.XStackFramePresentation
+import com.intellij.platform.debugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
@@ -23,50 +26,46 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.awt.Color
 
 internal class FrontendXStackFrame(
-  val id: XStackFrameId,
-  private val project: Project,
-  private val suspendContextLifetimeScope: CoroutineScope,
-  private val sourcePosition: XSourcePositionDto?,
-  private val bgColor: XStackFrameBackgroundColor?,
-  private val equalityObject: XStackFrameEqualityObject?,
-  private val evaluatorDto: XDebuggerEvaluatorDto,
-  private val captionInfo: XStackFrameCaptionInfo,
-  private val textPresentation: XStackFramePresentation,
-  canDrop: ThreeState,
+  project: Project,
+  private val frameDto: XStackFrameDto,
+  cs: CoroutineScope,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
+
+  val id: XStackFrameId get() = frameDto.stackFrameId
+
   private val evaluator by lazy {
-    createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
+    createFrontendXDebuggerEvaluator(project, cs, frameDto.evaluator, id)
   }
 
-  private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false, id)
+  private val xValueContainer = FrontendXValueContainer(project, cs, false, id)
 
   val backgroundColor: Color?
-    get() = bgColor?.colorId?.color()
+    get() = frameDto.backgroundColor?.colorId?.color()
 
-  val canDropFlow: MutableStateFlow<CanDropState> = MutableStateFlow(CanDropState.fromThreeState(canDrop))
+  val canDropFlow: MutableStateFlow<CanDropState> = MutableStateFlow(CanDropState.fromThreeState(frameDto.canDrop))
 
   // For speedsearch in the frame list. We can't use text presentation for that as it might differ from the UI presentation.
   // Yet search shouldn't do any RPC to call customizePresentation on a backend counterpart.
   private val currentUiPresentation = MutableStateFlow(XStackFrameUiPresentationContainer())
 
   override fun getSourcePosition(): XSourcePosition? {
-    return sourcePosition?.sourcePosition()
+    return frameDto.sourcePosition?.sourcePosition()
   }
 
-  override fun getEqualityObject(): Any? = equalityObject
+  override fun getEqualityObject(): Any? = frameDto.equalityObject
 
   override fun computeChildren(node: XCompositeNode) {
     xValueContainer.computeChildren(node)
   }
 
   override fun isDocumentEvaluator(): Boolean {
-    return evaluatorDto.canEvaluateInDocument
+    return frameDto.evaluator.canEvaluateInDocument
   }
 
   override fun getEvaluator(): XDebuggerEvaluator = evaluator
 
   override fun customizeTextPresentation(component: ColoredTextContainer) {
-    val (fragments, iconId, tooltipText) = textPresentation
+    val (fragments, iconId, tooltipText) = frameDto.textPresentation
     component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
     for ((text, attributes) in fragments) {
@@ -94,11 +93,11 @@ internal class FrontendXStackFrame(
   }
 
   override fun hasSeparatorAbove(): Boolean {
-    return captionInfo.hasSeparatorAbove
+    return frameDto.captionInfo.hasSeparatorAbove
   }
 
   override fun getCaptionAboveOf(): @NlsContexts.Separator String? {
-    return captionInfo.caption
+    return frameDto.captionInfo.caption
   }
 
   override fun equals(other: Any?): Boolean {
