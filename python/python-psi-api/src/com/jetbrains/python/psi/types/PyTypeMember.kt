@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.jetbrains.python.psi.Property
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,13 +15,13 @@ import org.jetbrains.annotations.ApiStatus
  * For a property, one member represents its getter, setter and deleter
  */
 @ApiStatus.Experimental
-class PyTypeMember @JvmOverloads constructor(
+class PyTypeMember @JvmOverloads @ApiStatus.Internal constructor(
   val mainElement: PsiElement?,
   val type: PyType?,
   val isClassVar: Boolean = false,
   val getter: PsiElement? = mainElement,
-  val setter: PsiElement? = mainElement,
-  val deleter: PsiElement? = mainElement,
+  val setter: PsiElement? = getSetterFromMainElement(mainElement),
+  val deleter: PsiElement? = getSetterFromMainElement(mainElement),
 ) : RatedResolveResult(0, mainElement) {
 
   constructor(property: Property, type: PyType?) : this(
@@ -35,4 +36,13 @@ class PyTypeMember @JvmOverloads constructor(
   val isDeletable: Boolean get() = deleter != null
 
   val name: String? get() = if (mainElement is PsiNamedElement) mainElement.name else null
+
+  private companion object {
+    fun getSetterFromMainElement(element: PsiElement?): PsiElement? {
+      if (element is PyFunction) {
+        return null
+      }
+      return element
+    }
+  }
 }
