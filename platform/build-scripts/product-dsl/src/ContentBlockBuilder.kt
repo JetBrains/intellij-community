@@ -4,9 +4,9 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import org.jetbrains.intellij.build.productLayout.validation.validateAndRecordAlias
-import org.jetbrains.intellij.build.productLayout.validation.validateModuleSetOverrides
-import org.jetbrains.intellij.build.productLayout.validation.validateNoDuplicateModules
+import org.jetbrains.intellij.build.productLayout.analysis.validateAndRecordAlias
+import org.jetbrains.intellij.build.productLayout.analysis.validateModuleSetOverrides
+import org.jetbrains.intellij.build.productLayout.analysis.validateNoDuplicateModules
 
 internal data class ContentBuildData(
   @JvmField val contentBlocks: List<ContentBlock>,

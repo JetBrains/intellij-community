@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.validation.detectDuplicates
+import org.jetbrains.intellij.build.productLayout.analysis.detectDuplicates
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile

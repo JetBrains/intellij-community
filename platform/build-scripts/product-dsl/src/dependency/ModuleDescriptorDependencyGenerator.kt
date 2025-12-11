@@ -10,21 +10,15 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-import org.jetbrains.intellij.build.productLayout.analysis.MissingDependenciesError
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
-import org.jetbrains.intellij.build.productLayout.analysis.formatProductDependencyErrorsFooter
-import org.jetbrains.intellij.build.productLayout.analysis.formatProductDependencyErrorsHeader
-import org.jetbrains.intellij.build.productLayout.analysis.formatValidationErrors
 import org.jetbrains.intellij.build.productLayout.analysis.validateProductModuleSets
 import org.jetbrains.intellij.build.productLayout.analysis.validateSelfContainedModuleSets
 import org.jetbrains.intellij.build.productLayout.discovery.PluginContentInfo
 import org.jetbrains.intellij.build.productLayout.stats.DependencyFileResult
 import org.jetbrains.intellij.build.productLayout.stats.DependencyGenerationResult
-import org.jetbrains.intellij.build.productLayout.util.ValidationErrorCollector
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 import org.jetbrains.intellij.build.productLayout.xml.updateXmlDependencies
-import kotlin.system.exitProcess
 
 /**
  * Generates module descriptor dependencies for all modules with includeDependencies=true.
@@ -57,7 +51,6 @@ internal suspend fun generateModuleDescriptorDependencies(
   productSpecs: List<Pair<String, ProductModulesContentSpec?>> = emptyList(),
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
   additionalPlugins: Map<String, String> = emptyMap(),
-  errorCollector: ValidationErrorCollector? = null,
 ): DependencyGenerationResult = coroutineScope {
   val allModuleSets = communityModuleSets + coreModuleSets + ultimateModuleSets
   val modulesToProcess = collectModulesToProcess(allModuleSets)
@@ -84,27 +77,6 @@ internal suspend fun generateModuleDescriptorDependencies(
     additionalPlugins = additionalPlugins,
   ))
 
-  // Report all errors at once
-  if (errors.isNotEmpty()) {
-    val hasMissingDependencies = errors.any { it is MissingDependenciesError }
-    val errorMessage = buildString {
-      if (hasMissingDependencies) {
-        formatProductDependencyErrorsHeader(this)
-      }
-      append(formatValidationErrors(errors))
-      if (hasMissingDependencies) {
-        formatProductDependencyErrorsFooter(this)
-      }
-    }
-    if (errorCollector == null) {
-      System.err.println(errorMessage)
-      exitProcess(1)
-    }
-    else {
-      errorCollector.record(errorMessage)
-    }
-  }
-
   // Write XML files in parallel
   val results = modulesToProcess.map { moduleName ->
     async {
@@ -119,7 +91,7 @@ internal suspend fun generateModuleDescriptorDependencies(
     }
   }.awaitAll().filterNotNull()
 
-  DependencyGenerationResult(results)
+  DependencyGenerationResult(files = results, errors = errors)
 }
 
 /**

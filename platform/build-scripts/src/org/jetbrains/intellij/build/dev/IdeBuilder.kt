@@ -511,11 +511,9 @@ internal suspend fun createProductProperties(
   projectDir: Path,
   platformPrefix: String?,
 ): ProductProperties {
-  val classPathFiles = buildList {
-    for (moduleName in getBuildModules(productConfiguration)) {
-      addAll(outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(moduleName)))
-    }
-  }
+  val classPathFiles = getBuildModules(productConfiguration)
+    .flatMap { outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(it)) }
+    .toList()
 
   @Suppress("SimpleRedundantLet")
   (ProductConfiguration::class.java.classLoader as? PathClassLoader)?.let {
@@ -526,13 +524,13 @@ internal suspend fun createProductProperties(
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  return spanBuilder("create product properties").use {
-    val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-      "org.jetbrains.intellij.build.IjVoidProperties"
-    }
-    else {
-      productConfiguration.className
-    }
+  val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
+    "org.jetbrains.intellij.build.IjVoidProperties"
+  }
+  else {
+    productConfiguration.className
+  }
+  return spanBuilder("create product properties").setAttribute("className", className).use {
     doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
   }
 }

@@ -11,6 +11,8 @@ import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
+import org.jetbrains.intellij.build.productLayout.analysis.validateNoRedundantModuleSets
 import org.jetbrains.intellij.build.productLayout.cleanupOrphanedModuleSetFiles
 import org.jetbrains.intellij.build.productLayout.dependency.ModuleDescriptorCache
 import org.jetbrains.intellij.build.productLayout.dependency.generateModuleDescriptorDependencies
@@ -24,8 +26,6 @@ import org.jetbrains.intellij.build.productLayout.stats.ProductGenerationResult
 import org.jetbrains.intellij.build.productLayout.stats.printGenerationSummary
 import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
-import org.jetbrains.intellij.build.productLayout.util.ValidationErrorCollector
-import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -169,8 +169,10 @@ private fun aggregateAndCleanupOrphanedFiles(moduleSetResults: List<ModuleSetGen
  * 5. Prints a comprehensive summary
  *
  * @param config Configuration specifying module set sources, discovered products, test products, and other parameters
+ * @param dryRunCollector If non-null, collects diffs instead of writing files (validation mode)
+ * @return Validation errors found during generation (empty in CLI mode - errors are printed and process exits)
  */
-suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig, dryRunCollector: DryRunCollector? = null, errorCollector: ValidationErrorCollector? = null) {
+suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig, dryRunCollector: DryRunCollector? = null): List<ValidationError> {
   val startTime = System.currentTimeMillis()
 
   // Discover all module sets and validate products
@@ -228,7 +230,6 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
         productSpecs = products,
         pluginContentJobs = pluginContentJobs,
         additionalPlugins = config.additionalPlugins,
-        errorCollector = errorCollector,
       )
     }
 
@@ -277,4 +278,6 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
     projectRoot = config.projectRoot,
     durationMs = System.currentTimeMillis() - startTime,
   )
+
+  return dependencyResult.errors
 }

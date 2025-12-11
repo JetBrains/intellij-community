@@ -12,12 +12,15 @@ import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.analysis.ProductCategory
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
+import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
+import org.jetbrains.intellij.build.productLayout.analysis.formatValidationErrors
 import org.jetbrains.intellij.build.productLayout.discovery.findProductPropertiesSourceFile
 import org.jetbrains.intellij.build.productLayout.json.streamModuleAnalysisJson
 import org.jetbrains.intellij.build.telemetry.withoutTracer
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Path
+import kotlin.system.exitProcess
 
 /**
  * Determines product category based on module sets included in the content spec.
@@ -44,7 +47,7 @@ private fun determineProductCategory(contentSpec: ProductModulesContentSpec?): P
  * @return JsonFilter if filter is specified, null for full JSON output
  */
 fun parseJsonArgument(arg: String): JsonFilter? {
-  if (arg.contains("=")) {
+  if (arg.contains('=')) {
     val filterJson = arg.substringAfter("=")
     try {
       return Json.decodeFromString<JsonFilter>(filterJson)
@@ -74,7 +77,7 @@ fun parseJsonArgument(arg: String): JsonFilter? {
  * @param communitySourceFile Source file path for community module sets
  * @param ultimateSourceFile Source file path for ultimate module sets (or null for community-only)
  * @param projectRoot Project root path
- * @param generateXmlImpl Lambda to generate XML files (default mode implementation)
+ * @param generateXmlImpl Lambda to generate XML files, returns validation errors
  */
 suspend fun runModuleSetMain(
   args: Array<String>,
@@ -84,7 +87,7 @@ suspend fun runModuleSetMain(
   communitySourceFile: String,
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> Unit,
+  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> List<ValidationError>,
 ) {
   withoutTracer {
     // Parse `--json` arg with optional filter
@@ -93,7 +96,11 @@ suspend fun runModuleSetMain(
       val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
       if (jsonArg == null) {
         // Default mode: Generate XML files
-        generateXmlImpl(outputProvider)
+        val errors = generateXmlImpl(outputProvider)
+        if (errors.isNotEmpty()) {
+          System.err.print(formatValidationErrors(errors))
+          exitProcess(1)
+        }
       }
       else {
         jsonResponse(
@@ -186,7 +193,7 @@ private suspend fun jsonResponse(
   )
 }
 
-fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
+private fun createModuleOutputProvider(projectRoot: Path, scope: CoroutineScope): ModuleOutputProvider {
   val project = JpsSerializationManager.getInstance().loadProject(
     projectRoot.toString(),
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),

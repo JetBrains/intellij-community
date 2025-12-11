@@ -24,7 +24,7 @@ import org.jetbrains.intellij.build.productLayout.analysis.parseModulesXml
 import org.jetbrains.intellij.build.productLayout.analysis.suggestModuleSetUnification
 import org.jetbrains.intellij.build.productLayout.analysis.validateCommunityProducts
 import org.jetbrains.intellij.build.productLayout.analysis.validateModuleSetLocations
-import org.jetbrains.intellij.build.productLayout.validation.validateNoRedundantModuleSets
+import org.jetbrains.intellij.build.productLayout.analysis.validateNoRedundantModuleSets
 import java.nio.file.Path
 import java.time.Instant
 

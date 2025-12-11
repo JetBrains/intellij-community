@@ -42,30 +42,6 @@ class DryRunCollector {
 }
 
 /**
- * Collector for validation errors.
- * Pass through the call chain to collect errors instead of printing and exiting.
- */
-class ValidationErrorCollector {
-  private val _errors = CopyOnWriteArrayList<String>()
-
-  val errors: List<String>
-    get() = _errors
-
-  internal fun record(error: String) {
-    _errors.add(error)
-  }
-}
-
-/**
- * Result of model generator validation.
- * Contains both file diffs (out-of-sync files) and validation errors (missing dependencies, etc.).
- */
-data class ModelValidationResult(
-  @JvmField val diffs: List<DryRunDiff>,
-  @JvmField val errors: List<String>,
-)
-
-/**
  * Utilities for atomic file updates with change detection.
  * Provides consistent file update logic across all generators.
  */

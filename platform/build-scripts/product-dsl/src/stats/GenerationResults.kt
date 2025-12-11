@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout.stats
 
+import org.jetbrains.intellij.build.productLayout.analysis.ValidationError
 import java.nio.file.Path
 
 /**
@@ -113,6 +114,8 @@ internal data class DependencyFileResult(
  */
 internal data class DependencyGenerationResult(
   @JvmField val files: List<DependencyFileResult>,
+  /** Validation errors found during dependency generation */
+  @JvmField val errors: List<ValidationError> = emptyList(),
 ) {
   val totalDependencies: Int get() = files.sumOf { it.dependencyCount }
 }

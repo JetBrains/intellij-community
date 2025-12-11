@@ -19,13 +19,14 @@ import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
-import org.jetbrains.intellij.build.productLayout.util.ModelValidationResult
+import org.jetbrains.intellij.build.productLayout.analysis.ModelValidationResult
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
@@ -52,11 +53,11 @@ private data class ContentReportList(
  * The function takes the project home path and returns validation result
  * containing file diffs and validation errors.
  */
-typealias GeneratorValidator = suspend (projectHome: Path) -> ModelValidationResult
+typealias GeneratorValidator = suspend (projectHome: Path, outputProvider: ModuleOutputProvider) -> ModelValidationResult
 
 @ApiStatus.Internal
 suspend fun createContentCheckTests(
-  projectHomePath: Path,
+  homePath: Path,
   productProperties: ProductProperties,
   contentYamlPath: String,
   testInfo: TestInfo,
@@ -66,22 +67,33 @@ suspend fun createContentCheckTests(
   modelValidator: GeneratorValidator? = null,
 ): Iterator<DynamicTest> {
   val (validationResult, packageResult) = coroutineScope {
+    val context = createBuildContext(
+      projectHome = homePath,
+      productProperties = productProperties,
+      setupTracer = false,
+      proprietaryBuildTools = buildTools,
+      options = createBuildOptionsForTest(
+        productProperties = productProperties,
+        homeDir = homePath,
+        testInfo = testInfo,
+        customizer = { it.customizeBuildOptions() },
+      ),
+    )
+
+    // needed for TC, otherwise modelValidator will fail (as no module compilation outputs)
+    context.compileProductionModules()
+
     // validate that generated files are up to date (if validator is provided)
     val validationDeferred = async {
-      modelValidator?.invoke(projectHomePath) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
+      modelValidator?.invoke(homePath, context.outputProvider) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
     }
 
     val packageDeferred = async {
       var result: PackageResult? = null
-      computePackageResult(
-        productProperties = productProperties,
-        testInfo = testInfo,
-        homePath = projectHomePath,
-        contentConsumer = {
-          result = it
-        },
-        buildTools = buildTools,
-      )
+
+      productProperties.buildDocAuthoringAssets = false
+
+      computePackageResult(testInfo = testInfo, contentConsumer = { result = it }, context = context)
       result!!
     }
 
@@ -100,7 +112,7 @@ suspend fun createContentCheckTests(
   if (packageResult == null) {
     return sequence {
       for (diff in validationResult.diffs) {
-        val relativePath = projectHomePath.relativize(diff.path)
+        val relativePath = homePath.relativize(diff.path)
         yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-sync: $relativePath)") {
           throw FileComparisonFailedError(
             message = """Generated file is out of sync: $relativePath
@@ -113,9 +125,9 @@ suspend fun createContentCheckTests(
         })
       }
 
-      for ((index, error) in validationResult.errors.withIndex()) {
-        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation-error-${index + 1})") {
-          throw IllegalStateException(error)
+      for (error in validationResult.errors) {
+        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation: ${error.id})") {
+          throw AssertionError(error.message)
         })
       }
     }.iterator()
@@ -176,6 +188,34 @@ suspend fun createContentCheckTests(
   }.iterator()
 }
 
+private fun BuildOptions.customizeBuildOptions() {
+  // reproducible content report
+  randomSeedNumber = 42
+  skipCustomResourceGenerators = true
+  targetOs = OsFamily.ALL
+  targetArch = null
+  buildStepsToSkip += listOf(
+    BuildOptions.MAVEN_ARTIFACTS_STEP,
+    BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
+    BuildOptions.BROKEN_PLUGINS_LIST_STEP,
+    BuildOptions.FUS_METADATA_BUNDLE_STEP,
+    BuildOptions.SCRAMBLING_STEP,
+    BuildOptions.PREBUILD_SHARED_INDEXES,
+    BuildOptions.SOURCES_ARCHIVE_STEP,
+    BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
+    BuildOptions.ARCHIVE_PLUGINS,
+    BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
+    BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
+    SoftwareBillOfMaterials.STEP_ID,
+    BuildOptions.LINUX_ARTIFACTS_STEP,
+    BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
+    BuildOptions.LOCALIZE_STEP,
+    BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
+    "JupyterFrontEndResourcesGenerator",
+  )
+  useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
+}
+
 private fun toMap(contentList: List<PluginContentReport>): Map<String, PluginContentReport> {
   val result = contentList.associateByTo(LinkedHashMap(contentList.size)) { getPluginContentKey(it) }
   require(result.size == contentList.size) {
@@ -229,53 +269,12 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
 private fun getPluginContentKey(item: PluginContentReport): String = item.mainModule + (if (item.os == null) "" else " (os=${item.os})")
 
 private suspend fun computePackageResult(
-  productProperties: ProductProperties,
   testInfo: TestInfo,
-  homePath: Path,
   contentConsumer: (PackageResult) -> Unit,
-  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  context: BuildContext,
 ) {
-  productProperties.buildDocAuthoringAssets = false
-  val buildOptionsCustomizer = { it: BuildOptions ->
-    // reproducible content report
-    it.randomSeedNumber = 42
-    it.skipCustomResourceGenerators = true
-    it.targetOs = OsFamily.ALL
-    it.targetArch = null
-    it.buildStepsToSkip += listOf(
-      BuildOptions.MAVEN_ARTIFACTS_STEP,
-      BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
-      BuildOptions.BROKEN_PLUGINS_LIST_STEP,
-      BuildOptions.FUS_METADATA_BUNDLE_STEP,
-      BuildOptions.SCRAMBLING_STEP,
-      BuildOptions.PREBUILD_SHARED_INDEXES,
-      BuildOptions.SOURCES_ARCHIVE_STEP,
-      BuildOptions.VERIFY_CLASS_FILE_VERSIONS,
-      BuildOptions.ARCHIVE_PLUGINS,
-      BuildOptions.WINDOWS_EXE_INSTALLER_STEP,
-      BuildOptions.REPAIR_UTILITY_BUNDLE_STEP,
-      SoftwareBillOfMaterials.STEP_ID,
-      BuildOptions.LINUX_ARTIFACTS_STEP,
-      BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP,
-      BuildOptions.LOCALIZE_STEP,
-      BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED,
-      "JupyterFrontEndResourcesGenerator",
-    )
-    it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
-  }
   doRunTestBuild(
-    context = createBuildContext(
-      projectHome = homePath,
-      productProperties = productProperties,
-      setupTracer = false,
-      proprietaryBuildTools = buildTools,
-      options = createBuildOptionsForTest(
-        productProperties = productProperties,
-        homeDir = homePath,
-        testInfo = testInfo,
-        customizer = buildOptionsCustomizer,
-      ),
-    ),
+    context = context,
     writeTelemetry = true,
     checkIntegrityOfEmbeddedFrontend = false,
     checkThatBundledPluginInFrontendArePresent = false,
