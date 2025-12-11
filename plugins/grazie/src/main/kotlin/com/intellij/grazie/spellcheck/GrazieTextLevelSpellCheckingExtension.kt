@@ -40,6 +40,7 @@ object GrazieTextLevelSpellCheckingExtension {
       .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
       .flatMap { SpellingCheckerRunner(it).run() }
       .filter { SpellingCheckerRunner.belongsToElement(it, element) }
+      .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
       .forEach { consumer.accept(it) }
     return SpellCheckingResult.Checked
   }
