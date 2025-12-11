@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupRelativePosition
 import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder
 import com.intellij.openapi.ui.popup.PopupShowOptionsImpl
+import com.intellij.openapi.util.TextRange
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WidthBasedLayout
@@ -16,6 +17,7 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
 import com.intellij.util.Alarm
+import com.intellij.util.Range
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
@@ -180,28 +182,30 @@ internal class ComponentAreaPopupContext(
       }
     }
 
-    private fun calculatePosition(component: Component, popup: AbstractPopup) =
-      PopupShowOptionsBuilder()
-        .withComponentPoint(AnchoredPoint(
-          AnchoredPoint.Anchor.TOP_LEFT,
-          component,
-          Point(areaWithinComponent.x, areaWithinComponent.y + areaWithinComponent.height),
-        ))
-        .withRelativePosition(PopupRelativePosition.BOTTOM)
-        .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
-        .withMinimumHeight(minHeight)
-        .withDefaultPopupComponentUnscaledGap(4)
-        .takeIf { isWithinScreen(it.build(), popup) }
-      ?: PopupShowOptionsBuilder()
-        .withComponentPoint(AnchoredPoint(
-          AnchoredPoint.Anchor.TOP_LEFT,
-          component,
-          Point(areaWithinComponent.x, areaWithinComponent.y),
-        ))
-        .withRelativePosition(PopupRelativePosition.TOP)
-        .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
-        .withMinimumHeight(minHeight)
-        .withDefaultPopupComponentUnscaledGap(4)
+    private fun calculatePosition(component: Component, popup: AbstractPopup): PopupShowOptionsBuilder {
+      val bounds = component.bounds
+      return PopupShowOptionsBuilder()
+               .withComponentPoint(AnchoredPoint(
+                 AnchoredPoint.Anchor.TOP_LEFT,
+                 component,
+                 Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y + areaWithinComponent.height),
+               ))
+               .withRelativePosition(PopupRelativePosition.BOTTOM)
+               .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
+               .withMinimumHeight(minHeight)
+               .withDefaultPopupComponentUnscaledGap(4)
+               .takeIf { isWithinScreen(it.build(), popup) }
+             ?: PopupShowOptionsBuilder()
+               .withComponentPoint(AnchoredPoint(
+                 AnchoredPoint.Anchor.TOP_LEFT,
+                 component,
+                 Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y),
+               ))
+               .withRelativePosition(PopupRelativePosition.TOP)
+               .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
+               .withMinimumHeight(minHeight)
+               .withDefaultPopupComponentUnscaledGap(4)
+    }
 
 
     override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
@@ -254,13 +258,11 @@ internal class ComponentAreaPopupContext(
         it.x += componentLocation.x
         it.y += componentLocation.y
       }
-      if (popupLocation.y < componentActiveArea.y + componentActiveArea.height) {
+      if (TextRange(popupLocation.y, popupLocation.y + popupSize.height)
+          .intersectsStrict(componentActiveArea.y, componentActiveArea.y + componentActiveArea.height)) {
         // reposition popup above the component
-        val height = popup.height
-        if (height < componentActiveArea.y) {
-          popupLocation.y = componentActiveArea.y - height - 4
-          popup.setLocation(popupLocation)
-        }
+        popupLocation.y = componentActiveArea.y - popupSize.height - 4
+        popup.setLocation(popupLocation)
       }
     }
 
