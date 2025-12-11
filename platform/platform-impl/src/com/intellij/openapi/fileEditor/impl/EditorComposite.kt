@@ -474,10 +474,10 @@ open class EditorComposite internal constructor(
       editorComponent = DumbService.getInstance(project).wrapGently(editorComponent, editor)
     }
     component.add(editorComponent, BorderLayout.CENTER)
-    val topPanel = TopBottomPanel()
+    val topPanel = EditorTopPanel()
     topComponents.put(editor, topPanel)
     component.add(topPanel, BorderLayout.NORTH)
-    val bottomPanel = TopBottomPanel()
+    val bottomPanel = EditorBottomPanel()
     bottomComponents.put(editor, bottomPanel)
     component.add(bottomPanel, BorderLayout.SOUTH)
     return component
@@ -986,7 +986,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   }
 }
 
-private class TopBottomPanel : JPanel() {
+internal open class EditorBottomPanel : JPanel() {
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
   }
@@ -1001,6 +1001,8 @@ private class TopBottomPanel : JPanel() {
     }
   }
 }
+
+internal class EditorTopPanel : EditorBottomPanel()
 
 internal fun createTopBottomSideBorder(top: Boolean, borderColor: Color?): SideBorder {
   return object : SideBorder(null, if (top) BOTTOM else TOP) {

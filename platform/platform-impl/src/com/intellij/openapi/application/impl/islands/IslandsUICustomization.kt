@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorCompositePanel
-import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.fileEditor.impl.createTopBottomSideBorder
+import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.ui.*
@@ -641,7 +638,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       if (isManyIslandEnabled) {
         val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace, 6, 0, 6))
+        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace + getTopBorderTakingIntoHeader(this), 6, 0, 6))
 
         g as Graphics2D
 
@@ -675,7 +672,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       @Suppress("UseDPIAwareInsets")
       val supplier = Supplier {
-        Insets(5 + searchReplaceEmptyTopSpace, 9, 5, 9)
+        Insets(5 + searchReplaceEmptyTopSpace + getTopBorderTakingIntoHeader(parent), 9, 5, 9)
       }
       @Suppress("UNCHECKED_CAST")
       parent.border = JBUI.Borders.empty(JBInsets.create(supplier, supplier.get()))
@@ -686,6 +683,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
 
     (component as SearchReplaceFacade).configureUI(enabled)
+  }
+
+  private fun getTopBorderTakingIntoHeader(component: Component): Int {
+    val editorCompositePanel = UIUtil.getParentOfType(EditorCompositePanel::class.java, component)
+    val header = UIUtil.findComponentOfType(editorCompositePanel, EditorTopPanel::class.java)
+    if (header != null && header.componentCount > 0) {
+      return 6
+    }
+    return 0
   }
 
   override fun configureEditorTopComponent(component: JComponent, top: Boolean): JComponent? {
@@ -727,7 +733,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
             if (parent != null) {
               val index = parent.components.indexOf(c)
               val top = if (index == 0) 1 else 4
-              val bottom = if (index == parent.componentCount - 1) getBottomInsetForLastComponent(parent) else 4
+              val bottom = if (index == parent.componentCount - 1) 1 else 4
               return JBInsets(top, 10, bottom, 10)
             }
             return super.getBorderInsets(c)
@@ -737,14 +743,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
       else {
         this.border = border ?: createTopBottomSideBorder(top, borderColor)
       }
-    }
-
-    private fun getBottomInsetForLastComponent(component: Component): Int {
-      val editorCompositePanel = UIUtil.getParentOfType(EditorCompositePanel::class.java, component)
-      if (UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) != null) {
-        return 7
-      }
-      return 1
     }
 
     override fun paintComponent(g: Graphics?) {
