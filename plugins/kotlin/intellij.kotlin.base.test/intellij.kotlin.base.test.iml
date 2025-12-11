@@ -38,5 +38,10 @@
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.inspections" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
   </component>
 </module>

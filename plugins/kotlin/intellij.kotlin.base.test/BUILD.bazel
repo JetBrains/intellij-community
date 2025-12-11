@@ -48,6 +48,11 @@ jvm_library(
     "//java/java-runtime:rt",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/kotlin/inspections",
+    "//platform/code-style-api:codeStyle",
+    "//plugins/kotlin/formatter/minimal",
+    "//jvm/jvm-analysis-impl:analysis-impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
