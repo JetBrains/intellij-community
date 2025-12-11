@@ -46,8 +46,8 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfiguration
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
-import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationError
-import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingConfigurationError
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -129,9 +129,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         dialog.show()
         if (!dialog.isOK) return emptySet()
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
-        KotlinConfigurationFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
+        KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
-        KotlinConfigurationFUSCollector.logStartConfigureKt(project)
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
         val commandKey = "command.name.configure.kotlin"
         val (result, collector) = runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
@@ -219,7 +219,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val jvmTargets = readAction {
             checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
         }
-        KotlinConfigurationFUSCollector.logStartConfigureKt(project, true)
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
         val commandKey = "command.name.configure.kotlin.automatically"
         val (result, _) = withModalProgress(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
@@ -240,7 +240,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     class ConfigurationResult(
         val configuredModules: Set<Module>,
         val changedFiles: ChangedConfiguratorFiles,
-        val error: KotlinConfigurationError?
+        val error: KotlinJ2KOnboardingConfigurationError?
     )
 
     // Expected to be called from a coroutine with a progress reporter
@@ -266,9 +266,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 project.executeCommand(KotlinProjectConfigurationBundle.message(commandKey)) {
                     val configurationResult = configureAction()
                     if (configurationResult.error != null) {
-                        KotlinConfigurationFUSCollector.logConfigureKtFailed(project, configurationResult.error)
+                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, configurationResult.error)
                     } else if (configurationResult.configuredModules.isEmpty()) {
-                        KotlinConfigurationFUSCollector.logConfigureKtFailed(project, KotlinConfigurationError.OTHER)
+                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
                     }
                     val firstModule = modules.firstOrNull()
                     if (isAutoConfig && firstModule != null) {
@@ -304,7 +304,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val definedVersionInPluginSettings = rootModule?.let { getPluginManagementVersion(it) }
         var addVersionToModuleBuildScript = definedVersionInPluginSettings?.parsedVersion != kotlinVersion
 
-        var error: KotlinConfigurationError? = null
+        var error: KotlinJ2KOnboardingConfigurationError? = null
 
         if (rootModule != null) {
             val allKotlinModules = kotlinVersionsAndModules.values.flatMap { it.values }
@@ -364,7 +364,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         if (configured) {
                             configuredModules.add(rootModule)
                         } else {
-                            error = KotlinConfigurationError.CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED
+                            error = KotlinJ2KOnboardingConfigurationError.CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED
                         }
                     }
 
@@ -385,7 +385,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                                 // If Kotlin version wasn't added to settings.gradle, then it has just been added to root script
                                 addVersionToModuleBuildScript = false
                             } else {
-                                error = KotlinConfigurationError.ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED
+                                error = KotlinJ2KOnboardingConfigurationError.ADDING_KOTLIN_VERSION_TO_TOP_LEVEL_BUILD_SCRIPT_FAILED
                             }
                         }
                     }
@@ -395,7 +395,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         ConfigurationResult(
                             configuredModules,
                             changedFiles,
-                            KotlinConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                            KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
                         )
                     }
                 }
@@ -435,7 +435,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                     if (configured) {
                         configuredModules.add(module)
                     } else {
-                        error = KotlinConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
+                        error = KotlinJ2KOnboardingConfigurationError.CONFIGURING_OF_MODULE_BUILD_SCRIPT_FAILED
                     }
                 }
             } else {
@@ -444,7 +444,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                     ConfigurationResult(
                         configuredModules,
                         changedFiles,
-                        KotlinConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                        KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
                     )
                 }
             }
