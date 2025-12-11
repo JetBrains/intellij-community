@@ -2,6 +2,7 @@ package com.intellij.python.junit5Tests.env
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
@@ -13,10 +14,15 @@ import com.intellij.python.processOutput.impl.CoroutineNames
 import com.intellij.python.processOutput.impl.ProcessOutputControllerService
 import com.intellij.python.processOutput.impl.ProcessOutputControllerServiceLimits
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.progress.sleepCancellable
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
+import java.awt.datatransfer.DataFlavor
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,12 +32,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.debug.DebugProbes
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Files
-import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
-import org.junit.jupiter.api.Assertions.assertEquals
 
 @PyEnvTestCase
 class ProcessOutputControllerServiceTest {
@@ -171,6 +174,110 @@ class ProcessOutputControllerServiceTest {
                 .size,
         )
     }
+
+    @Test
+    fun `tag section and exit info copy buttons test`(
+        @TempDir cwd: Path,
+        @PythonBinaryPath python: PythonBinary,
+    ): Unit = timeoutRunBlocking {
+        val service = projectFixture.get().service<ProcessOutputControllerService>()
+
+        val binOnEel = BinOnEel(python, cwd)
+        val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
+
+        edtWriteAction {
+            mainPy.toFile().writeText(
+                """
+                    import sys 
+                    
+                    print("out1")
+                    print("out2")
+                    print("out3")
+                    print("out4")
+                    print("out5")
+                    print("out6")
+                    
+                    print("err7", file=sys.stderr)
+                    print("err8", file=sys.stderr)
+                    print("err9", file=sys.stderr)
+                    print("err10", file=sys.stderr)
+                """.trimIndent(),
+            )
+        }
+
+        runBin(binOnEel, Args(MAIN_PY))
+
+        waitUntil {
+            service.firstLineOfLastProcess()?.startsWith("out1") == true
+        }
+
+        val process = service.loggedProcesses.value[0]
+
+        // stdout section (0..5)
+        service.copyOutputTagAtIndexToClipboard(process, 0)
+
+        assertEquals(
+            """
+                out1
+                out2
+                out3
+                out4
+                out5
+                out6
+                
+            """.trimIndent(),
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
+        )
+
+        // stderr section (6..9)
+        service.copyOutputTagAtIndexToClipboard(process, 6)
+
+        assertEquals(
+            """
+                err7
+                err8
+                err9
+                err10
+                
+            """.trimIndent(),
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
+        )
+
+        // exit info without additional message
+        service.copyOutputExitInfoToClipboard(process)
+
+        assertEquals(
+            """
+                0
+                
+            """.trimIndent(),
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
+        )
+
+        // exit info with additional message
+        process.exitInfo.emit(
+            process.exitInfo.value?.copy(additionalMessageToUser = "some test message"),
+        )
+
+        service.copyOutputExitInfoToClipboard(process)
+
+        assertEquals(
+            """
+                0: some test message
+                
+            """.trimIndent(),
+            CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor),
+        )
+    }
+
+    private fun ProcessOutputControllerService.firstLineOfLastProcess(): String? =
+        loggedProcesses
+            .value
+            .lastOrNull()
+            ?.lines
+            ?.replayCache
+            ?.getOrNull(0)
+            ?.text
 
     companion object {
         const val MAIN_PY = "main.py"

@@ -74,6 +74,8 @@ internal interface ProcessOutputController {
     fun toggleProcessOutput()
     fun specifyAdditionalMessageToUser(logId: Int, message: @Nls String)
     fun copyOutputToClipboard(loggedProcess: LoggedProcess)
+    fun copyOutputTagAtIndexToClipboard(loggedProcess: LoggedProcess, fromIndex: Int)
+    fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess)
 
     @RequiresEdt
     fun tryOpenLogInToolWindow(logId: Int): Boolean
@@ -306,6 +308,44 @@ class ProcessOutputControllerService(
         CopyPasteManager.copyTextToClipboard(stringToCopy)
 
         ProcessOutputUsageCollector.outputCopyClicked()
+    }
+
+    override fun copyOutputTagAtIndexToClipboard(
+        loggedProcess: LoggedProcess,
+        fromIndex: Int,
+    ) {
+        val stringToCopy = buildString {
+            val replayCache = loggedProcess.lines.replayCache
+
+            replayCache
+                .drop(fromIndex)
+                .takeWhile { it.kind == replayCache[fromIndex].kind }
+                .forEach {
+                    appendLine(it.text)
+                }
+        }
+
+        CopyPasteManager.copyTextToClipboard(stringToCopy)
+
+        ProcessOutputUsageCollector.outputTagSectionCopyClicked()
+    }
+
+    override fun copyOutputExitInfoToClipboard(loggedProcess: LoggedProcess) {
+        val exitInfo = loggedProcess.exitInfo.value ?: return
+        val stringToCopy = buildString {
+            append(exitInfo.exitValue)
+
+            exitInfo.additionalMessageToUser?.also { message ->
+                append(": ")
+                append(message)
+            }
+
+            appendLine()
+        }
+
+        CopyPasteManager.copyTextToClipboard(stringToCopy)
+
+        ProcessOutputUsageCollector.outputExitInfoCopyClicked()
     }
 
     @RequiresEdt
