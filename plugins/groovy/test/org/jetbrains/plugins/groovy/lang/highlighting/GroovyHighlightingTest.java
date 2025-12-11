@@ -783,7 +783,13 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
   public void testAbstractMethodWithBody() {
     doTestHighlighting("""
                          interface A {
-                           def foo()<error descr="Abstract methods must not have body">{}</error>
+                           def foo()<error descr="Interface abstract methods must not have body">{}</error>
+                         
+                           <error descr="Interface members are not allowed to be private">private</error> def privateMethod() <error descr="Interface abstract methods must not have body">{}</error>
+                         
+                           <error descr="Interface must have no static method">static</error> def staticMethod() <error descr="Interface abstract methods must not have body">{}</error>
+                         
+                           <error descr="Modifier 'default' is available in Groovy 3.0 or later">default</error> def defaultMethod() {}
                          }
 
                          abstract class B {

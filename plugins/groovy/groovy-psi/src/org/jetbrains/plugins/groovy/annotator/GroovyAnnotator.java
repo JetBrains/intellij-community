@@ -588,7 +588,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     PsiElement blockParent = block.getParent();
     if (blockParent instanceof GrMethod method) {
       if (GrTraitUtil.isMethodAbstract(method)) {
-        String message = GroovyBundle.message("abstract.methods.must.not.have.body");
+        String message = GrTraitUtil.isInterface(method.getContainingClass()) ? GroovyBundle.message("interface.abstract.methods.must.not.have.body") : GroovyBundle.message("abstract.methods.must.not.have.body");
         AnnotationBuilder builder =
           myHolder.newAnnotation(HighlightSeverity.ERROR, message);
         registerMakeAbstractMethodNotAbstractFix(builder, method, true, message, block.getTextRange()).create();
@@ -1807,9 +1807,14 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       }
       //interface
       else if (containingTypeDef.isInterface()) {
-        checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, GroovyBundle.message("interface.must.have.no.static.method"), holder);
-        checkModifierIsNotAllowed(modifiersList, PsiModifier.PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
-        checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PROTECTED), holder);
+        if (!GroovyConfigUtils.isAtLeastGroovy50(containingTypeDef)) {
+          checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, GroovyBundle.message("interface.must.have.no.static.method"),
+                                    holder);
+          checkModifierIsNotAllowed(modifiersList, PsiModifier.PRIVATE,
+                                    GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PRIVATE), holder);
+        }
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.PROTECTED,
+                                  GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PROTECTED), holder);
       }
       else if (containingTypeDef.isAnonymous()) {
         if (isMethodAbstract) {
