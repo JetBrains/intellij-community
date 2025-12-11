@@ -1,7 +1,5 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
-import com.intellij.driver.client.Driver
-import com.intellij.driver.client.Remote
 import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
@@ -21,7 +19,11 @@ import kotlinx.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-internal class IDEFrontendHandler(private val frontendContext: IDETestContext, private val driverOptions: DriverOptions, private val debugPort: Int) {
+internal class IDEFrontendHandler(
+  private val frontendContext: IDETestContext,
+  private val driverOptions: DriverOptions,
+  private val debugPort: Int,
+) {
 
   private fun VMOptions.addDisplayIfNecessary() {
     if (SystemInfo.isLinux && System.getenv("DISPLAY") == null) {
@@ -51,7 +53,8 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
     }
     val result = perClassSupervisorScope.async {
       try {
-        val thinClientCommand = if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
+        val thinClientCommand =
+          if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
 
         frontendContext.runIdeSuspending(
           commandLine = IDECommandLine.Args(listOf(thinClientCommand, joinLink)),
@@ -84,6 +87,6 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
       }
     }
 
-    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() }})
+    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() } })
   }
 }
