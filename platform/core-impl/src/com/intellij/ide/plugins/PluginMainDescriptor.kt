@@ -36,7 +36,7 @@ class PluginMainDescriptor(
   private val isBundled: Boolean,
   override val useCoreClassLoader: Boolean = false,
 ) : PluginModuleDescriptor(raw) {
-  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
+  private val id: PluginId = PluginId.getId(raw.id ?: raw.name ?: throw IllegalArgumentException("Neither id nor name are specified for plugin located at $pluginPath"))
   private val name: String = raw.name ?: id.idString
 
   private val version: String? = raw.version
