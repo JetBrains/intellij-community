@@ -31,6 +31,7 @@ sealed interface XStackFramesEvent {
 data class XStackFrameDto(
   val stackFrameId: XStackFrameId,
   val sourcePosition: XSourcePositionDto?,
+  val alternativeSourcePosition: XSourcePositionDto?,
   val equalityObject: XStackFrameEqualityObject?,
   val evaluator: XDebuggerEvaluatorDto,
   val textPresentation: XStackFramePresentation,

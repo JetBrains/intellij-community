@@ -87,9 +87,6 @@ class FrontendXDebuggerSession private constructor(
   override val id: XDebugSessionId = sessionDto.id
 
   @Volatile
-  private var currenSourcePosition: XSourcePosition? = null
-
-  @Volatile
   private var topSourcePosition: XSourcePosition? = null
 
   @Volatile
@@ -248,7 +245,6 @@ class FrontendXDebuggerSession private constructor(
       is XDebuggerSessionEvent.StackFrameChanged -> {
         updateState()
         isTopFrameSelected = isTopFrame
-        currenSourcePosition = sourcePositionDto?.sourcePosition()
         topSourcePosition = topSourcePositionDto?.sourcePosition()
         val newFrame = stackFrame?.let {
           getCurrentSuspendContext()?.getOrCreateStackFrame(it)
@@ -267,17 +263,15 @@ class FrontendXDebuggerSession private constructor(
   private fun clearSuspendContext() {
     suspendContext.getAndUpdate { null }?.cancel()
     isTopFrameSelected = false
-    currenSourcePosition = null
     topSourcePosition = null
     currentExecutionStack = null
     currentStackFrame.value = StackFrameUpdate.noNotify(null)
   }
 
   private fun SuspendData.applyToCurrents() {
-    val (suspendContextDto, executionStackDto, stackFrameDto, sourcePositionDto, topSourcePositionDto) = this
+    val (suspendContextDto, executionStackDto, stackFrameDto, topSourcePositionDto) = this
     val currentSuspendContext = getOrCreateSuspendContext(suspendContextDto)
     val suspendContextLifetimeScope = currentSuspendContext.lifetimeScope
-    currenSourcePosition = sourcePositionDto?.sourcePosition()
     topSourcePosition = topSourcePositionDto?.sourcePosition()
 
     val stack = executionStackDto?.let {
@@ -381,20 +375,26 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
-  override fun getCurrentPosition(): XSourcePosition? = currenSourcePosition
+  override fun getCurrentPosition(): XSourcePosition? = getCurrentStackFrame()?.let { getFrameSourcePosition(it) }
 
   override fun getTopFramePosition(): XSourcePosition? = topSourcePosition
 
   override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
-    // TODO Support XSourceKind
-    return frame.sourcePosition
+    return getFrameSourcePosition(frame, currentSourceKind)
   }
 
   override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
-    // TODO Support XSourceKind, need to adapt XAlternativeSourceHandler for the front-end use only
-    if (sourceKind == XSourceKind.ALTERNATIVE) return null
-    return frame.sourcePosition
+    return when (sourceKind) {
+      XSourceKind.ALTERNATIVE -> (frame as FrontendXStackFrame).getAlternativeSourcePosition()
+      else -> frame.sourcePosition
+    }
   }
+
+  override val alternativeSourceKindState: StateFlow<Boolean> = channelFlow {
+    XDebugSessionApi.getInstance().getAlternativeSourceKindFlow(id).collect {
+      send(it)
+    }
+  }.stateIn(cs, SharingStarted.Eagerly, false)
 
   override fun getCurrentExecutionStack(): XExecutionStack? = currentExecutionStack
 
@@ -408,11 +408,8 @@ class FrontendXDebuggerSession private constructor(
     isTopFrameSelected = isTopFrame
     currentExecutionStack = executionStack
 
-    // TODO Support XSourceKind
-    val frameSourcePosition = frame.sourcePosition
-    currenSourcePosition = frameSourcePosition
     if (isTopFrame) {
-      topSourcePosition = frameSourcePosition
+      topSourcePosition = getFrameSourcePosition(frame)
     }
 
     currentStackFrame.value = StackFrameUpdate.notifyChanged(frame)

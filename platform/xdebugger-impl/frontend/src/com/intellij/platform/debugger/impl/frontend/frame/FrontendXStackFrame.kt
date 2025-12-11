@@ -52,6 +52,10 @@ internal class FrontendXStackFrame(
     return frameDto.sourcePosition?.sourcePosition()
   }
 
+  fun getAlternativeSourcePosition(): XSourcePosition? {
+    return frameDto.alternativeSourcePosition?.sourcePosition()
+  }
+
   override fun getEqualityObject(): Any? = frameDto.equalityObject
 
   override fun computeChildren(node: XCompositeNode) {

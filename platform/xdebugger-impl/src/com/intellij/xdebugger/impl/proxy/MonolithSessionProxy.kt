@@ -42,6 +42,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -144,6 +145,12 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
   override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
     return sessionImplIfAvailable?.getFrameSourcePosition(frame, sourceKind)
   }
+
+  override val alternativeSourceKindState: StateFlow<Boolean>
+    get() = sessionImpl.alternativeSourceKindState
+
+  override val currentSourceKind: XSourceKind
+    get() = sessionImpl.currentSourceKind
 
   override fun getCurrentExecutionStack(): XExecutionStack? {
     return sessionImplIfAvailable?.currentExecutionStack

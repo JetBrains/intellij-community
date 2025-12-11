@@ -3,12 +3,12 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
-import com.intellij.util.asDisposable
-import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
-import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
+import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
+import com.intellij.util.asDisposable
+import com.intellij.xdebugger.XDebugSessionListener
 import kotlinx.coroutines.launch
 
 
@@ -33,19 +33,19 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
 
     session.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
-        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
+        updateExecutionPosition(session)
       }
 
       override fun sessionResumed() {
-        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
+        updateExecutionPosition(session)
       }
 
       override fun sessionPaused() {
-        updateExecutionPosition(project)
+        updateExecutionPosition(session, checkAlternativePosition = true)
       }
 
       override fun sessionStopped() {
-        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
+        updateExecutionPosition(session)
       }
 
     }, session.coroutineScope.asDisposable())
@@ -62,14 +62,8 @@ private fun updateAfterActiveSessionChanged(
 ) {
   val executionPointManager = XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project) ?: return
   if (currentSession != null) {
-    val xDebugSession = XDebugMonolithUtils.findSessionById(currentSession.id)
-    if (xDebugSession != null) {
-      executionPointManager.alternativeSourceKindFlow = xDebugSession.alternativeSourceKindState
-      updateExecutionPosition(project, xDebugSession.currentSourceKind)
-    }
-    else {
-      updateExecutionPosition(project)
-    }
+    executionPointManager.alternativeSourceKindFlow = currentSession.alternativeSourceKindState
+    updateExecutionPosition(currentSession)
   }
   else {
     executionPointManager.clearExecutionPoint()
@@ -88,26 +82,32 @@ private fun updateGutterRendererIcon(project: Project) {
   }
 }
 
-// TODO: need to support navigationSourceKind properly from the calling side!
-internal fun updateExecutionPosition(project: Project, navigationSourceKind: XSourceKind? = null) {
-  val session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project) ?: return
+private fun detectSourceKind(session: XDebugSessionProxy): XSourceKind {
+  if (session.currentSourceKind == XSourceKind.ALTERNATIVE) return XSourceKind.ALTERNATIVE
+  // TODO XAlternativeSourceHandler.isAlternativeSourceKindPreferred is supported only in monolith
+  val xDebugSession = XDebuggerEntityConverter.getSession(session) ?: return XSourceKind.MAIN
+  val suspendContext = xDebugSession.suspendContext ?: return XSourceKind.MAIN
+  val alternativeSourceHandler = xDebugSession.debugProcess.alternativeSourceHandler ?: return XSourceKind.MAIN
+  val useAlternative = alternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext)
+  return if (useAlternative) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
+}
 
-  val isTopFrame = session.isTopFrameSelected()
-  val currentStackFrame = session.getCurrentStackFrame()
+internal fun updateExecutionPosition(session: XDebugSessionProxy, checkAlternativePosition: Boolean = false) {
+  val currentSession = XDebugManagerProxy.getInstance().getCurrentSessionProxy(session.project) ?: return
+  if (currentSession.id != session.id) return
 
-  val xDebugSession = XDebugMonolithUtils.findSessionById(session.id)
-  val adjustedKind = if (navigationSourceKind == null && xDebugSession != null) {
-    val forceUseAlternative = xDebugSession.suspendContext?.let {
-      xDebugSession.debugProcess.alternativeSourceHandler?.isAlternativeSourceKindPreferred(it)
-    } ?: false
-    if (forceUseAlternative || xDebugSession.alternativeSourceKindState.value) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
-  } else XSourceKind.MAIN
+  val executionPointManager = XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(session.project)
+  if (executionPointManager != null) {
+    val isTopFrame = session.isTopFrameSelected()
+    val currentStackFrame = session.getCurrentStackFrame()
 
-  val mainSourcePosition = currentStackFrame?.let { session.getFrameSourcePosition(it, XSourceKind.MAIN) }
-  val alternativeSourcePosition = currentStackFrame?.let { session.getFrameSourcePosition(it, XSourceKind.ALTERNATIVE) }
+    val mainSourcePosition = currentStackFrame?.let { session.getFrameSourcePosition(it, XSourceKind.MAIN) }
+    val alternativeSourcePosition = currentStackFrame?.let { session.getFrameSourcePosition(it, XSourceKind.ALTERNATIVE) }
 
-  XDebugManagerProxy.getInstance().getDebuggerExecutionPointManager(project)?.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, adjustedKind)
-  updateGutterRendererIcon(project)
+    val navigationSourceKind = if (checkAlternativePosition) detectSourceKind(session) else XSourceKind.MAIN
+    executionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind)
+  }
+  updateGutterRendererIcon(session.project)
 }
 
 private fun getGutterRenderer(breakpoint: XBreakpointProxy?, session: XDebugSessionProxy): GutterIconRenderer? =

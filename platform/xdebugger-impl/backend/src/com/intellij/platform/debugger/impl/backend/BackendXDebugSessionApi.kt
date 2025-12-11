@@ -31,6 +31,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -68,6 +69,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     return smartReadAction(project) {
       editorsProvider.getSupportedLanguages(project, position)
     }.map { it.toRpc() }
+  }
+
+  override suspend fun getAlternativeSourceKindFlow(sessionId: XDebugSessionId): Flow<Boolean> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return session.alternativeSourceKindState
   }
 
   override suspend fun resume(sessionId: XDebugSessionId) {
@@ -307,14 +313,12 @@ internal fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
   val executionStackDto = suspendContext.activeExecutionStack?.toRpc(suspendScope, this)
   val stackFrameDto = currentStackFrame?.toRpc(suspendScope, this)
-  val sourcePositionDto = currentPosition?.toRpc()
   val topSourcePositionDto = topFramePosition?.toRpc()
 
   return SuspendData(
     suspendContextDto,
     executionStackDto,
     stackFrameDto,
-    sourcePositionDto,
     topSourcePositionDto,
   )
 }
@@ -328,8 +332,18 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
     else -> XStackFrameStringEqualityObject(equalityObject.toString())
   }
   val evaluatorDto = XDebuggerEvaluatorDto(isDocumentEvaluator)
-  return XStackFrameDto(id, sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, computeTextPresentation(),
-                        captionInfo(), backgroundInfo(session.project), canDrop(session))
+  val alternativeSourcePosition = session.getFrameSourcePosition(this, XSourceKind.ALTERNATIVE)
+  return XStackFrameDto(
+    id,
+    sourcePosition?.toRpc(),
+    alternativeSourcePosition?.toRpc(),
+    serializedEqualityObject,
+    evaluatorDto,
+    computeTextPresentation(),
+    captionInfo(),
+    backgroundInfo(session.project),
+    canDrop(session)
+  )
 }
 
 internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {

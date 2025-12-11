@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nls
 interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
   suspend fun supportedLanguages(projectId: ProjectId, editorsProviderId: XDebuggerEditorsProviderId, sourcePositionDto: XSourcePositionDto?): List<LanguageDto>
+  suspend fun getAlternativeSourceKindFlow(sessionId: XDebugSessionId): Flow<Boolean>
 
   suspend fun resume(sessionId: XDebugSessionId)
 

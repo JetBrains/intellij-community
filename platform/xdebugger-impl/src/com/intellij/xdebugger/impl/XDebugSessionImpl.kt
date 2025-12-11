@@ -869,9 +869,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   @Deprecated("Update should go via front-end listeners")
   override fun updateExecutionPosition() {
     // Actually, it is just a fallback. All information should go via front-end listeners.
-    if (myDebuggerManager.currentSession == this) {
-      updateExecutionPosition(myProject, currentSourceKind)
-    }
+    updateExecutionPosition(this.asProxy())
   }
 
   val isTopFrameSelected: Boolean
