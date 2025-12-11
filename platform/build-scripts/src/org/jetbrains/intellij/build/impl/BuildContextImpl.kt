@@ -197,6 +197,7 @@ class BuildContextImpl internal constructor(
   }
 
   companion object {
+    @Deprecated("Use `createBuildContext`", ReplaceWith("createBuildContext(projectHome, productProperties, proprietaryBuildTools, options)"))
     suspend fun createContext(
       projectHome: Path,
       productProperties: ProductProperties,

@@ -22,8 +22,8 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -99,7 +99,7 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties, homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
+  return createBuildContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 fun runTestBuild(
@@ -138,7 +138,7 @@ fun runTestBuild(
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
         doRunTestBuild(
-          context = BuildContextImpl.createContext(
+          context = createBuildContext(
             projectHome = homeDir,
             productProperties = productProperties,
             setupTracer = false,
@@ -150,7 +150,7 @@ fun runTestBuild(
               customizer = buildOptionsCustomizer,
             ).also {
               reproducibilityTest.configure(it)
-            }
+            },
           ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
@@ -168,7 +168,7 @@ fun runTestBuild(
   }
   else {
     doRunTestBuild(
-      context = BuildContextImpl.createContext(
+      context = createBuildContext(
         projectHome = homeDir,
         productProperties = productProperties,
         setupTracer = false,

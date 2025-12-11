@@ -8,8 +8,8 @@ import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.collectPluginDescriptors
+import org.jetbrains.intellij.build.impl.createBuildContext
 import java.nio.file.Path
 
 fun runEssentialPluginsTest(
@@ -17,7 +17,7 @@ fun runEssentialPluginsTest(
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
 ): Unit = runBlocking(Dispatchers.Default) {
-  val buildContext = BuildContextImpl.createContext(
+  val buildContext = createBuildContext(
     projectHome = homePath,
     productProperties = productProperties,
     setupTracer = false,

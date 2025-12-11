@@ -82,7 +82,12 @@ suspend fun createCompilationContext(
 ): CompilationContext {
   val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false).asBazelIfNeeded
+  return CompilationContextImpl.createCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = { defaultOutputRoot },
+    options = options,
+    setupTracer = false,
+  ).asBazelIfNeeded
 }
 
 internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHome: Path, artifactDir: Path? = null): BuildPaths {

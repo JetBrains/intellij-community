@@ -9,7 +9,7 @@ import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
@@ -48,12 +48,7 @@ class IdeaCommunityBuildTest {
             skipDependencySetup = true,
             testInfo = testInfo,
           )
-          BuildContextImpl.createContext(
-            projectHome = homePath,
-            productProperties = productProperties,
-            setupTracer = false,
-            options = options,
-          )
+          createBuildContext(projectHome = homePath, productProperties = productProperties, setupTracer = false, options = options)
         },
       ) {
         buildCommunityStandaloneJpsBuilder(targetDir = it.paths.artifactDir.resolve("jps"), context = it)
