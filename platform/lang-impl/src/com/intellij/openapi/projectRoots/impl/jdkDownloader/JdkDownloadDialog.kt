@@ -175,8 +175,12 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .mapNotNull { it.value }
         .map { JdkVersionVendorItem(item = it) }
 
+      val defaultSelectedItem = includedItems.firstOrNull { it.item.isDefaultItem }
+                                ?: includedItems.firstOrNull { !it.item.isPreview }
+                                ?: includedItems.firstOrNull()
+
       JdkVersionItem(jdkVersion,
-                     includedItems.firstOrNull() ?: error("Empty group of includeItems for $jdkVersion"),
+                     defaultSelectedItem ?: error("Empty group of includeItems for $jdkVersion"),
                      includedItems.sortedForUI(),
                      excludedItems.sortedForUI())
     }
