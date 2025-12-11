@@ -115,6 +115,7 @@
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer$Activity"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer$GradleLocalRepositoryIndexUpdater"/>
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.plugins.gradle.autolink.GradleUnlinkedProjectAware"/>
     <externalSystemSettingsListener id="gradle" implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater" order="before external-system"/>
     <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor"/>
