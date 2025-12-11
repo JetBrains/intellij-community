@@ -23,8 +23,8 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.productLayout.util.ModelValidationResult
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
@@ -76,10 +76,10 @@ suspend fun createContentCheckTests(
       computePackageResult(
         productProperties = productProperties,
         testInfo = testInfo,
+        homePath = projectHomePath,
         contentConsumer = {
           result = it
         },
-        homePath = projectHomePath,
         buildTools = buildTools,
       )
       result!!
@@ -231,8 +231,8 @@ private fun getPluginContentKey(item: PluginContentReport): String = item.mainMo
 private suspend fun computePackageResult(
   productProperties: ProductProperties,
   testInfo: TestInfo,
-  contentConsumer: (PackageResult) -> Unit,
   homePath: Path,
+  contentConsumer: (PackageResult) -> Unit,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
 ) {
   productProperties.buildDocAuthoringAssets = false
@@ -264,7 +264,7 @@ private suspend fun computePackageResult(
     it.useReleaseCycleRelatedBundlingRestrictionsForContentReport = false
   }
   doRunTestBuild(
-    context = BuildContextImpl.createContext(
+    context = createBuildContext(
       projectHome = homePath,
       productProperties = productProperties,
       setupTracer = false,

@@ -68,6 +68,27 @@ import kotlin.time.Duration
 @Suppress("SpellCheckingInspection")
 private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
+suspend fun createBuildContext(
+  projectHome: Path,
+  productProperties: ProductProperties,
+  setupTracer: Boolean = true,
+  proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  options: BuildOptions = BuildOptions(),
+): BuildContext {
+  val compilationContext = CompilationContextImpl.createCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+    options = options,
+    setupTracer = setupTracer
+  ).asBazelIfNeeded
+  return BuildContextImpl.createContext(
+    compilationContext = compilationContext,
+    projectHome = projectHome,
+    productProperties = productProperties,
+    proprietaryBuildTools = proprietaryBuildTools,
+  )
+}
+
 class BuildContextImpl internal constructor(
   internal val compilationContext: CompilationContext,
   override val productProperties: ProductProperties,
@@ -183,17 +204,12 @@ class BuildContextImpl internal constructor(
       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
       options: BuildOptions = BuildOptions(),
     ): BuildContext {
-      val compilationContext = CompilationContextImpl.createCompilationContext(
-        projectHome = projectHome,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
-        options = options,
-        setupTracer = setupTracer
-      ).asBazelIfNeeded
-      return createContext(
-        compilationContext = compilationContext,
+      return createBuildContext(
         projectHome = projectHome,
         productProperties = productProperties,
+        setupTracer = setupTracer,
         proprietaryBuildTools = proprietaryBuildTools,
+        options = options,
       )
     }
 

@@ -83,37 +83,47 @@ import kotlin.io.path.relativeTo
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
+suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContext, dependencyModules: List<String> = emptyList()) {
+  checkProductProperties(context)
+  checkPluginModules(mainPluginModules, fieldName = "mainPluginModules", context)
+  copyDependenciesFile(context)
+  context.compileProductionModules()
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
+  val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
+  filterPluginsToPublish(pluginsToPublishEffective, context)
+  val platformLayout = createPlatformLayout(context)
+  val distState = DistributionBuilderState(platformLayout, pluginsToPublishEffective, context)
+  val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+
+  // build required dist/lib components for scrambling of plugins such as Marketplace
+  //val traceContext = Context.current().asContextElement()
+  //val buildPlatformLibJob = coroutineScope {
+  //  async(traceContext + CoroutineName("build platform lib")) {
+  //    buildPlatform(
+  //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
+  //    )
+  //  }
+  //}
+
+  buildNonBundledPlugins(
+    pluginsToPublish = pluginsToPublish,
+    compressPluginArchive = context.options.compressZipFiles,
+    buildPlatformLibJob = null /* buildPlatformLibJob */,
+    state = distState,
+    searchableOptionSet = searchableOptionSet,
+    isUpdateFromSources = false,
+    descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
+    context = context,
+  )
+}
+
 internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
   override suspend fun buildDistributions() {
     buildDistributions(context)
   }
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String>) {
-    checkProductProperties(context)
-    checkPluginModules(mainPluginModules, fieldName = "mainPluginModules", context)
-    copyDependenciesFile(context)
-    context.compileProductionModules()
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
-    val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
-    filterPluginsToPublish(pluginsToPublishEffective, context)
-    val platformLayout = createPlatformLayout(context)
-    val distState = DistributionBuilderState(platformLayout, pluginsToPublishEffective, context)
-    val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
-
-    // build required dist/lib components for scrambling of plugins such as Marketplace
-    //val traceContext = Context.current().asContextElement()
-    //val buildPlatformLibJob = coroutineScope {
-    //  async(traceContext + CoroutineName("build platform lib")) {
-    //    buildPlatform(
-    //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
-    //    )
-    //  }
-    //}
-
-    buildNonBundledPlugins(
-      pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null /* buildPlatformLibJob */, distState, searchableOptionSet, isUpdateFromSources = false,
-      distState.platformLayout.descriptorCacheContainer, context
-    )
+    buildNonBundledPlugins(mainPluginModules = mainPluginModules, dependencyModules = dependencyModules, context = context)
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -807,7 +817,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName
+          mainClass = context.ideMainClassName,
         ),
         ProductInfoLaunchData.create(
           os = OsFamily.LINUX.osName,
@@ -818,7 +828,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
           mainClass = context.ideMainClassName,
-          startupWmClass = getLinuxFrameClass(context)
+          startupWmClass = getLinuxFrameClass(context),
         ),
         ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
@@ -828,7 +838,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName
+          mainClass = context.ideMainClassName,
         )
       )
     }.toList(),
