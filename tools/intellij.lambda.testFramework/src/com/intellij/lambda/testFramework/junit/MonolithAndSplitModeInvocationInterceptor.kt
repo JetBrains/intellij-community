@@ -3,8 +3,6 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
-import com.intellij.lambda.testFramework.utils.toLambdaParams
-import com.intellij.remoteDev.tests.impl.LambdaTestHost
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambdaHelper
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
@@ -15,7 +13,6 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.io.Serializable
 import java.lang.reflect.Method
-import kotlin.reflect.KClass
 
 /**
  * Wrap test method invocations in lambda that later called on the IDE side.
