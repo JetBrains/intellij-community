@@ -645,6 +645,11 @@ pc:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
 com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 - registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - a:unregisterActions(com.intellij.openapi.actionSystem.ActionManager):V
+f:com.intellij.openapi.actionSystem.impl.MenuCancelledControlFlowException
+- java.lang.RuntimeException
+- com.intellij.openapi.diagnostic.ControlFlowException
+- <init>():V
+- <init>(java.lang.Throwable):V
 f:com.intellij.openapi.command.impl.FinishMarkAction
 - getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
 f:com.intellij.openapi.command.impl.StartMarkAction

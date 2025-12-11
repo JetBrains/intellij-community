@@ -20,6 +20,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.maximize
 import com.intellij.ide.ui.normalize
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.impl.MenuCancelledControlFlowException
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ThreadingSupport
@@ -456,6 +457,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     var t = exception
     if (isTestMode()) {
       throw t
+    }
+
+    if (t is MenuCancelledControlFlowException) {
+      return
     }
 
     if (t is ControlFlowException && java.lang.Boolean.getBoolean("report.control.flow.exceptions.in.edt")) {
