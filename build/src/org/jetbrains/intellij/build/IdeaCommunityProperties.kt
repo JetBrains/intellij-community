@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -31,12 +31,14 @@ val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListO
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions,
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
-): BuildContext = BuildContextImpl.createContext(
-  projectHome = projectHome,
-  productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-  setupTracer = true,
-  options = options,
-)
+): BuildContext {
+  return createBuildContext(
+    projectHome = projectHome,
+    productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+    setupTracer = true,
+    options = options,
+  )
+}
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrainsProductProperties() {
   init {
