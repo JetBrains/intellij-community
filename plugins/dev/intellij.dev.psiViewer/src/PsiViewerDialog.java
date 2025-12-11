@@ -16,10 +16,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityKt;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -814,8 +811,10 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
           }
 
           if (myPsiTree.hasFocus()) {
-            myBlockTree.selectNodeFromPsi(element);
-            myStubTree.selectNodeFromPsi(element);
+            WriteIntentReadAction.run(() -> {
+              myBlockTree.selectNodeFromPsi(element);
+              myStubTree.selectNodeFromPsi(element);
+            });
           }
           myPsiViewerPropertiesTabViewModel.setSelectedPsiElement(element);
           updateReferences(element);
