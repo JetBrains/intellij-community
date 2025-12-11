@@ -141,7 +141,9 @@ class PyProtocolInspection : PyInspection() {
             registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", elementName, protocol.name))
           }
           else if (expectedMember.isWritable && !it.isWritable || expectedMember.isDeletable && !it.isDeletable) {
-            registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.not.writable", elementName, protocol.name))
+            if ((expectedMember.element !is PyFunction && it.element !is PyFunction) || expectedMember.isProperty || it.isProperty) {
+              registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.not.writable", elementName, protocol.name))
+            }
           }
         }
     }

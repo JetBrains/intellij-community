@@ -3332,4 +3332,33 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    var: Template = Concrete()
                    """);
   }
+
+  // PY-86249
+  public void testProtocolAndFrozenDataclassWithMethod() {
+    doTestByText("""
+                   import abc
+                   import dataclasses
+                   from typing import Protocol
+                   
+                   
+                   class Proto(Protocol):
+                       @abc.abstractmethod
+                       def to_kwargs(self) -> dict:
+                           pass
+                   
+                   
+                   @dataclasses.dataclass(frozen=True)
+                   class Impl:
+                       name: str
+                   
+                       def to_kwargs(self) -> dict:
+                           return {"name": self.name}
+                   
+                   
+                   def do(arg: Proto) -> None: ...
+                   
+                   
+                   do(Impl(name="vrf1"))
+                   """);
+  }
 }

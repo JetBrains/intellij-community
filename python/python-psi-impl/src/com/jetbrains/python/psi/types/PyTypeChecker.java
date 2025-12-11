@@ -591,11 +591,18 @@ public final class PyTypeChecker {
 
       final PyType protocolElementType = dropSelfIfNeeded(expected, pair.getFirst().getType(), matchContext.context);
       final boolean elementResult = ContainerUtil.exists(subclassElementMembers, subclassElementMember -> {
-        if (protocolMember.isWritable() && !subclassElementMember.isWritable()) {
-          return false;
-        }
-        if (protocolMember.isDeletable() && !subclassElementMember.isDeletable()) {
-          return false;
+        // Ignore read-only checks for methods
+        // Usually methods are writable, but protocol methods are considered read-only
+        if ((!(protocolMember.getElement() instanceof PyFunction) &&
+             !(subclassElementMember.getElement() instanceof PyFunction)) ||
+            (protocolMember.isProperty() || subclassElementMember.isProperty())
+        ) {
+          if (protocolMember.isWritable() && !subclassElementMember.isWritable()) {
+            return false;
+          }
+          if (protocolMember.isDeletable() && !subclassElementMember.isDeletable()) {
+            return false;
+          }
         }
         boolean isProtocolMemberClassVar = protocolMember.isClassVar();
         boolean isSubclassMemberClassVar = subclassElementMember.isClassVar();
