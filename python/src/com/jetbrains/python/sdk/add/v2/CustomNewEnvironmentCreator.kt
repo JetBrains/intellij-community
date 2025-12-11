@@ -33,11 +33,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox<P>
   internal lateinit var executablePath: ValidatedPathField<Version, P, ValidatedPath.Executable<P>>
 
-  open suspend fun onBinarySelection(pathOnFileSystem: P): ValidatedPath.Executable<P> {
-    val binaryToExec = model.fileSystem.getBinaryToExec(pathOnFileSystem)
-    return ValidatedPath.Executable(pathOnFileSystem, binaryToExec.getToolVersion(name))
-  }
-
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       basePythonComboBox = pythonInterpreterComboBox(

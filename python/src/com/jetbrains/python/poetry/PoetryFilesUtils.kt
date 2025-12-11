@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
@@ -91,9 +90,6 @@ class PoetryPyProjectTomlPythonVersionsService : Disposable {
   }
 
   fun getVersionString(moduleFile: VirtualFile): String = getVersion(moduleFile).stringVersion
-
-  fun validateSdkVersions(moduleFile: VirtualFile, sdks: List<Sdk>): List<Sdk> =
-    sdks.filter { getVersion(moduleFile).isValid(it.versionString) }
 
   fun <P : PathHolder> validateInterpretersVersions(moduleFile: VirtualFile, interpreters: Flow<List<PythonSelectableInterpreter<P>>?>): Flow<List<PythonSelectableInterpreter<P>>?> {
     val version = getVersion(moduleFile)

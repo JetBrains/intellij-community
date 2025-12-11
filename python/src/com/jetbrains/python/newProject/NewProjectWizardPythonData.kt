@@ -102,8 +102,7 @@ class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleS
     builder.row { cell(onShowTrigger) }
 
     val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator(
-      errorSink = ShowingMessageErrorSync,
-      module = null,
+        module = null,
     )
 
     sdkPanelBuilder.buildPanel(builder, projectPathFlows)

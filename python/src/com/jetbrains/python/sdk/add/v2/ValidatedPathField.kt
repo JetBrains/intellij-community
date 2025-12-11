@@ -136,10 +136,6 @@ internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
     }
   }
 
-  private val browseFolderActionLister: ActionListener? = createBrowseFolderListener(browseFolderDialogTitle, isFileSelectionMode)?.also {
-    addActionListener(it)
-  }
-
   init {
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {

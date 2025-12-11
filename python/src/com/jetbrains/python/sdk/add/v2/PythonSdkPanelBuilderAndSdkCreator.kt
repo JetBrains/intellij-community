@@ -17,7 +17,6 @@ import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
@@ -61,7 +60,6 @@ interface PySdkPanelBuilder {
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
 internal class PythonSdkPanelBuilderAndSdkCreator(
-  private val errorSink: ErrorSink,
   private val module: Module? = null,
   private val limitExistingEnvironments: Boolean = true,
 ) : PySdkPanelBuilder, PySdkCreator {

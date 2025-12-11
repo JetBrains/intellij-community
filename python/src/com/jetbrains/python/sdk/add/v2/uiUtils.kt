@@ -375,7 +375,6 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
     (editor as ComboBoxWithBrowseButtonEditor<*, P>).setBusy(busy)
   }
 
-  val isBusy: Boolean get() = (editor as ComboBoxWithBrowseButtonEditor<*, P>).isBusy
 }
 
 /**

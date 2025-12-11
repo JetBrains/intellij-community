@@ -18,15 +18,6 @@ import org.jetbrains.annotations.ApiStatus
  * @return List of all installed packages or null if the operation was failed.
  */
 @ApiStatus.Internal
-suspend fun PythonPackageManagerUI.updatePackageBackground(
-  pyPackage: String,
-): List<PythonPackage>? =
-  updatePackagesByNamesBackground(listOf(pyPackage))
-
-/**
- * @return List of all installed packages or null if the operation was failed.
- */
-@ApiStatus.Internal
 suspend fun PythonPackageManagerUI.updatePackagesByNamesBackground(
   packages: List<String>,
 ): List<PythonPackage>? {

@@ -18,9 +18,6 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.console.PyConsoleProcessHandler;
-import com.jetbrains.python.console.PydevConsoleCommunication;
-import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.extensions.ProgressManagerExtKt;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
 import kotlin.jvm.functions.Function0;
@@ -28,8 +25,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.nio.charset.Charset;
 
 public abstract class PythonRemoteInterpreterManager {
   public static final ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
@@ -100,18 +95,6 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public abstract @NotNull SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
-
-  /**
-   * The method is going to be removed when the flag {@code python.use.targets.api} is eliminated.
-   */
-  @ApiStatus.Obsolete
-  public abstract @NotNull PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
-                                                                      @NotNull PythonConsoleView view,
-                                                                      @NotNull PydevConsoleCommunication consoleCommunication,
-                                                                      @NotNull String commandLine,
-                                                                      @NotNull Charset charset,
-                                                                      @Nullable PyRemotePathMapper pathMapper,
-                                                                      @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider);
 
   public abstract String @NotNull [] chooseRemoteFiles(@NotNull Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
     throws ExecutionException, InterruptedException;

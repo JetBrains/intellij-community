@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.ParamsGroup
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.PythonCommandLineState
@@ -33,20 +32,6 @@ private fun getOptionString(name: String, value: Any): String = "--$name=$value"
 
 private fun getOptionString(name: String, value: TargetEnvironmentFunction<*>): TargetEnvironmentFunction<String> =
   value.andThen { it: Any? -> "--$name=$it" }
-
-/**
- * Adds new or replaces existing [PythonCommandLineState.GROUP_SCRIPT]
- * parameters of [this] command line with the path to Python console script
- * (*pydevconsole.py*) and parameters required for running it in the *client*
- * mode.
- *
- * @param port the port that Python console script will connect to
- *
- * @see PythonHelper.CONSOLE
- */
-fun GeneralCommandLine.setupPythonConsoleScriptInClientMode(sdk: Sdk, port: Int) {
-  initializePydevConsoleScriptGroup(PythonSdkFlavor.getFlavor(sdk)).appendClientModeParameters(port)
-}
 
 /**
  * Adds new or replaces existing [PythonCommandLineState.GROUP_SCRIPT]
