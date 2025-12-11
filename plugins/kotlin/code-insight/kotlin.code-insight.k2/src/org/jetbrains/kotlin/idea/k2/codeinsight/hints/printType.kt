@@ -93,6 +93,15 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text(KtTokens.SUSPEND_KEYWORD.value)
                 text(" ")
             }
+            val contextReceivers = type.contextReceivers
+            if (contextReceivers.isNotEmpty()) {
+                text("context(")
+                contextReceivers.forEachIndexed { index, context ->
+                    if (index != 0) text(", ")
+                    printKtType(context.type)
+                }
+                text(") ")
+            }
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
