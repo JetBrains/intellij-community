@@ -23,7 +23,7 @@ import java.nio.file.Path
 import kotlin.io.path.writeLines
 
 @Internal
-class ArchivedCompilationContext(
+class ArchivedCompilationContext internal constructor(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(
     paths = delegate.paths,

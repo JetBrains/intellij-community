@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -15,8 +14,7 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
-@Internal
-class ArchivedCompilationOutputStorage(
+internal class ArchivedCompilationOutputStorage(
   private val paths: BuildPaths,
   private val classesOutputDirectory: Path,
   private val messages: BuildMessages,
