@@ -5,8 +5,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.injection.KotlinConcatenationInjectionTestBase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 class K2KotlinConcatenationInjectionTest: KotlinConcatenationInjectionTestBase() {
 

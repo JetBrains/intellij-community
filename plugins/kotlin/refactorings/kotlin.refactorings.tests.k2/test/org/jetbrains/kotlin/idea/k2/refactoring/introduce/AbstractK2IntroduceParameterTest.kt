@@ -6,7 +6,6 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2IntroduceParameterTest : AbstractExtractionTest() {
 

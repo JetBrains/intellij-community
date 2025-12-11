@@ -47,6 +47,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "//java/java-runtime:rt",
     "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinc-analysis-api-platform-interface",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

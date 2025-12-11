@@ -34,10 +34,10 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/code-insight/structural-search-k2:kotlin-codeInsight-structuralSearch",
-    "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//platform/duplicates-analysis",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` end

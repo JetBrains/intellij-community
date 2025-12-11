@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.k2.inspections.tests
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 import kotlin.io.path.Path
 

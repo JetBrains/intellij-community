@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementWithLibTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

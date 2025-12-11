@@ -3,11 +3,11 @@ package org.jetbrains.kotlin.idea.fir.navigation
 
 
 import com.intellij.testFramework.TestIndexingModeSupporter
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.name

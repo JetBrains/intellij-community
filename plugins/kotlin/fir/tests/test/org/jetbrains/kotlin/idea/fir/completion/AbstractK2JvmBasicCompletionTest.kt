@@ -7,7 +7,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTestBase() {
 

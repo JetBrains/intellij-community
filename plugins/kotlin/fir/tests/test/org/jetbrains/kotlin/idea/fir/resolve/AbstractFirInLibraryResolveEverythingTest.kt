@@ -5,9 +5,9 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractFirInLibraryResolveEverythingTest : KotlinLightCodeInsightFixtureTestCase() {

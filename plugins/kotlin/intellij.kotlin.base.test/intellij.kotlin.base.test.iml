@@ -37,5 +37,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-platform-interface" level="project" />
   </component>
 </module>

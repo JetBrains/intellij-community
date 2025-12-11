@@ -30,7 +30,6 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
-    "//plugins/kotlin/fir/tests:tests_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/plugin",
@@ -40,6 +39,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` end
