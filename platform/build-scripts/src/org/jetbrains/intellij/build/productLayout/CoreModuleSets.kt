@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("GrazieInspection")
 
 package org.jetbrains.intellij.build.productLayout
@@ -156,6 +156,7 @@ object CoreModuleSets {
     embeddedModule("intellij.libraries.jediterm.ui")
     embeddedModule("intellij.libraries.jgoodies.common")
     embeddedModule("intellij.libraries.jgoodies.forms")
+    embeddedModule("intellij.libraries.jsch.agent.proxy")
     embeddedModule("intellij.libraries.miglayout.swing")
     embeddedModule("intellij.libraries.pty4j")
     embeddedModule("intellij.libraries.sshj")

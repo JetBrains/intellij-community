@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jsch.agent.proxy` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jsch-agent-proxy_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsch-agent-proxy",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jsch-agent-proxy_resources"],
+  exports = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"],
+  runtime_deps = ["@lib//:libraries-jsch-agent-proxy-jsch-agent-proxy"]
+)
+### auto-generated section `build intellij.libraries.jsch.agent.proxy` end
