@@ -25,6 +25,7 @@ fun PrefixMatcher.toRpc(itemId: RpcCompletionItemId): RpcPrefixMatcher {
   if (this.javaClass == CamelHumpMatcher::class.java) {
     this as CamelHumpMatcher
     return RpcPrefixMatcher.CamelHumpMatcher(this.prefix, this.isCaseSensitive, this.isTypoTolerant)
+      .also { RpcCompletionStat.registerMatcher(this) }
   }
 
   return RpcPrefixMatcher.Backend(id = itemId, prefix = this.prefix)

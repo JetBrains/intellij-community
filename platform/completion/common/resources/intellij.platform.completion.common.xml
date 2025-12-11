@@ -3,5 +3,9 @@
     <!--suppress PluginXmlRegistrationCheck -->
     <projectService serviceInterface="com.intellij.codeInsight.AutoPopupControllerHelper"
                     serviceImplementation="com.intellij.platform.completion.common.AutoPopupControllerHelperImpl"/>
+
+    <registryKey key="remdev.completion.on.frontend.stat"
+                 defaultValue="false"
+                 description="Enables collecting statistics for non-frontend completion things"/>
   </extensions>
 </idea-plugin>
