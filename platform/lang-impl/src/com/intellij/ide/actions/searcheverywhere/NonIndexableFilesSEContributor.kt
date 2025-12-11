@@ -125,7 +125,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
         if (matchingDegree > 0) {
           val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: return@iterateNonIndexableFiles true
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, matchingDegree)
-          runReadAction { consumer.process(itemDescriptor) }
+          ReadAction.computeCancellable<Boolean, Throwable> {
+            consumer.process(itemDescriptor)
+          }
         }
         else {
           suboptimalMatches.add(file)
