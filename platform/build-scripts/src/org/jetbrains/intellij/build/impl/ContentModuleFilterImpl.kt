@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductMode
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.jps.model.JpsProject
 
@@ -38,9 +38,9 @@ internal object IncludeAllContentModuleFilter : ContentModuleFilter {
   override fun toString(): String = "IncludeAllContentModuleFilter"
 }
 
-internal class SkipUnresolvedOptionalContentModuleFilter(private val context: BuildContext) : ContentModuleFilter {
+internal class SkipUnresolvedOptionalContentModuleFilter(private val outputProvider: ModuleOutputProvider) : ContentModuleFilter {
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
-    return context.findModule(moduleName) != null
+    return outputProvider.findModule(moduleName) != null
   }
   
   override fun toString(): String = "SkipUnresolvedOptionalContentModuleFilter"

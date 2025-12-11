@@ -22,7 +22,7 @@ import java.nio.file.Path
  * - File I/O runs on Dispatchers.IO to avoid blocking coroutine threads
  */
 internal class ModuleDescriptorCache(
-  private val moduleOutputProvider: ModuleOutputProvider,
+  private val outputProvider: ModuleOutputProvider,
   scope: CoroutineScope,
 ) {
   data class DescriptorInfo(
@@ -49,7 +49,7 @@ internal class ModuleDescriptorCache(
    * Analyzes a module to find its descriptor and production dependencies.
    */
   private suspend fun analyzeModule(moduleName: String): DescriptorInfo? {
-    val jpsModule = moduleOutputProvider.findRequiredModule(moduleName)
+    val jpsModule = outputProvider.findRequiredModule(moduleName)
     val descriptorPath = findFileInModuleSources(module = jpsModule, relativePath = "$moduleName.xml", onlyProductionSources = true) ?: return null
 
     // Read file content once and reuse it

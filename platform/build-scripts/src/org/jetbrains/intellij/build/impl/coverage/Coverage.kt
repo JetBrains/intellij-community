@@ -65,7 +65,7 @@ internal class CoverageImpl(
     val libraryName = "jetbrains.intellij.deps.coverage.reporter"
     val libraryModule = "intellij.platform.buildScripts"
     val jarName = "intellij-coverage-agent"
-    val jar = context.findLibraryRoots(libraryName, moduleLibraryModuleName = libraryModule)
+    val jar = context.outputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName = libraryModule)
                 .firstOrNull { it.name.startsWith(jarName) && it.extension == "jar" }
               ?: error("Can't find the '$jarName' jar in '$libraryName' library")
     check(jar.exists()) { "'$jar' doesn't exist" }
@@ -102,7 +102,7 @@ internal class CoverageImpl(
   private val coveredModulesWithTransitiveDependencies: Collection<JpsModule> by lazy {
     coveredModuleNames.flatMap {
       JpsJavaExtensionService
-        .dependencies(context.findRequiredModule(it))
+        .dependencies(context.outputProvider.findRequiredModule(it))
         .withoutLibraries().withoutSdk().recursively()
         .includedIn(JpsJavaClasspathKind.runtime(true))
         .modules
@@ -157,7 +157,7 @@ internal class CoverageImpl(
 
   private val outputRoots: List<Path> by lazy {
     val outputRoots = coveredModulesWithTransitiveDependencies.flatMap {
-      context.getModuleOutputRoots(it, false)
+      context.outputProvider.getModuleOutputRoots(it, false)
     }
     check(outputRoots.any()) {
       "No output roots for '${coveredModulesWithTransitiveDependencies.map { it.name }}'"

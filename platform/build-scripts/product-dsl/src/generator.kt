@@ -59,7 +59,7 @@ internal fun generateProductXml(
   spec: ProductModulesContentSpec,
   productName: String,
   productPropertiesClass: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   projectRoot: Path,
   isUltimateBuild: Boolean,
   dryRunCollector: DryRunCollector? = null,
@@ -73,7 +73,7 @@ internal fun generateProductXml(
   // Note: Module set XML files themselves always contain inlined module definitions
   val buildResult = buildProductContentXml(
     spec = spec,
-    moduleOutputProvider = moduleOutputProvider,
+    outputProvider = outputProvider,
     inlineXmlIncludes = false,
     inlineModuleSets = false,
     productPropertiesClass = productPropertiesClass,
@@ -103,7 +103,7 @@ internal fun generateProductXml(
  * Generates module alias, xi:include directives (or inlined content), and `<content>` blocks for each module set.
  * 
  * @param spec The product modules specification
- * @param moduleOutputProvider Provider for module output paths
+ * @param outputProvider Provider for module output paths
  * @param inlineXmlIncludes Whether to inline legacy XML includes (vs. using xi:include)
  * @param inlineModuleSets Controls how module sets are rendered in PRODUCT XML files only.
  *                         - false (default): Use xi:include directives to reference module set XML files
@@ -118,7 +118,7 @@ internal fun generateProductXml(
  */
 fun buildProductContentXml(
   spec: ProductModulesContentSpec,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   inlineXmlIncludes: Boolean,
   inlineModuleSets: Boolean,
   productPropertiesClass: String,
@@ -146,7 +146,7 @@ fun buildProductContentXml(
 
     // Generate xi:include directives or inline content
     if (spec.deprecatedXmlIncludes.isNotEmpty()) {
-      generateXIncludes(spec = spec, moduleOutputProvider = moduleOutputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this, isUltimateBuild = isUltimateBuild)
+      generateXIncludes(spec = spec, outputProvider = outputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this, isUltimateBuild = isUltimateBuild)
     }
 
     // Generate module sets as xi:includes or inline content blocks

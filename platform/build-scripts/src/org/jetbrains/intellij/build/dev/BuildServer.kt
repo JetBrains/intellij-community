@@ -133,7 +133,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
           val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
           createProductProperties(
             productConfiguration = productConfiguration,
-            moduleOutputProvider = compilationContext,
+            outputProvider = compilationContext.outputProvider,
             projectDir = request.projectDir,
             platformPrefix = request.platformPrefix,
           )

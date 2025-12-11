@@ -84,16 +84,16 @@ suspend fun runModuleSetMain(
   communitySourceFile: String,
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend (moduleOutputProvider: ModuleOutputProvider) -> Unit,
+  generateXmlImpl: suspend (outputProvider: ModuleOutputProvider) -> Unit,
 ) {
   withoutTracer {
     // Parse `--json` arg with optional filter
     val jsonArg = args.firstOrNull { it.startsWith("--json") }
     coroutineScope {
-      val moduleOutputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
+      val outputProvider = createModuleOutputProvider(projectRoot = projectRoot, scope = this)
       if (jsonArg == null) {
         // Default mode: Generate XML files
-        generateXmlImpl(moduleOutputProvider)
+        generateXmlImpl(outputProvider)
       }
       else {
         jsonResponse(
@@ -104,7 +104,7 @@ suspend fun runModuleSetMain(
           projectRoot = projectRoot,
           testProducts = testProducts,
           jsonArg = jsonArg,
-          moduleOutputProvider = moduleOutputProvider,
+          outputProvider = outputProvider,
         )
       }
     }
@@ -119,7 +119,7 @@ private suspend fun jsonResponse(
   projectRoot: Path,
   testProducts: List<Pair<String, ProductModulesContentSpec>>,
   jsonArg: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
 ) {
   // Prepare all module sets with metadata
   val communityModuleSetsWithMeta = communityModuleSets.map {
@@ -146,7 +146,7 @@ private suspend fun jsonResponse(
   val allModuleSets = communityModuleSetsWithMeta + ultimateModuleSetsWithMeta
 
   // Discover regular products and add passed test products
-  val regularProducts = discoverAllProducts(projectRoot, moduleOutputProvider).asSequence().map {
+  val regularProducts = discoverAllProducts(projectRoot, outputProvider).asSequence().map {
     // For test products (properties = null), use "test-product" as source file
     val props = it.properties // Store in local val to enable smart cast
     val sourceFile = if (props == null) {
@@ -154,12 +154,7 @@ private suspend fun jsonResponse(
     }
     else {
       // Use JPS-based lookup to find actual source file in module source roots
-      findProductPropertiesSourceFile(
-        buildModules = it.config.modules,
-        productPropertiesClass = props.javaClass,
-        moduleOutputProvider = moduleOutputProvider,
-        projectRoot = projectRoot
-      )
+      findProductPropertiesSourceFile(buildModules = it.config.modules, productPropertiesClass = props.javaClass, outputProvider = outputProvider, projectRoot = projectRoot)
     }
     ProductSpec(
       name = it.name,
@@ -187,7 +182,7 @@ private suspend fun jsonResponse(
     products = (regularProducts + testProductSpecs).toList(),
     projectRoot = projectRoot,
     filter = parseJsonArgument(jsonArg),
-    moduleOutputProvider = moduleOutputProvider,
+    outputProvider = outputProvider,
   )
 }
 

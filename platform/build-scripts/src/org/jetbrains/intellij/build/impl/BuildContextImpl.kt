@@ -141,7 +141,7 @@ class BuildContextImpl internal constructor(
 
   private var builtinModulesData: BuiltinModulesFileData? = null
 
-  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this.compilationContext) }
+  internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(outputProvider) }
 
   override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
 
@@ -277,7 +277,7 @@ class BuildContextImpl internal constructor(
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
-      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, context = this@BuildContextImpl)
+      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, outputProvider = outputProvider)
     }
     else {
       EmptyFrontendModuleFilter
@@ -291,7 +291,7 @@ class BuildContextImpl internal constructor(
   private fun computeContentModuleFilter(): ContentModuleFilter {
     if (productProperties.productMode == ProductMode.MONOLITH) {
       if (productProperties.productLayout.skipUnresolvedContentModules) {
-        return SkipUnresolvedOptionalContentModuleFilter(context = this)
+        return SkipUnresolvedOptionalContentModuleFilter(outputProvider)
       }
       return IncludeAllContentModuleFilter
     }
@@ -457,7 +457,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
-    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = this)
+    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, provider = outputProvider)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {

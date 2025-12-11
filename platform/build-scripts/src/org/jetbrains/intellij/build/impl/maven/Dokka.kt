@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -13,19 +13,19 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 
+private const val moduleWithDokka = "intellij.libraries.dokka"
+
 /**
  * Both Javadoc and KDoc are processed, see https://kotlinlang.org/docs/dokka-introduction.html
  */
 @OptIn(ExperimentalPathApi::class)
-internal class Dokka(private val context: BuildContext) {
-  private val moduleWithDokka = "intellij.libraries.dokka"
-
+internal class Dokka(private val context: CompilationContext) {
   /**
    * See https://kotlinlang.org/docs/dokka-cli.html
    */
   private val cli: Path by lazy {
     val libraryName = "jetbrains.dokka.cli"
-    val jars = context.findLibraryRoots(libraryName, moduleLibraryModuleName = moduleWithDokka)
+    val jars = context.outputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName = moduleWithDokka)
     jars.singleOrNull() ?: error("Only one jar is expected in $libraryName but found $jars")
   }
 
@@ -33,8 +33,8 @@ internal class Dokka(private val context: BuildContext) {
    * See https://kotlinlang.org/docs/dokka-javadoc.html
    */
   private val pluginsClasspath: List<Path> by lazy {
-    context.findLibraryRoots("jetbrains.dokka.javadoc.plugin", moduleLibraryModuleName = moduleWithDokka) +
-    context.findLibraryRoots("jetbrains.dokka.analysis.kotlin.descriptors", moduleLibraryModuleName = moduleWithDokka)
+    context.outputProvider.findLibraryRoots("jetbrains.dokka.javadoc.plugin", moduleLibraryModuleName = moduleWithDokka) +
+    context.outputProvider.findLibraryRoots("jetbrains.dokka.analysis.kotlin.descriptors", moduleLibraryModuleName = moduleWithDokka)
   }
 
   /**

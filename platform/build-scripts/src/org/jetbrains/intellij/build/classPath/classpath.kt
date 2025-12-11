@@ -130,7 +130,7 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   context: BuildContext,
 ): Set<String> {
   val pluginModule = context.findRequiredModule(pluginMainModule)
-  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context)
+  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context.outputProvider)
   val pluginXmlContent = pluginXmlBytes.decodeToString()
   val rootElement = JDOMUtil.load(pluginXmlContent)
   if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
@@ -193,7 +193,12 @@ fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescri
   )
   for (content in mainPluginDescriptor.getChildren("content")) {
     for (moduleElement in content.getChildren("module")) {
-      resolveAndEmbedContentModuleDescriptor(moduleElement = moduleElement, descriptorCache = platformDescriptorCache, xIncludeResolver = xIncludeResolver, context = context)
+      resolveAndEmbedContentModuleDescriptor(
+        moduleElement = moduleElement,
+        descriptorCache = platformDescriptorCache,
+        xIncludeResolver = xIncludeResolver,
+        outputProvider = context.outputProvider,
+      )
     }
   }
 

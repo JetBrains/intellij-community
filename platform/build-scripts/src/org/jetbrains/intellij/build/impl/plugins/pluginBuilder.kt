@@ -15,6 +15,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
@@ -117,7 +118,7 @@ private suspend fun CoroutineScope.buildPlugin(
         mainPluginModule = pluginLayout.mainModule,
         includedModules = pluginLayout.includedModules,
         moduleExcludes = pluginLayout.moduleExcludes,
-        context = context,
+        outputProvider = context.outputProvider,
       )
     }
 
@@ -178,11 +179,11 @@ private fun checkOutputOfPluginModules(
   mainPluginModule: String,
   includedModules: Collection<ModuleItem>,
   moduleExcludes: Map<String, List<String>>,
-  context: BuildContext,
+  outputProvider: ModuleOutputProvider,
 ) {
   for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
     if (module != "intellij.java.guiForms.rt" ||
-        !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), context)) {
+        !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), outputProvider)) {
       continue
     }
 
@@ -194,8 +195,13 @@ private fun checkOutputOfPluginModules(
   }
 }
 
-private fun containsFileInOutput(moduleName: String, @Suppress("SameParameterValue") filePath: String, excludes: Collection<String>, context: BuildContext): Boolean {
-  val exists = hasModuleOutputPath(module = context.findRequiredModule(moduleName), relativePath = filePath, context = context)
+private fun containsFileInOutput(
+  moduleName: String,
+  @Suppress("SameParameterValue") filePath: String,
+  excludes: Collection<String>,
+  outputProvider: ModuleOutputProvider,
+): Boolean {
+  val exists = hasModuleOutputPath(module = outputProvider.findRequiredModule(moduleName), relativePath = filePath, outputProvider = outputProvider)
   if (!exists) {
     return false
   }

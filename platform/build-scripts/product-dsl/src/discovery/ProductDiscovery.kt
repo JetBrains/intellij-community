@@ -61,14 +61,14 @@ private val CLASS_TO_FILE_NAME_OVERRIDES = mapOf(
  *
  * @param buildModules List of build module names from dev-build.json (e.g., ["intellij.goland.build"])
  * @param productPropertiesClass The ProductProperties class to find
- * @param moduleOutputProvider Provider for accessing JPS modules
+ * @param outputProvider Provider for accessing JPS modules
  * @param projectRoot Project root path for making paths relative
  * @return Relative path to the source file
  */
 fun findProductPropertiesSourceFile(
   buildModules: List<String>,
   productPropertiesClass: Class<*>,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   projectRoot: Path,
 ): String {
   val className = productPropertiesClass.name
@@ -80,7 +80,7 @@ fun findProductPropertiesSourceFile(
 
   // Search each build module's source roots
   for (buildModuleName in buildModules) {
-    val jpsModule = moduleOutputProvider.findModule(buildModuleName) ?: continue
+    val jpsModule = outputProvider.findModule(buildModuleName) ?: continue
 
     // Search production source roots (not test roots)
     val sourceFile = jpsModule.sourceRoots

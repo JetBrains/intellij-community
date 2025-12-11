@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
-interface CompilationContext : ModuleOutputProvider {
+interface CompilationContext {
   val options: BuildOptions
   val messages: BuildMessages
   val paths: BuildPaths
@@ -20,6 +20,10 @@ interface CompilationContext : ModuleOutputProvider {
   val dependenciesProperties: DependenciesProperties
   val bundledRuntime: BundledRuntime
   val compilationData: JpsCompilationData
+
+  val outputProvider: ModuleOutputProvider
+
+  fun findRequiredModule(moduleName: String): JpsModule = outputProvider.findRequiredModule(moduleName)
 
   fun isStepSkipped(step: String): Boolean = options.buildStepsToSkip.contains(step)
 
@@ -39,24 +43,6 @@ interface CompilationContext : ModuleOutputProvider {
   val classesOutputDirectory: Path
 
   suspend fun getOriginalModuleRepository(): OriginalModuleRepository
-
-  /**
-   * A directory or a .jar file.
-   */
-  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests)"))
-  fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path {
-    val outputRoots = getModuleOutputRoots(module, forTests)
-    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
-  }
-
-  /**
-   * A directory or a .jar file.
-   */
-  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests = true)"))
-  suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
-    val outputRoots = getModuleOutputRoots(module, forTests = true)
-    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
-  }
 
   suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
 

@@ -283,13 +283,13 @@ internal fun cleanupOrphanedModuleSetFiles(
  * If the module set has an outputModule specified, uses that module's resources directory.
  * Otherwise, uses the default outputDir.
  */
-private fun resolveOutputDir(moduleSet: ModuleSet, defaultOutputDir: Path, moduleOutputProvider: ModuleOutputProvider?): Path {
+private fun resolveOutputDir(moduleSet: ModuleSet, defaultOutputDir: Path, outputProvider: ModuleOutputProvider?): Path {
   val outputModuleName = moduleSet.outputModule
   if (outputModuleName != null) {
-    require(moduleOutputProvider != null) {
+    require(outputProvider != null) {
       "ModuleOutputProvider is required when module set '${moduleSet.name}' specifies outputModule='$outputModuleName'"
     }
-    val module = moduleOutputProvider.findRequiredModule(outputModuleName)
+    val module = outputProvider.findRequiredModule(outputModuleName)
     val resourceRoot = module.sourceRoots.firstOrNull { it.rootType == JavaResourceRootType.RESOURCE }
       ?: error("No resource root found for module '$outputModuleName' (required by module set '${moduleSet.name}')")
     return resourceRoot.path.resolve("META-INF")
@@ -308,7 +308,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   obj: Any,
   outputDir: Path,
   label: String,
-  moduleOutputProvider: ModuleOutputProvider? = null,
+  outputProvider: ModuleOutputProvider? = null,
   dryRunCollector: DryRunCollector? = null,
 ): ModuleSetGenerationResult = coroutineScope {
   Files.createDirectories(outputDir)
@@ -318,7 +318,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   // Generate all module set XML files first (in parallel)
   val fileResults = moduleSets.map { moduleSet ->
     async {
-      val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
+      val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
       generateModuleSetXml(moduleSet = moduleSet, outputDir = targetOutputDir, label = label, dryRunCollector = dryRunCollector)
     }
   }.awaitAll()
@@ -326,7 +326,7 @@ internal suspend fun doGenerateAllModuleSetsInternal(
   // Build map of output directory -> generated file names (for cleanup aggregation)
   val outputDirToGeneratedFiles = HashMap<Path, MutableSet<String>>()
   for ((moduleSet, fileResult) in moduleSets.zip(fileResults)) {
-    val targetOutputDir = resolveOutputDir(moduleSet, outputDir, moduleOutputProvider)
+    val targetOutputDir = resolveOutputDir(moduleSet, outputDir, outputProvider)
     outputDirToGeneratedFiles.computeIfAbsent(targetOutputDir) { HashSet() }.add(fileResult.fileName)
   }
 

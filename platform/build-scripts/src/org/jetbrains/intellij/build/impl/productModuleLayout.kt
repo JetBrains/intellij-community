@@ -9,6 +9,7 @@ import com.intellij.platform.plugins.parser.impl.elements.xmlValue
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -54,7 +55,7 @@ internal fun processAndGetProductPluginContentModules(
   else {
     val buildResult = buildProductContentXml(
       spec = programmaticModulesSpec,
-      moduleOutputProvider = context,
+      outputProvider = context.outputProvider,
       inlineXmlIncludes = true,
       inlineModuleSets = true,
       productPropertiesClass = context.productProperties::class.java.name,
@@ -75,7 +76,7 @@ internal fun processAndGetProductPluginContentModules(
   // be specified in an included file. This is done not only for performance but for correctness.
   val xIncludeResolver = XIncludeElementResolverImpl(
     searchPath = listOf(DescriptorSearchScope(includedPlatformModulesPartialList, descriptorCache)),
-    context = context
+    context = context,
   )
   resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
@@ -83,8 +84,6 @@ internal fun processAndGetProductPluginContentModules(
   val moduleItems = LinkedHashSet<ModuleItem>()
   filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
     processProductModule(
-      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.xmlValue,
-      moduleName = moduleName,
       moduleElement = moduleElement,
       frontendModuleFilter = frontendModuleFilter,
       result = moduleItems,
@@ -92,6 +91,8 @@ internal fun processAndGetProductPluginContentModules(
       moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
       descriptorCache = descriptorCache,
       xIncludeResolver = xIncludeResolver,
+      moduleName = moduleName,
+      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.xmlValue,
       context = context,
     )
   }
@@ -146,9 +147,9 @@ private fun processProductModule(
   moduleToIncludeDependenciesOverride: Map<String, Boolean>? = null,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
-  context: BuildContext,
   moduleName: String,
   isEmbedded: Boolean,
+  context: CompilationContext,
 ) {
   val isInScrambledFile = isEmbedded && isModuleCloseSource(moduleName = moduleName, context = context)
   val relativeOutFile = if (isInScrambledFile) {
@@ -184,7 +185,7 @@ private fun processProductModule(
       moduleElement = moduleElement,
       descriptorCache = descriptorCache,
       xIncludeResolver = xIncludeResolver,
-      context = context,
+      outputProvider = context.outputProvider,
     )
   }
   // For Gateway or a module-based loader, where PLUGIN_CLASSPATH isn’t used, performance will be slightly affected
@@ -193,7 +194,7 @@ private fun processProductModule(
   // We prefer not to increase code complexity without a strong reason.
 }
 
-private fun isModuleCloseSource(moduleName: String, context: BuildContext): Boolean {
+private fun isModuleCloseSource(moduleName: String, context: CompilationContext): Boolean {
   if (moduleName.endsWith(".resources") || moduleName.endsWith(".icons") || moduleName.startsWith(LIB_MODULE_PREFIX)) {
     return false
   }
@@ -203,7 +204,7 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
     return false
   }
 
-  val sourceRoots = context.findRequiredModule(moduleName).sourceRoots.filter { it.rootType == JavaSourceRootType.SOURCE }
+  val sourceRoots = context.outputProvider.findRequiredModule(moduleName).sourceRoots.filter { it.rootType == JavaSourceRootType.SOURCE }
   if (sourceRoots.isEmpty()) {
     return false
   }

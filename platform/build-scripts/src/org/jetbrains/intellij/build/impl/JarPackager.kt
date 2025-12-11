@@ -306,7 +306,7 @@ class JarPackager private constructor(
 
     val module = context.findRequiredModule(moduleName)
     val useTestModuleOutput = helper.isTestPluginModule(moduleName, module)
-    val moduleOutputRoots = context.getModuleOutputRoots(module, forTests = useTestModuleOutput)
+    val moduleOutputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = useTestModuleOutput)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
     val packToDir = context.options.isUnpackedDist &&
@@ -483,7 +483,7 @@ class JarPackager private constructor(
         packLibFilesIntoModuleJar(
           asset = asset.value,
           item = item,
-          files = getLibraryRoots(library, context),
+          files = getLibraryRoots(library, context.outputProvider),
           projectLibraryData = projectLibraryData,
           library = library,
         )
@@ -495,7 +495,7 @@ class JarPackager private constructor(
         }
 
         val targetFile = outDir.resolve(item.relativeOutputFile)
-        val files = getLibraryFiles(library, context, copiedFiles, targetFile)
+        val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = context.outputProvider)
         if (layout is PluginLayout && item.relativeOutputFile == layout.getMainJarName()) {
           if (files.size > 1) {
             for (i in (files.size - 1) downTo 0) {
@@ -600,7 +600,7 @@ class JarPackager private constructor(
       }
 
       val asset = getJarAsset(targetFile, relativePath)
-      val files = getLibraryFiles(library = library, context, copiedFiles = copiedFiles, targetFile = targetFile)
+      val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = context.outputProvider)
       filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativePath, projectLibraryData = null)
     }
   }
@@ -645,6 +645,7 @@ class JarPackager private constructor(
       return LinkedHashMap()
     }
 
+    val outputProvider = context.outputProvider
     val projectLibs = layout.includedProjectLibraries.sortedBy { it.libraryName }
     val toMerge = LinkedHashMap<JpsLibrary, List<Path>>()
     for (libraryData in projectLibs) {
@@ -664,7 +665,7 @@ class JarPackager private constructor(
 
       val outPath = libraryData.outPath
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
-        toMerge.put(library, getLibraryFiles(library = library, moduleOutputProvider = context, copiedFiles = copiedFiles, targetFile = null))
+        toMerge.put(library, getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = null, outputProvider = outputProvider))
         continue
       }
 
@@ -673,7 +674,7 @@ class JarPackager private constructor(
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
           val asset = getJarAsset(targetFile, outPath)
-          val files = getLibraryFiles(library, moduleOutputProvider = context, copiedFiles, targetFile)
+          val files = getLibraryFiles(library, copiedFiles, targetFile, outputProvider = outputProvider)
           filesToSourceWithMapping(asset, files, library, outPath, libraryData)
           continue
         }
@@ -689,10 +690,14 @@ class JarPackager private constructor(
       if (packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
         val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-        addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, moduleOutputProvider = context, copiedFiles, targetFile))
+        addLibrary(
+          targetFile = targetFile,
+          relativeOutputFile = relativeOutputFile,
+          files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile, outputProvider = outputProvider)
+        )
       }
       else {
-        for (file in getLibraryRoots(library, context)) {
+        for (file in getLibraryRoots(library, outputProvider)) {
           var fileName = file.fileName.toString()
           if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
             fileName = removeVersionFromJar(fileName)
@@ -825,8 +830,8 @@ private fun removeVersionFromJar(fileName: String): String {
   return if (matcher.matches()) "${matcher.group(1)}.jar" else fileName
 }
 
-private fun getLibraryFiles(library: JpsLibrary, moduleOutputProvider: ModuleOutputProvider, copiedFiles: MutableMap<CopiedForKey, CopiedFor>, targetFile: Path?): MutableList<Path> {
-  val files = getLibraryRoots(library, moduleOutputProvider).toMutableList()
+private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<CopiedForKey, CopiedFor>, targetFile: Path?, outputProvider: ModuleOutputProvider): MutableList<Path> {
+  val files = getLibraryRoots(library, outputProvider).toMutableList()
   val iterator = files.iterator()
   while (iterator.hasNext()) {
     val file = iterator.next()
@@ -873,8 +878,8 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
   )
 }
 
-fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
-  val outputs = context.getModuleOutputRoots(module)
+fun moduleOutputAsSource(module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes, outputProvider: ModuleOutputProvider): Source {
+  val outputs = outputProvider.getModuleOutputRoots(module)
   if (outputs.size != 1) {
     throw IllegalStateException("Supports only one module output for module '${module.name}', but got ${outputs.size}: $outputs")
   }
@@ -891,7 +896,7 @@ fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, exclude
   }
 }
 
-fun createModuleSourcesNamesFilter(excludes: List<PathMatcher>): (String) -> Boolean {
+internal fun createModuleSourcesNamesFilter(excludes: List<PathMatcher>): (String) -> Boolean {
   return { name ->
     val p = Path.of(name)
     excludes.none { it.matches(p) }
@@ -1177,7 +1182,7 @@ private class NativeFileHandlerImpl(private val context: BuildContext) : NativeF
   }
 }
 
-suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: BuildContext, dryRun: Boolean = false) {
+suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: CompilationContext, dryRun: Boolean = false) {
   if (dryRun) {
     return
   }
@@ -1186,8 +1191,8 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
     buildJar(
       targetFile = targetFile,
       sources = moduleNames.flatMap { moduleName ->
-        val module = context.findRequiredModule(moduleName)
-        context.getModuleOutputRoots(module).mapNotNull { output ->
+        val module = context.outputProvider.findRequiredModule(moduleName)
+        context.outputProvider.getModuleOutputRoots(module).mapNotNull { output ->
           createModuleSource(module = module, outputDir = output, excludes = commonModuleExcludes)
         }
       },

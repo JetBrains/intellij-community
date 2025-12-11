@@ -56,17 +56,17 @@ internal data class DependencyPathResult(
  * This queries the JPS model to find production runtime dependencies.
  *
  * @param moduleName The module name to query
- * @param moduleOutputProvider Provider for accessing JPS modules
+ * @param outputProvider Provider for accessing JPS modules
  * @param includeTransitive If true, collects ALL transitive dependencies (BFS traversal)
  * @return Module dependencies result with direct deps, and optionally transitive deps
  */
 internal fun getModuleDependencies(
   moduleName: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   includeTransitive: Boolean = false
 ): ModuleDependenciesResult {
   try {
-    val jpsModule = moduleOutputProvider.findModule(moduleName)
+    val jpsModule = outputProvider.findModule(moduleName)
     if (jpsModule == null) {
       return ModuleDependenciesResult(
         moduleName = moduleName,
@@ -81,7 +81,7 @@ internal fun getModuleDependencies(
       .toList()
 
     val transitiveDeps = if (includeTransitive) {
-      collectTransitiveDependencies(moduleName, moduleOutputProvider)
+      collectTransitiveDependencies(moduleName, outputProvider)
     } else null
 
     return ModuleDependenciesResult(
@@ -105,12 +105,12 @@ internal fun getModuleDependencies(
  * Returns a sorted list of all reachable modules (excluding the start module itself).
  *
  * @param moduleName Starting module
- * @param moduleOutputProvider Provider for accessing JPS modules
+ * @param outputProvider Provider for accessing JPS modules
  * @return Sorted list of all transitive dependencies
  */
 private fun collectTransitiveDependencies(
   moduleName: String,
-  moduleOutputProvider: ModuleOutputProvider
+  outputProvider: ModuleOutputProvider
 ): List<String> {
   val queue = ArrayDeque<String>()
   val visited = mutableSetOf<String>()
@@ -123,7 +123,7 @@ private fun collectTransitiveDependencies(
     val current = queue.removeFirst()
 
     // Get dependencies of current module
-    val jpsModule = moduleOutputProvider.findModule(current) ?: continue
+    val jpsModule = outputProvider.findModule(current) ?: continue
     val dependencies = jpsModule.getProductionModuleDependencies()
       .map { it.moduleReference.moduleName }
       .toList()
@@ -153,18 +153,18 @@ private fun collectTransitiveDependencies(
  * @param moduleName The module to check
  * @param moduleSetName The module set context
  * @param allModuleSets All available module sets
- * @param moduleOutputProvider Provider for accessing JPS modules
+ * @param outputProvider Provider for accessing JPS modules
  * @return Module reachability result
  */
 internal fun checkModuleReachability(
   moduleName: String,
   moduleSetName: String,
   allModuleSets: List<ModuleSetMetadata>,
-  moduleOutputProvider: ModuleOutputProvider
+  outputProvider: ModuleOutputProvider
 ): ModuleReachabilityResult {
   try {
     // Get JPS dependencies
-    val dependenciesResult = getModuleDependencies(moduleName, moduleOutputProvider)
+    val dependenciesResult = getModuleDependencies(moduleName, outputProvider)
     if (dependenciesResult.error != null) {
       return ModuleReachabilityResult(
         moduleName = moduleName,
@@ -253,17 +253,17 @@ internal fun checkModuleReachability(
  *
  * @param fromModule Starting module
  * @param toModule Target module
- * @param moduleOutputProvider Provider for accessing JPS modules
+ * @param outputProvider Provider for accessing JPS modules
  * @return Dependency path result
  */
 internal fun findDependencyPath(
   fromModule: String,
   toModule: String,
-  moduleOutputProvider: ModuleOutputProvider
+  outputProvider: ModuleOutputProvider
 ): DependencyPathResult {
   try {
     // Check if both modules exist
-    if (moduleOutputProvider.findModule(fromModule) == null) {
+    if (outputProvider.findModule(fromModule) == null) {
       return DependencyPathResult(
         fromModule = fromModule,
         toModule = toModule,
@@ -273,7 +273,7 @@ internal fun findDependencyPath(
       )
     }
 
-    if (moduleOutputProvider.findModule(toModule) == null) {
+    if (outputProvider.findModule(toModule) == null) {
       return DependencyPathResult(
         fromModule = fromModule,
         toModule = toModule,
@@ -305,7 +305,7 @@ internal fun findDependencyPath(
       }
 
       // Get dependencies of current module
-      val jpsModule = moduleOutputProvider.findModule(current) ?: continue
+      val jpsModule = outputProvider.findModule(current) ?: continue
       val dependencies = jpsModule.getProductionModuleDependencies()
         .map { it.moduleReference.moduleName }
         .toList()

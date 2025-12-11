@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
@@ -35,7 +36,7 @@ import kotlin.io.path.pathString
 class BazelCompilationContext(
   private val delegate: CompilationContext,
 ) : CompilationContext {
-  private val moduleOutputProvider by lazy {
+  override val outputProvider: ModuleOutputProvider by lazy {
     @OptIn(DelicateCoroutinesApi::class)
     BazelModuleOutputProvider(modules = delegate.project.modules, projectHome = delegate.paths.projectHome, bazelOutputRoot = bazelOutputRoot!!, scope = GlobalScope)
   }
@@ -70,18 +71,6 @@ class BazelCompilationContext(
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
-  override fun findRequiredModule(name: String): JpsModule = delegate.findRequiredModule(name)
-
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
-    return moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
-  }
-
-  override fun findModule(name: String): JpsModule? = delegate.findModule(name)
-
-  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    return moduleOutputProvider.getModuleOutputRoots(module, forTests)
-  }
-
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
       .also {
@@ -94,14 +83,14 @@ class BazelCompilationContext(
     val result = LinkedHashSet<Path>()
     enumerator.processModuleAndLibraries(
       { depModule ->
-        result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = forTests))
+        result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = forTests))
         if (forTests) {  // incl. production
-          result.addAll(moduleOutputProvider.getModuleOutputRoots(depModule, forTests = false))
+          result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = false))
         }
       },
       { library ->
         val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
-        for (path in moduleOutputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
+        for (path in outputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
           result.add(path)
         }
       }
@@ -112,10 +101,6 @@ class BazelCompilationContext(
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(moduleName, relativePath, forTests)
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(module, relativePath, forTests)
-
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    return moduleOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
-  }
 
   override fun notifyArtifactBuilt(artifactPath: Path): Unit = delegate.notifyArtifactBuilt(artifactPath)
 
@@ -140,13 +125,13 @@ class BazelCompilationContext(
         continue
       }
 
-      val module = findModule(path.name)
+      val module = outputProvider.findModule(path.name)
       if (module == null) {
         out.add(path)
         continue
       }
 
-      val roots = moduleOutputProvider.getModuleOutputRoots(module, path.parent.name == "test")
+      val roots = outputProvider.getModuleOutputRoots(module, path.parent.name == "test")
       out.addAll(roots)
     }
     return out

@@ -19,10 +19,10 @@ import java.nio.file.Path
  * All other product-related generation logic has been moved to product-dsl module.
  *
  * @param projectRoot The project root path
- * @param moduleOutputProvider Module output provider for creating ProductProperties
+ * @param outputProvider Module output provider for creating ProductProperties
  * @return List of discovered products with ProductProperties instances
  */
-suspend fun discoverAllProducts(projectRoot: Path, moduleOutputProvider: ModuleOutputProvider): List<DiscoveredProduct> {
+suspend fun discoverAllProducts(projectRoot: Path, outputProvider: ModuleOutputProvider): List<DiscoveredProduct> {
   val jsonContent = Files.readString(projectRoot.resolve(PRODUCT_REGISTRY_PATH))
   val productToConfiguration = Json.decodeFromString<ProductConfigurationRegistry>(jsonContent).products
 
@@ -31,7 +31,7 @@ suspend fun discoverAllProducts(projectRoot: Path, moduleOutputProvider: ModuleO
       async {
         val productProperties = createProductProperties(
           productConfiguration = productConfig,
-          moduleOutputProvider = moduleOutputProvider,
+          outputProvider = outputProvider,
           projectDir = projectRoot,
           platformPrefix = null,
         )

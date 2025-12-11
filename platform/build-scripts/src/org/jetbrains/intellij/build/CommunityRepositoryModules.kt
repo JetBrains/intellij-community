@@ -564,8 +564,8 @@ object CommunityRepositoryModules {
           spec.withGeneratedPlatformResources(supportedOs, supportedArch, supportedLibc) { targetDir, context ->
             val libDir = targetDir.resolve("lib")
 
-            copyFileToDir(context.findLibraryRoots(ffmpegLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
-            copyFileToDir(context.findLibraryRoots(javacppLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
+            copyFileToDir(context.outputProvider.findLibraryRoots(ffmpegLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
+            copyFileToDir(context.outputProvider.findLibraryRoots(javacppLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
           }
 
           spec.excludeModuleLibrary(ffmpegLibraryName, streamingModuleName)

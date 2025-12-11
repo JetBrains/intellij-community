@@ -113,10 +113,11 @@ private suspend fun buildNonBundledPlugins(
       context.buildNumber
     }
     else {
+      val outputProvider = context.outputProvider
       plugin.versionEvaluator.evaluate(
-        pluginXmlSupplier = { getUnprocessedPluginXmlContent(context.findRequiredModule(plugin.mainModule), context).decodeToString() },
+        pluginXmlSupplier = { getUnprocessedPluginXmlContent(outputProvider.findRequiredModule(plugin.mainModule), outputProvider).decodeToString() },
         ideBuildVersion = context.pluginBuildNumber,
-        context,
+        context = context,
       ).pluginVersion
     }
 
@@ -130,13 +131,7 @@ private suspend fun buildNonBundledPlugins(
     val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
     pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
 
-    val entries = handleCustomPlatformSpecificAssets(
-      layout = plugin,
-      targetPlatform = null,
-      context = context,
-      pluginDir = pluginDirOrFile,
-      isDevMode = true,
-    )
+    val entries = handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
 
     if (isPluginArchiveEnabled) {
       archivePlugin(

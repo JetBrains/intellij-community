@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.findFileInModuleSources
 
-suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
+fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
@@ -100,7 +100,7 @@ private fun isPluginCompatible(
   return true
 }
 
-suspend fun collectPluginDescriptors(
+fun collectPluginDescriptors(
   skipImplementationDetails: Boolean,
   skipBundled: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,
@@ -241,7 +241,7 @@ suspend fun collectPluginDescriptors(
         if (contentModuleName != null && !contentModuleName.isEmpty()) {
           val jpsModuleName = contentModuleName.take(contentModuleName.lastIndexOf('/').takeIf { it != -1 } ?: contentModuleName.length)
           val fileName = contentModuleName.replace("/", ".")
-          val jpsContentModule = context.findModule(jpsModuleName)
+          val jpsContentModule = context.outputProvider.findModule(jpsModuleName)
           if (jpsContentModule != null) {
             val moduleFile = findFileInModuleSources(module = jpsContentModule, relativePath = "$fileName.xml", onlyProductionSources = true)
             if (moduleFile != null) {

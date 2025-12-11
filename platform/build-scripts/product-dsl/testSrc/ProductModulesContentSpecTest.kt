@@ -31,7 +31,7 @@ class ProductModulesContentSpecTest {
     // This should not throw - all overridden modules exist
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       productPropertiesClass = "TestProperties",
@@ -64,7 +64,7 @@ class ProductModulesContentSpecTest {
     assertThatThrownBy {
       buildProductContentXml(
         spec = spec,
-        moduleOutputProvider = MockModuleOutputProvider(),
+        outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         productPropertiesClass = "TestProperties",
@@ -107,7 +107,7 @@ class ProductModulesContentSpecTest {
     assertThatThrownBy {
       buildProductContentXml(
         spec = spec,
-        moduleOutputProvider = MockModuleOutputProvider(),
+        outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         productPropertiesClass = "TestProperties",
@@ -137,7 +137,7 @@ class ProductModulesContentSpecTest {
     // This should not throw
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       productPropertiesClass = "TestProperties",
@@ -169,7 +169,7 @@ class ProductModulesContentSpecTest {
     assertThatThrownBy {
       buildProductContentXml(
         spec = spec,
-        moduleOutputProvider = MockModuleOutputProvider(),
+        outputProvider = MockModuleOutputProvider(),
         inlineXmlIncludes = false,
         inlineModuleSets = true,
         productPropertiesClass = "TestProperties",
@@ -210,7 +210,7 @@ class ProductModulesContentSpecTest {
     // Test with inlineModuleSets = false (selective inlining mode)
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = false,
       productPropertiesClass = "TestProperties",
@@ -248,7 +248,7 @@ class ProductModulesContentSpecTest {
     // Test with inlineModuleSets = true (full inlining mode)
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,
       productPropertiesClass = "TestProperties",
@@ -310,7 +310,7 @@ class ProductModulesContentSpecTest {
 
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = false,
       productPropertiesClass = "TestProperties",
@@ -373,7 +373,7 @@ class ProductModulesContentSpecTest {
     // Test with inlineModuleSets = true (full inlining mode) - this is where the bug occurs
     val result = buildProductContentXml(
       spec = spec,
-      moduleOutputProvider = MockModuleOutputProvider(),
+      outputProvider = MockModuleOutputProvider(),
       inlineXmlIncludes = false,
       inlineModuleSets = true,  // Full inlining mode
       productPropertiesClass = "TestProperties",

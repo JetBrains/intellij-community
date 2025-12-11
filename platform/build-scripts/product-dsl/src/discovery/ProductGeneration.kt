@@ -37,14 +37,14 @@ import java.nio.file.Path
  * @param discoveredProducts Products discovered from dev-build.json (must be provided by caller)
  * @param testProductSpecs List of test product specifications to generate alongside regular products
  * @param projectRoot Project root path
- * @param moduleOutputProvider Module output provider for resolving module dependencies and output directories
+ * @param outputProvider Module output provider for resolving module dependencies and output directories
  */
 data class ModuleSetGenerationConfig(
   @JvmField val moduleSetSources: Map<String, Pair<Any, Path>>,
   @JvmField val discoveredProducts: List<DiscoveredProduct>,
   @JvmField val testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   @JvmField val projectRoot: Path,
-  @JvmField val moduleOutputProvider: ModuleOutputProvider,
+  @JvmField val outputProvider: ModuleOutputProvider,
   @JvmField val additionalPlugins: Map<String, String> = emptyMap(),
   @JvmField val dependencyFilter: (embeddedModules: Set<String>, moduleName: String, depName: String) -> Boolean,
 )
@@ -56,14 +56,14 @@ data class ModuleSetGenerationConfig(
  * @param discoveredProducts Regular products discovered from dev-build.json
  * @param testProductSpecs Test product specifications (name to ProductModulesContentSpec pairs)
  * @param projectRoot The project root path
- * @param moduleOutputProvider Module output provider for resolving module dependencies
+ * @param outputProvider Module output provider for resolving module dependencies
  * @return Result containing generation statistics
  */
 internal suspend fun generateAllProductXmlFiles(
   discoveredProducts: List<DiscoveredProduct>,
   testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
   projectRoot: Path,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   dryRunCollector: DryRunCollector? = null,
 ): ProductGenerationResult {
   // Convert test product specs to DiscoveredProduct instances
@@ -111,7 +111,7 @@ internal suspend fun generateAllProductXmlFiles(
           pluginXmlPath = pluginXmlPath,
           spec = spec,
           productName = discovered.name,
-          moduleOutputProvider = moduleOutputProvider,
+          outputProvider = outputProvider,
           productPropertiesClass = productPropertiesClass,
           projectRoot = projectRoot,
           isUltimateBuild = isUltimateBuild,
@@ -193,7 +193,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
           obj = sourceObj,
           outputDir = outputDir,
           label = label,
-          moduleOutputProvider = config.moduleOutputProvider,
+          outputProvider = config.outputProvider,
           dryRunCollector = dryRunCollector,
         )
       }
@@ -208,7 +208,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
     val xIncludeCache = AsyncCache<String, LoadedXIncludeReference?>(this)
     val pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = allBundledPlugins.associateWith { pluginName ->
       async {
-        extractPluginContent(pluginName = pluginName, moduleOutputProvider = config.moduleOutputProvider, xIncludeCache = xIncludeCache)
+        extractPluginContent(pluginName = pluginName, outputProvider = config.outputProvider, xIncludeCache = xIncludeCache)
       }
     }
 
@@ -219,7 +219,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
         discoverModuleSets(sourceObj)
       }
 
-      val cache = ModuleDescriptorCache(config.moduleOutputProvider, this)
+      val cache = ModuleDescriptorCache(config.outputProvider, this)
       generateModuleDescriptorDependencies(
         communityModuleSets = moduleSetsByLabel.get("community") ?: emptyList(),
         ultimateModuleSets = moduleSetsByLabel.get("ultimate") ?: emptyList(),
@@ -238,7 +238,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
         null
       }
       else {
-        val cache = ModuleDescriptorCache(config.moduleOutputProvider, this)
+        val cache = ModuleDescriptorCache(config.outputProvider, this)
         val embeddedModules = embeddedModulesDeferred.await()
         generatePluginDependencies(
           plugins = allBundledPlugins,
@@ -254,7 +254,7 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
         discoveredProducts = config.discoveredProducts,
         testProductSpecs = config.testProductSpecs,
         projectRoot = config.projectRoot,
-        moduleOutputProvider = config.moduleOutputProvider,
+        outputProvider = config.outputProvider,
         dryRunCollector = dryRunCollector,
       )
     }

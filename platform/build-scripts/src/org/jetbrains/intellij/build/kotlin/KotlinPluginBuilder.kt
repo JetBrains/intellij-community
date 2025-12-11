@@ -387,7 +387,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
-    val jars = context.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -401,7 +401,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
     val distLibName = "kotlinc.$libName"
-    val jars = context.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }

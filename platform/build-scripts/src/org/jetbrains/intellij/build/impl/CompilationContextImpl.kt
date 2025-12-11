@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -108,7 +109,7 @@ class CompilationContextImpl private constructor(
   val global: JpsGlobal
     get() = model.global
 
-  private val moduleOutputProvider = JpsModuleOutputProvider(project)
+  override val outputProvider: ModuleOutputProvider = JpsModuleOutputProvider(project)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
@@ -306,14 +307,6 @@ class CompilationContextImpl private constructor(
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
-  override fun findRequiredModule(name: String): JpsModule = moduleOutputProvider.findRequiredModule(name)
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
-    moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
-
-  override fun findModule(name: String): JpsModule? = moduleOutputProvider.findModule(name)
-
-  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
-
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     return JpsJavaExtensionService.dependencies(module).recursively()
       // if a project requires different SDKs, they all shouldn't be added to the test classpath
@@ -329,10 +322,6 @@ class CompilationContextImpl private constructor(
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
     return org.jetbrains.intellij.build.findFileInModuleSources(module, relativePath)
-  }
-
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    return moduleOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {

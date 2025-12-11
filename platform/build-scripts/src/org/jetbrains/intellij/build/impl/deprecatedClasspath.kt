@@ -41,7 +41,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
+        classPath.addAll(context.outputProvider.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
@@ -57,11 +57,12 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
       continue
     }
 
+    val outputProvider = context.outputProvider
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
+        classPath.addAll(outputProvider.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
         for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.owner.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
-          classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
+          classPath.addAll(outputProvider.getModuleOutputRoots(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
         }
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
@@ -121,7 +122,7 @@ private suspend fun generateProjectStructureMapping(
 
     val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(pluginLayout.directoryName)
     val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
-    val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context).decodeToString(), context)
+    val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
     val element = JDOMUtil.load(descriptorContent)
 
     // we need to put descriptorContent into cache as computeModuleSourcesByContent expects

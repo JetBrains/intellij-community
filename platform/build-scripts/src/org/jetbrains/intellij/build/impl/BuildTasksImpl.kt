@@ -33,6 +33,7 @@ import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
@@ -362,7 +363,7 @@ private fun copyDependenciesFile(context: BuildContext): Path {
   return outputFile
 }
 
-private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
+private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: CompilationContext) {
   val unknownLibraries = names.filter { context.project.libraryCollection.findLibrary(it) == null }
   check(unknownLibraries.isEmpty()) {
     "The following libraries from $fieldName aren't found in the project: $unknownLibraries"
@@ -388,11 +389,7 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
 
   if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-    return distributionState(
-      pluginsToPublish = pluginsToPublish,
-      projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-      context = context
-    )
+    return distributionState(pluginsToPublish = pluginsToPublish, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   }
 
   return spanBuilder("collecting compatible plugins").use {
@@ -578,9 +575,10 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
+  val outputProvider = context.outputProvider
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
     checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
-    if (findProductModulesFile(embeddedFrontendRootModule, context) == null) {
+    if (findProductModulesFile(embeddedFrontendRootModule, outputProvider) == null) {
       context.messages.logErrorAndThrow(
         "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
         "'productProperties.embeddedFrontendRootModule'."
@@ -600,7 +598,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
     }
   }
 
-  checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
+  checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", outputProvider)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
     checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath")
@@ -630,14 +628,14 @@ private suspend fun checkProductProperties(context: BuildContext) {
     }
   }
 
-  checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules", context)
-  checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", context)
+  checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules", outputProvider)
+  checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", outputProvider)
   if (context.productProperties.scrambleMainJar) {
     context.proprietaryBuildTools.scrambleTool?.let {
-      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context)
+      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", outputProvider)
     }
   }
-  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", context)
+  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", outputProvider)
   if (properties.contentModulesToScramble.isNotEmpty() && !properties.scrambleMainJar) {
     context.messages.logErrorAndThrow("productProperties.contentModulesToScramble specifies some modules, but productProperties.scrambleMainJar is not set to true")
   }
@@ -677,31 +675,33 @@ private fun checkProductLayout(context: BuildContext) {
     "productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
     " but no pluginModulesToPublish are specified"
   }
-  checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
-  checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
-  checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
+  val outputProvider = context.outputProvider
+  checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", outputProvider)
+  checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", outputProvider)
+  checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", outputProvider)
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "'${plugin.mainModule}' plugin", context)
   }
   checkPlatformSpecificPluginResources(pluginLayouts, layout.pluginModulesToPublish)
 }
 
-private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
-  checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", context)
-  checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
-  checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
+private fun checkBaseLayout(layout: BaseLayout, description: String, context: CompilationContext) {
+  val outputProvider = context.outputProvider
+  checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", outputProvider)
+  checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", outputProvider)
+  checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", outputProvider)
 
   checkProjectLibraries(names = layout.includedProjectLibraries.map { it.libraryName }, fieldName = "includedProjectLibraries in $description", context)
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
-    checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
+    checkModules(listOf(moduleName), "includedModuleLibraries in $description", outputProvider)
     check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryFileName(it) == libraryName }) {
       "Cannot find library '$libraryName' in '$moduleName' (used in $description)"
     }
   }
 
   if (layout is PluginLayout) {
-    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context)
+    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", outputProvider)
     for ((key, value) in layout.excludedLibraries.entries) {
       val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
       for (libraryName in value) {
@@ -712,7 +712,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
       }
     }
 
-    checkModules(modules = layout.modulesWithExcludedModuleLibraries, fieldName = "modulesWithExcludedModuleLibraries in $description", context = context)
+    checkModules(modules = layout.modulesWithExcludedModuleLibraries, fieldName = "modulesWithExcludedModuleLibraries in $description", outputProvider = outputProvider)
   }
 }
 
@@ -740,9 +740,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   }
 }
 
-private fun checkModules(modules: Collection<String?>?, fieldName: String, context: CompilationContext) {
+private fun checkModules(modules: Collection<String?>?, fieldName: String, outputProvider: ModuleOutputProvider) {
   if (modules != null) {
-    val unknownModules = modules.filter { it != null && context.findModule(it) == null }
+    val unknownModules = modules.filter { it != null && outputProvider.findModule(it) == null }
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren't found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }
@@ -750,7 +750,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
 }
 
 private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
-  if (moduleName != null && context.findModule(moduleName) == null) {
+  if (moduleName != null && context.outputProvider.findModule(moduleName) == null) {
     context.messages.logErrorAndThrow("Module '$moduleName' from $fieldName isn't found in the project")
   }
 }
@@ -760,10 +760,10 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
     return
   }
 
-  checkModules(pluginModules, fieldName, context)
+  checkModules(modules = pluginModules, fieldName = fieldName, outputProvider = context.outputProvider)
 
   val unknownBundledPluginModules = pluginModules.filter { name ->
-    context.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
+    context.outputProvider.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
   }
   check(unknownBundledPluginModules.isEmpty()) {
     "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules" +

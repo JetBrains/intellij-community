@@ -507,13 +507,13 @@ private suspend fun createBuildContext(
 
 internal suspend fun createProductProperties(
   productConfiguration: ProductConfiguration,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   projectDir: Path,
   platformPrefix: String?,
 ): ProductProperties {
   val classPathFiles = buildList {
     for (moduleName in getBuildModules(productConfiguration)) {
-      addAll(moduleOutputProvider.getModuleOutputRoots(moduleOutputProvider.findRequiredModule(moduleName)))
+      addAll(outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(moduleName)))
     }
   }
 

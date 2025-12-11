@@ -44,16 +44,16 @@ internal data class PluginContentInfo(
  */
 internal suspend fun extractPluginContent(
   pluginName: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   xIncludeCache: AsyncCache<String, LoadedXIncludeReference?>,
 ): PluginContentInfo? {
-  val jpsModule = moduleOutputProvider.findModule(pluginName) ?: return null
+  val jpsModule = outputProvider.findModule(pluginName) ?: return null
   val pluginXmlPath = findFileInModuleSources(module = jpsModule, relativePath = PLUGIN_XML_RELATIVE_PATH, onlyProductionSources = true) ?: return null
   val content = withContext(Dispatchers.IO) { Files.readString(pluginXmlPath) }
 
   val xIncludeResolver: suspend (String) -> LoadedXIncludeReference? = { path ->
     xIncludeCache.getOrPut(path) {
-      resolveXInclude(path = path, jpsModule = jpsModule, moduleOutputProvider = moduleOutputProvider)
+      resolveXInclude(path = path, jpsModule = jpsModule, outputProvider = outputProvider)
     }
   }
 
@@ -137,10 +137,10 @@ private fun getParentDir(path: String): String? {
 private suspend fun resolveXInclude(
   path: String,
   jpsModule: JpsModule,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
 ): LoadedXIncludeReference? {
   // First, try to find in module sources
-  val data = moduleOutputProvider.readFileContentFromModuleOutputAsync(module = jpsModule, relativePath = path)
+  val data = outputProvider.readFileContentFromModuleOutputAsync(module = jpsModule, relativePath = path)
   if (data != null) {
     return LoadedXIncludeReference(data, null)
   }
@@ -148,14 +148,14 @@ private suspend fun resolveXInclude(
   val processedModules = HashSet<String>()
 
   // Search module dependencies recursively
-  val depContent = findFileInModuleDependenciesRecursiveAsync(module = jpsModule, relativePath = path, provider = moduleOutputProvider, processedModules = processedModules)
+  val depContent = findFileInModuleDependenciesRecursiveAsync(module = jpsModule, relativePath = path, provider = outputProvider, processedModules = processedModules)
   if (depContent != null) {
     return LoadedXIncludeReference(depContent, null)
   }
 
   // Final fallback: search module outputs (like runtime classloader does)
   val prefix = jpsModule.name.substringBefore('.', missingDelimiterValue = "").takeIf { it.isNotEmpty() }
-  val anyContent = moduleOutputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)
+  val anyContent = outputProvider.findFileInAnyModuleOutput(path, prefix, processedModules)
   return anyContent?.let { LoadedXIncludeReference(it, null) }
 }
 

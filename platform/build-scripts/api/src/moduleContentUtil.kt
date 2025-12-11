@@ -22,17 +22,17 @@ import java.nio.file.attribute.BasicFileAttributes
 const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
 val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
-fun getUnprocessedPluginXmlContent(module: JpsModule, context: ModuleOutputProvider): ByteArray {
-  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, provider = context)) {
+fun getUnprocessedPluginXmlContent(module: JpsModule, outputProvider: ModuleOutputProvider): ByteArray {
+  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, outputProvider = outputProvider)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
 }
 
-fun findUnprocessedDescriptorContent(module: JpsModule, path: String, provider: ModuleOutputProvider): ByteArray? {
+fun findUnprocessedDescriptorContent(module: JpsModule, path: String, outputProvider: ModuleOutputProvider): ByteArray? {
   try {
-    val result = provider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+    val result = outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
     if (result == null && useTestSourceEnabled) {
-      return provider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+      return outputProvider.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
     }
     return result
   }
@@ -60,20 +60,20 @@ fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProduct
 
 fun isModuleNameLikeFilename(relativePath: String): Boolean = relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.")
 
-fun getLibraryReferenceRoots(libraryReference: JpsLibraryReference, moduleOutputProvider: ModuleOutputProvider): List<Path> {
+fun getLibraryReferenceRoots(libraryReference: JpsLibraryReference, outputProvider: ModuleOutputProvider): List<Path> {
   val parentLibraryReference = libraryReference.parentReference
   val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
-  return moduleOutputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
+  return outputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 }
 
-fun getLibraryRoots(library: JpsLibrary, moduleOutputProvider: ModuleOutputProvider): List<Path> {
-  return getLibraryReferenceRoots(library.createReference(), moduleOutputProvider)
+fun getLibraryRoots(library: JpsLibrary, outputProvider: ModuleOutputProvider): List<Path> {
+  return getLibraryReferenceRoots(library.createReference(), outputProvider)
 }
 
-fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String, moduleOutputProvider: ModuleOutputProvider): ByteArray? {
+fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency is JpsLibraryDependency) {
-      for (jarPath in getLibraryReferenceRoots(dependency.libraryReference, moduleOutputProvider)) {
+      for (jarPath in getLibraryReferenceRoots(dependency.libraryReference, outputProvider)) {
         ImmutableZipFile.load(jarPath).use { zipFile ->
           zipFile.getData(relativePath)?.let { return it }
         }
@@ -90,18 +90,18 @@ fun findProductModulesFile(clientMainModuleName: String, provider: ModuleOutputP
 fun findFileInModuleDependencies(
   module: JpsModule,
   relativePath: String,
-  context: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
-  findFileInModuleLibraryDependencies(module, relativePath, context)?.let {
+  findFileInModuleLibraryDependencies(module, relativePath, outputProvider)?.let {
     return it
   }
 
   return findFileInModuleDependenciesRecursive(
     module = module,
     relativePath = relativePath,
-    provider = context,
+    provider = outputProvider,
     processedModules = processedModules,
     recursiveModuleExclude = recursiveModuleExclude,
   )
@@ -125,7 +125,7 @@ private fun findFileInModuleDependenciesRecursive(
     }
 
     val dependentModule = provider.findRequiredModule(moduleName)
-    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, provider = provider)?.let {
+    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, outputProvider = provider)?.let {
       return it
     }
 
@@ -170,8 +170,8 @@ suspend fun findFileInModuleDependenciesRecursiveAsync(
 }
 
 @Internal
-fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: ModuleOutputProvider): Boolean {
-  return context.getModuleOutputRoots(module).any { output ->
+fun hasModuleOutputPath(module: JpsModule, relativePath: String, outputProvider: ModuleOutputProvider): Boolean {
+  return outputProvider.getModuleOutputRoots(module).any { output ->
     val attributes = try {
       Files.readAttributes(output, BasicFileAttributes::class.java)
     }
