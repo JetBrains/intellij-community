@@ -18,9 +18,9 @@ import java.util.Objects;
  * Please don't look, there's nothing interesting here.
  *
  *
- *
- *
- * If you insist, JVM stores stacktrace information in compact form in Throwable.backtrace field, but blocks reflective access to this field.
+ * If you insist, JVM stores stacktrace information in compact form in Throwable.backtrace field
+ * (or Throwable.walkback on OpenJ9), but blocks reflective access to this field.
+ * 
  * This class uses this field for comparing Throwables.
  * The available method Throwable.getStackTrace() unfortunately can't be used for that because it's
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
@@ -92,12 +92,21 @@ public final class ThrowableInterner {
   private static final Field BACKTRACE_FIELD;
 
   static {
+    Field backtraceField;
     try {
-      BACKTRACE_FIELD = Throwable.class.getDeclaredField("backtrace");
+      backtraceField = Throwable.class.getDeclaredField("backtrace");
     }
     catch (NoSuchFieldException e) {
-      throw new RuntimeException(e);
     }
+
+    try {
+      backtraceField = Throwable.class.getDeclaredField("walkback");
+    }
+    catch (NoSuchFieldException e) {
+    }
+
+    if (backtraceField == null) throw new RuntimeException("No 'backtrace' or 'walkback' field found in java.lang.Throwable");
+    BACKTRACE_FIELD = backtraceField;
     BACKTRACE_FIELD.setAccessible(true);
   }
 
