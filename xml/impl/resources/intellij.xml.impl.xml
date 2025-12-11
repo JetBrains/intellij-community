@@ -220,13 +220,6 @@
     <declarationRangeHandler key="com.intellij.psi.xml.XmlTag"
                              implementationClass="com.intellij.codeInsight.hint.TagDeclarationRangeHandler"/>
 
-    <liveTemplateContext contextId="HTML_TEXT" baseContextId="HTML" implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
-    <liveTemplateContext contextId="HTML" implementation="com.intellij.codeInsight.template.HtmlContextType"/>
-    <liveTemplateContext contextId="XSL_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XslTextContextType"/>
-    <liveTemplateContext contextId="XML" implementation="com.intellij.codeInsight.template.XmlContextType"/>
-    <liveTemplateContext contextId="XML_TEXT" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlTextContextType"/>
-    <liveTemplateContext contextId="XML_TAG" baseContextId="XML" implementation="com.intellij.codeInsight.template.XmlElementContextType"/>
-
     <elementDescriptionProvider implementation="com.intellij.refactoring.util.XmlNonCodeSearchElementDescriptionProvider"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor" id="xmlAttribute"/>
