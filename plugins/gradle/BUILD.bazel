@@ -79,6 +79,7 @@ jvm_library(
     "//platform/execution",
     "//platform/forms_rt:java-guiForms-rt",
     "//libraries/jspecify",
+    "//plugins/repository-search",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
