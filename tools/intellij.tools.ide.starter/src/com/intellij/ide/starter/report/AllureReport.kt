@@ -20,7 +20,13 @@ object AllureReport {
     errorLink.url = "https://jb.gg/ide-test-errors"
   }
 
-  fun reportFailure(contextName: String, message: String, originalStackTrace: String, links: List<Pair<String, String?>>? = null, suffix: String = "Exception") {
+  fun reportFailure(
+    contextName: String,
+    message: String,
+    originalStackTrace: String,
+    links: List<Pair<String, String?>> = emptyList(),
+    suffix: String = "Exception",
+  ) {
     try {
       val uuid = UUID.randomUUID().toString()
       val stackTrace = "${originalStackTrace}${System.lineSeparator().repeat(2)}ContextName: ${contextName}${System.lineSeparator()}TestName: ${CurrentTestMethod.get()?.fullName()}"
@@ -43,12 +49,10 @@ object AllureReport {
       val errorLabels = labels.filter { label -> !ignoreLabels.contains(label.name) }.toMutableList()
       val linksList = mutableListOf<Link>()
 
-      if (links != null) {
-        for ((name, url) in links){
+      for ((name, url) in links){
           Allure.link(name, url)
           linksList.add(Link().setName(name).setUrl(url))
         }
-      }
       linksList.add(errorLink)
 
       errorLabels.add(Label().setName("layer").setValue("Exception"))
