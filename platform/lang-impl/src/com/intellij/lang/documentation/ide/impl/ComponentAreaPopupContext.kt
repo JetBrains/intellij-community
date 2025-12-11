@@ -240,13 +240,19 @@ internal class ComponentAreaPopupContext(
     }
 
     private fun relocatePopupIfNeeded(popup: AbstractPopup) {
+      var popupLocation = popup.locationOnScreen
+      val screen = ScreenUtil.getScreenRectangle(popupLocation)
+      val popupSize = popup.size
+      if (popupLocation.y + popupSize.height > screen.y + screen.height) {
+        popup.setLocation(Point(popupLocation.x, screen.y + screen.height - popupSize.height))
+        popupLocation = popup.locationOnScreen
+      }
+
       val componentLocation = myComponentReference.get()?.locationOnScreen ?: return
       val componentActiveArea = Rectangle(areaWithinComponent).also {
         it.x += componentLocation.x
         it.y += componentLocation.y
       }
-
-      val popupLocation = popup.locationOnScreen
       if (popupLocation.y < componentActiveArea.y + componentActiveArea.height) {
         // reposition popup above the component
         val height = popup.height
