@@ -35,7 +35,14 @@
     <inspectionTreeAdvertiser implementation="org.intellij.lang.regexp.inspection.custom.RegExpAdvertiser" />
 
     <intentionAction>
+      <language>RegExp</language>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
+      <bundleName>messages.RegExpBundle</bundleName>
+      <categoryKey>inspection.group.name.regexp</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>RegExp</language>
+      <className>org.intellij.lang.regexp.intention.FlipAlternationIntention</className>
       <bundleName>messages.RegExpBundle</bundleName>
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
