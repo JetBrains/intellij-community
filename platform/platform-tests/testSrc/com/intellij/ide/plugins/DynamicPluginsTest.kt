@@ -1200,7 +1200,7 @@ class DynamicPluginsTest {
         loadPluginWithText(ai).use {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
-          assert(scalaAiCompletion.isLoaded)
+          assert(scalaAiCompletion.pluginClassLoader != null)
         }
       }
     }
@@ -1236,7 +1236,7 @@ class DynamicPluginsTest {
         loadPluginWithText(ai).use {
           val scalaAiCompletion = PluginManagerCore.getPlugin(PluginId("scala"))!!.contentModules[0] as ContentModuleDescriptor
           assert(PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("scala.ai.completion", PluginModuleId.JETBRAINS_NAMESPACE)))
-          assert(scalaAiCompletion.isLoaded)
+          assert(scalaAiCompletion.pluginClassLoader != null)
         }
       }
     }
