@@ -169,7 +169,6 @@
 
     <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet"
                              dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
-    <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.XmlSettings"/>
 

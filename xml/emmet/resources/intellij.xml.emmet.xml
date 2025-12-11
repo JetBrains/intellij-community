@@ -1,2 +1,9 @@
 <idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
+  </extensions>
 </idea-plugin>

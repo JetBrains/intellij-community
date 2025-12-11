@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
   </component>
 </module>

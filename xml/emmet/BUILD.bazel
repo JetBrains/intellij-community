@@ -27,6 +27,11 @@ jvm_provided_library(
   lib = "//platform/lang-impl"
 )
 
+jvm_provided_library(
+  name = "platform_projectModel_provided",
+  lib = "//platform/projectModel-api:projectModel"
+)
+
 jvm_library(
   name = "emmet",
   module_name = "intellij.xml.emmet",
@@ -40,6 +45,7 @@ jvm_library(
     ":platform_analysis-impl_provided",
     ":xml_psi_provided",
     ":platform_lang-impl_provided",
+    ":platform_projectModel_provided",
   ]
 )
 ### auto-generated section `build intellij.xml.emmet` end
