@@ -6,7 +6,6 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
@@ -47,7 +46,6 @@ public abstract class PsiUpdateCompletionItem<T> implements ModCompletionItem {
       doc.deleteString(completionStart, prefixEnd);
     }, updater -> {
       Document document = updater.getDocument();
-      PsiFile writableFile = updater.getWritable(finalActionContext.file());
       document.replaceString(completionStart,
                              insertionContext.mode() == InsertionMode.OVERWRITE ?
                              calculateEndOffsetForOverwrite(document, completionStart) : completionStart, lookupString);
