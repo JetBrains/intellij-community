@@ -13,7 +13,8 @@ import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser.Companion.p
 import org.jetbrains.plugins.gradle.util.Ranges
 
 typealias PluginId = String
-typealias PluginVersionsToGradleVersions = Map<String, Ranges<GradleVersion>>
+typealias PluginVersion = String
+typealias PluginVersionsToGradleVersions = Map<PluginVersion, Ranges<GradleVersion>>
 
 /**
  * This class is used to store compatibility between Gradle versions and Gradle plugins' versions.
@@ -41,16 +42,16 @@ class GradleToPluginsCompatibilityStore : IdeVersionedDataStorage<GradleToPlugin
 
     private fun getCompatibility(data: GradleToPluginsCompatibilityState): Map<PluginId, PluginVersionsToGradleVersions> {
         val pluginIdToVersions = mutableMapOf<PluginId, PluginVersionsToGradleVersions>()
-        data.plugins.mapNotNull { plugin ->
-            val pluginId = plugin.id ?: return@mapNotNull null
-            val pluginVersionsToGradleVersions = mutableMapOf<String, Ranges<GradleVersion>>()
-            plugin.compatibility.mapNotNull { mapping ->
-                val pluginVersion = mapping.pluginVersion ?: return@mapNotNull null
-                val gradleVersions = mapping.gradleVersions ?: return@mapNotNull null
+        data.plugins.forEach { plugin ->
+            val pluginId = plugin.id ?: return@forEach
+            val pluginVersionsToGradleVersions = mutableMapOf<PluginVersion, Ranges<GradleVersion>>()
+            plugin.compatibility.forEach { mapping ->
+                val pluginVersion = mapping.pluginVersion ?: return@forEach
+                val gradleVersions = mapping.gradleVersions ?: return@forEach
                 val gradleVersionsRange = parseRange(gradleVersions.split(','), GradleVersion::version)
-                pluginVersionsToGradleVersions.put(pluginVersion, gradleVersionsRange)
+                pluginVersionsToGradleVersions[pluginVersion] = gradleVersionsRange
             }
-            pluginIdToVersions.put(pluginId, pluginVersionsToGradleVersions)
+            pluginIdToVersions[pluginId] = pluginVersionsToGradleVersions
         }
         return pluginIdToVersions
     }
@@ -58,8 +59,8 @@ class GradleToPluginsCompatibilityStore : IdeVersionedDataStorage<GradleToPlugin
     fun getPluginVersionByGradleVersion(pluginId: String, gradleVersion: GradleVersion): String? {
         val compatibility = compatibility[pluginId] ?: return null
         compatibility.forEach { entry ->
-            val gradleVersions = entry.value
-            if (gradleVersions.contains(gradleVersion)) return entry.key
+            val compatibleGradleVersions = entry.value
+            if (gradleVersion in compatibleGradleVersions) return entry.key
         }
         return null
     }
@@ -128,7 +129,7 @@ internal object GradleToPluginsCompatibilityParser : IdeVersionedDataParser<Grad
                 val gradleVersions = compatibilityEntryObj["gradle"]?.asSafeString ?: return@mapNotNull null
                 val pluginVersion = compatibilityEntryObj["plugin"]?.asSafeString ?: return@mapNotNull null
                 GradleToPluginVersionMapping(gradleVersions, pluginVersion)
-            }.toList()
+            }
 
             GradleToPluginCompatibilityEntry(id, compatibility)
         }
