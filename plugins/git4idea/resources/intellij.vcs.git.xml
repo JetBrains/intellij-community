@@ -639,8 +639,10 @@
                  description="Search for available executables in WSL on Windows"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
                  description="Show toolwindow tab with stashes"/>
-    <registryKey defaultValue="true" description="Use the new API for OS abstraction for non-local projects."
-                 key="git.use.eel.for.non.local.projects"/>
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for projects in containers."
+                 key="git.use.eel.for.container.projects"/>
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for WSL projects."
+                 key="git.use.eel.for.wsl.projects"/>
     <registryKey defaultValue="false" description="Use the new API for OS abstraction for local projects."
                  key="git.use.eel.for.local.projects"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
