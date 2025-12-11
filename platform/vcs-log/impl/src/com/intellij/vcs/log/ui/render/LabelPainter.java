@@ -103,43 +103,55 @@ public class LabelPainter {
                                                        @NotNull Color background,
                                                        int availableWidth,
                                                        boolean compact) {
-    List<Presentation> labels = new ArrayList<>();
-    int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
-    int height = fontMetrics.getHeight();
-
-    int bookmarksWidth = addBookmarkLabels(labels, bookmarks, refGroups.isEmpty(), background, height, compact);
-    width += bookmarksWidth;
-
-    int referencesWidth = addReferenceLabels(labels, refGroups, fontMetrics, availableWidth - width,
-                                             background, height, compact);
-    width += referencesWidth;
-
-    return new Presentations(labels, width);
-  }
-
-  private int addBookmarkLabels(@NotNull List<Presentation> labels,
-                                @NotNull List<VcsBookmarkRef> bookmarks,
-                                boolean isLast,
-                                @NotNull Color background,
-                                int height,
-                                boolean compact) {
-    int bookmarkWidth = 0;
-    int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
-    for (int i = 0; i < bookmarks.size(); i++) {
-      Icon icon = new BookmarkIcon(myComponent, height, background, bookmarks.get(i));
-      bookmarkWidth += icon.getIconWidth() + (isLast && i == bookmarks.size() - 1 ? 0 : middlePadding);
-      labels.add(new Presentation("", icon));
+    if (refGroups.isEmpty() && bookmarks.isEmpty()) {
+      return new Presentations(Collections.emptyList(), 0);
     }
-    return bookmarkWidth;
+
+    int height = fontMetrics.getHeight();
+    int sidePaddingsWidth = LEFT_PADDING.get() + RIGHT_PADDING.get();
+    int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
+
+    List<Presentation> bookmarkLabels = processBookmarkLabels(bookmarks, background, height);
+    if (refGroups.isEmpty()) {
+      int width = getPresentationsWidth(bookmarkLabels, middlePadding);
+      return new Presentations(bookmarkLabels, width > 0 ? width + sidePaddingsWidth : 0);
+    }
+
+    int remainingWidth = availableWidth - getCurrentWidth(bookmarkLabels, middlePadding) - sidePaddingsWidth;
+    List<Presentation> referenceLabels = processReferenceLabels(refGroups, fontMetrics, remainingWidth, background, height, compact);
+
+    List<Presentation> result = new ArrayList<>(bookmarkLabels);
+    result.addAll(referenceLabels);
+
+    return new Presentations(result, sidePaddingsWidth + getPresentationsWidth(result, middlePadding));
   }
 
-  private int addReferenceLabels(@NotNull List<Presentation> labels,
-                                 @NotNull List<? extends RefGroup> refGroups,
-                                 @NotNull FontMetrics fontMetrics,
-                                 int availableForReferencesWidth,
-                                 @NotNull Color background,
-                                 int height,
-                                 boolean compact) {
+  private static int getCurrentWidth(@NotNull List<Presentation> result, int middlePadding) {
+    int presentationsWidth = getPresentationsWidth(result, middlePadding);
+    return presentationsWidth + (presentationsWidth > 0 ? middlePadding : 0);
+  }
+
+  private static int getPresentationsWidth(@NotNull List<Presentation> presentations, int middlePadding) {
+    if (presentations.isEmpty()) return 0;
+    return presentations.stream().mapToInt(Presentation::width).sum() + middlePadding * (presentations.size() - 1);
+  }
+
+  private @NotNull List<Presentation> processBookmarkLabels(@NotNull List<VcsBookmarkRef> bookmarks,
+                                                            @NotNull Color background,
+                                                            int height) {
+    return bookmarks.stream()
+      .map(it -> new BookmarkIcon(myComponent, height, background, it))
+      .map(icon -> new Presentation("", icon, icon.getIconWidth()))
+      .toList();
+  }
+
+  private @NotNull List<Presentation> processReferenceLabels(@NotNull List<? extends RefGroup> refGroups,
+                                                             @NotNull FontMetrics fontMetrics,
+                                                             int availableWidth,
+                                                             @NotNull Color background,
+                                                             int height,
+                                                             boolean compact) {
+    List<Presentation> labels = new ArrayList<>();
     int referencesWidth = 0;
     int middlePadding = compact ? COMPACT_MIDDLE_PADDING.get() : MIDDLE_PADDING.get();
     for (int i = 0; i < refGroups.size(); i++) {
@@ -156,24 +168,32 @@ public class LabelPainter {
       boolean isLast = i == refGroups.size() - 1;
       int newWidth = referencesWidth + labelIcon.getIconWidth() + (isLast ? 0 : middlePadding);
 
-      String text = getGroupText(group, fontMetrics, availableForReferencesWidth - newWidth - doNotFitWidth);
-      newWidth += fontMetrics.stringWidth(text);
-      newWidth += getIconTextPadding();
+      String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
+      newWidth += getTextWidth(fontMetrics, text);
 
       // for compact case all references are already combined to one, no need to combine them again
-      if (!compact && availableForReferencesWidth - newWidth - doNotFitWidth < 0) {
+      if (!compact && availableWidth - newWidth - doNotFitWidth < 0) {
         LabelIcon lastIcon = getIcon(height, background, getColors(refGroups.subList(i, refGroups.size())));
         String name = labels.isEmpty() ? text : "";
-        labels.add(new Presentation(name, lastIcon));
-        referencesWidth += fontMetrics.stringWidth(name) + lastIcon.getIconWidth();
+        labels.add(getIconTextPresentation(fontMetrics, name, lastIcon));
         break;
       }
       else {
-        labels.add(new Presentation(text, labelIcon));
+        labels.add(getIconTextPresentation(fontMetrics, text, labelIcon));
         referencesWidth = newWidth;
       }
     }
-    return referencesWidth;
+    return labels;
+  }
+
+  private static @NotNull Presentation getIconTextPresentation(@NotNull FontMetrics fontMetrics, @NotNull String text, @NotNull Icon icon) {
+    int iconTextWidth = icon.getIconWidth() + getTextWidth(fontMetrics, text);
+    return new Presentation(text, icon, iconTextWidth);
+  }
+
+  private static int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String name) {
+    int textWidth = fontMetrics.stringWidth(name);
+    return textWidth > 0 ? getIconTextPadding() + textWidth : 0;
   }
 
   private @NotNull LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
@@ -343,7 +363,7 @@ public class LabelPainter {
   private record Presentations(@NotNull List<Presentation> list, int width) {
   }
 
-  private record Presentation(@NotNull String text, @NotNull Icon icon) {
+  private record Presentation(@NotNull String text, @NotNull Icon icon, int width) {
   }
 }
 
