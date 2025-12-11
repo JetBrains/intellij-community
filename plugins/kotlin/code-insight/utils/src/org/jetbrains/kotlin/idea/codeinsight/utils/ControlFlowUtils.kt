@@ -49,6 +49,12 @@ fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
     return (this as? KtProperty)?.getter?.initializer
 }
 
+/**
+ * Finds the nearest loop expression that contains the given expression, taking into account any labels
+ * and outer loops.
+ *
+ * Returns null if no relevant loop is found.
+ */
 fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
     val expressionLabelName = when (expression) {
         is KtExpressionWithLabel -> expression.getLabelName()
@@ -79,7 +85,7 @@ fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
     ) {
         it.parent is KtDeclaration
     }
-    // expression belongs to the loop when they are in its control structure body
+    // expression belongs to the loop when it is inside the loop body
     return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
 }
 

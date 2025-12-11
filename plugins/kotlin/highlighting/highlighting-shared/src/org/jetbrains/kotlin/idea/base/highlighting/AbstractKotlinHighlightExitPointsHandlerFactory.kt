@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowOrLambdaUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -342,21 +341,12 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             }
 
             relevantLoop.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
-                var nestedLoopExpressions = Stack<KtLoopExpression>()
-
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
                 }
 
                 override fun visitExpression(expression: KtExpression) {
-                    val nestedLoopFound = if (expression != relevantLoop && expression is KtLoopExpression) {
-                        nestedLoopExpressions.push(expression)
-                        true
-                    } else {
-                        false
-                    }
-
                     when (expression) {
                         is KtBlockExpression -> {
                             val containerNode = expression.parent as? KtContainerNode
@@ -381,13 +371,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         }
                     }
 
-                    try {
-                        super.visitExpression(expression)
-                    } finally {
-                        if (nestedLoopFound) {
-                            nestedLoopExpressions.pop()
-                        }
-                    }
+                    super.visitExpression(expression)
                 }
             })
         }
