@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.codeInsight.hints.presentation.InlayButtonPresentationFactory;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
@@ -14,6 +15,7 @@ import com.intellij.execution.filters.JvmExceptionOccurrenceFilter;
 import com.intellij.execution.impl.InlayProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,10 +49,19 @@ public final class JavaDebuggerAddExceptionBreakpointFilter implements JvmExcept
 
     @Override
     public EditorCustomElementRenderer createInlayRenderer(Editor editor) {
-      PresentationFactory factory = new PresentationFactory(editor);
       DebuggerStatistics.logThreadDumpTriggerException(editor.getProject(), myExceptionFqn);
-      InlayPresentation presentation =
-        factory.referenceOnHover(factory.roundWithBackground(factory.smallText("Create breakpoint")), (event, point) -> {
+
+      PresentationFactory factory = new PresentationFactory(editor);
+      InlayButtonPresentationFactory inlayButtonFactory = new InlayButtonPresentationFactory(
+        editor,
+        factory,
+        DefaultLanguageHighlighterColors.INLAY_BUTTON_DEFAULT,
+        DefaultLanguageHighlighterColors.INLAY_BUTTON_HOVERED,
+        DefaultLanguageHighlighterColors.INLAY_BUTTON_FOCUSED
+      );
+      InlayPresentation presentation = inlayButtonFactory
+        .smallText("Create breakpoint")
+        .onClick((event, point) -> {
           JavaDebuggerActionsCollector.createExceptionBreakpointInlay.log();
           Project project = editor.getProject();
           Collection<? extends XBreakpoint<JavaExceptionBreakpointProperties>> exceptionBreakpoints =
@@ -67,7 +78,8 @@ public final class JavaDebuggerAddExceptionBreakpointFilter implements JvmExcept
           if (breakpoint != null) {
             BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
           }
-        });
+        })
+        .build();
       return new PresentationRenderer(presentation);
     }
   }
