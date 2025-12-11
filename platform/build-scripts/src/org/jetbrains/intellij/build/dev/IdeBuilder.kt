@@ -43,7 +43,6 @@ import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuil
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -51,6 +50,7 @@ import org.jetbrains.intellij.build.impl.asArchived
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jetbrains.intellij.build.impl.copyDistFiles
+import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
@@ -458,7 +458,7 @@ private suspend fun createBuildContext(
         result.distAllDir = runDir
         Files.createDirectories(tempDir)
 
-        CompilationContextImpl.createCompilationContext(
+        createCompilationContext(
           projectHome = request.projectDir,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,

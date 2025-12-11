@@ -75,11 +75,11 @@ suspend fun createBuildContext(
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   options: BuildOptions = BuildOptions(),
 ): BuildContext {
-  val compilationContext = CompilationContextImpl.createCompilationContext(
+  val compilationContext = createCompilationContext(
     projectHome = projectHome,
     buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
     options = options,
-    setupTracer = setupTracer
+    setupTracer = setupTracer,
   ).asBazelIfNeeded
   return createBuildContext(
     compilationContext = compilationContext,
