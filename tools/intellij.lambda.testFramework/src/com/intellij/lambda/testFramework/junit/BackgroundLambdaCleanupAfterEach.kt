@@ -31,7 +31,7 @@ class BackgroundLambdaCleanupAfterEach : AfterEachCallback {
     runBlocking(perTestSupervisorScope.coroutineContext) {
       withTimeout(5.seconds) {
         catchAll("Invoking test application cleanup") {
-          if (!IdeInstance.isStarted() || !IdeInstance.runContext.calculateVmOptions().hasUnitTestMode()) return@catchAll
+          if (!IdeInstance.isStarted() || !IdeInstance.runContext.frontendContext.calculateVmOptions().hasUnitTestMode()) return@catchAll
 
           IdeInstance.ide.apply {
             runInFrontend("IDE test application cleanup") {

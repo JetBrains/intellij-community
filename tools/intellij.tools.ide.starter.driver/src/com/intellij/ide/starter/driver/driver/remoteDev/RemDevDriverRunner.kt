@@ -8,6 +8,7 @@ import com.intellij.ide.starter.driver.engine.DriverWithDetailedLogging
 import com.intellij.ide.starter.driver.engine.remoteDev.RemDevFrontendDriver
 import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
@@ -31,8 +32,8 @@ class RemDevDriverRunner : DriverRunner {
     collectNativeThreads: Boolean,
     configure: IDERunContext.() -> Unit,
   ): BackgroundRun {
-    require(context is IDERemDevTestContext) { "for split-mode context should be instance of ${IDERemDevTestContext::class.java.simpleName}" }
-
+    require(context.isRemDevContext()) { "for split-mode context should be instance of ${IDERemDevTestContext::class.java.simpleName}" }
+    context as IDERemDevTestContext
     addConsoleAllAppender()
 
     val remoteDevDriverOptions = RemoteDevDriverOptions()

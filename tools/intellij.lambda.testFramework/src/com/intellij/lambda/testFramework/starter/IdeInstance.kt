@@ -4,19 +4,24 @@ import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
 import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.coroutine.testSuiteSupervisorScope
+import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.junit5.cancelSupervisorScope
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
+import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.lambda.testFramework.utils.runIdeWithLambda
+import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = starterLogger<IdeInstance>()
+
+data class RunContext(var frontendContext: IDERunContext, var backendContext: IDERunContext? = null)
 
 object IdeInstance {
   private var _ide: IdeWithLambda? = null
@@ -27,7 +32,7 @@ object IdeInstance {
     private set
 
   private lateinit var currentIdeConfig: IdeStartConfig
-  lateinit var runContext: IDERunContext
+  lateinit var runContext: RunContext
     private set
 
   fun isStarted(): Boolean = _ide != null
@@ -47,13 +52,37 @@ object IdeInstance {
       currentIdeConfig = IdeStartConfig.current
       ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
 
+      EventsBus.subscribe(IdeInstance) { event: IdeLaunchEvent ->
+        if (event.runContext.testContext.isRemDevContext()) {
+          LOG.info("$runMode mode run context hash ${event.runContext.hashCode()} object ${event.runContext}")
+
+          if (this::runContext.isInitialized) {
+            runContext = runContext.copy(backendContext = event.runContext)
+          }
+          else {
+            runContext = RunContext(backendContext = event.runContext, frontendContext = event.runContext)
+          }
+        }
+        else {
+          val frontendName = if (runMode == IdeRunMode.SPLIT) "Frontend" else "Monolith"
+          LOG.info("$frontendName run context hash ${event.runContext.hashCode()} object ${event.runContext}")
+
+          if (this::runContext.isInitialized) {
+            runContext = runContext.copy(frontendContext = event.runContext)
+          }
+          else {
+            runContext = RunContext(frontendContext = event.runContext)
+          }
+        }
+      }
+
       val testContext = Starter.newContextWithLambda(runMode.name, IdeStartConfig.current)
       _ide = testContext.runIdeWithLambda(configure = {
         IdeStartConfig.current.configureRunContext(this)
         // Artifacts will be published after each test by invoking IdeInstance.publishArtifacts
         this.artifactsPublishingEnabled = false
-        runContext = this
       })
+
       return ide
     }
     catch (e: Throwable) {
@@ -76,7 +105,8 @@ object IdeInstance {
   }
 
   fun publishArtifacts(): Unit = synchronized(this) {
-    runContext.publishArtifacts(true)
+    runContext.frontendContext.publishArtifacts(publish = true)
+    runContext.backendContext?.publishArtifacts(publish = true)
   }
 
   fun cleanup() = synchronized(this) {
