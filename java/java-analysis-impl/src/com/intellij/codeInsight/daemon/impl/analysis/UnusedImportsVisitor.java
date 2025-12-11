@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -38,7 +37,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -152,21 +154,21 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
     List<PsiImportStatementBase> imports = getRedundantImports(myState, javaFile, importList, statement -> ProgressManager.checkCanceled());
     registerRedundantImports(imports, unusedImportKey);
 
-    HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
-    if (misSortedKey != null && isToolEnabled(misSortedKey) && myState.requiresFix) {
+    HighlightDisplayKey missortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
+    if (missortedKey != null && isToolEnabled(missortedKey) && myState.requiresFix) {
       myState.builderList.add(
         HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
           .range(importList)
           .registerFix(
             QuickFixFactory.getInstance().createOptimizeImportsFix(false, myPsiFile),
-            null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey));
+            null, HighlightDisplayKey.getDisplayNameByKey(missortedKey), null, missortedKey));
     }
   }
 
   /**
    * @return all unused imports and their quickfixes in the current file
    */
-  public static @Nullable Result getImportProblems(@NotNull PsiJavaFile javaFile) {
+  public static @Nullable UnusedImportsVisitor.ImportProblems getImportProblems(@NotNull PsiJavaFile javaFile) {
     PsiImportList importList = javaFile.getImportList();
     if (importList == null) return null;
     State state = new State(javaFile);
@@ -184,7 +186,7 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
         )
       );
     }
-    return new Result(redundantImportInfoList, !redundantImportList.isEmpty() || state.requiresFix);
+    return new ImportProblems(redundantImportInfoList, !redundantImportList.isEmpty() || state.requiresFix);
   }
 
   private static @NotNull List<PsiImportStatementBase> getRedundantImports(
@@ -208,7 +210,7 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
       else {
         int entryIndex = JavaCodeStyleManager.getInstance(javaFile.getProject()).findEntryIndex(importStatement);
         if (entryIndex < state.currentEntryIndex && !state.requiresFix) {
-          // mis-sorted imports found
+          // missorted imports found
           state.requiresFix = true;
         }
         state.currentEntryIndex = entryIndex;
@@ -304,6 +306,6 @@ public class UnusedImportsVisitor extends JavaElementVisitor {
    *
    * @param shouldOrganizeImports whether the imports are missorted and could be organized
    */
-  public record Result(@NotNull List<RedundantImportInfo> redundantImportInfoList, boolean shouldOrganizeImports) {
+  public record ImportProblems(@NotNull List<RedundantImportInfo> redundantImportInfoList, boolean shouldOrganizeImports) {
   }
 }

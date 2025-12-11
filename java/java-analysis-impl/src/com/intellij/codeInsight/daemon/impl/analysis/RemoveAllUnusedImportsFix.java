@@ -6,13 +6,15 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveAllUnusedImportsFix implements ModCommandAction {
@@ -36,13 +38,7 @@ public class RemoveAllUnusedImportsFix implements ModCommandAction {
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     if (!(context.file() instanceof PsiJavaFile)) return ModCommand.nop();
-    List<PsiImportStatementBase> importStatements = new ArrayList<>();
-    for (SmartPsiElementPointer<PsiImportStatementBase> pointer : myUnusedImportPointerList) {
-      PsiImportStatementBase importStatement = pointer.getElement();
-      if (importStatement != null) {
-        importStatements.add(importStatement);
-      }
-    }
+    List<PsiImportStatementBase> importStatements = ContainerUtil.mapNotNull(myUnusedImportPointerList, SmartPsiElementPointer::getElement);
 
     return removeImports(context, importStatements);
   }
