@@ -45,8 +45,7 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, "file1", "file2", "file3")
     assertIncluded()
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -82,8 +81,7 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, "file1", "file2", "file3")
     assertIncluded()
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -125,8 +123,7 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, "file1", "file2", "file3")
     assertIncluded()
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -161,10 +158,8 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, FILE_2, "file1", "file2", "file3")
     assertIncluded()
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c_d_e1")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_2, "a2_b_c_d_e2")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c_d_e1")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a2_b_c_d_e2")
     refreshCLM()
 
     include(FILE_1, "file1")
@@ -197,10 +192,8 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, FILE_2, "file1", "file2", "file3")
     assertIncluded()
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_2, "a_b_c_d_e")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     include(FILE_1, "file1")
@@ -233,10 +226,8 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, FILE_2, "file1", "file2", "file3")
     assertIncluded()
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c_d_e1")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_2, "a2_b_c_d_e2")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c_d_e1")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a2_b_c_d_e2")
     refreshCLM()
 
     include(FILE_1, "file1")
@@ -295,10 +286,8 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, FILE_2, "file1", "file2", "file3")
     assertIncluded()
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c1_d_e1")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_2, "a2_b_c2_d_e2")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c1_d_e1")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a2_b_c2_d_e2")
     refreshCLM()
 
     include(FILE_1, "file1")
@@ -349,10 +338,8 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1, FILE_2, "file1", "file2", "file3")
     assertIncluded()
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c1_d_e1")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_2, "a2_b_c2_d_e2")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c1_d_e1")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a2_b_c2_d_e2")
     refreshCLM()
 
     file1.withOpenedEditor {
@@ -382,8 +369,7 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     include(FILE_1)
     assertIncluded(FILE_1)
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c1_d_e1")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c1_d_e1")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -420,8 +406,7 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
     include(FILE_1)
     assertIncluded(FILE_1)
 
-    val file = addLocalFile(FILE_1, "a_ _c_ _e")
-    setBaseVersion(FILE_1, "a1_ _c1_ _e1")
+    val file = addLocalFile(name = FILE_1, content = "a_ _c_ _e", baseContent = "a1_ _c1_ _e1")
     refreshCLM()
 
     file.withOpenedEditor {

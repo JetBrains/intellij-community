@@ -17,8 +17,8 @@ internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
   }
 
   fun `test resolve change by id`() {
-    addModifiedFile("file1.txt", "content1", "base1")
-    addModifiedFile("file2.txt", "content2", "base2")
+    addLocalFile(name = "file1.txt", content = "content1", baseContent = "base1")
+    addLocalFile(name = "file2.txt", content = "content2", baseContent = "base2")
     refreshCLM()
 
     val changes = getChanges()
@@ -31,8 +31,8 @@ internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
 
   fun `test resolve change from different changelists`() {
     createChangelist("Test List")
-    addModifiedFile("file1.txt", "content1", "base1")
-    val file2 = addModifiedFile("file2.txt", "content2", "base2")
+    addLocalFile(name = "file1.txt", content = "content1", baseContent = "base1")
+    val file2 = addLocalFile(name = "file2.txt", content = "content2", baseContent = "base2")
     refreshCLM()
     file2.moveAllChangesTo("Test List")
 
@@ -45,7 +45,7 @@ internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
   }
 
   fun `test return null for unknown id`() {
-    val file = addModifiedFile("file.txt", "content", "base1")
+    val file = addLocalFile(name = "file.txt", content = "content", baseContent = "base1")
     refreshCLM()
     val nonExistentId = ChangeId.getId(file.change!!)
     val resolvedChange = cache.getChangeListChange(nonExistentId)
@@ -88,9 +88,6 @@ internal class ChangesViewChangeIdCacheTest : BaseChangeListsTest() {
     }
     assertSame(change, resolvedChange)
   }
-
-  private fun addModifiedFile(name: String, content: String, baseContent: String) =
-    addLocalFile(name, content).also { setBaseVersion(name, baseContent) }
 
   // Accessing change lists populates cache
   private fun getChanges(): List<Change> =

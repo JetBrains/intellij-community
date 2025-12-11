@@ -16,7 +16,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
   fun `test partial tracker lifecycle - editor for unchanged file`() {
     createChangelist("Test")
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e")
     file.assertNullTracker()
 
     file.withOpenedEditor {
@@ -29,8 +29,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
   fun `test partial tracker lifecycle - editor for modified file`() {
     createChangelist("Test")
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
     file.assertNullTracker()
 
@@ -57,8 +56,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
   fun `test partial tracker lifecycle - multiple editors`() {
     createChangelist("Test")
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
     file.assertNullTracker()
 
@@ -81,8 +79,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
   fun `test partial tracker lifecycle - with partial changes without editor`() {
     createChangelist("Test")
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
     file.assertNullTracker()
 
@@ -110,8 +107,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker from non-default changelist`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test")
@@ -128,8 +124,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker from non-default changelist - modified during initialisation`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d1_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test")
@@ -148,8 +143,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d1_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test")
@@ -170,8 +164,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c_d_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test")
@@ -188,8 +181,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a1_b_c_d_e1")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a1_b_c_d_e1", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test")
@@ -212,8 +204,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     createChangelist("Test #1")
     createChangelist("Test #2")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test #2")
@@ -243,10 +234,8 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     createChangelist("Test #1")
     createChangelist("Test #2")
 
-    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
-    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a1_b_c_d_e1")
-    setBaseVersion(FILE_2, "a1_b_c_d_e1")
+    val file1 = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a1_b_c_d_e1")
+    val file2 = addLocalFile(name = FILE_2, content = "a_b_c_d_e", baseContent = "a1_b_c_d_e1")
     refreshCLM()
 
 
@@ -288,8 +277,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     createChangelist("Test #1")
     createChangelist("Test #2")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     file.moveAllChangesTo("Test #2")
@@ -314,8 +302,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker before initialisation - no changed lines in vcs, local changes reverted`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
     file.moveAllChangesTo("Test")
 
@@ -342,8 +329,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker before initialisation - typing`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
 
@@ -367,8 +353,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker before initialisation - no changed lines in vcs`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
     file.moveAllChangesTo("Test")
 
@@ -392,8 +377,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test tracker before initialisation - old local changes reverted`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a2_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a2_b_c_d_e", baseContent = "a_b_c_d_e")
     refreshCLM()
     file.moveAllChangesTo("Test")
 
@@ -415,8 +399,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   }
 
   fun `test bulk refresh freezes tracker - inner operation`() {
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -433,8 +416,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   }
 
   fun `test bulk refresh freezes tracker - outer operation`() {
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     runBatchFileChangeOperation {
@@ -448,8 +430,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   }
 
   fun `test bulk refresh freezes tracker - interleaving operation`() {
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     runBatchFileChangeOperation {
@@ -466,8 +447,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   }
 
   fun `test bulk refresh freezes tracker - multiple operations`() {
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -489,8 +469,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - incoming changes in non-active changelist 1`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -512,8 +491,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - incoming changes in non-active changelist 2`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e2")
-    setBaseVersion(FILE_1, "a_b_c_d_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e2", baseContent = "a_b_c_d_e")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -639,8 +617,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker released during update (editor closed)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -669,8 +646,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker released during update (no more partial changes)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -701,8 +677,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker created during update`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -727,8 +702,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker created during update (changes moved via LST)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -760,8 +734,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     createChangelist("Test")
     createChangelist("Test 2")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -793,8 +766,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker created and released during update (changes moved via LST)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -828,8 +800,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     createChangelist("Test")
     createChangelist("Test 2")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -862,8 +833,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker created during update (and released after update)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -894,8 +864,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test vcs refresh - tracker created and released during update  (changes moved via LST, no partial changes)`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -926,8 +895,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test file rename - no partial changes`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     file.assertAffectedChangeLists("Test")
@@ -943,8 +911,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test file rename - with partial changes`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     runCommand { file.document.replaceString(0, 1, "a2") }
@@ -965,8 +932,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test file rename - with partial changes, while tracker not initialized`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     runCommand { file.document.replaceString(0, 1, "a2") }
@@ -987,8 +953,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test file rename - with partial changes, try release tracker during CLM refresh`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b_c_d_e2")
     refreshCLM()
     file.moveAllChangesTo("Test")
     runCommand { file.document.replaceString(0, 1, "a2") }
@@ -1022,8 +987,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test shelve-unshelve 1`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
-    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    val file = addLocalFile(name = FILE_1, content = "a1_b_c_d_e_f1", baseContent = "a_b_c_d_e_f")
     refreshCLM()
     file.moveAllChangesTo("Test")
     runCommand { file.document.replaceString(7, 8, "d2") }
@@ -1049,8 +1013,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test shelve-unshelve 2`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
-    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    val file = addLocalFile(name = FILE_1, content = "a1_b_c_d_e_f1", baseContent = "a_b_c_d_e_f")
     refreshCLM()
     file.moveAllChangesTo("Test")
     runCommand { file.document.replaceString(7, 8, "d2") }
@@ -1076,8 +1039,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   fun `test shelve-unshelve 3`() {
     createChangelist("Test")
 
-    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
-    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    val file = addLocalFile(name = FILE_1, content = "a1_b_c_d_e_f1", baseContent = "a_b_c_d_e_f")
     refreshCLM()
     file.moveAllChangesTo("Test")
 

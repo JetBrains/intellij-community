@@ -17,8 +17,7 @@ internal class PartialChangesHolderTest: BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1)
     assertIncluded()
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.withOpenedEditor {
@@ -40,8 +39,7 @@ internal class PartialChangesHolderTest: BasePartiallyExcludedChangesTest() {
     setHolderPaths(FILE_1)
     assertIncluded()
 
-    val file = addLocalFile(FILE_1, "a_b_c_d_e")
-    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
     refreshCLM()
 
     file.withOpenedEditor {

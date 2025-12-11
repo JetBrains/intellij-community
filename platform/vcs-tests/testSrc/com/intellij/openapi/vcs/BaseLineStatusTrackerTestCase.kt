@@ -38,8 +38,7 @@ abstract class BaseLineStatusTrackerTestCase : BaseLineStatusTrackerManagerTest(
                                                              fileName: String = "file.txt",
                                                              createTestHelper: (LineStatusTracker<*>) -> TestHelper,
                                                              task: TestHelper.() -> Unit) {
-    val file = addLocalFile(fileName, parseInput(text))
-    setBaseVersion(fileName, parseInput(vcsText))
+    val file = addLocalFile(fileName, content =  parseInput(text), baseContent = parseInput(vcsText))
     refreshCLM()
 
     file.withOpenedEditor {
