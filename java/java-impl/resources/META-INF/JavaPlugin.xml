@@ -12,21 +12,13 @@
   <xi:include href="/META-INF/JavaCodeServerCore.xml"/>
   <xi:include href="/META-INF/JavaCodeServerHighlighting.xml"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
-  <xi:include href="/META-INF/IntentionPowerPack.xml">
-    <xi:fallback/>
-  </xi:include>
+  <xi:include href="/META-INF/IntentionPowerPack.xml"/>
   <xi:include href="/META-INF/Intentions.xml"/>
   <xi:include href="/META-INF/InspectionGadgets.xml"/>
   <xi:include href="/META-INF/Inspections.xml"/>
-  <xi:include href="/META-INF/ManifestSupport.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/TypeMigration.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/UsageData.xml">
-    <xi:fallback/>
-  </xi:include>
+  <xi:include href="/META-INF/ManifestSupport.xml"/>
+  <xi:include href="/META-INF/TypeMigration.xml"/>
+  <xi:include href="/META-INF/UsageData.xml"/>
   <xi:include href="/META-INF/java-debugger.xml"/>
 
   <projectListeners>
