@@ -25,7 +25,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
-  static @NotNull ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
+  public static @NotNull ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
     //throw foo
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(element)) {
       return TrueFilter.INSTANCE;

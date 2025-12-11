@@ -1,6 +1,7 @@
 *a:com.intellij.codeInsight.ModNavigatorTailType
 - com.intellij.codeInsight.TailType
 - <init>():V
+- s:dotType():com.intellij.codeInsight.ModNavigatorTailType
 - s:humbleSpaceBeforeWordType():com.intellij.codeInsight.ModNavigatorTailType
 - s:insertSpaceType():com.intellij.codeInsight.ModNavigatorTailType
 - isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z

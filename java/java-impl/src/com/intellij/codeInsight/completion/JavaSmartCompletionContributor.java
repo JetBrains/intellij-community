@@ -134,6 +134,10 @@ public final class JavaSmartCompletionContributor {
   }
 
   public static ExpectedTypeInfo @NotNull [] getExpectedTypes(final CompletionParameters parameters) {
+    return getExpectedTypes((BaseCompletionParameters)parameters);
+  }
+
+  public static ExpectedTypeInfo @NotNull [] getExpectedTypes(final BaseCompletionParameters parameters) {
     return getExpectedTypes(parameters.getPosition(), parameters.getCompletionType() == CompletionType.SMART);
   }
 

@@ -211,7 +211,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return CodeStyle.getLanguageSettings(element.getContainingFile(), JavaLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
-  static boolean isInaccessibleConstructorSuggestion(@NotNull PsiElement position, @Nullable PsiClass cls) {
+  /**
+   * @param position position to test
+   * @param cls class where constructor is located
+   * @return true if there's no accessible constructor of a given class in a given position.
+   */
+  public static boolean isInaccessibleConstructorSuggestion(@NotNull PsiElement position, @Nullable PsiClass cls) {
     if (cls == null || cls.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
     PsiMethod[] constructors = cls.getConstructors();
     if (constructors.length > 0) {

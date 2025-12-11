@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -87,7 +88,7 @@ public final class MemberLookupHelper {
 
     presentation.appendTailText(params, false);
     if (myShouldImport && !constructor && StringUtil.isNotEmpty(className)) {
-      presentation.appendTailText(" in " + className + location, true);
+      presentation.appendTailText(JavaBundle.message("member.in.class", className) + location, true);
     } else {
       presentation.appendTailText(location, true);
     }

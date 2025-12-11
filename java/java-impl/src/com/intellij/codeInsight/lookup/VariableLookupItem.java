@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -32,7 +33,8 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
-  private static final String EQ = " = ";
+  @ApiStatus.Internal
+  public static final String EQ = " = ";
   private final @Nullable MemberLookupHelper myHelper;
   private final String myTailText;
   private final boolean myNegatable;
@@ -60,7 +62,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     super(var, Objects.requireNonNull(var.getName()));
     myHelper = helper;
     myTailText = tailText == null ? getInitializerText(var) : tailText;
-    myNegatable = PsiTypes.booleanType().isAssignableFrom(var.getType());
+    myNegatable = TypeConversionUtil.isBooleanType(var.getType());
   }
 
   @ApiStatus.Internal
@@ -92,7 +94,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return this;
   }
 
-  private @Nullable String getInitializerText(PsiVariable var) {
+  /**
+   * @param var variable to get its initializer text
+   * @return the initializer text to display in completion popup; null if not applicable
+   */
+  @ApiStatus.Internal
+  public static @Nullable String getInitializerText(PsiVariable var) {
     if (!var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (PlainDescriptor.hasInitializationHacks(var)) return null;
 
@@ -294,9 +301,15 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return shouldQualify(field, context.getFile().findReferenceAt(context.getTailOffset() - 1));
   }
 
-  private static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
-    if ((context instanceof PsiReferenceExpression && !((PsiReferenceExpression)context).isQualified()) || 
-        (context instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)context).isQualified())) {
+  /**
+   * @param field field to check
+   * @param context context where it's about to be used
+   * @return whether the field access should be qualified in a given context
+   */
+  @ApiStatus.Internal
+  public static boolean shouldQualify(@NotNull PsiField field, @Nullable PsiReference context) {
+    if ((context instanceof PsiReferenceExpression ref && !ref.isQualified()) ||
+        (context instanceof PsiJavaCodeReferenceElement codeRef && !codeRef.isQualified())) {
       PsiElement element = context.getElement();
       if (isEnumInSwitch(field, element)) return false;
       PsiVariable target = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()

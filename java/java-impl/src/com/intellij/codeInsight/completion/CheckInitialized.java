@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,16 +21,17 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-class CheckInitialized implements ElementFilter {
+@ApiStatus.Internal
+public class CheckInitialized implements ElementFilter {
   private final Set<PsiField> myNonInitializedFields;
   private final boolean myInsideConstructorCall;
 
-  CheckInitialized(@NotNull PsiElement position) {
+  public CheckInitialized(@NotNull PsiElement position) {
     myNonInitializedFields = getNonInitializedFields(position);
     myInsideConstructorCall = isInsideConstructorCall(position);
   }
 
-  static boolean isInsideConstructorCall(@NotNull PsiElement position) {
+  public static boolean isInsideConstructorCall(@NotNull PsiElement position) {
     return JavaPsiConstructorUtil.isConstructorCall(PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class)) &&
            !JavaKeywordCompletion.AFTER_DOT.accepts(position);
   }
