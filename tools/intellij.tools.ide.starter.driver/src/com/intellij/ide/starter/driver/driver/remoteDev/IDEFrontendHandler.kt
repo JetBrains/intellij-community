@@ -8,6 +8,7 @@ import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDEHandle
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.openapi.util.SystemInfo
@@ -32,7 +33,12 @@ internal class IDEFrontendHandler(
     }
   }
 
-  fun runInBackground(launchName: String, joinLink: String, runTimeout: Duration): Pair<Deferred<IDEStartResult>, IDEHandle> {
+  fun runInBackground(
+    launchName: String,
+    joinLink: String,
+    runTimeout: Duration,
+    configure: IDERunContext.() -> Unit = {},
+  ): Pair<Deferred<IDEStartResult>, IDEHandle> {
     frontendContext.ide.vmOptions.let {
       //setup xDisplay
       it.addDisplayIfNecessary()
@@ -75,6 +81,8 @@ internal class IDEFrontendHandler(
               }
             }
             withScreenRecording()
+
+            configure(this)
           })
           .also {
             logOutput("Remote IDE Frontend run ${frontendContext.testName} completed")

@@ -59,7 +59,8 @@ class RemDevDriverRunner : DriverRunner {
                                                                     remoteDevDriverOptions.debugPort)
       .runInBackground(launchName,
                        joinLink,
-                       runTimeout)
+                       runTimeout,
+                       configure)
 
     return RemoteDevBackgroundRun(backendRun = backendRun,
                                   frontendProcess = frontendProcess,

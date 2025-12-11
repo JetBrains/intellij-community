@@ -47,7 +47,7 @@ internal class IDEBackendHandler(
     expectedKill: Boolean,
     expectedExitCode: Int,
     collectNativeThreads: Boolean,
-    configure: IDERunContext.() -> Unit,
+    configure: IDERunContext.() -> Unit = {},
   ): BackgroundRun {
     if (ConfigurationStorage.useInstaller()) {
       ConfigurationStorage.includeRuntimeModuleRepositoryInIde(true)
