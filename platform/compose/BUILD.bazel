@@ -29,6 +29,7 @@ jvm_library(
     "//libraries/skiko",
     "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
     "//platform/diagnostic/telemetry",
+    "//platform/core-impl",
   ],
   exports = [
     "//platform/jewel/ui",
@@ -66,6 +67,7 @@ jvm_library(
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/core-impl",
   ],
   exports = [
     "//platform/jewel/ui",

@@ -34,6 +34,7 @@ object VmOptionsGenerator {
     "-Djdk.nio.maxCachedBufferSize=2097152",
     "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
     "-Dkotlinx.coroutines.debug=off",
+    "-Dskiko.rendering.useScreenMenuBar=false",
   )
 
   /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */

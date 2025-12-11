@@ -6,14 +6,12 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.PathManager
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.Toolkit
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseEvent
-import java.io.File
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +21,6 @@ import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.LocalComponent as LocalComponentFoundation
-import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
 import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
@@ -193,25 +190,10 @@ public fun JewelComposeNoThemePanel(
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
-@ApiStatus.Internal
-@InternalJewelApi
-public fun setSkikoLibraryPath() {
-    if (System.getProperty("skiko.library.path") == null) {
-        val bundledSkikoFolder = File(PathManager.getLibPath(), "/skiko-awt-runtime-all")
-        if (bundledSkikoFolder.isDirectory && bundledSkikoFolder.canRead()) {
-            System.setProperty("skiko.library.path", PathManager.getLibPath() + "/skiko-awt-runtime-all")
-        } else {
-            JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
-        }
-    }
-}
-
 private fun createJewelComposePanel(
     focusOnClickInside: Boolean,
     config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
 ): JewelComposePanelWrapper {
-    setSkikoLibraryPath()
-
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
