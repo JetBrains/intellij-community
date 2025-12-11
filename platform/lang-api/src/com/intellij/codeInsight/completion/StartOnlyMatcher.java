@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 public class StartOnlyMatcher extends PrefixMatcher {
   private final PrefixMatcher myDelegate;
 
-  public StartOnlyMatcher(PrefixMatcher delegate) {
+  public StartOnlyMatcher(@NotNull PrefixMatcher delegate) {
     super(delegate.getPrefix());
     myDelegate = delegate;
   }
