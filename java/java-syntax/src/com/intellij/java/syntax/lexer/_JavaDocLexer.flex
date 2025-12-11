@@ -133,6 +133,7 @@ LEADING_TOKEN_MARKDOWN="///"
       }
 
       // According to the JFlex user guide, lookahead should be avoided.
+      (\\\\) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
       (\\\[) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
       (\\\]) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
       (\\\() { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
