@@ -26,16 +26,17 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
 import com.intellij.ui.layout.selected
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.ProxyConfiguration.*
 import com.intellij.util.proxy.CommonProxy
 import com.intellij.util.proxy.JavaProxyProperty
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.net.MalformedURLException
-import java.net.URL
+import java.net.URI
+import java.net.URISyntaxException
+import java.net.http.HttpResponse
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -76,7 +77,7 @@ internal class ProxySettingsUi(
   private var lastUserConfiguration: ProxyConfiguration =
     (proxySettings as? OverrideCapableProxySettings)?.originalProxyConfiguration ?: proxySettings.getProxyConfiguration()
 
-  private var checkConnectionUrl = "https://"
+  private var checkConnectionUrl = "https://example.com/"
   private var lastProxyError: @NlsSafe String = ""
 
   private fun getMainPanel() = mainPanel
@@ -221,8 +222,9 @@ internal class ProxySettingsUi(
     }
 
     val title = IdeBundle.message("dialog.title.check.proxy.settings")
-    val url = Messages.showInputDialog(mainPanel, IdeBundle.message("message.text.enter.url.to.check.connection"),
-                                       title, Messages.getQuestionIcon(), checkConnectionUrl, null)
+    val url = Messages.showInputDialog(
+      mainPanel, IdeBundle.message("message.text.enter.url.to.check.connection"), title, Messages.getQuestionIcon(), checkConnectionUrl, null
+    )
     if (url.isNullOrBlank()) return
     checkConnectionUrl = url
     try {
@@ -232,13 +234,15 @@ internal class ProxySettingsUi(
       return
     }
 
-    val exceptionReference = AtomicReference<IOException>()
+    val exceptionReference = AtomicReference<Exception>()
     runWithModalProgressBlocking(ModalTaskOwner.component(mainPanel), IdeBundle.message("progress.title.check.connection")) {
       withContext(Dispatchers.IO) {
         try {
-          HttpRequests.request(url).readTimeout(3 * 1000).tryConnect()
+          val client = PlatformHttpClient.client()
+          val request = PlatformHttpClient.requestBuilder(URI(url)).timeout(Duration.ofSeconds(3)).build()
+          PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.discarding()))
         }
-        catch (e: IOException) {
+        catch (e: Exception) {
           exceptionReference.set(e)
         }
       }
@@ -261,8 +265,10 @@ internal class ProxySettingsUi(
       val pacUrl = pacUrlTextField.text
       if (pacUrl.isNullOrBlank()) throw ConfigurationException(IdeBundle.message("dialog.message.url.is.empty"))
       try {
-        return@runCatching ProxyConfiguration.proxyAutoConfiguration(URL(pacUrl))
+        return@runCatching ProxyConfiguration.proxyAutoConfiguration(URI(pacUrl).toURL())
       } catch (_: MalformedURLException) {
+        throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
+      } catch (_: URISyntaxException) {
         throw ConfigurationException(IdeBundle.message("dialog.message.url.is.invalid"))
       }
     }
