@@ -3,11 +3,14 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.DocumentationManager.DocumentationOnHoverSession
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.vcs.log.impl.CommonUiProperties
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.ui.table.links.IssueLinkTag
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
@@ -38,6 +41,9 @@ internal class VcsLogGraphTableLinkPreviewSupport(private val table: VcsLogGraph
   }
 
   private fun startShowingDoc(tag: IssueLinkTag, row: Int) {
+    val settings = ApplicationManager.getApplication().service<VcsLogApplicationSettings>()
+    if (!settings[CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER]) return
+    val delay = settings[CommonUiProperties.SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY]
     ReadAction
       .nonBlocking(Callable {
         Optional.ofNullable(tag.documentationTarget)
@@ -46,7 +52,7 @@ internal class VcsLogGraphTableLinkPreviewSupport(private val table: VcsLogGraph
       .finishOnUiThread(ModalityState.any(), Consumer { pointerOptional ->
         val target = pointerOptional.map { it.dereference() }.orElse(null)
         if (target != null) {
-          session?.let {session ->
+          session?.let { session ->
             if (tag.issueId == session.issueId && row == session.row) {
               session.documentationSession.mouseWithinSourceArea()
               return@Consumer
@@ -61,7 +67,7 @@ internal class VcsLogGraphTableLinkPreviewSupport(private val table: VcsLogGraph
           cellRect.x = 0
           cellRect.width = table.getWidth()
           project.service<DocumentationManager>()
-            .showDocumentationOnHoverAround(listOf(target), project, table, cellRect, 350) {
+            .showDocumentationOnHoverAround(listOf(target), project, table, cellRect, 350, delay) {
               session = null
             }?.let {
               session = LinkPreviewSession(project, tag.issueId, row, it)

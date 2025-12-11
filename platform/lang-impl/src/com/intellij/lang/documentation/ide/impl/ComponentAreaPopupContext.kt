@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
@@ -30,6 +29,7 @@ internal class ComponentAreaPopupContext(
   private val areaWithinComponent: Rectangle,
   private val onDocumentationSessionDone: Runnable?,
   private val minHeight: Int,
+  private val delay: Int,
 ) : DefaultPopupContext(project, null) {
 
   private val myComponentReference = WeakReference(component)
@@ -115,9 +115,7 @@ internal class ComponentAreaPopupContext(
             return false
           }
         }, popup)
-        // Add some delay, which usually is related to reference resolve and other stuff,
-        // so that the popup does not appear immediately, even if the delay is zero.
-      }, 150 + CodeInsightSettings.getInstance().JAVADOC_INFO_DELAY)
+      }, delay)
     }
 
     fun mouseOutsideOfSourceArea() {
