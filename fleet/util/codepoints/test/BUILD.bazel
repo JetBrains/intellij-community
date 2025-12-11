@@ -24,8 +24,7 @@ jvm_library(
   deps = [
     "//fleet/util/codepoints",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-test",
-    "//fleet/junit4",
+    "//fleet/junit",
   ]
 )
 ### auto-generated section `build fleet.util.codepoints.test` end

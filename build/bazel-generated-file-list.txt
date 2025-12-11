@@ -234,7 +234,7 @@ fleet/codecache
 fleet/codecache/test
 fleet/compiler-plugins
 fleet/fastutil
-fleet/junit4
+fleet/junit
 fleet/kernel
 fleet/ktor/client/cio
 fleet/ktor/client/core

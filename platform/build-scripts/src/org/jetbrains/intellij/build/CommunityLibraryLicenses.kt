@@ -1443,6 +1443,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-gradle-plugin-idea-proto"),
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
+    jetbrainsLibrary("kotlin-test-junit5"),
     jetbrainsLibrary("kotlin-tooling-core"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.analysis-api"),

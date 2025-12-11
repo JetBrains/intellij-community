@@ -15,7 +15,7 @@ plugins {
 
 fleetModule {
   module {
-    name = "fleet.junit4"
+    name = "fleet.junit"
     importedFromJps {}
   }
 }
@@ -35,15 +35,26 @@ kotlin {
   configureAtMostOneJvmTargetOrThrow { compilations.named("test") { withJavaSourceSet { javaSourceSet -> javaSourceSet.java.srcDir(layout.projectDirectory.dir("../srcJvmTest")) } } }
   sourceSets.jvmTest.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesJvmTest")) }
   sourceSets.commonMain.dependencies {
-    api(jps.junit.junit399551665.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.hamcrest", module = "hamcrest-core")
+    api(jps.org.junit.jupiter.junit.jupiter.api1894444205.get())
+    api(jps.org.junit.jupiter.junit.jupiter.params1101092435.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
+    api(jps.org.junit.jupiter.junit.jupiter.engine1404327319.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
+    api(jps.org.junit.platform.junit.platform.launcher1454626487.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.apiguardian", module = "apiguardian-api")
+      exclude(group = "org.opentest4j", module = "opentest4j")
+      exclude(group = "org.junit.platform", module = "junit-platform-commons")
     }
     api(jps.org.hamcrest.hamcrest1545074716.get().let { "${it.group}:${it.name}:${it.version}" }) {
       isTransitive = false
     }
-    api(jps.org.jetbrains.kotlin.kotlin.test.junit1832084525.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-test")
-      exclude(group = "junit", module = "junit")
+    api(jps.org.jetbrains.kotlin.kotlin.test.junit5960045374.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+    }
+    api(jps.org.jetbrains.kotlin.kotlin.test542871666.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
   }
   // KOTLIN__MARKER_END

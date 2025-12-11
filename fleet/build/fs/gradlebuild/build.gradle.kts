@@ -64,13 +64,8 @@ kotlin {
       isTransitive = false
     }
   }
-  sourceSets.commonTest.dependencies {
-    implementation(jps.org.jetbrains.kotlin.kotlin.test542871666.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
-  }
   sourceSets.jvmTest.dependencies {
-    implementation(project(":fleet.junit4"))
+    implementation(project(":fleet.junit"))
   }
   // KOTLIN__MARKER_END
 }

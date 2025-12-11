@@ -18,7 +18,7 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" filepath="$PROJECT_DIR$/fleet/codecache/test/fleet.codecache.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" filepath="$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" />
-      <module fileurl="file://$PROJECT_DIR$/fleet/junit4/fleet.junit4.iml" filepath="$PROJECT_DIR$/fleet/junit4/fleet.junit4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/junit/fleet.junit.iml" filepath="$PROJECT_DIR$/fleet/junit/fleet.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" filepath="$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/ktor/client/cio/fleet.ktor.client.cio.iml" filepath="$PROJECT_DIR$/fleet/ktor/client/cio/fleet.ktor.client.cio.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/ktor/client/core/fleet.ktor.client.core.iml" filepath="$PROJECT_DIR$/fleet/ktor/client/core/fleet.ktor.client.core.iml" />

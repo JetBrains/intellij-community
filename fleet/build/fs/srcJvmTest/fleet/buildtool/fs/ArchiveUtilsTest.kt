@@ -6,7 +6,7 @@ import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Over
 import fleet.buildtool.fs.ReproducibilityMode.Reproducible.PermissionOption.Preserve
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream
-import org.junit.Assume.assumeTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
@@ -345,7 +345,12 @@ class ArchiveUtilsTest {
     val destination = tempDir.resolve("extracted")
 
     // When
-    extractZip(zipFile, destination, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tempDir.resolve("tmp"), logger = logger)
+    extractZip(zipFile,
+               destination,
+               stripTopLevelFolder = false,
+               cleanDestination = false,
+               temporaryDir = tempDir.resolve("tmp"),
+               logger = logger)
 
     // Then
     assertTrue(destination.resolve("file1.txt").exists())
@@ -362,7 +367,12 @@ class ArchiveUtilsTest {
     val destination = tempDir.resolve("non-existent/extracted")
 
     // When
-    extractZip(zipFile, destination, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tempDir.resolve("tmp"), logger = logger)
+    extractZip(zipFile,
+               destination,
+               stripTopLevelFolder = false,
+               cleanDestination = false,
+               temporaryDir = tempDir.resolve("tmp"),
+               logger = logger)
 
     // Then
     assertTrue(destination.exists())
@@ -383,7 +393,12 @@ class ArchiveUtilsTest {
     val destination = tempDir.resolve("extracted")
 
     // When
-    extractZip(zipFile, destination, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tempDir.resolve("tmp"), logger = logger)
+    extractZip(zipFile,
+               destination,
+               stripTopLevelFolder = false,
+               cleanDestination = false,
+               temporaryDir = tempDir.resolve("tmp"),
+               logger = logger)
 
     // Then
     assertTrue(destination.resolve("emptydir").isDirectory())
@@ -400,7 +415,12 @@ class ArchiveUtilsTest {
     val destination = tempDir.resolve("extracted")
 
     // When
-    extractZip(zipFile, destination, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tempDir.resolve("tmp"), logger = logger)
+    extractZip(zipFile,
+               destination,
+               stripTopLevelFolder = false,
+               cleanDestination = false,
+               temporaryDir = tempDir.resolve("tmp"),
+               logger = logger)
 
     // Then
     assertTrue(destination.resolve("level1/level2/level3/file.txt").exists())
@@ -1079,7 +1099,12 @@ class ArchiveUtilsTest {
 
     // Then
     val destination = tempDir.resolve("extracted")
-    extractZip(targetZip, destination, stripTopLevelFolder = false, cleanDestination = false, temporaryDir = tempDir.resolve("tmp"), logger = logger)
+    extractZip(targetZip,
+               destination,
+               stripTopLevelFolder = false,
+               cleanDestination = false,
+               temporaryDir = tempDir.resolve("tmp"),
+               logger = logger)
     assertTrue(destination.resolve("a/b/c/d/e/f/g/h/deep.txt").exists())
     assertEquals("deep", destination.resolve("a/b/c/d/e/f/g/h/deep.txt").readText())
   }
@@ -1322,7 +1347,7 @@ class ArchiveUtilsTest {
 
 
   private fun assumePosixFileSystem() {
-    assumeTrue("Posix permissions are not supported on this system. Skipping test.", tempDir.isPosixSupported())
+    assumeTrue(tempDir.isPosixSupported(), "Posix permissions are not supported on this system. Skipping test.")
   }
 
   private fun Path.isPosixSupported(): Boolean {

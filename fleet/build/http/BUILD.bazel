@@ -48,8 +48,7 @@ jvm_library(
     "//fleet/build/fs:fs_test_lib",
     "@lib//:fleet-io-ktor-client-logging",
     "@lib//:slf4j-api",
-    "//fleet/junit4",
-    "@lib//:kotlin-test",
+    "//fleet/junit",
     "@lib//:fleet-io-ktor-client-mock",
   ],
   exports = [
