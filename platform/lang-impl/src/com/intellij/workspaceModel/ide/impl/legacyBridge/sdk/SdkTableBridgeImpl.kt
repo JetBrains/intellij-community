@@ -46,7 +46,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     for (globalWorkspaceModel in globalWorkspaceModels) {
       val currentSnapshot = globalWorkspaceModel.currentSnapshot
       val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
-                        .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
+                        .firstOrNull { Comparing.strEqual(name, it.name) } ?: continue
       return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
     }
     return null
