@@ -52,6 +52,9 @@
 *f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
 - f:defaultBuilderFactory():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
 - f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.SyntaxGeneratedParserRuntimeFactoryKt
+- sf:createSyntaxGeneratedParserRuntime(com.intellij.lang.Language,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- bs:createSyntaxGeneratedParserRuntime$default(com.intellij.lang.Language,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.ParserUserState,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 *f:com.intellij.platform.syntax.psi.SyntaxGrammarKitFileElementType
 - com.intellij.psi.tree.IFileElementType
 - <init>(com.intellij.lang.Language):V

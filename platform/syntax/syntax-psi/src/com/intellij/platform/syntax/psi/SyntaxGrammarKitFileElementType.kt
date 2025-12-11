@@ -4,7 +4,6 @@ package com.intellij.platform.syntax.psi
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
 import com.intellij.platform.syntax.psi.ElementTypeConverters.getConverter
-import com.intellij.platform.syntax.psi.impl.getSyntaxParserRuntimeFactory
 import com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
 import com.intellij.platform.syntax.util.runtime.ParserUserState
 import com.intellij.psi.PsiElement
@@ -23,11 +22,13 @@ class SyntaxGrammarKitFileElementType(language: Language) : IFileElementType(lan
                                                      language,
                                                      chameleon.getChars())
     val converter = getConverter(language)
-    val convertedElement = converter.convert(elementType) ?: throw IllegalStateException("Failed convert element type: $elementType. Converter: Converter: ${converter}")
-    val parserRuntime =
-      getSyntaxParserRuntimeFactory(language)
-        .buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder(),
-                            createExtendedParserUserState())
+    val convertedElement = converter.convert(elementType)
+                           ?: throw IllegalStateException("Failed convert element type: $elementType. Converter: Converter: ${converter}")
+    val parserRuntime = createSyntaxGeneratedParserRuntime(
+      language = language,
+      builder = syntaxBuilder.getSyntaxTreeBuilder(),
+      state = createExtendedParserUserState()
+    )
 
     val root = registerParse(syntaxBuilder, language) {
       syntaxLanguageDefinition.parse(convertedElement, parserRuntime)
