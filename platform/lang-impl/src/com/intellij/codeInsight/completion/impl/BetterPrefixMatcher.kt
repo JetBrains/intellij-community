@@ -4,7 +4,12 @@ package com.intellij.codeInsight.completion.impl
 import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.serialization.FrontendFriendlyPrefixMatcherSerializer
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import kotlinx.serialization.Serializable
 
 open class BetterPrefixMatcher(
   private val original: PrefixMatcher,
@@ -59,21 +64,46 @@ open class BetterPrefixMatcher(
     createCopy(original.cloneWithPrefix(prefix), minMatchingDegree)
 
   class AutoRestarting private constructor(
-    private val result: CompletionResultSet,
     original: PrefixMatcher,
     minMatchingDegree: Int,
   ) : BetterPrefixMatcher(original, minMatchingDegree) {
-    constructor(result: CompletionResultSet) : this(result, result.prefixMatcher, Int.MIN_VALUE)
+    constructor(result: CompletionResultSet) : this(result.prefixMatcher, Int.MIN_VALUE)
 
     override fun createCopy(original: PrefixMatcher, degree: Int): BetterPrefixMatcher =
-      AutoRestarting(result, original, degree)
+      AutoRestarting(original, degree)
 
     override fun prefixMatchesEx(name: String): MatchingOutcome {
       val outcome = super.prefixMatchesEx(name)
       if (outcome == MatchingOutcome.WORSE_MATCH) {
-        result.restartCompletionOnAnyPrefixChange()
+        CompletionServiceImpl.currentCompletionProgressIndicator?.addWatchedPrefix(0, StandardPatterns.string())
       }
       return outcome
     }
+
+    internal class Converter : PrefixMatcherDescriptorConverter<BetterPrefixMatcher> {
+      override fun toDescriptor(target: BetterPrefixMatcher): PrefixMatcherDescriptor? {
+        val originalDescriptor = FrontendFriendlyPrefixMatcherSerializer.toDescriptor(target.original) ?: return null
+        return Descriptor(originalDescriptor, target.minMatchingDegree)
+      }
+    }
+
+    @Serializable
+    internal data class Descriptor(val original: PrefixMatcherDescriptor, val minMatchingDegree: Int) : PrefixMatcherDescriptor {
+      override fun recreateMatcher(): PrefixMatcher =
+        AutoRestarting(original.recreateMatcher(), minMatchingDegree)
+    }
+  }
+
+  internal class Converter : PrefixMatcherDescriptorConverter<BetterPrefixMatcher> {
+    override fun toDescriptor(target: BetterPrefixMatcher): PrefixMatcherDescriptor? {
+      val originalDescriptor = FrontendFriendlyPrefixMatcherSerializer.toDescriptor(target.original) ?: return null
+      return Descriptor(originalDescriptor, target.minMatchingDegree)
+    }
+  }
+
+  @Serializable
+  internal data class Descriptor(val original: PrefixMatcherDescriptor, val minMatchingDegree: Int) : PrefixMatcherDescriptor {
+    override fun recreateMatcher(): PrefixMatcher =
+      BetterPrefixMatcher(original.recreateMatcher(), minMatchingDegree)
   }
 }

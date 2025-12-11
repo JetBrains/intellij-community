@@ -61,5 +61,17 @@
       implementation="com.intellij.ide.projectView.impl.canBeSelected.ArchiveCanBeSelectedInProjectPaneProvider"/>
     <canBeSelectedInProjectPaneProvider
       implementation="com.intellij.ide.projectView.impl.canBeSelected.ScratchCanBeSelectedInProjectPaneProvider"/>
+
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.command.LimitedToleranceMatcher"
+                                              converter="com.intellij.codeInsight.completion.command.LimitedToleranceMatcher$Converter"
+                                              descriptor="com.intellij.codeInsight.completion.command.LimitedToleranceMatcher$Descriptor"/>
+
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher"
+                                              converter="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$Converter"
+                                              descriptor="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$Descriptor"/>
+
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting"
+                                              converter="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Converter"
+                                              descriptor="com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting$Descriptor"/>
   </extensions>
 </idea-plugin>

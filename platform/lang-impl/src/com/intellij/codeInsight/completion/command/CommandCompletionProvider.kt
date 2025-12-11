@@ -9,6 +9,8 @@ import com.intellij.codeInsight.completion.command.configuration.ApplicationComm
 import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
@@ -43,6 +45,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 
@@ -646,7 +649,7 @@ internal fun findCommandCompletionType(
   return null
 }
 
-private class LimitedToleranceMatcher(
+internal class LimitedToleranceMatcher(
   prefix: String,
   private val currentTags: List<String>,
   private val otherTags: List<String>
@@ -692,6 +695,21 @@ private class LimitedToleranceMatcher(
       return this
     }
     return LimitedToleranceMatcher(prefix, currentTags, otherTags)
+  }
+
+  class Converter : PrefixMatcherDescriptorConverter<LimitedToleranceMatcher> {
+    override fun toDescriptor(target: LimitedToleranceMatcher): PrefixMatcherDescriptor =
+      Descriptor(target.prefix, target.currentTags, target.otherTags)
+  }
+
+  @Serializable
+  data class Descriptor(
+    private val prefix: String,
+    private val currentTags: List<String>,
+    private val otherTags: List<String>,
+  ) : PrefixMatcherDescriptor {
+    override fun recreateMatcher(): PrefixMatcher =
+      LimitedToleranceMatcher(prefix, currentTags, otherTags)
   }
 }
 

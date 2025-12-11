@@ -122,6 +122,8 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V
+f:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$AutoRestarting
+- b:<init>(com.intellij.codeInsight.completion.PrefixMatcher,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 pe:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$MatchingOutcome
 - s:getEntries():kotlin.enums.EnumEntries
 com.intellij.codeInsight.daemon.ProjectSdkSetupValidator

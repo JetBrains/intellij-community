@@ -4,6 +4,16 @@
     <projectService serviceInterface="com.intellij.codeInsight.AutoPopupControllerHelper"
                     serviceImplementation="com.intellij.platform.completion.common.AutoPopupControllerHelperImpl"/>
 
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.PlainPrefixMatcher"
+                                              converter="com.intellij.platform.completion.common.protocol.PlainPrefixMatcherDescriptorConverter"
+                                              descriptor="com.intellij.platform.completion.common.protocol.PlainPrefixMatcherDescriptor"/>
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.impl.CamelHumpMatcher"
+                                              converter="com.intellij.platform.completion.common.protocol.CamelHumpMatcherDescriptorConverter"
+                                              descriptor="com.intellij.platform.completion.common.protocol.CamelHumpMatcherDescriptor"/>
+    <completion.frontendFriendlyPrefixMatcher target="com.intellij.codeInsight.completion.StartOnlyMatcher"
+                                              converter="com.intellij.platform.completion.common.protocol.StartOnlyMatcherDescriptorConverter"
+                                              descriptor="com.intellij.platform.completion.common.protocol.StartOnlyMatcherDescriptor"/>
+
     <registryKey key="remdev.completion.on.frontend.stat"
                  defaultValue="false"
                  description="Enables collecting statistics for non-frontend completion things"/>

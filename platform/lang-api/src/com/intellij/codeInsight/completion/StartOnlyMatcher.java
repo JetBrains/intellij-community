@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class StartOnlyMatcher extends PrefixMatcher {
@@ -9,6 +10,12 @@ public class StartOnlyMatcher extends PrefixMatcher {
   public StartOnlyMatcher(@NotNull PrefixMatcher delegate) {
     super(delegate.getPrefix());
     myDelegate = delegate;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public PrefixMatcher getDelegate() {
+    return myDelegate;
   }
 
   @Override
