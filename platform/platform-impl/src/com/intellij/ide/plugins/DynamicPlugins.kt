@@ -1242,7 +1242,7 @@ private fun optionalDependenciesOnPlugin(
   classLoaderConfigurator: ClassLoaderConfigurator,
   pluginSet: PluginSet,
 ): Set<IdeaPluginDescriptorImpl> {
-  val dependentDescriptors = ArrayList<ContentModuleDescriptor>()
+  val dependentDescriptors = LinkedHashSet<ContentModuleDescriptor>()
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { _, module ->
     // 'depends' descriptors are not dynamically loadable
     if (module is ContentModuleDescriptor) {
@@ -1255,9 +1255,8 @@ private fun optionalDependenciesOnPlugin(
   if (dependentDescriptors.isEmpty()) {
     return emptySet()
   }
-  val topologicalComparator = PluginSetBuilder(dependentDescriptors.map { it.getMainDescriptor() }.toSet()).topologicalComparator
-  dependentDescriptors.sortWith { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) }
-  return dependentDescriptors
+  val orderedDependentDescriptors = dependentDescriptors.sortedWith(pluginSet.getModuleTopologicalComparator())
+  return orderedDependentDescriptors
     .distinct()
     .filter {
       classLoaderConfigurator.configureDescriptorDynamic(it)
