@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
@@ -15,11 +16,11 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.net.AppShutdownProxySelector.AppShutdownProxyMode.*
 import com.intellij.util.proxy.CommonProxyCompatibility
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Component
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.BiConsumer
 
 sealed interface JdkProxyProvider {
   val proxySelector: ProxySelector
@@ -87,15 +88,16 @@ sealed interface JdkProxyProvider {
     @ApiStatus.Internal
     @JvmStatic
     fun showProxyAuthNotification(): Boolean {
+      val app = ApplicationManager.getApplication() ?: return false
       if (proxyAuthNotificationActive.getAndSet(true)) return false
       val title = UIBundle.message("proxy.auth.notification.title")
       val content = UIBundle.message("proxy.auth.notification.text")
-      Notification("proxy.auth.failed", title, content, NotificationType.WARNING)
-        .addAction(NotificationAction.createSimpleExpiring(UIBundle.message("proxy.auth.notification.action"), Runnable {
-          ShowSettingsUtil.getInstance().editConfigurable(null as Component?, HttpProxyConfigurable())
+      val notification = Notification("proxy.auth.failed", title, content, NotificationType.WARNING)
+        .addAction(NotificationAction.createExpiring(UIBundle.message("proxy.auth.notification.action"), BiConsumer { e, _ ->
+          ShowSettingsUtil.getInstance().editConfigurable(e.project, HttpProxyConfigurable())
         }))
         .whenExpired { proxyAuthNotificationActive.set(false) }
-        .notify(null)
+      app.invokeLater({ notification.notify(null) }, ModalityState.nonModal())
       return true
     }
   }
