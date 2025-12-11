@@ -117,10 +117,12 @@ class EditorTabbedContainer internal constructor(
       }
       val result = ActionCallback()
       val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
-      CommandProcessor.getInstance().executeCommand(project, {
-        ideDocumentHistory.onSelectionChanged()
-        result.notify(doChangeSelection.run())
-      }, "EditorChange", null)
+      WriteIntentReadAction.run {
+        CommandProcessor.getInstance().executeCommand(project, {
+          ideDocumentHistory.onSelectionChanged()
+          result.notify(doChangeSelection.run())
+        }, "EditorChange", null)
+      }
       result
     }
     editorTabs.component.addMouseListener(object : MouseAdapter() {
