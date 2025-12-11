@@ -21,7 +21,7 @@ internal val kotlinxJson = Json {
 
 /**
  * Enriches products with calculated metrics (parallelized).
- * Calculates totalModuleCount, directModuleCount, moduleSetCount, and uniqueModuleCount for each product.
+ * Calculates totalModuleCount, directModuleCount, and moduleSetCount for each product.
  *
  * Uses cache for O(1) module name lookups instead of repeated traversals.
  */
@@ -39,24 +39,11 @@ internal suspend fun enrichProductsWithMetrics(
         product // Return as-is if no contentSpec
       }
       else {
-        // Calculate metrics using cache
-        val allModules = mutableSetOf<String>()
-
-        // Collect modules from module sets (O(1) per set via cache)
-        for (msRef in contentSpec.moduleSets) {
-          allModules.addAll(cache.getModuleNames(msRef.moduleSet.name))
-        }
-
-        // Add additional modules
-        for (module in contentSpec.additionalModules) {
-          allModules.add(module.name)
-        }
-
+        val allModules = cache.collectProductModuleNames(contentSpec)
         product.copy(
           totalModuleCount = allModules.size,
           directModuleCount = contentSpec.additionalModules.size,
-          moduleSetCount = contentSpec.moduleSets.size,
-          uniqueModuleCount = allModules.size
+          moduleSetCount = contentSpec.moduleSets.size
         )
       }
     }
@@ -98,16 +85,7 @@ internal fun writeModuleDistribution(
   // Collect modules from products (using cache for O(1) lookups)
   for (product in products) {
     val contentSpec = product.contentSpec ?: continue
-    val allModulesInProduct = mutableSetOf<String>()
-
-    for (msRef in contentSpec.moduleSets) {
-      allModulesInProduct.addAll(cache.getModuleNames(msRef.moduleSet.name))
-    }
-    for (module in contentSpec.additionalModules) {
-      allModulesInProduct.add(module.name)
-    }
-
-    for (moduleName in allModulesInProduct) {
+    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
       inProducts.computeIfAbsent(moduleName) { mutableSetOf() }.add(product.name)
     }
   }
@@ -184,16 +162,16 @@ internal fun writeModuleUsageIndex(
   cache: ModuleSetTraversalCache
 ) {
   @Serializable
-  data class ModuleSetRef(val name: String, val location: String, val sourceFile: String)
+  data class ModuleSetRef(@JvmField val name: String, @JvmField val location: String, @JvmField val sourceFile: String)
 
   @Serializable
-  data class ProductRef(val name: String, val sourceFile: String)
+  data class ProductRef(@JvmField val name: String, @JvmField val sourceFile: String)
 
   @Serializable
-  data class ModuleEntry(val moduleSets: List<ModuleSetRef>, val products: List<ProductRef>)
+  data class ModuleEntry(@JvmField val moduleSets: List<ModuleSetRef>, @JvmField val products: List<ProductRef>)
 
   @Serializable
-  data class Wrapper(val modules: Map<String, ModuleEntry>)
+  data class Wrapper(@JvmField val modules: Map<String, ModuleEntry>)
 
   val moduleSetsMap = mutableMapOf<String, MutableList<ModuleSetRef>>()
   val productsMap = mutableMapOf<String, MutableList<ProductRef>>()
@@ -209,16 +187,7 @@ internal fun writeModuleUsageIndex(
   // Collect from products (using cache for O(1) lookups)
   for (product in products) {
     val contentSpec = product.contentSpec ?: continue
-    val allModulesInProduct = mutableSetOf<String>()
-
-    for (msRef in contentSpec.moduleSets) {
-      allModulesInProduct.addAll(cache.getModuleNames(msRef.moduleSet.name))
-    }
-    for (module in contentSpec.additionalModules) {
-      allModulesInProduct.add(module.name)
-    }
-
-    for (moduleName in allModulesInProduct) {
+    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
       productsMap.computeIfAbsent(moduleName) { mutableListOf() }
         .add(ProductRef(product.name, product.sourceFile))
     }

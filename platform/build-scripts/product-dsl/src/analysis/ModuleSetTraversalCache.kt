@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.productLayout.analysis
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import org.jetbrains.intellij.build.productLayout.ModuleSet
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -89,6 +90,21 @@ internal class ModuleSetTraversalCache(allModuleSets: List<ModuleSet>) {
    */
   fun isTransitivelyNested(parentSetName: String, childSetName: String): Boolean {
     return getNestedSets(parentSetName).contains(childSetName)
+  }
+
+  /**
+   * Collects all module names from a product's content spec.
+   * Combines modules from all referenced module sets with additional modules.
+   */
+  internal fun collectProductModuleNames(contentSpec: ProductModulesContentSpec): Set<String> {
+    val result = HashSet<String>()
+    for (msRef in contentSpec.moduleSets) {
+      result.addAll(getModuleNames(msRef.moduleSet.name))
+    }
+    for (module in contentSpec.additionalModules) {
+      result.add(module.name)
+    }
+    return result
   }
 
   private fun collectModulesWithLoadingInternal(moduleSet: ModuleSet): Map<String, CachedModuleInfo> {

@@ -98,10 +98,9 @@ data class ProductSpec(
   val contentSpec: ProductModulesContentSpec?,
   val buildModules: List<String>,
   val category: ProductCategory = ProductCategory.BACKEND,  // Product architecture category
-  val totalModuleCount: Int = 0,      // All modules including from module sets
+  val totalModuleCount: Int = 0,      // All modules including from module sets (deduplicated)
   val directModuleCount: Int = 0,     // Just additionalModules count
-  val moduleSetCount: Int = 0,        // Number of module sets included
-  val uniqueModuleCount: Int = 0      // Deduplicated module count
+  val moduleSetCount: Int = 0         // Number of module sets included
 )
 
 /**
