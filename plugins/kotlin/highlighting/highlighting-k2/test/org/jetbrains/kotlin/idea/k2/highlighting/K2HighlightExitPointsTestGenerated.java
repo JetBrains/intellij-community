@@ -50,6 +50,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../../idea/tests/testData/exitPoints/continueInNestedForDeclarationWithLabel.kt");
     }
 
+    @TestMetadata("continueWithNonLocalBreak.kt")
+    public void testContinueWithNonLocalBreak() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/continueWithNonLocalBreak.kt");
+    }
+
     @TestMetadata("doWhileLoopBreak.kt")
     public void testDoWhileLoopBreak() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/doWhileLoopBreak.kt");
@@ -258,6 +263,11 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
     @TestMetadata("loopWithContinueInNestedForDeclarationWithLabel.kt")
     public void testLoopWithContinueInNestedForDeclarationWithLabel() throws Exception {
         runTest("../../idea/tests/testData/exitPoints/loopWithContinueInNestedForDeclarationWithLabel.kt");
+    }
+
+    @TestMetadata("loopWithContinueWithNonLocalBreak.kt")
+    public void testLoopWithContinueWithNonLocalBreak() throws Exception {
+        runTest("../../idea/tests/testData/exitPoints/loopWithContinueWithNonLocalBreak.kt");
     }
 
     @TestMetadata("notInline1.kt")

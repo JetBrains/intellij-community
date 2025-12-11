@@ -50,6 +50,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
         runTest("testData/exitPoints/continueInNestedForDeclarationWithLabel.kt");
     }
 
+    @TestMetadata("continueWithNonLocalBreak.kt")
+    public void testContinueWithNonLocalBreak() throws Exception {
+        runTest("testData/exitPoints/continueWithNonLocalBreak.kt");
+    }
+
     @TestMetadata("doWhileLoopBreak.kt")
     public void testDoWhileLoopBreak() throws Exception {
         runTest("testData/exitPoints/doWhileLoopBreak.kt");
@@ -258,6 +263,11 @@ public class HighlightExitPointsTestGenerated extends AbstractCustomHighlightUsa
     @TestMetadata("loopWithContinueInNestedForDeclarationWithLabel.kt")
     public void testLoopWithContinueInNestedForDeclarationWithLabel() throws Exception {
         runTest("testData/exitPoints/loopWithContinueInNestedForDeclarationWithLabel.kt");
+    }
+
+    @TestMetadata("loopWithContinueWithNonLocalBreak.kt")
+    public void testLoopWithContinueWithNonLocalBreak() throws Exception {
+        runTest("testData/exitPoints/loopWithContinueWithNonLocalBreak.kt");
     }
 
     @TestMetadata("notInline1.kt")

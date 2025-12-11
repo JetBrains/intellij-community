@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -78,12 +81,15 @@ fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
 
 @ApiStatus.Internal
 fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
+    val allowNonLocalBreaks =
+        loopExpression.module?.languageVersionSettings?.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas) == true
     val structureBodies = PsiTreeUtil.collectParents(
         /* element = */ this,
         /* parent = */ KtContainerNodeForControlStructureBody::class.java,
         /* includeMyself = */ false
     ) {
-        it.parent is KtDeclaration
+        val p = it.parent
+        p is KtDeclaration && !(allowNonLocalBreaks && p is KtFunctionLiteral)
     }
     // expression belongs to the loop when it is inside the loop body
     return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
