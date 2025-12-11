@@ -106,7 +106,8 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
       if (task == null) return@create
       @Nls
       val description = HtmlBuilder()
-      val taskDescription = task.description
+      // TODO add support for fetching images through the Task implementation
+      val taskDescription = task.description?.removeImages()
       if (!taskDescription.isNullOrBlank()) {
 
         if (taskDescription.length > 1500)
@@ -162,4 +163,12 @@ sealed class AbstractTaskSymbol : PolySymbol, DocumentationSymbol {
 
   override fun equals(other: Any?): Boolean =
     other === this || other is AbstractTaskSymbol && other.javaClass == javaClass && other.id == id
+
+  companion object {
+    @Suppress("HardCodedStringLiteral")
+    @Nls
+    private fun String.removeImages(): String =
+      replace(Regex("!\\[]\\([^) \t\n]+\\)(\\{[^} \t\n]+})?"), "")
+        .replace(Regex("<img [^>]*>"), "")
+  }
 }
