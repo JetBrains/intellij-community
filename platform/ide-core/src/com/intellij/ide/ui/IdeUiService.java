@@ -131,7 +131,5 @@ public class IdeUiService {
     return null;
   }
 
-  public boolean showProxyAuthNotification() {
-    return false;
-  }
+  public void showProxyAuthNotification() { }
 }
