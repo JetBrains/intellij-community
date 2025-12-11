@@ -7,34 +7,32 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.util.containers.prefixTree.set.toPrefixTreeSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gradle.GradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Files.isDirectory
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.isDirectory
 import kotlin.use
 
 @Service(Service.Level.PROJECT)
-class GradleLocalRepositoryIndex(private val project: Project, private val coroutineScope: CoroutineScope) {
+class GradleLocalRepositoryIndexer(private val project: Project, private val coroutineScope: CoroutineScope) {
 
-  private data class Snapshot(
+  private data class IndexSnapshot(
     val groupIds: Set<String>,
     val group2Artifacts: Map<String, Set<String>>,
     val module2Versions: Map<String, Set<String>>,
     val createdAtMillis: Long,
   ) {
     companion object {
-      val EMPTY = Snapshot(emptySet(), emptyMap(), emptyMap(), 0L)
+      val EMPTY = IndexSnapshot(emptySet(), emptyMap(), emptyMap(), 0L)
     }
   }
 
@@ -51,7 +49,7 @@ class GradleLocalRepositoryIndex(private val project: Project, private val corou
   class Activity : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
-      project.getService(GradleLocalRepositoryIndex::class.java).launchIndex()
+      project.getService(GradleLocalRepositoryIndexer::class.java).launchIndex()
     }
   }
 
@@ -61,8 +59,9 @@ class GradleLocalRepositoryIndex(private val project: Project, private val corou
     var versionNumber = 0
     val startTime = System.currentTimeMillis()
     try {
+      val eelDescriptor = project.getEelDescriptor()
       // expected structure: <GRADLE_USER_HOME>/caches/modules-2/files-2.1/<group>/<artifact>/<version>/...
-      val files21 = gradleUserHomeDir(project.getEelDescriptor())
+      val files21 = gradleUserHomeDir(eelDescriptor)
         .resolve("caches")
         .resolve("modules-2")
         .resolve("files-2.1")
@@ -92,13 +91,14 @@ class GradleLocalRepositoryIndex(private val project: Project, private val corou
       val immutableGroup2Artifacts = group2ArtifactsLocal.mapValues { it.value.toSortedSet() }
       val immutableModule2Versions = module2VersionsLocal.mapValues { it.value.toSortedSet().reversed() } //TODO semantic version sorting?
       val groupIds = immutableGroup2Artifacts.keys.toSortedSet()
-      val snapshot = Snapshot(
+      val indexSnapshot = IndexSnapshot(
           groupIds = groupIds,
           group2Artifacts = immutableGroup2Artifacts,
           module2Versions = immutableModule2Versions,
           createdAtMillis = System.currentTimeMillis(),
         )
-      GLOBAL.set(snapshot)
+      val ref = INDICES.computeIfAbsent(eelDescriptor) { AtomicReference(IndexSnapshot.EMPTY) }
+      ref.set(indexSnapshot)
     } catch (e: IOException) {
       LOG.error(e)
     } finally {
@@ -111,10 +111,18 @@ class GradleLocalRepositoryIndex(private val project: Project, private val corou
     Files.list(this).use { stream -> stream.filter(Files::isDirectory).forEach(action) }
 
   companion object {
-    private val GLOBAL = java.util.concurrent.atomic.AtomicReference(Snapshot.EMPTY)
-    @JvmStatic fun groups(): Collection<String> = GLOBAL.get().groupIds
-    @JvmStatic fun artifacts(groupId: String): Set<String> = GLOBAL.get().group2Artifacts[groupId] ?: emptySet()
-    @JvmStatic fun versions(groupId: String, artifactId: String): Set<String> = GLOBAL.get().module2Versions["$groupId:$artifactId"] ?: emptySet()
-    private val LOG = logger<GradleLocalRepositoryIndex>()
+    private val INDICES: ConcurrentHashMap<EelDescriptor, AtomicReference<IndexSnapshot>> = ConcurrentHashMap()
+
+    private fun snapshot(descriptor: EelDescriptor): IndexSnapshot = INDICES[descriptor]?.get() ?: IndexSnapshot.EMPTY
+
+    fun groups(descriptor: EelDescriptor): Collection<String> = snapshot(descriptor).groupIds
+
+    fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> =
+      snapshot(descriptor).group2Artifacts[groupId] ?: emptySet()
+
+    fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> =
+      snapshot(descriptor).module2Versions["$groupId:$artifactId"] ?: emptySet()
+
+    private val LOG = logger<GradleLocalRepositoryIndexer>()
   }
 }
