@@ -24,6 +24,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//platform/analysis-api:analysis",
     "//platform/platform-impl/rpc",
+    "//platform/lang-api:lang",
   ]
 )
 ### auto-generated section `build intellij.platform.completion.common` end

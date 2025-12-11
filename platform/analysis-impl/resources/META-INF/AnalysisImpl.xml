@@ -28,6 +28,11 @@
       <with attribute="descriptor" implements="com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler"/>
       <with attribute="converter" implements="com.intellij.codeInsight.completion.InsertHandlerToFrontendFriendlyConverter"/>
     </extensionPoint>
+    <extensionPoint name="completion.frontendFriendlyPrefixMatcher" beanClass="com.intellij.codeInsight.serialization.ExtensionPointSerializerBean" dynamic="true">
+      <with attribute="target" implements="com.intellij.codeInsight.completion.PrefixMatcher"/>
+      <with attribute="descriptor" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor"/>
+      <with attribute="converter" implements="com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptorConverter"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"

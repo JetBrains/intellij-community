@@ -2,25 +2,16 @@
 package com.intellij.platform.completion.common.protocol
 
 import com.intellij.codeInsight.completion.PrefixMatcher
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
+import com.intellij.codeInsight.completion.serialization.FrontendFriendlyPrefixMatcherSerializer
+import com.intellij.codeInsight.completion.serialization.PrefixMatcherDescriptor
 import kotlinx.serialization.Serializable
 
 /**
  * Serializes [PrefixMatcher]s installed to completion items.
+ * [PrefixMatcherDescriptor] is used for serialization
  */
 @Serializable
 sealed interface RpcPrefixMatcher {
-  /** Represents [com.intellij.codeInsight.completion.impl.CamelHumpMatcher] */
-  @Serializable
-  data class CamelHumpMatcher(val prefix: String, val caseSensitive: Boolean, val typoTolerant: Boolean) : RpcPrefixMatcher {
-    override fun toString(): String = buildToString("CamelHumpMatcher") {
-      field("prefix", prefix)
-      field("caseSensitive", caseSensitive)
-      field("typoTolerant", typoTolerant)
-    }
-  }
-
-
   /**
    * Represents a [PrefixMatcher] that is not available on the frontend.
    */
@@ -32,14 +23,25 @@ sealed interface RpcPrefixMatcher {
     }
   }
 
+  /**
+   * Represents a [PrefixMatcher] that is available on the frontend.
+   */
+  @Serializable
+  data class Frontend(
+    @Serializable(with = FrontendFriendlyPrefixMatcherSerializer::class)
+    val descriptor: PrefixMatcherDescriptor,
+  ) : RpcPrefixMatcher {
+    override fun toString(): String = buildToString("Frontend") {
+      field("descriptor", descriptor)
+    }
+  }
 }
 
 fun PrefixMatcher.toRpc(itemId: RpcCompletionItemId): RpcPrefixMatcher {
-  if (this.javaClass == CamelHumpMatcher::class.java) {
-    this as CamelHumpMatcher
-    return RpcPrefixMatcher.CamelHumpMatcher(this.prefix, this.isCaseSensitive, this.isTypoTolerant)
+  val descriptor = FrontendFriendlyPrefixMatcherSerializer.toDescriptor(this)
+  return when (descriptor != null) {
+    true -> RpcPrefixMatcher.Frontend(descriptor)
+    false -> RpcPrefixMatcher.Backend(id = itemId, prefix = this.prefix)
       .also { RpcCompletionStat.registerMatcher(this) }
   }
-
-  return RpcPrefixMatcher.Backend(id = itemId, prefix = this.prefix)
 }
