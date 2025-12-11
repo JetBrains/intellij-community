@@ -43,7 +43,7 @@ class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectD
 object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 5)
+    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 6)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
