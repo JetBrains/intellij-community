@@ -51,6 +51,7 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -729,6 +730,9 @@ import kotlin.math.abs
     val currentContentFactory = contentFactory ?: return
     // clear it first to avoid SOE
     this.contentFactory = null
+
+    ThreadingAssertions.softAssertEventDispatchThread()
+
     if (contentManager.isInitialized()) {
       contentManager.value.removeAllContents(false)
     }

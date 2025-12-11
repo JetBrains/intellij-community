@@ -3,6 +3,7 @@ package com.intellij.openapi.wm
 
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.Icon
 
@@ -28,6 +29,7 @@ interface ToolWindowFactory : PossiblyDumbAware {
   @Deprecated("Use isApplicableAsync")
   fun isApplicable(project: Project): Boolean = true
 
+  @RequiresEdt
   fun createToolWindowContent(project: Project, toolWindow: ToolWindow)
 
   /**
