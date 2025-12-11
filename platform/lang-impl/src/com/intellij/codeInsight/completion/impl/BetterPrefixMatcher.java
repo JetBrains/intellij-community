@@ -38,17 +38,17 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     return prefixMatchesEx(name) == MatchingOutcome.BETTER_MATCH;
   }
 
-  protected MatchingOutcome prefixMatchesEx(String name) {
+  protected @NotNull MatchingOutcome prefixMatchesEx(String name) {
     return myHumpMatcher != null ? matchOptimized(name, myHumpMatcher) : matchGeneric(name);
   }
 
-  private MatchingOutcome matchGeneric(String name) {
+  private @NotNull MatchingOutcome matchGeneric(String name) {
     if (!myOriginal.prefixMatches(name)) return MatchingOutcome.NON_MATCH;
     if (!myOriginal.isStartMatch(name)) return MatchingOutcome.WORSE_MATCH;
     return myOriginal.matchingDegree(name) >= myMinMatchingDegree ? MatchingOutcome.BETTER_MATCH : MatchingOutcome.WORSE_MATCH;
   }
 
-  private MatchingOutcome matchOptimized(String name, CamelHumpMatcher matcher) {
+  private @NotNull MatchingOutcome matchOptimized(String name, CamelHumpMatcher matcher) {
     FList<TextRange> fragments = matcher.matchingFragments(name);
     if (fragments == null) return MatchingOutcome.NON_MATCH;
     if (!MinusculeMatcher.isStartMatch(fragments)) return MatchingOutcome.WORSE_MATCH;
@@ -81,7 +81,9 @@ public class BetterPrefixMatcher extends PrefixMatcher {
       this(result, result.getPrefixMatcher(), Integer.MIN_VALUE);
     }
 
-    private AutoRestarting(CompletionResultSet result, PrefixMatcher original, int minMatchingDegree) {
+    private AutoRestarting(@NotNull CompletionResultSet result,
+                           @NotNull PrefixMatcher original,
+                           int minMatchingDegree) {
       super(original, minMatchingDegree);
       myResult = result;
     }
@@ -92,7 +94,7 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     }
 
     @Override
-    protected MatchingOutcome prefixMatchesEx(String name) {
+    protected @NotNull MatchingOutcome prefixMatchesEx(String name) {
       MatchingOutcome outcome = super.prefixMatchesEx(name);
       if (outcome == MatchingOutcome.WORSE_MATCH) {
         myResult.restartCompletionOnAnyPrefixChange();
