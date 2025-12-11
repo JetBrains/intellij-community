@@ -10,18 +10,20 @@ import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder
 import com.intellij.openapi.ui.popup.PopupShowOptionsImpl
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WidthBasedLayout
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.Alarm
 import com.intellij.util.asSafely
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
+import kotlin.math.min
 
 internal class ComponentAreaPopupContext(
   project: Project,
@@ -66,6 +68,7 @@ internal class ComponentAreaPopupContext(
     private var clickedInside: Boolean = false
     private var popup: AbstractPopup? = null
     private var alarm: Alarm? = null
+    private var defaultPopupHeight: Int? = null
 
     override fun showPopup(popup: AbstractPopup) {
       if (hideRequested) {
@@ -123,7 +126,8 @@ internal class ComponentAreaPopupContext(
         hideRequested = true
         alarm?.cancelAllRequests()
         popup?.cancel()
-      } else if (!mouseInDocPopup && mouseMoved) {
+      }
+      else if (!mouseInDocPopup && mouseMoved) {
         hideRequested = true
         scheduleHide()
       }
@@ -204,7 +208,35 @@ internal class ComponentAreaPopupContext(
         resizePopup(popup, popupUpdateEvent)
         yield()
       }
+      adjustPopupHeight(popup, popupUpdateEvent)
       relocatePopupIfNeeded(popup)
+    }
+
+    private fun adjustPopupHeight(
+      popup: AbstractPopup,
+      popupUpdateEvent: PopupUpdateEvent,
+    ) {
+      val width = popup.width - JBUI.scale(1) -
+                  generateSequence(popup.component as Container) { it.parent }.sumOf { it.insets.width }
+      val hMax = WidthBasedLayout.getPreferredHeight(popup.component.getComponent(0), width) +
+                 generateSequence(popup.component as Container) { it.parent }.sumOf { it.insets.height } +
+                 // add some margin, we are not able to calculate from other sources.
+                 JBUI.scale(1)
+      val currentHeight = popup.height
+      if (currentHeight > hMax) {
+        // Shrink popup
+        if (defaultPopupHeight == null) {
+          defaultPopupHeight = currentHeight
+        }
+        popup.size = Dimension(width, hMax)
+      }
+      else if (popupUpdateEvent is PopupUpdateEvent.ContentChanged
+               && popupUpdateEvent.updateKind == PopupUpdateEvent.ContentUpdateKind.DocumentationPageOpened
+               && hMax > currentHeight
+               && defaultPopupHeight != null) {
+        // restore popup height after showing a notification
+        popup.size = Dimension(width, min(hMax, defaultPopupHeight!!))
+      }
     }
 
     private fun relocatePopupIfNeeded(popup: AbstractPopup) {
@@ -217,9 +249,9 @@ internal class ComponentAreaPopupContext(
       val popupLocation = popup.locationOnScreen
       if (popupLocation.y < componentActiveArea.y + componentActiveArea.height) {
         // reposition popup above the component
-        val bounds = popup.content.bounds
-        if (bounds.height < componentActiveArea.y) {
-          popupLocation.y = componentActiveArea.y - bounds.height - 4
+        val height = popup.height
+        if (height < componentActiveArea.y) {
+          popupLocation.y = componentActiveArea.y - height - 4
           popup.setLocation(popupLocation)
         }
       }
