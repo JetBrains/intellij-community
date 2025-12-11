@@ -122,6 +122,8 @@ c:com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 com.intellij.codeInsight.completion.CompletionPhaseListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:completionPhaseChanged(Z):V
+pe:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher$MatchingOutcome
+- s:getEntries():kotlin.enums.EnumEntries
 com.intellij.codeInsight.daemon.ProjectSdkSetupValidator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - doFix(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
