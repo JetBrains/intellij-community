@@ -6,6 +6,8 @@ import java.io.ByteArrayOutputStream
 import java.lang.ProcessBuilder.Redirect
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
@@ -19,8 +21,18 @@ class Git(private val dir: Path) {
     return execute("git", "log", "--pretty=format:$format", "-n", "1").joinToString("\n")
   }
 
-  fun listTree(refSpec: String = "HEAD"): List<String> {
-    return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec, "--name-only")
+  data class Entry(val path: String, val mode: String) {
+    val isExecutable: Boolean get() = (mode.toInt(8) and 0b001_001_001) != 0 // any x bit
+  }
+
+  fun listTree(refSpec: String = "HEAD"): List<Entry> {
+    return executeWithNullSeparatedOutput("git", "ls-tree", "-z", "-r", refSpec)
+      .map { line ->
+        val tabIndex = line.indexOf('\t')
+        val mode = line.substring(0, tabIndex).substringBefore(' ')
+        val path = line.substring(tabIndex + 1)
+        Entry(Path(path).invariantSeparatorsPathString, mode)
+      }
   }
 
   fun listStagingFiles(): List<String> {
@@ -50,13 +62,13 @@ class Git(private val dir: Path) {
   }
 
   private fun maybeExecute(vararg command: String): ExecutionResult {
-    val process = ProcessBuilder(*command).directory(dir.toFile()).start()
+    val process = ProcessBuilder(*command).directory(@Suppress("IO_FILE_USAGE")dir.toFile()).start()
     var output = process.inputStream.bufferedReader().use {
       it.lines().map { line -> line.trim() }.toList()
     }
     if (!process.waitFor(1, TimeUnit.MINUTES)) {
       process.destroyForcibly().waitFor()
-      throw IllegalStateException("Cannot execute $command: 1 minute timeout")
+      throw IllegalStateException("Cannot execute '${command.joinToString(" ")}': 1 minute timeout")
     }
     if (process.exitValue() != 0) {
       output = listOf(process.errorStream.bufferedReader().use { it.readText() }) + output
@@ -67,7 +79,7 @@ class Git(private val dir: Path) {
   private fun executeWithNullSeparatedOutput(vararg command: String): List<String> {
     val process = ProcessBuilder(*command)
       .redirectError(Redirect.INHERIT)
-      .directory(dir.toFile())
+      .directory(@Suppress("IO_FILE_USAGE")dir.toFile())
       .start()
     process.outputStream.close()
 

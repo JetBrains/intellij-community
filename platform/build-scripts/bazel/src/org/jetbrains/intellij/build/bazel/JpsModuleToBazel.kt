@@ -113,7 +113,7 @@ internal class JpsModuleToBazel {
       generator.save(ultimateResult.moduleBuildFiles)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = Path.of(m2Repo))
-      if (ultimateRoot != null) {
+      if (ultimateRoot != null && ultimateRoot.resolve("toolbox").exists()) {
         generator.generateToolboxDeps()
       }
 
