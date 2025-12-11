@@ -5,11 +5,17 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.finishBuildingStubs
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueIfBuildingStubs
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.startBuildingStubs
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.psi.util.ParameterizedCachedValueProvider
+import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 
@@ -58,10 +64,10 @@ object StubBuildCachedValuesManager {
 
   @JvmStatic
   fun <T, P> getCachedValueIfBuildingStubs(
-      dataHolder: PsiElement,
-      stubBuildingKey: Key<StubBuildCachedValue<T>>,
-      parameter: P,
-      provider: Function<P, T>
+    dataHolder: PsiElement,
+    stubBuildingKey: Key<StubBuildCachedValue<T>>,
+    parameter: P,
+    provider: Function<P, T>,
   ): T {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
@@ -83,7 +89,7 @@ object StubBuildCachedValuesManager {
     key: Key<ParameterizedCachedValue<T, P>>,
     stubBuildingKey: Key<StubBuildCachedValue<T>>,
     provider: ParameterizedCachedValueProvider<T, P>,
-    parameter: P
+    parameter: P,
   ): T {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
@@ -96,24 +102,26 @@ object StubBuildCachedValuesManager {
       return current.value
     }
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(
-      node, key, provider, false, parameter
+      node, key,  provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
+      false, parameter
     )
   }
 
   // Avoid using recursion manager and other complex logic when building stubs - improves speed by 10%.
   @JvmStatic
   fun <T, P> getCachedValueStubBuildOptimized(
-      dataHolder: PsiElement,
-      key: Key<ParameterizedCachedValue<T, P>>,
-      stubBuildingKey: Key<StubBuildCachedValue<T>>,
-      provider: ParameterizedCachedValueProvider<T, P>,
-      parameter: P
+    dataHolder: PsiElement,
+    key: Key<ParameterizedCachedValue<T, P>>,
+    stubBuildingKey: Key<StubBuildCachedValue<T>>,
+    provider: ParameterizedCachedValueProvider<T, P>,
+    parameter: P,
   ): T {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
       val node = dataHolder.getNode()
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
+
         val value = provider.compute(parameter)
         current = StubBuildCachedValue(stubBuildId, value.getValue())
         node.putUserData(stubBuildingKey, current)
@@ -121,7 +129,8 @@ object StubBuildCachedValuesManager {
       return current.value
     }
     return CachedValuesManager.getManager(dataHolder.getProject()).getParameterizedCachedValue(
-      dataHolder, key, provider, false, parameter
+      dataHolder, key, provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
+      false, parameter
     )
   }
 
@@ -132,15 +141,16 @@ object StubBuildCachedValuesManager {
    */
   @JvmStatic
   fun <T> getCachedValueStubBuildOptimized(
-      dataHolder: PsiElement,
-      stubBuildingKey: Key<StubBuildCachedValue<T?>>,
-      provider: CachedValueProvider<T>,
+    dataHolder: PsiElement,
+    stubBuildingKey: Key<StubBuildCachedValue<T?>>,
+    provider: CachedValueProvider<T>,
   ): T? {
     val stubBuildId = stubBuildId
     if (stubBuildId != null) {
       val node = dataHolder.getNode()
       var current = node.getUserData(stubBuildingKey)
       if (current == null || current.buildId != stubBuildId) {
+
         val value = provider.compute()
         current = StubBuildCachedValue(stubBuildId, value?.getValue())
         node.putUserData(stubBuildingKey, current)
@@ -151,4 +161,37 @@ object StubBuildCachedValuesManager {
   }
 
   class StubBuildCachedValue<T> internal constructor(internal val buildId: Long, internal val value: T)
+
+  @Suppress("NOTHING_TO_INLINE")
+  private inline fun <T, P> ParameterizedCachedValueProvider<T, P>.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter: P): ParameterizedCachedValueProvider<T, P> =
+    if (parameter is PsiElement && !parameter.isPhysical())
+      NonPhysicalPsiHandlerProvider(this)
+    else
+      this
+
+  private class NonPhysicalPsiHandlerProvider<T, P>(private val delegate: ParameterizedCachedValueProvider<T, P>) :
+    ParameterizedCachedValueProvider<T, P> {
+    override fun compute(context: P): CachedValueProvider.Result<T>? {
+      val result = delegate.compute(context)
+      if (result != null && context is PsiElement && !context.isPhysical()) {
+        val file = context.getContainingFile()
+        if (file != null) {
+          val adjusted = CachedValueProvider.Result.create<T>(
+            result.getValue(), *ArrayUtil.append(result.dependencyItems, file, ArrayUtil.OBJECT_ARRAY_FACTORY))
+          return adjusted
+        }
+      }
+      return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (other == null || javaClass != other.javaClass) return false
+      val provider = other as NonPhysicalPsiHandlerProvider<*, *>
+      return delegate == provider.delegate
+    }
+
+    override fun hashCode(): Int = Objects.hashCode(delegate)
+
+    override fun toString(): String = delegate.toString()
+  }
 }
