@@ -1156,9 +1156,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
 
-    if (myStickyLinesManager != null) {
-      myStickyLinesManager.reinitSettings();
-    }
+    reinitStickyLines();
   }
 
   @Contract("_->fail")
@@ -5481,6 +5479,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           myStickyLinesManager.clearStickyModel();
         }
       }
+    }
+  }
+
+  void reinitStickyLines() {
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.reinitSettings();
     }
   }
 

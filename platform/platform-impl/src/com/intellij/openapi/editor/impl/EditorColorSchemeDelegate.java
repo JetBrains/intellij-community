@@ -253,6 +253,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     float globalFontSize = getDelegate().getEditorFontSize2D();
     myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
     reinitFonts();
+    myEditor.reinitStickyLines();
   }
 
   @Override

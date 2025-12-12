@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
 import java.awt.Rectangle
+
 
 internal class StickyLinesManager(
   private val editor: Editor,
@@ -33,13 +33,6 @@ internal class StickyLinesManager(
     editor.scrollingModel.addVisibleAreaListener(this, this)
     stickyModel.addListener(this)
     shadowPainter.isDarkColorScheme = isDarkColorScheme()
-    editor.project!!.messageBus.connect(this).subscribe(
-      UISettingsListener.TOPIC,
-      UISettingsListener {
-        shadowPainter.isDarkColorScheme = isDarkColorScheme()
-        recalculateAndRepaintLines()
-      }
-    )
   }
 
   fun repaintLines(startVisualLine: Int, endVisualLine: Int) {
@@ -72,6 +65,9 @@ internal class StickyLinesManager(
     val newIsEnabled: Boolean = editor.settings.areStickyLinesShown()
     val oldLineLimit: Int = activeLineLimit
     val newLineLimit: Int = editor.settings.stickyLinesLimit
+    val oldIsDarkColor: Boolean = shadowPainter.isDarkColorScheme
+    val newIsDarkColor: Boolean = isDarkColorScheme()
+
     activeIsEnabled = newIsEnabled
     activeLineLimit = newLineLimit
 
@@ -80,6 +76,9 @@ internal class StickyLinesManager(
     } else if (!newIsEnabled && oldIsEnabled) {
       resetLines()
     } else if (newLineLimit != oldLineLimit) {
+      recalculateAndRepaintLines()
+    } else if (oldIsDarkColor != newIsDarkColor) {
+      shadowPainter.isDarkColorScheme = newIsDarkColor
       recalculateAndRepaintLines()
     }
   }

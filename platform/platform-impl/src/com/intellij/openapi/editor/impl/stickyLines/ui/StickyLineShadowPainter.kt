@@ -40,7 +40,7 @@ internal class StickyLineShadowPainter(var isDarkColorScheme: Boolean = false) {
 
   private fun shadowColor(): Color {
     if (isShadowDebugEnabled()) {
-      return Color.GREEN
+      return if (isDarkColorScheme) Color.BLUE else Color.GREEN
     }
     return if (isDarkColorScheme) SHADOW_COLOR_DARK else SHADOW_COLOR_LIGHT
   }
