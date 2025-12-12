@@ -17,9 +17,15 @@
   <content namespace="jetbrains">
     <module name="intellij.javaFX"/>
     <module name="intellij.javaFX.properties"/>
+    <module name="intellij.javaFX.css" loading="optional"/>
+    <module name="intellij.javaFX.css.intellilang" loading="optional"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <dependencySupport coordinate="org.openjfx:javafx-base" kind="java" displayName="JavaFX"/>
   </extensions>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
 </idea-plugin>
