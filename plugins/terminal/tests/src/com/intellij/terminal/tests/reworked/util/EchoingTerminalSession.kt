@@ -142,9 +142,13 @@ internal class EchoingTerminalSession(coroutineScope: CoroutineScope) : Terminal
       executedCommand = null,
       exitCode = null,
     )
+    val sessionState = TerminalSessionModelImpl.getInitialState().copy(
+      isShellIntegrationEnabled = true,
+      currentDirectory = "fakeDir",
+    )
     return TerminalInitialStateEvent(
       startupOptions = TerminalStartupOptionsDto(listOf("/bin/zsh", "--login", "-i"), "fakeDir", emptyMap()),
-      sessionState = TerminalSessionModelImpl.getInitialState().copy(isShellIntegrationEnabled = true).toDto(),
+      sessionState = sessionState.toDto(),
       outputModelState = outputModelState,
       alternateBufferState = TerminalOutputModelStateDto("", 0, 0, 0, 0, emptyList()),
       blocksModelState = TerminalBlocksModelStateDto(listOf(commandBlock), 1),

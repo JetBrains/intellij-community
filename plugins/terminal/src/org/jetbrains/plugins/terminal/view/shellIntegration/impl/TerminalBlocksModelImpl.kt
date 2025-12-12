@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.view.shellIntegration.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.DisposableWrapperList
-import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -170,7 +169,7 @@ class TerminalBlocksModelImpl(
       endOffset = outputModel.endOffset,
       commandStartOffset = null,
       outputStartOffset = null,
-      workingDirectory = sessionModel.terminalState.value.currentDirectory.nullize(), // it can be empty string, so use nullize()
+      workingDirectory = sessionModel.terminalState.value.currentDirectory,
       executedCommand = null,
       exitCode = null,
     )

@@ -164,7 +164,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       outputFlow.collect { events ->
         for (event in events) {
           if (event is TerminalStateChangedEvent) {
-            val newCurrentDirectory = convertRemoteDirectoryToHost(event.state.currentDirectory, eelDescriptor)
+            val newCurrentDirectory = event.state.currentDirectory?.let { convertRemoteDirectoryToHost(it, eelDescriptor) }
             if (newCurrentDirectory != currentDirectory) {
               currentDirectory = newCurrentDirectory
               updateTabsAndStore { tabs ->

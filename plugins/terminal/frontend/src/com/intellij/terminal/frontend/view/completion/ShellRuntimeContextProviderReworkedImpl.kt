@@ -24,7 +24,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
-      currentDirectory = sessionModel.terminalState.value.currentDirectory,
+      currentDirectory = sessionModel.terminalState.value.currentDirectory ?: error("Current directory should be set at this moment"),
       envVariables = envVariables,
       typedPrefix = typedPrefix,
       shellName = ShellType.ZSH.toShellName(),
