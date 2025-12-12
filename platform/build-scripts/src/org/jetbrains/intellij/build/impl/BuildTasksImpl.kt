@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -85,14 +87,15 @@ internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
 suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContext, dependencyModules: List<String> = emptyList()) {
   checkProductProperties(context)
-  checkPluginModules(mainPluginModules, fieldName = "mainPluginModules", context)
+  checkPluginModules(pluginModules = mainPluginModules, fieldName = "mainPluginModules", context = context)
   copyDependenciesFile(context)
   context.compileProductionModules()
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
   filterPluginsToPublish(pluginsToPublishEffective, context)
   val platformLayout = createPlatformLayout(context)
-  val distState = DistributionBuilderState(platformLayout, pluginsToPublishEffective, context)
+  val distState = DistributionBuilderState(platformLayout = platformLayout, pluginsToPublish = pluginsToPublishEffective, context = context)
+
   val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
 
   // build required dist/lib components for scrambling of plugins such as Marketplace
@@ -285,7 +288,7 @@ class DistributionForOsTaskResult(
   @JvmField val builder: OsSpecificDistributionBuilder,
   @JvmField val arch: JvmArchitecture,
   @JvmField val libc: LibcImpl,
-  @JvmField val outDir: Path
+  @JvmField val outDir: Path,
 )
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
@@ -500,7 +503,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     val distDirs = buildOsSpecificDistributions(context)
 
-    lookForJunkFiles(context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
+    lookForJunkFiles(context = context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
 
     launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
@@ -864,7 +867,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     "dependencies.txt" to copyDependenciesFile(context),
   )
   runtimeModuleRepositoryDirPath?.listDirectoryEntries()?.forEach { file ->
-    extraFiles["$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}"] = file
+    extraFiles.put("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}", file)
   }
   crossPlatformZip(
     distResults = distResults.filter { it.libc != LinuxLibcImpl.MUSL },
