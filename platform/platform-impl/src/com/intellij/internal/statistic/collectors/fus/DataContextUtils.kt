@@ -4,11 +4,15 @@ package com.intellij.internal.statistic.collectors.fus
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.InjectedDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -23,6 +27,15 @@ object DataContextUtils {
     return CommonDataKeys.PSI_FILE.getData(dataContext)?.language
            ?: getFileTypeLanguage(dataContext)
            ?: CommonDataKeys.LANGUAGE.getData(dataContext)
+  }
+
+  /**
+   * Returns language from [InjectedDataKeys.EDITOR], [InjectedDataKeys.PSI_FILE]
+   * or [CommonDataKeys.PSI_FILE] if there's no information about injected fragment
+   */
+  fun getInjectedOrFileLanguage(project: Project?, dataContext: DataContext): Language? {
+    val injected = getInjectedLanguage(dataContext, project)
+    return injected ?: getFileLanguage(dataContext)
   }
 
   /**
@@ -67,6 +80,23 @@ object DataContextUtils {
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(file.nameSequence)
     if (fileType is LanguageFileType) {
       return fileType.language
+    }
+    return null
+  }
+
+  private fun getInjectedLanguage(dataContext: DataContext, project: Project?): Language? {
+    val file = InjectedDataKeys.PSI_FILE.getData(dataContext)
+    if (file != null) {
+      return file.language
+    }
+    if (project != null) {
+      val editor = InjectedDataKeys.EDITOR.getData(dataContext)
+      if (editor != null && !project.isDisposed) {
+        val injectedFile = runReadAction { PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document) }
+        if (injectedFile != null) {
+          return injectedFile.language
+        }
+      }
     }
     return null
   }
