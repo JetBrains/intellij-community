@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public final class StickyLinesTest extends AbstractEditorTest {
   private Editor editor;
@@ -47,7 +48,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
     assertEquals(
       "added line number is expected to match the value from the sticky model",
       expectedLineNumber,
-      lines.get(0).primaryLine()
+      lines.getFirst().primaryLine()
     );
   }
 
@@ -154,7 +155,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
       1,
       lines.size()
     );
-    VisualStickyLine visualLine = lines.get(0);
+    VisualStickyLine visualLine = lines.getFirst();
     assertEquals(
       "primary visual line should match the corresponding logical line: " + visualLine,
       primaryLine,
@@ -228,7 +229,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
       1,
       lines.size()
     );
-    assertEquals("line0", textAtLine(lines.get(0)));
+    assertEquals("line0", textAtLine(lines.getFirst()));
   }
 
   public void testVisualStickyLineYLocationShifted() {
@@ -244,7 +245,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
     assertEquals(
       "sticky line should be shifted by scroll offset",
       -halfLineScrollOffset,
-      lines.get(0).getYLocation()
+      lines.getFirst().getYLocation()
     );
   }
 
@@ -257,7 +258,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
                """);
     addStickyLine(0, 2);
     List<VisualStickyLine> lines = stickyLines(yToVisibleArea(lineToY(1.0)));
-    assertEquals(0, lines.get(0).getYLocation());
+    assertEquals(0, lines.getFirst().getYLocation());
   }
 
   public void testTwoVisualLinesYLocation() {
@@ -289,9 +290,9 @@ public final class StickyLinesTest extends AbstractEditorTest {
     List<VisualStickyLine> lines0 = stickyLines(yToVisibleArea(scrollOffset0));
     List<VisualStickyLine> lines1 = stickyLines(yToVisibleArea(scrollOffset1));
     List<VisualStickyLine> lines2 = stickyLines(yToVisibleArea(scrollOffset2));
-    assertEquals(-scrollOffset0, lines0.get(0).getYLocation());
+    assertEquals(-scrollOffset0, lines0.getFirst().getYLocation());
     assertEmpty(lines1);
-    assertEquals(-1, lines2.get(0).getYLocation());
+    assertEquals(-1, lines2.getFirst().getYLocation());
   }
 
   public void testInsertNewLineBeforePrimaryLine() {
@@ -302,7 +303,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
                """);
     addStickyLine(0, 1);
     insertString(0, "\n");
-    StickyLine line = stickyModel.getAllStickyLines().get(0);
+    StickyLine line = stickyModel.getAllStickyLines().getFirst();
     assertEquals("line0", textAtLine(line));
     assertEquals(1, line.primaryLine());
     assertEquals(2, line.scopeLine());
@@ -316,7 +317,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
                """);
     addStickyLine(0, 1);
     insertString(6, "\n");
-    StickyLine line = stickyModel.getAllStickyLines().get(0);
+    StickyLine line = stickyModel.getAllStickyLines().getFirst();
     assertEquals("line0", textAtLine(line));
     assertEquals(0, line.primaryLine());
     assertEquals(2, line.scopeLine());
@@ -330,7 +331,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
                """);
     addStickyLine(0, 1);
     insertString(12, "\n");
-    StickyLine line = stickyModel.getAllStickyLines().get(0);
+    StickyLine line = stickyModel.getAllStickyLines().getFirst();
     assertEquals("line0", textAtLine(line));
     assertEquals(0, line.primaryLine());
     assertEquals(1, line.scopeLine());
@@ -344,26 +345,26 @@ public final class StickyLinesTest extends AbstractEditorTest {
                """);
     addStickyLine(0, 1);
     insertString(4, "Text");
-    StickyLine line = stickyModel.getAllStickyLines().get(0);
+    StickyLine line = stickyModel.getAllStickyLines().getFirst();
     assertEquals("lineText0", textAtLine(line));
   }
 
-  private StickyLine addStickyLine(int primaryLine) {
+  private @NotNull StickyLine addStickyLine(int primaryLine) {
     return addStickyLine(primaryLine, primaryLine + 1);
   }
 
-  private StickyLine addStickyLine(int primaryLine, int scopeLine) {
+  private @NotNull StickyLine addStickyLine(int primaryLine, int scopeLine) {
     int startOffset = document.getLineStartOffset(primaryLine);
     int endOffset = document.getLineEndOffset(scopeLine);
     return stickyModel.addStickyLine(startOffset, endOffset, "");
   }
 
-  private List<VisualStickyLine> stickyLines(Rectangle visibleArea) {
+  private @NotNull List<VisualStickyLine> stickyLines(Rectangle visibleArea) {
     vsl.recalculate(visibleArea);
     return new ArrayList<>(vsl.lines(visibleArea));
   }
 
-  private Rectangle yToVisibleArea(int y) {
+  private @NotNull Rectangle yToVisibleArea(int y) {
     return new Rectangle(0, y, 50, document.getLineCount() * lineHeight());
   }
 
@@ -375,7 +376,7 @@ public final class StickyLinesTest extends AbstractEditorTest {
     return editor.getLineHeight();
   }
 
-  private String textAtLine(StickyLine line) {
+  private @NotNull String textAtLine(StickyLine line) {
     int logicalLine;
     if (line instanceof VisualStickyLine) {
       int y = editor.visualLineToY(line.primaryLine());
