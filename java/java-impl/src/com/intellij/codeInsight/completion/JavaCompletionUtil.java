@@ -574,7 +574,7 @@ public final class JavaCompletionUtil {
       return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
     }
 
-    return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
+    return List.of();
   }
 
   public static boolean hasAccessibleConstructor(@NotNull PsiType type, @NotNull PsiElement place) {
