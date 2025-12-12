@@ -35,9 +35,13 @@ import java.util.function.Function;
  * Otherwise, there's no purpose in such a command.
  * And to some extent, showing UI could also be considered a modification (of things visible on the screen).
  * <p>
- * All inheritors are records, so the whole state is declarative and readable.
+ * All inheritors are records, so the whole state is declarative and easily readable.
+ * Thanks to this property, every {@link ModCommand} can be easily serialized and sent e.g., over the network, or to a different process.
+ * <p>
  * Instead of creating the commands directly, it's preferred to use static methods in this class to create individual commands.
  * Especially take a look at {@link #psiUpdate} methods which are helpful in most of the cases.
+ *
+ * @see com.intellij.openapi.command.CommandProcessor CommandProcessor
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage, ModEditOptions,
@@ -400,7 +404,7 @@ public sealed interface ModCommand
    *
    * @param title       user-readable title to display in UI
    * @param elements    all elements to select from
-   * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
+   * @param nextCommand a function to compute the next command based on the selection; will be executed in read-action
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
@@ -416,7 +420,7 @@ public sealed interface ModCommand
    * @param title            user-readable title to display in UI
    * @param elements         all elements to select from
    * @param defaultSelection default selection
-   * @param nextCommand      a function to compute the subsequent command based on the selection; will be executed in read-action
+   * @param nextCommand      a function to compute the next command based on the selection; will be executed in read-action
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
@@ -448,13 +452,13 @@ public sealed interface ModCommand
   }
 
   /**
-   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Creates a command that displays a UI and allows the user to select the next action from the list.
    * Intention preview assumes that the first available action is selected by default.
    * In batch mode, the first option is also selected automatically.
    *
    * @param title   title to display to the user
    * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
-   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a next step
    */
   static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
                                           @NotNull List<? extends @NotNull ModCommandAction> actions) {
@@ -462,13 +466,13 @@ public sealed interface ModCommand
   }
 
   /**
-   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Creates a command that displays a UI and allows the user to select the next action from the list.
    * Intention preview assumes that the first available action is selected by default.
    * In batch mode, the first option is also selected automatically.
    *
    * @param title   title to display to the user
    * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
-   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a next step
    */
   static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
                                           @NotNull ModCommandAction @NotNull ... actions) {
