@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.installDndSupport
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
@@ -47,6 +48,11 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     if (!application.isUnitTestMode) {
       initializeSubscriptions(changesView, cs)
     }
+  }
+
+  override fun initPanel() {
+    super.initPanel()
+    changesView.installDndSupport(cs.asDisposable())
   }
 
   private fun initializeSubscriptions(changesView: ChangesListView, cs: CoroutineScope) {

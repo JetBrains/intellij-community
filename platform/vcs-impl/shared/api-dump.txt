@@ -522,6 +522,21 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesTreeCellRenderer
 - getToolTipText():java.lang.String
 - getTreeCellRendererComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
 - pf:paintComponent(java.awt.Graphics):V
+a:com.intellij.openapi.vcs.changes.ui.ChangesTreeDnDSupport
+- com.intellij.ide.dnd.DnDDropHandler
+- com.intellij.ide.dnd.DnDTargetChecker
+- pf:myTree:com.intellij.openapi.vcs.changes.ui.ChangesTree
+- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree):V
+- pa:canHandleDropEvent(com.intellij.ide.dnd.DnDEvent,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+- s:createDragImage(com.intellij.ui.treeStructure.Tree,java.lang.String):com.intellij.ide.dnd.DnDImage
+- pa:createDragStartBean(com.intellij.ide.dnd.DnDActionInfo):com.intellij.ide.dnd.DnDDragStartBean
+- p:createDraggedImage(com.intellij.ide.dnd.DnDActionInfo):com.intellij.ide.dnd.DnDImage
+- p:getDropNode(com.intellij.ide.dnd.DnDEvent):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- s:getDropRootNode(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.ide.dnd.DnDEvent):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- s:getSelectionCount(com.intellij.openapi.vcs.changes.ui.ChangesTree):I
+- install(com.intellij.openapi.Disposable):V
+- s:isCopyAction(com.intellij.ide.dnd.DnDEvent):Z
+- update(com.intellij.ide.dnd.DnDEvent):Z
 com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - a:insertChanges(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 - a:insertFilesIntoNode(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
