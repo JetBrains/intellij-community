@@ -28,7 +28,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    XValue selectedValue = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+    XValue selectedValue = XDebuggerTreeSplitActionBase.getSelectedValue(dataContext);
 
     getSelectedExpressionAsync(project, evaluator, editor, psiFile, selectedValue)
       .onSuccess(expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
