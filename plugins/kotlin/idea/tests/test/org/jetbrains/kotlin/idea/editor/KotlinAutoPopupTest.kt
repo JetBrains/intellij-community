@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -11,11 +10,8 @@ import org.junit.runner.RunWith
 import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
-open class KotlinAutoPopupTest : CompletionAutoPopupTestCase(),
+abstract class KotlinAutoPopupTest : CompletionAutoPopupTestCase(),
                                  ExpectedPluginModeProvider {
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K1
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
