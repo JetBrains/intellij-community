@@ -115,7 +115,7 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
     val context = ShellRuntimeContextImpl(
       currentDirectory = currentDirectory,
       envVariables = emptyMap(),
-      typedPrefix = path,
+      commandTokens = listOf(path),
       shellName = ShellName("test"),
       generatorCommandsRunner = ShellCommandExecutorReworked(processExecutor),
       generatorProcessExecutor = processExecutor,

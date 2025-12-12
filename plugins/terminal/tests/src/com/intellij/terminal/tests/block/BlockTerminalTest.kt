@@ -118,7 +118,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
         val context = ShellRuntimeContextImpl(
           currentDirectory = "",
           envVariables = emptyMap(),
-          typedPrefix = "",
+          commandTokens = listOf(""),
           shellName = session.shellIntegration.shellType.toShellName(),
           generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
         )

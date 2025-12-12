@@ -18,8 +18,8 @@ class TestRuntimeContextProvider(
   private val shellName: ShellName = ShellName("dummy"),
   private val generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor,
 ) : ShellRuntimeContextProvider {
-  override fun getContext(typedPrefix: String): ShellRuntimeContext {
-    return ShellRuntimeContextImpl(directory, envVariables, typedPrefix, shellName, generatorCommandsRunner).also {
+  override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
+    return ShellRuntimeContextImpl(directory, envVariables, commandTokens, shellName, generatorCommandsRunner).also {
       it.putUserData(PROJECT_KEY, project)
     }
   }

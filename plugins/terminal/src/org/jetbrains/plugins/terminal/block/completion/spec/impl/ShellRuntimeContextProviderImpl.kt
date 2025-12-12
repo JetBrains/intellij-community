@@ -53,11 +53,11 @@ class ShellRuntimeContextProviderImpl(
     })
   }
 
-  override fun getContext(typedPrefix: String): ShellRuntimeContext {
+  override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
       currentDirectory = curDirectory,
       envVariables = emptyMap(),
-      typedPrefix = typedPrefix,
+      commandTokens = commandTokens,
       shellName = session.shellIntegration.shellType.toShellName(),
       generatorCommandsRunner = generatorCommandsRunner
     ).apply {

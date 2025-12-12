@@ -23,7 +23,18 @@ interface ShellRuntimeContext {
   val envVariables: Map<String, String>
 
   /**
-   * User typed prefix of the current value we are trying to complete.
+   * Words (tokens) of the command we are trying to complete.
+   * The last token is the [typedPrefix].
+   *
+   * For example: `[ls, -al, ~/Documents/projects]`
+   */
+  val commandTokens: List<String>
+
+  /**
+   * User typed prefix of the current token we are trying to complete.
+   *
+   * For example, if [commandTokens] are `[ls, -al, ~/Documents/proj]`,
+   * then typed prefix is `~/Documents/proj`
    */
   val typedPrefix: String
 

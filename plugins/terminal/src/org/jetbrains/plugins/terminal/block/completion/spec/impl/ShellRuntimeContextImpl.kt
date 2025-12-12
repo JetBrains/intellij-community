@@ -10,12 +10,13 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.th
 class ShellRuntimeContextImpl(
   override val currentDirectory: String,
   override val envVariables: Map<String, String>,
-  override val typedPrefix: String,
+  override val commandTokens: List<String>,
   override val shellName: ShellName,
   private val generatorCommandsRunner: ShellCommandExecutor,
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null,
   private val fileSystemSupport: ShellFileSystemSupport? = null,
 ) : ShellRuntimeContext, UserDataHolderBase() {
+  override val typedPrefix: String = commandTokens.last()
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
     return generatorCommandsRunner.runShellCommand(currentDirectory, command)

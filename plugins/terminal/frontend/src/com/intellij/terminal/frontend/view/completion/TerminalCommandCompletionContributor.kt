@@ -107,7 +107,7 @@ private suspend fun computeSuggestions(tokens: List<String>, parameters: Termina
     return emptyList()
   }
 
-  val runtimeContext = parameters.runtimeContextProvider.getContext(tokens.last())
+  val runtimeContext = parameters.runtimeContextProvider.getContext(tokens)
   val completion = ShellCommandSpecCompletion(
     parameters.commandSpecsManager,
     parameters.generatorsExecutor,

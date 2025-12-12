@@ -53,7 +53,8 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun buildSubcommandTree(root: ShellCommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestionsProvider = createSuggestionsProvider(name)
+      val currentTokens = arguments.take(curIndex + 1)
+      val suggestionsProvider = createSuggestionsProvider(currentTokens)
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root)
       val suggestion = findMatchingSuggestion(suggestions, name)
       if (suggestion == null
@@ -87,7 +88,8 @@ internal class ShellCommandTreeBuilder private constructor(
   private suspend fun buildOptionTree(root: ShellOptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
-      val suggestionsProvider = createSuggestionsProvider(name)
+      val currentTokens = arguments.take(curIndex + 1)
+      val suggestionsProvider = createSuggestionsProvider(currentTokens)
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root)
       val suggestion = findMatchingSuggestion(suggestions, name)
       val node = if (suggestion == null) {
@@ -167,8 +169,8 @@ internal class ShellCommandTreeBuilder private constructor(
     return ShellCommandNode(name, spec, parent)
   }
 
-  private fun createSuggestionsProvider(typedPrefix: String): ShellCommandTreeSuggestionsProvider {
-    val context = contextProvider.getContext(typedPrefix)
+  private fun createSuggestionsProvider(commandTokens: List<String>): ShellCommandTreeSuggestionsProvider {
+    val context = contextProvider.getContext(commandTokens)
     return ShellCommandTreeSuggestionsProvider(context, generatorsExecutor)
   }
 }

@@ -23,11 +23,11 @@ internal class ShellRuntimeContextProviderReworkedImpl(
   private val shellCommandExecutor = ShellCommandExecutorReworked(generatorProcessExecutor)
   private val fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
 
-  override fun getContext(typedPrefix: String): ShellRuntimeContext {
+  override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
       currentDirectory = sessionModel.terminalState.value.currentDirectory ?: error("Current directory should be set at this moment"),
       envVariables = envVariables,
-      typedPrefix = typedPrefix,
+      commandTokens = commandTokens,
       shellName = ShellType.ZSH.toShellName(),
       generatorCommandsRunner = shellCommandExecutor,
       generatorProcessExecutor = generatorProcessExecutor,

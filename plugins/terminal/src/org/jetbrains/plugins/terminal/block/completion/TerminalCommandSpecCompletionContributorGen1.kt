@@ -119,7 +119,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
       return emptyList()
     }
 
-    val runtimeContext = context.runtimeContextProvider.getContext(tokens.last())
+    val runtimeContext = context.runtimeContextProvider.getContext(tokens)
     val completion = ShellCommandSpecCompletion(
       context.commandSpecsManager,
       context.generatorsExecutor,
@@ -209,8 +209,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
     if (tokens.size < 2) {
       return tokens
     }
-    // aliases generator does not requires actual typed prefix
-    val dummyRuntimeContext = context.runtimeContextProvider.getContext("")
+    val dummyRuntimeContext = context.runtimeContextProvider.getContext(tokens)
     val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, aliasesGenerator()) ?: emptyMap()
     val expandedTokens = expandAliases(tokens, aliases, context)
     return expandedTokens

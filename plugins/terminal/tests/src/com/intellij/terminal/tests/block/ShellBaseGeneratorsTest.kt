@@ -130,7 +130,7 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
     val context = ShellRuntimeContextImpl(
       currentDirectory = "",
       envVariables = emptyMap(),
-      typedPrefix = typedPrefix,
+      commandTokens = listOf(typedPrefix),
       shellName = session.shellIntegration.shellType.toShellName(),
       generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
     )
