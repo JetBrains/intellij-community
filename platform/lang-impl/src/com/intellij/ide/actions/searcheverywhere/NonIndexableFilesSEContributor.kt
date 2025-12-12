@@ -157,7 +157,9 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
           val psiItem = PsiManager.getInstance(project).getPsiFileSystemItem(file) ?: continue
           val weight = matchingDegree * (otherNameMatchers.size - i) / (otherNameMatchers.size + 1)
           val itemDescriptor = FoundItemDescriptor<Any>(psiItem, weight)
-          if (!runReadAction { consumer.process(itemDescriptor) }) return
+          if (!ReadAction.computeCancellable<Boolean, Throwable> {
+            consumer.process(itemDescriptor)
+          }) return
           break
         }
       }
