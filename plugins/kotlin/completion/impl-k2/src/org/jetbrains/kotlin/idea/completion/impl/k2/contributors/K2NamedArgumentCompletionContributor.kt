@@ -76,16 +76,20 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
             buildList {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
-                        add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
+                        add(createNamedArgumentLookupElement(name, indexedTypes))
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
-                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }.map { it.value }
-                        if (typesAtCurrentPosition.any { it.isBooleanType }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
+                        val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }
+
+                        val booleanPosition = typesAtCurrentPosition.firstOrNull { it.value.isBooleanType }
+                        if (booleanPosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value, booleanPosition.index))
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value, booleanPosition.index))
                         }
-                        if (typesAtCurrentPosition.any { it.isMarkedNullable }) {
-                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
+
+                        val nullablePosition = typesAtCurrentPosition.firstOrNull { it.value.isMarkedNullable }
+                        if (nullablePosition != null) {
+                            add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value, nullablePosition.index))
                         }
                     }
                 }

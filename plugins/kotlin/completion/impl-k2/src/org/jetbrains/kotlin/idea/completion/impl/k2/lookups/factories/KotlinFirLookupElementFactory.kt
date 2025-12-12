@@ -102,11 +102,11 @@ object KotlinFirLookupElementFactory {
         PackagePartLookupElementFactory.createLookup(packagePartFqName)
 
     context(_: KaSession)
-    fun createNamedArgumentLookupElement(name: Name, types: List<KaType>): LookupElement =
+    fun createNamedArgumentLookupElement(name: Name, types: List<IndexedValue<KaType>>): LookupElement =
         NamedArgumentLookupElementFactory.createLookup(name, types)
 
-    fun createNamedArgumentWithValueLookupElement(name: Name, value: String): LookupElement =
-        NamedArgumentLookupElementFactory.createLookup(name, value)
+    fun createNamedArgumentWithValueLookupElement(name: Name, value: String, index: Int): LookupElement =
+        NamedArgumentLookupElementFactory.createLookup(name, value, index)
 
     context(_: KaSession)
     fun createTypeLookupElement(type: KaType): LookupElement? =
