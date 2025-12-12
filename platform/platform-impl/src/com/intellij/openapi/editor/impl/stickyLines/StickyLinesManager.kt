@@ -6,10 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineColors
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.ColorUtil
 import java.awt.Rectangle
 
 
@@ -17,7 +16,7 @@ internal class StickyLinesManager(
   private val editor: Editor,
   private val stickyModel: StickyLinesModel,
   private val stickyPanel: StickyLinesPanel,
-  private val shadowPainter: StickyLineShadowPainter,
+  private val stickyColors: StickyLineColors,
   private val visualStickyLines: VisualStickyLines,
   parentDisposable: Disposable,
 ) : VisibleAreaListener, StickyLinesModel.Listener, Disposable {
@@ -32,7 +31,6 @@ internal class StickyLinesManager(
     Disposer.register(parentDisposable, this)
     editor.scrollingModel.addVisibleAreaListener(this, this)
     stickyModel.addListener(this)
-    shadowPainter.isDarkColorScheme = isDarkColorScheme()
   }
 
   fun repaintLines(startVisualLine: Int, endVisualLine: Int) {
@@ -65,8 +63,7 @@ internal class StickyLinesManager(
     val newIsEnabled: Boolean = editor.settings.areStickyLinesShown()
     val oldLineLimit: Int = activeLineLimit
     val newLineLimit: Int = editor.settings.stickyLinesLimit
-    val oldIsDarkColor: Boolean = shadowPainter.isDarkColorScheme
-    val newIsDarkColor: Boolean = isDarkColorScheme()
+    val colorsChanged: Boolean = stickyColors.updateScheme(editor.colorsScheme)
 
     activeIsEnabled = newIsEnabled
     activeLineLimit = newLineLimit
@@ -77,9 +74,8 @@ internal class StickyLinesManager(
       resetLines()
     } else if (newLineLimit != oldLineLimit) {
       recalculateAndRepaintLines()
-    } else if (oldIsDarkColor != newIsDarkColor) {
-      shadowPainter.isDarkColorScheme = newIsDarkColor
-      recalculateAndRepaintLines()
+    } else if (colorsChanged) {
+      repaintLines()
     }
   }
 
@@ -108,11 +104,6 @@ internal class StickyLinesManager(
 
   override fun dispose() {
     stickyModel.removeListener(this)
-  }
-
-  private fun isDarkColorScheme(): Boolean {
-    val background = editor.colorsScheme.defaultBackground
-    return ColorUtil.isDark(background)
   }
 
   private fun recalculateAndRepaintLines(force: Boolean = false) {
