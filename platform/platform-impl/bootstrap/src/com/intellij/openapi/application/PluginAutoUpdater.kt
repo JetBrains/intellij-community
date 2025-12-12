@@ -10,8 +10,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.findUnsatisfiedDependencies
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import kotlinx.coroutines.CompletableDeferred
@@ -69,23 +67,26 @@ object PluginAutoUpdater {
     logDeferred.await().info("There are ${updates.size} prepared updates for plugins. Applying...")
     val autoupdatesDir = getAutoUpdateDirPath()
 
-    val currentDescriptors = span("loading existing descriptors") {
+    val initContext = ProductPluginInitContext()
+    val discoveredPlugins = span("loading existing descriptors") {
       ZipFilePoolImpl().use { pool ->
-        val discoveredPlugins = loadDescriptors(
+        loadDescriptors(
           zipPoolDeferred = CompletableDeferred(pool),
           mainClassLoaderDeferred = CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
-        ).second
-        val loadingResult = PluginLoadingResult()
-        loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = ProductPluginInitContext())
-        loadingResult
+        ).second.discoveredPlugins
       }
     }
     // shadowing intended
     val updates = updates.filter { (id, _) ->
-      (!PluginManagerCore.isDisabled(id) && (currentDescriptors.getIdMap()[id] != null || currentDescriptors.getIncompleteIdMap()[id] != null))
-        .also { pluginForUpdateExists ->
-          if (!pluginForUpdateExists) logDeferred.await().warn("Update for plugin $id is declined since the plugin is not going to be loaded")
-        }
+      if (initContext.isPluginDisabled(id)) {
+        logDeferred.await().warn("Update for plugin $id is declined since the plugin is marked as disabled and won't be loaded")
+        return@filter false
+      }
+      if (!discoveredPlugins.any { it.plugins.any { it.pluginId == id }}) {
+        logDeferred.await().warn("Update for plugin $id is declined since the original plugin is not found")
+        return@filter false
+      }
+      true
     }
     val updateDescriptors = span("update descriptors loading") {
       updates.mapValues { (_, info) ->
@@ -99,8 +100,7 @@ object PluginAutoUpdater {
         if (!loaded) logDeferred.await().warn("Update for plugin ${it.key} has failed to load", it.value.exceptionOrNull())
       }
     }.mapValues { it.value.getOrNull()!! }
-
-    val updateCheck = determineValidUpdates(currentDescriptors, updateDescriptors)
+    val updateCheck = determineValidUpdates(discoveredPlugins, updateDescriptors, initContext)
     updateCheck.rejectedUpdates.forEach { (id, reason) ->
       logDeferred.await().warn("Update for plugin $id has been rejected: $reason")
     }
@@ -112,8 +112,7 @@ object PluginAutoUpdater {
       }.onFailure {
         logDeferred.await().warn("Failed to apply update for plugin $id", it)
       }.onSuccess {
-        logDeferred.await().info("Plugin $id has been successfully updated: " +
-                                 "version ${currentDescriptors.getIdMap()[id]?.version} -> ${updateDescriptors[id]!!.version}")
+        logDeferred.await().info("Plugin $id has been successfully updated to version ${updateDescriptors[id]!!.version}")
         updatesApplied++
       }
     }
@@ -126,22 +125,23 @@ object PluginAutoUpdater {
   )
 
   private fun determineValidUpdates(
-    currentDescriptors: PluginLoadingResult,
-    updates: Map<PluginId, IdeaPluginDescriptorImpl>,
+    discoveredPlugins: List<DiscoveredPluginsList>,
+    updates: Map<PluginId, PluginMainDescriptor>,
+    initContext: ProductPluginInitContext,
   ): UpdateCheckResult {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
+    val loadingResult = PluginLoadingResult().apply {
+      val compoundLoadingResult = PluginDescriptorLoadingResult.build(
+        discoveredPlugins + DiscoveredPluginsList(updates.values.toList(), PluginsSourceContext.Custom)
+      )
+      initAndAddAll(compoundLoadingResult, initContext)
+    }
+    val nonLoadReasonsCollector = ArrayList<PluginNonLoadReason>()
+    val pluginSet = PluginSetBuilder(loadingResult.getPluginsToAttemptLoading())
+      .createPluginSetWithEnabledModulesMap(loadingResult.getIncompleteIdMap().values, nonLoadReasonsCollector)
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
-    val enabledPluginsAndModulesIds: Set<String> = currentDescriptors.getIdMap().flatMap { entry ->
-      val desc = entry.value
-      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleId.name } // FIXME content module aliases are not accounted
-    }.toSet()
     for ((id, updateDesc) in updates) {
-      val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]
-      if (existingDesc == null) {
-        rejectedUpdates[id] = "plugin $id is not installed"
-        continue
-      }
       // no third-party plugin check, settings are not available at this point; that check must be done when downloading the updates
       if (PluginManagerCore.isIncompatible(updateDesc)) {
         rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} is not compatible with current IDE build"
@@ -155,10 +155,6 @@ object PluginAutoUpdater {
         rejectedUpdates[id] = "plugin $id is part of the IDE distribution and cannot be updated without IDE update"
         continue
       }
-      if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(updateDesc.version, existingDesc) <= 0) {
-        rejectedUpdates[id] = "plugin $id has same or newer version installed (${existingDesc.version} vs update version ${updateDesc.version})"
-        continue
-      }
       // I guess a more robust way to check which updates should be applied and which not is the following.
       // Greedily try to apply all the updates and then exclude those which turn out to be incompatible (on the module graph level).
       // Repeat until the set of updates doesn't produce incompatibilities.
@@ -167,16 +163,14 @@ object PluginAutoUpdater {
       // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
-      val unmetDependencies = findUnsatisfiedDependencies(
-        updateDesc.dependencies,
-        enabledPluginsAndModulesIds
-      )
-      if (unmetDependencies.isNotEmpty()) {
-        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} has unsatisfied dependencies " +
-                              "(plugin ids): ${unmetDependencies.joinToString(", ") { it.pluginId.idString }}"
+      val pluginToLoad = pluginSet.findEnabledPlugin(id)
+      if (pluginToLoad !== updateDesc) {
+        val nonLoadReason = nonLoadReasonsCollector.find { it.plugin === updateDesc }
+        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} would not load after the update" +
+                              (nonLoadReason?.let { ": ${it.logMessage}" } ?:
+                              pluginToLoad?.let { ": version ${it.version} is selected for loading instead" }.orEmpty())
         continue
       }
-      // TODO check signature ? com.intellij.ide.plugins.marketplace.PluginSignatureChecker; probably also should be done after download
       updatesToApply.add(id)
     }
     return UpdateCheckResult(updatesToApply, rejectedUpdates)

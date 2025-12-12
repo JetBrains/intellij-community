@@ -314,11 +314,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     }
   }
 
-  fun createPluginSetWithEnabledModulesMap(): PluginSet {
-    // FIXME pass proper list of incomplete plugins to ensure that this information isn't lost after enabling/disabling a plugin dynamically
-    //   and proper init context too
-    val incompletePlugins = emptyList<PluginMainDescriptor>()
-    computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+  fun createPluginSetWithEnabledModulesMap(
+    incompletePlugins: Collection<PluginMainDescriptor> = emptyList(),
+    nonLoadReasonCollector: ArrayList<PluginNonLoadReason>? = null
+  ): PluginSet {
+    val nonLoadReasons = computeEnabledModuleMap(incompletePlugins = incompletePlugins, initContext = ProductPluginInitContext())
+    nonLoadReasonCollector?.addAll(nonLoadReasons)
     return createPluginSet(incompletePlugins = incompletePlugins)
   }
 
