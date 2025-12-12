@@ -274,7 +274,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
-    <contributor implementation="org.jetbrains.plugins.gradle.KotlinGradleDependencyCompletionContributor"/>
+    <contributor implementation="org.jetbrains.plugins.gradle.GradleDependencyCompletionContributor"/>
   </extensions>
 
   <applicationListeners>

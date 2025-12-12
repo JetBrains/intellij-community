@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import org.jetbrains.idea.completion.api.*
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalRepositoryIndexer
 
-private class KotlinGradleDependencyCompletionContributor : DependencyCompletionContributor {
+private class GradleDependencyCompletionContributor : DependencyCompletionContributor {
 
   override fun isApplicable(context: DependencyCompletionContext): Boolean {
     return context is GradleDependencyCompletionContext
