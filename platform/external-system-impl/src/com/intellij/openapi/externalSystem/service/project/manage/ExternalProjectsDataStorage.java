@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.serialization.ObjectSerializer;
 import com.intellij.serialization.SerializationException;
@@ -477,6 +478,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
     var markerFile = getBrokenMarkerFile();
     try {
+      NioFiles.createParentDirectories(markerFile);
       Files.writeString(markerFile, String.valueOf(System.currentTimeMillis()));
     }
     catch (IOException e) {
