@@ -2,12 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import com.intellij.codeInsight.completion.CompletionType
-import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import java.io.File
-
-abstract class AbstractCodeFragmentCompletionHandlerTest : AbstractCompletionHandlerTest(CompletionType.BASIC)
 
 abstract class AbstractK1CodeFragmentCompletionHandlerTest : AbstractCodeFragmentCompletionHandlerTest() {
     override fun setUpFixture(testPath: String) {
