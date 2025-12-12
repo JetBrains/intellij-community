@@ -40,16 +40,16 @@ function Global:Prompt() {
   $Success = $Global:?
 
   $Result = ""
+  $CurrentDirectory = (Get-Location).Path
   if ($Global:__JetBrainsIntellijState.IsInitialized -eq $false) {
     $Global:__JetBrainsIntellijState.IsInitialized = $true
-    $Result += Global:__JetBrainsIntellijOSC "initialized"
+    $Result += Global:__JetBrainsIntellijOSC "initialized;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
     # Return the empty aliases list for now
     $Result += Global:__JetBrainsIntellijOSC "aliases_received"
   }
   elseif ($Global:__JetBrainsIntellijState.IsCommandRunning -eq $true){
     $Global:__JetBrainsIntellijState.IsCommandRunning = $false
     $ExitCode = if ($Success) { 0 } else { 1 }
-    $CurrentDirectory = (Get-Location).Path
     $Result += Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode;current_directory=$(Global:__JetBrainsIntellijEncode $CurrentDirectory)"
   }
 

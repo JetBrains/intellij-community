@@ -19,7 +19,7 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
     terminalController.addCustomCommandListener { args: List<String> ->
       try {
         when (args.getOrNull(0)) {
-          "initialized" -> dispatcher.multicaster.initialized()
+          "initialized" -> processInitializedEvent(args)
           "command_started" -> processCommandStartedEvent(args)
           "command_finished" -> processCommandFinishedEvent(args)
           "prompt_started" -> dispatcher.multicaster.promptStarted()
@@ -51,6 +51,11 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
       LOG.error("Failed to parse aliases: $text", t)
       emptyMap()
     }
+  }
+
+  private fun processInitializedEvent(args: List<String>) {
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(1))
+    dispatcher.multicaster.initialized(currentDirectory)
   }
 
   private fun processCommandStartedEvent(args: List<String>) {

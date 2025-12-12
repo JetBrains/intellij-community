@@ -201,7 +201,7 @@ internal fun createTerminalOutputFlow(
   })
 
   shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
-    override fun initialized() {
+    override fun initialized(currentDirectory: String) {
       textBuffer.withLock {
         curState = curState.copy(isShellIntegrationEnabled = true)
         collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))

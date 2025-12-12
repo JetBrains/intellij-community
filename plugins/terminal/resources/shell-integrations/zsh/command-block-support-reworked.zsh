@@ -49,7 +49,7 @@ __jetbrains_intellij_command_precmd() {
     # all rc files have been processed and before the first prompt is displayed.
     # So, here it finishes the initialization block, not a user command.
     __jetbrains_intellij_initialized=1
-    builtin printf '\e]1341;initialized\a'
+    builtin printf '\e]1341;initialized;current_directory=%s\a' "$(__jetbrains_intellij_encode "$PWD")"
     __jetbrains_intellij_get_aliases
     __jetbrains_intellij_update_prompt
     builtin return
