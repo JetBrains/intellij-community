@@ -286,7 +286,7 @@ internal class GradleServerEnvironmentSetupImpl(
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
       val javaHomePath = consumerOperationParameters.javaHome.path
-      ProjectJdkTable.getInstance().allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
+      ProjectJdkTable.getInstance(project).allJdks.find { FileUtilRt.pathsEqual(it.homePath, javaHomePath) }?.let { javaParameters.jdk = it }
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {

@@ -179,8 +179,9 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
     runAll(
       {
         WriteAction.runAndWait<RuntimeException>(ThrowableRunnable {
-          ProjectJdkTable.getInstance().getAllJdks()
-            .forEach { ProjectJdkTable.getInstance().removeJdk(it) }
+          val jdkTable = ProjectJdkTable.getInstance(myProject)
+          jdkTable.getAllJdks()
+            .forEach { jdkTable.removeJdk(it) }
           for (sdk in removedSdks) {
             SdkConfigurationUtil.addSdk(sdk)
           }
@@ -303,8 +304,9 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
   protected fun cleanJdkTable() {
     removedSdks.clear()
-    for (sdk in ProjectJdkTable.getInstance().getAllJdks()) {
-      ProjectJdkTable.getInstance().removeJdk(sdk)
+    val jdkTable = ProjectJdkTable.getInstance(myProject)
+    for (sdk in jdkTable.getAllJdks()) {
+      jdkTable.removeJdk(sdk)
       if (GRADLE_JDK_NAME == sdk.getName()) continue
       removedSdks.add(sdk)
     }
@@ -312,7 +314,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
 
   protected fun populateJdkTable(jdks: List<Sdk>) {
     for (jdk in jdks) {
-      ProjectJdkTable.getInstance().addJdk(jdk)
+      ProjectJdkTable.getInstance(myProject).addJdk(jdk)
     }
   }
 

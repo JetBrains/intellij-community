@@ -70,7 +70,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val sdk = IdeaTestUtil.getMockJdk9()
     WriteAction.run<Throwable> {
-      ProjectJdkTable.getInstance().addJdk(sdk, testFixture.testRootDisposable)
+      ProjectJdkTable.getInstance(project).addJdk(sdk, testFixture.testRootDisposable)
       ProjectRootManager.getInstance(project).projectSdk = sdk
     }
 
@@ -117,8 +117,9 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val sdk9 = createMockJdk(JavaVersion.compose(9))
 
     WriteAction.run<Throwable> {
-      ProjectJdkTable.getInstance().addJdk(sdk8, testFixture.testRootDisposable)
-      ProjectJdkTable.getInstance().addJdk(sdk9, testFixture.testRootDisposable)
+      val jdkTable = ProjectJdkTable.getInstance(project)
+      jdkTable.addJdk(sdk8, testFixture.testRootDisposable)
+      jdkTable.addJdk(sdk9, testFixture.testRootDisposable)
     }
 
     assertThat(getAvailableJdk(project).second).isEqualTo(sdk9)
@@ -131,7 +132,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val sdk8 = createMockJdk(JavaVersion.compose(8))
     val sdk9 = createMockJdk(JavaVersion.compose(9))
 
-    val dependentSDK = ProjectJdkTable.getInstance().createSdk("TestJavaDependentSdk", TestJavaDependentSdkType.getInstance())
+    val dependentSDK = ProjectJdkTable.getInstance(project).createSdk("TestJavaDependentSdk", TestJavaDependentSdkType.getInstance())
     val sdkModificator = dependentSDK.sdkModificator
     sdkModificator.versionString = "1.0"
     sdkModificator.homePath = "fake/path"
@@ -139,7 +140,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
 
     WriteAction.run<Throwable> {
-      with(ProjectJdkTable.getInstance()) {
+      with(ProjectJdkTable.getInstance(project)) {
         addJdk(sdk8, testFixture.testRootDisposable)
         addJdk(sdk9, testFixture.testRootDisposable)
         addJdk(dependentSDK, testFixture.testRootDisposable)

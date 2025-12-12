@@ -73,7 +73,7 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
          * This code allows to avoid some irregular conflicts
          * For example: strange duplications in SdkComboBox or unexpected modifications of gradleJvm
          */
-        val fakeSdk = sdk?.let(::findRegisteredSdk)
+        val fakeSdk = sdk?.let { findRegisteredSdk(project, it) }
         if (fakeSdk != null && projectSettings.gradleJvm == null) {
           projectSettings.gradleJvm = fakeSdk.name
         }
@@ -146,7 +146,7 @@ internal fun Project.resolveProjectJdk(): Sdk? {
   return null
 }
 
-private fun findRegisteredSdk(sdk: Sdk): Sdk? = runReadAction {
-  val projectJdkTable = ProjectJdkTable.getInstance()
+private fun findRegisteredSdk(project: Project, sdk: Sdk): Sdk? = runReadAction {
+  val projectJdkTable = ProjectJdkTable.getInstance(project)
   projectJdkTable.findJdk(sdk.name, sdk.sdkType.name)
 }

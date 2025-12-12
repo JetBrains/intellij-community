@@ -104,7 +104,7 @@ open class ProjectModelRule : TestRule {
   }
 
   fun createSdk(name: String = "sdk", setup: (SdkModificator) -> Unit = {}): Sdk {
-    val sdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
+    val sdk = ProjectJdkTable.getInstance(project).createSdk(name, sdkType)
     modifySdk(sdk, setup)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
     return sdk
@@ -135,7 +135,7 @@ open class ProjectModelRule : TestRule {
   
   fun addSdk(sdk: Sdk) {
     runWriteActionAndWait {
-      ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+      ProjectJdkTable.getInstance(project).addJdk(sdk, disposableRule.disposable)
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }

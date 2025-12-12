@@ -143,7 +143,7 @@ public class Bar {
 
   override fun tearDown() {
     try {
-      ProjectJdkTable.getInstance().apply {
+      ProjectJdkTable.getInstance(project).apply {
         allJdks.forEach { removeJdk(it) }
       }
       (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(null)

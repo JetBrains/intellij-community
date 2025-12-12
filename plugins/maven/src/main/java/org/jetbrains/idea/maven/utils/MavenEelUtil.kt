@@ -384,10 +384,14 @@ object MavenEelUtil {
         }.firstOrNull()
         if (sdkPath != null) {
           WriteAction.runAndWait<RuntimeException> {
-            val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
-                                                                   ProjectJdkTable.getInstance().allJdks.toList())
+            val jdkTable = ProjectJdkTable.getInstance(project)
+            val jdkName = SdkConfigurationUtil.createUniqueSdkName(
+              JavaSdk.getInstance(),
+              sdkPath,
+              jdkTable.allJdks.toList()
+            )
             val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
-            ProjectJdkTable.getInstance().addJdk(newJdk)
+            jdkTable.addJdk(newJdk)
             ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
             notification.hideBalloon()
           }
@@ -432,10 +436,14 @@ object MavenEelUtil {
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
           edtWriteAction {
-            val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
-                                                                   ProjectJdkTable.getInstance().allJdks.toList())
+            val jdkTable = ProjectJdkTable.getInstance(project)
+            val jdkName = SdkConfigurationUtil.createUniqueSdkName(
+              JavaSdk.getInstance(),
+              sdkPath,
+              jdkTable.allJdks.toList()
+            )
             val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
-            ProjectJdkTable.getInstance().addJdk(newJdk)
+            jdkTable.addJdk(newJdk)
             ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
             notification.hideBalloon()
           }

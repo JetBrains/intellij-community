@@ -246,7 +246,7 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
 
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     return projectSdk?.let(inSdkFinder)
-           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
+           ?: ProjectJdkTable.getInstance(project).allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
   }
 
   return rootTypes.asSequence().map { rootType ->

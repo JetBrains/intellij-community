@@ -13,9 +13,9 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.belongsToEel
 import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
-import com.intellij.openapi.projectRoots.belongsToEel
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Computable
@@ -185,9 +185,11 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
     val namedSdk = sdkName?.let {
       ApplicationManager.getApplication().runReadAction(Computable {
+        val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
+                       ?: ProjectJdkTable.getInstance()
         when (sdkType) {
-          null -> ProjectJdkTable.getInstance().findJdk(sdkName)
-          else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
+          null -> jdkTable.findJdk(sdkName)
+          else -> jdkTable.findJdk(sdkName, sdkType.name)
         }
       })
     }
@@ -357,7 +359,11 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         //it could be that the suggested SDK is already registered, so we could simply return it
         //NOTE: something similar has to be done with downloading SDKs, e.g. we should replace download task with an already running one
         val sdkPrototype = possibleFix.registeredSdkPrototype
-        if (sdkPrototype != null && sdkPrototype in runReadAction { ProjectJdkTable.getInstance().allJdks }) {
+        if (sdkPrototype != null && sdkPrototype in runReadAction {
+            val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
+                           ?: ProjectJdkTable.getInstance()
+            jdkTable.allJdks
+          }) {
           if (testLoadSdkAndWaitIfNeeded(sdkPrototype, indicator)) {
             return@runSdkResolutionUnderProgress
           }

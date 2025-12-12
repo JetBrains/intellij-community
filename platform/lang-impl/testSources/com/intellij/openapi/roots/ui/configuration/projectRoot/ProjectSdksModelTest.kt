@@ -44,9 +44,9 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     model.addSdk(sdk)
     model.apply()
 
-    disposeOnTearDown(Disposable { runWriteAction { ProjectJdkTable.getInstance().removeJdk(sdk) } })
+    disposeOnTearDown(Disposable { runWriteAction { ProjectJdkTable.getInstance(project).removeJdk(sdk) } })
 
-    val foundSdk = ProjectJdkTable.getInstance().allJdks.find { it.name == sdk.name }
+    val foundSdk = ProjectJdkTable.getInstance(project).allJdks.find { it.name == sdk.name }
 
     //we assume that the added Sdk is added to the ProjectJdkTable
     Assert.assertNotNull(foundSdk)
@@ -60,7 +60,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
 
     model.apply()
 
-    val foundSdk2 = ProjectJdkTable.getInstance().allJdks.find { it.name == sdk.name }
+    val foundSdk2 = ProjectJdkTable.getInstance(project).allJdks.find { it.name == sdk.name }
     Assert.assertNotNull(foundSdk2)
 
     //the ProjectJdkTable should keep the same element as it was
@@ -84,7 +84,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     init {
       disposeOnTearDown(Disposable {
         runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
+          val jdkTable = ProjectJdkTable.getInstance(project)
           jdkTable.allJdks.filter { it.name == sdkName }.forEach { jdkTable.removeJdk(it) }
         }
       })
@@ -162,7 +162,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
         }
 
         runReadAction {
-          assertThat(ProjectJdkTable.getInstance().allJdks).withFailMessage(
+          assertThat(ProjectJdkTable.getInstance(project).allJdks).withFailMessage(
             "Downloading SDK should be visible").anyMatch { it.name == sdkName }
         }
       }
@@ -173,7 +173,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     }
 
     assertThat(model.sdks).withFailMessage("SDK should NOT added to the model after cancellation").noneMatch { it.name == sdkName }
-    assertThat(ProjectJdkTable.getInstance().allJdks).withFailMessage(
+    assertThat(ProjectJdkTable.getInstance(project).allJdks).withFailMessage(
       "Downloading SDK should NOT be visible").noneMatch { it.name == sdkName }
   }
 }

@@ -551,7 +551,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun setupJdkForModule(moduleName: String): Sdk {
     val sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()) }
+    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance(project).addJdk(sdk, getTestRootDisposable()) }
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk)
     return sdk
   }

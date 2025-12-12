@@ -123,7 +123,7 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
     }
 
     // Match against the project JDK table
-    val jdks = ProjectJdkTable.getInstance().allJdks
+    val jdks = ProjectJdkTable.getInstance(project).allJdks
     for (jdk in jdks) {
       val path = jdk.homePath ?: continue
       if (SystemInfo.isWindows && wsl != WslPath.isWslUncPath(path)) continue

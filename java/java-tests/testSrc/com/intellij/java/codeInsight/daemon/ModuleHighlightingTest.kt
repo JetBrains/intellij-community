@@ -1226,10 +1226,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
         var path = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!
         if (caseInsensitive) path = breakPath(path)
-        val jdk = ProjectJdkTable.getInstance().findJdk(name)
+        val jdk = ProjectJdkTable.getInstance(project).findJdk(name)
                   ?: createJdk(name, path)
 
-        ProjectJdkTable.getInstance().addJdk(jdk, project)
+        ProjectJdkTable.getInstance(project).addJdk(jdk, project)
         ModuleRootModificationUtil.setModuleSdk(module, jdk)
       })
 
@@ -1241,15 +1241,16 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     finally {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
         ModuleRootModificationUtil.setModuleSdk(module, projectDescriptor.sdk)
-        ProjectJdkTable.getInstance().findJdk(name)?.also { jdk ->
-          ProjectJdkTable.getInstance().removeJdk(jdk)
+        val jdkTable = ProjectJdkTable.getInstance(project)
+        jdkTable.findJdk(name)?.also { jdk ->
+          jdkTable.removeJdk(jdk)
         }
       })
     }
   }
 
   fun createJdk(jdkName: String, home: String): Sdk {
-    val jdk = ProjectJdkTable.getInstance().createSdk(jdkName, JavaSdk.getInstance())
+    val jdk = ProjectJdkTable.getInstance(project).createSdk(jdkName, JavaSdk.getInstance())
     val sdkModificator = jdk.getSdkModificator()
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home))

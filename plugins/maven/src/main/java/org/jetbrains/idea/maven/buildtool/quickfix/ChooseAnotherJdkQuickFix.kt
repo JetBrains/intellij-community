@@ -33,7 +33,7 @@ class ChooseAnotherJdkQuickFix : BuildIssueQuickFix {
       }.onSdkSelected { sdk ->
         val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
         cs.launch {
-          val table = ProjectJdkTable.getInstance()
+          val table = ProjectJdkTable.getInstance(project)
 
           if (table.findJdk(sdk.name) == null) {
             writeAction {

@@ -42,7 +42,7 @@ internal class MultiverseSdkResolveTest {
       val project = projectFixture.init()
       val sdk = IdeaTestUtil.getMockJdk21()
       writeAction {
-        ProjectJdkTable.getInstance().addJdk(sdk, project)
+        ProjectJdkTable.getInstance(project).addJdk(sdk, project)
         val module = ModuleManager.getInstance(project).modules.find { it.name == "foo" }!!
         ModuleRootManager.getInstance(module).modifiableModel.apply {
           this.sdk = sdk

@@ -169,7 +169,8 @@ internal class PlatformSdkPopupFactory : SdkPopupFactory {
         if (addToJdkTable && item is SdkListItem.SdkItem) {
           val sdk = item.sdk
           runWriteAction {
-            val jdkTable = ProjectJdkTable.getInstance()
+            val jdkTable = project?.let { ProjectJdkTable.getInstance(it) }
+                           ?: ProjectJdkTable.getInstance()
             if (jdkTable.findJdk(sdk.name) == null) {
               jdkTable.addJdk(sdk)
             }

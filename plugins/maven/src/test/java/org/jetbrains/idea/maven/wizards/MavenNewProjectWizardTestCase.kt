@@ -36,7 +36,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     testDisposable = Disposer.newDisposable()
 
     mySdk = ExternalSystemJdkProvider.getInstance().internalJdk
-    val jdkTable = ProjectJdkTable.getInstance()
+    val jdkTable = ProjectJdkTable.getInstance(project)
     runWriteActionAndWait {
       jdkTable.addJdk(mySdk, testDisposable)
     }

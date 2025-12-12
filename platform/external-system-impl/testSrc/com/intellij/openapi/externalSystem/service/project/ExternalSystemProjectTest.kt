@@ -476,14 +476,15 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     VfsRootAccess.allowRootAccess(testRootDisposable, *allowedRoots.toTypedArray())
 
     runWriteAction {
-      val oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName)
+      val jdkTable = ProjectJdkTable.getInstance(project)
+      val oldJdk = jdkTable.findJdk(myJdkName)
       if (oldJdk != null) {
-        ProjectJdkTable.getInstance().removeJdk(oldJdk)
+        jdkTable.removeJdk(oldJdk)
       }
       val jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myJdkHome))!!
       val jdk = SdkConfigurationUtil.setupSdk(emptyArray(), jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName)
       assertNotNull("Cannot create JDK for $myJdkHome", jdk)
-      ProjectJdkTable.getInstance().addJdk(jdk!!, project)
+      jdkTable.addJdk(jdk!!, project)
     }
 
     applyProjectModel(

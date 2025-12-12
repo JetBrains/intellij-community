@@ -38,7 +38,7 @@ fun javaCodeInsightFixture(
 fun setUpJdk(level: LanguageLevel, project: Project, module: Module, disposable: Disposable) {
   val jdk = IdeaTestUtil.getMockJdk(level)
   WriteAction.runAndWait<Exception> {
-    ProjectJdkTable.getInstance().addJdk(jdk, disposable)
+    ProjectJdkTable.getInstance(project).addJdk(jdk, disposable)
     ProjectRootManager.getInstance(project).setProjectSdk(jdk)
     ModuleRootModificationUtil.setModuleSdk(module, jdk)
   }

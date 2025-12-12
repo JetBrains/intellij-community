@@ -1889,7 +1889,7 @@ object MavenUtil {
   }
 
   fun suggestProjectSdk(project: Project): Sdk? {
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(project)
     val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
     return projectJdkTable.getSdksOfType(sdkType)
       .filterNotNull()
