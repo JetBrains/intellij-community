@@ -326,8 +326,8 @@
     <target name="repackage-java-plugin" description="Remove IDEA specific descriptors">
         <jar destfile="${community.out}/dist.all/plugins/java/lib/stripped.jar">
             <zipfileset src="${community.out}/dist.all/plugins/java/lib/java-impl.jar" excludes="META-INF/**" />
+            <fileset dir="${basedir}/manifests/java-impl.jar" includes="META-INF/**"/>
         </jar>
-        <copy file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/lib/java-impl.jar"/>
         <move file="${community.out}/dist.all/plugins/java/lib/stripped.jar" tofile="${community.out}/dist.all/plugins/java/lib/java-impl.jar"/>
     </target>
 
