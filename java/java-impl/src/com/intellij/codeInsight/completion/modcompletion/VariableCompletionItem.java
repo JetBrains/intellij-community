@@ -142,12 +142,12 @@ final class VariableCompletionItem extends PsiUpdateCompletionItem<PsiVariable> 
         if (toDelete != null && toDelete.isValid()) {
           document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
         }
-        PsiDocumentManager.getInstance(project).commitDocument(document);
       }
       else if (VariableLookupItem.shouldQualify(field, file.findReferenceAt(updater.getCaretOffset() - 1))) {
         qualifyFieldReference(actionContext.offset(), updater, field);
       }
     }
+    PsiDocumentManager.getInstance(project).commitDocument(document);
 
     PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, updater.getCaretOffset() - 1, PsiReferenceExpression.class, false);
     if (ref != null) {

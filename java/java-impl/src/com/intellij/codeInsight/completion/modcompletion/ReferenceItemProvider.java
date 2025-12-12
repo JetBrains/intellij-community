@@ -150,10 +150,6 @@ final class ReferenceItemProvider implements ModCompletionItemProvider {
           sink.accept(firstArrayElement);
         }
       });
-
-    //if (context.invocationCount() > 0) {
-    //  items.addAll(getInnerScopeVariables(parameters, position));
-    //}
   }
 
   private static @Nullable CommonCompletionItem accessFirstElement(ModCompletionItem item) {
