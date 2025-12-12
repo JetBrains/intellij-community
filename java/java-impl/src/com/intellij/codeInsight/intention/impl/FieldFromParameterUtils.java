@@ -18,6 +18,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -290,7 +291,14 @@ public final class FieldFromParameterUtils {
           existingField.hasModifierProperty(PsiModifier.FINAL) && !method.isConstructor()) {
         return false;
       }
+
+      if (method.isConstructor()) {
+        if (VariableAccessUtils.variableIsAssigned(existingField, method)) {
+          return false;
+        }
+      }
     }
+
     if (method.isConstructor()) {
       PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
       if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
