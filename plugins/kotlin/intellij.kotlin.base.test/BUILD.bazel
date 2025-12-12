@@ -57,6 +57,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/jvm/shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
