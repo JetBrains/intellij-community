@@ -55,6 +55,15 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
         }
     }
 
+    /**
+     * Performs the move, setting up user data for a forced package if a change from implicit to explicit package has been detected.
+     *
+     * Note about the allowed EDT analysis.
+     * The refactoring goes under a modal progress indicator on the EDT.
+     * The implementation of the indicator takes care of dispatching the UI updates.
+     * Even in the case of a potentially long analysis, there will be visible UI activity.
+     * The permission is necessary for direct analysis requests through the Analysis API, which sometimes happens in plugins.
+     */
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun performRefactoring(_usages: Array<out UsageInfo?>) {
         allowAnalysisOnEdt {
