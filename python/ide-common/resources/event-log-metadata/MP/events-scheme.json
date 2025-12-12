@@ -1,0 +1,155 @@
+{
+  "groups" : [ {
+    "id" : "mp.event.log",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "1"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum#__event_id}" ],
+      "event_data" : {
+        "code" : [ "{regexp#integer}" ],
+        "dictionary_last_modified" : [ "{regexp#integer}" ],
+        "error" : [ "{enum:SEND|NOT_PERMITTED_SERVER|NOT_PERMITTED_USER|ERROR_IN_CONFIG|NOT_PERMITTED_TIMEOUT|NOTHING_TO_SEND|SENT_WITH_ERRORS|EXCEPTION_OCCURRED|NO_ARGUMENTS|NO_APPLICATION_CONFIG|IDE_NOT_CLOSING|ERROR_ON_SEND|NO_DEVICE_ID|NO_MACHINE_ID|INVALID_BUCKET|INVALID_REVISION|NO_LOG_FILES}", "{enum:NO_LOGS|NO_UPLOADER|NO_LIBRARIES|NO_TEMP_FOLDER}", "{util#class_name}", "{enum:EMPTY_CONTENT|INVALID_JSON|UNKNOWN|EMPTY_SERVICE_URL|UNREACHABLE_SERVICE|EMPTY_RESPONSE_BODY|ERROR_ON_LOAD|UNKNOWN_IO_ERROR}" ],
+        "error_ts" : [ "{regexp#integer}" ],
+        "errors" : [ "{regexp#integer}" ],
+        "external" : [ "{enum#boolean}" ],
+        "failed" : [ "{regexp#integer}" ],
+        "max_sent_files_count" : [ "{regexp#integer}" ],
+        "paths" : [ "{regexp#hash}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ],
+        "send" : [ "{regexp#integer}" ],
+        "send_ts" : [ "{regexp#integer}" ],
+        "sent_files_count" : [ "{regexp#integer}" ],
+        "stage" : [ "{enum:LOADING|PARSING}" ],
+        "succeed" : [ "{enum#boolean}", "{regexp#integer}" ],
+        "total" : [ "{regexp#integer}" ],
+        "total_files_count" : [ "{regexp#integer}" ],
+        "version" : [ "{regexp#version}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "external.send.finished", "metadata.load.failed", "external.send.started", "metadata.updated", "external.send.command.creation.started", "logs.send", "metadata.loaded", "metadata.update.failed", "external.send.command.creation.finished", "loading.config.failed", "sent.logs.files.calculated", "dictionaries.loaded", "dictionary.update.failed", "dictionaries.load.failed", "dictionary.updated", "dictionary.loaded", "dictionary.load.failed", "dictionary.list.update.failed", "dictionary.list.load.failed" ]
+      }
+    },
+    "anonymized_fields" : [ {
+      "event" : "logs.send",
+      "fields" : [ "paths" ]
+    } ]
+  }, {
+    "id" : "mp.plugin.manager",
+    "builds" : [ ],
+    "versions" : [ {
+      "from" : "8"
+    } ],
+    "rules" : {
+      "event_id" : [ "{enum#__event_id}" ],
+      "event_data" : {
+        "acceptance_result" : [ "{enum:ACCEPTED|DECLINED|AUTO_ACCEPTED}" ],
+        "enabled_state" : [ "{enum:ENABLED|DISABLED}" ],
+        "group" : [ "{enum:BUNDLED_UPDATE|UPDATE|INSTALLING|INSTALLED|SEARCH_INSTALLED|SEARCH|STAFF_PICKS|NEW_AND_UPDATED|TOP_DOWNLOADS|TOP_RATED|CUSTOM_REPOSITORY|INTERNAL|SUGGESTED}" ],
+        "index" : [ "{regexp#integer}" ],
+        "localSearchFeatures.isBundled" : [ "{enum#boolean}" ],
+        "localSearchFeatures.isDisabled" : [ "{enum#boolean}" ],
+        "localSearchFeatures.isDownloaded" : [ "{enum#boolean}" ],
+        "localSearchFeatures.isEnabled" : [ "{enum#boolean}" ],
+        "localSearchFeatures.isInvalid" : [ "{enum#boolean}" ],
+        "localSearchFeatures.isUpdateNeeded" : [ "{enum#boolean}" ],
+        "localSearchFeatures.tagFiltersCount" : [ "{regexp#integer}" ],
+        "localSearchFeatures.vendorFiltersCount" : [ "{regexp#integer}" ],
+        "localSearchFeatures.withAttributes" : [ "{enum#boolean}" ],
+        "marketplaceSearchFeatures.customRepositoryCount" : [ "{regexp#integer}" ],
+        "marketplaceSearchFeatures.experimentGroup" : [ "{regexp#integer}" ],
+        "marketplaceSearchFeatures.experimentVersion" : [ "{regexp#integer}" ],
+        "marketplaceSearchFeatures.isOrderedByML" : [ "{enum#boolean}" ],
+        "marketplaceSearchFeatures.isStaffPicks" : [ "{enum#boolean}" ],
+        "marketplaceSearchFeatures.isSuggested" : [ "{enum#boolean}" ],
+        "marketplaceSearchFeatures.isUserInternal" : [ "{enum#boolean}" ],
+        "marketplaceSearchFeatures.marketplaceCustomRepositoryCount" : [ "{regexp#integer}" ],
+        "marketplaceSearchFeatures.sortBy" : [ "{enum:UPDATE_DATE|DOWNLOADS|RATING|NAME|RELEVANCE}" ],
+        "marketplaceSearchFeatures.tagsListFilter" : [ "{util#mp_tags_list}" ],
+        "marketplaceSearchFeatures.vendorsListFilter" : [ "{util#mp_vendors_list}" ],
+        "plugin" : [ "{util#plugin}" ],
+        "plugin_type" : [ "{util#plugin_type}" ],
+        "plugin_version" : [ "{util#plugin_version}" ],
+        "previous_version" : [ "{util#plugin_version}" ],
+        "resultsFeatures.isEmpty" : [ "{enum#boolean}" ],
+        "resultsFeatures.reportLimit" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.byJetBrains" : [ "{enum#boolean}" ],
+        "resultsFeatures.results.date" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.daysSinceLatestUpdate" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.downloads" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.isPaid" : [ "{enum#boolean}" ],
+        "resultsFeatures.results.marketplaceId" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.marketplaceInfo.date" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.marketplaceInfo.downloads" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.marketplaceInfo.isPaid" : [ "{enum#boolean}" ],
+        "resultsFeatures.results.marketplaceInfo.marketplaceId" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.marketplaceInfo.marketplaceRating" : [ "{regexp#float}" ],
+        "resultsFeatures.results.marketplaceRating" : [ "{regexp#float}" ],
+        "resultsFeatures.results.mlScore" : [ "{regexp#float}" ],
+        "resultsFeatures.results.nameLength" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.plugin" : [ "{util#plugin}" ],
+        "resultsFeatures.results.plugin_type" : [ "{util#plugin_type}" ],
+        "resultsFeatures.results.plugin_version" : [ "{util#plugin_version}" ],
+        "resultsFeatures.results.prefixExact" : [ "{enum#boolean}" ],
+        "resultsFeatures.results.prefixGreedyScore" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixGreedyWithCaseScore" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixMatchedLastWord" : [ "{enum#boolean}" ],
+        "resultsFeatures.results.prefixMatchedWordsRelative" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixMatchedWordsScore" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixMatchedWordsWithCaseRelative" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixMatchedWordsWithCaseScore" : [ "{regexp#float}" ],
+        "resultsFeatures.results.prefixMatchingType" : [ "{enum:START_WITH|WORDS_FIRST_CHAR|GREEDY_WITH_CASE|GREEDY|UNKNOWN}" ],
+        "resultsFeatures.results.prefixSameStartCount" : [ "{regexp#integer}" ],
+        "resultsFeatures.results.prefixSkippedWords" : [ "{regexp#integer}" ],
+        "resultsFeatures.total" : [ "{regexp#integer}" ],
+        "searchIndex" : [ "{regexp#integer}" ],
+        "sessionId" : [ "{regexp#integer}" ],
+        "signature_check_result" : [ "{enum:INVALID_SIGNATURE|MISSING_SIGNATURE|WRONG_SIGNATURE|SUCCESSFUL}" ],
+        "source" : [ "{enum:MARKETPLACE|CUSTOM_REPOSITORY|FROM_DISK}" ],
+        "userQueryFeatures.isEmptyQuery" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryContainsAbbreviations" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryContainsPath" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryContainsSpaces" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryIsAllLowercase" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryIsAllUppercase" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryIsCamelCase" : [ "{enum#boolean}" ],
+        "userQueryFeatures.queryLength" : [ "{regexp#integer}" ],
+        "userQueryFeatures.withHANSymbols" : [ "{enum#boolean}" ],
+        "userQueryFeatures.wordCharsAndDelimitersOnly" : [ "{enum#boolean}" ],
+        "userQueryFeatures.wordsNumber" : [ "{regexp#integer}" ]
+      },
+      "enums" : {
+        "__event_id" : [ "plugin.install.third.party.check", "plugin.search.card.opened", "plugin.signature.warning.shown", "plugin.state.changed", "search.reset", "plugin.installation.finished", "plugin.signature.check.result", "marketplace.tab.search", "plugin.installation.started", "installed.tab.search", "plugin.was.removed" ]
+      }
+    }
+  } ],
+  "rules" : {
+    "enums" : {
+      "boolean" : [ "true", "false", "TRUE", "FALSE", "True", "False" ],
+      "plugin_type" : [ "JVM_CORE", "PLATFORM", "JB_BUNDLED", "JB_NOT_BUNDLED", "LISTED", "NOT_LISTED", "JB_UPDATED_BUNDLED", "UNKNOWN", "FROM_SOURCES" ]
+    },
+    "regexps" : {
+      "count" : "\\d+K?M?\\+?",
+      "date_YYYY-MM-DD_HH" : "^[12][0-9]{3}-(0[0-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])_(([0-1][0-9]|2[0-3]))?$",
+      "date_short_hash" : "[0-9]{2}[01][0-9][0123][0-9]-(([0-9A-Fa-f]{12})|undefined)",
+      "double" : "-?\\d+(\\.\\d+)?(E\\-?\\d+)?",
+      "float" : "-?\\d+(\\.\\d+(E\\-?\\d+)?)?",
+      "float_unit" : "0?(\\.\\d+)?(E\\-\\d+)?|1(\\.0+)?|[1-9](\\.\\d+)?E\\-\\d+",
+      "hash" : "([0-9A-Fa-f]{40,64})|undefined",
+      "int_pw_of_2" : "-?(1|2|4|8|16|32|64|128|256|512|1024|2048|4096|8192|16384|32768|65536|131072|262144|524288|1048576|2097152|4194304|8388608|16777216|33554432|67108864|134217728|268435456|536870912|1073741824)",
+      "integer" : "-?\\d+(\\+)?",
+      "long" : "-?\\d{1,19}",
+      "long_pw_of_2" : "(-9223372036854775808|(-?(1|2|4|8|16|32|64|128|256|512|1024|2048|4096|8192|16384|32768|65536|131072|262144|524288|1048576|2097152|4194304|8388608|16777216|33554432|67108864|134217728|268435456|536870912|1073741824|2147483648|4294967296|8589934592|17179869184|34359738368|68719476736|137438953472|274877906944|549755813888|1099511627776|2199023255552|4398046511104|8796093022208|17592186044416|35184372088832|70368744177664|140737488355328|281474976710656|562949953421312|1125899906842624|2251799813685248|4503599627370496|9007199254740992|18014398509481984|36028797018963968|72057594037927936|144115188075855872|288230376151711744|576460752303423488|1152921504606846976|2305843009213693952|4611686018427387904)))",
+      "negative_integer" : "-(\\d{1,9}|[12]\\d{9})",
+      "negative_long" : "-\\d{1,19}",
+      "positive_integer" : "\\d{1,9}|[12]\\d{9}",
+      "positive_long" : "\\d{1,19}",
+      "short_hash" : "([0-9A-Fa-f]{12})|undefined",
+      "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
+    }
+  },
+  "version" : "6360"
+}
