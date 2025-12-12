@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.openapi.Disposable
@@ -19,11 +18,11 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
-import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.io.File
 

@@ -52,5 +52,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="TEST" />
   </component>
 </module>

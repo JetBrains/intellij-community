@@ -62,6 +62,8 @@ jvm_library(
     "//platform/execution",
     "//java/execution/openapi:java-execution",
     "//platform/execution-impl",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/run-configurations/jvm",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
