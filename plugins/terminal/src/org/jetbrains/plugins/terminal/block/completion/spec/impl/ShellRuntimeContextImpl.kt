@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
 
 @ApiStatus.Internal
 class ShellRuntimeContextImpl(
@@ -26,38 +27,22 @@ class ShellRuntimeContextImpl(
       ShellDataGeneratorProcessBuilderImpl(executable, currentDirectory, generatorProcessExecutor)
     }
     else {
-      // Experimental 2024 Terminal case - this API is not supported there.
-      NoOpProcessBuilder()
+      throwUnsupportedInExpTerminalException()
     }
   }
 
   override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
-    return fileSystemSupport?.listDirectoryFiles(path)
-           ?: error("Supported only in Reworked Terminal")
+    @Suppress("IfThenToElvis")
+    return if (fileSystemSupport != null) {
+      // Reworked Terminal case - file system support is available
+      fileSystemSupport.listDirectoryFiles(path)
+    }
+    else {
+      throwUnsupportedInExpTerminalException()
+    }
   }
 
   override fun toString(): String {
     return "ShellRuntimeContextImpl(currentDirectory='$currentDirectory', typedPrefix='$typedPrefix')"
-  }
-}
-
-/**
- * Doesn't run the process and always return [ShellCommandResult] with empty output and exit code 1.
- */
-private class NoOpProcessBuilder : ShellDataGeneratorProcessBuilder {
-  override fun args(args: List<String>): ShellDataGeneratorProcessBuilder {
-    return this
-  }
-
-  override fun workingDirectory(workingDirectory: String): ShellDataGeneratorProcessBuilder {
-    return this
-  }
-
-  override fun env(env: Map<String, String>): ShellDataGeneratorProcessBuilder {
-    return this
-  }
-
-  override suspend fun execute(): ShellCommandResult {
-    return ShellCommandResult.create("", 1)
   }
 }

@@ -49,13 +49,16 @@ interface ShellRuntimeContext {
    * Modify the builder parameters and call [ShellDataGeneratorProcessBuilder.execute] to execute the process.
    *
    * **Works only in the Reworked Terminal.**
-   * In Experimental 2024 Terminal it will create a no-op builder that always returns empty output with exit code 1.
+   * In Experimental 2024 Terminal it will throw [UnsupportedOperationException].
    *
    * @param executable the absolute path the executable or the executable name to be found in the PATH environment variable.
    */
   suspend fun createProcessBuilder(executable: String): ShellDataGeneratorProcessBuilder
 
   /**
+   * **Works only in the Reworked Terminal.**
+   * In Experimental 2024 Terminal it will throw [UnsupportedOperationException].
+   *
    * @param path absolute os-dependent path to the directory.
    */
   suspend fun listDirectoryFiles(path: String): List<ShellFileInfo>

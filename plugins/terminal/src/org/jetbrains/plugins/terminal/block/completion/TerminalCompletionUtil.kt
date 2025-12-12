@@ -84,9 +84,17 @@ object TerminalCompletionUtil {
     catch (ce: CancellationException) {
       throw ce
     }
+    catch (e: UnsupportedOperationException) {
+      logger<ShellDataGeneratorsExecutor>().debug(e)
+      null
+    }
     catch (e: Exception) {
       logger<ShellDataGeneratorsExecutor>().error("Failed to execute generator: $generator in context: $context", e)
       null
     }
+  }
+
+  fun throwUnsupportedInExpTerminalException(): Nothing {
+    throw UnsupportedOperationException("This API is not supported in Experimental 2024 Terminal")
   }
 }
