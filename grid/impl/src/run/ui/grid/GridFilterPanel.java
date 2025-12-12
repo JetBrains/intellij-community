@@ -31,7 +31,6 @@ public class GridFilterPanel extends GridEditorPanelBase {
           grid.getDataHookup().getFilterPrefix(),
           grid.getDataHookup().getFilterEmptyText(),
           getFilterDocument(grid));
-    // TODO (anya) [grid]: similar logic for sort panel ((!) note that the sort panel is attached to the filter panel)
     setVisible(grid.getDataHookup().isFilterApplicable());
 
     Function<@NotNull DataGrid, @Nullable GridEditorPanel> getPanel = g -> g.getFilterComponent().getFilterPanel();

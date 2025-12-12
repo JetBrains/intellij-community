@@ -65,7 +65,6 @@ public abstract class DumpHandler<T> {
 
   protected abstract @NotNull ExtractorConfig createExtractorConfig(@NotNull T source, @Nullable Project project);
 
-  // TODO (anya) [api]: make it abstract later
   protected int getSubQueryIndex(@NotNull T source) {
     return 0;
   }
