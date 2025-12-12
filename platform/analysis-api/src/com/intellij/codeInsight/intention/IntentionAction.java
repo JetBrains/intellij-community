@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Intention actions are context-specific actions related to the caret position in the editor.
  * Upon pressing <kbd>Alt+Enter</kbd>, a list of possible intention actions is shown in a popup.
  * <p>
- * Individual intention actions can be enabled or disabled in the <em>Settings | Editor | Intentions</em> dialog.
+ * Individual intention actions can be enabled or disabled in <a href="jetbrains://idea/settings?name=Editor--Intentions">Settings | Editor | Intentions</a>.
  * <p>
  * To change the icon in the intention popup menu, implement {@link Iconable}.
  * <p>
