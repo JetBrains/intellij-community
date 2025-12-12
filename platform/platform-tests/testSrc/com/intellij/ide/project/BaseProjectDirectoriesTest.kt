@@ -107,6 +107,27 @@ class BaseProjectDirectoriesTest {
     assertNull(service.getBaseDirectoryFor(externalFile))
   }
 
+  @Test
+  fun `add duplicate content roots and remove one`() {
+    val module1 = projectModel.createModule(name = "module1")
+    val module2 = projectModel.createModule(name = "module2")
+
+    val root = projectModel.baseProjectDir.newVirtualDirectory("root")
+    checkBaseDirectories()
+
+    ModuleRootModificationUtil.addContentRoot(module1, root)
+    checkBaseDirectories(root)
+
+    ModuleRootModificationUtil.addContentRoot(module2, root)
+    checkBaseDirectories(root)
+
+    PsiTestUtil.removeContentEntry(module2, root)
+    checkBaseDirectories(root)
+
+    PsiTestUtil.removeContentEntry(module1, root)
+    checkBaseDirectories()
+  }
+
   private fun checkBaseDirectories(vararg files: VirtualFile) {
     waitUntilChangesAreApplied(projectModel.project)
 
