@@ -45,12 +45,21 @@ internal fun KtCodeFragment.checkImports(testFile: File) {
 
 @OptIn(KaExperimentalApi::class)
 internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String, useFirCodeFragment: Boolean = false) {
+    if (useFirCodeFragment) {
+        configureByK2ModeCodeFragment(filePath)
+    } else {
+        configureByK1ModeCodeFragment(filePath)
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+internal fun JavaCodeInsightTestFixture.configureByK2ModeCodeFragment(filePath: String) {
     configureByFile(File(filePath).name)
 
     val elementAt = file?.findElementAt(caretOffset)
 
     val isBlock = InTextDirectivesUtils.isDirectiveDefined(file.text, BLOCK_CODE_FRAGMENT)
-    val file = createCodeFragment(filePath, elementAt!!, isBlock, useFirCodeFragment)
+    val file = createK2ModeCodeFragment(filePath, elementAt!!, isBlock)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
 
@@ -64,6 +73,20 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
             null
         }
     }
+    configureFromExistingVirtualFile(file.virtualFile!!)
+}
+
+@OptIn(KaExperimentalApi::class)
+internal fun JavaCodeInsightTestFixture.configureByK1ModeCodeFragment(filePath: String) {
+    configureByFile(File(filePath).name)
+
+    val elementAt = file?.findElementAt(caretOffset)
+
+    val isBlock = InTextDirectivesUtils.isDirectiveDefined(file.text, BLOCK_CODE_FRAGMENT)
+    val file = createK1ModeCodeFragment(filePath, elementAt!!, isBlock)
+
+    val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
+
     file.putCopyableUserData(CodeFragmentUtils.RUNTIME_TYPE_EVALUATOR) {
         if (typeStr != null) {
             val codeFragment = KtPsiFactory(project).createBlockCodeFragment(
@@ -81,16 +104,29 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     configureFromExistingVirtualFile(file.virtualFile!!)
 }
 
-private fun createCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean, useFirCodeFragment: Boolean): KtCodeFragment {
+private fun createK2ModeCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean): KtCodeFragment {
     val contextTuner = CodeFragmentContextTuner.getInstance()
     val effectiveContextElement = contextTuner.tuneContextElement(contextElement)
 
-    val fileNameForFragment = if (useFirCodeFragment) {
-        "$filePath.fragment.k2"
+    val fileNameForFragment = "$filePath.fragment.k2"
+
+    val fileForFragment = File(fileNameForFragment)
+    val codeFragmentText = FileUtil.loadFile(fileForFragment, true).trim()
+    val psiFactory = KtPsiFactory(contextElement.project)
+
+    return if (isBlock) {
+        psiFactory.createBlockCodeFragment(codeFragmentText, effectiveContextElement)
+    } else {
+        psiFactory.createExpressionCodeFragment(codeFragmentText, effectiveContextElement)
     }
-    else {
-        "$filePath.fragment"
-    }
+}
+
+private fun createK1ModeCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean): KtCodeFragment {
+    val contextTuner = CodeFragmentContextTuner.getInstance()
+    val effectiveContextElement = contextTuner.tuneContextElement(contextElement)
+
+    val fileNameForFragment = "$filePath.fragment"
+
     val fileForFragment = File(fileNameForFragment)
     val codeFragmentText = FileUtil.loadFile(fileForFragment, true).trim()
     val psiFactory = KtPsiFactory(contextElement.project)
