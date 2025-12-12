@@ -67,6 +67,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//java/execution/impl",
+    "//platform/platform-util-io:ide-util-io",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.RunManager.Companion.getInstance
@@ -140,7 +140,7 @@ abstract class AbstractRunConfigurationTest  : AbstractRunConfigurationBaseTest(
 
         with(runConfiguration.factory!!) {
             assertTrue(isEditableInDumbMode)
-            assertTrue(safeAs<PossiblyDumbAware>()!!.isDumbAware)
+            assertTrue((this as PossiblyDumbAware).isDumbAware)
         }
     }
 
