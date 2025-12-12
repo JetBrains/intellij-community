@@ -6,10 +6,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.text.CheckerRunner;
-import com.intellij.grazie.text.RuleGroup;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextExtractor;
-import com.intellij.grazie.utils.Text;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -38,11 +36,6 @@ final class CommitAnnotator implements Annotator {
   private static void checkText(AnnotationHolder holder, TextContent text) {
     CheckerRunner runner = new CheckerRunner(text);
     runner.run().forEach(problem -> {
-      if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
-          Text.isSingleSentence(Text.findParagraphRange(text, problem.getHighlightRanges().getFirst()).subSequence(text))) {
-        return;
-      }
-
       List<ProblemDescriptor> descriptors = runner.toProblemDescriptors(problem, true);
       if (descriptors.isEmpty()) return;
 

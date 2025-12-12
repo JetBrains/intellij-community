@@ -36,7 +36,7 @@ object GrazieTextLevelSpellCheckingExtension {
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, TextDomain.ALL), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
 
-    texts
+    texts.asSequence()
       .filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
       .flatMap { SpellingCheckerRunner(it).run() }
       .filter { SpellingCheckerRunner.belongsToElement(it, element) }

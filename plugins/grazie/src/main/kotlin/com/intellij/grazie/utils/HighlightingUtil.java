@@ -1,7 +1,6 @@
 package com.intellij.grazie.utils;
 
 import ai.grazie.nlp.langs.Language;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.jlanguage.Lang;
@@ -11,10 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,19 +31,6 @@ import static com.intellij.grazie.text.TextExtractor.findAllTextContents;
 public final class HighlightingUtil {
 
   public static final Comparator<TextContent> BY_TEXT_START = Comparator.comparing(tc -> tc.textOffsetToFile(0));
-
-  //todo use a more decent API when it appears (https://youtrack.jetbrains.com/issue/IDEA-294972)
-  public static boolean skipExpensivePrecommitAnalysis(PsiFile file) {
-    for (PsiFile root : file.getViewProvider().getAllFiles()) {
-      var function = InspectionProfileWrapper.getCustomInspectionProfileWrapper(root);
-      if (function != null &&
-          function.getClass().getName().contains("com.intellij.codeInsight.daemon.impl.MainPassesRunner") &&
-          Registry.is("grazie.skip.precommit.checks")) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   public static Set<TextContent.TextDomain> checkedDomains() {
     return GrazieInspection.Companion.checkedDomains();
@@ -112,7 +96,11 @@ public final class HighlightingUtil {
   public static List<TextContent> getCheckedFileTexts(FileViewProvider vp) {
     return CachedValuesManager.getManager(vp.getManager().getProject()).getCachedValue(vp, () -> {
       List<TextContent> contents = ContainerUtil.sorted(findAllTextContents(vp, checkedDomains()), BY_TEXT_START);
-      return CachedValueProvider.Result.create(contents, vp.getAllFiles().get(0), grazieConfigTracker());
+      return CachedValueProvider.Result.create(contents, vp.getAllFiles().getFirst(), grazieConfigTracker());
     });
+  }
+
+  public static boolean isLowercase(@NotNull CharSequence content) {
+    return content.chars().allMatch(c -> !Character.isLetter(c) || Character.isLowerCase(c));
   }
 }

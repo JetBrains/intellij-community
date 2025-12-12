@@ -27,6 +27,18 @@ class CommitSupportTest : GrazieTestBase() {
     myFixture.findSingleIntention("Ignore 'a error'")
     myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an'' in commit messages…")
   }
+
+  fun `test no highlighting in commit message if it's entirely lowercase after prefix`() {
+    checkCommitMessage("JIRA-123: add apache commons text dependency")
+    checkCommitMessage("JIRA-123: it started - june is here")
+    checkCommitMessage("JIRA-123: installation of opera is required")
+    checkCommitMessage("JIRA-123: fix bug when system was disabled if temperature is less than 20° celsius")
+  }
+
+  private fun checkCommitMessage(text: String) {
+    configureCommit(myFixture, text)
+    myFixture.checkHighlighting()
+  }
 }
 
 internal fun configureCommit(fixture: CodeInsightTestFixture, text: String) {
