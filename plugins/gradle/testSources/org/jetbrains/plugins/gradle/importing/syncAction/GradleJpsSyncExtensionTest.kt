@@ -8,8 +8,10 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ExModuleOptionAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ExcludeUrlAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
@@ -272,4 +274,55 @@ class GradleJpsSyncExtensionTest {
       }
     }
   }
+
+  @Test
+  fun `test GradleJpsSyncExtension#removeDuplicatedExcludeUrls sharedSourceSetsEnabled duplicatesWithinSameModule`(): Unit = runBlocking {
+    Disposer.newDisposable().use { disposable ->
+      Registry.get("intellij.platform.shared.source.support").setValue(true, disposable)
+      val moduleName = "module"
+      val contentRootPath = virtualFileUrl(projectPath.resolve("contentRoot"))
+      val excludeUrlPath = virtualFileUrl(projectPath.resolve("contentRoot/excluded"))
+
+      val phase = GradleSyncPhase.PROJECT_MODEL_PHASE // Any
+      val entitySource = GradleTestEntitySource(projectPath.toCanonicalPath(), phase)
+
+      val projectStorage = MutableEntityStorage.create()
+
+      projectStorage addEntity ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
+        contentRoots += ContentRootEntity(contentRootPath, emptyList(), NonPersistentEntitySource) {
+          excludedUrls = listOf(
+            ExcludeUrlEntity(excludeUrlPath, NonPersistentEntitySource),
+          )
+        }
+      }
+
+
+      val syncStorage = MutableEntityStorage.create()
+      syncStorage addEntity ModuleEntity(moduleName, emptyList(), entitySource) {
+        contentRoots += ContentRootEntity(contentRootPath, emptyList(), entitySource) {
+          excludedUrls = listOf(
+            ExcludeUrlEntity(excludeUrlPath, entitySource),
+            ExcludeUrlEntity(excludeUrlPath, entitySource),
+          )
+        }
+      }
+
+
+      val context = mock<ProjectResolverContext> {
+        on { project } doReturn project
+        on { projectPath } doReturn projectPath.toCanonicalPath()
+      }
+      GradleJpsSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      GradleBaseSyncExtension().updateProjectModel(context, syncStorage, projectStorage, phase)
+      Mockito.reset(context)
+
+      ModuleAssertions.assertModules(projectStorage, moduleName)
+      ModuleAssertions.assertModuleEntity(projectStorage, moduleName) { module ->
+        Assertions.assertEquals(entitySource, module.entitySource)
+        ContentRootAssertions.assertContentRootsOrdered(module, listOf(contentRootPath))
+        ExcludeUrlAssertions.assertExcludedUrlsOrdered(module, listOf(excludeUrlPath))
+      }
+    }
+  }
+
 }
