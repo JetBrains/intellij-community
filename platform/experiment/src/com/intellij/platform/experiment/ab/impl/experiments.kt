@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption.TYPESCRIPT_SERVICE_TYPES
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
@@ -85,8 +86,9 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
 /**
  * This method can be configured to allow options only in particular IDEs.
  */
-fun isAllowed(option: ABExperimentOption): Boolean {
-  return true
+fun isAllowed(option: ABExperimentOption): Boolean = when (option) {
+  ABExperimentOption.SPLIT_SEARCH_EVERYWHERE -> IdeProductMode.isMonolith
+  else -> true
 }
 
 // ================= IMPLEMENTATION ====================
