@@ -10,4 +10,5 @@ class PluginManagerState internal constructor(
   val pluginIdsToDisable: Set<PluginId>,
   val pluginIdsToEnable: Set<PluginId>,
   val incompleteIdMapForLogging: Map<PluginId, PluginMainDescriptor>, // TODO refactor
+  val shadowedBundledPlugins: Set<PluginId>,
 )

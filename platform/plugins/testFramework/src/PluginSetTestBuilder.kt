@@ -8,7 +8,6 @@ import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.lang.UrlClassLoader
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import java.util.Collections.emptySet
 
@@ -94,36 +93,23 @@ class PluginSetTestBuilder private constructor(
     return loadingContext to PluginDescriptorLoadingResult.build(listOf(pluginList))
   }
 
-  fun buildLoadingResult(initContext: PluginInitializationContext? = null): Pair<PluginDescriptorLoadingContext, PluginLoadingResult> {
-    val initContext = initContext ?: buildInitContext()
-    val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
-    val result = PluginLoadingResult()
-    val pluginList = DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
-    loadingContext.use {
-      @Suppress("RAW_RUN_BLOCKING") //it's used in tests where the Application isn't available
-      runBlocking {
-        result.initAndAddAll(
-          descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
-          initContext = initContext,
-        )
-      }
-    }
-    return loadingContext to result
-  }
-
-  fun build(): PluginSet {
+  fun buildState(): PluginManagerState {
     //clear errors, which may be registered by other tests
     PluginManagerCore.getAndClearPluginLoadingErrors()
-    
+
     val initContext = buildInitContext()
     setInitContextForLoadingRuleDetermination(initContext) // FIXME this should not exist
-    val (loadingContext, loadingResult) = buildLoadingResult(initContext)
+    val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
+    val pluginList = DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
+    val discoveredPlugins = PluginDescriptorLoadingResult.build(listOf(pluginList))
     return PluginManagerCore.initializePlugins(
       descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       initContext = initContext,
-      loadingResult = loadingResult,
+      discoveredPlugins = discoveredPlugins,
       coreLoader = customCoreLoader ?: UrlClassLoader.build().get(),
       parentActivity = null,
-    ).pluginSet
+    )
   }
+
+  fun build(): PluginSet = buildState().pluginSet
 }

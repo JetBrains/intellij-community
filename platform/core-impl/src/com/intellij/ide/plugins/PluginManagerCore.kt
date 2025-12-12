@@ -511,10 +511,13 @@ object PluginManagerCore {
   fun initializePlugins(
     descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
-    loadingResult: PluginLoadingResult,
+    discoveredPlugins: PluginDescriptorLoadingResult,
     coreLoader: ClassLoader,
     parentActivity: Activity?,
   ): PluginManagerState {
+    val loadingResult = PluginLoadingResult()
+    loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
+
     val pluginErrorsById = loadingResult.copyPluginErrors()
     val globalErrors = descriptorLoadingErrors.toMutableList()
     if (loadingResult.duplicateModuleMap != null) {
@@ -613,6 +616,7 @@ object PluginManagerCore {
       pluginIdsToDisable = pluginsToDisable.keys,
       pluginIdsToEnable = pluginsToEnable.keys,
       incompleteIdMapForLogging = loadingResult.getIncompleteIdMap(),
+      shadowedBundledPlugins = loadingResult.shadowedBundledIds
     )
   }
 
@@ -726,20 +730,18 @@ object PluginManagerCore {
   ): PluginManagerState {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
-      val loadingResult = PluginLoadingResult()
-      loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
         descriptorLoadingErrors = descriptorLoadingErrors,
         initContext = initContext,
-        loadingResult = loadingResult,
+        discoveredPlugins = discoveredPlugins,
         coreLoader = coreLoader,
         parentActivity = tracerShim.getTraceActivity(),
       )
       val pluginState = pluginsState
       pluginState.pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
       pluginState.pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
-      pluginState.shadowedBundledPlugins = loadingResult.shadowedBundledIds
+      pluginState.shadowedBundledPlugins = initResult.shadowedBundledPlugins
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       pluginState.nullablePluginSet = initResult.pluginSet
       initResult
