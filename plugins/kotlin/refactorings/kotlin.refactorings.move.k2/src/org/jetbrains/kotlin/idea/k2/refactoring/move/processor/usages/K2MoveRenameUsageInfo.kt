@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages
 
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
@@ -192,6 +193,15 @@ sealed class K2MoveRenameUsageInfo(
         internal var KtElement.nonUpdatableUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(
           Key.create("NON_UPDATABLE_INTERNAL_USAGE_INFO"))
 
+        /**
+         * A hard reference to the AST node to prevent switching back to stubs due to GC pressure.
+         * AST unloading leads to the loss of all user data attached to the elements, including copyable.
+         * In case of missing [updatableUsageInfo] this means incorrect handling of internal usages inside moved declarations.
+         * This user data property is not copyable and should not outlive the [PsiElement].
+         * The user data is attached to the owner [PsiElement] of the referenced [ASTNode].
+         */
+        internal var PsiElement.hardRefToAst: ASTNode? by UserDataProperty(Key.create("HARD_REF_TO_AST"))
+
         fun PsiElement.internalUsageElements(): List<KtElement> =
             collectDescendantsOfType<KDocName>() +
                     collectDescendantsOfType<KtReferenceExpression>() +
@@ -204,6 +214,7 @@ sealed class K2MoveRenameUsageInfo(
          * @see com.intellij.codeInsight.ChangeContextUtil.encodeContextInfo for Java implementation
          */
         fun markInternalUsages(containing: PsiElement, topLevelMoved: KtElement) {
+            containing.hardRefToAst = containing.node
             containing.internalUsageElements().forEach { refElem ->
                 when (refElem) {
                     is KDocName -> {
@@ -307,6 +318,7 @@ sealed class K2MoveRenameUsageInfo(
                 refExpr.updatableUsageInfo = null
                 refExpr.nonUpdatableUsageInfo = null
             }
+            containing.hardRefToAst = null
         }
 
         /**
