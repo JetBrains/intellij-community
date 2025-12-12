@@ -105,7 +105,12 @@ internal suspend fun validateProductModuleSets(
       .mapNotNull { (productName, spec) ->
         val spec = spec ?: return@mapNotNull null
         async {
-          productName to buildProductModuleIndex(productName = productName, spec = spec, cache = cache, pluginContentJobs = pluginContentJobs)
+          productName to buildProductModuleIndex(
+            productName = productName,
+            spec = spec,
+            cache = cache,
+            pluginContentJobs = pluginContentJobs,
+          )
         }
       }
       .awaitAll()
@@ -121,23 +126,7 @@ internal suspend fun validateProductModuleSets(
     .flatten()
     .toSet()
 
-  // Build module traceability info for error messages (single lookup per module)
-  // Step 1: plugin -> products that bundle it
-  val pluginToProducts = HashMap<String, MutableSet<String>>()
-  for ((productName, spec) in productSpecs) {
-    spec?.bundledPlugins?.forEach { pluginName ->
-      pluginToProducts.computeIfAbsent(pluginName) { HashSet() }.add(productName)
-    }
-  }
-  // Step 2: module -> full trace info (single pass through all plugins)
-  val moduleTraceInfo = HashMap<String, ModuleTraceInfo>()
-  for ((pluginName, job) in pluginContentJobs) {
-    val products = pluginToProducts.get(pluginName) ?: emptySet()
-    val info = ModuleTraceInfo(sourcePlugin = pluginName, bundledInProducts = products, additionalPluginSource = additionalPlugins.get(pluginName))
-    job.await()?.contentModules?.forEach { moduleName ->
-      moduleTraceInfo.put(moduleName, info)
-    }
-  }
+  val moduleSourceInfo = buildModuleSourceInfo(pluginContentJobs, productIndices, additionalPlugins)
 
   // Identify non-critical plugin modules BEFORE any validation (just module names, O(n) filter)
   // A module is non-critical globally only if it's NOT critical (EMBEDDED/REQUIRED) in ANY product
@@ -161,7 +150,7 @@ internal suspend fun validateProductModuleSets(
         descriptorCache = descriptorCache,
         allModuleSets = allModuleSets,
         allowedMissing = globalAllowedMissing,
-        moduleTraceInfo = moduleTraceInfo,
+        moduleSourceInfo = moduleSourceInfo,
       )
     }
 
@@ -177,6 +166,7 @@ internal suspend fun validateProductModuleSets(
           crossProductModules = crossProductModules,
           descriptorCache = descriptorCache,
           nonCriticalPluginModules = nonCriticalPluginModules,
+          moduleSourceInfo = moduleSourceInfo,
         )
       }
     }
@@ -193,6 +183,7 @@ internal suspend fun validateProductModuleSets(
  *
  * @param nonCriticalPluginModules Modules to skip (they're validated globally in parallel).
  *        These are non-critical plugin modules that can depend on cross-plugin/cross-product modules.
+ * @param moduleSourceInfo Unified source info for all modules (from plugins and module sets).
  */
 private suspend fun validateSingleProduct(
   productIndex: ProductModuleIndex,
@@ -203,6 +194,7 @@ private suspend fun validateSingleProduct(
   crossProductModules: Set<String>,
   descriptorCache: ModuleDescriptorCache,
   nonCriticalPluginModules: Set<String>,
+  moduleSourceInfo: Map<String, ModuleSourceInfo>,
 ): List<ValidationError> {
   val errors = mutableListOf<ValidationError>()
   val productName = productIndex.productName
@@ -257,20 +249,11 @@ private suspend fun validateSingleProduct(
   )
 
   if (missingDeps.isNotEmpty()) {
-    // Build metadata for modules that have missing dependencies
-    val affectedModules = missingDeps.values.flatten().toSet()
-    val moduleMetadata = affectedModules.associateWith { moduleName ->
-      ModuleMetadata(
-        loadingMode = productIndex.moduleLoadings[moduleName],
-        sourcePlugin = productIndex.moduleToSourcePlugin[moduleName],
-        sourceModuleSet = productIndex.moduleToSourceModuleSet[moduleName],
-      )
-    }
     errors.add(MissingDependenciesError(
       context = productName,
       missingModules = missingDeps,
       allModuleSets = allModuleSets,
-      moduleMetadata = moduleMetadata,
+      moduleSourceInfo = moduleSourceInfo,
     ))
   }
 
@@ -313,6 +296,7 @@ private suspend fun collectAllPluginModules(pluginContentJobs: Map<String, Defer
  * Each module is validated in parallel for maximum throughput.
  *
  * @param nonCriticalPluginModules Pre-computed set of non-critical plugin module names
+ * @param moduleSourceInfo Unified source info for all modules (from plugins and module sets).
  * @return List of validation errors for modules with missing dependencies
  */
 private suspend fun preValidateNonCriticalPluginModules(
@@ -322,7 +306,7 @@ private suspend fun preValidateNonCriticalPluginModules(
   descriptorCache: ModuleDescriptorCache,
   allModuleSets: List<ModuleSet>,
   allowedMissing: Set<String>,
-  moduleTraceInfo: Map<String, ModuleTraceInfo>,
+  moduleSourceInfo: Map<String, ModuleSourceInfo>,
 ): List<ValidationError> {
   if (nonCriticalPluginModules.isEmpty()) {
     return emptyList()
@@ -359,24 +343,11 @@ private suspend fun preValidateNonCriticalPluginModules(
     return emptyList()
   }
 
-  // Build error with full traceability from moduleTraceInfo
-  val affectedModules = globallyMissingDeps.values.flatMapTo(HashSet()) { it }
-  val moduleMetadata = affectedModules.associateWith { moduleName ->
-    val traceInfo = moduleTraceInfo[moduleName]
-    ModuleMetadata(
-      loadingMode = null, // Non-critical by definition
-      sourcePlugin = traceInfo?.sourcePlugin,
-      sourceModuleSet = null,
-      sourceProducts = traceInfo?.bundledInProducts,
-    )
-  }
-
   return listOf(MissingDependenciesError(
     context = "Non-critical plugin modules (global validation)",
     missingModules = globallyMissingDeps,
     allModuleSets = allModuleSets,
-    moduleMetadata = moduleMetadata,
-    moduleTraceInfo = moduleTraceInfo, // Pass for missing dep lookup
+    moduleSourceInfo = moduleSourceInfo,
   ))
 }
 
@@ -498,6 +469,51 @@ private suspend fun validateModuleDependencies(
   return moduleName to missingDeps
 }
 
+/**
+ * Builds unified module source info for error message formatting.
+ *
+ * Two-step process:
+ * 1. Track ALL plugin modules from [pluginContentJobs] (ensures non-bundled plugins are covered)
+ * 2. Enrich with product-specific info from [productIndices] (adds module sets, products)
+ *
+ * This ensures that validation errors for ANY module (bundled or not) will have source info.
+ */
+private suspend fun buildModuleSourceInfo(
+  pluginContentJobs: Map<String, Deferred<PluginContentInfo?>>,
+  productIndices: Map<String, ProductModuleIndex>,
+  additionalPlugins: Map<String, String>,
+): Map<String, ModuleSourceInfo> {
+  val result = HashMap<String, ModuleSourceInfo>()
+
+  // Step A: ALL plugin modules (including non-bundled plugins)
+  for ((pluginName, job) in pluginContentJobs) {
+    val pluginInfo = job.await() ?: continue
+    for (moduleName in pluginInfo.contentModules) {
+      result.put(moduleName, ModuleSourceInfo(
+        loadingMode = pluginInfo.contentModuleLoadings?.get(moduleName),
+        sourcePlugin = pluginName,
+        additionalPluginSource = additionalPlugins.get(pluginName),
+      ))
+    }
+  }
+
+  // Step B: product-specific info (module sets, products, additional modules)
+  for ((productName, productIndex) in productIndices) {
+    for (moduleName in productIndex.allModules) {
+      val existing = result.get(moduleName)
+      result.put(moduleName, ModuleSourceInfo(
+        loadingMode = existing?.loadingMode ?: productIndex.moduleLoadings.get(moduleName),
+        sourcePlugin = existing?.sourcePlugin ?: productIndex.moduleToSourcePlugin.get(moduleName),
+        sourceModuleSet = existing?.sourceModuleSet ?: productIndex.moduleToSourceModuleSet.get(moduleName),
+        sourceProducts = (existing?.sourceProducts ?: emptySet()) + productName,
+        additionalPluginSource = existing?.additionalPluginSource,
+      ))
+    }
+  }
+
+  return result
+}
+
 private data class ProductModuleIndex(
   @JvmField val productName: String,
   @JvmField val allModules: Set<String>,
@@ -515,11 +531,11 @@ private suspend fun buildProductModuleIndex(
   cache: ModuleSetTraversalCache,
   pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = emptyMap(),
 ): ProductModuleIndex {
-  val allModules = mutableSetOf<String>()
-  val referencedModuleSets = mutableSetOf<String>()
-  val moduleLoadings = mutableMapOf<String, ModuleLoadingRuleValue?>()
-  val moduleToSourcePlugin = mutableMapOf<String, String>()
-  val moduleToSourceModuleSet = mutableMapOf<String, String>()
+  val allModules = HashSet<String>()
+  val referencedModuleSets = HashSet<String>()
+  val moduleLoadings = HashMap<String, ModuleLoadingRuleValue?>()
+  val moduleToSourcePlugin = HashMap<String, String>()
+  val moduleToSourceModuleSet = HashMap<String, String>()
 
   for (moduleSetWithOverrides in spec.moduleSets) {
     val moduleSet = moduleSetWithOverrides.moduleSet
@@ -527,23 +543,22 @@ private suspend fun buildProductModuleIndex(
     // O(1) lookup from cache instead of re-traversal
     for ((moduleName, info) in cache.getModulesWithLoading(moduleSet)) {
       allModules.add(moduleName)
-      moduleLoadings[moduleName] = info.loading
-      moduleToSourceModuleSet[moduleName] = info.sourceModuleSet
+      moduleLoadings.put(moduleName, info.loading)
+      moduleToSourceModuleSet.put(moduleName, info.sourceModuleSet)
     }
   }
 
   for (module in spec.additionalModules) {
     allModules.add(module.name)
-    moduleLoadings[module.name] = module.loading
+    moduleLoadings.put(module.name, module.loading)
   }
 
   for (pluginName in spec.bundledPlugins) {
-    val pluginInfo = pluginContentJobs[pluginName]?.await() ?: continue
+    val pluginInfo = pluginContentJobs.get(pluginName)?.await() ?: continue
     for (moduleName in pluginInfo.contentModules) {
       allModules.add(moduleName)
-      moduleToSourcePlugin[moduleName] = pluginName
-      // Get loading mode from plugin content info if available
-      pluginInfo.contentModuleLoadings?.get(moduleName)?.let { moduleLoadings[moduleName] = it }
+      moduleToSourcePlugin.put(moduleName, pluginName)
+      pluginInfo.contentModuleLoadings?.get(moduleName)?.let { moduleLoadings.put(moduleName, it) }
     }
   }
 

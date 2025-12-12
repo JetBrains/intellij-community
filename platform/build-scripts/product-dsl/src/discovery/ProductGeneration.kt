@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.productLayout.discovery
 
-import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -47,6 +46,10 @@ data class ModuleSetGenerationConfig(
   @JvmField val outputProvider: ModuleOutputProvider,
   @JvmField val additionalPlugins: Map<String, String> = emptyMap(),
   @JvmField val dependencyFilter: (embeddedModules: Set<String>, moduleName: String, depName: String) -> Boolean,
+  /** Xi:include paths to skip during plugin content extraction (e.g., paths from external libraries like Kotlin compiler) */
+  @JvmField val skipXIncludePaths: Set<String> = emptySet(),
+  /** Returns prefix for xi:include filtering, or null to disable filtering for this module */
+  @JvmField val xIncludePrefixFilter: (moduleName: String) -> String? = { null },
 )
 
 /**
@@ -207,10 +210,16 @@ suspend fun generateAllModuleSetsWithProducts(config: ModuleSetGenerationConfig,
       .distinct()
       .toList()
 
-    val xIncludeCache = AsyncCache<String, LoadedXIncludeReference?>(this)
+    val xIncludeCache = AsyncCache<String, ByteArray?>(this)
     val pluginContentJobs: Map<String, Deferred<PluginContentInfo?>> = allBundledPlugins.associateWith { pluginName ->
       async {
-        extractPluginContent(pluginName = pluginName, outputProvider = config.outputProvider, xIncludeCache = xIncludeCache)
+        extractPluginContent(
+          pluginName = pluginName,
+          outputProvider = config.outputProvider,
+          xIncludeCache = xIncludeCache,
+          skipXIncludePaths = config.skipXIncludePaths,
+          prefixFilter = config.xIncludePrefixFilter,
+        )
       }
     }
 

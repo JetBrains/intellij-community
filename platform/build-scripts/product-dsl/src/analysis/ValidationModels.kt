@@ -13,60 +13,57 @@ sealed interface ValidationError {
 
 data class SelfContainedValidationError(
   override val context: String,
-  val missingDependencies: Map<String, Set<String>>,
+  @JvmField val missingDependencies: Map<String, Set<String>>,
 ) : ValidationError
 
 data class MissingModuleSetsError(
   override val context: String,
-  val missingModuleSets: Set<String>,
+  @JvmField val missingModuleSets: Set<String>,
 ) : ValidationError
 
 data class DuplicateModulesError(
   override val context: String,
-  val duplicates: Map<String, Int>,
+  @JvmField val duplicates: Map<String, Int>,
 ) : ValidationError
 
 data class MissingDependenciesError(
   override val context: String,
-  val missingModules: Map<String, Set<String>>,
-  val allModuleSets: List<ModuleSet>,
-  /** Metadata about modules that have missing dependencies (loading mode, source plugin, etc.) */
-  val moduleMetadata: Map<String, ModuleMetadata> = emptyMap(),
-  /** Full traceability info for all plugin modules (for looking up missing dep info) */
-  val moduleTraceInfo: Map<String, ModuleTraceInfo> = emptyMap(),
+  @JvmField val missingModules: Map<String, Set<String>>,
+  @JvmField val allModuleSets: List<ModuleSet>,
+  /** Unified source info for all modules (needing and missing) */
+  @JvmField val moduleSourceInfo: Map<String, ModuleSourceInfo> = emptyMap(),
+) : ValidationError
+
+data class XIncludeResolutionError(
+  override val context: String,
+  /** Plugin module name where xi:include was found */
+  @JvmField val pluginName: String,
+  /** xi:include path that failed to resolve */
+  @JvmField val xIncludePath: String,
+  /** Internal debug info (search details) */
+  @JvmField val debugInfo: String,
 ) : ValidationError
 
 // endregion
 
-// region Module Metadata
+// region Module Source Info
 
 /**
- * Metadata about a module's origin and loading characteristics.
- * Used to provide contextual information in validation error messages.
- */
-data class ModuleMetadata(
-  /** The loading mode (EMBEDDED, REQUIRED, OPTIONAL, ON_DEMAND) */
-  val loadingMode: ModuleLoadingRuleValue?,
-  /** Name of the bundled plugin that contributed this module, or null if from module set */
-  val sourcePlugin: String?,
-  /** Name of the module set that contributed this module, or null if from bundled plugin */
-  val sourceModuleSet: String?,
-  /** Products that contain this module (for global validation error messages) */
-  val sourceProducts: Set<String>? = null,
-)
-
-/**
- * Complete traceability info for a plugin content module.
+ * Complete source info for a module - works for both plugin content modules and module set modules.
  * Single lookup provides all context for error messages.
  * Built once and shared across all validation lookups.
  */
-data class ModuleTraceInfo(
-  /** Plugin containing this module */
-  @JvmField val sourcePlugin: String,
-  /** Products that bundle this plugin (empty for additional/non-bundled plugins) */
-  @JvmField val bundledInProducts: Set<String>,
-  /** Source description if plugin is in additionalPlugins, null otherwise */
-  @JvmField val additionalPluginSource: String?,
+data class ModuleSourceInfo(
+  /** The loading mode (EMBEDDED, REQUIRED, OPTIONAL, ON_DEMAND) */
+  @JvmField val loadingMode: ModuleLoadingRuleValue? = null,
+  /** Plugin containing this module, or null if from module set directly */
+  @JvmField val sourcePlugin: String? = null,
+  /** Module set containing this module, or null if from bundled plugin */
+  @JvmField val sourceModuleSet: String? = null,
+  /** Products that contain this module */
+  @JvmField val sourceProducts: Set<String> = emptySet(),
+  /** Source description if plugin is in additionalPlugins */
+  @JvmField val additionalPluginSource: String? = null,
 )
 
 // endregion
@@ -74,23 +71,12 @@ data class ModuleTraceInfo(
 // region Structured Output for Tests
 
 /**
- * Represents a single validation error for external consumers (e.g., test frameworks).
- * Each error corresponds to one missing dependency or validation issue.
- */
-data class StructuredValidationError(
-  /** Short identifier for the error (e.g., "missing-dep:intellij.javascript.parser") */
-  @JvmField val id: String,
-  /** Plain-text error message without ANSI codes or ASCII art */
-  @JvmField val message: String,
-)
-
-/**
  * Result of model generator validation.
  * Contains both file diffs (out-of-sync files) and validation errors (missing dependencies, etc.).
  */
 data class ModelValidationResult(
   @JvmField val diffs: List<DryRunDiff>,
-  @JvmField val errors: List<StructuredValidationError>,
+  @JvmField val errors: List<ValidationError>,
 )
 
 // endregion

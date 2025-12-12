@@ -398,7 +398,7 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
   filterPluginsToPublish(pluginsToPublish, context)
 
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context)
-  // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
+  // computed only based on a bundled and plugins to publish lists; by intention, compatible plugins are not taken in an account
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
 
   if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -464,9 +464,11 @@ private suspend fun distributionState(
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.reportDistributionBuildNumber()
 
-  checkProductProperties(context)
+  coroutineScope {
+    launch { checkProductProperties(context) }
 
-  copyDependenciesFile(context)
+    launch { copyDependenciesFile(context) }
+  }
 
   logFreeDiskSpace("before compilation", context)
   context.compileProductionModules()
@@ -584,9 +586,9 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkProductLayout(context)
 
   val properties = context.productProperties
-  checkPaths2(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
-  checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
-  checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
+  checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
+  checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
+  checkPaths(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
   val outputProvider = context.outputProvider
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
@@ -791,13 +793,6 @@ private fun checkPaths(paths: Collection<Path>, propertyName: String) {
   }
 }
 
-private fun checkPaths2(paths: Collection<Path>, propertyName: String) {
-  val nonExistingFiles = paths.filter { Files.notExists(it) }
-  check(nonExistingFiles.isEmpty()) {
-    "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
-  }
-}
-
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   if (context.options.printFreeSpace) {
     logFreeDiskSpace(context.paths.buildOutputDir, phase)
@@ -819,7 +814,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
+          additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.WINDOWS, arch = arch, isPortableDist = true),
           mainClass = context.ideMainClassName,
         ),
         ProductInfoLaunchData.create(
@@ -829,7 +824,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
+          additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.LINUX, arch = arch, isPortableDist = true),
           mainClass = context.ideMainClassName,
           startupWmClass = getLinuxFrameClass(context),
         ),
@@ -840,7 +835,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
-          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
+          additionalJvmArguments = context.getAdditionalJvmArguments(os = OsFamily.MACOS, arch = arch, isPortableDist = true),
           mainClass = context.ideMainClassName,
         )
       )
@@ -1107,9 +1102,9 @@ private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
   val result = Collections.synchronizedSet(mutableSetOf<Path>())
 
   withContext(Dispatchers.IO + CoroutineName("Looking for junk files")) {
-    paths.forEach {
+    for (file in paths) {
       launch {
-        Files.walk(it).use { stream ->
+        Files.walk(file).use { stream ->
           stream.forEach { path ->
             if (path.fileName.toString() in junk) {
               result.add(path)

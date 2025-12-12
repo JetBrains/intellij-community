@@ -150,6 +150,7 @@ suspend fun findFileInModuleDependenciesRecursiveAsync(
   relativePath: String,
   provider: ModuleOutputProvider,
   processedModules: MutableSet<String>,
+  prefix: String? = null,
 ): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency !is JpsModuleDependency) {
@@ -157,6 +158,9 @@ suspend fun findFileInModuleDependenciesRecursiveAsync(
     }
 
     val moduleName = dependency.moduleReference.moduleName
+    if (prefix != null && !moduleName.startsWith(prefix)) {
+      continue
+    }
     if (!processedModules.add(moduleName)) {
       continue
     }

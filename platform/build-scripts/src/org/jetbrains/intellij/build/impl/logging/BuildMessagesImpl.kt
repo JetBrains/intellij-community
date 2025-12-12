@@ -133,7 +133,7 @@ class BuildMessagesImpl private constructor(
 
 /**
  * Used to print a debug-level log message to a file in the build output.
- * It firstly prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
+ * It first prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
  */
 private class DebugLogger {
   // Most of the logging is carried out via OpenTelemetry. Thus, the debug log is commonly empty.

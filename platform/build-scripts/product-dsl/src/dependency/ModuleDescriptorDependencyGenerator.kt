@@ -77,6 +77,11 @@ internal suspend fun generateModuleDescriptorDependencies(
     additionalPlugins = additionalPlugins,
   ))
 
+  // Collect xi:include resolution errors from plugin content extraction
+  for (job in pluginContentJobs.values) {
+    job.await()?.xIncludeErrors?.let { errors.addAll(it) }
+  }
+
   // Write XML files in parallel
   val results = modulesToProcess.map { moduleName ->
     async {

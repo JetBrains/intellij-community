@@ -47,8 +47,7 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
       project.libraryCollection.findLibrary(libraryName) ?: error("Could not find project-level library $libraryName")
     }
 
-    val libraryMoniker = "library '$libraryName' " +
-                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
+    val libraryMoniker = "library '$libraryName' " + if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
 
     val paths = library.getPaths(JpsOrderRootType.COMPILED)
     for (path in paths) {
@@ -68,11 +67,7 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
     return listOf(Path.of(JpsPathUtil.urlToPath(url)))
   }
 
-  override suspend fun findFileInAnyModuleOutput(
-    relativePath: String,
-    moduleNamePrefix: String?,
-    processedModules: MutableSet<String>?,
-  ): ByteArray? {
+  override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     return findFileInAnyModuleOutput(
       modules = modules,
       relativePath = relativePath,

@@ -138,11 +138,7 @@ internal class BazelModuleOutputProvider(
     return jars
   }
 
-  override suspend fun findFileInAnyModuleOutput(
-    relativePath: String,
-    moduleNamePrefix: String?,
-    processedModules: MutableSet<String>?,
-  ): ByteArray? {
+  override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
     return findFileInAnyModuleOutput(
       modules = nameToModule.values,
       relativePath = relativePath,
