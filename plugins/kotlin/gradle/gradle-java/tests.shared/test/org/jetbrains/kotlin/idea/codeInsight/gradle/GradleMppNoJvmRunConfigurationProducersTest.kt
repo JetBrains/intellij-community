@@ -45,7 +45,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     // The test is incompatible with Gradle 9.0 - KTIJ-34799
     @TargetVersions("<9.0")
     fun allTestsInJsClass() {
-        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests"""",
             runReadActionAndWait {
@@ -74,7 +73,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     // The test is incompatible with Gradle 9.0 - KTIJ-34799
     @TargetVersions("<9.0")
     fun testForJsMethod() {
-        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests.jsTest"""",
             runReadActionAndWait {
@@ -103,7 +101,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     // The test is incompatible with Gradle 9.0 - KTIJ-34799
     @TargetVersions("<9.0")
     fun allTestsInJsPackage() {
-        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
             runReadActionAndWait {
@@ -133,7 +130,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     // The test is incompatible with Gradle 9.0 - KTIJ-34799
     @TargetVersions("<9.0")
     fun allTestsInJsDirectory() {
-        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {
@@ -165,7 +161,6 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
     // The test is incompatible with Gradle 9.0 - KTIJ-34799
     @TargetVersions("<9.0")
     fun allTestsInJsModule() {
-        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {

@@ -34,7 +34,6 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     @Test
     @TargetVersions("<7.6")
     fun testExpectClassWithTests() {
-        enableExperimentalMPP(true)
         doTest()
     }
 
@@ -42,7 +41,6 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
     @TargetVersions("<7.6")
     fun testMultiplatformInheritedTests() {
         mockInheritorPopup()
-        enableExperimentalMPP(true)
         doTest()
     }
 
