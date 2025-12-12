@@ -270,7 +270,7 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        getAllTexts().first().strictClick()
+        moveMouse()
       }
     }
 
