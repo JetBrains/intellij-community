@@ -15,6 +15,7 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 internal class ShellCompletionTestFixtureImpl(
   private val project: Project?,
   private val curDirectory: String,
+  private val envVariables: Map<String, String>,
   private val commandSpecs: List<ShellCommandSpec>?,
   private val generatorCommandsRunner: ShellCommandExecutor,
 ) : ShellCompletionTestFixture {
@@ -30,7 +31,7 @@ internal class ShellCompletionTestFixtureImpl(
     val completion = ShellCommandSpecCompletion(
       commandSpecsManager,
       TestGeneratorsExecutor(),
-      TestRuntimeContextProvider(project, curDirectory, emptyMap(), generatorCommandsRunner)
+      TestRuntimeContextProvider(project, curDirectory, envVariables, generatorCommandsRunner)
     )
 
     val command = tokens.first()

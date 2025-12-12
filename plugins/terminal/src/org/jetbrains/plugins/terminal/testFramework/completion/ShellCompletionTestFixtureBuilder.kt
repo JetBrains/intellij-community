@@ -19,6 +19,12 @@ interface ShellCompletionTestFixtureBuilder {
   fun setCurrentDirectory(directory: String): ShellCompletionTestFixtureBuilder
 
   /**
+   * These variables will be returned from [ShellRuntimeContext.envVariables].
+   * By default, the env variables map is empty.
+   */
+  fun setEnvVariables(envVars: Map<String, String>): ShellCompletionTestFixtureBuilder
+
+  /**
    * Allows mocking the available command specs for which completion can be provided.
    * By default, we use all command specs available in production, but it requires starting the IDE application.
    * If your test is not starting the IDE, available command specs must be provided using this method.

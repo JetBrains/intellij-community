@@ -14,11 +14,17 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 @TestOnly
 internal class ShellCompletionTestFixtureBuilderImpl(private val project: Project?) : ShellCompletionTestFixtureBuilder {
   private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
+  private var envVariables: Map<String, String> = emptyMap()
   private var commandSpecs: List<ShellCommandSpec>? = null
   private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor
 
   override fun setCurrentDirectory(directory: String): ShellCompletionTestFixtureBuilder {
     curDirectory = directory
+    return this
+  }
+
+  override fun setEnvVariables(envVars: Map<String, String>): ShellCompletionTestFixtureBuilder {
+    envVariables = envVars
     return this
   }
 
@@ -35,6 +41,12 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
   }
 
   override fun build(): ShellCompletionTestFixture {
-    return ShellCompletionTestFixtureImpl(project, curDirectory, commandSpecs, generatorCommandsRunner)
+    return ShellCompletionTestFixtureImpl(
+      project = project,
+      curDirectory = curDirectory,
+      envVariables = envVariables,
+      commandSpecs = commandSpecs,
+      generatorCommandsRunner = generatorCommandsRunner
+    )
   }
 }
