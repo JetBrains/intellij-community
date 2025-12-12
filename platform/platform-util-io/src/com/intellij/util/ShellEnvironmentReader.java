@@ -201,6 +201,13 @@ public final class ShellEnvironmentReader {
     return cp;
   }
 
+  private static String readString(Path path) throws IOException {
+    // this is a workaround for CPP-47852 because `readString` throws exception on
+    // on malformed input, while new String() does not for incomplete UTF-8 sequence
+
+    // noinspection ReadWriteStringCanBeUsed
+    return new String(Files.readAllBytes(path), Charset.defaultCharset());
+  }
   /**
    * Runs the given command.
    * Returns loaded environment and the command output (stdout/stderr combined).
@@ -236,8 +243,8 @@ public final class ShellEnvironmentReader {
         .start();
       int exitCode = waitAndTerminateAfter(process, timeoutMillis);
 
-      var envData = Files.readString(dataFile, Charset.defaultCharset());
-      var log = Files.exists(logFile) ? Files.readString(logFile, Charset.defaultCharset()) : "(no log file)";
+      var envData = readString(dataFile);
+      var log = Files.exists(logFile) ? readString(logFile) : "(no log file)";
       if (exitCode != 0 || envData.isEmpty()) {
         if (!log.isEmpty()) {
           LOG.info("stdout/stderr: " + log);
