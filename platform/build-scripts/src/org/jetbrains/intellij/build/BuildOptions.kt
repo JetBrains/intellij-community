@@ -5,7 +5,8 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildOptions.Companion.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA
@@ -26,12 +27,12 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
-  @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
-  @ApiStatus.Internal @JvmField var compressZipFiles: Boolean = true,
+  @Internal @JvmField val jarCacheDir: Path? = null,
+  @Internal @JvmField var compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
-  @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
-  @ApiStatus.Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
+  @Internal @JvmField val printFreeSpace: Boolean = true,
+  @Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
   @JvmField var skipDependencySetup: Boolean = false,
 
   /**
@@ -52,7 +53,7 @@ data class BuildOptions(
    * If `true` and [ProductProperties.embeddedFrontendRootModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
-  @ApiStatus.Experimental @JvmField var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  @Experimental @JvmField var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
@@ -189,7 +190,7 @@ data class BuildOptions(
     const val LOCALIZE_STEP: String = "localize"
 
     @JvmField
-    @ApiStatus.Internal
+    @Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
       .splitToSequence(';')
       .filter { !it.isBlank() }
@@ -450,7 +451,7 @@ data class BuildOptions(
    * If this option is set to `true` and [ProductProperties.rootModuleForModularLoader] is non-null, a file containing module descriptors
    * will be added to the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
-  @ApiStatus.Experimental
+  @Experimental
   var useModularLoader: Boolean = getBooleanProperty("intellij.build.use.modular.loader", true)
 
   /**
@@ -460,7 +461,7 @@ data class BuildOptions(
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used
    * (in this case, the generation is always enabled).
    */
-  @ApiStatus.Experimental
+  @Experimental
   var generateRuntimeModuleRepository: Boolean = getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
 
   /**
@@ -474,7 +475,7 @@ data class BuildOptions(
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
-  @ApiStatus.Internal
+  @Internal
   var skipCustomResourceGenerators: Boolean = false
 
   var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY)?.toInt() ?: 2
@@ -502,11 +503,11 @@ data class BuildOptions(
    * won't be affected by [PluginBundlingRestrictions.includeInDistribution]
    */
   @set:TestOnly
-  @ApiStatus.Internal
+  @Internal
   var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
 
   @set:TestOnly
-  @ApiStatus.Internal
+  @Internal
   var buildStepListener: BuildStepListener = BuildStepListener()
 
   init {

@@ -21,7 +21,7 @@ interface ModuleOutputProvider {
    * Used for xi:include resolution where the included file may be in any module, not just dependencies.
    * Returns the file content if found, or null if the file doesn't exist in any module output.
    *
-   * @param moduleNamePrefix if specified, only searches in modules whose name starts with this prefix followed by '.'
+   * @param moduleNamePrefix if specified, only searches in modules whose name starts with this prefix
    * @param processedModules if specified, skips modules that are already in this set (and adds searched modules to it)
    */
   suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String? = null, processedModules: MutableSet<String>? = null): ByteArray? = null

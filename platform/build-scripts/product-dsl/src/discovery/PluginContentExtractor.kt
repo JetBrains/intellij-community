@@ -87,11 +87,7 @@ internal suspend fun extractPluginContent(
   }
 
   // BFS traversal with concurrent xi:include resolution
-  val contentModules = extractContentModulesWithSuspendResolver(
-    input = content.toByteArray(),
-    xIncludeResolver = xIncludeResolver,
-    skipXIncludePaths = skipXIncludePaths,
-  )
+  val contentModules = extractContentModules(input = content.toByteArray(), skipXIncludePaths = skipXIncludePaths, xIncludeResolver = xIncludeResolver)
 
   // Filter out module names with '/' (v2 module paths, not supported yet)
   val filteredModules = contentModules.filter { !it.name.contains('/') }
@@ -110,10 +106,10 @@ internal suspend fun extractPluginContent(
  * Extracts content modules from XML using BFS traversal with suspend xi:include resolution.
  * Resolves all `xi:includes` at each level concurrently for optimal I/O performance.
  */
-private suspend fun extractContentModulesWithSuspendResolver(
+private suspend fun extractContentModules(
   input: ByteArray,
-  xIncludeResolver: suspend (path: String) -> ByteArray?,
   skipXIncludePaths: Set<String>,
+  xIncludeResolver: suspend (path: String) -> ByteArray?,
 ): List<ContentModuleElement> {
   val allContent = ArrayList<ContentModuleElement>()
   val processedPaths = HashSet<String>()
@@ -170,6 +166,7 @@ private suspend fun resolveXInclude(
   }
 
   val processedModules = ConcurrentHashMap.newKeySet<String>()
+  processedModules.add(jpsModule.name)
 
   findFileInModuleDependenciesRecursiveAsync(
     module = jpsModule,
@@ -185,7 +182,14 @@ private suspend fun resolveXInclude(
     return XIncludeResult.Success(it)
   }
 
-  return XIncludeResult.Failure(path = path, debugInfo = "searched ${jpsModule.name} output, dependencies, and all outputs" + (if (prefix == null) "" else " with prefix '$prefix'"))
+  return XIncludeResult.Failure(
+    path = path,
+    debugInfo = "searched ${jpsModule.name} output, dependencies, and all outputs (" +
+                "filterPrefix=$prefix, " +
+                "outputProvider=$outputProvider" +
+                "processedModules=\n  ${processedModules.sorted().joinToString("\n  ")}\n" +
+                ")",
+  )
 }
 
 /**

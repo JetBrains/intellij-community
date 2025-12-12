@@ -147,11 +147,13 @@ internal class BazelModuleOutputProvider(
       processedModules = processedModules,
     )
   }
+
+  override fun toString(): String = "BazelModuleOutputProvider(projectHome=$projectHome, bazelOutputRoot=$bazelOutputRoot)"
 }
 
 /**
  * Searches for a file across module outputs.
- * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix followed by '.'.
+ * If [moduleNamePrefix] is specified, only searches in modules whose name starts with the prefix.
  * If [processedModules] is specified, skips modules already in the set and adds searched modules to it.
  */
 internal suspend fun findFileInAnyModuleOutput(
@@ -163,7 +165,7 @@ internal suspend fun findFileInAnyModuleOutput(
 ): ByteArray? {
   for (module in modules) {
     val name = module.name
-    if (moduleNamePrefix != null && !name.startsWith("$moduleNamePrefix.")) {
+    if (moduleNamePrefix != null && !name.startsWith(moduleNamePrefix)) {
       continue
     }
     if (processedModules != null && !processedModules.add(name)) {
