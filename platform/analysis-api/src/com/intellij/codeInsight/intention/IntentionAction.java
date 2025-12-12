@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * To change the ordering, implement {@link HighPriorityAction},
  * {@link LowPriorityAction} or {@link PriorityAction}.
  * <p>
- * Can be marked {@link com.intellij.openapi.project.DumbAware}.
+ * Can be marked {@link com.intellij.openapi.project.DumbAware DumbAware}.
  * <p>
  * See {@link CustomizableIntentionAction} for further customization options.
  */
@@ -50,24 +50,24 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    * Checks whether this intention is available at the caret position in the file.
    * If this method returns true, a light bulb for this intention is shown.
    * <p>
-   * It is supposed to be fast enough to be run on the EDT thread as well.
+   * It is supposed to be fast enough to be run on the EDT.
    *
    * @param project the project in which the availability is checked.
    * @param editor  the editor in which the intention will be invoked.
-   * @param psiFile    the file open in the editor.
+   * @param psiFile the file open in the editor.
    * @return {@code true} if the intention is available, {@code false} otherwise.
    */
   boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile);
 
   /**
-   * Called when the user has selected the intention in order to invoke it.
-   * This method is called inside a command.
+   * Called when the user has selected the intention to invoke it.
+   * This method is called inside a command (see {@link com.intellij.openapi.command.CommandProcessor CommandProcessor}).
    * If {@link #startInWriteAction()} returns {@code true},
    * this method is also called inside a write action.
    *
    * @param project the project in which the intention is invoked.
    * @param editor  the editor in which the intention is invoked.
-   * @param psiFile    the file open in the editor.
+   * @param psiFile the file open in the editor.
    */
   void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException;
 
@@ -104,7 +104,7 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    * @param project the current project
    * @param editor  the editor where a file copy is opened.
    *                Could be a simplified headless Editor implementation that lacks some features.
-   * @param psiFile    a non-physical file to apply, which is a copy of the file that contains the element returned from
+   * @param psiFile a non-physical file to apply, which is a copy of the file that contains the element returned from
    *                {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
