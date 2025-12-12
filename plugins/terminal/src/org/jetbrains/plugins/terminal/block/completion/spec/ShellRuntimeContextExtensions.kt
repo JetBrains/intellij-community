@@ -17,12 +17,18 @@ import java.io.File
 import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
 
+@ApiStatus.Internal
+val PROJECT_KEY: Key<Project> = Key.create("Project")
+
+@ApiStatus.Internal
+val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("EelDescriptor")
+
+@ApiStatus.Internal
+val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
+
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.project: Project
   get() = getUserData(PROJECT_KEY) ?: error("No project data in $this")
-
-@ApiStatus.Internal
-val PROJECT_KEY: Key<Project> = Key.create("Project")
 
 /**
  * EelDescriptor represents the environment where the shell session is running
@@ -32,9 +38,6 @@ val PROJECT_KEY: Key<Project> = Key.create("Project")
 val ShellRuntimeContext.eelDescriptor: EelDescriptor
   get() = getUserData(EEL_DESCRIPTOR_KEY) ?: throwUnsupportedInExpTerminalException()
 
-@ApiStatus.Internal
-val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("EelDescriptor")
-
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.currentDirectoryPath: EelPath
   get() = EelPath.parse(currentDirectory, eelDescriptor)
@@ -42,9 +45,6 @@ val ShellRuntimeContext.currentDirectoryPath: EelPath
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.isReworkedTerminal: Boolean
   get() = getUserData(IS_REWORKED_KEY) ?: false
-
-@ApiStatus.Internal
-val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
 
 /**
  * Returns the list of [path] child file names.
