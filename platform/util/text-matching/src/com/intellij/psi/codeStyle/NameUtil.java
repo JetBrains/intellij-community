@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.text.matching.MatchingMode;
+import com.intellij.util.text.matching.KeyboardLayoutConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -340,9 +341,10 @@ public final class NameUtil {
     }
 
     public MinusculeMatcher build() {
-      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, matchingMode, separators) :
-                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, matchingMode, separators) :
-                                 new FixingLayoutMatcher(pattern, matchingMode, separators);
+      KeyboardLayoutConverter keyboardLayoutConverter = PlatformKeyboardLayoutConverter.INSTANCE;
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, matchingMode, separators, keyboardLayoutConverter) :
+                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, matchingMode, separators, keyboardLayoutConverter) :
+                                 new FixingLayoutMatcher(pattern, matchingMode, separators, keyboardLayoutConverter);
       if (preferStartMatches) {
         matcher = new PreferStartMatchMatcherWrapper(matcher);
       }

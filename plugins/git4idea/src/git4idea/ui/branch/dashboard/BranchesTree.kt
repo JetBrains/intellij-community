@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -501,7 +502,7 @@ private class BranchesTreeMatcher(rawPattern: String?) : MinusculeMatcher() {
     const val PARTIAL_MATCH_DEGREE = 1
 
     private fun createMatcher(word: String) =
-      GitBranchesMatcherWrapper(FixingLayoutMatcher("*$word", MatchingMode.IGNORE_CASE, ""))
+      GitBranchesMatcherWrapper(FixingLayoutMatcher("*$word", MatchingMode.IGNORE_CASE, "", PlatformKeyboardLayoutConverter))
   }
 }
 

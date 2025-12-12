@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -99,7 +100,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
       Ref<Boolean> hasSuggestionsFixedPattern = Ref.create(false);
       if (processItems) { // stay within the original logic that was before adding the fuzzy search
-        String fixedPattern = FixingLayoutMatcher.fixLayout(pattern);
+        String fixedPattern = FixingLayoutMatcher.fixLayout(pattern, PlatformKeyboardLayoutConverter.INSTANCE);
         // With fuzzy search: The process was interrupt but there are suggestions.
         if (fixedPattern != null &&
             !processItemsForPattern(base, parameters.withCompletePattern(fixedPattern), consumer, indicator, hasSuggestionsFixedPattern) &&

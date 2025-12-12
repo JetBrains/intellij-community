@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.AllOccurrencesMatcher.Companion.create
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.text.Matcher
+import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.Test
@@ -644,7 +645,7 @@ class NameUtilMatchingTest {
   @Test
   fun testMatchingAllOccurrences() {
     val text = "some text"
-    val matcher = create("*e", MatchingMode.IGNORE_CASE, "")
+    val matcher = create("*e", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop)
     assertContentEquals(matcher.matchingFragments(text), listOf(TextRange(3, 4), TextRange(6, 7)))
   }
 
