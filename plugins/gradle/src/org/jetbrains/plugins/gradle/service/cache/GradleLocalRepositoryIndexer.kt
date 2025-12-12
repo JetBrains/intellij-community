@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.cache
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -27,8 +28,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.isDirectory
 
-@Service(Service.Level.PROJECT)
-class GradleLocalRepositoryIndexer(private val project: Project, private val coroutineScope: CoroutineScope) {
+@Service(Service.Level.APP)
+class GradleLocalRepositoryIndexer(private val coroutineScope: CoroutineScope) {
 
   private data class IndexSnapshot(
     val groupIds: Set<String>,
@@ -41,10 +42,22 @@ class GradleLocalRepositoryIndexer(private val project: Project, private val cor
     }
   }
 
-  private fun launchIndex() {
+  private val INDICES: ConcurrentHashMap<EelDescriptor, AtomicReference<IndexSnapshot>> = ConcurrentHashMap()
+
+  private fun snapshot(descriptor: EelDescriptor): IndexSnapshot = INDICES[descriptor]?.get() ?: IndexSnapshot.EMPTY
+
+  fun groups(descriptor: EelDescriptor): Collection<String> = snapshot(descriptor).groupIds
+
+  fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> =
+    snapshot(descriptor).group2Artifacts[groupId] ?: emptySet()
+
+  fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> =
+    snapshot(descriptor).module2Versions["$groupId:$artifactId"] ?: emptySet()
+
+  private fun launchIndex(project: Project) {
     coroutineScope.launchTracked {
       withContext(Dispatchers.IO) {
-        update()
+        update(project)
       }
     }
   }
@@ -52,9 +65,9 @@ class GradleLocalRepositoryIndexer(private val project: Project, private val cor
   internal class Activity : ProjectActivity {
     override suspend fun execute(project: Project) {
       if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) return
-      project.getService(GradleLocalRepositoryIndexer::class.java).let { indexer ->
+      service<GradleLocalRepositoryIndexer>().let { indexer ->
         project.trackActivity(ExternalSystemActivityKey) {
-          indexer.launchIndex()
+          indexer.launchIndex(project)
         }
       }
     }
@@ -64,16 +77,16 @@ class GradleLocalRepositoryIndexer(private val project: Project, private val cor
     override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
       if (id.projectSystemId == GradleConstants.SYSTEM_ID && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
         val project = id.findProject() ?: return
-        project.getService(GradleLocalRepositoryIndexer::class.java)?.let { indexer ->
+        service<GradleLocalRepositoryIndexer>().let { indexer ->
           project.trackActivityBlocking(ExternalSystemActivityKey) {
-            indexer.launchIndex()
+            indexer.launchIndex(project)
           }
         }
       }
     }
   }
 
-  private fun update() {
+  private fun update(project: Project) {
     var groupNumber = 0
     var artifactNumber = 0
     var versionNumber = 0
@@ -112,16 +125,18 @@ class GradleLocalRepositoryIndexer(private val project: Project, private val cor
       val immutableModule2Versions = module2VersionsLocal.mapValues { it.value.toSortedSet().reversed() } //TODO semantic version sorting?
       val groupIds = immutableGroup2Artifacts.keys.toSortedSet()
       val indexSnapshot = IndexSnapshot(
-          groupIds = groupIds,
-          group2Artifacts = immutableGroup2Artifacts,
-          module2Versions = immutableModule2Versions,
-          createdAtMillis = System.currentTimeMillis(),
-        )
+        groupIds = groupIds,
+        group2Artifacts = immutableGroup2Artifacts,
+        module2Versions = immutableModule2Versions,
+        createdAtMillis = System.currentTimeMillis(),
+      )
       val ref = INDICES.computeIfAbsent(eelDescriptor) { AtomicReference(IndexSnapshot.EMPTY) }
       ref.set(indexSnapshot)
-    } catch (e: IOException) {
+    }
+    catch (e: IOException) {
       LOG.error(e)
-    } finally {
+    }
+    finally {
       LOG.info("Gradle GAV index updated in ${System.currentTimeMillis() - startTime} millis")
       LOG.info("Found $groupNumber groups, $artifactNumber artifacts, $versionNumber versions")
     }
@@ -131,18 +146,6 @@ class GradleLocalRepositoryIndexer(private val project: Project, private val cor
     Files.list(this).use { stream -> stream.filter(Files::isDirectory).forEach(action) }
 
   companion object {
-    private val INDICES: ConcurrentHashMap<EelDescriptor, AtomicReference<IndexSnapshot>> = ConcurrentHashMap()
-
-    private fun snapshot(descriptor: EelDescriptor): IndexSnapshot = INDICES[descriptor]?.get() ?: IndexSnapshot.EMPTY
-
-    fun groups(descriptor: EelDescriptor): Collection<String> = snapshot(descriptor).groupIds
-
-    fun artifacts(descriptor: EelDescriptor, groupId: String): Set<String> =
-      snapshot(descriptor).group2Artifacts[groupId] ?: emptySet()
-
-    fun versions(descriptor: EelDescriptor, groupId: String, artifactId: String): Set<String> =
-      snapshot(descriptor).module2Versions["$groupId:$artifactId"] ?: emptySet()
-
     private val LOG = logger<GradleLocalRepositoryIndexer>()
   }
 }
