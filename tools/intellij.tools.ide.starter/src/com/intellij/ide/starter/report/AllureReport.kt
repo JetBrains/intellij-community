@@ -10,6 +10,12 @@ import io.qameta.allure.model.*
 import java.util.*
 
 
+data class AllureLink(val name: String, val url: String) {
+  companion object {
+    fun single(name: String, url: String): List<AllureLink> = listOf(AllureLink(name, url))
+  }
+}
+
 object AllureReport {
 
   private val ignoreLabels = setOf("layer", "AS_ID")
@@ -24,56 +30,91 @@ object AllureReport {
     contextName: String,
     message: String,
     originalStackTrace: String,
-    links: List<Pair<String, String?>> = emptyList(),
+    links: List<AllureLink> = emptyList(),
     suffix: String = "Exception",
   ) {
     try {
-      val uuid = UUID.randomUUID().toString()
-      val stackTrace = "${originalStackTrace}${System.lineSeparator().repeat(2)}ContextName: ${contextName}${System.lineSeparator()}TestName: ${CurrentTestMethod.get()?.fullName()}"
-      val result = TestResult()
-      result.uuid = uuid
-      //inherit labels from the main test case for the exception
-      var labels: List<Label> = mutableListOf()
+      val parentContext = captureCurrentAllureContext()
+      val currentTestMethodName = CurrentTestMethod.get()?.fullName()
 
-      var testName = ""
-      var fullName = ""
-      var testCaseName = ""
-      Allure.getLifecycle().updateTestCase {
-        labels = it?.labels.orEmpty()
-        testName = it?.name.orEmpty()
-        fullName = it?.fullName.orEmpty()
-        testCaseName = it?.testCaseName.orEmpty()
+      val formattedStackTrace = buildString {
+        append(originalStackTrace)
+        appendLine().appendLine()
+        appendLine("ContextName: $contextName")
+        append("TestName: $currentTestMethodName")
       }
-      Allure.getLifecycle().scheduleTestCase(result)
-      Allure.getLifecycle().startTestCase(uuid)
-      val errorLabels = labels.filter { label -> !ignoreLabels.contains(label.name) }.toMutableList()
-      val linksList = mutableListOf<Link>()
-
-      for ((name, url) in links){
-          Allure.link(name, url)
-          linksList.add(Link().setName(name).setUrl(url))
-        }
-      linksList.add(errorLink)
-
-      errorLabels.add(Label().setName("layer").setValue("Exception"))
-      errorLabels.add(Label().setName("AS_ID").setValue("-1"))
-      val hash = convertToHashCodeWithOnlyLetters(generifyErrorMessage(stackTrace.processStringForTC()).hashCode())
-      Allure.getLifecycle().updateTestCase {
-        it.status = Status.FAILED
-        it.name = "$suffix in ${testName.ifBlank { contextName }}"
-        it.statusDetails = StatusDetails().setMessage(message).setTrace(stackTrace)
-        it.fullName = fullName.ifBlank { contextName } + ".${hash}" + ".${suffix.lowercase()}"
-        it.testCaseName = testCaseName
-        it.historyId = hash
-        it.description = "IDE ${suffix} error that appears when running $fullName"
-        it.links = linksList
-        it.labels = errorLabels
-      }
-      Allure.getLifecycle().stopTestCase(uuid)
-      Allure.getLifecycle().writeTestCase(uuid)
+      reportErrorInNewThread(parentContext, links, formattedStackTrace, suffix, contextName, message)
     }
     catch (e: Exception) {
       logError("Fail to write allure", e)
     }
   }
+
+  private fun reportErrorInNewThread(
+    parentContext: AllureContextSnapshot,
+    links: List<AllureLink>,
+    formattedStackTrace: String,
+    suffix: String,
+    contextName: String,
+    message: String,
+  ) {
+    kotlin.concurrent.thread(start = true, isDaemon = false) {
+      val uuid = UUID.randomUUID().toString()
+
+      val lifecycle = Allure.getLifecycle()
+      val result = TestResult().apply { this.uuid = uuid }
+
+      lifecycle.scheduleTestCase(result)
+      lifecycle.startTestCase(uuid)
+      try {
+        val errorLabels = parentContext.labels.filter { label -> !ignoreLabels.contains(label.name) }.toMutableList()
+        val linksList = mutableListOf<Link>()
+
+        for ((name, url) in links) {
+          Allure.link(name, url)
+          linksList.add(Link().setName(name).setUrl(url))
+        }
+        linksList.add(errorLink)
+        errorLabels.add(Label().setName("layer").setValue("Exception"))
+        errorLabels.add(Label().setName("AS_ID").setValue("-1"))
+        val hash = convertToHashCodeWithOnlyLetters(generifyErrorMessage(formattedStackTrace.processStringForTC()).hashCode())
+        Allure.getLifecycle().updateTestCase {
+          it.status = Status.FAILED
+          it.name = "$suffix in ${parentContext.testName.ifBlank { contextName }}"
+          it.statusDetails = StatusDetails().setMessage(message).setTrace(formattedStackTrace)
+          it.fullName = parentContext.fullName.ifBlank { contextName } + ".${hash}" + ".${suffix.lowercase()}"
+          it.testCaseName = parentContext.testCaseName
+          it.historyId = hash
+          it.description = "IDE ${suffix} error that appears when running ${parentContext.fullName}"
+          it.links = linksList
+          it.labels = errorLabels
+        }
+      }
+      finally {
+        Allure.getLifecycle().stopTestCase(uuid)
+        Allure.getLifecycle().writeTestCase(uuid)
+      }
+    }.join()
+  }
+
+  private fun captureCurrentAllureContext(): AllureContextSnapshot {
+    var snapshot = AllureContextSnapshot(emptyList(), "", "", "")
+    // using updateTestCase just to read is a bit of a hack, but necessary if no getter exists
+    Allure.getLifecycle().updateTestCase {
+      snapshot = AllureContextSnapshot(
+        labels = it.labels.orEmpty(),
+        testName = it.name.orEmpty(),
+        fullName = it.fullName.orEmpty(),
+        testCaseName = it.testCaseName.orEmpty()
+      )
+    }
+    return snapshot
+  }
+
+  private data class AllureContextSnapshot(
+    val labels: List<Label>,
+    val testName: String,
+    val fullName: String,
+    val testCaseName: String,
+  )
 }
