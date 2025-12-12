@@ -10,7 +10,6 @@
     <module name="intellij.xml.dom"/>
     <module name="intellij.xml.ui.common"/>
     <module name="intellij.platform.vcs"/>
-    <module name="intellij.xml.emmet"/>
   </dependencies>
 
   <extensionPoints>
@@ -28,8 +27,6 @@
 
     <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
-    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator" dynamic="true"/>
-    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter" dynamic="true"/>
     <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
@@ -64,31 +61,6 @@
     <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction">
       <add-to-group group-id="EditMenu" anchor="last"/>
     </action>
-
-    <group id="Emmet">
-      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
-      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction"/>
-      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction">
-        <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
-      </action>
-
-      <group id="GoToEditPointGroup">
-        <separator/>
-        <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
-
-        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward">
-          <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
-          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
-          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
-        </action>
-
-        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward">
-          <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
-          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
-          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
-        </action>
-      </group>
-    </group>
 
     <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
@@ -167,15 +139,7 @@
     <include.provider implementation="com.intellij.xml.util.XIncludeProvider"/>
     <indexedRootsProvider implementation="com.intellij.javaee.ExternalResourcesRootsProvider"/>
 
-    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet"
-                             dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
-
     <applicationService serviceImplementation="com.intellij.application.options.XmlSettings"/>
-
-    <xml.zenCodingGenerator implementation="com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl" order="last"/>
-    <customLiveTemplate implementation="com.intellij.codeInsight.template.emmet.ZenCodingTemplate"/>
-    <editorTypedHandler implementationClass="com.intellij.codeInsight.template.emmet.EmmetPreviewTypedHandler" id="emmetPreview"/>
-    <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <lang.documentationProvider language="XML" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"
                                 order="last"/>
@@ -380,12 +344,5 @@
 
     <virtualFileCustomDataProvider implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
     <virtualFileCustomDataProvider implementation="com.intellij.xml.XmlCodeStyleSettingsCustomDataSynchronizer"/>
-
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.XslZenCodingFilter"/>
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.CommentZenCodingFilter"/>
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.EscapeZenCodingFilter"/>
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter"/>
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.BemEmmetFilter"/>
-    <xml.zenCodingFilter implementation="com.intellij.codeInsight.template.emmet.filters.TrimZenCodingFilter"/>
   </extensions>
 </idea-plugin>

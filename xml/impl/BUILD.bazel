@@ -1,15 +1,10 @@
 ### auto-generated section `build intellij.xml.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
   name = "impl_resources",
   srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
-)
-
-jvm_provided_library(
-  name = "xml_emmet_provided",
-  lib = "//xml/emmet"
 )
 
 jvm_library(
@@ -63,7 +58,6 @@ jvm_library(
     "//xml/xml-syntax:syntax",
     "//xml/xml-analysis-api:analysis",
     "//platform/forms_rt:java-guiForms-rt",
-    ":xml_emmet_provided",
   ],
   exports = [
     "//xml/xml-psi-impl:psi-impl",

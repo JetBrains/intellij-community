@@ -1545,6 +1545,7 @@ xml/dom-impl
 xml/dom-openapi
 xml/dom-tests
 xml/emmet
+xml/emmet/backend
 xml/impl
 xml/langInjection
 xml/langInjection/xpath

@@ -18,5 +18,17 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.xerces" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
 </module>
