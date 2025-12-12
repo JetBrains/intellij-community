@@ -235,7 +235,6 @@
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex"/>
 
     <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
-    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.CommonLinkDestinationReferenceContributor"/>
     <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink"

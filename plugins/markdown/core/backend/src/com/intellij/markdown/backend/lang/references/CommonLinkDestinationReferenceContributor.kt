@@ -1,8 +1,13 @@
-package org.intellij.plugins.markdown.lang.references
+package com.intellij.markdown.backend.lang.references
 
 import com.intellij.openapi.paths.PathReferenceManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceContributor
+import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.util.ProcessingContext
+import org.intellij.plugins.markdown.lang.references.ReferenceUtil
 
 internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
