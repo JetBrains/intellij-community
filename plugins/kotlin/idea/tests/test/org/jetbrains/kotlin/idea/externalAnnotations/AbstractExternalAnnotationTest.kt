@@ -58,5 +58,3 @@ abstract class AbstractExternalAnnotationTest : KotlinLightCodeInsightFixtureTes
         private const val externalAnnotationsFile = "$externalAnnotationsPath/annotations.xml"
     }
 }
-
-abstract class AbstractK1ExternalAnnotationTest : AbstractExternalAnnotationTest()
