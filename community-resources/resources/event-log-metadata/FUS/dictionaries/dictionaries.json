@@ -1,0 +1,3 @@
+{
+  "dictionaries" : [ "crate_names.ndjson", "dotnet_technologies.ndjson", "grazie_rule_ids.ndjson", "grazie_rule_long_ids.ndjson", "ktor_feature_ids.ndjson", "look_and_feel.ndjson", "python_packages.ndjson" ]
+}
