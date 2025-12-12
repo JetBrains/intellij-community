@@ -17,7 +17,7 @@ public class StepIntoAction extends XDebuggerActionBase implements SplitDebugger
   }
 
   @Override
-  protected @NotNull DebuggerActionHandler getHandler(final @NotNull DebuggerSupport debuggerSupport) {
+  protected @NotNull DebuggerActionHandler getHandler() {
     return ourHandler;
   }
 }

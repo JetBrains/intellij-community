@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirem
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.core.permissions.Permission
 import com.intellij.platform.ide.core.permissions.RequiresPermissions
-import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.*
@@ -47,7 +46,7 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarActi
 open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarPauseActionHandler()
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
+  override fun getHandler(): DebuggerActionHandler {
     return handler
   }
 
@@ -60,7 +59,7 @@ open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
 open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarResumeActionHandler()
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
+  override fun getHandler(): DebuggerActionHandler {
     return handler
   }
 
@@ -88,7 +87,7 @@ internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false), Requ
     return ActionUpdateThread.BGT
   }
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
+  override fun getHandler(): DebuggerActionHandler {
     return getResumeHandler()
   }
 

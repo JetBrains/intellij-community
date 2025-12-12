@@ -115,17 +115,14 @@ c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.ForceStepIntoAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.ForceStepOverAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.MuteBreakpointAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - <init>():V
@@ -150,23 +147,19 @@ c:com.intellij.xdebugger.impl.actions.RunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.StepIntoAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.StepOutAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.StepOverAction
 - com.intellij.openapi.project.DumbAware
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 c:com.intellij.xdebugger.impl.actions.ViewBreakpointsAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

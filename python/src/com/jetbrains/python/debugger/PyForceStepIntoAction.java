@@ -19,9 +19,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
   private final XDebuggerProxySuspendedActionHandler myPyForceStepIntoHandler;
 
   public PyForceStepIntoAction() {
-    DebuggerSupport debuggerSupport = new DebuggerSupport() {
-    };
-    DebuggerActionHandler superHandler = super.getHandler(debuggerSupport);
+    DebuggerActionHandler superHandler = super.getHandler();
     myPyForceStepIntoHandler = new XDebuggerProxySuspendedActionHandler() {
       @Override
       public void perform(@NotNull Project project, @NotNull AnActionEvent event) {

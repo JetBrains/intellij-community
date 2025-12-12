@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.shared.*
-import com.intellij.xdebugger.impl.DebuggerSupport
 
 open class StepOutAction : XDebuggerActionBase(), SplitDebuggerAction {
-  override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
+  override fun getHandler(): DebuggerActionHandler {
     return ourHandler
   }
 

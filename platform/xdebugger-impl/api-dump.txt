@@ -36,6 +36,20 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessInfo):V
 - attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
 - a:getDebuggerDisplayName():java.lang.String
+c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.ForceStepIntoAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.ForceStepOverAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.RunToCursorAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.StepIntoAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.StepOutAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+c:com.intellij.xdebugger.impl.actions.StepOverAction
+- p:getHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - pa:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 - pa:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V

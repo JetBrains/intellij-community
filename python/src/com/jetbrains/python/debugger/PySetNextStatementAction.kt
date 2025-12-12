@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
@@ -54,7 +53,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
     }
   }
 
-  override fun getHandler(debuggerSupport: DebuggerSupport): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
+  override fun getHandler(): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
 
   override fun isHidden(event: AnActionEvent): Boolean {
     val project = event.getData(CommonDataKeys.PROJECT)
