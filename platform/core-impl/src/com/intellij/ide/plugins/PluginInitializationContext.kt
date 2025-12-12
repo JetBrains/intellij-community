@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProd
 import com.intellij.idea.AppMode
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -121,3 +122,61 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
 
 @ApiStatus.Internal
 data class PluginsPerProjectConfig(val isMainProcess: Boolean)
+
+/**
+ * Filters discovered plugins to keep only compatible plugins with the most recent version per plugin ID.
+ * 
+ * @param onPluginExcluded Callback invoked for each excluded plugin
+ * @return Filtered list containing only compatible plugins, one per plugin ID (the most recent).
+ *         Returns the original list if no exclusions occurred, otherwise returns filtered lists.
+ */
+@ApiStatus.Internal
+fun PluginInitializationContext.selectCompatibleAndMostRecentPlugins(
+  discoveredPlugins: List<DiscoveredPluginsList>,
+  onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
+): List<DiscoveredPluginsList> {
+  if (discoveredPlugins.isEmpty()) {
+    return emptyList()
+  }
+  
+  val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
+  var hasExclusions = false
+  
+  // Process regular lists first
+  for (pluginList in discoveredPlugins) {
+    for (plugin in pluginList.plugins) {
+      // Check compatibility first
+      validatePluginIsCompatible(plugin)?.let { reason ->
+        onPluginExcluded(plugin, reason)
+        hasExclusions = true
+        continue
+      }
+      
+      val pluginId = plugin.pluginId
+      val existingPlugin = selectedPluginsByPluginId[pluginId]
+      
+      if (existingPlugin == null) {
+        selectedPluginsByPluginId[pluginId] = plugin
+        continue
+      }
+      
+      if (VersionComparatorUtil.compare(plugin.version, existingPlugin.version) > 0 ||
+          pluginList.source is PluginsSourceContext.SystemPropertyProvided) {
+        onPluginExcluded(existingPlugin, PluginVersionIsSuperseded(existingPlugin, plugin))
+        selectedPluginsByPluginId[pluginId] = plugin
+      }
+      else {
+        onPluginExcluded(plugin, PluginVersionIsSuperseded(plugin, existingPlugin))
+      }
+      hasExclusions = true
+    }
+  }
+
+  if (!hasExclusions) {
+    return discoveredPlugins
+  }
+  return discoveredPlugins.map { pluginList ->
+    val filteredPlugins = pluginList.plugins.filter { selectedPluginsByPluginId[it.pluginId] === it }
+    DiscoveredPluginsList(filteredPlugins, pluginList.source)
+  }
+}
