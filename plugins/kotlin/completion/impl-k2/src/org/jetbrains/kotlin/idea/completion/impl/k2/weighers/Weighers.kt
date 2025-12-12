@@ -294,6 +294,7 @@ internal object Weighers {
         @Suppress("DEPRECATION")
         applyWeighs(sectionContext.weighingContext, symbolWithOrigin)
         PreferMatchingArgumentNameWeigher.addWeight(lookupElement)
+        PreferNamedArgumentCompletionWeigher.addWeight(lookupElement)
     }
 
     @Deprecated("This method only exists for compatibility for the old Fir contributors and will be removed soon")
@@ -334,6 +335,7 @@ internal object Weighers {
             PlatformWeighersIds.STATS,
             TrailingLambdaParameterNameWeigher,
             CompletionContributorGroupWeigher.Weigher,
+            PreferNamedArgumentCompletionWeigher.Weigher,
             ExpectedTypeWeigher.Weigher,
             DeprecatedWeigher.Weigher,
             PriorityWeigher.Weigher,

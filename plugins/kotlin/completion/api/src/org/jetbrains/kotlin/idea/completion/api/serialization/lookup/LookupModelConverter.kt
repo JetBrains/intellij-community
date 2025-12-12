@@ -151,7 +151,9 @@ object LookupModelConverter {
 
     private val keysToIgnore = setOf(
         // weighters are not needed for insertion
-        "KOTLIN_CLASSIFIER_WEIGHT", "KOTLIN_CALLABlE_WEIGHT",
+        "KOTLIN_CLASSIFIER_WEIGHT",
+        "KOTLIN_CALLABlE_WEIGHT",
+        "PREFER_NAMED_ARGUMENT_WEIGHT",
         // not needed for insertion
         "LookupArrangerMatcher",
         "LAST_COMPUTED_PRESENTATION",
