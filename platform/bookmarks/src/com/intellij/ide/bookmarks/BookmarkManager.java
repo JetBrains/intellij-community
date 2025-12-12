@@ -4,6 +4,7 @@ package com.intellij.ide.bookmarks;
 import com.intellij.ide.bookmark.BookmarkType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 @Deprecated
-public final class BookmarkManager implements PersistentStateComponent<Element> {
+public final class BookmarkManager implements PersistentStateComponent<Element>, Disposable {
   private record BookmarkInfo(Bookmark bookmark, int line, String text) {
   }
 
@@ -75,7 +76,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorColorsManager.TOPIC, __ -> colorsChanged());
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
-    multicaster.addDocumentListener(new MyDocumentListener(), myProject);
+    multicaster.addDocumentListener(new MyDocumentListener(), this);
 
     mySortedState = UISettings.getInstance().getSortBookmarks();
     connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
@@ -411,6 +412,10 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     for (Bookmark bookmark : myBookmarks.values()) {
       bookmark.updateHighlighter();
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private final class MyDocumentListener implements DocumentListener {

@@ -3,6 +3,8 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -60,7 +62,9 @@ public final class EditorListenerTracker {
       for (Map.Entry<Class<? extends EventListener>, List<? extends EventListener>> entry : leaked.entrySet()) {
         Class<? extends EventListener> aClass = entry.getKey();
         List<? extends EventListener> list = entry.getValue();
-        Assert.fail("Listeners leaked for " + aClass+":\n"+list);
+        String projectNames =
+          StringUtil.join(ContainerUtil.map(ProjectManager.getInstance().getOpenProjects(), project -> project.getName()), ", ");
+        Assert.fail("Listeners leaked for " + aClass+":\n"+list + "\nOpened projects: " + projectNames);
       }
     }
     finally {

@@ -107,12 +107,14 @@ f:com.intellij.ide.bookmarks.Bookmark
 - setDescription(java.lang.String):V
 - setMnemonic(C):V
 f:com.intellij.ide.bookmarks.BookmarkManager
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>(com.intellij.openapi.project.Project):V
 - addFileBookmark(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - addTextBookmark(com.intellij.openapi.vfs.VirtualFile,I,java.lang.String):com.intellij.ide.bookmarks.Bookmark
 - applyNewStateInTestMode(java.util.List):V
 - deleteMnemonic(com.intellij.ide.bookmarks.Bookmark):V
+- dispose():V
 - findBookmarkForMnemonic(C):com.intellij.ide.bookmarks.Bookmark
 - findEditorBookmark(com.intellij.openapi.editor.Document,I):com.intellij.ide.bookmarks.Bookmark
 - findElementBookmark(com.intellij.psi.PsiElement):com.intellij.ide.bookmarks.Bookmark
