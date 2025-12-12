@@ -7,13 +7,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -22,7 +25,6 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -156,7 +158,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     e.presentation.isEnabledAndVisible = true
     e.presentation.description = templatePresentation.description
 
-    val commitEditingDataCreationResult = createCommitEditingData(e)
+    val commitEditingDataCreationResult = createCommitEditingData(e.project, e.dataContext.getCommitEditingData())
     if (commitEditingDataCreationResult is Prohibited) {
       val description = commitEditingDataCreationResult.description
       if (description != null) {
@@ -240,22 +242,13 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     return null
   }
 
-  private fun checkNotRebaseDuringRebase(commitEditingData: T): @Nls String? {
-    when (val policy = prohibitRebaseDuringRebasePolicy) {
-      ProhibitRebaseDuringRebasePolicy.Allow -> {
-      }
-      is ProhibitRebaseDuringRebasePolicy.Prohibit -> {
-        val message = getProhibitedStateMessage(commitEditingData, policy.operation)
-        if (message != null) {
-          return message
-        }
-      }
-    }
-    return null
+  private fun checkNotRebaseDuringRebase(commitEditingData: T): @Nls String? = when (val policy = prohibitRebaseDuringRebasePolicy) {
+    ProhibitRebaseDuringRebasePolicy.Allow -> null
+    is ProhibitRebaseDuringRebasePolicy.Prohibit -> getProhibitedStateMessage(commitEditingData, policy.operation)
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val commitEditingRequirements = (createCommitEditingData(e) as Created<T>).data
+    val commitEditingRequirements = (createCommitEditingData(e.project, e.dataContext.getCommitEditingData()) as Created<T>).data
     val description = lastCheckCommitsEditingAvailability(commitEditingRequirements)
 
     if (description != null) {
@@ -268,8 +261,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     }
 
     if (!checkNotInitialCommit(commitEditingRequirements)) {
-      val ans = MessageDialogBuilder.Companion.yesNo(GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.title"),
-                                                     GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.text"))
+      val ans = MessageDialogBuilder.yesNo(GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.title"),
+                                           GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.text"))
         .yesText(CommonBundle.getContinueButtonText())
         .noText(CommonBundle.getCancelButtonText())
         .icon(Messages.getWarningIcon())
@@ -301,18 +294,15 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     return null
   }
 
-  private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {
-    val project = e.project
-    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
-    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
-    val logUiEx = e.getData(VcsLogInternalDataKeys.LOG_UI_EX)
-    val selectedChanges = e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS)?.toList() ?: emptyList()
-
-    if (project == null || selection == null || logDataProvider == null) {
+  protected fun createCommitEditingData(
+    project: Project?,
+    commitEditingActionContext: CommitEditingActionContext?,
+  ): CommitEditingDataCreationResult<T> {
+    if (project == null || commitEditingActionContext == null) {
       return Prohibited()
     }
 
-    val commitList = selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = commitEditingActionContext.selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
@@ -325,7 +315,11 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
     }
 
-    return createCommitEditingData(repository, selection, logDataProvider, logUiEx, selectedChanges)
+    return createCommitEditingData(repository,
+                                   commitEditingActionContext.selection,
+                                   commitEditingActionContext.logData,
+                                   commitEditingActionContext.logUiEx,
+                                   commitEditingActionContext.selectedChanges)
   }
 
   protected open fun getProhibitedStateMessage(
@@ -337,7 +331,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     Repository.State.MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)
     Repository.State.GRAFTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.grafting", operation)
     Repository.State.REVERTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.reverting", operation)
-    else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
   }
 
   open class MultipleCommitEditingData @JvmOverloads constructor(
