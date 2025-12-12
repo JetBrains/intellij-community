@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.core.CoreBundle
-import com.intellij.idea.AppMode
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -127,7 +124,7 @@ class PluginLoadingResult {
     if (context.isPluginDisabled(pluginId)) {
       return PluginIsMarkedDisabled(this)
     }
-    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
+    context.validatePluginIsCompatible(this)?.let {
       return it
     }
     for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
@@ -139,28 +136,6 @@ class PluginLoadingResult {
       if (context.isPluginDisabled(pluginDependency)) {
         return PluginDependencyIsDisabled(this, pluginDependency, false)
       }
-    }
-    return null
-  }
-
-  private fun PluginMainDescriptor.checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginNonLoadReason? {
-    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
-      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
-      val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      return PluginIsIncompatibleWithKotlinMode(this, mode)
-    }
-    if (isBundled) {
-      return null
-    }
-    if (AppMode.isDisableNonBundledPlugins()) {
-      return NonBundledPluginsAreExplicitlyDisabled(this)
-    }
-    PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {
-      return it
-    }
-    // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
-    if (isPluginBroken(pluginId, version)) {
-      return PluginIsMarkedBroken(this)
     }
     return null
   }
