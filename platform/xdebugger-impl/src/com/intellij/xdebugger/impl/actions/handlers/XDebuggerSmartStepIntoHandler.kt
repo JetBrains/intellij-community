@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetDto
 import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetId
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.ui.Hint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ListActions
@@ -53,7 +54,6 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
@@ -116,29 +116,33 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
     val stepData = editor.getUserData(SMART_STEP_INPLACE_DATA)
     if (stepData != null) {
       stepData.stepIntoCurrent()
+      return
     }
-    else {
-      try {
-        val targets = computeTargets(session).map { it.target() }
-        withContext(Dispatchers.EDT) {
-          if (!handleSimpleCases(targets, session)) {
-            choose(targets, position, session, editor)
-          }
-        }
-      }
-      catch (ce: CancellationException) {
-        throw ce
-      }
-      catch (_: Throwable) {
-        // TODO: need to show some error notification here, but currently we don't have a proper error handling mechanism
+    try {
+      val targets = computeTargets(session)?.map { it.target() }
+      if (targets == null) {
+        // fallback to step into
         session.stepInto(ignoreBreakpoints = false)
+        return
       }
+      withContext(Dispatchers.EDT) {
+        if (handleSimpleCases(targets, session)) return@withContext
+
+        choose(targets, position, session, editor)
+      }
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Throwable) {
+      LOG.error("Exception while smart step into, falling back to step into", e)
+      session.stepInto(ignoreBreakpoints = false)
     }
   }
 
   protected open suspend fun computeTargets(
     session: XDebugSessionProxy,
-  ): List<XSmartStepIntoTargetDto> {
+  ): List<XSmartStepIntoTargetDto>? {
     return XDebugSessionApi.getInstance().computeSmartStepTargets(session.id)
   }
 

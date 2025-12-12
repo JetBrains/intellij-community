@@ -52,7 +52,9 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
+import org.jetbrains.concurrency.rejectedPromise
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
@@ -128,32 +130,32 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto> {
+  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>? {
     return computeTargets(sessionId) { handler, position ->
       withContext(Dispatchers.EDT) {
-        handler.computeSmartStepVariantsAsync(position).await()
+        handler.computeSmartStepVariantsAsync(position).awaitOrNullIfRejected()
       }
     }
   }
 
-  override suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto> {
+  override suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>? {
     return computeTargets(sessionId) { handler, position ->
       withContext(Dispatchers.EDT) {
-        handler.computeStepIntoVariants(position).await()
+        handler.computeStepIntoVariants(position).awaitOrNullIfRejected()
       }
     }
   }
 
   private suspend fun computeTargets(
     sessionId: XDebugSessionId,
-    computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>,
-  ): List<XSmartStepIntoTargetDto> {
-    val session = sessionId.findValue() ?: return emptyList()
-    val scope = session.currentSuspendCoroutineScope ?: return emptyList()
-    val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
-    val sourcePosition = session.topFramePosition ?: return emptyList()
+    computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>?,
+  ): List<XSmartStepIntoTargetDto>? {
+    val session = sessionId.findValue() ?: return null
+    val scope = session.currentSuspendCoroutineScope ?: return null
+    val handler = session.debugProcess.smartStepIntoHandler ?: return null
+    val sourcePosition = session.topFramePosition ?: return null
     try {
-      return computeVariants(handler, sourcePosition).map { variant ->
+      return computeVariants(handler, sourcePosition)?.map { variant ->
         val id = variant.storeGlobally(scope, session)
         readAction {
           val textRange = variant.highlightRange?.toRpc()
@@ -163,7 +165,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       }
     }
     catch (_: IndexNotReadyException) {
-      return emptyList()
+      return null
     }
   }
 
@@ -388,4 +390,9 @@ internal fun XStackFrame.computeTextPresentation(): XStackFramePresentation {
   val parts = mutableListOf<XStackFramePresentationFragment>()
   customizeTextPresentation { fragment, attributes -> parts += XStackFramePresentationFragment(fragment, attributes.toRpc()) }
   return XStackFramePresentation(parts, null, null)
+}
+
+private suspend fun <T> Promise<T>.awaitOrNullIfRejected(): T? {
+  if (this === rejectedPromise<T>()) return null
+  return await()
 }

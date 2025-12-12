@@ -47,8 +47,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun smartStepInto(smartStepTargetId: XSmartStepIntoTargetId)
   suspend fun smartStepIntoEmpty(sessionId: XDebugSessionId)
-  suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>
-  suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>
+  suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>?
+  suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>?
 
   suspend fun forceStepInto(sessionId: XDebugSessionId)
 
