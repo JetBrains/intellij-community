@@ -422,11 +422,8 @@ com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 - a:getLibraryId():com.intellij.platform.workspace.jps.entities.LibraryId
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils
 - sf:findLibraryId(com.intellij.openapi.roots.libraries.Library):com.intellij.platform.workspace.jps.entities.LibraryId
-- sf:presentableName(com.intellij.platform.workspace.jps.entities.LibraryEntity):java.lang.String
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils
 - sf:getModuleLevelLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkEntityUtilsKt
-- sf:presentableName(com.intellij.platform.workspace.jps.entities.SdkEntity):java.lang.String
 com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 - sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory$Companion
 - a:createEntitySourceForModule(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.platform.workspace.storage.EntitySource

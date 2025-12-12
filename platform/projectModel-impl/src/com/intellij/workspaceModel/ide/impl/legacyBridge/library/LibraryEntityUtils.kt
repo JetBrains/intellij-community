@@ -59,7 +59,9 @@ fun findLibraryId(library: Library): LibraryId {
  *
  * @return name of this [LibraryEntity] to be shown to user.
  */
-fun LibraryEntity.presentableName(): String {
+@get:ApiStatus.Internal
+val LibraryEntity.presentableName: String
+  get() {
   return LibraryNameGenerator.getLegacyLibraryName(symbolicId) ?: getPresentableNameForUnnamedLibrary()
 }
 
