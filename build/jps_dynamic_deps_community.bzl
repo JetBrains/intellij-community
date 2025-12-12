@@ -116,7 +116,7 @@ def _targets_repo_impl(ctx):
 
 targets_repo = repository_rule(
     implementation = _targets_repo_impl,
-    local = True,  # Rerun if filesystem changes
+    # local = True,  # Rerun if filesystem changes
 )
 
 # Define the module extension that uses the repo rule
