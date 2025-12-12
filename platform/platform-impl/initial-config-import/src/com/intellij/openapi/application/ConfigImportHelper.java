@@ -1009,7 +1009,7 @@ public final class ConfigImportHelper {
     @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
     @NotNull List<IdeaPluginDescriptor> pluginsToDownload
   ) {
-    @Nullable PluginLoadingResult oldIdeLoadingResult = null;
+    @Nullable PluginDescriptorLoadingResult oldIdePlugins = null;
     try {
       /* FIXME
        * in production, bundledPluginPath from the options is always null, it is set only in tests.
@@ -1018,14 +1018,9 @@ public final class ConfigImportHelper {
        * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
        * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
        */
-      var pluginLists = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
+      oldIdePlugins = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, options.compatibleBuildNumber
       );
-      var initContext = new ProductPluginInitContext(
-        options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
-      );
-      oldIdeLoadingResult = new PluginLoadingResult();
-      oldIdeLoadingResult.initAndAddAll(pluginLists, initContext);
     }
     catch (ExecutionException | InterruptedException e) {
       return false;
@@ -1034,7 +1029,12 @@ public final class ConfigImportHelper {
       options.log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
 
-    if (oldIdeLoadingResult != null) {
+    if (oldIdePlugins != null) {
+      var initContext = new ProductPluginInitContext(
+        options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
+      );
+      PluginLoadingResult oldIdeLoadingResult = new PluginLoadingResult();
+      oldIdeLoadingResult.initAndAddAll(oldIdePlugins, initContext);
       if (Boolean.getBoolean(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY)) {
         partitionNonBundled(oldIdeLoadingResult.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
           var brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
