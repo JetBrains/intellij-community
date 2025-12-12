@@ -403,6 +403,7 @@ internal class TerminalToolWindowTabsManagerImpl(
           backendTabId(tab.id)
           sessionId(tab.sessionId)
           portForwardingId(tab.portForwardingId)
+          requestFocus(false)  // Otherwise it may trigger the tool window showing
         }
         builder.createTab()
       }
