@@ -3,9 +3,14 @@ package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.configureByK2ModeCodeFragment
 import java.nio.file.Paths
 
 abstract class AbstractK2CodeFragmentCompletionTest : AbstractCodeFragmentCompletionTest() {
+
+    override fun configureFixture(testPath: String) {
+        myFixture.configureByK2ModeCodeFragment(testPath)
+    }
 
     override fun doTest(filePath: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

@@ -2,4 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-abstract class AbstractK1CodeFragmentAutoImportTest : AbstractCodeFragmentAutoImportTest()
+abstract class AbstractK1CodeFragmentAutoImportTest : AbstractCodeFragmentAutoImportTest() {
+    override fun configureByCodeFragment(filePath: String) {
+        myFixture.configureByK1ModeCodeFragment(filePath)
+    }
+}

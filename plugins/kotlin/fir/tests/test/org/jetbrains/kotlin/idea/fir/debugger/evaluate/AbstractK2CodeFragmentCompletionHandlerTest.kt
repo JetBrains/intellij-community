@@ -2,5 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionHandlerTest
+import org.jetbrains.kotlin.idea.debugger.evaluate.configureByK2ModeCodeFragment
 
-abstract class AbstractK2CodeFragmentCompletionHandlerTest : AbstractCodeFragmentCompletionHandlerTest()
+abstract class AbstractK2CodeFragmentCompletionHandlerTest : AbstractCodeFragmentCompletionHandlerTest() {
+    override fun setUpFixture(testPath: String) {
+        myFixture.configureByK2ModeCodeFragment(dataFile(testPath).path)
+    }
+}

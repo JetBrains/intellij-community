@@ -44,16 +44,7 @@ internal fun KtCodeFragment.checkImports(testFile: File) {
 }
 
 @OptIn(KaExperimentalApi::class)
-internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String, useFirCodeFragment: Boolean = false) {
-    if (useFirCodeFragment) {
-        configureByK2ModeCodeFragment(filePath)
-    } else {
-        configureByK1ModeCodeFragment(filePath)
-    }
-}
-
-@OptIn(KaExperimentalApi::class)
-internal fun JavaCodeInsightTestFixture.configureByK2ModeCodeFragment(filePath: String) {
+fun JavaCodeInsightTestFixture.configureByK2ModeCodeFragment(filePath: String) {
     configureByFile(File(filePath).name)
 
     val elementAt = file?.findElementAt(caretOffset)

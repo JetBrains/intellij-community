@@ -6,13 +6,13 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import java.nio.file.Paths
 
-abstract class AbstractCodeFragmentCompletionTest : AbstractJvmBasicCompletionTestBase() {
-    override fun configureFixture(testPath: String) {
-        myFixture.configureByCodeFragment(testPath)
-    }
-}
+abstract class AbstractCodeFragmentCompletionTest : AbstractJvmBasicCompletionTestBase()
 
 abstract class AbstractK1CodeFragmentCompletionTest : AbstractCodeFragmentCompletionTest() {
+    override fun configureFixture(testPath: String) {
+        myFixture.configureByK1ModeCodeFragment(testPath)
+    }
+
     override fun doTest(filePath: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(filePath),

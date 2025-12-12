@@ -16,12 +16,12 @@ import java.io.File
 
 abstract class AbstractCodeFragmentHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
     open fun doTest(filePath: String) {
-        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
+        configureByCodeFragment(filePath)
         checkHighlighting(filePath)
     }
 
     protected open fun doTestWithImport(filePath: String) {
-        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
+        configureByCodeFragment(filePath)
 
         project.executeWriteCommand("Imports insertion") {
             val fileText = FileUtil.loadFile(File(filePath), true)
@@ -39,6 +39,8 @@ abstract class AbstractCodeFragmentHighlightingTest : KotlinLightCodeInsightFixt
     protected open fun checkHighlighting(filePath: String) {
         myFixture.checkHighlighting(true, false, false)
     }
+
+    protected abstract fun configureByCodeFragment(filePath: String)
 }
 
 abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHighlightingTest() {
@@ -68,6 +70,10 @@ abstract class AbstractK1CodeFragmentHighlightingTest : AbstractCodeFragmentHigh
         }
 
         super.checkHighlighting(filePath)
+    }
+
+    override fun configureByCodeFragment(filePath: String) {
+        myFixture.configureByK1ModeCodeFragment(filePath)
     }
 
     private val inspectionDirectives: List<String> =

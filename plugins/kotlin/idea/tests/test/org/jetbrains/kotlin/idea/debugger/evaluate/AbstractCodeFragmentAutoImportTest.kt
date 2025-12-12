@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 
 abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisitorTest() {
     override fun doTest(filePath: String) {
-        myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
+        configureByCodeFragment(filePath)
         myFixture.doHighlighting()
 
         val importFix = myFixture.availableIntentions.singleOrNull { it.familyName == "Import" }
@@ -24,4 +24,6 @@ abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisit
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    protected abstract fun configureByCodeFragment(filePath: String)
 }
