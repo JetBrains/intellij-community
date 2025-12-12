@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentAutoImportTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.configureByK2ModeCodeFragment
 import java.nio.file.Paths
 
 abstract class AbstractK2CodeFragmentAutoImportTest : AbstractCodeFragmentAutoImportTest() {

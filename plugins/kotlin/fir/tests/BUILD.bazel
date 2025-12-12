@@ -81,6 +81,7 @@ jvm_library(
     "//plugins/kotlin/formatter/minimal",
     "//plugins/kotlin/base/code-insight/minimal",
     "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/jvm-debugger/core",
     "//plugins/kotlin/jvm-debugger/evaluation",
     "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
     "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",

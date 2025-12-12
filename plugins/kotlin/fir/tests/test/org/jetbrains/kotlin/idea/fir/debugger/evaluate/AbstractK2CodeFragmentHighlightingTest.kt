@@ -6,7 +6,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
-import org.jetbrains.kotlin.idea.debugger.evaluate.configureByK2ModeCodeFragment
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.nio.file.Paths
 
