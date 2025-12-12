@@ -213,22 +213,21 @@ suspend fun runTestBuild(
 
 private val defaultLogFactory = Logger.getFactory()
 
-internal suspend fun doRunTestBuild(
+internal suspend fun <T> doRunTestBuild(
   context: BuildContext,
   traceSpanName: String,
   writeTelemetry: Boolean,
   checkIntegrityOfEmbeddedFrontend: Boolean,
   checkThatBundledPluginInFrontendArePresent: Boolean,
   checkPrivatePluginModulesAreNotPublic: Boolean = true,
-  build: suspend (context: BuildContext) -> Unit,
-) {
+  build: suspend (context: BuildContext) -> T,
+): T {
   var outDir: Path? = null
   var traceFile: Path? = null
-  var error: Throwable? = null
   val buildLogsDir = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName")
   Logger.setFactory(TestLoggerFactory::class.java)
   try {
-    spanBuilder(traceSpanName).use { span ->
+    return spanBuilder(traceSpanName).use { span ->
       context.cleanupJarCache()
       outDir = context.paths.buildOutputDir
       span.setAttribute("outDir", outDir.toString())
@@ -238,7 +237,7 @@ internal suspend fun doRunTestBuild(
         }
       }
       try {
-        build(context)
+        val result = build(context)
 
         val softly = SoftAssertions()
         if (checkIntegrityOfEmbeddedFrontend) {
@@ -257,6 +256,8 @@ internal suspend fun doRunTestBuild(
           checkPrivatePluginModulesAreNotPublic(context, softly)
         }
         softly.assertAll()
+
+        result
       }
       catch (e: CancellationException) {
         throw e
@@ -270,19 +271,18 @@ internal suspend fun doRunTestBuild(
         copyLogs(context, buildLogsDir)
 
         if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
-          error = TestAbortedException("failed to load data for build scripts", e)
+          throw TestAbortedException("failed to load data for build scripts", e)
         }
         else {
-          error = e
+          throw e
         }
-      }
-      finally {
-        // close debug logging to prevent locking of the output directory on Windows
-        context.messages.close()
       }
     }
   }
   finally {
+    // close debug logging to prevent locking of the output directory on Windows
+    context.messages.close()
+
     closeKtorClient()
 
     if (traceFile != null) {
@@ -302,10 +302,6 @@ internal suspend fun doRunTestBuild(
       System.err.println("cannot cleanup $outDir:")
       e.printStackTrace(System.err)
     }
-  }
-
-  error?.let {
-    throw it
   }
 }
 

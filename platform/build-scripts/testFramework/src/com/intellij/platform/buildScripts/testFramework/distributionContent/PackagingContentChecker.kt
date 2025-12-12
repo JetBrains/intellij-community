@@ -13,8 +13,10 @@ import com.intellij.platform.distributionContent.testFramework.deserializeModule
 import com.intellij.platform.distributionContent.testFramework.deserializePluginData
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.util.lang.HashMapZipFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
@@ -31,7 +33,7 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestInfo
-import org.junit.jupiter.api.function.Executable
+import org.opentest4j.TestAbortedException
 import java.nio.file.Path
 
 private data class PackageResult(
@@ -56,7 +58,8 @@ private data class ContentReportList(
 typealias GeneratorValidator = suspend (projectHome: Path, outputProvider: ModuleOutputProvider) -> ModelValidationResult
 
 @ApiStatus.Internal
-suspend fun createContentCheckTests(
+fun createContentCheckTests(
+  scope: CoroutineScope,
   homePath: Path,
   productProperties: ProductProperties,
   contentYamlPath: String,
@@ -66,7 +69,10 @@ suspend fun createContentCheckTests(
   suggestedReviewer: String? = null,
   modelValidator: GeneratorValidator? = null,
 ): Iterator<DynamicTest> {
-  val (validationResult, packageResult) = coroutineScope {
+  productProperties.buildDocAuthoringAssets = false
+
+  // Setup is async - validation and packaging tasks will await it
+  val contextDeferred: Deferred<BuildContext> = scope.async {
     val context = createBuildContext(
       projectHome = homePath,
       productProperties = productProperties,
@@ -79,62 +85,86 @@ suspend fun createContentCheckTests(
         customizer = { it.customizeBuildOptions() },
       ),
     )
-
     // needed for TC, otherwise modelValidator will fail (as no module compilation outputs)
     context.compileProductionModules()
-
-    // validate that generated files are up to date (if validator is provided)
-    val validationDeferred = async {
-      modelValidator?.invoke(homePath, context.outputProvider) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
-    }
-
-    val packageDeferred = async {
-      var result: PackageResult? = null
-
-      productProperties.buildDocAuthoringAssets = false
-
-      computePackageResult(testInfo = testInfo, contentConsumer = { result = it }, context = context)
-      result!!
-    }
-
-    // wait for validation first - if it has errors, cancel packaging and return early
-    val validation = validationDeferred.await()
-    if (validation.diffs.isNotEmpty() || validation.errors.isNotEmpty()) {
-      packageDeferred.cancel()
-      validation to null
-    }
-    else {
-      validation to packageDeferred.await()
-    }
+    context
   }
 
-  // if model validation failed, only report those errors (skip packaging tests to avoid confusing cascading failures)
-  if (packageResult == null) {
-    return sequence {
-      for (diff in validationResult.diffs) {
-        val relativePath = homePath.relativize(diff.path)
-        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-sync: $relativePath)") {
-          throw FileComparisonFailedError(
-            message = """Generated file is out of sync: $relativePath
-                          |Run 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update.
-                          """.trimMargin(),
-            expected = diff.expectedContent,
-            actual = diff.actualContent,
-            expectedFilePath = diff.path.toString(),
-          )
-        })
-      }
-
-      for (error in validationResult.errors) {
-        yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation: ${error.id})") {
-          throw AssertionError(error.message)
-        })
-      }
-    }.iterator()
+  // Start both tasks immediately in caller's scope (parallel after context is ready)
+  val validationDeferred: Deferred<ModelValidationResult> = scope.async {
+    val context = contextDeferred.await()
+    modelValidator?.invoke(homePath, context.outputProvider) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
   }
 
-  val projectHome = packageResult.projectHome
+  val packagingDeferred: Deferred<PackageResult> = scope.async {
+    computePackageResult(testInfo = testInfo, context = contextDeferred.await())
+  }
+
   return sequence {
+    // Model Validation - awaits inside test to capture timing
+    yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation)") {
+      val result = runBlocking { validationDeferred.await() }
+      if (result.diffs.isNotEmpty()) {
+        val diff = result.diffs.first()
+        val relativePath = homePath.relativize(diff.path)
+        throw FileComparisonFailedError(
+          message = "Generated file is out of sync: $relativePath\nRun 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update." +
+                    if (result.diffs.size > 1) "\n(${result.diffs.size - 1} more files out of sync)" else "",
+          expected = diff.expectedContent,
+          actual = diff.actualContent,
+          expectedFilePath = diff.path.toString(),
+        )
+      }
+      if (result.errors.isNotEmpty()) {
+        val error = result.errors.first()
+        throw AssertionError("Model validation error (${error.id}): ${error.message}" +
+                             if (result.errors.size > 1) "\n(${result.errors.size - 1} more errors)" else "")
+      }
+    })
+
+    // After first test yields, get validation result (instant - already complete)
+    @Suppress("RunBlockingInSuspendFunction")
+    val validationResult = runBlocking { validationDeferred.await() }
+
+    // Yield additional tests for remaining diffs (skip first - already shown)
+    for ((index, diff) in validationResult.diffs.withIndex()) {
+      if (index == 0) continue
+      val relativePath = homePath.relativize(diff.path)
+      yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation: $relativePath)") {
+        throw FileComparisonFailedError(
+          message = "Generated file is out of sync: $relativePath\nRun 'Generate Product Layouts' or 'bazel run //platform/buildScripts:plugin-model-tool' to update.",
+          expected = diff.expectedContent,
+          actual = diff.actualContent,
+          expectedFilePath = diff.path.toString(),
+        )
+      })
+    }
+
+    // Yield additional tests for remaining errors (skip first - already shown)
+    for ((index, error) in validationResult.errors.withIndex()) {
+      if (index == 0) continue
+      yield(DynamicTest.dynamicTest("${testInfo.spanName}(model-validation: ${error.id})") {
+        throw AssertionError("Model validation error: ${error.message}")
+      })
+    }
+
+    // Packaging - awaits inside test to capture timing
+    yield(DynamicTest.dynamicTest("${testInfo.spanName}(packaging)") {
+      if (validationResult.diffs.isNotEmpty() || validationResult.errors.isNotEmpty()) {
+        throw TestAbortedException("Skipped: model validation failed")
+      }
+      runBlocking { packagingDeferred.await() }
+    })
+
+    // Content check tests - use packaging result
+    if (validationResult.diffs.isNotEmpty() || validationResult.errors.isNotEmpty()) {
+      return@sequence
+    }
+
+    @Suppress("RunBlockingInSuspendFunction")
+    val packageResult = runBlocking { packagingDeferred.await() }
+
+    val projectHome = packageResult.projectHome
     val contentList = packageResult.content
 
     yield(DynamicTest.dynamicTest("${testInfo.spanName}(platform)") {
@@ -162,30 +192,39 @@ suspend fun createContentCheckTests(
     )
 
     if (checkPlugins) {
-      // a non-bundled plugin may duplicated bundled one
-      // - first check non-bundled: any valid mismatch will lead to test failure
-      // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
-
-      val bundled = toMap(contentList.bundled)
-      val nonBundled = toMap(contentList.nonBundled)
-
-      checkPlugins(
-        fileEntries = bundled.values.asSequence(),
-        project = project,
-        projectHome = projectHome,
-        nonBundled = nonBundled,
-        testInfo = testInfo,
-      )
-
-      checkPlugins(
-        fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
-        project = project,
-        projectHome = projectHome,
-        nonBundled = null,
-        testInfo = testInfo,
-      )
+      checkPlugins(contentList = contentList, project = project, projectHome = projectHome, testInfo = testInfo)
     }
   }.iterator()
+}
+
+private suspend fun SequenceScope<DynamicTest>.checkPlugins(
+  contentList: ContentReportList,
+  project: JpsProject,
+  projectHome: Path,
+  testInfo: TestInfo,
+) {
+  // a non-bundled plugin may duplicated bundled one
+  // - first check non-bundled: any valid mismatch will lead to test failure
+  // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
+
+  val bundled = toMap(contentList.bundled)
+  val nonBundled = toMap(contentList.nonBundled)
+
+  checkPlugins(
+    fileEntries = bundled.values.asSequence(),
+    project = project,
+    projectHome = projectHome,
+    nonBundled = nonBundled,
+    testInfo = testInfo,
+  )
+
+  checkPlugins(
+    fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
+    project = project,
+    projectHome = projectHome,
+    nonBundled = null,
+    testInfo = testInfo,
+  )
 }
 
 private fun BuildOptions.customizeBuildOptions() {
@@ -243,7 +282,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
     //  continue
     //}
 
-    yield(DynamicTest.dynamicTest("${testInfo.spanName}(${getPluginContentKey(item)})", Executable {
+    yield(DynamicTest.dynamicTest("${testInfo.spanName}(${getPluginContentKey(item)})") {
       checkThatContentIsNotChanged(
         actualFileEntries = item.content,
         expectedFile = expectedFile,
@@ -253,7 +292,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
       )
 
       if (nonBundled != null) {
-        val nonBundledVersion = nonBundled.get(getPluginContentKey(item)) ?: return@Executable
+        val nonBundledVersion = nonBundled.get(getPluginContentKey(item)) ?: return@dynamicTest
         val a = normalizeContentReport(fileEntries = item.content, short = true)
         val b = normalizeContentReport(fileEntries = nonBundledVersion.content, short = true)
         if (a != b) {
@@ -262,18 +301,14 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
           "\nnon-bundled:\n$b"
         }
       }
-    }))
+    })
   }
 }
 
 private fun getPluginContentKey(item: PluginContentReport): String = item.mainModule + (if (item.os == null) "" else " (os=${item.os})")
 
-private suspend fun computePackageResult(
-  testInfo: TestInfo,
-  contentConsumer: (PackageResult) -> Unit,
-  context: BuildContext,
-) {
-  doRunTestBuild(
+private suspend fun computePackageResult(testInfo: TestInfo, context: BuildContext): PackageResult {
+  return doRunTestBuild(
     context = context,
     writeTelemetry = true,
     checkIntegrityOfEmbeddedFrontend = false,
@@ -281,15 +316,12 @@ private suspend fun computePackageResult(
     traceSpanName = testInfo.spanName,
     build = { context ->
       buildDistributions(context)
-      extraValidatePackageResult(context, contentConsumer)
+      extraValidatePackageResult(context)
     },
   )
 }
 
-private fun extraValidatePackageResult(
-  context: BuildContext,
-  contentConsumer: (PackageResult) -> Unit,
-) {
+private fun extraValidatePackageResult(context: BuildContext): PackageResult {
   val file = context.paths.artifactDir.resolve("content-report.zip")
 
   HashMapZipFile.load(file).use { zip ->
@@ -331,18 +363,16 @@ private fun extraValidatePackageResult(
         }
       }
 
-    contentConsumer(
-      PackageResult(
-        content = ContentReportList(
-          platform = getPlatformData("platform.yaml"),
-          productModules = getData("product-modules.yaml"),
-          bundled = getData("bundled-plugins.yaml"),
-          nonBundled = getData("non-bundled-plugins.yaml"),
-          moduleSets = moduleSets,
-        ),
-        jpsProject = context.project,
-        projectHome = context.paths.projectHome,
-      )
+    return PackageResult(
+      content = ContentReportList(
+        platform = getPlatformData("platform.yaml"),
+        productModules = getData("product-modules.yaml"),
+        bundled = getData("bundled-plugins.yaml"),
+        nonBundled = getData("non-bundled-plugins.yaml"),
+        moduleSets = moduleSets,
+      ),
+      jpsProject = context.project,
+      projectHome = context.paths.projectHome,
     )
   }
 }
