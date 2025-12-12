@@ -864,6 +864,85 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/convertRangeCheckToTwoComparisons")
+    public static class ConvertRangeCheckToTwoComparisons extends AbstractSharedK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentTypes.kt")
+        public void testDifferentTypes() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/differentTypes.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/double.kt");
+        }
+
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/downTo.kt");
+        }
+
+        @TestMetadata("forLoop.kt")
+        public void testForLoop() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/forLoop.kt");
+        }
+
+        @TestMetadata("insideForLoop.kt")
+        public void testInsideForLoop() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/insideForLoop.kt");
+        }
+
+        @TestMetadata("insideForLoop2.kt")
+        public void testInsideForLoop2() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/insideForLoop2.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/int.kt");
+        }
+
+        @TestMetadata("nonConstants.kt")
+        public void testNonConstants() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/nonConstants.kt");
+        }
+
+        @TestMetadata("otherOp.kt")
+        public void testOtherOp() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/otherOp.kt");
+        }
+
+        @TestMetadata("rangeUntil.kt")
+        public void testRangeUntil() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/rangeUntil.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/until.kt");
+        }
+
+        @TestMetadata("userDefinedRange.kt")
+        public void testUserDefinedRange() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/userDefinedRange.kt");
+        }
+
+        @TestMetadata("withSideEffects.kt")
+        public void testWithSideEffects() throws Exception {
+            runTest("../testData/intentions/convertRangeCheckToTwoComparisons/withSideEffects.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
     public abstract static class ConvertToForEachFunctionCall extends AbstractSharedK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -8,7 +7,6 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -48,10 +46,12 @@ fun getRangeBinaryExpressionType(expression: KtExpression): RangeKtExpressionTyp
             if (operationReference?.hasIllegalLiteralPrefixOrSuffix() != false) return null
             RangeKtExpressionType.DOWN_TO
         }
+
         name == "until" -> {
             if (operationReference?.hasIllegalLiteralPrefixOrSuffix() != false) return null
             RangeKtExpressionType.UNTIL
         }
+
         else -> null
     }
 }
