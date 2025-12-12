@@ -1023,13 +1023,13 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
 
   //api_version
   handleArgument(K2JVMCompilerArguments::apiVersion) { apiVersion ->
-    if (apiVersion != null && apiVersion != "2.2") {
+    if (apiVersion != null && apiVersion != "2.3") {
       options.put("api_version", apiVersion)
     }
   }
   //language_version
   handleArgument(K2JVMCompilerArguments::languageVersion) { languageVersion ->
-    if (languageVersion != null && languageVersion != "2.2") {
+    if (languageVersion != null && languageVersion != "2.3") {
       options.put("language_version", languageVersion)
     }
   }

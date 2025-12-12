@@ -79,7 +79,7 @@ _KOPTS = {
         args = dict(
             default = "",
             doc = "Allow using declarations only from the specified version of Kotlin bundled libraries",
-            values = ["2.0", "2.1", "2.2"],
+            values = ["2.0", "2.1", "2.2", "2.3"],
         ),
         type = attr.string,
         value_to_flag = None,
@@ -89,7 +89,7 @@ _KOPTS = {
         args = dict(
             default = "",
             doc = "Provide source compatibility with the specified version of Kotlin",
-            values = ["2.0", "2.1", "2.2"],
+            values = ["2.0", "2.1", "2.2", "2.3"],
         ),
         type = attr.string,
         value_to_flag = None,
