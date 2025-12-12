@@ -138,7 +138,10 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
     @ApiStatus.Internal
     context(_: KaSession)
     open fun getBaseIcon(symbol: KaSymbol): Icon? {
-        val isAbstract = (symbol as? KaDeclarationSymbol)?.modality == KaSymbolModality.ABSTRACT
+        val isAbstract by lazy(LazyThreadSafetyMode.NONE) {
+            (symbol as? KaDeclarationSymbol)?.modality == KaSymbolModality.ABSTRACT
+        }
+
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {
