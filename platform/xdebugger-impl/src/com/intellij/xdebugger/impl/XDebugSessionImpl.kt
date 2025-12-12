@@ -232,16 +232,18 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myMockRunContentDescriptor
   }
 
+  val hasSessionTab: Boolean get() = mySessionTab.isCompleted
 
   private val isTabInitialized: Boolean
-    get() = myTabInitDataFlow.value != null && (SplitDebuggerMode.isSplitDebugger() || mySessionTab.isCompleted)
+    get() = myTabInitDataFlow.value != null && (SplitDebuggerMode.isSplitDebugger() || hasSessionTab)
 
   private fun assertSessionTabInitialized() {
-    if (myShowToolWindowOnSuspendOnly && !this.isTabInitialized) {
-      LOG.error("Debug tool window isn't shown yet because debug process isn't suspended")
+    val initialized = isTabInitialized
+    if (myShowToolWindowOnSuspendOnly) {
+      LOG.assertTrue(initialized, "Debug tool window isn't shown yet because debug process isn't suspended")
     }
     else {
-      LOG.assertTrue(this.isTabInitialized, "Debug tool window not initialized yet!")
+      LOG.assertTrue(initialized, "Debug tool window not initialized yet!")
     }
   }
 
@@ -431,6 +433,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myConsoleView
   }
 
+  /**
+   * Use [runWhenTabReady] to avoid races.
+   */
   val sessionTab: XDebugSessionTab?
     get() {
       if (SplitDebuggerMode.showSplitWarnings()) {
@@ -440,12 +445,26 @@ class XDebugSessionImpl @JvmOverloads constructor(
       return getSessionTabInternal()
     }
 
+  /**
+   * Calls [block] in EDT when the tab is ready.
+   */
+  @ApiStatus.Obsolete
+  fun runWhenTabReady(block: (XDebugSessionTab?) -> Unit) {
+    if (AppMode.isRemoteDevHost() && SplitDebuggerMode.isSplitDebugger()) {
+      if (SplitDebuggerMode.showSplitWarnings()) {
+        LOG.error("[Split debugger] Debugger tab is not accessible in RemDev on backend")
+      }
+      return
+    }
+    assertSessionTabInitialized()
+    tabCoroutineScope.launch(Dispatchers.EDT) {
+      val tab = mySessionTab.await()
+      block(tab)
+    }
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getSessionTabInternal(): XDebugSessionTab? = if (mySessionTab.isCompleted) mySessionTab.getCompleted() else null
-
-  val sessionTabDeferred: Deferred<XDebugSessionTab?>
-    @ApiStatus.Internal
-    get() = mySessionTab
 
   /**
    * Use [runWhenUiReady] to avoid races.
@@ -480,7 +499,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         getMockRunContentDescriptorIfInitialized()?.runnerLayoutUi
       }
       else {
-        sessionTabDeferred.await()?.ui
+        mySessionTab.await()?.ui
       }
       if (ui != null) {
         block(ui)

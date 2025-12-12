@@ -39,7 +39,6 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -84,8 +83,6 @@ internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionP
     get() = sessionImplIfAvailable?.valueMarkers
   override val sessionTab: XDebugSessionTab?
     get() = sessionImplIfAvailable?.sessionTab
-  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab?>
-    get() = sessionImpl.sessionTabDeferred
   override val isPaused: Boolean
     get() = session.isPaused
   override val isStopped: Boolean

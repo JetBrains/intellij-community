@@ -152,9 +152,6 @@ class FrontendXDebuggerSession private constructor(
   override val sessionTab: XDebugSessionTab?
     get() = if (sessionTabDeferred.isCompleted) sessionTabDeferred.getCompleted() else null
 
-  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab?>
-    get() = sessionTabDeferred
-
   override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData = FrontendXDebugSessionData(sessionDto.sessionDataDto, tabScope, sessionStateFlow)
 

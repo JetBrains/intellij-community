@@ -27,7 +27,6 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
@@ -55,7 +54,6 @@ interface XDebugSessionProxy {
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?
   val sessionTab: IXDebuggerSessionTab?
-  val sessionTabWhenInitialized: Deferred<IXDebuggerSessionTab?>
   val isStopped: Boolean
   val isPaused: Boolean
   val isSuspended: Boolean
