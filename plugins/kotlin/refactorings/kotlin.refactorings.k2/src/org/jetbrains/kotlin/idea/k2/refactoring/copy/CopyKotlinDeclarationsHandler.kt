@@ -164,7 +164,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         for (element in elementsToCopy) {
             analyzeInModalWindow(elementsToCopy.first(), RefactoringBundle.message("refactoring.preprocess.usages.progress")) {
-                markInternalUsages(element, element)
+                markInternalUsages(element)
             }
         }
 

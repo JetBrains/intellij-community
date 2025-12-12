@@ -82,7 +82,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     // If we do not search for references, we still need to mark internal usages so that
                     // imports are copied over correctly.
                     // In the branch above, markInternalUsages is called as part of findUsages.
-                    markInternalUsages(elem, elem)
+                    markInternalUsages(elem)
                     emptyList()
                 }
             }
