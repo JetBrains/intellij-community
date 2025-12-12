@@ -119,7 +119,7 @@ internal class BlockTerminalTest(private val shellPath: Path) {
           currentDirectory = "",
           envVariables = emptyMap(),
           commandTokens = listOf(""),
-          shellName = session.shellIntegration.shellType.toShellName(),
+          definedShellName = session.shellIntegration.shellType.toShellName(),
           generatorCommandsRunner = ShellCachingGeneratorCommandsRunner(commandExecutor)
         )
         val commandsListDeferred: Deferred<List<ShellCommandSpec>> = async(Dispatchers.Default) {

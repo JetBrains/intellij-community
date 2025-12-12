@@ -11,12 +11,15 @@ class ShellRuntimeContextImpl(
   override val currentDirectory: String,
   override val envVariables: Map<String, String>,
   override val commandTokens: List<String>,
-  override val shellName: ShellName,
+  private val definedShellName: ShellName?,
   private val generatorCommandsRunner: ShellCommandExecutor,
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null,
   private val fileSystemSupport: ShellFileSystemSupport? = null,
 ) : ShellRuntimeContext, UserDataHolderBase() {
   override val typedPrefix: String = commandTokens.last()
+
+  override val shellName: ShellName
+    get() = definedShellName ?: throw UnsupportedOperationException("Not supported in Reworked Terminal")
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
     return generatorCommandsRunner.runShellCommand(currentDirectory, command)

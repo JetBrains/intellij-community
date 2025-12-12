@@ -175,7 +175,7 @@ internal class ShellCommandSpecManagerTest : BasePlatformTestCase() {
       currentDirectory = "",
       envVariables = emptyMap(),
       commandTokens = listOf(""),
-      shellName = ShellName("dummy"),
+      definedShellName = ShellName("dummy"),
       generatorCommandsRunner = DummyShellCommandExecutor
     )
   }

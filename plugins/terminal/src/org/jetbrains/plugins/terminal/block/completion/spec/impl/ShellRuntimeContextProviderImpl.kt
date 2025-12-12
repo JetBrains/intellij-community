@@ -58,7 +58,7 @@ class ShellRuntimeContextProviderImpl(
       currentDirectory = curDirectory,
       envVariables = emptyMap(),
       commandTokens = commandTokens,
-      shellName = session.shellIntegration.shellType.toShellName(),
+      definedShellName = session.shellIntegration.shellType.toShellName(),
       generatorCommandsRunner = generatorCommandsRunner
     ).apply {
       putUserData(PROJECT_KEY, project)

@@ -38,6 +38,14 @@ interface ShellRuntimeContext {
    */
   val typedPrefix: String
 
+  /**
+   * **Supported only in Experimental 2024 Terminal.**
+   * In the Reworked Terminal it will throw [UnsupportedOperationException].
+   *
+   * Do not use it in new code.
+   * It is expected that completion items computation logic shouldn't depend on the shell.
+   */
+  @get:ApiStatus.Obsolete
   val shellName: ShellName
 
   /**

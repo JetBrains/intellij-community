@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.specs.make
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.terminal.completion.spec.ShellSuggestionType
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -36,8 +39,7 @@ object ShellMakeCommandSpec {
     path: String
   ): List<ShellCompletionSuggestion> {
     if (path.isBlank()) return emptyList()
-    val catCommand = if (shellName.isBash() || shellName.isZsh()) "command cat $path" else "cat $path"
-    val result = runShellCommand(catCommand)
+    val result = runShellCommand("cat $path")
     if (result.exitCode != 0) {
       logger<ShellRuntimeContext>().warn("Get file command for path '$path' failed with exit code ${result.exitCode}, output: ${result.output}")
       return emptyList()

@@ -5,7 +5,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.DIRECTORY
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.FILE
-import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.frontend.view.completion.ShellCommandExecutorReworked
 import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorProcessExecutorImpl
 import com.intellij.terminal.frontend.view.completion.ShellFileSystemSupportImpl
@@ -116,7 +115,7 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
       currentDirectory = currentDirectory,
       envVariables = emptyMap(),
       commandTokens = listOf(path),
-      shellName = ShellName("test"),
+      definedShellName = null,
       generatorCommandsRunner = ShellCommandExecutorReworked(processExecutor),
       generatorProcessExecutor = processExecutor,
       fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)

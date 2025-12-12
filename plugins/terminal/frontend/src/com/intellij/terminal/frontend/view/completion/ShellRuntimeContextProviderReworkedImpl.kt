@@ -5,13 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.EEL_DESCRIPTOR_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.util.ShellType
 
 internal class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
@@ -28,7 +26,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
       currentDirectory = sessionModel.terminalState.value.currentDirectory ?: error("Current directory should be set at this moment"),
       envVariables = envVariables,
       commandTokens = commandTokens,
-      shellName = ShellType.ZSH.toShellName(),
+      definedShellName = null,
       generatorCommandsRunner = shellCommandExecutor,
       generatorProcessExecutor = generatorProcessExecutor,
       fileSystemSupport = fileSystemSupport,

@@ -2,15 +2,15 @@ package com.intellij.terminal.completion.spec
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 @JvmInline
 value class ShellName(val name: String)
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 fun ShellName.isZsh(): Boolean = name == "zsh"
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 fun ShellName.isBash(): Boolean = name == "bash"
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 fun ShellName.isPowerShell(): Boolean = name == "powershell"
