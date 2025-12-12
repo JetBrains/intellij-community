@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRangeLeftAndRightSigns
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFollowedByNewLine
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.isComparable

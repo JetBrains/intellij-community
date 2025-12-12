@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.hints
+package org.jetbrains.kotlin.idea.codeinsight.utils
+
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiComment
@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
-
 @ApiStatus.Internal
 fun ASTNode.isFollowedByNewLine(): Boolean {
     for (sibling in siblings()) {
@@ -30,7 +29,6 @@ fun ASTNode.isFollowedByNewLine(): Boolean {
     }
     return false
 }
-
 
 @ApiStatus.Internal
 enum class RangeKtExpressionType {
@@ -79,6 +77,7 @@ fun KtExpression.getRangeLeftAndRightSigns(): Pair<String, String?>? {
         }
     }
 }
+
 private fun KtOperationReferenceExpression.hasIllegalLiteralPrefixOrSuffix(): Boolean {
     val prevLeaf = PsiTreeUtil.prevLeaf(this)
     val nextLeaf = PsiTreeUtil.nextLeaf(this)

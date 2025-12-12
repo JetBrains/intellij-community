@@ -10,7 +10,7 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeinsight.utils.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractReplaceRangeToInspection.Context
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.canUseRangeUntil
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.isFloatingPointType
