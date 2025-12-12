@@ -230,9 +230,10 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   protected abstract @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
   @RequiresEdt
-  protected @NotNull LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
-                                                      @NotNull ThreeSide targetSide,
-                                                      @NotNull LogicalPosition position) {
+  @NotNull
+  public LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
+                                          @NotNull ThreeSide targetSide,
+                                          @NotNull LogicalPosition position) {
     if (mySyncScrollSupport == null) return position;
     if (baseSide == targetSide) return position;
 
