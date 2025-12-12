@@ -146,7 +146,12 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   ): Job = launch {
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val list = collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
+    val list = try {
+      collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
+    } finally {
+      unmatchedIdsChannel.close()
+    }
+
     LOG.debug { "Matched actions list is collected" }
 
     awaitJob?.join() // wait until all items from the previous step are processed
@@ -258,7 +263,6 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         }
       }
     }.toList()
-    unmatchedIdsChannel.close()
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
     return@coroutineScope matchedActions.sortedWith(comparator)
