@@ -97,7 +97,7 @@ sealed interface JdkProxyProvider {
           ShowSettingsUtil.getInstance().editConfigurable(e.project, HttpProxyConfigurable())
         }))
         .whenExpired { proxyAuthNotificationActive.set(false) }
-      app.invokeLater({ notification.notify(null) }, ModalityState.nonModal())
+      app.invokeLater({ notification.notify(null) }, ModalityState.nonModal())  // workaround for IJPL-223358
     }
   }
 }
