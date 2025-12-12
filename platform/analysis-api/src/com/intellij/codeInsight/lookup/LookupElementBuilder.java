@@ -4,6 +4,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.LookupElementWithEffectiveInsertHandler;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -11,10 +12,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +26,7 @@ import java.util.Set;
  * @see LookupElementDecorator
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
  */
-public final class LookupElementBuilder extends LookupElement {
+public final class LookupElementBuilder extends LookupElement implements LookupElementWithEffectiveInsertHandler {
   private final @NotNull String myLookupString;
   private final @NotNull Object myObject;
   private final @Nullable SmartPsiElementPointer<?> myPsiElement;
@@ -387,6 +385,12 @@ public final class LookupElementBuilder extends LookupElement {
     if (myRenderer != null && renderer != null ? !myRenderer.getClass().equals(renderer.getClass()) : myRenderer != renderer) return false;
 
     return true;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
+    return getInsertHandler();
   }
 
   @Override

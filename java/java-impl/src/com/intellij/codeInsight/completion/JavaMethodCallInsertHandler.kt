@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion
 import com.intellij.codeInsight.completion.JavaMethodCallInsertHandler.Companion.showParameterHints
 import com.intellij.codeInsight.completion.method.*
 import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper.findInsertedCall
+import com.intellij.codeInsight.completion.serialization.InsertHandlerSerializer
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
@@ -63,7 +64,7 @@ public class JavaMethodCallInsertHandler(
    * It is expected that the element is fully set up and ready for insertion.
    */
   item: JavaMethodCallElement,
-) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+) : InsertHandler<JavaMethodCallElement> {
 
   /**
    * tracks the start offset of the reference, needs movableToRight=true to correctly handle insertion of a qualifier
@@ -86,15 +87,18 @@ public class JavaMethodCallInsertHandler(
     myHandlers.forEach { it.handleInsert(context, item) }
   }
 
-  public override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
-    val convertedChildren = myHandlers
-      .mapNotNull { child -> child.asFrontendFriendly() }
+  internal class Converter : InsertHandlerToFrontendFriendlyConverter<JavaMethodCallInsertHandler> {
+    override fun toDescriptor(target: JavaMethodCallInsertHandler): FrontendFriendlyInsertHandler? {
+      val convertedChildren = target.myHandlers.mapNotNull { child ->
+        InsertHandlerSerializer.toDescriptor(child)
+      }
 
-    if (convertedChildren.size != myHandlers.size) return null
+      if (convertedChildren.size != target.myHandlers.size) return null
 
-    val operational = convertedChildren.filterNot { it is NoOpFrontendFriendlyInsertHandler }
+      val operational = convertedChildren.filterNot { it is NoOpFrontendFriendlyInsertHandler }
 
-    return CompositeFrontendFriendlyInsertHandler("JavaMethodCallInsertHandler#frontendFriendly", operational)
+      return CompositeFrontendFriendlyInsertHandler("JavaMethodCallInsertHandler#frontendFriendly", operational)
+    }
   }
 
   public companion object {
@@ -197,7 +201,7 @@ private class MethodCallParenthesesInsertHandler private constructor(
   private val hasParameters: Boolean,
   private val hasTailType: Boolean,
   private val isVoidMethod: Boolean,
-) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+) : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val allItems = context.elements
@@ -205,9 +209,11 @@ private class MethodCallParenthesesInsertHandler private constructor(
     FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams, isVoidMethod)
   }
 
-  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
-    if (hasTailType) return null
-    return FrontendFriendlyParenthesesInsertHandler(hasParameters, isVoidMethod)
+  class Converter : InsertHandlerToFrontendFriendlyConverter<MethodCallParenthesesInsertHandler> {
+    override fun toDescriptor(target: MethodCallParenthesesInsertHandler): FrontendFriendlyInsertHandler? {
+      if (target.hasTailType) return null
+      return FrontendFriendlyParenthesesInsertHandler(target.hasParameters, target.isVoidMethod)
+    }
   }
 
   companion object {
@@ -352,16 +358,18 @@ private class ShowParameterInfoInsertHandler : InsertHandler<JavaMethodCallEleme
   }
 }
 
-private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
+private class MethodCallRegistrationHandler : InsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val methodCall = findInsertedCall(item, context) ?: return
     CompletionMemory.registerChosenMethod(method, methodCall)
   }
 
-  override fun asFrontendFriendly(): FrontendFriendlyInsertHandler {
-    //TODO IJPL-207762 registering functionality is off on frontend, can be implemented separately if needed
-    return NoOpFrontendFriendlyInsertHandler
+  class Converter : InsertHandlerToFrontendFriendlyConverter<MethodCallRegistrationHandler> {
+    override fun toDescriptor(target: MethodCallRegistrationHandler): FrontendFriendlyInsertHandler? {
+      //TODO IJPL-207762 registering functionality is off on frontend, can be implemented separately if needed
+      return NoOpFrontendFriendlyInsertHandler
+    }
   }
 }
 

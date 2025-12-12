@@ -109,6 +109,7 @@ jvm_library(
     "//java/java-syntax:syntax",
     "//java/java-psi-api:psi",
     "//platform/execution",
+    "//libraries/kotlinx/serialization/core",
   ],
   exports = [
     "//platform/lang-impl",
@@ -222,6 +223,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/execution",
     "//platform/testFramework/common",
+    "//libraries/kotlinx/serialization/core",
   ],
   exports = [
     "//platform/lang-impl",

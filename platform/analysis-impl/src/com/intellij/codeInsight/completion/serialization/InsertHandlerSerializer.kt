@@ -2,18 +2,19 @@
 package com.intellij.codeInsight.completion.serialization
 
 import com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.serialization.ExtensionPointSerializer
 import com.intellij.codeInsight.serialization.ExtensionPointSerializerBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Serializer for [FrontendFriendlyInsertHandler].
+ * Serializer for [InsertHandler].
  *
- * It uses [ep_name] to collect serializers for all known [FrontendFriendlyInsertHandlerSerializer] implementations.
+ * It uses [ep_name] to collect serializers for all known [InsertHandlerSerializer] implementations.
  */
 @ApiStatus.Internal
-object FrontendFriendlyInsertHandlerSerializer : ExtensionPointSerializer<FrontendFriendlyInsertHandler, FrontendFriendlyInsertHandler>(
+object InsertHandlerSerializer : ExtensionPointSerializer<InsertHandler<*>, FrontendFriendlyInsertHandler>(
   epName = ep_name,
   descriptorClass = FrontendFriendlyInsertHandler::class
 )

@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.completion.common.protocol
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.serialization.FrontendFriendlyInsertHandlerSerializer
+import com.intellij.codeInsight.completion.FrontendFriendlyInsertHandler
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.LookupElementWithEffectiveInsertHandler
+import com.intellij.codeInsight.completion.serialization.InsertHandlerSerializer
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
  * Note that [LookupElement] can either use an [InsertHandler] or just implement [LookupElement.handleInsert].
  * Both cases are handled here. [LookupElement.handleInsert] is considered a special case of [InsertHandler].
  *
- * @see FrontendFriendlyLookupElement
+ * @see LookupElementWithEffectiveInsertHandler
  * @see FrontendFriendlyInsertHandler
  */
 @Serializable
@@ -35,7 +35,7 @@ sealed interface RpcInsertHandler {
    */
   @Serializable
   data class Frontend(
-    @Serializable(with = FrontendFriendlyInsertHandlerSerializer::class)
+    @Serializable(with = InsertHandlerSerializer::class)
     val insertHandler: FrontendFriendlyInsertHandler,
   ) : RpcInsertHandler {
     override fun toString(): String = buildToString("Frontend") {
@@ -45,33 +45,8 @@ sealed interface RpcInsertHandler {
 }
 
 fun LookupElement.getRpcInsertHandler(): RpcInsertHandler {
-  val handler = when {
-    this is FrontendFriendlyLookupElement -> {
-      when (val frontendFriendly = this.frontendFriendlyInsertHandler) {
-        null -> RpcInsertHandler.Backend
-        else -> RpcInsertHandler.Frontend(frontendFriendly)
-      }
-    }
-    this is LookupElementBuilder -> {
-      this.insertHandler?.toRpc() ?: RpcInsertHandler.Frontend(NoOpFrontendFriendlyInsertHandler)
-    }
-    this is TransparentForInsertHandling && this is LookupElementDecorator<*> -> {
-      this.delegate.getRpcInsertHandler()
-    }
-    LookupElementDecorator.isDecoratedWithInsertHandler(this) -> {
-      (this as LookupElementDecorator<*>).decoratorInsertHandler!!.toRpc()
-    }
-    else -> {
-      RpcInsertHandler.Backend
-    }
-  }
-
-  return handler
-}
-
-private fun InsertHandler<*>.toRpc(): RpcInsertHandler {
-  return when (this) {
-    is FrontendFriendlyInsertHandler -> RpcInsertHandler.Frontend(this)
-    else -> RpcInsertHandler.Backend
-  }
+  val lookupElementWithEffectiveInsertHandler = this as? LookupElementWithEffectiveInsertHandler ?: return RpcInsertHandler.Backend
+  val effectiveInsertHandler = lookupElementWithEffectiveInsertHandler.effectiveInsertHandler ?: return RpcInsertHandler.Backend
+  val frontendFriendlyInsertHandler = InsertHandlerSerializer.toDescriptor(effectiveInsertHandler) ?: return RpcInsertHandler.Backend
+  return RpcInsertHandler.Frontend(frontendFriendlyInsertHandler)
 }

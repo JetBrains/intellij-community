@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable, FrontendFriendlyLookupElement {
+public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable, LookupElementWithEffectiveInsertHandler {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
   public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
   private final @Nullable PsiClass myContainingClass;
@@ -176,9 +176,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public @Nullable FrontendFriendlyInsertHandler getFrontendFriendlyInsertHandler() {
-    JavaMethodCallInsertHandler handler = createInsertHandler();
-    return handler.asFrontendFriendly();
+  public @Nullable InsertHandler<?> getEffectiveInsertHandler() {
+    return createInsertHandler();
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");
