@@ -14,7 +14,6 @@ import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.driver.sdk.waitFor
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JDialog
@@ -99,6 +98,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val installedButton = x { and(byType(JButton::class.java), byAccessibleName("Installed")) }
     val enabledCheckBox = checkBox { and(byType(JCheckBox::class.java), byAccessibleName("Enabled")) }
     val ultimateTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Ultimate")) }
+    val proTagLabel = x { and(byType("com.intellij.ide.plugins.newui.TagComponent"), byAccessibleName("Pro")) }
     val errorNotice = x { byType("com.intellij.ide.plugins.newui.ErrorComponent") }
     val updateButton = x { byAccessibleName("Update") }
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
