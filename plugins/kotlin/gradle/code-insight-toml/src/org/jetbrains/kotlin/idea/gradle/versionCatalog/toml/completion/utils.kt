@@ -17,7 +17,7 @@ internal inline fun <reified I : PsiElement> psiElement(): PsiElementPattern.Cap
 
 internal fun insideLibrariesTable() =
     psiElement()
-        .inFile(DEFAULT_VERSION_CATALOG_NAME_FILE_PATTERN)
+        //.inFile(DEFAULT_VERSION_CATALOG_NAME_FILE_PATTERN)
         .inside(
             psiElement<TomlTable>()
                 .withChild(
