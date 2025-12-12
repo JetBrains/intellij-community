@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
@@ -22,7 +21,7 @@ abstract class Java8OverrideImplementTest<T : ClassMember> : AbstractOverrideImp
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
     fun testOverrideCollectionStream() = doOverrideFileTest("stream")
-    
+
     fun testImplementKotlinInterface() {
         val file = myFixture.addFileToProject(
             "A.kt", """interface A<T> {
@@ -39,7 +38,7 @@ abstract class Java8OverrideImplementTest<T : ClassMember> : AbstractOverrideImp
         myFixture.project.executeWriteCommand("") {
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(myFixture.editor, psiClass, candidates, false, true)
         }
-        
+
         myFixture.checkResultByFile(getTestName(true) + ".after.java")
     }
 }
