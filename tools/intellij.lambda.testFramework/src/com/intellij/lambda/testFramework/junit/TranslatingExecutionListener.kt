@@ -54,7 +54,16 @@ class TranslatingExecutionListener(
 
     val synthetic = getOrCreateSyntheticDescriptor(testDescriptor)
     startedDescriptors.add(synthetic.uniqueId)
-    startIde()
+
+    try {
+      IdeInstance.startIde(modeContainer.mode)
+    }
+    catch (e: Throwable) {
+      delegate.executionStarted(synthetic)
+      delegate.executionFinished(synthetic, TestExecutionResult.failed(e))
+      throw e
+    }
+
     delegate.executionStarted(synthetic)
   }
 
@@ -139,9 +148,5 @@ class TranslatingExecutionListener(
 
     modeContainer.addChild(synthetic)
     return synthetic
-  }
-
-  private fun startIde() {
-    IdeInstance.startIde(modeContainer.mode)
   }
 }
