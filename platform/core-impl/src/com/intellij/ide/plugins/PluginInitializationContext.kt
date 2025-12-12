@@ -113,6 +113,9 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
   if (isPluginBroken(plugin.pluginId, plugin.version)) {
     return PluginIsMarkedBroken(plugin)
   }
+  if (requirePlatformAliasDependencyForLegacyPlugins && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(plugin)) {
+    return PluginIsCompatibleOnlyWithIntelliJIDEA(plugin)
+  }
   return null
 }
 

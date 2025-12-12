@@ -85,11 +85,6 @@ class PluginLoadingResult {
       return
     }
 
-    if (initContext.requirePlatformAliasDependencyForLegacyPlugins && PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies(descriptor)) {
-      addIncompletePlugin(descriptor, PluginIsCompatibleOnlyWithIntelliJIDEA(descriptor))
-      return
-    }
-
     // remove any error that occurred for a plugin with the same `id`
     val pluginId = descriptor.pluginId
     pluginErrors.remove(pluginId)
