@@ -7,15 +7,9 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import java.io.File
-
-@RunWith(JUnit38ClassRunner::class)
-class OldOverrideImplementTest : OverrideImplementTest<OverrideMemberChooserObject>(), OldOverrideImplementTestMixIn
 
 abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplementTest<T>() {
     override val testDataDirectory: File
