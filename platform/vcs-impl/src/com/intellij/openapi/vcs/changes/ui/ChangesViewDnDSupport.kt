@@ -1,101 +1,81 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.ide.dnd.DnDActionInfo;
-import com.intellij.ide.dnd.DnDDragStartBean;
-import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-
-import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
-import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+import com.intellij.ide.dnd.DnDActionInfo
+import com.intellij.ide.dnd.DnDDragStartBean
+import com.intellij.ide.dnd.DnDEvent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.createNameForChangeList
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import com.intellij.platform.vcs.impl.shared.changes.ChangeListDnDSupport.Companion.getInstance
+import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
-  private final @NotNull Project myProject;
-
-  public static void install(@NotNull Project project, @NotNull ChangesTree tree, @NotNull Disposable disposable) {
-    new ChangesViewDnDSupport(project, tree).install(disposable);
-  }
-
-  private ChangesViewDnDSupport(@NotNull Project project, @NotNull ChangesTree tree) {
-    super(tree);
-    myProject = project;
-  }
-
-  @Override
-  protected @Nullable DnDDragStartBean createDragStartBean(@NotNull DnDActionInfo info) {
-    if (info.isMove()) {
-      List<Change> changes = VcsTreeModelData.selected(myTree)
-        .iterateUserObjects(Change.class).toList();
-      List<FilePath> unversionedFiles = VcsTreeModelData.selectedUnderTag(myTree, UNVERSIONED_FILES_TAG)
-        .iterateUserObjects(FilePath.class).toList();
-      List<FilePath> ignoredFiles = VcsTreeModelData.selectedUnderTag(myTree, IGNORED_FILES_TAG)
-        .iterateUserObjects(FilePath.class).toList();
+class ChangesViewDnDSupport private constructor(private val myProject: Project, tree: ChangesTree) : ChangesTreeDnDSupport(tree) {
+  override fun createDragStartBean(info: DnDActionInfo): DnDDragStartBean? {
+    if (info.isMove) {
+      val changes = VcsTreeModelData.selected(myTree)
+        .iterateUserObjects(Change::class.java).toList()
+      val unversionedFiles = VcsTreeModelData.selectedUnderTag(myTree, ChangesBrowserNode.UNVERSIONED_FILES_TAG)
+        .iterateUserObjects(FilePath::class.java).toList()
+      val ignoredFiles = VcsTreeModelData.selectedUnderTag(myTree, ChangesBrowserNode.IGNORED_FILES_TAG)
+        .iterateUserObjects(FilePath::class.java).toList()
 
       if (!changes.isEmpty() || !unversionedFiles.isEmpty() || !ignoredFiles.isEmpty()) {
-        return new DnDDragStartBean(new ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles));
+        return DnDDragStartBean(ChangeListDragBean(myTree, changes, unversionedFiles, ignoredFiles))
       }
     }
 
-    return null;
+    return null
   }
 
-  @Override
-  protected boolean canHandleDropEvent(@NotNull DnDEvent aEvent, @Nullable ChangesBrowserNode<?> dropNode) {
-    Object attached = aEvent.getAttachedObject();
-    if (attached instanceof ChangeListDragBean) {
+  override fun canHandleDropEvent(aEvent: DnDEvent, dropNode: ChangesBrowserNode<*>?): Boolean {
+    val attached = aEvent.getAttachedObject()
+    if (attached is ChangeListDragBean) {
       if (dropNode != null) {
-        final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-        dragBean.setTargetNode(dropNode);
-        return dragBean.getSourceComponent() == myTree && dropNode.canAcceptDrop(dragBean);
+        attached.targetNode = dropNode
+        return attached.sourceComponent === myTree && dropNode.canAcceptDrop(attached)
       }
     }
-    else if (attached instanceof ShelvedChangeListDragBean) {
-      return dropNode == null ||
-             dropNode instanceof ChangesBrowserChangeListNode;
+    else if (attached is ShelvedChangeListDragBean) {
+      return dropNode == null || dropNode is ChangesBrowserChangeListNode
     }
-    return false;
+    return false
   }
 
-  @Override
-  public void drop(DnDEvent aEvent) {
-    Object attached = aEvent.getAttachedObject();
-    if (attached instanceof ShelvedChangeListDragBean dragBean) {
-      ChangesBrowserNode<?> dropRootNode = getDropRootNode(myTree, aEvent);
-      LocalChangeList targetChangeList;
-      if (dropRootNode != null) {
-        targetChangeList = TreeUtil.getUserObject(LocalChangeList.class, dropRootNode);
+  override fun drop(aEvent: DnDEvent) {
+    val attached = aEvent.getAttachedObject()
+    if (attached is ShelvedChangeListDragBean) {
+      val dropRootNode = getDropRootNode(myTree, aEvent)
+      val targetChangeList = if (dropRootNode != null) {
+        TreeUtil.getUserObject(LocalChangeList::class.java, dropRootNode)
       }
       else {
-        ShelvedChangeList changeList = ContainerUtil.getFirstItem(dragBean.getShelvedChangelists());
-        String suggestedName = changeList != null ? changeList.getName() : VcsBundle.message("changes.new.changelist");
-        String listName = ChangeListUtil.createNameForChangeList(myProject, suggestedName);
-        targetChangeList = ChangeListManager.getInstance(myProject).addChangeList(listName, null);
+        val changeList = attached.shelvedChangelists.firstOrNull()
+        val suggestedName = changeList?.name ?: VcsBundle.message("changes.new.changelist")
+        val listName = createNameForChangeList(myProject, suggestedName)
+        ChangeListManager.getInstance(myProject).addChangeList(listName, null)
       }
-      unshelveSilentlyWithDnd(myProject, dragBean, targetChangeList, !isCopyAction(aEvent));
+      ShelveChangesManager.unshelveSilentlyWithDnd(myProject, attached, targetChangeList, !isCopyAction(aEvent))
     }
-    else if (attached instanceof ChangeListDragBean dragBean) {
-      final ChangesBrowserNode<?> changesBrowserNode = dragBean.getTargetNode();
+    else if (attached is ChangeListDragBean) {
+      val changesBrowserNode = attached.targetNode
       if (changesBrowserNode != null) {
-        changesBrowserNode.acceptDrop(ChangeListDnDSupport.getInstance(myProject), dragBean);
+        changesBrowserNode.acceptDrop(getInstance(myProject), attached)
       }
+    }
+  }
+
+  companion object {
+    fun install(project: Project, tree: ChangesTree, disposable: Disposable) {
+      ChangesViewDnDSupport(project, tree).install(disposable)
     }
   }
 }
