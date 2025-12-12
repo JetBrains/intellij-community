@@ -382,7 +382,7 @@ sealed class K2MoveRenameUsageInfo(
         ): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
             val newElements = oldToNewMap.values.toList()
             val topLevelElements = newElements
-                .filter { elem -> newElements.any { otherElem -> elem.isAncestor(otherElem) } }
+                .filter { elem -> newElements.none { otherElem -> otherElem.isAncestor(elem, strict = true) } }
                 .filterIsInstance<KtElement>()
             return topLevelElements
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }
