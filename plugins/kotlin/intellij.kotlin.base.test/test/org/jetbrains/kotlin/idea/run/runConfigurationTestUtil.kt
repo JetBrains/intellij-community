@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.Executor
@@ -29,7 +28,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.MapDataContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.disposeLibrary
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 
 fun getJavaRunParameters(configuration: RunConfiguration): JavaParameters {
@@ -49,7 +47,7 @@ fun createConfigurationFromElement(element: PsiElement, save: Boolean = false): 
 
     val runnerAndConfigurationSettings =
         ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configuration
-            ?: error("no runnerAndConfigurationSettings for $element [${element.safeAs<KtNamedFunction>()?.fqName?.asString()}]")
+            ?: error("no runnerAndConfigurationSettings for $element [${(element as? KtNamedFunction)?.fqName?.asString()}]")
     if (save) {
         RunManagerEx.getInstanceEx(element.project).setTemporaryConfiguration(runnerAndConfigurationSettings)
     }

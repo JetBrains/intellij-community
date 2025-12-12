@@ -59,6 +59,9 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/jvm/shared",
     "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//platform/execution",
+    "//java/execution/openapi:java-execution",
+    "//platform/execution-impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
