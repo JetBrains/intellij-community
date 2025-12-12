@@ -413,6 +413,13 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
   }
 
+  /** @return stacktrace of place there storage was closed, or null, if it not yet closed */
+  public @Nullable Exception getCloseStackTrace() {
+    synchronized (pagesLock) {
+      return closeStackTrace;
+    }
+  }
+
   private Page pageByIndexLocked(int pageIndex) throws IOException {
     synchronized (pagesLock) {
       if (!channel.isOpen()) {
