@@ -40,8 +40,10 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
 
   /**
    * Computes a command to be executed to actually perform the action.
+   * <p>
    * Called in a background read-action.
-   * Called after {@link #getPresentation(ActionContext)} returns a non-null presentation.
+   * <p>
+   * Can be called only after {@link #getPresentation(ActionContext)} returns a non-null presentation.
    *
    * @param context context in which the action is executed
    * @return a {@link ModCommand} to be executed to actually apply the action
