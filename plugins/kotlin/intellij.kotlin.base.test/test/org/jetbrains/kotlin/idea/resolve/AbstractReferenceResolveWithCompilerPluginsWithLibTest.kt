@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.resolve
 
 import com.intellij.jarRepository.JarRepositoryManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
-import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 abstract class AbstractReferenceResolveWithCompilerPluginsWithLibTest : AbstractReferenceResolveWithLibTest() {
@@ -42,6 +43,20 @@ private fun Project.resolveAdditionalLibClasspath(): List<File> {
     return dependencyCoordinates.map(::loadSingleJarFromMaven)
 }
 
+/**
+ * This variable dynamically resolves the location of the `SerializationComponentRegistrar` class
+ * to determine the associated plugin's jar path.
+ *
+ * It is used to avoid direct dependency on the [org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins].
+ */
+private val KOTLINX_SERIALIZATION_COMPILER_PLUGIN_PATH: Path
+    get() {
+        // Hack to avoid using KotlinK2BundledCompilerPlugins explicitly
+        val registrarClass = Class.forName("org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar")
+
+        return PathManager.getJarForClass(registrarClass) ?: error("Jar file for $registrarClass not found")
+    }
+
 private val additionalLibCompilationOptions: List<String>
     get() {
         /*
@@ -50,10 +65,10 @@ private val additionalLibCompilationOptions: List<String>
         The plugin jar should contain both K1 and K2 plugin implementations.
         */
         val compilerPlugins = listOf(
-            KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN
+            KOTLINX_SERIALIZATION_COMPILER_PLUGIN_PATH
         )
 
-        return compilerPlugins.map { "-Xplugin=${it.bundledJarLocation.absolutePathString()}" }
+        return compilerPlugins.map { "-Xplugin=${it.absolutePathString()}" }
     }
 
 fun Project.loadSingleJarFromMaven(mavenCoordinates: String): File {

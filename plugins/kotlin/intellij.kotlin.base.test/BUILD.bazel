@@ -70,6 +70,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "@lib//:kotlin-test",
     "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
