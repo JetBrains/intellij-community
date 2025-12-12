@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 import java.nio.file.Paths
-
-abstract class AbstractCodeFragmentCompletionTest : AbstractJvmBasicCompletionTestBase()
 
 abstract class AbstractK1CodeFragmentCompletionTest : AbstractCodeFragmentCompletionTest() {
     override fun configureFixture(testPath: String) {
