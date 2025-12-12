@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.openapi.vfs.VirtualFile
@@ -7,7 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.DumbModeTestUtils
 import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -121,7 +121,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
 
             val module = file.module!!
             val containingClass = function.toLightMethods().first().containingClass
-            val kotlinOrigin = (containingClass as? KtUltraLightClass)?.kotlinOrigin
+            val kotlinOrigin = (containingClass as? KtLightClass)?.kotlinOrigin
             val mainClassName = if (kotlinOrigin is KtObjectDeclaration && kotlinOrigin.isCompanion()) {
                 // Run configuration for companion object is created for the owner class
                 // i.e. `foo.Bar` instead of `foo.Bar.Companion`
