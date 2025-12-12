@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.PsiMethodMember
-import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
@@ -32,7 +30,6 @@ import org.junit.Assert
 import java.awt.Color
 import java.io.File
 import java.nio.charset.StandardCharsets
-import kotlin.test.assertEquals
 
 abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeInsightFixtureTestCase(), OverrideImplementTestMixIn<T> {
 
@@ -139,7 +136,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         chooserObjects.forEach { (ktClassOrObject, objects) ->
             val singleToOverride = if (memberToOverride == null) {
                 val filtered = objects.filter { !isMemberOfAny(ktClassOrObject, it) }
-                assertEquals(1, filtered.size, "Invalid number of available chooserObjects for override")
+                Assert.assertEquals( "Invalid number of available chooserObjects for override", 1, filtered.size)
                 filtered.single()
             } else {
                 objects.single { chooserObject ->
@@ -287,8 +284,8 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
                     else -> "$text [$textStyle]"
                 }
             }
-        }.toLinkedSet()
-        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).map { it.replace("\\n", "\n") }.toLinkedSet() +
+        }.toSet()
+        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).map { it.replace("\\n", "\n") }.toSet() +
                                   InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), frontendDependentDirective)
 
         if (addMissingDirectives) {
