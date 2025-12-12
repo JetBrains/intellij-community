@@ -608,7 +608,12 @@ object PluginManagerCore {
 
     val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
     ClassLoaderConfigurator(pluginSet, coreLoader).configure()
-    return PluginManagerState(pluginSet = pluginSet, pluginIdsToDisable = pluginsToDisable.keys, pluginIdsToEnable = pluginsToEnable.keys)
+    return PluginManagerState(
+      pluginSet = pluginSet,
+      pluginIdsToDisable = pluginsToDisable.keys,
+      pluginIdsToEnable = pluginsToEnable.keys,
+      incompleteIdMapForLogging = loadingResult.getIncompleteIdMap(),
+    )
   }
 
   /**
@@ -717,10 +722,12 @@ object PluginManagerCore {
   internal suspend fun initializeAndSetPlugins(
     descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
-    loadingResult: PluginLoadingResult,
-  ): PluginSet {
+    discoveredPlugins: PluginDescriptorLoadingResult,
+  ): PluginManagerState {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
+      val loadingResult = PluginLoadingResult()
+      loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
         descriptorLoadingErrors = descriptorLoadingErrors,
@@ -735,7 +742,7 @@ object PluginManagerCore {
       pluginState.shadowedBundledPlugins = loadingResult.shadowedBundledIds
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       pluginState.nullablePluginSet = initResult.pluginSet
-      initResult.pluginSet
+      initResult
     }
   }
 

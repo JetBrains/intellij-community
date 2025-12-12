@@ -444,16 +444,15 @@ internal fun CoroutineScope.scheduleLoading(
   }
   val pluginSetDeferred = async {
     val (loadingContext, discoveredPlugins) = resultDeferred.await()
-    val loadingResult = PluginLoadingResult()
-    loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
-    val pluginSet = PluginManagerCore.initializeAndSetPlugins(
+    val pluginsState = PluginManagerCore.initializeAndSetPlugins(
       descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
       initContext = initContext,
-      loadingResult = loadingResult,
+      discoveredPlugins = discoveredPlugins,
     )
+    val pluginSet = pluginsState.pluginSet
     this@scheduleLoading.launch {
       // logging is not as a part of a plugin set job for performance reasons
-      logPlugins(plugins = pluginSet.allPlugins, initContext = initContext, loadingResult = loadingResult, logSupplier = {
+      logPlugins(plugins = pluginSet.allPlugins, initContext = initContext, incompleteIdMap = pluginsState.incompleteIdMapForLogging, logSupplier = {
         // make sure that logger is ready to use (not a console logger)
         logDeferred?.await()
         LOG
@@ -467,7 +466,7 @@ internal fun CoroutineScope.scheduleLoading(
 private suspend fun logPlugins(
   plugins: Collection<IdeaPluginDescriptorImpl>,
   initContext: PluginInitializationContext,
-  loadingResult: PluginLoadingResult,
+  incompleteIdMap: Map<PluginId, PluginMainDescriptor>,
   logSupplier: suspend () -> Logger,
 ) {
   if (AppMode.isDisableNonBundledPlugins()) {
@@ -497,7 +496,7 @@ private suspend fun logPlugins(
     appendPlugin(descriptor, target)
   }
 
-  for ((pluginId, descriptor) in loadingResult.getIncompleteIdMap()) {
+  for ((pluginId, descriptor) in incompleteIdMap) {
     // log only explicitly disabled plugins
     if (initContext.isPluginDisabled(pluginId) && !disabledPlugins.contains(pluginId)) {
       appendPlugin(descriptor, disabled)
