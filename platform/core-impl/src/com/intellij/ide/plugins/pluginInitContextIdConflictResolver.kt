@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -118,4 +119,33 @@ private class UnambiguousPluginSetImpl(
   override fun resolveContentModuleId(id: PluginModuleId): ContentModuleDescriptor? = contentModuleIdMap[id]
   override fun getFullPluginIdMapping(): Map<PluginId, PluginModuleDescriptor> = pluginIdMap
   override fun getFullContentModuleIdMapping(): Map<PluginModuleId, ContentModuleDescriptor> = contentModuleIdMap
+}
+
+@ApiStatus.Internal
+fun AmbiguousPluginSet.Companion.build(
+  plugins: List<PluginMainDescriptor>
+): AmbiguousPluginSet {
+  val pluginIdMap = HashMap<PluginId, SmartList<PluginModuleDescriptor>>()
+  val contentModuleIdMap = HashMap<PluginModuleId, SmartList<ContentModuleDescriptor>>()
+  for (plugin in plugins) {
+    for ((key, module) in plugin.sequenceAllKeysWithOrigin()) {
+      when (key) {
+        is PluginId -> pluginIdMap.getOrPut(key) { SmartList() }.add(module)
+        is PluginModuleId -> contentModuleIdMap.getOrPut(key) { SmartList() }.add(module as ContentModuleDescriptor)
+        else -> error("unexpected key type: $key")
+      }
+    }
+  }
+  return AmbiguousPluginSetImpl(plugins, pluginIdMap, contentModuleIdMap)
+}
+
+private class AmbiguousPluginSetImpl(
+  override val plugins: List<PluginMainDescriptor>,
+  private val pluginIdMap: Map<PluginId, List<PluginModuleDescriptor>>,
+  private val contentModuleIdMap: Map<PluginModuleId, List<ContentModuleDescriptor>>,
+): AmbiguousPluginSet {
+  override fun resolvePluginId(id: PluginId): Sequence<PluginModuleDescriptor> = pluginIdMap[id]?.asSequence() ?: emptySequence()
+  override fun resolveContentModuleId(id: PluginModuleId): Sequence<ContentModuleDescriptor> = contentModuleIdMap[id]?.asSequence() ?: emptySequence()
+  override fun getFullPluginIdMapping(): Map<PluginId, List<PluginModuleDescriptor>> = pluginIdMap
+  override fun getFullContentModuleIdMapping(): Map<PluginModuleId, List<ContentModuleDescriptor>> = contentModuleIdMap
 }
