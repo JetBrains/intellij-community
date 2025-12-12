@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.JavaMapForEachInspectionUtils
 import org.jetbrains.kotlin.idea.refactoring.singleLambdaArgumentExpression
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 internal class JavaMapForEachInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, JavaMapForEachInspection.Context>() {
@@ -36,8 +35,7 @@ internal class JavaMapForEachInspection : KotlinApplicableInspectionBase.Simple<
 
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         val call = element.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val receiverType = call.partiallyAppliedSymbol.dispatchReceiver?.type ?: return null
-        if (!receiverType.isSubtypeOf(StandardClassIds.Map)) return null
+        if (!call.isCalledOnMapDispatchReceiver) return null
 
         val lambda = element.singleLambdaArgumentExpression() ?: return null
         return Context(lambda)

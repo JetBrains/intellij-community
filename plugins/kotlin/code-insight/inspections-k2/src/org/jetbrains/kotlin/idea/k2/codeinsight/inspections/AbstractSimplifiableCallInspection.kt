@@ -98,10 +98,7 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         }
 
         context(_: KaSession)
-        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean {
-            val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
-            return !extensionReceiverType.isMap
-        }
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
     }
 
     protected class FilterToFilterIsInstanceConversion(
@@ -135,10 +132,7 @@ internal abstract class AbstractSimplifiableCallInspection : KotlinApplicableIns
         }
 
         context(_: KaSession)
-        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean {
-            val extensionReceiverType = resolvedCall.partiallyAppliedSymbol.extensionReceiver?.type ?: return false
-            return !extensionReceiverType.isMap
-        }
+        override fun callChecker(resolvedCall: KaFunctionCall<*>): Boolean = !resolvedCall.isCalledOnMapExtensionReceiver
     }
 
     protected abstract val conversions: List<Conversion>
@@ -243,7 +237,3 @@ private val KaType.isPrimitiveArray: Boolean
 context(_: KaSession)
 private val KaType.isArray: Boolean
     get() = this is KaClassType && StandardClassIds.Array == classId
-
-context(_: KaSession)
-private val KaType.isMap: Boolean
-    get() = this is KaClassType && (classId == StandardClassIds.Map || isSubtypeOf(StandardClassIds.Map))

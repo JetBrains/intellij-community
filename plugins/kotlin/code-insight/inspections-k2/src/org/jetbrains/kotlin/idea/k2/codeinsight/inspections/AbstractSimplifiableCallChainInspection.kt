@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -154,9 +155,7 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun isAppliedOnMapReceiver(firstCall: KaCallInfo): Boolean {
-        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
-            ?: return false
-        return extensionReceiverType.isSubtypeOf(StandardClassIds.Map)
+        return firstCall.successfulFunctionCallOrNull()?.isCalledOnMapExtensionReceiver == true
     }
 
     context(_: KaSession)
@@ -266,3 +265,19 @@ internal abstract class AbstractSimplifiableCallChainInspection :
     }
     // endregion
 }
+
+context(_: KaSession)
+internal val KaCallableMemberCall<*, *>.isCalledOnMapExtensionReceiver: Boolean
+    get() {
+        val extensionReceiver = partiallyAppliedSymbol.extensionReceiver ?: return false
+
+        return extensionReceiver.type.isSubtypeOf(StandardClassIds.Map)
+    }
+
+context(_: KaSession)
+internal val KaCallableMemberCall<*, *>.isCalledOnMapDispatchReceiver: Boolean
+    get() {
+        val dispatchReceiver = partiallyAppliedSymbol.dispatchReceiver ?: return false
+
+        return dispatchReceiver.type.isSubtypeOf(StandardClassIds.Map)
+    }
