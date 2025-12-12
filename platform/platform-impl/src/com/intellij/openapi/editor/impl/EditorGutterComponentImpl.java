@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -102,7 +103,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -298,7 +302,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
+              WriteIntentReadAction.run(() -> {
+                e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
+              });
             }
           }
         }
