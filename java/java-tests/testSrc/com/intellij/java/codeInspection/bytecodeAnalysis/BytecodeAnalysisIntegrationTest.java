@@ -19,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +68,6 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           libModel.commit();
         }
       }
-      Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
     }
 
     @Override
@@ -216,7 +214,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   }
 
   @SuppressWarnings("unused")
-  public void _testExportInferredAnnotations() {
+  public void testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
@@ -278,10 +276,10 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         }
       }
 
-      private void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
-                            PsiModifierListOwner owner,
-                            String annotationFQN,
-                            PsiNameValuePair[] attributes) {
+      private static void annotate(Map<String, Map<String, PsiNameValuePair[]>> annotations,
+                                   PsiModifierListOwner owner,
+                                   String annotationFQN,
+                                   PsiNameValuePair[] attributes) {
         String key = PsiFormatUtil.getExternalName(owner, false, Integer.MAX_VALUE);
         annotations.computeIfAbsent(key, k -> new TreeMap<>()).put(annotationFQN, attributes);
       }

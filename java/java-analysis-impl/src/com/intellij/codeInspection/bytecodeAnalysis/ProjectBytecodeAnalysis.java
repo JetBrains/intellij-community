@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,13 +46,9 @@ public class ProjectBytecodeAnalysis {
   private static final boolean SKIP_INDEX = false;
 
   public static final Logger LOG = Logger.getInstance(ProjectBytecodeAnalysis.class);
-  public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
-  public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
 
   private final Project myProject;
-  private final boolean nullableMethod;
-  private final boolean nullableMethodTransitivity;
   private final EquationProvider<?> myEquationProvider;
   private final NullableNotNullManager myNullabilityManager;
 
@@ -65,8 +60,6 @@ public class ProjectBytecodeAnalysis {
     myProject = project;
     myNullabilityManager = NullableNotNullManager.getInstance(project);
     myEquationProvider = SKIP_INDEX ? new PlainEquationProvider(myProject) : new IndexedEquationProvider(myProject);
-    nullableMethod = Registry.is(NULLABLE_METHOD);
-    nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
   /**
@@ -369,21 +362,6 @@ public class ProjectBytecodeAnalysis {
       addMethodAnnotations(solutions, result, key, arity);
     }
 
-    if (nullableMethod) {
-      Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
-      EKey nullableKey = key.withDirection(NullableOut);
-      if (nullableMethodTransitivity) {
-        collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
-      }
-      else {
-        collectSingleEquation(nullableKey, nullableMethodSolver);
-      }
-      Map<EKey, Value> nullableSolutions = nullableMethodSolver.solve();
-      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.invertStability()) == Value.Null) {
-        result.nullables.add(key);
-      }
-    }
-
     return result;
   }
 
@@ -471,15 +449,6 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(EKey curKey, Solver solver) {
-    ProgressManager.checkCanceled();
-
-    for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
-      Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
-      solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
-    }
-  }
-
   private @NotNull PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
@@ -550,7 +519,7 @@ public class ProjectBytecodeAnalysis {
     // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
     // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
     if (nonFailingContracts.size() == 1) {
-      StandardMethodContract contract = nonFailingContracts.get(0);
+      StandardMethodContract contract = nonFailingContracts.getFirst();
       if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
         nonFailingContracts = Collections.emptyList();
         notNulls.add(methodKey);

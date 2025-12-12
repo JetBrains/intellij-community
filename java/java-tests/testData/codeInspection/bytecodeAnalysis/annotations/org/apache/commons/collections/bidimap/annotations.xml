@@ -12,12 +12,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.lang.Object removeValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -57,7 +51,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.AbstractDualBidiMap org.apache.commons.collections.MapIterator mapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -189,12 +182,6 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap DualTreeBidiMap(java.util.Map, java.util.Map, org.apache.commons.collections.BidiMap) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.lang.Object nextKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.lang.Object previousKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.DualTreeBidiMap java.util.SortedMap headMap(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -336,14 +323,8 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doGet(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doGet(java.lang.Comparable, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doPut(java.lang.Comparable, java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doPut(java.lang.Comparable, java.lang.Comparable, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -351,47 +332,23 @@
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doPut(java.lang.Comparable, java.lang.Comparable, int) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object doRemove(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object get(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object get(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object getKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object getKey(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object nextKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object nextKey(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object previousKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object previousKey(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object put(java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object remove(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.Object removeValue(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.lang.String doToString(int)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -426,7 +383,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getGrandParent(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -436,7 +392,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getLeftChild(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -446,7 +401,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getParent(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -456,7 +410,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getRightChild(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -473,15 +426,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node lookup(java.lang.Comparable, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node nextGreater(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node nextGreater(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -491,7 +440,6 @@
             <val name="value" val="&quot;null,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node nextSmaller(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -594,20 +542,11 @@
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object nextKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object nextKey(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object previousKey(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object previousKey(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object put(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.lang.Object put(java.lang.Object, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -744,9 +683,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.ViewIterator java.lang.Object doGetData()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.ViewMapIterator ViewMapIterator(org.apache.commons.collections.bidimap.TreeBidiMap, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>

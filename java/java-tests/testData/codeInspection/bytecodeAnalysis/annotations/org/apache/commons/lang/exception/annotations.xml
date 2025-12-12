@@ -93,7 +93,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCause(java.lang.Throwable) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -102,27 +101,16 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCause(java.lang.Throwable, java.lang.String[]) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingFieldName(java.lang.Throwable, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingMethodName(java.lang.Throwable, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingWellKnownTypes(java.lang.Throwable)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getCauseUsingWellKnownTypes(java.lang.Throwable) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getRootCause(java.lang.Throwable)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.lang.Throwable getRootCause(java.lang.Throwable) 0'>
@@ -215,9 +203,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.exception.NestableError java.lang.String getMessage()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.lang.exception.NestableError java.lang.Throwable getCause()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -243,9 +228,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.lang.exception.NestableException java.lang.String getMessage()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.commons.lang.exception.NestableException java.lang.Throwable getCause()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -270,9 +252,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.lang.exception.NestableRuntimeException java.lang.String getMessage()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.NestableRuntimeException java.lang.Throwable getCause()'>
         <annotation name='org.jetbrains.annotations.Contract'>
