@@ -47,8 +47,8 @@ import org.jetbrains.kotlin.idea.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.configuration.gradle.AbstractGradleConfigureProjectByChangingFileTest
+import org.jetbrains.kotlin.idea.conversion.copy.AbstractK1LiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
-import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentCompletionHandlerTest
@@ -986,7 +986,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("dataFlowValueRendering")
         }
 
-        testClass<AbstractLiteralTextToKotlinCopyPasteTest> {
+        testClass<AbstractK1LiteralTextToKotlinCopyPasteTest> {
             model("copyPaste/plainTextLiteral", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
 

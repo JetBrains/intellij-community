@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
-import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
@@ -25,17 +24,17 @@ abstract class AbstractLiteralTextToKotlinCopyPasteTest : AbstractCopyPasteTest(
         if (!myFixture.editor.selectionModel.hasSelection())
             myFixture.editor.selectionModel.setSelection(0, fileText.length)
 
-        forceCheckForResolveInDispatchThreadInTests {
-            myFixture.performEditorAction(IdeActions.ACTION_COPY)
-        }
+        doPerformEditorAction(IdeActions.ACTION_COPY)
 
         configureTargetFile(targetFileName)
 
-        forceCheckForResolveInDispatchThreadInTests {
-            myFixture.performEditorAction(IdeActions.ACTION_PASTE)
-        }
+        doPerformEditorAction(IdeActions.ACTION_PASTE)
 
         val testFile = dataFile()
         KotlinTestUtils.assertEqualsToFile(getExpectedFile(testFile), myFixture.file.text)
+    }
+
+    protected open fun doPerformEditorAction(actionId: String) {
+        myFixture.performEditorAction(actionId)
     }
 }
