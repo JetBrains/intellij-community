@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,6 +24,21 @@ object DataContextUtils {
            ?: getFileTypeLanguage(dataContext)
            ?: CommonDataKeys.LANGUAGE.getData(dataContext)
   }
+
+  /**
+   * Returns file type from [CommonDataKeys.PSI_FILE]
+   * or by file name from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
+   */
+  @JvmStatic
+  fun getFileType(dataContext: DataContext): FileType? {
+    val fileType = CommonDataKeys.PSI_FILE.getData(dataContext)?.fileType
+    if (fileType != null) return fileType
+
+    val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext)
+                      ?: PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext)?.file ?: return null
+    return FileTypeRegistry.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
+  }
+
 
   /**
    * Returns language by file type from [CommonDataKeys.VIRTUAL_FILE] or [PlatformCoreDataKeys.FILE_EDITOR]
