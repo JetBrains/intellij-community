@@ -76,6 +76,10 @@
     <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.CommitExecutor"
                     area="IDEA_PROJECT" dynamic="true"/>
 
+    <extensionPoint name="vcs.commitSuccessNotificationActionProvider"
+                    interface="com.intellij.vcs.commit.CommitSuccessNotificationActionProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="vcsConfigurableProvider"
                     interface="com.intellij.openapi.vcs.VcsConfigurableProvider"
                     dynamic="true"/>

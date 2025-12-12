@@ -933,6 +933,9 @@
     <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
+
+    <vcs.commitSuccessNotificationActionProvider
+      implementation="git4idea.rebase.log.GitCommitSuccessNotificationRewordProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

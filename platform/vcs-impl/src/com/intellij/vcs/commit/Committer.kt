@@ -92,7 +92,7 @@ abstract class Committer(
     @JvmStatic
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 
-    fun Throwable.asVcsException(): VcsException = if (this is VcsException) this else VcsException(this)
+    fun Throwable.asVcsException(): VcsException = this as? VcsException ?: VcsException(this)
   }
 }
 

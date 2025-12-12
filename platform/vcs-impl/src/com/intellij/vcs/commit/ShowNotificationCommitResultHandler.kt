@@ -20,14 +20,12 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider
 import com.intellij.vcs.commit.Committer.Companion.collectErrors
-import org.jetbrains.annotations.NonNls
-
-private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
 
 class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) : CommitterResultHandler {
   private val notifier = VcsNotifier.getInstance(committer.project)
 
   override fun onSuccess(): Unit = reportResult()
+
   override fun onCancel() {
     notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
@@ -41,30 +39,28 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
     val commitErrors = collectErrors(commitExceptions)
     val warningsSize = commitExceptions.size - commitErrors.size
 
-    val notificationActions = commitExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
-
-    val changesFailedToCommit = countChangesIgnoringChangeLists(committer.failedToCommitChanges)
-    val changesCommitted = countChangesIgnoringChangeLists(committer.changes) - changesFailedToCommit
+    val changesCommitted =
+      committer.changes.countChangesIgnoringChangeLists() - committer.failedToCommitChanges.countChangesIgnoringChangeLists()
 
     val freshRoot = committer.commitContext.freshUnhostedRoots?.singleOrNull()
 
-    val type =
-      if (commitErrors.isNotEmpty()) CommitNotificationType.Failed
-      else if (commitExceptions.isNotEmpty()) CommitNotificationType.SuccessfulWithWarnings
-      else if (freshRoot != null) CommitNotificationType.SuccessfulInitial
-      else CommitNotificationType.Successful
-
-    val displayId: @NonNls String = type.displayId
-    val notificationType: NotificationType = type.notificationType
+    val type = when {
+      commitErrors.isNotEmpty() -> CommitNotificationType.Failed
+      commitExceptions.isNotEmpty() -> CommitNotificationType.SuccessfulWithWarnings
+      freshRoot != null -> CommitNotificationType.SuccessfulInitial
+      else -> CommitNotificationType.Successful
+    }
 
     val title: @NlsContexts.NotificationTitle String = when (type) {
       CommitNotificationType.Failed -> message("message.text.commit.failed.with.error", commitErrors.size)
       CommitNotificationType.SuccessfulWithWarnings -> message("message.text.commit.finished.with.warning", warningsSize)
-      else -> message("vcs.commit.files.committed", changesCommitted)
+      CommitNotificationType.Successful, CommitNotificationType.SuccessfulInitial -> message("vcs.commit.files.committed", changesCommitted)
     }
 
-    val notification = CommitNotification(VcsNotifier.importantNotification().displayId, title, message, notificationType).apply {
-      setDisplayId(displayId)
+    val notificationActions = commitExceptions.filterIsInstance<CommitExceptionWithActions>().flatMap { it.actions }
+
+    val notification = CommitNotification(VcsNotifier.importantNotification().displayId, title, message, type.notificationType).apply {
+      setDisplayId(type.displayId)
 
       if (commitExceptions.isNotEmpty()) {
 
@@ -72,18 +68,24 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
         VcsNotifier.addShowDetailsAction(committer.project, this)
       }
 
+      if (commitErrors.isEmpty()) {
+        addActions(CommitSuccessNotificationActionProvider.EP_NAME.extensionList.flatMap { it.getActions(committer, this) }
+        )
+      }
+
       if (freshRoot != null && commitErrors.isEmpty()) {
         ShareProjectActionProvider.EP_NAME.extensionList
           .filter { it.isApplicableForRoot(committer.project, freshRoot) }
           .forEachIndexed { index, ep ->
             addAction(NotificationAction.create(
-              if (index == 0) message("vcs.commit.notification.shareProjectOn", ep.hostServiceName) else message("vcs.commit.notification.shareProjectOn.orOn", ep.hostServiceName),
-              { e, _ ->
-                ep.action.actionPerformed(e.withDataContext(
-                  SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE, freshRoot, e.dataContext)
-                ))
-              }
-            ))
+              if (index == 0) message("vcs.commit.notification.shareProjectOn",
+                                      ep.hostServiceName)
+              else message("vcs.commit.notification.shareProjectOn.orOn", ep.hostServiceName)
+            ) { e, _ ->
+              ep.action.actionPerformed(e.withDataContext(
+                SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE, freshRoot, e.dataContext)
+              ))
+            })
           }
       }
     }
@@ -111,7 +113,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
 
   private enum class CommitNotificationType(
     val displayId: String,
-    val notificationType: NotificationType
+    val notificationType: NotificationType,
   ) {
     Successful(COMMIT_FINISHED, NotificationType.INFORMATION),
     SuccessfulInitial(COMMIT_FINISHED_INITIAL, NotificationType.INFORMATION),
@@ -119,7 +121,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
     Failed(COMMIT_FAILED, NotificationType.ERROR);
   }
 
-  private fun countChangesIgnoringChangeLists(changes: Collection<Change>): Int {
-    return HashSet(changes).size
-  }
+  private fun Collection<Change>.countChangesIgnoringChangeLists() = HashSet(this).size
 }
+
+private fun hasOnlyWarnings(exceptions: List<VcsException>) = exceptions.all { it.isWarning }
