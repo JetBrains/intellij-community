@@ -137,7 +137,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myModifierProvider = new ModifierProvider();
     myInnerDiffWorker = new MyInnerDiffWorker();
 
-    myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), MyLineStatusMarkerRenderer::new);
+    myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), (tracker) -> {
+      return new LineStatusMarkerRenderer(tracker, this);
+    });
 
     myTextDiffProvider = new TextDiffProviderBase(
       getTextSettings(),
@@ -162,8 +164,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myRightResolveAction = getResolveAction(MergeResult.RIGHT);
     myAcceptResolveAction = getResolveAction(MergeResult.RESOLVED);
 
-    DiffUtil.registerAction(new NavigateToChangeMarkerAction.NavigateToChangeMarkerAction(this, false), myPanel);
-    DiffUtil.registerAction(new NavigateToChangeMarkerAction.NavigateToChangeMarkerAction(this, true), myPanel);
+    DiffUtil.registerAction(new NavigateToChangeMarkerAction(this, false), myPanel);
+    DiffUtil.registerAction(new NavigateToChangeMarkerAction(this, true), myPanel);
 
     ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
 
@@ -207,9 +209,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
     diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
-    diffGroup.add(new ShowDiffWithBaseAction.ShowDiffWithBaseAction(this, ThreeSide.LEFT));
-    diffGroup.add(new ShowDiffWithBaseAction.ShowDiffWithBaseAction(this, ThreeSide.BASE));
-    diffGroup.add(new ShowDiffWithBaseAction.ShowDiffWithBaseAction(this, ThreeSide.RIGHT));
+    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.LEFT));
+    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.BASE));
+    diffGroup.add(new ShowDiffWithBaseAction(this, ThreeSide.RIGHT));
     group.add(diffGroup);
 
     group.add(new Separator(DiffBundle.messagePointer("action.Anonymous.text.apply.non.conflicting.changes")));
