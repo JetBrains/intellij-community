@@ -15,6 +15,8 @@ object SearchEverywhereFeature {
   private const val RIDER_KEY = "search.everywhere.new.rider.enabled"
   private const val CWM_CLIENT_KEY = "search.everywhere.new.cwm.client.enabled"
 
+  private const val ALLOW_AB_KEY = "search.everywhere.new.allow.ab"
+
   private val registryKey: String get() =
     if (isGuest) CWM_CLIENT_KEY
     else if (PlatformUtils.isRider()) RIDER_KEY
@@ -22,9 +24,14 @@ object SearchEverywhereFeature {
 
   var isSplit: Boolean
     get() =
-      Registry.`is`(registryKey, true) || ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
+      Registry.`is`(registryKey, false) ||
+      Registry.`is`(ALLOW_AB_KEY, true) && ABExperimentOption.SPLIT_SEARCH_EVERYWHERE.isEnabled()
+
     set(value) {
       Registry.get(registryKey).setValue(value)
+
+      // Ignore AB test since the Split SE was turned on/off explicitly
+      Registry.get(ALLOW_AB_KEY).setValue(false)
     }
 
   private val isGuest: Boolean get() {
