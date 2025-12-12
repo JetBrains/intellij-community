@@ -148,6 +148,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import kotlin.UninitializedPropertyAccessException;
 import org.intellij.lang.annotations.Language;
@@ -1525,6 +1526,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAllPsiFiles = new PsiFile[filePaths.length];
     for (int i = filePaths.length - 1; i >= 0; i--) {
       myAllPsiFiles[i] = configureByFileInner(filePaths[i]);
+      if (EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
     }
     return myAllPsiFiles;
   }

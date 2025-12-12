@@ -84,9 +84,8 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
     val start = System.currentTimeMillis()
     val job = cs.coroutineContext.job
     while (job.children.toList().isNotEmpty() && cs.coroutineContext.isActive) {
-      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
-        UIUtil.dispatchAllInvocationEvents()
-      }
+      // do not release the WI lock here! Causes accidental dumb mode appearance
+      UIUtil.dispatchAllInvocationEvents()
       Thread.sleep(1)
       if (System.currentTimeMillis() - start > 2000) {
         thisLogger().warn("Timed out waiting for synchronizers to be created.", TimeoutException())
