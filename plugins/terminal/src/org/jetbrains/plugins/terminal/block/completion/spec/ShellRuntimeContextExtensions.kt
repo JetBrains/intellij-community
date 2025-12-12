@@ -5,9 +5,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileInfoImpl
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import java.io.File
@@ -20,6 +23,21 @@ val ShellRuntimeContext.project: Project
 
 @ApiStatus.Internal
 val PROJECT_KEY: Key<Project> = Key.create("Project")
+
+/**
+ * EelDescriptor represents the environment where the shell session is running
+ * and provides access to it through EEL API.
+ */
+@get:ApiStatus.Experimental
+val ShellRuntimeContext.eelDescriptor: EelDescriptor
+  get() = getUserData(EEL_DESCRIPTOR_KEY) ?: throwUnsupportedInExpTerminalException()
+
+@ApiStatus.Internal
+val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("EelDescriptor")
+
+@get:ApiStatus.Experimental
+val ShellRuntimeContext.currentDirectoryPath: EelPath
+  get() = EelPath.parse(currentDirectory, eelDescriptor)
 
 @get:ApiStatus.Experimental
 val ShellRuntimeContext.isReworkedTerminal: Boolean

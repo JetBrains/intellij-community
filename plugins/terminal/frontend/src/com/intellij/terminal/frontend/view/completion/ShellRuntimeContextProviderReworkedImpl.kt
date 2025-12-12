@@ -6,6 +6,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.completion.spec.EEL_DESCRIPTOR_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
@@ -16,7 +17,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
   private val sessionModel: TerminalSessionModel,
   private val envVariables: Map<String, String>,
-  eelDescriptor: EelDescriptor,
+  private val eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
   private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor, envVariables)
   private val shellCommandExecutor = ShellCommandExecutorReworked(generatorProcessExecutor)
@@ -34,6 +35,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
     ).apply {
       putUserData(PROJECT_KEY, project)
       putUserData(IS_REWORKED_KEY, true)
+      putUserData(EEL_DESCRIPTOR_KEY, eelDescriptor)
     }
   }
 }
