@@ -3,11 +3,9 @@ package org.jetbrains.plugins.terminal.testFramework.completion.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
-import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.terminal.completion.spec.ShellName
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
@@ -17,10 +15,8 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 internal class ShellCompletionTestFixtureImpl(
   private val project: Project?,
   private val curDirectory: String,
-  private val shellName: ShellName,
   private val commandSpecs: List<ShellCommandSpec>?,
   private val generatorCommandsRunner: ShellCommandExecutor,
-  private val generatorsExecutor: ShellDataGeneratorsExecutor,
 ) : ShellCompletionTestFixture {
   override suspend fun getCompletions(commandText: String): List<ShellCompletionSuggestion> {
     val tokens = commandText.split(Regex(" +"))
@@ -33,8 +29,8 @@ internal class ShellCompletionTestFixtureImpl(
 
     val completion = ShellCommandSpecCompletion(
       commandSpecsManager,
-      generatorsExecutor,
-      TestRuntimeContextProvider(project, curDirectory, emptyMap(), shellName, generatorCommandsRunner)
+      TestGeneratorsExecutor(),
+      TestRuntimeContextProvider(project, curDirectory, emptyMap(), generatorCommandsRunner)
     )
 
     val command = tokens.first()

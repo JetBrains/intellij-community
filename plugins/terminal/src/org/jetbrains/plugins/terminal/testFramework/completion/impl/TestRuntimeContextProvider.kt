@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.testFramework.completion.impl
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
-import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
@@ -15,11 +14,16 @@ class TestRuntimeContextProvider(
   private val project: Project? = null,
   private val directory: String = "",
   private val envVariables: Map<String, String> = emptyMap(),
-  private val shellName: ShellName = ShellName("dummy"),
   private val generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor,
 ) : ShellRuntimeContextProvider {
   override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
-    return ShellRuntimeContextImpl(directory, envVariables, commandTokens, shellName, generatorCommandsRunner).also {
+    return ShellRuntimeContextImpl(
+      currentDirectory = directory,
+      envVariables = envVariables,
+      commandTokens = commandTokens,
+      definedShellName = null,
+      generatorCommandsRunner = generatorCommandsRunner
+    ).also {
       it.putUserData(PROJECT_KEY, project)
     }
   }

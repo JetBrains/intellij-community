@@ -3,8 +3,9 @@ package org.jetbrains.plugins.terminal.testFramework.completion.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
-import com.intellij.terminal.completion.spec.*
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
+import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellCommandSpec
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixtureBuilder
@@ -13,18 +14,11 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 @TestOnly
 internal class ShellCompletionTestFixtureBuilderImpl(private val project: Project?) : ShellCompletionTestFixtureBuilder {
   private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
-  private var shellName: ShellName = ShellName("dummy")
   private var commandSpecs: List<ShellCommandSpec>? = null
   private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor
-  private var generatorsExecutor: ShellDataGeneratorsExecutor = TestGeneratorsExecutor()
 
   override fun setCurrentDirectory(directory: String): ShellCompletionTestFixtureBuilder {
     curDirectory = directory
-    return this
-  }
-
-  override fun setShellName(name: ShellName): ShellCompletionTestFixtureBuilder {
-    shellName = name
     return this
   }
 
@@ -40,12 +34,7 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
     return this
   }
 
-  override fun mockDataGeneratorResults(mock: suspend (context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<*>) -> Any): ShellCompletionTestFixtureBuilder {
-    generatorsExecutor = TestGeneratorsExecutor(mock)
-    return this
-  }
-
   override fun build(): ShellCompletionTestFixture {
-    return ShellCompletionTestFixtureImpl(project, curDirectory, shellName, commandSpecs, generatorCommandsRunner, generatorsExecutor)
+    return ShellCompletionTestFixtureImpl(project, curDirectory, commandSpecs, generatorCommandsRunner)
   }
 }
