@@ -5,14 +5,19 @@ import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
+import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.contentRoot
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
@@ -34,7 +39,9 @@ class GradleJpsSyncExtension : GradleSyncExtension {
     removeUnloadedModules(context, syncStorage, phase)
     removeBridgeModules(context, syncStorage, projectStorage, phase)
     renameDuplicatedModules(context, syncStorage, projectStorage, phase)
-    removeDuplicatedContentRoots(context, syncStorage, projectStorage, phase)
+    removeDuplicatedUrlEntities<ContentRootEntity>(context, syncStorage, projectStorage, phase) { it.url to it.module }
+    removeDuplicatedUrlEntities<ExcludeUrlEntity>(context, syncStorage, projectStorage, phase) { it.url to it.contentRoot?.module}
+    removeDuplicatedUrlEntities<SourceRootEntity>(context, syncStorage, projectStorage, phase) { it.url to it.contentRoot.module }
   }
 
   private fun removeModulesWithUsedContentRoots(
@@ -86,26 +93,28 @@ class GradleJpsSyncExtension : GradleSyncExtension {
     syncStorage.removeAllEntities(entitiesToRemove)
   }
 
-  private fun removeDuplicatedContentRoots(
+  private inline fun <reified T: WorkspaceEntity> removeDuplicatedUrlEntities(
     context: ProjectResolverContext,
     syncStorage: MutableEntityStorage,
     projectStorage: EntityStorage,
     phase: GradleSyncPhase,
+    key: (T) -> Pair<VirtualFileUrl, ModuleEntity?>
   ) {
-    // Duplicate source sets are allowed when shared source support is enabled, but the ones duplicated
-    // in a single module should still be removed
-    fun ContentRootEntity.key() = url to module.name.takeIf { isSharedSourceSupportEnabled(context.project) }
-
-    val contentRootUrls = projectStorage.entitiesToSkip<ContentRootEntity>(context, phase)
-      .mapTo(HashSet()) { it.key() }
+    val existingProjectEntities = projectStorage.entitiesToSkip<T>(context, phase)
+      .mapTo(HashSet()) { key(it).sharedSourceSetAware(context.project) }
     val entitiesToRemove = ArrayList<WorkspaceEntity>()
-    for (contentRootEntity in syncStorage.entitiesToReplace<ContentRootEntity>(context, phase)) {
-      if (!contentRootUrls.add(contentRootEntity.key())) {
-        entitiesToRemove.add(contentRootEntity)
+    for (entity in syncStorage.entitiesToReplace<T>(context, phase)) {
+      if (!existingProjectEntities.add(key(entity).sharedSourceSetAware(context.project))) {
+        entitiesToRemove.add(entity)
       }
     }
     syncStorage.removeAllEntities(entitiesToRemove)
   }
+
+  // Duplicate source sets are allowed when shared source support is enabled, but the ones duplicated
+  // in a single module should still be removed
+  private fun Pair<VirtualFileUrl, ModuleEntity?>.sharedSourceSetAware(project: Project): Pair<VirtualFileUrl, String?> =
+    first to second?.name.takeIf { isSharedSourceSupportEnabled(project) }
 
   private fun renameDuplicatedModules(
     context: ProjectResolverContext,
