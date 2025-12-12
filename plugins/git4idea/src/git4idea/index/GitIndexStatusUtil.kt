@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.project.Project
@@ -74,9 +74,10 @@ fun getFileStatus(
   withRenames: Boolean,
   withUntracked: Boolean,
   withIgnored: Boolean,
+  statusCommand: GitCommand = GitCommand.STATUS,
 ): List<LightFileStatus.StatusRecord> {
   val h = GitUtil.createHandlerWithPaths(files) {
-    val h = GitLineHandler(project, root, GitCommand.STATUS)
+    val h = GitLineHandler(project, root, statusCommand)
     h.setSilent(true)
     h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
                        withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)

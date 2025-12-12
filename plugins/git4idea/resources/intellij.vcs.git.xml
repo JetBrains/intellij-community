@@ -682,6 +682,9 @@
                  description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
     <registryKey key="git.commit.staged.saver.use.index.info" defaultValue="false"
                  description="Uses an optimized approach to save and restore the index during changelist commits, improving performance"/>
+    <registryKey defaultValue="false"
+                 description="Use 'git status' without lock. Disabling may speed up commit but could result in stale data."
+                 key="git.status.no.lock"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

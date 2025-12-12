@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
@@ -24,6 +25,7 @@ import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRefreshUsageCollector.logUntrackedRefresh
+import git4idea.commands.GitCommand
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.index.LightFileStatus.StatusRecord
 import git4idea.index.getFileStatus
@@ -344,7 +346,10 @@ class GitUntrackedFilesHolder internal constructor(
           is DirtyScope.Files -> dirtyScope.files
         }
         coroutineToIndicator {
-          getFileStatus(project, repoRoot, dirtyFiles, false, true, withIgnored)
+          val statusCommand =
+            if (Registry.`is`("git.status.no.lock")) GitCommand.STATUS_NO_LOCK else GitCommand.STATUS
+
+          getFileStatus(project, repoRoot, dirtyFiles, false, true, withIgnored, statusCommand)
         }
       }
 
