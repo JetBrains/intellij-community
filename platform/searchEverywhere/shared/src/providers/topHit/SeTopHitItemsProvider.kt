@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
@@ -59,9 +60,7 @@ open class SeTopHitItemsProvider(
     return contributor.showInFindResults()
   }
 
-  override fun getSupportedCommands(): List<SeCommandInfo> {
-    return contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
-  }
+  override fun getSupportedCommands(): List<SeCommandInfo> = getSupportedCommandsFromContributor()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

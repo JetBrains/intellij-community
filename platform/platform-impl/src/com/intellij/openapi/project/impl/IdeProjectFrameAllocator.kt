@@ -121,7 +121,7 @@ internal class IdeProjectFrameAllocator(
         launch {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           fileEditorManager.initJob.join()
-          withContext(Dispatchers.UiWithModelAccess) {
+          withContext(Dispatchers.EDT) {
             frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
           }
         }
@@ -220,7 +220,7 @@ internal class IdeProjectFrameAllocator(
       else {
         val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
         // must be after preInit (frame decorator is required to set a full-screen mode)
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.EDT) {
           frameHelper.frame.isVisible = true
         }
         completeFrameAndCloseOnCancel(frameHelper) {

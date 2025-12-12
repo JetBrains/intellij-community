@@ -12,6 +12,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -19,8 +20,8 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,7 +41,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
-  public static final VcsUser DEFAULT_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
+  public static final VcsUser DEFAULT_USER = VcsUserUtil.createUser("John Smith", "John.Smith@mail.com");
 
   private final @NotNull List<TimedVcsCommit> myCommits;
   private final @NotNull Set<VcsRef> myRefs;

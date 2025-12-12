@@ -33,7 +33,7 @@ public class ConfigurationState {
   // Also consider advancing the version when
   //  - ABI generation logic changed (e.g. changes in ordering, filtering, etc)
   //  - Any changes in builder's logic implemented, that might affect sources processing
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
     new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of()
@@ -47,6 +47,7 @@ public class ConfigurationState {
     CLFlags.CP, // processed separately
     CLFlags.OUT,
     CLFlags.ABI_OUT,
+    CLFlags.KOTLIN_CRI_OUT,
 
     CLFlags.WARN,
     CLFlags.X_WASM_ATTACH_JS_EXCEPTION,

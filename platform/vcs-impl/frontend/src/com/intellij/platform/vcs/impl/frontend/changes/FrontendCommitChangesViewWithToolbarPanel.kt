@@ -4,17 +4,25 @@ package com.intellij.platform.vcs.impl.frontend.changes
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.project.projectId
+import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
+import com.intellij.util.application
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.tree.TreeUtil
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +32,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 
 private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
 
@@ -35,6 +44,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   private val diffableSelectionHelper = ChangesViewDiffableSelectionHelper(changesView)
 
   init {
+    if (!application.isUnitTestMode) {
+      initializeSubscriptions(changesView, cs)
+    }
+  }
+
+  private fun initializeSubscriptions(changesView: ChangesListView, cs: CoroutineScope) {
     changesView.setInclusionModel(inclusionModel)
     ChangeListsViewModel.getInstance(project).changeListsState.onEach { scheduleRefresh() }.launchIn(cs)
     cs.launch {
@@ -71,7 +86,8 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
       ChangesViewApi.getInstance().getBackendChangesViewEvents(project.projectId()).collect { event ->
         try {
           handleBackendEvent(event)
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
           LOG.error(e, "Failed to handle event $event")
         }
       }
@@ -89,13 +105,29 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
-      is BackendChangesViewEvent.SelectPath -> {
-        withContext(Dispatchers.UiWithModelAccess) {
-          changesView.selectFile(event.path.filePath.filePath)
-        }
+      is BackendChangesViewEvent.SelectPath -> withContext(Dispatchers.UiWithModelAccess) {
+        selectPath(event.path)
       }
     }
   }
+
+  @VisibleForTesting
+  @RequiresEdt
+  fun selectPath(path: ChangesTreePath) {
+    if (path.changeId == null) {
+      changesView.selectFile(path.filePath.filePath)
+    }
+    else {
+      val node = VcsTreeModelData.all(changesView).iterateNodes().find { node ->
+        val userObject = node.userObject
+        userObject is Change && path.matchesChange(userObject)
+      }
+      TreeUtil.selectNode(changesView, node)
+    }
+  }
+
+  private fun ChangesTreePath.matchesChange(change: Change): Boolean =
+    ChangesUtil.matches(change, filePath.filePath) && ChangeId.getId(change) == changeId
 
   private fun scheduleRefresh(withDelay: Boolean, refreshCounter: Int) {
     scheduleRefresh(withDelay) {

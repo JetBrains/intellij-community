@@ -1,0 +1,6 @@
+JsonFile: n_structure_incomplete_UTF8_BOM.json
+  PsiErrorElement:<value> expected, got '�'
+    PsiElement(BAD_CHARACTER)('�')
+  PsiElement(DUMMY_BLOCK)
+    PsiElement({)('{')
+    PsiElement(})('}')

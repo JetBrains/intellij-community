@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.lang.Language
@@ -25,13 +25,28 @@ interface InlayHintsCustomSettingsProvider<T> {
     }
   }
 
+  /**
+   * Create a settings component for the user to change the settings.
+   */
   fun createComponent(project: Project, language: Language) : JComponent
 
+  /**
+   * To check if settings have changed.
+   */
   fun isDifferentFrom(project: Project, settings: T) : Boolean
 
+  /**
+   * @return a copy of the settings used to check if the settings have changed.
+   */
   fun getSettingsCopy() : T
 
+  /**
+   * Unused method
+   */
   fun putSettings(project: Project, settings: T, language: Language)
 
+  /**
+   * Store the specifiedsettings, e.g. after the Apply or OK button has been clicked.
+   */
   fun persistSettings(project: Project, settings: T, language: Language)
 }

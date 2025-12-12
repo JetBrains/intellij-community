@@ -221,26 +221,27 @@ public class StorageManager implements CloseableExt {
   private void writeKotlinCriData(DependencyGraph graph, Boolean saveChanges) {
     if (!saveChanges || !isKotlinCriDataGenerationEnabled) return;
     Path kotlinCriPath = myContext.getKotlinCriStoragePath();
-    if (kotlinCriPath == null) return;
-    if (!Files.exists(kotlinCriPath)) {
-      try { Files.createDirectories(kotlinCriPath); }
-      catch (IOException e) { myContext.report(Message.create(null, e)); }
-    }
 
-    KotlinCriUtilKt.prepareSerializedData(graph)
-      .forEach(
-        (name, content) -> {
-          try {
-            Files.write(kotlinCriPath.resolve(name), content,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.WRITE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
-          }
-          catch (IOException e) {
-            myContext.report(Message.create(null, e));
-          }
+    boolean moved = false;
+    Path tempFile = null;
+    try {
+      tempFile = Files.createTempFile(kotlinCriPath.getParent(), kotlinCriPath.getFileName().toString(), ".tmp");
+      Files.write(tempFile, KotlinCriUtilKt.prepareSerializedData(graph));
+      Files.move(tempFile, kotlinCriPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      moved = true;
+    }
+    catch (IOException e) {
+      myContext.report(Message.create(null, e));
+    }
+    finally {
+      if (!moved) {
+        try {
+          Utils.deleteIfExists(tempFile);
+        } catch (IOException e) {
+          myContext.report(Message.create(null, e));
         }
-      );
+      }
+    }
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {

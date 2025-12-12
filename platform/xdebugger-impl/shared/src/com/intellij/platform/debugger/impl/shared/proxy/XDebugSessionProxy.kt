@@ -27,8 +27,8 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.ui.IXDebuggerSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.event.HyperlinkListener
@@ -54,7 +54,6 @@ interface XDebugSessionProxy {
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?
   val sessionTab: IXDebuggerSessionTab?
-  val sessionTabWhenInitialized: Deferred<IXDebuggerSessionTab?>
   val isStopped: Boolean
   val isPaused: Boolean
   val isSuspended: Boolean
@@ -79,6 +78,9 @@ interface XDebugSessionProxy {
   fun getTopFramePosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition?
+  val alternativeSourceKindState: StateFlow<Boolean>
+  val currentSourceKind: XSourceKind get() = if (alternativeSourceKindState.value) XSourceKind.ALTERNATIVE else XSourceKind.MAIN
+
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
   fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean = executionStack.topFrame == frame)

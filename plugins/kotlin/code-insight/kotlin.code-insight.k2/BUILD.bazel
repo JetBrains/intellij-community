@@ -125,7 +125,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//platform/usageView",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/frontend-independent",

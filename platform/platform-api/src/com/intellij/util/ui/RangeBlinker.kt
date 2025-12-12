@@ -1,17 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
-import com.intellij.util.Alarm
-import com.intellij.util.SingleAlarm
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.sample
 import org.jetbrains.annotations.ApiStatus.Internal
+
+@Service(Service.Level.APP)
+private class RangeBlinkerService(val coroutineScope: CoroutineScope)
 
 @Internal
 class RangeBlinker(
@@ -20,27 +29,28 @@ class RangeBlinker(
   private var timeToLive: Int,
   parentDisposable: Disposable?,
 ) {
+  private val lifetime = timeToLive
   private val markers = ArrayList<Segment>()
   private var show = true
-  private val blinkingAlarm = SingleAlarm(
-    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-    parentDisposable = parentDisposable,
-    delay = 400,
-    task = {
-      if (timeToLive > 0 || show) {
-        timeToLive--
-        show = !show
-        startBlinking()
-      }
-    })
   private val addedHighlighters = ArrayList<RangeHighlighter>()
 
-  fun resetMarkers(markers: List<Segment>) {
+  private val scope: CoroutineScope = service<RangeBlinkerService>().coroutineScope.childScope("RangeBlinker")
+  private val triggerFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1)
+  private var blinkingJob: Job? = null
+
+  init {
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) { scope.cancel() }
+    }
+  }
+
+  fun resetMarkers(markers: List<Segment>, resetTime: Boolean = false) {
     removeHighlights()
     this.markers.clear()
     stopBlinking()
     this.markers.addAll(markers)
     show = true
+    if (resetTime) timeToLive = lifetime
   }
 
   private fun removeHighlights() {
@@ -55,7 +65,7 @@ class RangeBlinker(
     addedHighlighters.clear()
   }
 
-  fun startBlinking() {
+  private fun doBlinkTick() {
     val project = editor.project
     if (ApplicationManager.getApplication().isDisposed || editor.isDisposed || project != null && project.isDisposed) {
       return
@@ -77,10 +87,35 @@ class RangeBlinker(
     else {
       removeHighlights()
     }
-    blinkingAlarm.scheduleCancelAndRequest()
+
+    if (timeToLive > 0 || show) {
+      timeToLive--
+      show = !show
+      // Chain next tick after delay via flow
+      triggerFlow.tryEmit(Unit)
+    } else {
+      stopBlinking()
+    }
+  }
+
+  @OptIn(FlowPreview::class)
+  fun startBlinking() {
+    if (blinkingJob == null) {
+      blinkingJob = scope.launch {
+        doBlinkTick()
+        triggerFlow
+          .debounce(400)
+          .sample(400)
+          .collect { doBlinkTick() }
+      }
+    }
+    else {
+      triggerFlow.tryEmit(Unit)
+    }
   }
 
   fun stopBlinking() {
-    blinkingAlarm.cancel()
+    blinkingJob?.cancel()
+    blinkingJob = null
   }
 }

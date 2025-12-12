@@ -27,7 +27,7 @@ fun panel(init: Panel.() -> Unit): DialogPanel {
   builder.build()
   initPanel(dialogPanelConfig, result)
 
-  Registry.getColor("ui.kotlin.ui.dsl.background", null)?.let {
+  Registry.getColor("ui.kotlin.ui.dsl.color", null)?.let {
     result.background = it
   }
   return result

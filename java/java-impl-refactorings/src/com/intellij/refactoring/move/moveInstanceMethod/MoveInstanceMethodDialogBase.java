@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -137,11 +138,13 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value instanceof PsiVariable psiVariable) {
-        final String text = PsiFormatUtil.formatVariable(psiVariable,
-                                                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE,
-                                                         PsiSubstitutor.EMPTY);
-        setIcon(psiVariable.getIcon(0));
-        setText(text);
+        WriteIntentReadAction.run(() -> {
+          final String text = PsiFormatUtil.formatVariable(psiVariable,
+                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE,
+                                                           PsiSubstitutor.EMPTY);
+          setIcon(psiVariable.getIcon(0));
+          setText(text);
+        });
       }
       else if (value instanceof @NlsSafe String s) {
         setText(s);

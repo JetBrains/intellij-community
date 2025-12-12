@@ -134,10 +134,9 @@ public final class CreateFromUsageUtils {
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
-    Properties properties = FileTemplateManager.getInstance(method.getProject()).getDefaultProperties();
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
-                           PsiTypesUtil.getDefaultValueOfType(returnType));
+    Map<String, Object> properties = FileTemplateManager.getInstance(method.getProject()).getDefaultContextMap();
+    properties.put(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
+    properties.put(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
 
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
 

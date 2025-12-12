@@ -12,7 +12,10 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-internal class EelPipeImpl(private val debugLabel: String) : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
+internal class EelPipeImpl(
+  private val debugLabel: String,
+  override val prefersDirectBuffers: Boolean,
+) : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
   private sealed class State {
     override fun toString(): String = javaClass.simpleName
 

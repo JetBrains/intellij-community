@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -41,7 +42,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
           send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
           while (isActive) {
             delay(SYNC_INTERVAL)
-            send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+            send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId() }))
           }
         }
       }
@@ -103,7 +104,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       LOG.debug("Updating state for ${repository.root}")
 
       val repositoryState = GitRepositoryToDtoConverter.convertRepositoryState(repository)
-      channel.trySend(GitRepositoryEvent.RepositoryStateUpdated(repository.rpcId, repositoryState))
+      channel.trySend(GitRepositoryEvent.RepositoryStateUpdated(repository.rpcId(), repositoryState))
     }
 
     override fun tagsLoaded(repository: GitRepository) {
@@ -112,7 +113,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       LOG.debug("Tags were loaded for ${repository.root}. Updating tags state")
 
       val tagsState = repository.tagHolder.getTags().keys
-      channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId, tagsState))
+      channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId(), tagsState))
     }
 
     private fun isRepositoryValid(repository: GitRepository): Boolean {
@@ -140,7 +141,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       LOG.debug("Working trees were loaded for ${repository.root}. Updating working trees state")
 
       val workingTrees = repository.workingTreeHolder.getWorkingTrees()
-      channel.trySend(GitRepositoryEvent.WorkingTreesLoaded(repository.rpcId, workingTrees))
+      channel.trySend(GitRepositoryEvent.WorkingTreesLoaded(repository.rpcId(), workingTrees))
     }
 
     override fun favoriteRefsUpdated(repository: GitRepository?) {
@@ -150,24 +151,24 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
       val update = mutableMapOf<RepositoryId, GitFavoriteRefs>()
       if (repository != null) {
-        update[repository.rpcId] = GitRepositoryToDtoConverter.collectFavorites(repository)
+        update[repository.rpcId()] = GitRepositoryToDtoConverter.collectFavorites(repository)
       }
       else {
         getAllRepositories(project).forEach { repository ->
-          update[repository.rpcId] = GitRepositoryToDtoConverter.collectFavorites(repository)
+          update[repository.rpcId()] = GitRepositoryToDtoConverter.collectFavorites(repository)
         }
       }
 
-      update.forEach { id, favoriteRefs ->
+      update.forEach { (id, favoriteRefs) ->
         channel.trySend(GitRepositoryEvent.FavoriteRefsUpdated(id, favoriteRefs))
       }
     }
 
     fun sendDeletedEventOnDispose(repository: GitRepository) {
-      Disposer.register(repository, {
+      Disposer.register(repository) {
         LOG.debug("Notifying repository disposed: $repository")
-        channel.trySend(GitRepositoryEvent.RepositoryDeleted(repository.rpcId))
-      })
+        channel.trySend(GitRepositoryEvent.RepositoryDeleted(repository.rpcId()))
+      }
     }
 
     override fun forceSync() {

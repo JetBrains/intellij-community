@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
+import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.asFlow
@@ -146,7 +147,12 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   ): Job = launch {
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val list = collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
+    val list = try {
+      collectMatchedActions(pattern, allIds, weightMatcher, unmatchedIdsChannel)
+    } finally {
+      unmatchedIdsChannel.close()
+    }
+
     LOG.debug { "Matched actions list is collected" }
 
     awaitJob?.join() // wait until all items from the previous step are processed
@@ -258,7 +264,6 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         }
       }
     }.toList()
-    unmatchedIdsChannel.close()
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
     return@coroutineScope matchedActions.sortedWith(comparator)
@@ -477,7 +482,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
   private fun buildWeightMatcher(pattern: String): MinusculeMatcher {
     return NameUtil.buildMatcher("*$pattern")
-      .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build()
   }

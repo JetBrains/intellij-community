@@ -5,8 +5,11 @@ package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceImplObsoleteInspectionBaseTest
 import com.intellij.openapi.util.IntellijInternalApi
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 class WorkspaceImplObsoleteInspectionTest : WorkspaceImplObsoleteInspectionBaseTest() {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(WorkspaceImplObsoleteInspection())

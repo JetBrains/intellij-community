@@ -203,6 +203,7 @@ open class MavenServerCMDState(
     classPath.add(PathUtil.getJarPathForClass(StringUtilRt::class.java)) //util-rt
     classPath.add(PathUtil.getJarPathForClass(NotNull::class.java)) //annotations-java5
     classPath.add(PathUtil.getJarPathForClass(Element::class.java)) //JDOM
+    classPath.add(PathUtil.getJarPathForClass(TelemetryContext ::class.java)) //util-8
     return classPath
   }
 

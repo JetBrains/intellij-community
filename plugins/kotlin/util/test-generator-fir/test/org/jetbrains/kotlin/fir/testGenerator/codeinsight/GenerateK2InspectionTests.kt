@@ -85,6 +85,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/intentions/convertArgumentToSet")
             model("${idea}/inspectionsLocal/coroutines/redundantRunCatching")
             model("${idea}/inspectionsLocal/coroutines/simplifiableFlowCallChain")
+            model("${idea}/inspectionsLocal/coroutines/simplifiableFlowCall")
             model("${idea}/inspectionsLocal/coroutines/unusedFlow")
             model("${idea}/inspectionsLocal/joinDeclarationAndAssignment")
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")

@@ -62,7 +62,8 @@ public class BuildContextImpl implements BuildContext {
     String abiPath = CLFlags.ABI_OUT.getOptionalScalarValue(flags);
     myAbiJar = abiPath != null? baseDir.resolve(abiPath).normalize() : null;
 
-    myKotlinCriStoragePath = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + DataPaths.KOTLIN_CRI_STORAGE_SUFFIX);
+    String kotlinCriStoragePath = CLFlags.KOTLIN_CRI_OUT.getOptionalScalarValue(flags);
+    myKotlinCriStoragePath = kotlinCriStoragePath != null ? baseDir.resolve(kotlinCriStoragePath).normalize() : null;
 
     myDataDir = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + DataPaths.DATA_DIR_NAME_SUFFIX);
     

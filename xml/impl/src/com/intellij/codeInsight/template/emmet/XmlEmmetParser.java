@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -27,8 +27,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class XmlEmmetParser extends EmmetParser {
-  public static final String DEFAULT_ATTRIBUTE_NAME = "%default";
-  public static final String BOOLEAN_ATTRIBUTE_VALUE = "%boolean";
+  /**
+   * @deprecated use {@link XmlEmmetConstants#DEFAULT_ATTRIBUTE_NAME} instead
+   */
+  @Deprecated
+  public static final String DEFAULT_ATTRIBUTE_NAME = XmlEmmetConstants.DEFAULT_ATTRIBUTE_NAME;
+  /**
+   * @deprecated use {@link XmlEmmetConstants#BOOLEAN_ATTRIBUTE_VALUE} instead
+   */
+  @Deprecated
+  public static final String BOOLEAN_ATTRIBUTE_VALUE = XmlEmmetConstants.BOOLEAN_ATTRIBUTE_VALUE;
 
   private static final String DEFAULT_TAG = "div";
   private static final int DEFAULT_LOREM_LENGTH = 30;
@@ -348,7 +356,7 @@ public class XmlEmmetParser extends EmmetParser {
         if (isEndOfAttribute(nextToken(1))) {
           // boolean attribute
           advance(); // dot
-          return Couple.of(attributeName, BOOLEAN_ATTRIBUTE_VALUE);
+          return Couple.of(attributeName, XmlEmmetConstants.BOOLEAN_ATTRIBUTE_VALUE);
         }
       }
       else {
@@ -367,7 +375,7 @@ public class XmlEmmetParser extends EmmetParser {
     final String impliedValue = parseAttributeValue();
     if (!impliedValue.isEmpty()) {
       // implied attribute
-      return Couple.of(DEFAULT_ATTRIBUTE_NAME, impliedValue);
+      return Couple.of(XmlEmmetConstants.DEFAULT_ATTRIBUTE_NAME, impliedValue);
     }
     return null;
   }

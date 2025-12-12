@@ -85,8 +85,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().getCustomRepoTags()
   }
 
-  override suspend fun isModified(sessionId: String): Boolean {
-    return PluginInstallerApi.getInstance().isModified(sessionId)
+  override suspend fun isModified(): Boolean {
+    return PluginInstallerApi.getInstance().isModified()
   }
 
   override fun enablePlugins(sessionId: String, descriptorIds: List<PluginId>, enable: Boolean, project: Project?): SetEnabledStateResult {
@@ -205,8 +205,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     awaitForResult { PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable) }
   }
 
-  override suspend fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
-    return PluginInstallerApi.getInstance().applyPluginSession(sessionId, project?.projectId())
+  override suspend fun apply(parent: JComponent?, project: Project?): ApplyPluginsStateResult {
+    return PluginInstallerApi.getInstance().apply(project?.projectId())
   }
 
   override suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {

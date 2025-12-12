@@ -17,6 +17,7 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -471,22 +472,24 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         shouldAddExpressionVariants && addExpectedTypeMembers(parameters, false, expectedInfos,
                                                               item -> session.registerBatchItems(Collections.singleton(item)));
 
-      if (!smart) {
-        PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
-        if (anno != null) {
-          PsiClass annoClass = anno.resolveAnnotationType();
-          mayCompleteReference = mayCompleteValueExpression(position, annoClass);
-          if (annoClass != null) {
-            completeAnnotationAttributeName(result, position, anno, annoClass);
-            JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
+      if (!ModCompletionItemProvider.modCommandCompletionEnabled()) {
+        if (!smart) {
+          PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
+          if (anno != null) {
+            PsiClass annoClass = anno.resolveAnnotationType();
+            mayCompleteReference = mayCompleteValueExpression(position, annoClass);
+            if (annoClass != null) {
+              completeAnnotationAttributeName(result, position, anno, annoClass);
+              JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
+            }
           }
         }
-      }
 
-      PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
-      if (ref instanceof PsiLabelReference) {
-        session.registerBatchItems(processLabelReference((PsiLabelReference)ref));
-        result.stopHere();
+        PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
+        if (ref instanceof PsiLabelReference labelRef) {
+          session.registerBatchItems(processLabelReference(labelRef));
+          result.stopHere();
+        }
       }
 
       List<LookupElement> refSuggestions = Collections.emptyList();

@@ -15,7 +15,7 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import java.util.concurrent.atomic.AtomicReference
 
@@ -225,7 +225,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                     title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
                 ) {
                     val settings = autoConfigurator.calculateAutoConfigSettings(module)
-                    KotlinConfigurationFUSCollector.logCheckAutoConfigStatus(module.project, settings != null)
+                    KotlinJ2KOnboardingFUSCollector.logCheckAutoConfigStatus(module.project, settings != null)
                     settings
                 }
 

@@ -67,7 +67,6 @@ open class IDETestContext(
 
     private val SEARCH_EVERYWHERE_REGISTRY_KEYS: List<String> get() = listOf(
       "search.everywhere.new.enabled",
-      "search.everywhere.new.internal.enabled",
       "search.everywhere.new.rider.enabled",
       "search.everywhere.new.clion.enabled",
       "search.everywhere.new.cwm.client.enabled"
@@ -444,7 +443,7 @@ open class IDETestContext(
         collectNativeThreads = collectNativeThreads,
         stdOut = stdOut
       )
-      runContext.configure()
+      configure(runContext)
 
       try {
         val ideRunResult = runContext.runIdeSuspending()
@@ -567,10 +566,10 @@ open class IDETestContext(
       logOutput("License is not provided")
       return this
     }
-    if (this is IDERemDevTestContext) {
-      frontendIDEContext.setLicense(license)
-      return this
-    }
+    this.onRemDevContext {
+      it.frontendIDEContext.setLicense(license)
+    }?.let { return it }
+
     val licenseKeyFileName: String = when (this.ide.productCode) {
       IdeProductProvider.IU.productCode -> "idea.key"
       IdeProductProvider.RM.productCode -> "rubymine.key"

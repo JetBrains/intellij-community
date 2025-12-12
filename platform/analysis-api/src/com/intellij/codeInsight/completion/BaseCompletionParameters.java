@@ -29,6 +29,11 @@ public interface BaseCompletionParameters {
   @NotNull PsiElement getPosition();
 
   /**
+   * @return the used completion type
+   */
+  @NotNull CompletionType getCompletionType();
+
+  /**
    * @return the offset (relative to the file) where code completion was invoked.
    */
   int getOffset();

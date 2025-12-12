@@ -126,6 +126,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
 
     private void addKeywords() {
       if (!canAddKeywords()) return;
+      if (processAnnotationAttributes()) return;
       if (PsiJavaModule.MODULE_INFO_FILE.equals(myFile.getName()) && PsiUtil.isAvailable(JavaFeature.MODULES, myFile)) {
         addModuleKeywords();
         return;
@@ -172,6 +173,20 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
       addClassLiteral();
       addExtendsImplements();
       addCaseNullToSwitch();
+    }
+
+    private boolean processAnnotationAttributes() {
+      PsiAnnotation annotation = JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition);
+      if (annotation != null) {
+        if (myPosition instanceof PsiIdentifier) {
+            PsiClass annoClass = annotation.resolveAnnotationType();
+            if (annoClass != null) {
+              addPrimitiveTypes();
+            }
+        }
+        return true;
+      }
+      return false;
     }
 
     private void addCaseNullToSwitch() {
@@ -232,8 +247,8 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
                 createKeyword(JavaKeywords.PERMITS, humbleSpaceBeforeWordType());
               if (modifiers != null && !modifiers.hasExplicitModifier(PsiModifier.SEALED)) {
                 permits = permits
-                  .withAdditionalUpdater((start, file, updater) -> {
-                    PsiClass aClass = PsiTreeUtil.findElementOfClassAtOffset(file, start, PsiClass.class, false);
+                  .withAdditionalUpdater((start, updater) -> {
+                    PsiClass aClass = PsiTreeUtil.findElementOfClassAtOffset(updater.getPsiFile(), start, PsiClass.class, false);
                     if (aClass != null) {
                       PsiModifierList modifierList = aClass.getModifierList();
                       if (modifierList != null) {
@@ -475,7 +490,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
         .withPresentation(
           new ModCompletionItemPresentation(MarkupText.builder().append(keyword, STRONG).append(" " + className, NORMAL).build())
             .withMainIcon(CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon()))
-        .withAdditionalUpdater((start, file, updater) -> {
+        .withAdditionalUpdater((start, updater) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();
           String suffix = " ";
@@ -531,12 +546,13 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
 
     private void addInstanceof() {
       if (JavaKeywordCompletion.isInstanceofPlace(myPosition)) {
-        addKeyword(createKeyword(JavaKeywords.INSTANCEOF).withAdditionalUpdater((startOffset, file, updater, insertionContext) -> {
+        addKeyword(createKeyword(JavaKeywords.INSTANCEOF).withAdditionalUpdater((startOffset, updater, insertionContext) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();
           ModNavigatorTailType tailType = humbleSpaceBeforeWordType();
-          tailType.processTail(file.getProject(), updater, offset);
-          PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+          tailType.processTail(updater, offset);
+          PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+          PsiFile file = updater.getPsiFile();
           PsiInstanceOfExpression expr = 
             PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiInstanceOfExpression.class, false);
           if (expr != null) {
@@ -644,7 +660,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
             PsiMethod method = PsiTreeUtil.getParentOfType(myPosition, PsiMethod.class, false, PsiClass.class);
             assert method != null;
             boolean hasParams = superConstructorHasParameters(method);
-            addKeyword(superItem.withAdditionalUpdater((startOffset, file, updater) -> {
+            addKeyword(superItem.withAdditionalUpdater((startOffset, updater) -> {
               int offset = updater.getCaretOffset();
               Document document = updater.getDocument();
               // TODO: support '(' insertion character
@@ -656,8 +672,8 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
               else {
                 updater.moveCaretTo(offset + 3);
               }
-              PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-              CodeStyleManager.getInstance(file.getProject()).reformatText(file, offset, offset + 3);
+              PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+              CodeStyleManager.getInstance(updater.getProject()).reformatText(updater.getPsiFile(), offset, offset + 3);
             }));
             return;
           }
@@ -852,8 +868,8 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
 
 
     private static CommonCompletionItem wrapRuleIntoBlock(CommonCompletionItem item) {
-      return item.withAdditionalUpdater((startOffset, file, updater) -> {
-        PsiStatement statement = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), PsiStatement.class);
+      return item.withAdditionalUpdater((startOffset, updater) -> {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(updater.getPsiFile().findElementAt(startOffset), PsiStatement.class);
         boolean isAfterArrow = false;
         if (statement != null) {
           if (statement.getParent() instanceof PsiCodeBlock) {
@@ -872,7 +888,7 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
           PsiStatement updatedStatement = BlockUtils.expandSingleStatementToBlockStatement(statement);
           int updatedStart = updatedStatement.getTextRange().getStartOffset();
           updater.moveCaretTo(origPos + updatedStart - start);
-          PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(updater.getDocument());
+          PsiDocumentManager.getInstance(updater.getProject()).doPostponedOperationsAndUnblockDocument(updater.getDocument());
         }
       });
     }
@@ -1224,9 +1240,6 @@ final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
         return false;
       }
       if (psiElement().afterLeaf("::").accepts(myPosition)) {
-        return false;
-      }
-      if (JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition) != null) {
         return false;
       }
       return true;

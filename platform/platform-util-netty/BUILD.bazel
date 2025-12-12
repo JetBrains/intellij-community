@@ -11,9 +11,9 @@ jvm_library(
     "//platform/core-api:core",
     "//libraries/guava",
     "//libraries/fastutil",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//platform/util",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//platform/platform-util-io:ide-util-io",
     "//libraries/kotlinx/coroutines/core",
   ]

@@ -635,6 +635,8 @@ com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 - a:isNameRequired():Z
 - a:prepareProperties(java.util.Map):V
 - prepareProperties(java.util.Map,java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.openapi.project.Project):V
+f:com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl
+- getDefaultContextMap():java.util.Map
 com.intellij.ide.highlighter.custom.CustomHighlighterColors
 - sf:CUSTOM_INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:CUSTOM_KEYWORD1_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey

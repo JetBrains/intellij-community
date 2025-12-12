@@ -114,7 +114,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   suspend fun applyAsync(parent: JComponent?): Boolean {
-    val applyResult = withContext(Dispatchers.IO) { UiPluginManager.getInstance().applySession(mySessionId.toString(), parent, project) }
+    val applyResult = withContext(Dispatchers.IO) { UiPluginManager.getInstance().apply(parent, project) }
     val error = applyResult.error
     if (error != null) {
       throw ConfigurationException(XmlStringUtil.wrapInHtml(error)).withHtmlMessage()

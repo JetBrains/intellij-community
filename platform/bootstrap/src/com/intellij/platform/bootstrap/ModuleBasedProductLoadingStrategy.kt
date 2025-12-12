@@ -112,6 +112,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         useCoreClassLoader = useCoreClassLoader,
         classLoader = mainClassLoader,
         jarFileForModule = { moduleId, _ -> findProductContentModuleClassesRoot(moduleId) },
+        pool = zipPool,
       )
     }
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)

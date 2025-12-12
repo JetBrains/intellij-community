@@ -67,4 +67,18 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
     }
     return listOf(Path.of(JpsPathUtil.urlToPath(url)))
   }
+
+  override suspend fun findFileInAnyModuleOutput(
+    relativePath: String,
+    moduleNamePrefix: String?,
+    processedModules: MutableSet<String>?,
+  ): ByteArray? {
+    return findFileInAnyModuleOutput(
+      modules = modules,
+      relativePath = relativePath,
+      provider = this,
+      moduleNamePrefix = moduleNamePrefix,
+      processedModules = processedModules,
+    )
+  }
 }

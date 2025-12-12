@@ -426,18 +426,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<DocumentContent> contents = myMergeRequest.getContents();
       MergeRange importRange = ReadAction.compute(() -> {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
-        boolean isAutoResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
-        if (myConflictResolver.isAvailable() || isAutoResolveImportConflicts) {
-          initPsiFiles();
-        }
-        if (isAutoResolveImportConflicts) {
-          boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
-          myResolveImportsPossible = canImportsBeProcessedAutomatically;
-          if (canImportsBeProcessedAutomatically) {
-            return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
-          }
-        }
-        return null;
+        initPsiFiles();
+        myResolveImportsPossible = canImportsBeProcessedAutomatically();
+        return getTextSettings().isAutoResolveImportConflicts() && myResolveImportsPossible
+               ? MergeImportUtil.getImportMergeRange(myProject, myPsiFiles)
+               : null;
       });
 
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
@@ -502,10 +495,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private void initPsiFiles() {
     if (myProject == null) return;
     ArrayList<PsiFile> files = new ArrayList<>();
-    for (ThreeSide value : ThreeSide.values()) {
+    for (ThreeSide value : ThreeSide.getEntries()) {
       PsiFile psiFile = getPsiFile(value, myProject, myMergeRequest);
       if (psiFile != null) {
         files.add(psiFile);
+      } else {
+        return;
       }
     }
     myPsiFiles = files;
@@ -609,7 +604,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private boolean canSideBeProcessed(ThreeSide side) {
-    if (DumbService.isDumb(myProject)) return false;
+    if (myProject == null || DumbService.isDumb(myProject) || myPsiFiles.isEmpty()) return false;
     AtomicReference<Boolean> atLeastOnReferenceFound = new AtomicReference<>(false);
     return SyntaxTraverser.psiTraverser(side.select(myPsiFiles))
              .traverse(TreeTraversal.PLAIN_BFS)

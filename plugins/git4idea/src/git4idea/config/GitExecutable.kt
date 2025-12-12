@@ -7,20 +7,17 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.vcs.VcsLocaleHelper
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
@@ -122,21 +119,21 @@ sealed class GitExecutable {
       var filePath = exePath
 
       if (!filePath.contains(File.separator)) {
-        var exeFile = PathEnvironmentVariableUtil.findInPath(filePath, pathVariable, null)
-        if (exeFile != null) filePath = exeFile.path;
+        val exeFile = PathEnvironmentVariableUtil.findInPath(filePath, pathVariable, null)
+        if (exeFile != null) filePath = exeFile.path
       }
 
-      val executablePath = toPath(filePath);
+      val executablePath = toPath(filePath)
       var modificationTime = Files.getLastModifiedTime(executablePath).toMillis()
 
-      for (dependencyPath in GitExecutableDetector.getDependencyPaths(executablePath, isMac).map(toPath)) {
+      for (dependencyPath in GitExecutableDetector.getDependencyPaths(executablePath.toString(), isMac).map(toPath)) {
         runCatching {
           val depTime = Files.getLastModifiedTime(dependencyPath).toMillis()
           modificationTime = modificationTime.coerceAtLeast(depTime)
         }
       }
 
-      return modificationTime;
+      return modificationTime
     }
 
     internal fun doCreateBundledCommandLine(project: Project, isWindows: Boolean, vararg command: String): GeneralCommandLine {
@@ -166,7 +163,8 @@ sealed class GitExecutable {
   /**
    * Ideally, can represent any git executable, either local or remote. Actual instantiation depends on the feature flags enabled.
    */
-  data class Eel(override val exePath: @NonNls String, val eel: EelApi) : GitExecutable() {
+  data class Eel(val exeEelPath: EelPath, val eel: EelApi) : GitExecutable() {
+    override val exePath: String = exeEelPath.toString()
     private val delegate = Local(exePath)
 
     override val id: @NonNls String = eel.descriptor.toString()
@@ -176,12 +174,14 @@ sealed class GitExecutable {
       return if (isLocal) delegate.convertFilePath(file) else file.asEelPath().toString()
     }
 
-    override fun getModificationTime(): Long {
-      return delegate.getModificationTime(
-        pathVariable = eel.exec.fetchLoginShellEnvVariablesBlocking()["PATH"],
-        isMac = eel.platform is EelPlatform.Darwin,
-        toPath = { eel.fs.getPath(it).asNioPath() }
-      )
+    override fun getModificationTime(): Long  {
+      val dependencies = GitExecutableDetector.getDependencyPaths(exeEelPath.toString(), eel.platform is EelPlatform.Darwin).map { eel.fs.getPath(it) }
+
+      return (listOf(exeEelPath) + dependencies).mapNotNull { path ->
+        delegate.runCatching {
+          Files.getLastModifiedTime(path.asNioPath()).toMillis()
+        }.getOrNull()
+      }.maxOrNull() ?: 0
     }
 
     override fun convertFilePathBack(path: String, workingDir: Path): Path {

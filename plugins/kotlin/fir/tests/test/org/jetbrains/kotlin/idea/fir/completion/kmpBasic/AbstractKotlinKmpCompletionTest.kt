@@ -7,11 +7,11 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractKotlinKmpCompletionTest : KotlinFixtureCompletionBaseTestCase(), KMPTest {
 

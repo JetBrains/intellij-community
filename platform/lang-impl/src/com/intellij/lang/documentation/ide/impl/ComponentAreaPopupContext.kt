@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
 import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
@@ -9,20 +8,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupRelativePosition
 import com.intellij.openapi.ui.popup.PopupShowOptionsBuilder
 import com.intellij.openapi.ui.popup.PopupShowOptionsImpl
+import com.intellij.openapi.util.TextRange
 import com.intellij.ui.MouseMovementTracker
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WidthBasedLayout
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.Alarm
+import com.intellij.util.Range
 import com.intellij.util.asSafely
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
+import kotlin.math.min
 
 internal class ComponentAreaPopupContext(
   project: Project,
@@ -30,6 +33,7 @@ internal class ComponentAreaPopupContext(
   private val areaWithinComponent: Rectangle,
   private val onDocumentationSessionDone: Runnable?,
   private val minHeight: Int,
+  private val delay: Int,
 ) : DefaultPopupContext(project, null) {
 
   private val myComponentReference = WeakReference(component)
@@ -66,6 +70,7 @@ internal class ComponentAreaPopupContext(
     private var clickedInside: Boolean = false
     private var popup: AbstractPopup? = null
     private var alarm: Alarm? = null
+    private var defaultPopupHeight: Int? = null
 
     override fun showPopup(popup: AbstractPopup) {
       if (hideRequested) {
@@ -81,6 +86,7 @@ internal class ComponentAreaPopupContext(
           popup.cancel()
           return@Runnable
         }
+        popup.setRequestFocus(false)
         popup.show(position)
         relocatePopupIfNeeded(popup)
         val window = SwingUtilities.getWindowAncestor(popup.content)
@@ -115,9 +121,7 @@ internal class ComponentAreaPopupContext(
             return false
           }
         }, popup)
-        // Add some delay, which usually is related to reference resolve and other stuff,
-        // so that the popup does not appear immediately, even if the delay is zero.
-      }, 150 + CodeInsightSettings.getInstance().JAVADOC_INFO_DELAY)
+      }, delay)
     }
 
     fun mouseOutsideOfSourceArea() {
@@ -125,7 +129,8 @@ internal class ComponentAreaPopupContext(
         hideRequested = true
         alarm?.cancelAllRequests()
         popup?.cancel()
-      } else if (!mouseInDocPopup && mouseMoved) {
+      }
+      else if (!mouseInDocPopup && mouseMoved) {
         hideRequested = true
         scheduleHide()
       }
@@ -177,28 +182,30 @@ internal class ComponentAreaPopupContext(
       }
     }
 
-    private fun calculatePosition(component: Component, popup: AbstractPopup) =
-      PopupShowOptionsBuilder()
-        .withComponentPoint(AnchoredPoint(
-          AnchoredPoint.Anchor.TOP_LEFT,
-          component,
-          Point(areaWithinComponent.x, areaWithinComponent.y + areaWithinComponent.height),
-        ))
-        .withRelativePosition(PopupRelativePosition.BOTTOM)
-        .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
-        .withMinimumHeight(minHeight)
-        .withDefaultPopupComponentUnscaledGap(4)
-        .takeIf { isWithinScreen(it.build(), popup) }
-      ?: PopupShowOptionsBuilder()
-        .withComponentPoint(AnchoredPoint(
-          AnchoredPoint.Anchor.TOP_LEFT,
-          component,
-          Point(areaWithinComponent.x, areaWithinComponent.y),
-        ))
-        .withRelativePosition(PopupRelativePosition.TOP)
-        .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
-        .withMinimumHeight(minHeight)
-        .withDefaultPopupComponentUnscaledGap(4)
+    private fun calculatePosition(component: Component, popup: AbstractPopup): PopupShowOptionsBuilder {
+      val bounds = component.bounds
+      return PopupShowOptionsBuilder()
+               .withComponentPoint(AnchoredPoint(
+                 AnchoredPoint.Anchor.TOP_LEFT,
+                 component,
+                 Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y + areaWithinComponent.height),
+               ))
+               .withRelativePosition(PopupRelativePosition.BOTTOM)
+               .withDefaultPopupAnchor(AnchoredPoint.Anchor.TOP_LEFT)
+               .withMinimumHeight(minHeight)
+               .withDefaultPopupComponentUnscaledGap(4)
+               .takeIf { isWithinScreen(it.build(), popup) }
+             ?: PopupShowOptionsBuilder()
+               .withComponentPoint(AnchoredPoint(
+                 AnchoredPoint.Anchor.TOP_LEFT,
+                 component,
+                 Point(bounds.x + areaWithinComponent.x, bounds.y + areaWithinComponent.y),
+               ))
+               .withRelativePosition(PopupRelativePosition.TOP)
+               .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
+               .withMinimumHeight(minHeight)
+               .withDefaultPopupComponentUnscaledGap(4)
+    }
 
 
     override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
@@ -206,24 +213,56 @@ internal class ComponentAreaPopupContext(
         resizePopup(popup, popupUpdateEvent)
         yield()
       }
+      adjustPopupHeight(popup, popupUpdateEvent)
       relocatePopupIfNeeded(popup)
     }
 
+    private fun adjustPopupHeight(
+      popup: AbstractPopup,
+      popupUpdateEvent: PopupUpdateEvent,
+    ) {
+      val width = popup.width - JBUI.scale(1) -
+                  generateSequence(popup.component as Container) { it.parent }.sumOf { it.insets.width }
+      val hMax = WidthBasedLayout.getPreferredHeight(popup.component.getComponent(0), width) +
+                 generateSequence(popup.component as Container) { it.parent }.sumOf { it.insets.height } +
+                 // add some margin, we are not able to calculate from other sources.
+                 JBUI.scale(1)
+      val currentHeight = popup.height
+      if (currentHeight > hMax) {
+        // Shrink popup
+        if (defaultPopupHeight == null) {
+          defaultPopupHeight = currentHeight
+        }
+        popup.size = Dimension(width, hMax)
+      }
+      else if (popupUpdateEvent is PopupUpdateEvent.ContentChanged
+               && popupUpdateEvent.updateKind == PopupUpdateEvent.ContentUpdateKind.DocumentationPageOpened
+               && hMax > currentHeight
+               && defaultPopupHeight != null) {
+        // restore popup height after showing a notification
+        popup.size = Dimension(width, min(hMax, defaultPopupHeight!!))
+      }
+    }
+
     private fun relocatePopupIfNeeded(popup: AbstractPopup) {
+      var popupLocation = popup.locationOnScreen
+      val screen = ScreenUtil.getScreenRectangle(popupLocation)
+      val popupSize = popup.size
+      if (popupLocation.y + popupSize.height > screen.y + screen.height) {
+        popup.setLocation(Point(popupLocation.x, screen.y + screen.height - popupSize.height))
+        popupLocation = popup.locationOnScreen
+      }
+
       val componentLocation = myComponentReference.get()?.locationOnScreen ?: return
       val componentActiveArea = Rectangle(areaWithinComponent).also {
         it.x += componentLocation.x
         it.y += componentLocation.y
       }
-
-      val popupLocation = popup.locationOnScreen
-      if (popupLocation.y < componentActiveArea.y + componentActiveArea.height) {
+      if (TextRange(popupLocation.y, popupLocation.y + popupSize.height)
+          .intersectsStrict(componentActiveArea.y, componentActiveArea.y + componentActiveArea.height)) {
         // reposition popup above the component
-        val bounds = popup.content.bounds
-        if (bounds.height < componentActiveArea.y) {
-          popupLocation.y = componentActiveArea.y - bounds.height - 4
-          popup.setLocation(popupLocation)
-        }
+        popupLocation.y = componentActiveArea.y - popupSize.height - 4
+        popup.setLocation(popupLocation)
       }
     }
 

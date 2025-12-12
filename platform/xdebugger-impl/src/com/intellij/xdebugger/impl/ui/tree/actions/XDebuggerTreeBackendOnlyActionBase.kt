@@ -18,13 +18,13 @@ import org.jetbrains.annotations.ApiStatus
  * Supported UI: [com.intellij.openapi.ui.DialogWrapper.show]
  *
  * Use this base class for backend-only actions, which do not operate on the frontend.
- * If you need to create an action which operates on the frontend, use [XDebuggerTreeActionBase] instead.
+ * If you need to create an action which operates on the frontend, use [XDebuggerTreeSplitActionBase] instead.
  */
 @ApiStatus.Experimental
 abstract class XDebuggerTreeBackendOnlyActionBase : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun update(e: AnActionEvent) {
-    val selectedValue = getSelectedValue(e.dataContext)
+    val selectedValue = getSelectedValueWithName(e.dataContext)
     e.presentation.setEnabled(selectedValue != null && isEnabled(selectedValue.xValue, selectedValue.name, e) )
   }
 
@@ -33,7 +33,7 @@ abstract class XDebuggerTreeBackendOnlyActionBase : AnAction(), ActionRemoteBeha
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val (xValue, name) = getSelectedValue(e.dataContext) ?: return
+    val (xValue, name) = getSelectedValueWithName(e.dataContext) ?: return
     if (name != null) {
       perform(xValue, name, e)
     }
@@ -43,16 +43,24 @@ abstract class XDebuggerTreeBackendOnlyActionBase : AnAction(), ActionRemoteBeha
 
   companion object {
     @JvmStatic
-    fun getSelectedValues(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
-      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext)
+    fun getSelectedValues(dataContext: DataContext): List<XValue> {
+      return getSelectedValuesWithNames(dataContext).map { it.xValue }
     }
 
     @JvmStatic
-    fun getSelectedValue(dataContext: DataContext): XDebuggerTreeSelectedValue? {
+    fun getSelectedValue(dataContext: DataContext): XValue? {
       return getSelectedValues(dataContext).firstOrNull()
     }
+
+    private fun getSelectedValuesWithNames(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
+      return SplitDebuggerUIUtil.getXDebuggerTreeSelectedBackendValues(dataContext)
+    }
+
+    private fun getSelectedValueWithName(dataContext: DataContext): XDebuggerTreeSelectedValue? =
+      getSelectedValuesWithNames(dataContext).firstOrNull()
   }
 }
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 data class XDebuggerTreeSelectedValue(val xValue: XValue, val name: String?)

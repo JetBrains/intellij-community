@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.isUnderTag
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,8 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
 
     val currentValueIsSelected = changesView.selectedChangesNodes.any { node ->
       when (val obj = node.userObject) {
-        is Change -> ChangesUtil.matches(obj, previousSelection.selectedChange.filePath.filePath)
+        is Change -> ChangesUtil.matches(obj, previousSelection.selectedChange.filePath.filePath) &&
+                     ChangeId.getId(obj) == previousSelection.selectedChange.changeId
         is FilePath -> obj == previousSelection.selectedChange.filePath.filePath
         else -> false
       }

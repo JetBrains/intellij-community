@@ -16,7 +16,7 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,7 +30,7 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
     if (session == null) return
 
     val markers = session.valueMarkers
-    val node = XDebuggerTreeActionBase.getSelectedNode(event.dataContext)
+    val node = XDebuggerTreeSplitActionBase.getSelectedNode(event.dataContext)
     if (markers == null || node == null) return
     val detachedView = DebuggerUIUtil.isInDetachedTree(event)
     val treeState = XDebuggerTreeState.saveState(node.tree)
@@ -49,7 +49,7 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
     val markers: XValueMarkers<*, *>? = getValueMarkers(event)
     if (markers == null) return false
 
-    val value = XDebuggerTreeActionBase.getSelectedValue(event.dataContext)
+    val value = XDebuggerTreeSplitActionBase.getSelectedValue(event.dataContext)
     return value != null && markers.canMarkValue(value) && XDebugManagerProxy.getInstance().hasBackendCounterpart(value)
   }
 
@@ -57,7 +57,7 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
     val markers: XValueMarkers<*, *>? = getValueMarkers(event)
     if (markers == null) return false
 
-    val value = XDebuggerTreeActionBase.getSelectedValue(event.dataContext)
+    val value = XDebuggerTreeSplitActionBase.getSelectedValue(event.dataContext)
     return value != null && markers.getMarkup(value) != null
   }
 

@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.fir.findUsages
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesMultiModuleTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractFindUsagesMultiModuleFirTest : AbstractFindUsagesMultiModuleTest() {
     override fun getTestType(): AbstractFindUsagesTest.Companion.FindUsageTestType = AbstractFindUsagesTest.Companion.FindUsageTestType.FIR

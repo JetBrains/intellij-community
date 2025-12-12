@@ -2,12 +2,13 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
 import com.intellij.ide.actions.SETextShortener
+import com.intellij.ide.rpc.util.textRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
-import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -22,7 +23,7 @@ import javax.swing.ListCellRenderer
 @Internal
 class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultListRow>) {
   fun get(): ListCellRenderer<SeResultListRow> = listCellRenderer {
-    val presentation = (value as SeResultListItemRow).item.presentation as SeTargetItemPresentation
+    val presentation = (value as SeResultListItemRow).item.presentation as SeTargetItemPresentationImpl
     val selected = selected
     selectionColor = UIUtil.getListBackground(selected, selected)
     presentation.backgroundColor?.let { background = it }
@@ -64,7 +65,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
 
       if (selected) {
         speedSearch {
-          ranges = presentation.presentableTextMatchedRanges?.map { it.textRange }
+          ranges = presentation.presentableTextMatchedRanges?.map { it.textRange() }
         }
       }
     }
@@ -88,7 +89,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
           val postSuffixShiftAmount = containerText.length - shortenContainerText.length
 
           speedSearch {
-            ranges = presentation.containerTextMatchedRanges?.map { it.textRange }?.filter { range ->
+            ranges = presentation.containerTextMatchedRanges?.map { it.textRange() }?.filter { range ->
               range.endOffset <= prefixBoundary || range.startOffset >= suffixBoundary
             }?.map { range ->
               if (range.startOffset >= suffixBoundary) {

@@ -66,7 +66,7 @@ public final class DocumentMarkupModel {
     DocumentMarkupModelManager documentMarkupModelManager =
       project.isDisposed() ? null : DocumentMarkupModelManager.getInstance(project);
     if (documentMarkupModelManager == null || documentMarkupModelManager.isDisposed() || project.isDisposed()) {
-      return new EmptyMarkupModel(document);
+      return new EmptyImmutableMarkupModel(document);
     }
 
     ConcurrentMap<Project, MarkupModelImpl> markupModelMap = getMarkupModelMap(document);

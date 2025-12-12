@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -6,7 +6,7 @@ package org.jetbrains.intellij.build.impl
 import java.nio.file.Path
 import kotlin.io.path.name
 
-class JUnitRunConfigurationProperties(
+class JUnitRunConfigurationProperties private constructor(
   name: String,
   moduleName: String,
   val testSearchScope: TestSearchScope,
@@ -22,10 +22,10 @@ class JUnitRunConfigurationProperties(
   }
 
   companion object {
-    const val TYPE = "JUnit"
+    internal const val TYPE = "JUnit"
 
     fun loadRunConfiguration(file: Path): JUnitRunConfigurationProperties {
-      val configuration = getConfiguration(file)
+      val configuration = getRunConfiguration(file)
       if (!configuration.getAttributeValue("type").equals(TYPE)) {
         throw RuntimeException("Cannot load configuration from '${file.name}': only JUnit run configuration are supported")
       }
@@ -60,13 +60,15 @@ class JUnitRunConfigurationProperties(
           it.getAttributeValue("enabled") == "true"
         } == true
 
-      return JUnitRunConfigurationProperties(name = configuration.getAttributeValue("name")!!,
-                                             moduleName = moduleName,
-                                             testSearchScope = testSearchScope,
-                                             testClassPatterns = testClassPatterns,
-                                             vmParameters = vmParameters,
-                                             envVariables = envVariables,
-                                             buildProject = buildProject)
+      return JUnitRunConfigurationProperties(
+        name = configuration.getAttributeValue("name")!!,
+        moduleName = moduleName,
+        testSearchScope = testSearchScope,
+        testClassPatterns = testClassPatterns,
+        vmParameters = vmParameters,
+        envVariables = envVariables,
+        buildProject = buildProject,
+      )
     }
   }
 }

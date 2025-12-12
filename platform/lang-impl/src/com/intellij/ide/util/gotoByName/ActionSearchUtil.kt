@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.text.Matcher
+import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
@@ -41,8 +43,8 @@ fun getAnActionText(value: AnAction): @Nls String? {
 }
 
 fun buildMatcher(pattern: String): Matcher {
-  return if (pattern.contains(" ")) WordPrefixMatcher(pattern)
-  else NameUtil.buildMatcher("*$pattern", NameUtil.MatchingCaseSensitivity.NONE)
+  return if (pattern.contains(" ")) WordPrefixMatcher(pattern, PlatformKeyboardLayoutConverter)
+  else NameUtil.buildMatcher("*$pattern", MatchingMode.IGNORE_CASE)
 }
 
 fun calcElementWeight(element: Any, pattern: String, matcher: MinusculeMatcher): Int? {

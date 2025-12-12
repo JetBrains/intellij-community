@@ -1,0 +1,5 @@
+JsonFile: n_structure_lone_open_bracket.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> or ']' expected
+      <empty list>

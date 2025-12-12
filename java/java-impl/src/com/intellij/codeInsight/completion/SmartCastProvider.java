@@ -176,7 +176,7 @@ final class SmartCastProvider {
 
         final CommonCodeStyleSettings csSettings = CompletionStyleUtil.getCodeStyleSettings(context);
         final int oldTail = context.getTailOffset();
-        context.setTailOffset(RParenthTailType.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
+        context.setTailOffset(RParenthTailType.addRParenth(editor.asModNavigator(), oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 
         getDelegate().handleInsert(CompletionUtil.newContext(context, getDelegate(), context.getStartOffset(), oldTail));
 

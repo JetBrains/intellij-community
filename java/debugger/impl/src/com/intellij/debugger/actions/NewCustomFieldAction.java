@@ -20,7 +20,7 @@ public class NewCustomFieldAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+  protected void perform(@NotNull XValueNodeImpl node, @NotNull String nodeName, @NotNull AnActionEvent e) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     CustomFieldInplaceEditor.editNew(node, debuggerContext);
   }

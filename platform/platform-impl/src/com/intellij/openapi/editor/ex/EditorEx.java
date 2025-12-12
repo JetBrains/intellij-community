@@ -35,6 +35,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
@@ -44,6 +46,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 public interface EditorEx extends Editor {
@@ -382,6 +385,16 @@ public interface EditorEx extends Editor {
       @Override
       public @NotNull Document getDocument() {
         return EditorEx.this.getDocument();
+      }
+
+      @Override
+      public @NotNull Project getProject() {
+        return Objects.requireNonNull(EditorEx.this.getProject());
+      }
+
+      @Override
+      public @NotNull PsiFile getPsiFile() {
+        return Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
       }
 
       @Override

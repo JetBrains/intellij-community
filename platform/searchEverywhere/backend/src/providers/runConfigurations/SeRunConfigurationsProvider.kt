@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeWrappedLegacyContributorItemsProvider
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
@@ -61,9 +62,7 @@ class SeRunConfigurationsProvider(private val contributorWrapper: SeAsyncContrib
     return contributor.showInFindResults()
   }
 
-  override fun getSupportedCommands(): List<SeCommandInfo> {
-    return contributor.supportedCommands.map { commandInfo -> SeCommandInfo(commandInfo, id) }
-  }
+  override fun getSupportedCommands(): List<SeCommandInfo> = getSupportedCommandsFromContributor()
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

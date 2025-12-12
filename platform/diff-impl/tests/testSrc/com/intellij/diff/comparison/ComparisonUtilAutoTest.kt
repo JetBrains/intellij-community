@@ -151,8 +151,9 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, ignorePolicy, true, true)
       debugData.put("Processed Fragments", processed)
 
-      // TODO: allowNonTrimed: WordComparisonUtilTest.testWordFirstTrimmableCase
-      checkResultLine(text1, text2, processed, ignorePolicy, allowNonSquashed = true, allowNonTrimed = true)
+      // we do not consider 'x x' and 'xx' identical lines
+      checkResultLine(text1, text2, processed, ignorePolicy, allowNonSquashed = true,
+                      allowNonTrimed = ignorePolicy == ComparisonPolicy.IGNORE_WHITESPACES)
     }
   }
 
@@ -695,7 +696,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       if (countNonWhitespaceCharacters(line2) <= ComparisonUtil.getUnimportantLineCharCount()) return
     }
 
-    assertFalse(MANAGER.isEquals(line1, line2, policy))
+    assertFalse("\"$line1\" vs \"$line2\"", MANAGER.isEquals(line1, line2, policy))
   }
 
   private fun countNonWhitespaceCharacters(line: CharSequence): Int {

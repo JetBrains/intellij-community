@@ -17,6 +17,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.nio.file.Path
 import java.util.TreeSet
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -432,7 +434,7 @@ private fun String.removeSuffixStrict(suffix: String): String {
   return result
 }
 
-private fun String.removePrefixStrict(prefix: String): String {
+internal fun String.removePrefixStrict(prefix: String): String {
   require(prefix.isNotEmpty()) {
     "prefix must not be empty"
   }
@@ -546,7 +548,7 @@ private fun addDep(
             val hasTestResources = dependencyModuleDescriptor.testResources.isNotEmpty()
 
             if (isExported && hasTestSource) {
-              println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+              LOG.log(Level.FINE, "Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
             }
 
             if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
@@ -598,7 +600,7 @@ private fun addDep(
       }
       else {
         if (!isExported) {
-          println("WARN: dependency scope for ${dependencyLabel.label} should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
+          LOG.log(Level.FINE, "dependency scope for ${dependencyLabel.label} should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
         }
         runtimeDeps.add(dependencyLabel)
       }
@@ -615,7 +617,7 @@ private fun addDep(
         }
       }
       else {
-        println("WARN: ignoring dependency on $dependencyLabel (module=$dependentModule)")
+        LOG.log(Level.FINE, "WARN: ignoring dependency on $dependencyLabel (module=$dependentModule)")
       }
     }
     JpsJavaDependencyScope.TEST -> {
@@ -678,3 +680,5 @@ internal fun camelToSnakeCase(s: String, replacement: Char = '_'): String {
 internal val bazelLabelBadCharsPattern = Regex("[:.+]")
 
 internal fun escapeBazelLabel(name: String): String = bazelLabelBadCharsPattern.replace(name, "-")
+
+private val LOG = Logger.getLogger("dependency")

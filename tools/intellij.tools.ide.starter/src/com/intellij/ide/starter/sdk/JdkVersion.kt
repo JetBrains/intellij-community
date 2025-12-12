@@ -7,7 +7,8 @@ enum class JdkVersion(val number: Int) {
   JDK_16(16),
   JDK_17(17),
   JDK_20(20),
-  JDK_21(21);
+  JDK_21(21),
+  JDK_25(25);
 
   override fun toString(): String {
     return number.toString()

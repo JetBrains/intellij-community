@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -2309,6 +2310,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myHeaderPanel.revalidate();
     myHeaderPanel.repaint();
+
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      customization.updateEditorHeader(myHeaderPanel);
+    }
 
     if (SystemInfo.isMac) {
       TouchbarSupport.onUpdateEditorHeader(this);

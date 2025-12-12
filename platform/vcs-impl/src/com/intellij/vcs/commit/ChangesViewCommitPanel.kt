@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.VcsDisposable
@@ -28,7 +27,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-import kotlin.properties.Delegates.observable
 
 class ChangesViewCommitPanel internal constructor(
   project: Project,
@@ -64,12 +62,6 @@ class ChangesViewCommitPanel internal constructor(
     logger<ChangesViewCommitPanel>().assertTrue(rootComponent == null)
     rootComponent = newRootComponent
     commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
-  }
-
-  override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, newValue ->
-    ChangesViewManager.getInstanceEx(project).scheduleRefresh {
-      application.invokeLater { newValue?.let { expand(it) } }
-    }
   }
 
   override fun expand(item: Any) {

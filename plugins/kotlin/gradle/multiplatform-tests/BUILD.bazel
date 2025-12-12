@@ -26,7 +26,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/gradle/java",

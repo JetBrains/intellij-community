@@ -30,6 +30,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//uast/uast-common:uast",
     "//uast/uast-common-ide:ide",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
   ],
   exports = [
     "//uast/uast-common:uast",

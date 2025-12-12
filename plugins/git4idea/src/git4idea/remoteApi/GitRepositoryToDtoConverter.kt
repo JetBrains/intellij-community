@@ -2,6 +2,7 @@
 package git4idea.remoteApi
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.components.service
 import com.intellij.vcs.git.ref.GitCurrentRef
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.VisibleForTesting
 internal object GitRepositoryToDtoConverter {
   fun convertToDto(repository: GitRepository): GitRepositoryDto {
     return GitRepositoryDto(
-      repositoryId = repository.rpcId,
+      repositoryId = repository.rpcId(),
       shortName = VcsUtil.getShortVcsRootName(repository.project, repository.root),
       state = convertRepositoryState(repository),
       favoriteRefs = collectFavorites(repository),

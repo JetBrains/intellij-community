@@ -294,6 +294,10 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     internal fun mutableFacetMapping(mutableEntityStorage: MutableEntityStorage): MutableExternalEntityMapping<Facet<*>> {
       return mutableEntityStorage.getMutableExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
+
+    fun EntityStorage.findFacet(needle: FacetEntity): Facet<*>? = facetMapping().getDataByEntity(needle)
+
+    fun EntityStorage.findFacetEntity(facet: Facet<*>): FacetEntity? = facetMapping().getEntities(facet).filterIsInstance<FacetEntity>().firstOrNull()
   }
 }
 

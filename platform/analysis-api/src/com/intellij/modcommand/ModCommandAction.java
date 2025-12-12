@@ -21,6 +21,8 @@ import java.util.function.UnaryOperator;
  * If you need your action to work in the dumb mode, extend it with {@link com.intellij.openapi.project.DumbAware}
  * or override {@link PossiblyDumbAware#isDumbAware()}
  * (please see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#dumb-mode">dumb mode docs</a> for details)
+ * <p>
+ * The "action" in the name suggests relation to {@link IntentionAction}, not to {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
  */
 public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAware {
   /**

@@ -17,7 +17,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.messages.XDebuggerImplBundle;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
-import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
+import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueSplitActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import javax.swing.*;
 import static com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorKt.convertToJavaStringLiteral;
 
 @ApiStatus.Internal
-public abstract class ViewTextActionBase extends XFetchValueActionBase {
+public abstract class ViewTextActionBase extends XFetchValueSplitActionBase {
   @Override
   protected void handle(Project project, String value) { }
 
@@ -45,7 +45,8 @@ public abstract class ViewTextActionBase extends XFetchValueActionBase {
         String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
-          dialog.setTitle(XDebuggerImplBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
+          dialog.setTitle(node != null ? XDebuggerImplBundle.message("action.Debugger.ViewEditText.text")
+                                       : ActionsBundle.message("action.Debugger.ViewText.text"));
           dialog.show();
         }
         dialog.setText(text);

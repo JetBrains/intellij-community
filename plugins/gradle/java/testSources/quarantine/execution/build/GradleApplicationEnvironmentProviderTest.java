@@ -21,7 +21,7 @@ import org.junit.Test;
 public class GradleApplicationEnvironmentProviderTest extends GradleApplicationEnvironmentProviderTestCase {
 
   @Test
-  @TargetVersions("4.6+") // org.gradle.api.tasks.TaskContainer.create introduced only in Gradle 4.6
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")
@@ -209,7 +209,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleApplicationE
   }
 
   @Test
-  @TargetVersions("4.6+") // org.gradle.api.tasks.TaskContainer.create introduced only in Gradle 4.6
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testRunApplicationInnerStaticClass() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(getMyProject());
     @Language("Java")

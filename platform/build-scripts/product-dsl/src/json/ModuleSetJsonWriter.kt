@@ -2,143 +2,128 @@
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
-import org.jetbrains.intellij.build.productLayout.DuplicateIncludeDetector
+import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversal
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.collectAllModuleNamesFromSet
+import org.jetbrains.intellij.build.productLayout.analysis.detectDuplicates
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
 /**
- * Writes a single module set to JSON.
- * Uses kotlinx.serialization to serialize the ModuleSet structure directly,
- * then embeds the raw JSON using writeRawValue().
+ * Writes a single module set to JSON using kotlinx.serialization.
  */
 internal fun writeModuleSet(
   gen: JsonGenerator,
   moduleSet: ModuleSet,
   location: String,
   sourceFilePath: String,
-  allModuleSets: List<ModuleSet>
+  cache: ModuleSetTraversalCache
 ) {
-  gen.writeStartObject()
+  @Serializable
+  data class ModuleSetEntry(
+    val name: String,
+    val location: String,
+    val sourceFile: String,
+    val moduleSet: ModuleSet,
+    val allModulesFlattened: List<String>
+  )
 
-  // Metadata fields
-  gen.writeStringField("name", moduleSet.name)
-  gen.writeStringField("location", location)
-  gen.writeStringField("sourceFile", sourceFilePath)
-
-  // Serialize ModuleSet using kotlinx.serialization and write raw JSON
-  val moduleSetJson = kotlinxJson.encodeToString(moduleSet)
-  gen.writeFieldName("moduleSet")
-  gen.writeRawValue(moduleSetJson)
-
-  // Add flattened list of all modules (including from nested sets)
-  gen.writeArrayFieldStart("allModulesFlattened")
-  val allModules = collectAllModuleNamesFromSet(allModuleSets, moduleSet.name)
-  for (moduleName in allModules.sorted()) {
-    gen.writeString(moduleName)
-  }
-  gen.writeEndArray()
-
-  gen.writeEndObject()
+  val entry = ModuleSetEntry(
+    name = moduleSet.name,
+    location = location,
+    sourceFile = sourceFilePath,
+    moduleSet = moduleSet,
+    allModulesFlattened = cache.getModuleNames(moduleSet.name).sorted()
+  )
+  gen.writeRawValue(kotlinxJson.encodeToString(entry))
 }
 
 /**
  * Writes duplicate analysis section including both module duplicates and xi:include duplicates.
  */
-fun writeDuplicateAnalysis(
+internal fun writeDuplicateAnalysis(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  projectRoot: Path
+  projectRoot: Path,
+  cache: ModuleSetTraversalCache
 ) {
-  // Find modules that appear in multiple module sets
+  @Serializable
+  data class ModuleDuplicate(val moduleName: String, val appearsInSets: List<String>)
+
+  @Serializable
+  data class SetOverlap(
+    val set1: String,
+    val set2: String,
+    val overlapCount: Int,
+    val set1TotalModules: Int,
+    val set2TotalModules: Int,
+    val overlapPercentage: Double,
+    val uniqueToSet1: List<String>? = null,
+    val uniqueToSet2: List<String>? = null
+  )
+
+  // Find modules that appear in multiple module sets (using cache for O(1) lookups)
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
   for ((moduleSet, _, _) in allModuleSets) {
-    val allModules = ModuleSetTraversal.collectAllModuleNames(moduleSet)
+    val allModules = cache.getModuleNames(moduleSet)
     for (moduleName in allModules) {
       moduleToSets.computeIfAbsent(moduleName) { mutableListOf() }.add(moduleSet.name)
     }
   }
 
-  val duplicateModules = moduleToSets.filter { it.value.size > 1 }
+  val modulesInMultipleSets = moduleToSets
+    .filter { it.value.size > 1 }
+    .entries
+    .sortedBy { it.key }
+    .map { (moduleName, setNames) -> ModuleDuplicate(moduleName, setNames.sorted()) }
 
-  gen.writeArrayFieldStart("modulesInMultipleSets")
-  for ((moduleName, setNames) in duplicateModules.entries.sortedBy { it.key }) {
-    gen.writeStartObject()
-    gen.writeStringField("moduleName", moduleName)
+  gen.writeFieldName("modulesInMultipleSets")
+  gen.writeRawValue(kotlinxJson.encodeToString(modulesInMultipleSets))
 
-    gen.writeArrayFieldStart("appearsInSets")
-    for (setName in setNames.sorted()) {
-      gen.writeString(setName)
-    }
-    gen.writeEndArray()
-
-    gen.writeEndObject()
-  }
-  gen.writeEndArray()
-
-  // Set overlap analysis
-  gen.writeArrayFieldStart("setOverlapAnalysis")
+  // Set overlap analysis (using cache for O(1) lookups)
+  val setOverlapAnalysis = mutableListOf<SetOverlap>()
   for (i in allModuleSets.indices) {
     for (j in i + 1 until allModuleSets.size) {
       val (set1, _, _) = allModuleSets[i]
       val (set2, _, _) = allModuleSets[j]
 
-      val modules1 = ModuleSetTraversal.collectAllModuleNames(set1)
-      val modules2 = ModuleSetTraversal.collectAllModuleNames(set2)
+      val modules1 = cache.getModuleNames(set1)
+      val modules2 = cache.getModuleNames(set2)
 
       val overlap = modules1.intersect(modules2)
       if (overlap.size > 5) { // Only report significant overlaps
-        val uniqueToSet1 = modules1 - modules2
-        val uniqueToSet2 = modules2 - modules1
-
-        gen.writeStartObject()
-        gen.writeStringField("set1", set1.name)
-        gen.writeStringField("set2", set2.name)
-        gen.writeNumberField("overlapCount", overlap.size)
-        gen.writeNumberField("set1TotalModules", modules1.size)
-        gen.writeNumberField("set2TotalModules", modules2.size)
-        
+        val uniqueToSet1 = (modules1 - modules2).sorted().take(10).ifEmpty { null }
+        val uniqueToSet2 = (modules2 - modules1).sorted().take(10).ifEmpty { null }
         val overlapPercentage = (overlap.size.toDouble() / minOf(modules1.size, modules2.size)) * 100
-        gen.writeNumberField("overlapPercentage", overlapPercentage)
 
-        if (uniqueToSet1.isNotEmpty()) {
-          gen.writeArrayFieldStart("uniqueToSet1")
-          for (moduleName in uniqueToSet1.sorted().take(10)) { // Limit to first 10
-            gen.writeString(moduleName)
-          }
-          gen.writeEndArray()
-        }
-
-        if (uniqueToSet2.isNotEmpty()) {
-          gen.writeArrayFieldStart("uniqueToSet2")
-          for (moduleName in uniqueToSet2.sorted().take(10)) { // Limit to first 10
-            gen.writeString(moduleName)
-          }
-          gen.writeEndArray()
-        }
-
-        gen.writeEndObject()
+        setOverlapAnalysis.add(SetOverlap(
+          set1 = set1.name,
+          set2 = set2.name,
+          overlapCount = overlap.size,
+          set1TotalModules = modules1.size,
+          set2TotalModules = modules2.size,
+          overlapPercentage = overlapPercentage,
+          uniqueToSet1 = uniqueToSet1,
+          uniqueToSet2 = uniqueToSet2
+        ))
       }
     }
   }
-  gen.writeEndArray()
-  
+
+  gen.writeFieldName("setOverlapAnalysis")
+  gen.writeRawValue(kotlinxJson.encodeToString(setOverlapAnalysis))
+
   // xi:include duplicate detection
   val productFiles = products
     .mapNotNull { it.pluginXmlPath }
     .map { projectRoot.resolve(it) }
     .filter { it.exists() && it.isRegularFile() }
-  
-  val report = DuplicateIncludeDetector.detectDuplicates(productFiles, projectRoot)
-  
-  // Serialize using kotlinx.serialization and write raw JSON (consistent with ModuleSet pattern)
-  val reportJson = kotlinxJson.encodeToString(report)
+
+  val report = detectDuplicates(productFiles, projectRoot)
   gen.writeFieldName("xiIncludeDuplicates")
-  gen.writeRawValue(reportJson)
+  gen.writeRawValue(kotlinxJson.encodeToString(report))
 }

@@ -318,6 +318,8 @@ internal object Weighers {
         ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.scopeKind)
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
         PreferredSubtypeWeigher.addWeight(context, lookupElement, symbol)
+        // Prefer Duration-based overloads for specific time-related APIs
+        DurationPreferringWeigher.addWeight(lookupElement, symbol)
 
         if (symbol !is KaCallableSymbol) return@also
 
@@ -354,6 +356,8 @@ internal object Weighers {
             PlatformWeighersIds.PROXIMITY,
             ByNameAlphabeticalWeigher.Weigher,
             PreferKotlinClassesWeigher.Weigher,
+            // Prefer Duration-based overloads over Long-based ones for known time-related APIs
+            DurationPreferringWeigher.Weigher,
             PreferFewerParametersWeigher.Weigher,
             TrailingLambdaWeigher,
         ).weighBefore(

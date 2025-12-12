@@ -30,6 +30,6 @@
     <orderEntry type="module" module-name="intellij.libraries.cli.parser" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
-    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
   </component>
 </module>

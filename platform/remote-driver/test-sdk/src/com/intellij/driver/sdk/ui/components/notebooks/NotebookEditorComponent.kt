@@ -270,18 +270,14 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        getAllTexts().first().strictClick()
+        moveMouse()
       }
     }
 
     val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    waitFor(timeout = 30.seconds) {
-      newFileButton.present()
-    }
-    newFileButton.strictClick()
-
-    waitFor("New file popup will be selected", timeout = 15.seconds) {
+    waitFor(message = "new file popup should present and focused", timeout = 30.seconds) {
+      newFileButton.strictClick()
       hasFocus(popup())
     }
 

@@ -62,15 +62,17 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
     }
   }
 
-  @Deprecated("Dispatchers.EDT + ModalityState.any().asContextElement()", ReplaceWith("Dispatchers.EDT + ModalityState.any().asContextElement()", "kotlinx.coroutines.Dispatchers",
-                                   "com.intellij.openapi.application.EDT", "com.intellij.openapi.application.ModalityState",
-                                   "com.intellij.openapi.application.asContextElement"))
+  @Deprecated("Dispatchers.EDT + ModalityState.any().asContextElement()",
+              ReplaceWith("Dispatchers.EDT + ModalityState.any().asContextElement()", "kotlinx.coroutines.Dispatchers",
+                          "com.intellij.openapi.application.EDT", "com.intellij.openapi.application.ModalityState",
+                          "com.intellij.openapi.application.asContextElement"))
   val uiDispatcherAnyModality: CoroutineContext
     get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   override fun onException(throwable: Throwable) {
     if (throwable !is CancellationException) {
-      logger<RdCoroutineHost>().error("Unhandled coroutine throwable", throwable)
+      val coroutineName = coroutineContext[CoroutineName]?.name?.let { " [$it]" } ?: ""
+      logger<RdCoroutineHost>().error("Unhandled coroutine throwable${coroutineName}", throwable)
     }
   }
 

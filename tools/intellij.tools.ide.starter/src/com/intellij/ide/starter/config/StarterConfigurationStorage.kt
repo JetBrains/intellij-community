@@ -19,7 +19,7 @@ private const val ENV_JBR_DEV_SERVER_VERSION = "JBR_DEV_SERVER_VERSION"
 private const val ENABLE_SCRAMBLING_FOR_DEVSERVER = "ENABLE_SCRAMBLING_FOR_DEVSERVER"
 private const val ENV_MONITORING_DUMPS_INTERVAL_SECONDS = "MONITORING_DUMPS_INTERVAL_SECONDS"
 private const val ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS = "COROUTINE_SCOPES_CANCEL_TIMEOUT_MS"
-private const val ENV_UNIT_TEST_MODE = "UNIT_TEST_MODE"
+private const val ENV_DEBUG_LOGGING_ENABLED = "DEBUG_LOGGING_ENABLED"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -35,6 +35,7 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENABLE_SCRAMBLING_FOR_DEVSERVER to System.getenv().getOrDefault("ENABLE_SCRAMBLING_FOR_DEVSERVER", "false"),
   ENV_MONITORING_DUMPS_INTERVAL_SECONDS to System.getenv().getOrDefault(ENV_MONITORING_DUMPS_INTERVAL_SECONDS, "60"),
   ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS to System.getenv().getOrDefault(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, "2000"),
+  ENV_DEBUG_LOGGING_ENABLED to System.getenv().getOrDefault(ENV_DEBUG_LOGGING_ENABLED, "false"),
 ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
@@ -109,3 +110,7 @@ fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_S
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
   get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "2000").toLong().milliseconds }
   set(value) = instance().put(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS, value.inWholeMilliseconds.toString())
+
+var ConfigurationStorage.Companion.starterDebugEnabled: Boolean
+  get() = instance().get(ENV_DEBUG_LOGGING_ENABLED).toBoolean()
+  set(value) = instance().put(ENV_DEBUG_LOGGING_ENABLED, value)

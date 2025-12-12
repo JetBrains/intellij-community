@@ -76,7 +76,7 @@ public final class JavaGenerateMemberCompletionContributor {
 
   }
 
-  private static boolean isTypingAnnotationForNewMember(PsiElement position) {
+  public static boolean isTypingAnnotationForNewMember(PsiElement position) {
     if (psiElement(PsiIdentifier.class)
       .withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class).accepts(position)) {
       PsiElement parent = Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiModifierList.class)).getParent();

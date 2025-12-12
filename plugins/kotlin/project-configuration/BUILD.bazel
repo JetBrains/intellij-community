@@ -57,7 +57,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/core-api:core",
     "//platform/util/coroutines",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//platform/util",
     "//platform/workspace/storage",
     "//platform/vcs-impl/shared",

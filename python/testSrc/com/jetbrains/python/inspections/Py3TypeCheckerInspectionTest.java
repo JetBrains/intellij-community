@@ -1680,6 +1680,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    subClass.foo(subClass.foo(<warning descr="Expected type 'SubClass' (matched generic type 'Self@MyClass'), got 'MyClass' instead">myClass</warning>))""");
   }
 
+  public void testSelfParameterType() {
+    doTestByText("""
+                   class MyClass[T]:
+                       def __init__(self: "MyClass[int]") -> None: ...
+                   
+                   MyClass()
+                   MyClass[int]()
+                   <warning descr="Expected type 'MyClass[int]', got 'MyClass[str]' instead">MyClass[str]</warning>()
+                   """);
+  }
+
   // PY-53104
   public void testProtocolSelfClass() {
     doTestByText("""
@@ -3581,6 +3592,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    if not typing.TYPE_CHECKING:
                        x = 1
+                   """);
+  }
+
+  // PY-85988
+  public void testClsCallResult() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Self
+                   
+                   
+                   @dataclass
+                   class Foo:
+                       @classmethod
+                       def bar(cls) -> Self:
+                           return cls()
                    """);
   }
 }

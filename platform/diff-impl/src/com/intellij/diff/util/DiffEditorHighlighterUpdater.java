@@ -4,6 +4,7 @@ package com.intellij.diff.util;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -88,7 +89,11 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
       .submit(NonUrgentExecutor.getInstance())
       .onSuccess(psiFile -> {
         if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile, restartReason);
+          if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+            DaemonCodeAnalyzer.getInstance(project).restart(psiFile, restartReason);
+          } else {
+            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(psiFile, restartReason));
+          }
         }
       });
   }

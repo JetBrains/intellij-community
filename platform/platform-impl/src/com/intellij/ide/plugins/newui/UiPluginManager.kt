@@ -107,16 +107,16 @@ class UiPluginManager {
     getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
-  suspend fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
-    return getController().applySession(sessionId, parent, project)
+  suspend fun apply(parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
+    return getController().apply(parent, project)
   }
 
   suspend fun updatePluginDependencies(sessionId: String): Set<PluginId> {
     return getController().updatePluginDependencies(sessionId)
   }
 
-  suspend fun isModified(sessionId: String): Boolean {
-    return getController().isModified(sessionId)
+  suspend fun isModified(): Boolean {
+    return getController().isModified()
   }
 
   suspend fun findInstalledPlugins(plugins: Set<PluginId>): Map<PluginId, PluginUiModel> {

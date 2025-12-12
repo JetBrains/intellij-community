@@ -147,7 +147,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
                                 allTypes: List<ConfigurationType>,
                                 hideVirtualConfigurations : Boolean = false): List<ConfigurationType> =
       getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
-        .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
+        .sortedWith(Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
     fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
       val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
@@ -305,21 +305,25 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   }
 
   private fun findNode(configuration: RunConfiguration): DefaultMutableTreeNode? {
+    fun Any.extractConfiguration(): RunConfiguration? = when (this) {
+      is SingleConfigurationConfigurable<*> -> this.configuration
+      is RunnerAndConfigurationSettings     -> this.configuration
+      else                                  -> null
+    }
+    var firstNameMatch: DefaultMutableTreeNode? = null
     val enumeration = root.breadthFirstEnumeration()
     while (enumeration.hasMoreElements()) {
       val node = enumeration.nextElement() as DefaultMutableTreeNode
-      var userObject = node.userObject
-      if (userObject is SettingsEditorConfigurable<*>) {
-        userObject = userObject.settings
-      }
-      if (userObject is RunnerAndConfigurationSettingsImpl) {
-        val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
-        if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
-          return node
-        }
+      val userObject = node.userObject
+      val cfg = userObject.extractConfiguration() ?: continue
+      if (cfg === configuration) return node
+      // Remember a name match as a fallback (old behavior)
+      if (cfg.factory?.type?.id == configuration.factory?.type?.id && cfg.name == configuration.name) {
+        if (firstNameMatch == null) firstNameMatch = node
       }
     }
-    return null
+    // Fall back to name-based match if identity was not found
+    return firstNameMatch
   }
 
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
@@ -431,7 +435,18 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
                 val snapshot = editor.snapshot.configuration as LocatableConfiguration
                 val generatedName = snapshot.suggestedName()
                 if (!generatedName.isNullOrEmpty()) {
-                  info.nameText = generatedName
+                  val currentNode = findNode(info.configuration)
+                  val typeNode = currentNode?.let { getConfigurationTypeNode(getType(it)!!) }
+                  info.nameText = if (currentNode != null && typeNode != null) {
+                    createUniqueName(
+                      typeNode = typeNode,
+                      excludeNode = currentNode,
+                      baseName = generatedName,
+                      CONFIGURATION, TEMPORARY_CONFIGURATION
+                    )
+                  } else {
+                    RunManager.suggestUniqueName(generatedName, emptyList())
+                  }
                   changed = false
                 }
               }
@@ -1482,16 +1497,30 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   }
 }
 
-private fun createUniqueName(typeNode: DefaultMutableTreeNode, @Nls baseName: String?, vararg kinds: RunConfigurableNodeKind): String {
+private fun createUniqueName(
+  typeNode: DefaultMutableTreeNode,
+  @Nls baseName: String?,
+  vararg kinds: RunConfigurableNodeKind
+): String {
+  return createUniqueName(typeNode = typeNode, excludeNode = null, baseName = baseName, *kinds)
+}
+
+private fun createUniqueName(
+  typeNode: DefaultMutableTreeNode,
+  excludeNode: DefaultMutableTreeNode?,
+  @Nls baseName: String?,
+  vararg kinds: RunConfigurableNodeKind
+): String {
   val str = baseName ?: ExecutionBundle.message("run.configuration.unnamed.name.prefix")
   val configurationNodes = ArrayList<DefaultMutableTreeNode>()
   collectNodesRecursively(typeNode, configurationNodes, *kinds)
-  val currentNames = ArrayList<String>()
-  for (node in configurationNodes) {
+  val currentNames = configurationNodes.mapNotNull { node ->
     when (val userObject = node.userObject) {
-      is SingleConfigurationConfigurable<*> -> currentNames.add(userObject.nameText)
-      is RunnerAndConfigurationSettingsImpl -> currentNames.add((userObject as RunnerAndConfigurationSettings).name)
-      is String -> currentNames.add(userObject)
+      else if (node === excludeNode) -> null
+      is SingleConfigurationConfigurable<*> -> userObject.nameText
+      is RunnerAndConfigurationSettingsImpl -> userObject.name
+      is String -> userObject
+      else -> null
     }
   }
   return RunManager.suggestUniqueName(str, currentNames)

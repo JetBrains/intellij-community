@@ -20,6 +20,12 @@ org.jetbrains.jps.dependency.BaseMaplet
 - a:flush():V
 - a:getKeys():java.lang.Iterable
 - a:remove(java.lang.Object):V
+org.jetbrains.jps.dependency.ComparableTypeExternalizer
+- java.util.Comparator
+- org.jetbrains.jps.dependency.Externalizer
+- a:createStorage(I):java.lang.Object[]
+- s:forAnyGraphElement(java.util.function.Function,java.util.Comparator):org.jetbrains.jps.dependency.ComparableTypeExternalizer
+- s:forGraphElement(org.jetbrains.jps.dependency.DataReader,java.util.function.Function,java.util.Comparator):org.jetbrains.jps.dependency.ComparableTypeExternalizer
 org.jetbrains.jps.dependency.CompositeBackDependencyIndex
 - org.jetbrains.jps.dependency.BackDependencyIndex
 - s:create(java.lang.String,java.lang.Iterable):org.jetbrains.jps.dependency.CompositeBackDependencyIndex
@@ -63,6 +69,7 @@ org.jetbrains.jps.dependency.DifferentiateParameters
 - a:isCompiledWithErrors():Z
 - a:isProcessConstantsIncrementally():Z
 - logConsumer():org.jetbrains.jps.dependency.LogConsumer
+- a:scopeFilter():java.util.function.Predicate
 org.jetbrains.jps.dependency.DifferentiateResult
 - s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,Z,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
 - a:getAffectedSources():java.lang.Iterable
@@ -81,9 +88,6 @@ org.jetbrains.jps.dependency.ExternalizableGraphElement
 org.jetbrains.jps.dependency.Externalizer
 - org.jetbrains.jps.dependency.DataReader
 - org.jetbrains.jps.dependency.DataWriter
-- a:createStorage(I):java.lang.Object[]
-- s:forAnyGraphElement(java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
-- s:forGraphElement(org.jetbrains.jps.dependency.DataReader,java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
 org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 - org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:getFactorData():org.jetbrains.jps.dependency.ExternalizableGraphElement
@@ -122,8 +126,8 @@ org.jetbrains.jps.dependency.Maplet
 - a:get(java.lang.Object):java.lang.Object
 - a:put(java.lang.Object,java.lang.Object):V
 org.jetbrains.jps.dependency.MapletFactory
-- a:createMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.Maplet
-- a:createSetMultiMaplet(java.lang.String,org.jetbrains.jps.dependency.Externalizer,org.jetbrains.jps.dependency.Externalizer):org.jetbrains.jps.dependency.MultiMaplet
+- a:createMaplet(java.lang.String,org.jetbrains.jps.dependency.ComparableTypeExternalizer,org.jetbrains.jps.dependency.ComparableTypeExternalizer):org.jetbrains.jps.dependency.Maplet
+- a:createSetMultiMaplet(java.lang.String,org.jetbrains.jps.dependency.ComparableTypeExternalizer,org.jetbrains.jps.dependency.ComparableTypeExternalizer):org.jetbrains.jps.dependency.MultiMaplet
 org.jetbrains.jps.dependency.MultiMaplet
 - org.jetbrains.jps.dependency.BaseMaplet
 - a:appendValue(java.lang.Object,java.lang.Object):V
@@ -153,6 +157,7 @@ org.jetbrains.jps.dependency.NodeSourcePathMapper
 - a:toNodeSource(java.nio.file.Path):org.jetbrains.jps.dependency.NodeSource
 - a:toPath(org.jetbrains.jps.dependency.NodeSource):java.nio.file.Path
 org.jetbrains.jps.dependency.ReferenceID
+- java.lang.Comparable
 - org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:equals(java.lang.Object):Z
 - a:hashCode():I

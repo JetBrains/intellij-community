@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiModuleQuickFix")
-public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixMultiModuleTest {
+public abstract class QuickFixMultiModuleTestGenerated extends AbstractK1QuickFixMultiModuleTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/accessibilityChecker")
-    public static class AccessibilityChecker extends AbstractQuickFixMultiModuleTest {
+    public static class AccessibilityChecker extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -126,7 +126,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect")
-    public static class ActualAnnotationsNotMatchExpect extends AbstractQuickFixMultiModuleTest {
+    public static class ActualAnnotationsNotMatchExpect extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -265,7 +265,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/addDependency")
-    public static class AddDependency extends AbstractQuickFixMultiModuleTest {
+    public static class AddDependency extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -314,7 +314,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/addMissingActualMembers")
-    public static class AddMissingActualMembers extends AbstractQuickFixMultiModuleTest {
+    public static class AddMissingActualMembers extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -398,7 +398,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/addThrowsAnnotation")
-    public static class AddThrowsAnnotation extends AbstractQuickFixMultiModuleTest {
+    public static class AddThrowsAnnotation extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -427,7 +427,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/canSealedSubClassBeObject")
-    public static class CanSealedSubClassBeObject extends AbstractQuickFixMultiModuleTest {
+    public static class CanSealedSubClassBeObject extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -466,7 +466,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/changeModifier")
-    public static class ChangeModifier extends AbstractQuickFixMultiModuleTest {
+    public static class ChangeModifier extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -490,7 +490,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/changeSignature")
-    public static class ChangeSignature extends AbstractQuickFixMultiModuleTest {
+    public static class ChangeSignature extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -549,7 +549,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/changeVisibility")
-    public static class ChangeVisibility extends AbstractQuickFixMultiModuleTest {
+    public static class ChangeVisibility extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -568,7 +568,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/createActual")
-    public static class CreateActual extends AbstractQuickFixMultiModuleTest {
+    public static class CreateActual extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -777,7 +777,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/createActualExplicitApi")
-    public static class CreateActualExplicitApi extends AbstractQuickFixMultiModuleTest {
+    public static class CreateActualExplicitApi extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -801,7 +801,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/createExpect")
-    public static class CreateExpect extends AbstractQuickFixMultiModuleTest {
+    public static class CreateExpect extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1150,7 +1150,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/fixNativeThrowsErrors")
-    public static class FixNativeThrowsErrors extends AbstractQuickFixMultiModuleTest {
+    public static class FixNativeThrowsErrors extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1194,7 +1194,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/functionTypeReceiverToParameter")
-    public static class FunctionTypeReceiverToParameter extends AbstractQuickFixMultiModuleTest {
+    public static class FunctionTypeReceiverToParameter extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1258,7 +1258,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/initializeProperty")
-    public static class InitializeProperty extends AbstractQuickFixMultiModuleTest {
+    public static class InitializeProperty extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1292,7 +1292,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/inlineToValue")
-    public static class InlineToValue extends AbstractQuickFixMultiModuleTest {
+    public static class InlineToValue extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1326,7 +1326,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/makeOverridenMemberOpen")
-    public static class MakeOverridenMemberOpen extends AbstractQuickFixMultiModuleTest {
+    public static class MakeOverridenMemberOpen extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1360,7 +1360,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/other")
-    public static class Other extends AbstractQuickFixMultiModuleTest {
+    public static class Other extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1689,7 +1689,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/packageDirectoryMismatch")
-    public static class PackageDirectoryMismatch extends AbstractQuickFixMultiModuleTest {
+    public static class PackageDirectoryMismatch extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -1718,7 +1718,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/redundantNullableReturnType")
-    public static class RedundantNullableReturnType extends AbstractQuickFixMultiModuleTest {
+    public static class RedundantNullableReturnType extends AbstractK1QuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {

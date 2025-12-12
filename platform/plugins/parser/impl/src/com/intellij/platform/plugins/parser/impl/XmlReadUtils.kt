@@ -2,9 +2,7 @@
 package com.intellij.platform.plugins.parser.impl
 
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal object XmlReadUtils {
   fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.trim().takeIf { !it.isEmpty() }
   fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int): String? = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }

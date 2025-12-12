@@ -24,6 +24,7 @@ public enum CLFlags {
 
   OUT,
   ABI_OUT,
+  KOTLIN_CRI_OUT,
 
   KOTLIN_MODULE_NAME,
 

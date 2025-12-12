@@ -31,6 +31,7 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.ui.ExpandableItemsHandler
@@ -93,6 +94,12 @@ abstract class CommitChangesViewWithToolbarPanel(
     cs.launch(Dispatchers.UI) {
       project.serviceAsync<CommitToolWindowViewModel>().canExcludeFromCommit.collectLatest { canExclude ->
         changesView.isShowCheckboxes = canExclude
+      }
+    }
+
+    cs.launch {
+      project.serviceAsync<CommitToolWindowViewModel>().editedCommit.collect { editedCommit ->
+        scheduleRefresh(withDelay = true, callback = editedCommit?.let(::getEditedCommitSelectCallback))
       }
     }
 
@@ -165,6 +172,12 @@ abstract class CommitChangesViewWithToolbarPanel(
         checkCanceled()
         synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
+    }
+  }
+
+  private fun getEditedCommitSelectCallback(editedCommit: EditedCommitPresentation): RefreshCallback = {
+    withContext(Dispatchers.UI) {
+      changesView.findNodeInTree(editedCommit)?.let { node -> changesView.expandSafe(node) }
     }
   }
 

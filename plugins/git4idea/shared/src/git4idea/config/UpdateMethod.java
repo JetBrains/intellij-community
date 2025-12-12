@@ -24,7 +24,10 @@ public enum UpdateMethod {
    * Rebase local commits upon the fetched branch
    */
   REBASE("settings.git.update.method.rebase",
-         "settings.git.update.method.rebase.description");
+         "settings.git.update.method.rebase.description"),
+
+  RESET("action.Git.Update.Reset.To.Remote.Branch.text",
+        "action.Git.Update.Reset.To.Remote.Branch.description");
 
   private final @NotNull String myName;
   private final @NotNull String myPresentation;

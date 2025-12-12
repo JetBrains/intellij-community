@@ -18,14 +18,6 @@ internal object PyTestDiscoveryUtil {
   fun isDefaultPyTestTestModule(fileName: String?): Boolean =
     fileName != null && (fileName.startsWith("test_") || fileName.endsWith("_test.py")) && fileName != "conftest.py"
 
-  /**
-   * Returns true if it's allowed to create/show pytest-related artifacts for the given file under current module settings.
-   * In particular: when pytest is selected, only default pytest test modules are allowed.
-   */
-  @JvmStatic
-  fun isPyTestAllowedForFile(module: Module?, fileName: String?): Boolean =
-    !isPyTestSelected(module) || isDefaultPyTestTestModule(fileName)
-
   @JvmStatic
   fun isPyTestAllowedForFile(module: Module?, pyFile: PyFile?): Boolean {
     if (!isPyTestSelected(module)) return true

@@ -7,8 +7,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.*
+import com.intellij.vcs.commit.ChangesViewCommitWorkflow
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitMode
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -16,6 +20,7 @@ internal class ChangesViewWorkflowManagerImpl(
   private val project: Project,
 ) : ChangesViewWorkflowManager(), Disposable {
   override val allowExcludeFromCommit = MutableStateFlow(false)
+  override val editedCommit = MutableStateFlow<EditedCommitPresentation?>(null)
 
   private var _commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
@@ -41,10 +46,8 @@ internal class ChangesViewWorkflowManagerImpl(
       if (currentHandler == null) {
         val activity = StartUpMeasurer.startActivity("ChangesViewWorkflowManager initialization")
 
-        // ChangesViewPanel can be reused between workflow instances -> should clean up after ourselves
-        val changesView = (ChangesViewManager.getInstance(project) as ChangesViewManager).initChangesView()
         val workflow = ChangesViewCommitWorkflow(project)
-        val commitPanel = ChangesViewCommitPanel(project, changesView)
+        val commitPanel = ChangesViewManager.getInstanceEx(project).createCommitPanel()
         setCommitWorkflowHandler(ChangesViewCommitWorkflowHandler(workflow, commitPanel))
 
         activity.end()
@@ -74,6 +77,7 @@ internal class ChangesViewWorkflowManagerImpl(
     else {
       allowExcludeFromCommit.value = false
     }
+    setEditedCommit(null)
     project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
   }
 
@@ -90,5 +94,9 @@ internal class ChangesViewWorkflowManagerImpl(
       updateCommitWorkflowHandler()
     }
     return _commitWorkflowHandler
+  }
+
+  override fun setEditedCommit(editedCommit: EditedCommitPresentation?) {
+    this.editedCommit.value = editedCommit
   }
 }

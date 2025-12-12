@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.CompositeSettingsEditor;
@@ -65,6 +65,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
       FragmentedSettings.Option option = ContainerUtil.find(options, o -> fragment.getId().equals(o.getName()));
       fragment.setSelected(option == null ? fragment.isInitiallyVisible(settings) : option.getVisible());
     }
+    updateFragmentVisibility();
   }
 
   @Override
@@ -94,6 +95,18 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
       }
     }
     settings.setSelectedOptions(options);
+    updateFragmentVisibility();
+  }
+
+  private void updateFragmentVisibility() {
+    getAllFragments().forEach(f -> {
+      var shouldBeVisible = f.isAvailable() && f.isSelected();
+      f.component().setVisible(shouldBeVisible);
+      var hintComponent = f.getHintComponent();
+      if (hintComponent != null) {
+        hintComponent.setVisible(shouldBeVisible);
+      }
+    });
   }
 
   @Override

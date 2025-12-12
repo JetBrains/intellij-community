@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.ColorAndFontOptions
@@ -34,6 +34,7 @@ class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPane
         restoreDefaults = link(ApplicationBundle.message("settings.editor.font.restored.defaults")) {
           restoreDefaults()
         }
+        label(" ")
       }
     }
   }

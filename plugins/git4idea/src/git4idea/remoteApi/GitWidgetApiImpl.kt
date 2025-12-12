@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -122,7 +123,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
       val presentation = GitCurrentBranchPresenter.getPresentation(this)
 
       return GitWidgetState.OnRepository(
-        repository = this.rpcId,
+        repository = this.rpcId(),
         presentationData = GitWidgetState.RepositoryPresentation(
           icon = presentation.icon?.rpcId(),
           text = presentation.text,

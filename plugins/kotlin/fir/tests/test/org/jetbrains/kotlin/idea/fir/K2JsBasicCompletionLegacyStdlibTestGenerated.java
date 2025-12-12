@@ -3312,6 +3312,16 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/DataClassMembers2.kt");
             }
 
+            @TestMetadata("DebounceDurationPreferringCompletion.kt")
+            public void testDebounceDurationPreferringCompletion() throws Exception {
+                runTest("../../completion/testData/basic/common/DebounceDurationPreferringCompletion.kt");
+            }
+
+            @TestMetadata("DelayDurationPreferringCompletion.kt")
+            public void testDelayDurationPreferringCompletion() throws Exception {
+                runTest("../../completion/testData/basic/common/DelayDurationPreferringCompletion.kt");
+            }
+
             @TestMetadata("DoWhile.kt")
             public void testDoWhile() throws Exception {
                 runTest("../../completion/testData/basic/common/DoWhile.kt");

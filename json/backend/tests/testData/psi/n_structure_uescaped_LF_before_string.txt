@@ -1,0 +1,11 @@
+JsonFile: n_structure_uescaped_LF_before_string.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got '\'
+      PsiElement(BAD_CHARACTER)('\')
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('u000A')
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('""')
+  PsiErrorElement:<value> expected, got ']'
+    PsiElement(])(']')

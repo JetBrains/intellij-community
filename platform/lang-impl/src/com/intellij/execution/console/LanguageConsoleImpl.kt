@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -166,7 +165,7 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
 
   protected open fun doCreateHistoryEditor(): EditorEx {
     val editorFactory = EditorFactory.getInstance()
-    val historyDocument = (editorFactory as EditorFactoryImpl).createDocument(true)
+    val historyDocument = editorFactory.createDocument(true)
     UndoUtil.disableUndoFor(historyDocument)
     return editorFactory.createViewer(historyDocument, project, EditorKind.CONSOLE) as EditorEx
   }

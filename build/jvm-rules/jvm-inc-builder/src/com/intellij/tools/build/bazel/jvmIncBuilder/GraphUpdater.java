@@ -81,6 +81,7 @@ public final class GraphUpdater {
       .compiledWithErrors(errorsDetected)
       .calculateAffected(!snapshotDelta.isRecompileAll())
       .processConstantsIncrementally(true)
+      .withScopeFilter(__-> true)
       .withAffectionFilter(currentChunkScopeFilter)
       .withChunkStructureFilter(currentChunkScopeFilter)
       .withLogConsumer(LogConsumer.composite(LogConsumer.createJULogConsumer(Level.FINE), logConsumer)) 

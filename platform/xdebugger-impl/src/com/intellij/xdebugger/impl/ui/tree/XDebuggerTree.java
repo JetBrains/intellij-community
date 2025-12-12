@@ -484,11 +484,12 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     return XDEBUGGER_TREE_KEY.getData(context);
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
     if (SplitDebuggerMode.showSplitWarnings() && AppMode.isRemoteDevHost()) {
       LOG.error("""
         [Split debugger] XDebuggerTree.getSelectedNodes should not be called on the backend as it returns frontend node instances (XValueNodeImpl) which are only available on the frontend.
-        The action will not work correctly in Split mode. Please use XDebuggerTreeBackendOnlyActionBase to make your action backend-only and operates with XValue instances instead."""
+        The action will not work correctly in Split mode. Please use XDebuggerTreeBackendActionBase to make your action backend-only and operates with XValue instances instead."""
       );
     }
     return ContainerUtil.notNullize(SELECTED_NODES.getData(context));

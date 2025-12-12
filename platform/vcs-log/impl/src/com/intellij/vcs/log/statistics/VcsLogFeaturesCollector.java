@@ -39,7 +39,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefa
 
 @ApiStatus.Internal
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 9);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final EventId MAIN_UI_INITIALIZED = GROUP.registerEvent("mainUiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
@@ -59,6 +59,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   private static final VarargEventId LABELS_COMPACT = GROUP.registerVarargEvent("labels.compact", EventFields.Enabled);
   private static final VarargEventId LABELS_SHOW_TAG_NAMES = GROUP.registerVarargEvent("labels.showTagNames", EventFields.Enabled);
   private static final VarargEventId LABELS_ON_THE_LEFT = GROUP.registerVarargEvent("labels.onTheLeft", EventFields.Enabled);
+  private static final VarargEventId ISSUE_SHOW_PREVIEW_ON_HOVER = GROUP.registerVarargEvent("issue.showPreviewOnHover", EventFields.Enabled);
   private static final VarargEventId SHOW_COMMIT_DATE = GROUP.registerVarargEvent("showCommitDate", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_REGEX = GROUP.registerVarargEvent("textFilter.regex", EventFields.Enabled);
   private static final VarargEventId TEXT_FILTER_MATCH_CASE = GROUP.registerVarargEvent("textFilter.matchCase", EventFields.Enabled);
@@ -123,6 +124,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(COMPACT_REFERENCES_VIEW), LABELS_COMPACT);
     addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_TAG_NAMES), LABELS_SHOW_TAG_NAMES);
     addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(LABELS_LEFT_ALIGNED), LABELS_ON_THE_LEFT);
+    addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(SHOW_ISSUE_PREVIEW_ON_HOVER), ISSUE_SHOW_PREVIEW_ON_HOVER);
     addBoolIfDiffers(metricEvents, properties, defaultProperties, getter(PREFER_COMMIT_DATE), SHOW_COMMIT_DATE);
 
     VcsLogColumnManager modelIndices = VcsLogColumnManager.getInstance();

@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
 import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
@@ -16,14 +17,13 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.File
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.writeLines
 
 @Internal
-class ArchivedCompilationContext(
+class ArchivedCompilationContext internal constructor(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(
     paths = delegate.paths,
@@ -48,48 +48,52 @@ class ArchivedCompilationContext(
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 
-  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
+  override val outputProvider: ModuleOutputProvider = object : ModuleOutputProvider by delegate.outputProvider {
+    override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+      return delegate.outputProvider.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
+    }
 
-  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    return delegate.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
+    override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+      val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
+        if (!moduleOutput.startsWith(archivesLocation)) {
+          return delegate.outputProvider.readFileContentFromModuleOutput(module, relativePath)
+        }
+
+        var fileContent: ByteArray? = null
+        try {
+          readZipFile(moduleOutput) { name, data ->
+            if (name == relativePath) {
+              fileContent = data().toByteArray()
+              ZipEntryProcessorResult.STOP
+            }
+            else {
+              ZipEntryProcessorResult.CONTINUE
+            }
+          }
+        }
+        catch (e: IOException) {
+          // If the zip file doesn't exist, return null and let other output roots be tried
+          if (generateSequence<Throwable>(e) { it.cause }.any { it is NoSuchFileException }) {
+            return@mapNotNull null
+          }
+          // re-throw unexpected I/O errors (corrupted zip, permissions, etc.)
+          throw e
+        }
+        return@mapNotNull fileContent
+      }
+      check(result.size < 2) {
+        "More than one '$relativePath' file for module '${module.name}' in output roots"
+      }
+      return result.singleOrNull()
+    }
   }
+
+  override fun findRequiredModule(moduleName: String): JpsModule = outputProvider.findRequiredModule(moduleName)
+
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
     return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { it }, resultMapper = { it })
-  }
-
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
-      if (!moduleOutput.startsWith(archivesLocation)) {
-        return delegate.readFileContentFromModuleOutput(module, relativePath)
-      }
-
-      var fileContent: ByteArray? = null
-      try {
-        readZipFile(moduleOutput) { name, data ->
-          if (name == relativePath) {
-            fileContent = data().toByteArray()
-            ZipEntryProcessorResult.STOP
-          }
-          else {
-            ZipEntryProcessorResult.CONTINUE
-          }
-        }
-      }
-      catch (e: IOException) {
-        // If the zip file doesn't exist, return null and let other output roots be tried
-        if (generateSequence<Throwable>(e) { it.cause }.any { it is NoSuchFileException }) {
-          return@mapNotNull null
-        }
-        // re-throw unexpected I/O errors (corrupted zip, permissions, etc.)
-        throw e
-      }
-      return@mapNotNull fileContent
-    }
-    check(result.size < 2) {
-      "More than one '$relativePath' file for module '${module.name}' in output roots"
-    }
-    return result.singleOrNull()
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
@@ -103,8 +107,8 @@ class ArchivedCompilationContext(
     return doReplace(files, inputMapper = { it }, resultMapper = { it })
   }
 
-  suspend fun replaceWithCompressedIfNeededLF(files: List<File>): List<File> {
-    return doReplace(files, inputMapper = { it.toPath() }, resultMapper = { it.toFile() })
+  suspend fun replaceWithCompressedIfNeededLF(files: List<Path>): List<Path> {
+    return doReplace(files, inputMapper = { it }, resultMapper = { it })
   }
 
   private suspend inline fun <I : Any, R : Any> doReplace(

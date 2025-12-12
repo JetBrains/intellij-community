@@ -15,7 +15,6 @@ public interface DataPaths {
   String PARAMS_FILE_NAME_SUFFIX = ".params";
   String ABI_JAR_SUFFIX = ".abi.jar";
   String DATA_DIR_NAME_SUFFIX = "-ic";
-  String KOTLIN_CRI_STORAGE_SUFFIX = "-kotlinCriStorage";
   String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
   String BUILD_LOG_FILE_NAME = "build.log";
 

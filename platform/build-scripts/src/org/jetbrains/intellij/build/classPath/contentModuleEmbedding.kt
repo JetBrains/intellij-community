@@ -24,7 +24,6 @@ import com.intellij.openapi.util.JDOMUtil
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
@@ -106,7 +105,7 @@ internal fun embedContentModules(
         dependencyHelper = dependencyHelper,
         pluginLayout = pluginLayout,
         frontendModuleFilter = frontendModuleFilter,
-        context = context
+        outputProvider = context.outputProvider,
       )
     }
   }
@@ -147,11 +146,11 @@ fun deprecatedResolveDescriptor(
             moduleElement = moduleElement,
             pluginDescriptorContainer = clientDescriptorCache,
             xIncludeResolver = xIncludeResolver,
-            context = context,
             moduleName = moduleName,
             dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
             pluginLayout = PluginLayout.pluginAuto(clientModuleName) {},
-            frontendModuleFilter = context.getFrontendModuleFilter()
+            frontendModuleFilter = context.getFrontendModuleFilter(),
+            outputProvider = context.outputProvider,
           )
         }
       }
@@ -192,7 +191,7 @@ fun deprecatedResolveDescriptor(
           dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
           pluginLayout = pluginLayout,
           frontendModuleFilter = context.getFrontendModuleFilter(),
-          context = context
+          outputProvider = context.outputProvider,
         )
       }
     }
@@ -209,20 +208,20 @@ internal fun embedContentModule(
   dependencyHelper: JarPackagerDependencyHelper,
   pluginLayout: PluginLayout,
   frontendModuleFilter: FrontendModuleFilter,
-  context: CompilationContext,
+  outputProvider: ModuleOutputProvider,
 ) {
   resolveAndEmbedContentModuleDescriptor(
     moduleElement = moduleElement,
     descriptorCache = pluginDescriptorContainer,
     xIncludeResolver = xIncludeResolver,
-    context = context,
+    outputProvider = outputProvider,
     descriptorModifier = { descriptor ->
       val jpsModuleName = moduleName.substringBeforeLast('/')
       if (jpsModuleName == moduleName &&
           dependencyHelper.isPluginModulePackedIntoSeparateJar(
-            module = context.findRequiredModule(jpsModuleName.removeSuffix("._test")),
+            module = outputProvider.findRequiredModule(jpsModuleName.removeSuffix("._test")),
             layout = pluginLayout,
-            frontendModuleFilter = frontendModuleFilter
+            frontendModuleFilter = frontendModuleFilter,
           )) {
         descriptor.setAttribute("separate-jar", "true")
       }
@@ -251,13 +250,13 @@ private fun resolveContentModuleDescriptor(
   moduleName: String,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolver,
-  context: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
 ): Element {
   val descriptorFilename = contentModuleNameToDescriptorFileName(moduleName)
   val data = descriptorCache.getCachedFileData(descriptorFilename)
   val element = if (data == null) {
     val jpsModuleName = moduleName.substringBeforeLast('/')
-    val data = requireNotNull(findUnprocessedDescriptorContent(module = context.findRequiredModule(jpsModuleName), path = descriptorFilename, context = context)) {
+    val data = requireNotNull(findUnprocessedDescriptorContent(module = outputProvider.findRequiredModule(jpsModuleName), path = descriptorFilename, outputProvider = outputProvider)) {
       "Cannot find file $descriptorFilename in module $jpsModuleName"
     }
     descriptorCache.putIfAbsent(descriptorFilename, data)
@@ -297,7 +296,7 @@ internal fun resolveAndEmbedContentModuleDescriptor(
   moduleElement: Element,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
-  context: CompilationContext,
+  outputProvider: ModuleOutputProvider,
   descriptorModifier: ((Element) -> Unit)? = null,
 ) {
   if (!moduleElement.content.isEmpty()) {
@@ -309,7 +308,7 @@ internal fun resolveAndEmbedContentModuleDescriptor(
     moduleName = moduleName,
     descriptorCache = descriptorCache,
     xIncludeResolver = xIncludeResolver.copyWithExtraSearchPath(moduleName, descriptorCache),
-    context = context,
+    outputProvider = outputProvider,
   )
 
   descriptorModifier?.invoke(descriptor)
@@ -357,8 +356,9 @@ internal class XIncludeElementResolverImpl(
         return JDOMUtil.load(it)
       }
 
+      val outputProvider = context.outputProvider
       for (module in searchPath.modules) {
-        findUnprocessedDescriptorContent(context.findRequiredModule(module), loadPath, context)?.let { data ->
+        findUnprocessedDescriptorContent(outputProvider.findRequiredModule(module), loadPath, outputProvider)?.let { data ->
           descriptorCache.putIfAbsent(loadPath, data)
           return JDOMUtil.load(data)
         }
@@ -370,9 +370,9 @@ internal class XIncludeElementResolverImpl(
         val processedModules = HashSet(searchPath.modules)
         for (module in searchPath.modules) {
           findFileInModuleDependencies(
-            module = context.findRequiredModule(module),
+            module = outputProvider.findRequiredModule(module),
             relativePath = loadPath,
-            context = context,
+            outputProvider = outputProvider,
             processedModules = processedModules,
             recursiveModuleExclude = if (searchInDependencies == DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR) "intellij.platform." else null,
           )?.let { data ->

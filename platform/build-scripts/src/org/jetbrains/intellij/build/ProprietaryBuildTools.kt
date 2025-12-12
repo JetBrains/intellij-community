@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 /**
  * Describes proprietary tools which are used to build the product.
- * Pass the instance of this class to [org.jetbrains.intellij.build.impl.BuildContextImpl.Companion.createContext] method.
+ * Pass the instance of this class to [org.jetbrains.intellij.build.impl.createBuildContext] method.
  */
 data class ProprietaryBuildTools(
   /**

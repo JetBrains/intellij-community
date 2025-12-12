@@ -12,6 +12,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
@@ -37,17 +39,15 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.event.HyperlinkListener
 
-@ApiStatus.Internal
-class MonolithSessionProxy internal constructor(val session: XDebugSession) : XDebugSessionProxy {
+internal class MonolithSessionProxy(val session: XDebugSession) : XDebugSessionProxy {
 
   val sessionImpl: XDebugSessionImpl get() = session as XDebugSessionImpl
   private val sessionImplIfAvailable get() = session as? XDebugSessionImpl
@@ -83,8 +83,6 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     get() = sessionImplIfAvailable?.valueMarkers
   override val sessionTab: XDebugSessionTab?
     get() = sessionImplIfAvailable?.sessionTab
-  override val sessionTabWhenInitialized: Deferred<XDebugSessionTab?>
-    get() = sessionImpl.sessionTabDeferred
   override val isPaused: Boolean
     get() = session.isPaused
   override val isStopped: Boolean
@@ -145,6 +143,12 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     return sessionImplIfAvailable?.getFrameSourcePosition(frame, sourceKind)
   }
 
+  override val alternativeSourceKindState: StateFlow<Boolean>
+    get() = sessionImpl.alternativeSourceKindState
+
+  override val currentSourceKind: XSourceKind
+    get() = sessionImpl.currentSourceKind
+
   override fun getCurrentExecutionStack(): XExecutionStack? {
     return sessionImplIfAvailable?.currentExecutionStack
   }
@@ -196,7 +200,9 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
   }
 
   override fun createFileColorsCache(onAllComputed: () -> Unit): XStackFramesListColorsCache {
-    return MonolithFramesColorCache(sessionImpl, onAllComputed)
+    return sessionImpl.sessionData.getOrCreateUserData(COLOR_CACHE_KEY) {
+      MonolithFramesColorCache(sessionImpl, onAllComputed)
+    }
   }
 
   override fun areBreakpointsMuted(): Boolean {
@@ -276,6 +282,9 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     return session.hashCode()
   }
 
+  companion object {
+    private val COLOR_CACHE_KEY = Key.create<XStackFramesListColorsCache>("COLOR_CACHE_KEY")
+  }
 }
 
 @Service(Service.Level.PROJECT)
@@ -297,6 +306,5 @@ private class XDebugSessionProxyKeeper {
   }
 }
 
-@ApiStatus.Internal
-fun XDebugSession.asProxy(): XDebugSessionProxy =
+internal fun XDebugSession.asProxy(): XDebugSessionProxy =
   project.service<XDebugSessionProxyKeeper>().getOrCreateProxy(this)

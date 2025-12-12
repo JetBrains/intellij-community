@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.popup
 
 import com.intellij.codeInsight.codeVision.ui.popup.layouter.DockingLayouter
@@ -18,7 +18,7 @@ import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.warn
 import java.awt.Dimension
 
-class CodeVisionPopupWrapper(
+internal class CodeVisionPopupWrapper(
   val mainLTD: LifetimeDefinition,
   val editor: Editor,
   val popupFactory: (Lifetime) -> AbstractPopup,

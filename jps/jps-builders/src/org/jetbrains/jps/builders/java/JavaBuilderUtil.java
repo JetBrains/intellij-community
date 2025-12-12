@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
@@ -433,12 +434,15 @@ public final class JavaBuilderUtil {
     DependencyGraph dependencyGraph = graphConfig.getGraph();
     NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
     
-    final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    Predicate<NodeSource> scopeFilter = s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile());
+    Predicate<NodeSource> affectionFilter = s -> scopeFilter.test(s) && !LibraryDef.isLibraryPath(s);
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
       .compiledWithErrors(errorsDetected)
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
+      .withScopeFilter(scopeFilter)
+      .withAffectionFilter(affectionFilter)
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()))
       .withLogConsumer(LogConsumer.createJULogConsumer(Level.FINE));
     DifferentiateParameters differentiateParams = params.get();

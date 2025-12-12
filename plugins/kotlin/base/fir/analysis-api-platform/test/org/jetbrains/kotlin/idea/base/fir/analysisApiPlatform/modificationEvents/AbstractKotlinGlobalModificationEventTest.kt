@@ -5,6 +5,8 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analysis.api.platform.modification.isGlobalLevel
 
 abstract class AbstractKotlinGlobalModificationEventTest : AbstractKotlinModificationEventTest() {
+    protected abstract val expectedEventKind: KotlinModificationEventKind
+
     override fun setUp() {
         super.setUp()
 
@@ -15,11 +17,11 @@ abstract class AbstractKotlinGlobalModificationEventTest : AbstractKotlinModific
         label: String,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModificationEventTracker =
-        createGlobalTracker(label, additionalAllowedEventKinds)
+        createGlobalTracker(label, expectedEventKind, additionalAllowedEventKinds)
 
     protected fun createTracker(
         label: String,
         additionalAllowedEventKind: KotlinModificationEventKind,
     ): ModificationEventTracker =
-        createGlobalTracker(label, setOf(additionalAllowedEventKind))
+        createGlobalTracker(label, expectedEventKind, setOf(additionalAllowedEventKind))
 }

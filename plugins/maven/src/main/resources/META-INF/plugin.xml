@@ -66,6 +66,7 @@
     <module name="intellij.properties.backend"/>
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.idea.reposearch"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
   </dependencies>
 
   <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>

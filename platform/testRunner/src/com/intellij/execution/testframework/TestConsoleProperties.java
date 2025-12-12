@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -39,6 +39,7 @@ import java.util.Map;
  */
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
+  public static final BooleanProperty SCROLL_TO_BOTTOM = new BooleanProperty("scrollToBottom", false);
   public static final BooleanProperty SORT_ALPHABETICALLY = new BooleanProperty("sortTestsAlphabetically", false);
   public static final BooleanProperty SORT_BY_DURATION = new BooleanProperty("sortTestsByDuration", false);
   public static final BooleanProperty SORT_BY_DECLARATION_ORDER = new BooleanProperty("sortTestsByDeclarationOrder", false);

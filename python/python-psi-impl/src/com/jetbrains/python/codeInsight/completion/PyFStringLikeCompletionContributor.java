@@ -5,19 +5,18 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -131,7 +130,7 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
       return false;
     }
     PyClassType templateType = psiFacade.createClassType(templateClass, false);
-    PyType expectedType = PyTypeChecker.getExpectedType(stringLiteral, typeEvalContext);
+    PyType expectedType = PyExpectedTypeJudgement.getExpectedType(stringLiteral, typeEvalContext);
     return templateType.equals(expectedType);
   }
 }

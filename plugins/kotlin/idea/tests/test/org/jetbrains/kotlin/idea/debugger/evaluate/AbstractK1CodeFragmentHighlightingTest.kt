@@ -7,14 +7,15 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVisitorTest() {
-    override fun doTest(filePath: String) {
+abstract class AbstractCodeFragmentHighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
+    open fun doTest(filePath: String) {
         myFixture.configureByCodeFragment(filePath, useFirCodeFragment = isFirPlugin)
         checkHighlighting(filePath)
     }

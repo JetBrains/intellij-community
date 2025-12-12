@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.rd.text` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "text_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "text",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":text_resources"],
+  exports = ["@lib//:libraries-rd-text-rd-text"],
+  runtime_deps = ["@lib//:libraries-rd-text-rd-text"]
+)
+### auto-generated section `build intellij.libraries.rd.text` end

@@ -28,8 +28,7 @@ interface UndoSpy {
 
   fun undoRedoPerformed(project: Project?, editor: FileEditor?, isUndo: Boolean)
 
-  // TODO: sync FE commands instead of flush
-  fun commandMergerFlushed(project: Project?)
+  fun <T> withBlind(action: () -> T): T
 
   companion object {
     @JvmStatic
@@ -41,6 +40,16 @@ interface UndoSpy {
         } else {
           null
         }
+      }
+    }
+
+    @JvmStatic
+    fun <T> withBlindSpot(action: () -> T): T {
+      val undoSpy = getInstance()
+      return if (undoSpy == null) {
+        action()
+      } else {
+        undoSpy.withBlind(action)
       }
     }
   }

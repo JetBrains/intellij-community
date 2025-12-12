@@ -4,11 +4,11 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
@@ -55,13 +55,11 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
   }
 
-  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
+  fun collectProjectLibrariesFromIncludedModules(context: ModuleOutputProvider, consumer: (String, JpsModule) -> Unit) {
     val libsToUnpack = includedProjectLibraries.mapTo(LinkedHashSet(includedProjectLibraries.size)) { it.libraryName }
     val uniqueGuard = HashSet<String>()
     for (item in includedModules) {
-      // libraries are packed into product module
-      // there are no strong valid reasons to check `item.includeDependencies` here, just to preserve current behavior and reduce scope of changes; it will be addressed later
-      if (item.isProductModule() && !item.includeDependencies) {
+      if (item.isProductModule()) {
         continue
       }
 
@@ -72,14 +70,11 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
 
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-        if (!isSkippedLibrary(library, libsToUnpack)) {
-          consumer(library, module)
+        val libraryName = library.name
+        if (!libsToUnpack.contains(libraryName) && library.createReference().parentReference !is JpsModuleReference && !isProjectLibraryExcluded(libraryName)) {
+          consumer(libraryName, module)
         }
       }
     }
-  }
-
-  private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
-    return library.createReference().parentReference is JpsModuleReference || libsToUnpack.contains(library.name) || isProjectLibraryExcluded(library.name)
   }
 }

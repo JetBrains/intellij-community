@@ -15,13 +15,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.application
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-import kotlin.properties.Delegates.observable
 
 abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
   project: Project,
@@ -58,12 +56,6 @@ abstract class ChangeListViewCommitPanel @ApiStatus.Internal constructor(
     logger<ChangesViewCommitPanel>().assertTrue(rootComponent == null)
     rootComponent = newRootComponent
     commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
-  }
-
-  final override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, newValue ->
-    ChangesViewManager.getInstanceEx(project).scheduleRefresh {
-      application.invokeLater { newValue?.let { expand(it) } }
-    }
   }
 
   final override fun expand(item: Any) {

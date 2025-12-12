@@ -27,6 +27,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/jdom",
     "//platform/statistics",
+    "//libraries/jbr",
   ]
 )
 ### auto-generated section `build intellij.platform.editor.ex` end

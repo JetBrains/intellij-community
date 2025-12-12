@@ -18,7 +18,7 @@ jvm_library(
     "//libraries/kotlinx/coroutines/core",
     "@lib//:jetbrains-annotations",
     "//libraries/guava",
-    "@lib//:protobuf",
+    "//libraries/protobuf",
     "@lib//:jna",
     "//platform/execution-process-mediator/common",
     "//libraries/grpc",

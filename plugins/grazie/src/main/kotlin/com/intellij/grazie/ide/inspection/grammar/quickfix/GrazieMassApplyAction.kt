@@ -38,7 +38,7 @@ class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, Customizab
         }
       }, GrazieBundle.message("grazie.mass.apply.action.title"), true, project)
 
-    if (problems == ProofreadingProblems.NONE) return
+    if (problems.isEmpty) return
     val dialog = GrazieMassApplyDialog(file, problems)
     dialog.show()
     dialog.apply(editor)

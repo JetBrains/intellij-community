@@ -1,10 +1,10 @@
 <idea-plugin>
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.kernel"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

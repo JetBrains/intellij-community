@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.intellij.build.readPluginContentFromDescriptor
@@ -26,7 +26,7 @@ internal class FrontendModuleFilterImpl private constructor(
     fun createFrontendModuleFilter(
       project: JpsProject,
       productModules: RawProductModules,
-      context: CompilationContext,
+      outputProvider: ModuleOutputProvider,
     ): FrontendModuleFilter {
       val frontendModeMatcher = JpsProductModeMatcher(ProductMode.FRONTEND)
       val includedModuleNames = LinkedHashSet<String>()
@@ -46,7 +46,7 @@ internal class FrontendModuleFilterImpl private constructor(
         val module = project.findModuleByName(mainModuleId.stringId) ?: continue
         if (frontendModeMatcher.matches(module)) {
           includedModuleNames.add(module.name)
-          val pluginDescriptor = readXmlAsModel(getUnprocessedPluginXmlContent(module = module, context = context))
+          val pluginDescriptor = readXmlAsModel(getUnprocessedPluginXmlContent(module = module, outputProvider = outputProvider))
           readPluginContentFromDescriptor(pluginDescriptor)
             .mapNotNull { project.findModuleByName(it.first) }
             .filter { frontendModeMatcher.matches(it) }
@@ -58,7 +58,7 @@ internal class FrontendModuleFilterImpl private constructor(
         project = project,
         frontendModeMatcher = frontendModeMatcher,
         includedModuleNames = includedModuleNames,
-        includedProjectLibraryNames = includedProjectLibraryNames
+        includedProjectLibraryNames = includedProjectLibraryNames,
       )
     }
   }
@@ -116,7 +116,12 @@ private fun collectTransitiveDependenciesCompatibleWithFrontend(
   }
   JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModuleAndLibraries(
     { depModule ->
-      collectTransitiveDependenciesCompatibleWithFrontend(depModule, frontendModeMatcher, includedModuleNames, includedProjectLibraryNames)
+      collectTransitiveDependenciesCompatibleWithFrontend(
+        module = depModule,
+        frontendModeMatcher = frontendModeMatcher,
+        includedModuleNames = includedModuleNames,
+        includedProjectLibraryNames = includedProjectLibraryNames,
+      )
     },
     { depLibrary ->
       if (!isScrambledWithFrontend(depLibrary) && depLibrary.createReference().parentReference !is JpsModuleReference) {

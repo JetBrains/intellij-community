@@ -44,12 +44,8 @@ internal fun readModuleDescriptor(
 
     readRootAttributes(reader, consumer.getBuilder())
 
-    reader.consumeChildElements { localName ->
-      readRootElementChild(
-        consumer = consumer,
-        reader = reader,
-        localName = localName,
-      )
+    consumeChildElements(reader) { localName ->
+      readRootElementChild(consumer = consumer, reader = reader, localName = localName)
       assert(reader.isEndElement)
     }
   }
@@ -73,7 +69,7 @@ fun readBasicDescriptorData(input: InputStream): RawPluginDescriptor? {
     }
 
     val builder = PluginDescriptorBuilder.builder()
-    reader.consumeChildElements { localName ->
+    consumeChildElements(reader) { localName ->
       when (localName) {
         PluginXmlConst.ID_ELEM -> builder.id = getNullifiedContent(reader)
         PluginXmlConst.NAME_ELEM -> builder.name = getNullifiedContent(reader)
@@ -105,7 +101,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
       PluginXmlConst.PLUGIN_IS_SEPARATE_JAR_ATTR -> builder.isSeparateJar = reader.getAttributeAsBoolean(i)
       PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR -> builder.visibility = readModuleVisibility(reader.getAttributeValue(i), reader)
       PluginXmlConst.PLUGIN_VERSION_ATTR -> {
-        // internalVersionString - why it is not used, but just checked?
+        // internalVersionString - why it is not used but just checked?
         getNullifiedAttributeValue(reader, i)?.let {
           try {
             it.toInt()
@@ -140,8 +136,7 @@ private val KNOWN_KOTLIN_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(listOf(
   "org.jetbrains.kotlin.native.appcode"
 ))
 
-fun isKotlinPlugin(pluginId: String): Boolean =
-  pluginId in KNOWN_KOTLIN_PLUGIN_IDS
+fun isKotlinPlugin(pluginId: String): Boolean = pluginId in KNOWN_KOTLIN_PLUGIN_IDS
 
 private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
   "org.jetbrains.android",
@@ -174,12 +169,10 @@ private fun readRootElementChild(
         }
       }
     }
-    PluginXmlConst.NAME_ELEM -> builder.name = getNullifiedContent(
-      reader)
-    PluginXmlConst.CATEGORY_ELEM -> builder.category = getNullifiedContent(
-      reader)
+    PluginXmlConst.NAME_ELEM -> builder.name = getNullifiedContent(reader)
+    PluginXmlConst.CATEGORY_ELEM -> builder.category = getNullifiedContent(reader)
     PluginXmlConst.VERSION_ELEM -> {
-      // kotlin includes compiler.xml that due to some reasons duplicates a version
+      // kotlin includes compiler.xml that, due to some reasons, duplicates a version
       if (builder.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(builder.id)) {
         builder.version = getNullifiedContent(reader)
       }
@@ -268,7 +261,7 @@ private val actionNameToEnum = run {
 
 private fun readActions(builder: PluginDescriptorBuilder, reader: XMLStreamReader2, readContext: PluginDescriptorReaderContext) {
   val resourceBundle = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.ACTIONS_RESOURCE_BUNDLE_ATTR)
-  reader.consumeChildElements { elementName ->
+  consumeChildElements(reader) { elementName ->
     if (checkXInclude(elementName, reader)) {
       return@consumeChildElements
     }
@@ -328,7 +321,7 @@ private fun readOldDepends(reader: XMLStreamReader2, builder: PluginDescriptorBu
 
 private fun readExtensions(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, interner: XmlInterner) {
   val ns = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.EXTENSIONS_DEFAULT_EXTENSION_NS_ATTR)
-  reader.consumeChildElements { elementName ->
+  consumeChildElements(reader) { elementName ->
     if (checkXInclude(elementName, reader)) {
       return@consumeChildElements
     }
@@ -409,7 +402,7 @@ private fun readExtensionPoints(
   reader: XMLStreamReader2,
 ) {
   val builder = consumer.getBuilder()
-  reader.consumeChildElements { elementName ->
+  consumeChildElements(reader) { elementName ->
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = PluginDescriptorFromXmlStreamConsumer.withIncludeBase(
@@ -584,7 +577,7 @@ private fun parseIntOrZero(value: String?): Int {
 }
 
 private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
-  reader.consumeChildElements(PluginXmlConst.COMPONENT_ELEM) {
+  consumeChildElements(reader, PluginXmlConst.COMPONENT_ELEM) {
     var isApplicableForDefaultProject = false
     var interfaceClass: String? = null
     var implementationClass: String? = null
@@ -593,7 +586,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
     var overrides = false
     var options: MutableMap<String, String>? = null
 
-    reader.consumeChildElements { elementName ->
+    consumeChildElements(reader) { elementName ->
       when (elementName) {
         PluginXmlConst.COMPONENT_SKIP_FOR_DEFAULT_PROJECT_ELEM -> {
           val value = reader.elementText
@@ -656,6 +649,39 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
   }
 }
 
+private data class ContentModuleAttributes(
+  @JvmField val name: String?,
+  @JvmField val loadingRule: LoadingRule,
+  @JvmField val requiredIfAvailable: String?,
+)
+
+private fun readContentModuleAttributes(
+  reader: XMLStreamReader2,
+  internName: (String) -> String = { it },
+): ContentModuleAttributes {
+  var name: String? = null
+  var loadingRule = LoadingRule.OPTIONAL
+  var requiredIfAvailable: String? = null
+  for (i in 0 until reader.attributeCount) {
+    when (reader.getAttributeLocalName(i)) {
+      PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = internName(reader.getAttributeValue(i))
+      PluginXmlConst.CONTENT_MODULE_LOADING_ATTR -> {
+        loadingRule = when (val loading = reader.getAttributeValue(i)) {
+          PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> LoadingRule.OPTIONAL
+          PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> LoadingRule.REQUIRED
+          PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> LoadingRule.EMBEDDED
+          PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> LoadingRule.ON_DEMAND
+          else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
+        }
+      }
+      PluginXmlConst.CONTENT_MODULE_REQUIRED_IF_AVAILABLE_ATTR -> {
+        requiredIfAvailable = getNullifiedAttributeValue(reader, i)
+      }
+    }
+  }
+  return ContentModuleAttributes(name, loadingRule, requiredIfAvailable)
+}
+
 private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, readContext: PluginDescriptorReaderContext) {
   for (i in 0 until reader.attributeCount) {
     if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_NAMESPACE_ATTR) {
@@ -670,32 +696,14 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
     }
   }
 
-  reader.consumeChildElements { elementName ->
+  consumeChildElements(reader) { elementName ->
     if (elementName != PluginXmlConst.CONTENT_MODULE_ELEM) {
       reader.skipElement()
       throw RuntimeException("Unknown content item type: $elementName")
     }
 
-    var name: String? = null
-    var loadingRule = LoadingRule.OPTIONAL
-    var requiredIfAvailable: String? = null
-    for (i in 0 until reader.attributeCount) {
-      when (reader.getAttributeLocalName(i)) {
-        PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
-        PluginXmlConst.CONTENT_MODULE_LOADING_ATTR -> {
-          val loading = reader.getAttributeValue(i)
-          loadingRule = when (loading) {
-            PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> LoadingRule.OPTIONAL
-            PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> LoadingRule.REQUIRED
-            PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> LoadingRule.EMBEDDED
-            PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> LoadingRule.ON_DEMAND
-            else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
-          }
-        }
-        PluginXmlConst.CONTENT_MODULE_REQUIRED_IF_AVAILABLE_ATTR -> requiredIfAvailable = getNullifiedAttributeValue(reader, i)
-      }
-    }
-
+    val attrs = readContentModuleAttributes(reader) { readContext.interner.name(it) }
+    val name = attrs.name
     if (name.isNullOrEmpty()) {
       throw RuntimeException("Name is not specified at ${reader.location}")
     }
@@ -703,8 +711,12 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
       builder.addContentModule(
-        ContentModuleElement(name = name, loadingRule = loadingRule, requiredIfAvailable = requiredIfAvailable,
-                             embeddedDescriptorContent = null)
+        ContentModuleElement(
+          name = name,
+          loadingRule = attrs.loadingRule,
+          requiredIfAvailable = attrs.requiredIfAvailable,
+          embeddedDescriptorContent = null,
+        )
       )
     }
     else {
@@ -712,9 +724,13 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
       val toIndex = fromIndex + reader.textLength
       val length = toIndex - fromIndex
       val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-      builder.addContentModule(
-        ContentModuleElement(name = name, loadingRule = loadingRule, requiredIfAvailable = requiredIfAvailable,
-                             embeddedDescriptorContent = descriptorContent)
+    builder.addContentModule(
+        ContentModuleElement(
+          name = name,
+          loadingRule = attrs.loadingRule,
+          requiredIfAvailable = attrs.requiredIfAvailable,
+          embeddedDescriptorContent = descriptorContent,
+        )
       )
 
       var nesting = 1
@@ -735,7 +751,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 }
 
 private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, interner: XmlInterner) {
-  reader.consumeChildElements { elementName ->
+  consumeChildElements(reader) { elementName ->
     when (elementName) {
       PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
         var name: String? = null
@@ -807,7 +823,7 @@ private fun readInclude(
   }
 
   var isOptional = false
-  reader.consumeChildElements(PluginXmlConst.INCLUDE_FALLBACK_ELEM) {
+  consumeChildElements(reader, PluginXmlConst.INCLUDE_FALLBACK_ELEM) {
     isOptional = true
     reader.skipElement()
   }
@@ -866,6 +882,7 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 
   var formatter = dateTimeFormatter
   if (formatter == null) {
+    @Suppress("SpellCheckingInspection")
     formatter = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.US)!!
     dateTimeFormatter = formatter
   }
@@ -880,7 +897,7 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 }
 
 private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
-  reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
+  consumeChildElements(reader, PluginXmlConst.LISTENER_ELEM) {
     var os: OSValue? = null
     var listenerClassName: String? = null
     var topicClassName: String? = null
@@ -927,17 +944,17 @@ private fun readOSValue(value: String): OSValue {
   }
 }
 
-private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
+private inline fun consumeChildElements(reader: XMLStreamReader, crossinline consumer: (name: String) -> Unit) {
   // the cursor must be at the start of the parent element
-  assert(isStartElement)
+  assert(reader.isStartElement)
 
   var depth = 1
   while (true) {
-    when (next()) {
+    when (reader.next()) {
       XMLStreamConstants.START_ELEMENT -> {
         depth++
-        consumer(localName)
-        assert(isEndElement)
+        consumer(reader.localName)
+        assert(reader.isEndElement)
         depth--
       }
 
@@ -956,19 +973,19 @@ private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (n
       XMLStreamConstants.PROCESSING_INSTRUCTION -> {
         // ignore
       }
-      else -> throw XMLStreamException("Unexpected state: ${getEventTypeString(eventType)}", location)
+      else -> throw XMLStreamException("Unexpected state: ${getEventTypeString(reader.eventType)}", reader.location)
     }
   }
 }
 
-private inline fun XMLStreamReader2.consumeChildElements(name: String, crossinline consumer: () -> Unit) {
-  consumeChildElements {
+private inline fun consumeChildElements(reader: XMLStreamReader2, name: String, crossinline consumer: () -> Unit) {
+  consumeChildElements(reader) {
     if (name == it) {
       consumer()
-      assert(isEndElement)
+      assert(reader.isEndElement)
     }
     else {
-      skipElement()
+      reader.skipElement()
     }
   }
 }
@@ -990,3 +1007,106 @@ private fun getEventTypeString(eventType: Int): String {
     else -> "UNKNOWN_EVENT_TYPE, $eventType"
   }
 }
+
+// region Lightweight content and xi:include extraction
+
+/**
+ * Result of parsing a single XML file for content modules and xi:include paths.
+ * Used for lightweight extraction without full descriptor parsing.
+ */
+class ContentParseResult(
+  @JvmField val contentModules: List<ContentModuleElement>,
+  @JvmField val xIncludePaths: List<String>,
+)
+
+/**
+ * Parses a single XML file to extract content modules and xi:include paths.
+ * Does not resolve xi:includes - only collects their paths.
+ *
+ * This is a lightweight parser that only looks for:
+ * - `<content><module>` elements
+ * - `xi:include` elements (at root level)
+ *
+ * All other elements are skipped efficiently.
+ */
+fun parseContentAndXIncludes(
+  input: ByteArray,
+  locationSource: String?,
+  baseDir: String?,
+): ContentParseResult {
+  val contentModules = ArrayList<ContentModuleElement>()
+  val xIncludePaths = ArrayList<String>()
+
+  val reader = createNonCoalescingXmlStreamReader(input, locationSource)
+  try {
+    // Skip to root element
+    @Suppress("ControlFlowWithEmptyBody")
+    while (reader.next() != XMLStreamConstants.START_ELEMENT) ;
+    if (!reader.isStartElement) {
+      return ContentParseResult(contentModules, xIncludePaths)
+    }
+
+    parseElementForContentAndIncludes(reader, baseDir, contentModules, xIncludePaths)
+  }
+  finally {
+    reader.closeCompletely()
+  }
+
+  return ContentParseResult(contentModules, xIncludePaths)
+}
+
+private fun parseElementForContentAndIncludes(
+  reader: XMLStreamReader2,
+  baseDir: String?,
+  contentModules: MutableList<ContentModuleElement>,
+  xIncludePaths: MutableList<String>,
+) {
+  consumeChildElements(reader) { localName ->
+    when (localName) {
+        PluginXmlConst.INCLUDE_ELEM if reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI -> {
+          // Extract xi:include href
+          val href = XmlReadUtils.findAttributeValue(reader, PluginXmlConst.INCLUDE_HREF_ATTR)
+          if (href != null) {
+            xIncludePaths.add(LoadPathUtil.toLoadPath(href, baseDir))
+          }
+          reader.skipElement()
+        }
+        PluginXmlConst.CONTENT_ELEM -> {
+          // Parse content modules
+          consumeChildElements(reader) { childName ->
+            if (childName == PluginXmlConst.CONTENT_MODULE_ELEM) {
+              contentModules.add(readContentModuleElement(reader))
+            }
+            else {
+              reader.skipElement()
+            }
+          }
+        }
+        else -> {
+          // Recursively check nested elements for xi:includes (they can appear at root level only,
+          // but we still need to traverse to find them in case of nested structures)
+          if (reader.isStartElement) {
+            // For non-content elements, just skip - xi:include is only valid at root level
+            reader.skipElement()
+          }
+        }
+    }
+  }
+}
+
+private fun readContentModuleElement(reader: XMLStreamReader2): ContentModuleElement {
+  val attrs = readContentModuleAttributes(reader)
+  val name = attrs.name
+  if (name.isNullOrEmpty()) {
+    throw RuntimeException("Name is not specified at ${reader.location}")
+  }
+  reader.skipElement()
+  return ContentModuleElement(
+    name = name,
+    loadingRule = attrs.loadingRule,
+    requiredIfAvailable = attrs.requiredIfAvailable,
+    embeddedDescriptorContent = null,
+  )
+}
+
+// endregion

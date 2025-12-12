@@ -34,7 +34,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
   ]
 )

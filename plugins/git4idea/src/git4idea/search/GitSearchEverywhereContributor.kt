@@ -19,6 +19,7 @@ import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
+import com.intellij.util.text.matching.MatchingMode
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -73,7 +74,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
 
     val matcher = NameUtil.buildMatcher("*$pattern")
-      .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
       .typoTolerant()
       .build()
 

@@ -40,9 +40,10 @@ public final class JavaColorProvider implements ElementColorProvider {
     PsiElement parent = element.getParent();
     UCallExpression newExpression = UastUtils.findContaining(parent, UCallExpression.class);
     Color color = getJavaColorFromExpression(parent, newExpression);
-    if (color == null) {
-      parent = parent == null ? null : parent.getParent();
-      color = getJavaColorFromExpression(parent);
+    if (color == null && parent != null) {
+      parent = parent.getParent();
+      newExpression = UastUtils.findContaining(parent, UCallExpression.class);
+      color = getJavaColorFromExpression(parent, newExpression);
     }
 
     if (newExpression != null && color != null) {
@@ -73,11 +74,6 @@ public final class JavaColorProvider implements ElementColorProvider {
       }
     }
     return false;
-  }
-
-  public static @Nullable Color getJavaColorFromExpression(@Nullable PsiElement element) {
-    UCallExpression newExpression = UastUtils.findContaining(element, UCallExpression.class);
-    return getJavaColorFromExpression(element, newExpression);
   }
 
   private static @Nullable Color getJavaColorFromExpression(@Nullable PsiElement element, @Nullable UCallExpression newExpression) {

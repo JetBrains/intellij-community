@@ -83,8 +83,14 @@ data class PluginVersion(
             is UnifiedVersionComponent.IntComponent -> when (minor) {
               UnifiedVersionComponent.Snapshot -> throw IllegalArgumentException("Cannot parse `$s` as PluginVersion, minor cannot be '$SNAPSHOT' if there is a patch number")
               is UnifiedVersionComponent.IntComponent -> when (patch) {
-                is UnifiedVersionComponent.IntComponent -> PluginVersion(major = major.value, minor = minor.value, patch = patch.value, preRelease = null)
-                UnifiedVersionComponent.Snapshot -> PluginVersion(major = major.value, minor = minor.value, patch = 0, preRelease = SNAPSHOT) // hackily set to `0`, I don't see what else we could do here
+                is UnifiedVersionComponent.IntComponent -> PluginVersion(major = major.value,
+                                                                         minor = minor.value,
+                                                                         patch = patch.value,
+                                                                         preRelease = null)
+                UnifiedVersionComponent.Snapshot -> PluginVersion(major = major.value,
+                                                                  minor = minor.value,
+                                                                  patch = 0,
+                                                                  preRelease = SNAPSHOT) // hackily set to `0`, I don't see what else we could do here
               }
             }
           }
@@ -94,8 +100,14 @@ data class PluginVersion(
           when (major) {
             UnifiedVersionComponent.Snapshot -> throw IllegalArgumentException("Cannot parse `$s` as PluginVersion, major cannot be '$SNAPSHOT'")
             is UnifiedVersionComponent.IntComponent -> when (minor) {
-              is UnifiedVersionComponent.IntComponent -> PluginVersion(major = major.value, minor = minor.value, patch = 0, preRelease = null)  // hackily set to `0`, I don't see what else we could do here
-              UnifiedVersionComponent.Snapshot -> PluginVersion(major = major.value, minor = 0, patch = 0, preRelease = SNAPSHOT)  // hackily set to `0`, I don't see what else we could do here
+              is UnifiedVersionComponent.IntComponent -> PluginVersion(major = major.value,
+                                                                       minor = minor.value,
+                                                                       patch = 0,
+                                                                       preRelease = null)  // hackily set to `0`, I don't see what else we could do here
+              UnifiedVersionComponent.Snapshot -> PluginVersion(major = major.value,
+                                                                minor = 0,
+                                                                patch = 0,
+                                                                preRelease = SNAPSHOT)  // hackily set to `0`, I don't see what else we could do here
             }
           }
         }
@@ -260,12 +272,11 @@ fun PluginDescriptor.metaAsCoordinates(metaKey: String): Coordinates? = meta[met
 
 private const val JETBRAINS_VENDOR = "JetBrains"
 
-fun PluginDescriptor?.getVendorType(): PluginVendor {
-  val vendorId = this?.meta?.get(KnownMeta.VendorId)
-
-  return when {
-    vendorId == null -> PluginVendor.Platform
-    vendorId == JETBRAINS_VENDOR -> PluginVendor.JetBrains
+fun PluginDescriptor.getVendorType(): PluginVendor {
+  val vendorId = this.meta[KnownMeta.VendorId]
+  return when (vendorId) {
+    null -> PluginVendor.Platform
+    JETBRAINS_VENDOR -> PluginVendor.JetBrains
     else -> {
       PluginVendor.ThirdParty
     }

@@ -126,7 +126,8 @@ public final class PlatformHttpClient {
   public static <T> HttpResponse<T> checkResponse(@NotNull HttpResponse<T> response) throws HttpStatusException {
     var statusCode = response.statusCode();
     if (statusCode < 200 || statusCode >= 300) {
-      if (statusCode == HttpURLConnection.HTTP_PROXY_AUTH && JdkProxyProvider.showProxyAuthNotification()) {
+      if (statusCode == HttpURLConnection.HTTP_PROXY_AUTH) {
+        JdkProxyProvider.showProxyAuthNotification();
         var logger = Logger.getInstance(PlatformHttpClient.class);
         if (logger.isDebugEnabled()) logger.debug(
           "proxy auth failed for " + response.uri() + "; Proxy-Authenticate=" + response.headers().firstValue("Proxy-Authenticate"),

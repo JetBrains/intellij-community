@@ -4,11 +4,12 @@ package com.intellij.psi.codeStyle
 import com.intellij.psi.codeStyle.FixingLayoutMatcher.Companion.fixLayout
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.NameUtilCore
+import com.intellij.util.text.matching.KeyboardLayoutConverter
 
-class WordPrefixMatcher(pattern: String) : Matcher {
+class WordPrefixMatcher(pattern: String, keyboardLayoutConverter: KeyboardLayoutConverter) : Matcher {
   private val myPatternWords = splitToWords(pattern)
   private val myFallbackPatternWords = run {
-    val fixedLayout = fixLayout(pattern)
+    val fixedLayout = fixLayout(pattern, keyboardLayoutConverter)
     if (fixedLayout != null && fixedLayout != pattern) NameUtilCore.nameToWordList(fixedLayout) else null
   }
 

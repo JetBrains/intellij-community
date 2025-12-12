@@ -130,8 +130,8 @@ public class UnivocityTest extends BaseUnivocityTest {
     public void performCommand(@NotNull Environment env) {
       PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
       PsiFile file = getFile();
-      if (file instanceof PsiJavaFile) {
-        PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      if (file instanceof PsiJavaFile javaFile) {
+        PsiImportList importList = javaFile.getImportList();
         if (importList != null) {
           PsiImportStatement[] statements = importList.getImportStatements();
           if (statements.length > 0) {

@@ -14,7 +14,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
@@ -25,6 +24,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -183,7 +183,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   private fun AdvancedSettingBean.isApplicable(): Boolean {
     return when {
-      id == "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
+      id == "project.view.do.not.autoscroll.to.libraries" -> !PlatformUtils.isDataGrip()
       else -> true
     }
   }

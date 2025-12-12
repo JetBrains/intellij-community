@@ -11,17 +11,17 @@ import kotlin.jvm.JvmStatic
 @ApiStatus.Experimental
 object SyntaxRuntimeBundle {
   private const val BUNDLE: @NonNls String = "messages.SyntaxRuntimeBundle"
-    
+
   private val bundle = run {
     val defaultMapping by lazy { DefaultSyntaxRuntimeBundle.mappings }
     ResourceBundle("com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle", BUNDLE, this, defaultMapping)
   }
-  
+
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
     return bundle.message(key, *params)
   }
-  
+
   @JvmStatic
   fun messagePointer(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): () -> @Nls String {
     return bundle.messagePointer(key, *params)

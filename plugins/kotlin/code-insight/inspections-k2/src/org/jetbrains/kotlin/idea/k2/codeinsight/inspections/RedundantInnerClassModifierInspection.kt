@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.options.JavaClassValidator
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -46,7 +47,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
+class RedundantInnerClassModifierInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     @Suppress("MemberVisibilityCanBePrivate")
     var ignorableAnnotations: OrderedSet<String> = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
 

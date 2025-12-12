@@ -90,7 +90,7 @@ jvm_library(
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/idea/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/kotlin.searching",

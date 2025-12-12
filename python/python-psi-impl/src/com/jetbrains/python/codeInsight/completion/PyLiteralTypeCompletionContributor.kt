@@ -5,18 +5,14 @@ import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.ProcessingContext
-import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.impl.getMappedParameters
-import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeUtil
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.StringLiteralExpression
+import com.jetbrains.python.psi.types.*
 
 /**
  * Provides literal type variants in the following cases:
@@ -46,26 +42,10 @@ private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionPar
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val position = parameters.position.parent as? PyExpression ?: return
     if (!(position is PyStringLiteralExpression || position is PyReferenceExpression && !position.isQualified)) return
+
     val typeEvalContext = TypeEvalContext.codeCompletion(position.project, position.containingFile)
-
-    val mappedParameters = position.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))
-    if (mappedParameters != null) {
-      val types = mappedParameters.mapNotNull { it.getArgumentType(typeEvalContext) }
-      addToResult(position, types, result)
-      return
-    }
-
-    val assignmentStatement = PsiTreeUtil.skipParentsOfType(position,
-                                                            PyParenthesizedExpression::class.java,
-                                                            PyTupleExpression::class.java) as? PyAssignmentStatement
-    if (assignmentStatement != null) {
-      val mapping = assignmentStatement.targetsToValuesMapping.find { PyPsiUtils.flattenParens(it.second) === position }
-      if (mapping != null) {
-        val type = typeEvalContext.getType(mapping.first)
-        addToResult(position, listOfNotNull(type), result)
-      }
-      return
-    }
+    val expectedType = PyExpectedTypeJudgement.getExpectedType(position, typeEvalContext)
+    addToResult(position, listOfNotNull(expectedType), result)
   }
 
   private fun addToResult(position: PyExpression, possibleTypes: List<PyType>, result: CompletionResultSet) {

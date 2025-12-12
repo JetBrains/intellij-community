@@ -7,6 +7,8 @@ import com.intellij.openapi.vcs.changes.LocalChangeListImpl
 import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
+import com.intellij.platform.vcs.impl.shared.commit.insertEditedCommitNode
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.runInEdtAndWait
 import javax.swing.tree.DefaultTreeModel
@@ -23,6 +25,7 @@ abstract class ChangesViewTestBase : LightPlatformTestCase() {
     runInEdtAndWait {
       view.updateTreeModel(model, ChangesTree.ALWAYS_RESET)
       assertEquals(0, view.selectionCount)
+      assertTrue(view.containsFile(toSelect))
       view.selectFile(toSelect)
       assertEquals(1, view.selectionCount)
     }
@@ -35,8 +38,14 @@ abstract class ChangesViewTestBase : LightPlatformTestCase() {
     view: LocalChangesListView,
     lists: List<LocalChangeListImpl>,
     unversioned: List<FilePath>,
+    editedCommit: EditedCommitDetails? = null,
   ): DefaultTreeModel = TreeModelBuilder(project, view.grouping)
     .setChangeLists(lists, false, null)
     .setUnversioned(unversioned)
+    .apply {
+      if (editedCommit != null) {
+        insertEditedCommitNode(this, editedCommit)
+      }
+    }
     .build()
 }

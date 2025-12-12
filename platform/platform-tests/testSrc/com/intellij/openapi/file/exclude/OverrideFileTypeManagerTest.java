@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -15,6 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -70,5 +72,67 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     
     // not VirtualFileWithId
     assertThrows(IllegalArgumentException.class, ()->manager.addFile(new LightVirtualFile(), PlainTextFileType.INSTANCE));
+  }
+
+  public void testAvailableForOverride() {
+    OverrideFileTypeManager manager = OverrideFileTypeManager.getInstance();
+
+    var overrideAllowedFileType = new FakeOverridableFileType() {
+      @Override
+      public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
+
+      @Override
+      public @NotNull String getName() { return "Foo"; }
+
+      @Override
+      public @NotNull String getDescription() { return "Foo"; }
+
+      @Override
+      public boolean isAvailableForOverride() { return true; }
+    };
+
+    VirtualFile fooFile = myFixture.getTempDirFixture().createFile("test.txt");
+
+    manager.addFile(fooFile, overrideAllowedFileType);
+    assertEquals(overrideAllowedFileType.getName(), manager.getFileValue(fooFile));
+
+    manager.addFile(fooFile, PlainTextFileType.INSTANCE);
+    assertEquals(PlainTextFileType.INSTANCE.getName(), manager.getFileValue(fooFile));
+
+    var overrideDisallowedFileType = new FakeOverridableFileType() {
+      @Override
+      public boolean isMyFileType(@NotNull VirtualFile file) { return false; }
+
+      @Override
+      public @NotNull String getName() { return "FooNoOverride"; }
+
+      @Override
+      public @NotNull String getDescription() { return "FooNoOverride"; }
+
+      @Override
+      public boolean isAvailableForOverride() { return false; }
+    };
+
+    assertThrows(IllegalArgumentException.class, () -> manager.addFile(fooFile, overrideDisallowedFileType));
+  }
+}
+
+abstract class FakeOverridableFileType implements FileTypeIdentifiableByVirtualFile {
+  protected FakeOverridableFileType() {
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
+    return "fakeExtension";
+  }
+
+  @Override
+  public Icon getIcon() {
+    return null;
+  }
+
+  @Override
+  public boolean isBinary() {
+    return true;
   }
 }

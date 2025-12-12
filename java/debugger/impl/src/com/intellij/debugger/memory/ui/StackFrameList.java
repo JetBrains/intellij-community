@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -34,7 +34,9 @@ class StackFrameList extends XDebuggerFramesList {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
-          navigateToSelectedValue(false);
+          DebuggerUIUtil.invokeLater(() -> {
+            navigateToSelectedValue(false);
+          });
         }
       }
     });

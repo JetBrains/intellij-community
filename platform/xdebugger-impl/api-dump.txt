@@ -38,14 +38,8 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:getDebuggerDisplayName():java.lang.String
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
-c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
-- a:getBackgroundColor():java.awt.Color
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 - f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
-com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
-- com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
-- a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - com.intellij.openapi.Disposable
 - pF:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -54,8 +48,6 @@ com.intellij.xdebugger.impl.frame.XWatchesView
 - a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
 - a:removeAllWatches():V
 - a:removeWatches(java.util.List):V
-a:com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase
-- com.intellij.openapi.Disposable
 com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter$HighlighterProvider
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
 com.intellij.xdebugger.impl.ui.XValueTextProvider
@@ -69,6 +61,15 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - rebuild():V
 c:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
 - com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSplitActionBase
+a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
+- sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
+- sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
+- f:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+- f:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- f:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
 a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
 - p:handle(com.intellij.openapi.project.Project,java.lang.String):V
 - p:handle(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V

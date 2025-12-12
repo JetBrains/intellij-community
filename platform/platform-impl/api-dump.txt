@@ -1,6 +1,8 @@
 com.intellij.application.options.OptionsContainingConfigurable
 - processListOptions():java.util.Set
 - processListOptionsWithPaths():java.util.Map
+a:com.intellij.application.options.colors.AbstractFontOptionsPanel
+- fireSchemeChanged():V
 com.intellij.application.options.colors.ColorAndFontPanelFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createPanel(com.intellij.application.options.colors.ColorAndFontOptions):com.intellij.application.options.colors.NewColorAndFontPanel
@@ -785,6 +787,8 @@ com.intellij.openapi.editor.ex.TooltipAction
 f:com.intellij.openapi.editor.impl.EditorIdKt
 f:com.intellij.openapi.editor.impl.FoldingModelImpl
 - onFoldInitializationStatusChanged(Z):V
+f:com.intellij.openapi.editor.impl.FontInfo
+- <init>(java.awt.Font,F,Z,java.util.Set,java.awt.font.FontRenderContext):V
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
 com.intellij.openapi.editor.impl.TextDrawingCallback
@@ -1566,6 +1570,9 @@ com.intellij.ui.layout.RowBuilder
 - b:row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
+f:com.intellij.ui.layout.RowBuilder$DefaultImpls
+- s:row(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
+- s:row(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 com.intellij.ui.popup.BackendRenderedPopup
 com.intellij.ui.popup.ClosableByLeftArrow
 com.intellij.ui.popup.PopupComponent

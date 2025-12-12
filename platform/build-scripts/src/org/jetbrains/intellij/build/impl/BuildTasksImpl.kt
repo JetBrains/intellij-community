@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -33,6 +35,7 @@ import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
@@ -82,37 +85,48 @@ import kotlin.io.path.relativeTo
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
+suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: BuildContext, dependencyModules: List<String> = emptyList()) {
+  checkProductProperties(context)
+  checkPluginModules(pluginModules = mainPluginModules, fieldName = "mainPluginModules", context = context)
+  copyDependenciesFile(context)
+  context.compileProductionModules()
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
+  val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
+  filterPluginsToPublish(pluginsToPublishEffective, context)
+  val platformLayout = createPlatformLayout(context)
+  val distState = DistributionBuilderState(platformLayout = platformLayout, pluginsToPublish = pluginsToPublishEffective, context = context)
+
+  val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+
+  // build required dist/lib components for scrambling of plugins such as Marketplace
+  //val traceContext = Context.current().asContextElement()
+  //val buildPlatformLibJob = coroutineScope {
+  //  async(traceContext + CoroutineName("build platform lib")) {
+  //    buildPlatform(
+  //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
+  //    )
+  //  }
+  //}
+
+  buildNonBundledPlugins(
+    pluginsToPublish = pluginsToPublish,
+    compressPluginArchive = context.options.compressZipFiles,
+    buildPlatformLibJob = null /* buildPlatformLibJob */,
+    state = distState,
+    searchableOptionSet = searchableOptionSet,
+    isUpdateFromSources = false,
+    descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
+    context = context,
+  )
+}
+
 internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
   override suspend fun buildDistributions() {
     buildDistributions(context)
   }
 
   override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String>) {
-    checkProductProperties(context)
-    checkPluginModules(mainPluginModules, fieldName = "mainPluginModules", context)
-    copyDependenciesFile(context)
-    context.compileProductionModules()
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
-    val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
-    filterPluginsToPublish(pluginsToPublishEffective, context)
-    val platformLayout = createPlatformLayout(context)
-    val distState = DistributionBuilderState(platformLayout, pluginsToPublishEffective, context)
-    val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
-
-    // build required dist/lib components for scrambling of plugins such as Marketplace
-    //val traceContext = Context.current().asContextElement()
-    //val buildPlatformLibJob = coroutineScope {
-    //  async(traceContext + CoroutineName("build platform lib")) {
-    //    buildPlatform(
-    //      ModuleOutputPatcher(), distState, searchableOptionSet, false, context
-    //    )
-    //  }
-    //}
-
-    buildNonBundledPlugins(
-      pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null /* buildPlatformLibJob */, distState, searchableOptionSet, isUpdateFromSources = false,
-      distState.platformLayout.descriptorCacheContainer, context
-    )
+    buildNonBundledPlugins(mainPluginModules = mainPluginModules, dependencyModules = dependencyModules, context = context)
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -274,7 +288,7 @@ class DistributionForOsTaskResult(
   @JvmField val builder: OsSpecificDistributionBuilder,
   @JvmField val arch: JvmArchitecture,
   @JvmField val libc: LibcImpl,
-  @JvmField val outDir: Path
+  @JvmField val outDir: Path,
 )
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
@@ -362,7 +376,7 @@ private fun copyDependenciesFile(context: BuildContext): Path {
   return outputFile
 }
 
-private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
+private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: CompilationContext) {
   val unknownLibraries = names.filter { context.project.libraryCollection.findLibrary(it) == null }
   check(unknownLibraries.isEmpty()) {
     "The following libraries from $fieldName aren't found in the project: $unknownLibraries"
@@ -388,11 +402,7 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
 
   if (!context.shouldBuildDistributions() || context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-    return distributionState(
-      pluginsToPublish = pluginsToPublish,
-      projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-      context = context
-    )
+    return distributionState(pluginsToPublish = pluginsToPublish, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   }
 
   return spanBuilder("collecting compatible plugins").use {
@@ -493,7 +503,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     val distDirs = buildOsSpecificDistributions(context)
 
-    lookForJunkFiles(context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
+    lookForJunkFiles(context = context, paths = listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
 
     launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
@@ -578,9 +588,10 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
+  val outputProvider = context.outputProvider
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
     checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
-    if (findProductModulesFile(embeddedFrontendRootModule, context) == null) {
+    if (findProductModulesFile(embeddedFrontendRootModule, outputProvider) == null) {
       context.messages.logErrorAndThrow(
         "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
         "'productProperties.embeddedFrontendRootModule'."
@@ -600,7 +611,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
     }
   }
 
-  checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
+  checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", outputProvider)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
     checkPaths(listOfNotNull(winCustomizer.icoPath), "productProperties.windowsCustomizer.icoPath")
@@ -630,14 +641,14 @@ private suspend fun checkProductProperties(context: BuildContext) {
     }
   }
 
-  checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules", context)
-  checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", context)
+  checkModules(properties.mavenArtifacts.additionalModules, "productProperties.mavenArtifacts.additionalModules", outputProvider)
+  checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", outputProvider)
   if (context.productProperties.scrambleMainJar) {
     context.proprietaryBuildTools.scrambleTool?.let {
-      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context)
+      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", outputProvider)
     }
   }
-  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", context)
+  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", outputProvider)
   if (properties.contentModulesToScramble.isNotEmpty() && !properties.scrambleMainJar) {
     context.messages.logErrorAndThrow("productProperties.contentModulesToScramble specifies some modules, but productProperties.scrambleMainJar is not set to true")
   }
@@ -677,31 +688,33 @@ private fun checkProductLayout(context: BuildContext) {
     "productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
     " but no pluginModulesToPublish are specified"
   }
-  checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
-  checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
-  checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
+  val outputProvider = context.outputProvider
+  checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", outputProvider)
+  checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", outputProvider)
+  checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", outputProvider)
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "'${plugin.mainModule}' plugin", context)
   }
   checkPlatformSpecificPluginResources(pluginLayouts, layout.pluginModulesToPublish)
 }
 
-private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
-  checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", context)
-  checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
-  checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
+private fun checkBaseLayout(layout: BaseLayout, description: String, context: CompilationContext) {
+  val outputProvider = context.outputProvider
+  checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", outputProvider)
+  checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", outputProvider)
+  checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", outputProvider)
 
   checkProjectLibraries(names = layout.includedProjectLibraries.map { it.libraryName }, fieldName = "includedProjectLibraries in $description", context)
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
-    checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
+    checkModules(listOf(moduleName), "includedModuleLibraries in $description", outputProvider)
     check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryFileName(it) == libraryName }) {
       "Cannot find library '$libraryName' in '$moduleName' (used in $description)"
     }
   }
 
   if (layout is PluginLayout) {
-    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context)
+    checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", outputProvider)
     for ((key, value) in layout.excludedLibraries.entries) {
       val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
       for (libraryName in value) {
@@ -712,7 +725,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
       }
     }
 
-    checkModules(modules = layout.modulesWithExcludedModuleLibraries, fieldName = "modulesWithExcludedModuleLibraries in $description", context = context)
+    checkModules(modules = layout.modulesWithExcludedModuleLibraries, fieldName = "modulesWithExcludedModuleLibraries in $description", outputProvider = outputProvider)
   }
 }
 
@@ -740,9 +753,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   }
 }
 
-private fun checkModules(modules: Collection<String?>?, fieldName: String, context: CompilationContext) {
+private fun checkModules(modules: Collection<String?>?, fieldName: String, outputProvider: ModuleOutputProvider) {
   if (modules != null) {
-    val unknownModules = modules.filter { it != null && context.findModule(it) == null }
+    val unknownModules = modules.filter { it != null && outputProvider.findModule(it) == null }
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren't found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }
@@ -750,7 +763,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
 }
 
 private fun checkModule(moduleName: String?, fieldName: String, context: CompilationContext) {
-  if (moduleName != null && context.findModule(moduleName) == null) {
+  if (moduleName != null && context.outputProvider.findModule(moduleName) == null) {
     context.messages.logErrorAndThrow("Module '$moduleName' from $fieldName isn't found in the project")
   }
 }
@@ -760,10 +773,10 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
     return
   }
 
-  checkModules(pluginModules, fieldName, context)
+  checkModules(modules = pluginModules, fieldName = fieldName, outputProvider = context.outputProvider)
 
   val unknownBundledPluginModules = pluginModules.filter { name ->
-    context.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
+    context.outputProvider.findModule(name)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null
   }
   check(unknownBundledPluginModules.isEmpty()) {
     "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules" +
@@ -807,7 +820,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName
+          mainClass = context.ideMainClassName,
         ),
         ProductInfoLaunchData.create(
           os = OsFamily.LINUX.osName,
@@ -818,7 +831,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
           mainClass = context.ideMainClassName,
-          startupWmClass = getLinuxFrameClass(context)
+          startupWmClass = getLinuxFrameClass(context),
         ),
         ProductInfoLaunchData.create(
           os = OsFamily.MACOS.osName,
@@ -828,7 +841,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName
+          mainClass = context.ideMainClassName,
         )
       )
     }.toList(),
@@ -854,7 +867,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     "dependencies.txt" to copyDependenciesFile(context),
   )
   runtimeModuleRepositoryDirPath?.listDirectoryEntries()?.forEach { file ->
-    extraFiles["$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}"] = file
+    extraFiles.put("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}", file)
   }
   crossPlatformZip(
     distResults = distResults.filter { it.libc != LinuxLibcImpl.MUSL },

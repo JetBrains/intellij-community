@@ -4,7 +4,6 @@ package com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.act
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedPromoService
 import com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedShowPromoActivity
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 class ShowPyCommunityToUnifiedTooltipAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project: Project = e.project ?: return
-    currentThreadCoroutineScope().launch {
+    e.coroutineScope.launch {
       PyCommunityToUnifiedShowPromoActivity.showTooltip(project)
     }
   }
@@ -28,7 +27,7 @@ class ShowPyCommunityToUnifiedTooltipAction : AnAction() {
 class ShowPyCommunityToUnifiedPromoDialogAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project: Project = e.project ?: return
-    currentThreadCoroutineScope().launch {
+    e.coroutineScope.launch {
       PyCommunityToUnifiedShowPromoActivity.showModalPromo(project)
     }
   }

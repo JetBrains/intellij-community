@@ -1,5 +1,5 @@
 <idea-plugin>
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
@@ -16,7 +16,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>

@@ -64,7 +64,12 @@ internal class TerminalSessionTest(private val shellPath: Path) {
 
   private suspend fun startTerminalSession(scope: CoroutineScope): TerminalSession {
     TerminalSessionTestUtil.assumeCommandBlockShellIntegration(listOf(shellPath.toString()))
-    val session = TerminalSessionTestUtil.startTestTerminalSession(projectRule.project, shellPath.toString(), scope)
+    val session = TerminalSessionTestUtil.startTestTerminalSession(
+      projectRule.project,
+      shellPath.toString(),
+      System.getProperty("user.home"),
+      scope
+    ).session
     session.awaitOutputEvent(TerminalPromptFinishedEvent)
     return session
   }

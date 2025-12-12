@@ -5,7 +5,10 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.changes.ChangeListManagerState
-import com.intellij.platform.vcs.impl.shared.rpc.*
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
+import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
@@ -64,22 +67,9 @@ internal class ChangeListsApiImpl : ChangeListsApi {
   private fun LocalChangeList.toDto(): ChangeListDto = ChangeListDto(
     name = name,
     comment = comment,
-    changes = changes.map { change -> change.toDto() },
+    changes = changes.map(ChangeDto::toDto),
     isDefault = isDefault,
     id = id,
-    localValue = this,
-  )
-
-  private fun Change.toDto(): ChangeDto = ChangeDto(
-    beforeRevision = beforeRevision?.toDto(),
-    afterRevision = afterRevision?.toDto(),
-    fileStatusId = fileStatus.id,
-    localValue = this,
-  )
-
-  private fun ContentRevision.toDto() = ContentRevisionDto(
-    revisionString = revisionNumber.asString(),
-    filePath = FilePathDto.toDto(file),
     localValue = this,
   )
 }

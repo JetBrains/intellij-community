@@ -18,9 +18,6 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -353,11 +350,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
       for (FileType fileType : fileTypes) {
         // get rid of file types useless for highlighting
-        if (fileType == StdFileTypes.CLASS ||
-            fileType == ProjectFileType.INSTANCE ||
-            fileType == WorkspaceFileType.INSTANCE ||
-            fileType == ModuleFileType.INSTANCE ||
-            fileType == StdFileTypes.GUI_DESIGNER_FORM) {
+        if (fileType.isBinary() || fileType instanceof InternalFileType) {
           continue;
         }
 

@@ -1,0 +1,5 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.libraries.plexus.utils"/>
+  </dependencies>
+</idea-plugin>

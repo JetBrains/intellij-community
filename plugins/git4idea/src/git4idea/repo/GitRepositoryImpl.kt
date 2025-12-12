@@ -13,8 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.project.projectId
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import git4idea.GitDisposable
 import git4idea.GitLocalBranch
@@ -219,9 +217,7 @@ class GitRepositoryImpl private constructor(
     return "GitRepository $root : $repoInfo"
   }
 
-  override fun getRpcId(): RepositoryId {
-    return RepositoryId(projectId = project.projectId(), rootPath = root.path)
-  }
+
 
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)

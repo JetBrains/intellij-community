@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.memory.ui;
 
@@ -17,6 +17,7 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DoubleClickListener;
@@ -352,7 +353,9 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     @Override
     protected boolean onDoubleClick(@NotNull MouseEvent event) {
       if (!isShowNewInstancesEvent(event)) {
-        handleClassSelection(getTable().getSelectedClass());
+        WriteIntentReadAction.run(() -> {
+          handleClassSelection(getTable().getSelectedClass());
+        });
         return true;
       }
 

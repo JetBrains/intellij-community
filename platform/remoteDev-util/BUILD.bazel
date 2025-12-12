@@ -15,7 +15,8 @@ jvm_library(
   resources = [":remoteDev-util_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:rd-core",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
@@ -65,7 +66,8 @@ jvm_library(
   associates = [":remoteDev-util"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:rd-core",
+    "//libraries/rd/core",
+    "//libraries/rd/framework",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/util",

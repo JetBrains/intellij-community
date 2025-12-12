@@ -808,11 +808,8 @@ f:com.intellij.codeInsight.lookup.DefaultLookupItemRenderer
 - s:getRawIcon(com.intellij.codeInsight.lookup.LookupElement):javax.swing.Icon
 - renderElement(com.intellij.codeInsight.lookup.LookupItem,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 c:com.intellij.codeInsight.lookup.EqTailType
-- com.intellij.codeInsight.TailType
 - sf:INSTANCE:com.intellij.codeInsight.TailType
 - <init>():V
-- p:isSpaceAroundAssignmentOperators(com.intellij.openapi.editor.Editor,I):Z
-- processTail(com.intellij.openapi.editor.Editor,I):I
 c:com.intellij.codeInsight.lookup.LookupItem
 - com.intellij.codeInsight.lookup.LookupElement
 - java.lang.Comparable
@@ -2708,7 +2705,6 @@ c:com.intellij.lang.parser.GeneratedParserUtilBase$Builder
 - f:state:com.intellij.lang.parser.GeneratedParserUtilBase$ErrorState
 - <init>(com.intellij.lang.PsiBuilder,com.intellij.lang.parser.GeneratedParserUtilBase$ErrorState,com.intellij.lang.PsiParser):V
 - getLexer():com.intellij.lexer.Lexer
-- getProductions():java.util.List
 c:com.intellij.lang.parser.GeneratedParserUtilBase$CompletionState
 - com.intellij.util.Function
 - f:items:java.util.Collection

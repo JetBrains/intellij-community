@@ -544,4 +544,21 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                        _ = e <weak_warning descr="Member 'None' of 'tuple | None' does not have attribute '__contains__'">in</weak_warning> a
                    """);
   }
+
+  // PY-85941
+  public void testSuperCallResultAttributes() {
+    doTestByText("""
+                   from abc import ABC
+                   
+                   class A:
+                       def do_smth(self):
+                           print("Something from", self)
+                   
+                   class B(A, ABC):
+                       def do_smth(self):
+                           print("Something more from", self)
+                           super().do_smth()
+                           super().<warning descr="Cannot find reference 'non_existing' in 'A | ABC'">non_existing</warning>()
+                   """);
+  }
 }

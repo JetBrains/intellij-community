@@ -24,10 +24,11 @@ jvm_library(
     "//platform/external-process-auth-helper/rt",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:netty-codec-http",
-    "@lib//:netty-buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/util/coroutines",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"]
 )
@@ -48,11 +49,12 @@ jvm_library(
     "//platform/external-process-auth-helper/rt",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:netty-codec-http",
-    "@lib//:netty-buffer",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
+    "//libraries/netty/buffer",
     "@lib//:junit5",
     "//platform/eel",
     "//platform/eel-provider",
+    "//platform/util/coroutines",
   ],
   exports = ["//platform/built-in-server:builtInServer-impl"]
 )

@@ -19,6 +19,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -460,6 +461,66 @@ public final class JUnit5BazelRunner {
 
     Path workDirPath = Path.of(testSrcDir);
     String communityMarkerFileName = "intellij.idea.community.main.iml";
+
+    // Try to get the actual workspace name from TEST_WORKSPACE env variable
+    // In Bazel's runfiles layout, the workspace subdirectory is named after the workspace
+    String testWorkspace = System.getenv("TEST_WORKSPACE");
+    String runfilesManifestOnly = System.getenv(bazelEnvRunfilesManifestOnly);
+    String runfilesManifestFile = System.getenv("RUNFILES_MANIFEST_FILE");
+
+    if (testWorkspace != null && !testWorkspace.isBlank()) {
+      // On Windows, when RUNFILES_MANIFEST_ONLY=1, we need to read the manifest file
+      // instead of looking for actual files in the runfiles directory
+      if ("1".equals(runfilesManifestOnly) && runfilesManifestFile != null) {
+        try {
+          Path manifestPath = Path.of(runfilesManifestFile);
+          if (Files.exists(manifestPath)) {
+            // In Bazel's external repository layout, the file might be at:
+            // - _main/external/community+/intellij.idea.community.main.iml (for ultimate repo accessing community as external)
+            // - community+/intellij.idea.community.main.iml (direct community+ workspace reference)
+            // - _main/intellij.idea.community.main.iml (if at workspace root)
+            String[] searchKeys = {
+              testWorkspace + "/external/community+/" + communityMarkerFileName,
+              "community+/" + communityMarkerFileName,
+              testWorkspace + "/" + communityMarkerFileName
+            };
+
+            for (String searchKey : searchKeys) {
+              try (final Stream<String> lines = Files.lines(manifestPath)) {
+                String realPath = lines
+                  .filter(line -> line.startsWith(searchKey + " "))
+                  .map(line -> line.substring(line.indexOf(' ') + 1))
+                  .findFirst()
+                  .orElse(null);
+
+                if (realPath != null) {
+                  Path realMarkerFile;
+                  try {
+                    realMarkerFile = Path.of(realPath).toRealPath();
+                  }
+                  catch (FileSystemException e) {
+                    continue;
+                  }
+                  Path communityRoot = realMarkerFile.getParent();
+                  Path parentPath = communityRoot.getParent();
+                  if (parentPath != null && Files.exists(parentPath.resolve(".ultimate.root.marker"))) {
+                    return parentPath;
+                  }
+                  else {
+                    return communityRoot;
+                  }
+                }
+              }
+            }
+          }
+        }
+        catch (IOException e) {
+          // Fall through to legacy logic
+        }
+      }
+    }
+
+    // Fallback to hardcoded workspace names for backward compatibility
     Path ultimateMarkerFile = workDirPath.resolve("community+").resolve(communityMarkerFileName);
     Path communityMarkerFile = workDirPath.resolve("_main").resolve(communityMarkerFileName);
     if (Files.exists(ultimateMarkerFile)) {

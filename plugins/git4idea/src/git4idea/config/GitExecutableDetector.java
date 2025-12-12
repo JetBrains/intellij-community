@@ -98,7 +98,7 @@ public class GitExecutableDetector {
     var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed);
 
     if (eel != null && pathToGitParsed.isAbsolute()) {
-      return new GitExecutable.Eel(EelNioBridgeServiceKt.asEelPath(pathToGitParsed).toString(), eel);
+      return new GitExecutable.Eel(EelNioBridgeServiceKt.asEelPath(pathToGitParsed), eel);
     }
 
     WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
@@ -569,8 +569,8 @@ public class GitExecutableDetector {
     return getBashExecutablePath(null, gitExecutable);
   }
 
-  static @NotNull List<String> getDependencyPaths(@NotNull Path executablePath, @NotNull Boolean isMac) {
-    if (isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
+  static @NotNull List<String> getDependencyPaths(@NotNull String executablePath, @NotNull Boolean isMac) {
+    if (isMac && ArrayUtil.contains(executablePath, APPLEGIT_PATHS)) {
       return Arrays.stream(APPLEGIT_DEPENDENCY_PATHS).toList();
     }
     return Collections.emptyList();

@@ -64,16 +64,17 @@ class SeLocalItemDataProvider(
     val commandItems = getCommandItems(params, supportedCommands)
 
     for (item in commandItems) {
-      SeItemData.createItemData(session, UUID.randomUUID().toString(), item, id, item.weight(),
-                                item.presentation(), mapOf(SeItemDataKeys.IS_COMMAND to "true"), emptyList()
-      )?.also { itemData ->
-        val count = counter.incrementAndFetch()
-        SeLog.log(SeLog.ITEM_EMIT) {
-          "$logLabel provider for ${id.value} receives command (total=$count): " +
-          "${itemData.presentation.text.split("\n").firstOrNull()}"
-        }
-        send(itemData)
+      val itemData =
+        SeItemDataFactory().createItemData(session, UUID.randomUUID().toString(), item, id, mapOf(SeItemDataKeys.IS_COMMAND to "true"))
+        ?: continue
+
+      val count = counter.incrementAndFetch()
+      SeLog.log(SeLog.ITEM_EMIT) {
+        "$logLabel provider for ${id.value} receives command (total=$count): " +
+        "${itemData.presentation.text.split("\n").firstOrNull()}"
       }
+
+      send(itemData)
     }
   }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
 
@@ -98,7 +99,7 @@ class SeLocalItemDataProvider(
     params: SeParams,
     counter: AtomicInt,
   ): Flow<SeItemData> = getRawItems(params).mapNotNull { item ->
-    val itemData = SeItemData.createItemData(session, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList())
+    val itemData = SeItemDataFactory().createItemData(session, UUID.randomUUID().toString(), item, id, infoWithReportableId)
     itemData?.also {
       SeLog.log(SeLog.ITEM_EMIT) {
         val count = counter.incrementAndFetch()

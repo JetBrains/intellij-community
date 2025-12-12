@@ -8,12 +8,12 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.PluginVersionEvaluatorResult
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
+import org.jetbrains.intellij.build.impl.createBuildContext
 import java.nio.file.Path
 
 abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getProperty("kotlin.plugin.kind")?.let(KotlinPluginKind::valueOf) ?: KotlinPluginKind.IJ) {
@@ -346,7 +346,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
   }
 
   suspend fun build(home: Path, properties: ProductProperties) {
-    val context = BuildContextImpl.createContext(
+    val context = createBuildContext(
       setupTracer = true,
       projectHome = home,
       productProperties = properties,
@@ -387,7 +387,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
   spec.withPatch { patcher, context ->
-    val jars = context.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(kotlincKotlinCompilerCommon, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
     }
@@ -401,7 +401,7 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
     val distLibName = "kotlinc.$libName"
-    val jars = context.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
+    val jars = context.outputProvider.findLibraryRoots(distLibName, moduleLibraryModuleName = null)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }

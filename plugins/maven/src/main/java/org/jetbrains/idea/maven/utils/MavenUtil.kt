@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -69,7 +70,6 @@ import org.jdom.JDOMException
 import org.jdom.Namespace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -131,7 +131,6 @@ object MavenUtil {
     "http://maven.apache.org/EXTENSIONS/1.1.0",
     "http://maven.apache.org/EXTENSIONS/1.2.0"
   )
-  private val runnables: MutableSet<Runnable?> = Collections.newSetFromMap<Runnable?>(IdentityHashMap<Runnable?, Boolean?>())
   const val INTELLIJ_PLUGIN_ID: String = "org.jetbrains.idea.maven"
 
   @ApiStatus.Experimental
@@ -210,58 +209,8 @@ object MavenUtil {
   }
 
   fun invokeLater(p: Project, state: ModalityState, r: Runnable) {
-    startTestRunnable(r)
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      runAndFinishTestRunnable(r)
-    }, state, p.getDisposed())
+    ApplicationManager.getApplication().invokeLater(r, state, p.getDisposed())
   }
-
-
-  private fun startTestRunnable(r: Runnable?) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) return
-    synchronized(runnables) {
-      runnables.add(r)
-    }
-  }
-
-  private fun runAndFinishTestRunnable(r: Runnable) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run()
-      return
-    }
-
-    try {
-      r.run()
-    }
-    finally {
-      synchronized(runnables) {
-        runnables.remove(r)
-      }
-    }
-  }
-
-  @TestOnly
-  fun noUncompletedRunnables(): Boolean {
-    synchronized(runnables) {
-      return runnables.isEmpty()
-    }
-  }
-
-  fun cleanAllRunnables() {
-    synchronized(runnables) {
-      runnables.clear()
-    }
-  }
-
-  @get:TestOnly
-  val uncompletedRunnables: MutableList<Runnable?>
-    get() {
-      val result: MutableList<Runnable?>
-      synchronized(runnables) {
-        result = ArrayList<Runnable?>(runnables)
-      }
-      return result
-    }
 
   @JvmStatic
   fun invokeAndWait(p: Project, r: Runnable) {
@@ -269,34 +218,31 @@ object MavenUtil {
   }
 
   fun invokeAndWait(p: Project?, state: ModalityState, r: Runnable) {
-    startTestRunnable(r)
-    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, p), state)
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state)
   }
 
 
   @JvmStatic
   fun invokeAndWaitWriteAction(p: Project, r: Runnable) {
-    startTestRunnable(r)
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      runAndFinishTestRunnable(r)
+      r.run()
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().runWriteAction(r)
     }
     else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-        Runnable { ApplicationManager.getApplication().runWriteAction(Runnable { runAndFinishTestRunnable(r) }) }, p),
+        Runnable { ApplicationManager.getApplication().runWriteAction(r) }, p),
                                                         ModalityState.defaultModalityState())
     }
   }
 
   fun runDumbAware(project: Project, r: Runnable) {
-    startTestRunnable(r)
     if (isDumbAware(r)) {
-      runAndFinishTestRunnable(r)
+      r.run()
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, project))
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project))
     }
   }
 
@@ -310,8 +256,7 @@ object MavenUtil {
       runDumbAware(project, runnable)
     }
     else {
-      startTestRunnable(runnable)
-      StartupManager.getInstance(project).runAfterOpened(Runnable { runAndFinishTestRunnable(runnable) })
+      StartupManager.getInstance(project).runAfterOpened(runnable)
     }
   }
 
@@ -2028,9 +1973,7 @@ object MavenUtil {
   }
 
   @JvmStatic
-  fun isRunningFromSources(): Boolean {
-    return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
-  }
+  fun isRunningFromSources(): Boolean = PluginManagerCore.isRunningFromSources()
 
   @RequiresBackgroundThread
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {

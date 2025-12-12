@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="rd-framework" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2025.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1.jar">
+              <sha256sum>85f2a329245e4a6a1e4552ac62db4c1f23b6f02bf3c96e4df8240668187c848a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

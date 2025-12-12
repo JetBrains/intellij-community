@@ -47,6 +47,19 @@ internal class ComboBoxPanel : UISandboxPanel {
             isEditable = true
           }
       }
+      withStateLabel("Browsable") {
+        comboBox(items)
+          .applyToComponent {
+            initBrowsableEditor({}, disposable)
+          }
+      }
+      withStateLabel("Browsable") {
+        comboBox(items)
+          .applyToComponent {
+            initBrowsableEditor({}, disposable)
+            isEditable = false
+          }
+      }
 
       group("IS_EMBEDDED_PROPERTY") {
         withStateLabel {

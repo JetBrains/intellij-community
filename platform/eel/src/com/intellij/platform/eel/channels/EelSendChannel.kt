@@ -50,6 +50,13 @@ interface EelSendChannel {
    */
   @get:ApiStatus.Experimental
   val isClosed: Boolean
+
+  /**
+   * Returns true if the channel implementation works faster with [java.nio.DirectByteBuffer].
+   *
+   * See also [com.intellij.platform.eel.EelLowLevelObjectsPool.directByteBuffers].
+   */
+  val prefersDirectBuffers: Boolean
 }
 
 /**

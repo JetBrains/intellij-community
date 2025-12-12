@@ -22,8 +22,8 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
-import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
+import org.jetbrains.intellij.build.impl.createBuildContext
 import org.jetbrains.intellij.build.telemetry.JaegerJsonSpanExporterManager
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -63,7 +63,7 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
+internal inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
   val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
@@ -99,7 +99,7 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties, homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
+  return createBuildContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 fun runTestBuild(
@@ -138,7 +138,7 @@ fun runTestBuild(
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
         doRunTestBuild(
-          context = BuildContextImpl.createContext(
+          context = createBuildContext(
             projectHome = homeDir,
             productProperties = productProperties,
             setupTracer = false,
@@ -150,7 +150,7 @@ fun runTestBuild(
               customizer = buildOptionsCustomizer,
             ).also {
               reproducibilityTest.configure(it)
-            }
+            },
           ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
@@ -168,7 +168,7 @@ fun runTestBuild(
   }
   else {
     doRunTestBuild(
-      context = BuildContextImpl.createContext(
+      context = createBuildContext(
         projectHome = homeDir,
         productProperties = productProperties,
         setupTracer = false,
@@ -213,32 +213,31 @@ suspend fun runTestBuild(
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(
+internal suspend fun <T> doRunTestBuild(
   context: BuildContext,
   traceSpanName: String,
   writeTelemetry: Boolean,
   checkIntegrityOfEmbeddedFrontend: Boolean,
   checkThatBundledPluginInFrontendArePresent: Boolean,
   checkPrivatePluginModulesAreNotPublic: Boolean = true,
-  build: suspend (context: BuildContext) -> Unit,
-) {
+  build: suspend (context: BuildContext) -> T,
+): T {
   var outDir: Path? = null
   var traceFile: Path? = null
-  var error: Throwable? = null
   val buildLogsDir = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName")
   Logger.setFactory(TestLoggerFactory::class.java)
   try {
-    spanBuilder(traceSpanName).use { span ->
+    return spanBuilder(traceSpanName).use { span ->
       context.cleanupJarCache()
       outDir = context.paths.buildOutputDir
       span.setAttribute("outDir", outDir.toString())
       if (writeTelemetry) {
         traceFile = buildLogsDir.resolve("trace.json").also {
-          JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
+          JaegerJsonSpanExporterManager.setOutput(file = it, addShutDownHook = false)
         }
       }
       try {
-        build(context)
+        val result = build(context)
 
         val softly = SoftAssertions()
         if (checkIntegrityOfEmbeddedFrontend) {
@@ -257,6 +256,8 @@ private suspend fun doRunTestBuild(
           checkPrivatePluginModulesAreNotPublic(context, softly)
         }
         softly.assertAll()
+
+        result
       }
       catch (e: CancellationException) {
         throw e
@@ -270,19 +271,18 @@ private suspend fun doRunTestBuild(
         copyLogs(context, buildLogsDir)
 
         if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
-          error = TestAbortedException("failed to load data for build scripts", e)
+          throw TestAbortedException("failed to load data for build scripts", e)
         }
         else {
-          error = e
+          throw e
         }
-      }
-      finally {
-        // close debug logging to prevent locking of the output directory on Windows
-        context.messages.close()
       }
     }
   }
   finally {
+    // close debug logging to prevent locking of the output directory on Windows
+    context.messages.close()
+
     closeKtorClient()
 
     if (traceFile != null) {
@@ -302,10 +302,6 @@ private suspend fun doRunTestBuild(
       System.err.println("cannot cleanup $outDir:")
       e.printStackTrace(System.err)
     }
-  }
-
-  error?.let {
-    throw it
   }
 }
 

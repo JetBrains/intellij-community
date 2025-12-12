@@ -37,7 +37,7 @@ public abstract class CommandProcessor {
                                       @NotNull Runnable runnable,
                                       @Nullable @NlsContexts.Command String name,
                                       @Nullable Object groupId,
-                                      @NotNull UndoConfirmationPolicy confirmationPolicy);
+                                      @NotNull UndoConfirmationPolicy undoConfirmationPolicy);
 
   public abstract void executeCommand(@Nullable Project project,
                                       @NotNull Runnable command,

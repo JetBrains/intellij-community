@@ -11,13 +11,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeRunnableActionItemPresentation
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent

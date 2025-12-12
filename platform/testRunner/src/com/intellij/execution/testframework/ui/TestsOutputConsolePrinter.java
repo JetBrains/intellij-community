@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -137,6 +137,10 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   private void scrollToBeginning() {
+    if (TestConsoleProperties.SCROLL_TO_BOTTOM.value(myProperties) &&
+        (!TestConsoleProperties.SCROLL_TO_STACK_TRACE.value(myProperties) || myMarkOffset == 0)) {
+      return;
+    }
     EdtInvocationManager.invokeLaterIfNeeded(() -> {
       if (!myDisposed) {
         myConsole.performWhenNoDeferredOutput(() -> {

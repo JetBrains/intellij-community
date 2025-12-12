@@ -9686,6 +9686,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("classObjectIntTypeParam.kt")
+        public void testClassObjectIntTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/classObjectIntTypeParam.kt");
+        }
+
         @TestMetadata("inClass.kt")
         public void testInClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClass.kt");
@@ -9706,6 +9711,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inFunction.kt");
         }
 
+        @TestMetadata("innerClassObjectTypeParam.kt")
+        public void testInnerClassObjectTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/innerClassObjectTypeParam.kt");
+        }
+
+        @TestMetadata("innerClassObjectTypeParamInnerTarget.kt")
+        public void testInnerClassObjectTypeParamInnerTarget() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/innerClassObjectTypeParamInnerTarget.kt");
+        }
+
         @TestMetadata("objectLiteralNoCapture.kt")
         public void testObjectLiteralNoCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralNoCapture.kt");
@@ -9719,6 +9734,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("objectLiteralWithCapture.kt")
         public void testObjectLiteralWithCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
+        }
+
+        @TestMetadata("objectWithTypeParam.kt")
+        public void testObjectWithTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectWithTypeParam.kt");
         }
 
         @TestMetadata("severalParameters.kt")

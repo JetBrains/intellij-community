@@ -4,7 +4,6 @@ package com.jetbrains.python.debugger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -34,13 +33,6 @@ internal sealed class PythonDebuggerScope : CoroutineScope, Disposable {
      * Designed to be used in places where the project scope is not available.
      */
     val global: PythonDebuggerScope get() = service<GlobalScopeService>()
-
-    /**
-     * Retrieves project-level scope for the Python Debugger.
-     * Designed to be used for any asynchronous work where [Project] is accessible.
-     */
-    fun getForProject(project: Project): PythonDebuggerScope =
-      project.service<ProjectScope>()
 
     @Service
     private class GlobalScopeService : PythonDebuggerScope()

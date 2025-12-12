@@ -92,6 +92,8 @@ import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceBasicCompletionHa
 import org.jetbrains.kotlin.idea.perf.stats.AbstractPerformanceHighlightingStatNamesTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.projectView.AbstractKotlinProjectViewTest
+import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiFileTest
+import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
@@ -425,7 +427,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("kotlinAndJavaChecker/javaAgainstKotlin")
         }
 
-        testClass<AbstractHighlightingTest>(commonSuite = false) {
+        testClass<AbstractK1HighlightingTest>(commonSuite = false) {
             model("highlighter", pattern = KT_OR_JAVA)
         }
 
@@ -496,11 +498,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             )
         }
 
-        testClass<AbstractQuickFixMultiFileTest> {
+        testClass<AbstractK1QuickFixMultiFileTest>(generatedClassName = "org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated") {
             model("quickfix", pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$"""), testMethodName = "doTestWithExtraFile")
         }
 
-        testClass<AbstractQuickFixMultiModuleTest> {
+        testClass<AbstractK1QuickFixMultiModuleTest>(generatedClassName = "org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated") {
             model("multiModuleQuickFix", pattern = DIRECTORY, depth = 1)
         }
     }
@@ -1250,7 +1252,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     testGroup("scripting-support", category = SCRIPTS) {
         testClass<AbstractScratchRunActionTest> {
             model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
-            model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
+            // TODO: uncomment once KTIJ-33711 fixed
+//            model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
             model("scratch/multiFile", pattern = DIRECTORY, testMethodName = "doScratchMultiFileTest", testClassName = "ScratchMultiFile", isRecursive = false)
             model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
         }

@@ -304,8 +304,10 @@ private class ParameterValuesPage(
         ComponentValidator(this@ParameterValuesPage)
           .withValidator(
             Supplier {
-              documentManager.commitDocument(document)
-              refactoringSupport.ui.validateValue(data, component).also { onValueChanged(it) }
+              WriteIntentReadAction.compute {
+                documentManager.commitDocument(document)
+                refactoringSupport.ui.validateValue(data, component).also { onValueChanged(it) }
+              }
             }
           )
           .installOn(component)

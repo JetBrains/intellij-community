@@ -189,6 +189,7 @@ private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
+private val suggestionQuotePattern = Regex("(?<![\"'])</?suggestion>(?![\"'])")
 private val nextWordPattern = Regex("\\s+(\\w+)")
 private val an_vs_a_exclusions = mapOf(
   "an" to listOf(
@@ -277,7 +278,12 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
 }
 
 private val RuleMatch.messageSanitized
-  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
+  get(): String {
+    val replacement = if (suggestionQuotePattern.containsMatchIn(message)) "'" else ""
+    return message
+      .replace("<suggestion>", replacement)
+      .replace("</suggestion>", replacement)
+  }
 
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())

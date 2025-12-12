@@ -17,6 +17,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.logging.Level
+import java.util.logging.Logger
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.jvm.optionals.getOrNull
@@ -177,7 +179,7 @@ internal fun readModules(modulesBazel: List<Path>, repositories: List<JarReposit
     }
   }
 
-  println("DEBUG: read ${map.size} existing entries from $modulesBazel")
+  LOG.log(Level.FINE, "DEBUG: read ${map.size} existing entries from $modulesBazel")
 
   return map
 }
@@ -310,3 +312,5 @@ fun InputStream.sha256(): String {
   }
   return digest.digest().joinToString("") { "%02x".format(it) }
 }
+
+private val LOG = Logger.getLogger("url-cache")

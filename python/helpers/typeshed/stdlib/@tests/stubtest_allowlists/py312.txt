@@ -1,3 +1,14 @@
+# =========
+# Temporary
+# =========
+
+# Will be added in 3.12.13
+pyexpat.XMLParserType.SetAllocTrackerActivationThreshold
+pyexpat.XMLParserType.SetAllocTrackerMaximumAmplification
+xml.parsers.expat.XMLParserType.SetAllocTrackerActivationThreshold
+xml.parsers.expat.XMLParserType.SetAllocTrackerMaximumAmplification
+
+
 # =========================
 # New errors in Python 3.12
 # =========================

@@ -129,7 +129,9 @@ final class EditorTransferHandler extends TransferHandler {
 
     EditorImpl editor = getEditor(source);
     if (action == MOVE && !editor.isViewer() && editor.getDraggedRange() != null) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> removeDraggedOutFragment(editor));
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> WriteIntentReadAction.run(() -> {
+        removeDraggedOutFragment(editor);
+      }));
     }
 
     editor.clearDnDContext();

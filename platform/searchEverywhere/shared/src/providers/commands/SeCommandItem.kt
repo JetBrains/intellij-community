@@ -2,11 +2,10 @@
 package com.intellij.platform.searchEverywhere.providers.commands
 
 import com.intellij.ide.SearchTopHitProvider
-import com.intellij.ide.ui.icons.rpcId
 import com.intellij.platform.searchEverywhere.SeCommandInfo
 import com.intellij.platform.searchEverywhere.SeItem
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -16,12 +15,11 @@ class SeCommandItem(
 ) : SeItem {
   override fun weight(): Int = 10 // same as in SearchEverywhereUI.myStubCommandContributor
   override suspend fun presentation(): SeItemPresentation {
-    return SeTargetItemPresentation(
-      iconId = EmptyIcon.ICON_16.rpcId(),
-      presentableText = SearchTopHitProvider.getTopHitAccelerator() + commandInfo.command,
-      containerText = commandInfo.definition,
-      extendedInfo = null,
-      isMultiSelectionSupported = false)
+    return SeTargetItemPresentationBuilder()
+      .withIcon(EmptyIcon.ICON_16)
+      .withPresentableText(SearchTopHitProvider.getTopHitAccelerator() + commandInfo.command)
+      .withContainerText(commandInfo.definition)
+      .build()
   }
 
   override val rawObject: Any get() = commandInfo

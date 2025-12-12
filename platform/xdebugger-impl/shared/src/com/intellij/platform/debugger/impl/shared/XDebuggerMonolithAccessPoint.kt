@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerMonolithAccessPoint {
   fun getSession(proxy: XDebugSessionProxy): XDebugSession?
   fun getSessionNonSplitOnly(proxy: XDebugSessionProxy): XDebugSession?
+  fun asProxy(session: XDebugSession): XDebugSessionProxy?
 
   companion object {
     internal val EP_NAME = ExtensionPointName<XDebuggerMonolithAccessPoint>("com.intellij.xdebugger.monolithAccessPoint")

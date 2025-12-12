@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl.needGenerateInternalIgnoreFile
-import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreBlock
+import com.intellij.openapi.vcs.changes.ignore.psi.util.addNewElementsToIgnoreFile
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -201,6 +201,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       projectConfigDirVFile.createChildData(projectConfigDirVFile, GITIGNORE)
     }
 
+    val groupedEntries = mutableListOf<Pair<String, List<IgnoredFileDescriptor>>>()
     for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensionList) {
       val ignoresInStoreDir = ignoredFileProvider.getIgnoredFiles(project).filter { ignore ->
         inStoreDir(projectConfigDirPath.invariantSeparatorsPathString, ignore)
@@ -210,9 +211,12 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       }
 
       val ignoredGroupDescription = gitIgnoreContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
-      addNewElementsToIgnoreBlock(project, gitIgnoreFile, ignoredGroupDescription, gitVcsKey,
-                                  *ignoresInStoreDir.toTypedArray<IgnoredFileDescriptor>())
+      groupedEntries.add(ignoredGroupDescription to ignoresInStoreDir.toList())
     }
+
+    if (groupedEntries.isEmpty() || groupedEntries.all { it.second.isEmpty() }) return
+
+    addNewElementsToIgnoreFile(project, gitIgnoreFile, groupedEntries, gitVcsKey)
 
     markGenerated(project, projectConfigDirVFile)
   }

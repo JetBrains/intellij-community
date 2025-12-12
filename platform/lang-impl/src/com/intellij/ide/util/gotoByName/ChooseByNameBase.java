@@ -75,6 +75,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.*;
@@ -1552,7 +1553,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   private static @NotNull Matcher buildPatternMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
   }
 
   private static final class HintLabel extends JLabel {

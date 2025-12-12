@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.debugger.impl.rpc.XFrontendDebuggerCapabilities;
+import com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;

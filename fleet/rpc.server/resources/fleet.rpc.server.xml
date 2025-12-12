@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.multiplatform.shims"/>
     <module name="fleet.reporting.api"/>
@@ -7,5 +7,5 @@
     <module name="fleet.rpc"/>
     <module name="fleet.util.core"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

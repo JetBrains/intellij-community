@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkType
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
@@ -257,7 +258,9 @@ private class BookmarkLayoutGrid(
           val type = BookmarkType.get(event.keyCode.toChar())
           if (type != BookmarkType.DEFAULT) {
             onChosen(type)
-            save()
+            WriteIntentReadAction.run {
+              save()
+            }
           }
         }
       }

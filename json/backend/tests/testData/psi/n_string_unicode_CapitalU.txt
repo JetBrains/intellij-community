@@ -1,0 +1,3 @@
+JsonFile: n_string_unicode_CapitalU.json
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"\UA66D"')

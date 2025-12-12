@@ -32,7 +32,14 @@ class KotlinColorSettingsPage : ColorSettingsPage, RainbowColorSettingsPage {
  */
 <ANNOTATION>@Deprecated</ANNOTATION>(<ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES>message</ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES> = "Deprecated class")
 <BUILTIN_ANNOTATION>private</BUILTIN_ANNOTATION> class <CLASS>MyClass</CLASS><<BUILTIN_ANNOTATION>out</BUILTIN_ANNOTATION> <TYPE_PARAMETER>T</TYPE_PARAMETER> : <TRAIT>Iterable</TRAIT><<TYPE_PARAMETER>T</TYPE_PARAMETER>>>(var <PARAMETER><MUTABLE_VARIABLE><INSTANCE_PROPERTY>prop1</INSTANCE_PROPERTY></MUTABLE_VARIABLE></PARAMETER> : Int) {
-    fun <FUNCTION_DECLARATION>foo</FUNCTION_DECLARATION>(<PARAMETER>nullable</PARAMETER> : String<QUEST>?</QUEST>, <PARAMETER>r</PARAMETER> : <TRAIT>Runnable</TRAIT>, <PARAMETER>f</PARAMETER> : () -> Int, <PARAMETER>fl</PARAMETER> : <TRAIT>FunctionLike</TRAIT>, dyn: <KEYWORD>dynamic</KEYWORD>) {
+    fun <<TYPE_PARAMETER>T</TYPE_PARAMETER>> <FUNCTION_DECLARATION>fooGeneric</FUNCTION_DECLARATION>(<PARAMETER>t</PARAMETER>: <TYPE_PARAMETER>T</TYPE_PARAMETER> & <CLASS>Any</CLASS>) { }
+    
+    fun <FUNCTION_DECLARATION>foo</FUNCTION_DECLARATION>(<PARAMETER>nullable</PARAMETER> : String<QUEST>?</QUEST>, <PARAMETER>r</PARAMETER> : <TRAIT>Runnable</TRAIT>, <PARAMETER>f</PARAMETER> : () -> Int, <PARAMETER>fl</PARAMETER> : <TRAIT>FunctionLike</TRAIT>, dyn: <KEYWORD>dynamic</KEYWORD>, <PARAMETER>isEnabled</PARAMETER>: Boolean = true) {
+        // Logical operations
+        val <LOCAL_VARIABLE>hasContent</LOCAL_VARIABLE> = <PARAMETER>nullable</PARAMETER> != null && <PARAMETER>nullable</PARAMETER>.isNotEmpty()
+        val <LOCAL_VARIABLE>isActive</LOCAL_VARIABLE> = <PARAMETER>isEnabled</PARAMETER> && <INSTANCE_PROPERTY><MUTABLE_VARIABLE>prop1</MUTABLE_VARIABLE></INSTANCE_PROPERTY> > 0
+        val <LOCAL_VARIABLE>canProcess</LOCAL_VARIABLE> = <LOCAL_VARIABLE>hasContent</LOCAL_VARIABLE> || <LOCAL_VARIABLE>isActive</LOCAL_VARIABLE>
+        
         <PACKAGE_FUNCTION_CALL>println</PACKAGE_FUNCTION_CALL>("length\nis ${"$"}{<PARAMETER>nullable</PARAMETER><SAFE_ACCESS>?.</SAFE_ACCESS><INSTANCE_PROPERTY>length</INSTANCE_PROPERTY>} <STRING_ESCAPE><INVALID_STRING_ESCAPE>\e</INVALID_STRING_ESCAPE></STRING_ESCAPE>")
         <PACKAGE_FUNCTION_CALL>println</PACKAGE_FUNCTION_CALL>(<PARAMETER>nullable</PARAMETER><EXCLEXCL>!!</EXCLEXCL>.<INSTANCE_PROPERTY>length</INSTANCE_PROPERTY>)
         val <LOCAL_VARIABLE>ints</LOCAL_VARIABLE> = java.util.<CONSTRUCTOR_CALL>ArrayList</CONSTRUCTOR_CALL><Int?>(2)
@@ -126,6 +133,7 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             KotlinBundle.message("highlighter.descriptor.text.string.escape") to KotlinHighlightingColors.STRING_ESCAPE,
             OptionsBundle.message("options.java.attribute.descriptor.invalid.escape.in.string") to KotlinHighlightingColors.INVALID_STRING_ESCAPE,
             OptionsBundle.message("options.java.attribute.descriptor.operator.sign") to KotlinHighlightingColors.OPERATOR_SIGN,
+            KotlinBundle.message("highlighter.descriptor.text.ampersand") to KotlinHighlightingColors.AMPERSAND,
             OptionsBundle.message("options.java.attribute.descriptor.parentheses") to KotlinHighlightingColors.PARENTHESIS,
             OptionsBundle.message("options.java.attribute.descriptor.braces") to KotlinHighlightingColors.BRACES,
             KotlinBundle.message("highlighter.descriptor.text.closure.braces") to KotlinHighlightingColors.FUNCTION_LITERAL_BRACES_AND_ARROW,

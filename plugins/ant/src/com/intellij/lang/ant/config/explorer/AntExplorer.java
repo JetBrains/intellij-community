@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.ExecutionBundle;
@@ -26,6 +26,7 @@ import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -140,7 +141,9 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
-        popupInvoked(comp, x, y);
+        WriteIntentReadAction.run(() -> {
+          popupInvoked(comp, x, y);
+        });
       }
     });
 

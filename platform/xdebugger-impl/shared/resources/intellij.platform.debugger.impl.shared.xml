@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -16,7 +16,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.topics"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="xdebugger.consoleViewDataConverter"
@@ -31,4 +31,9 @@
                     interface="com.intellij.platform.debugger.impl.shared.XDebuggerMonolithAccessPoint"
                     dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.validation.customValidationRule implementation="com.intellij.platform.debugger.impl.shared.FrameTypeValidator"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.debugger.impl.shared.XDebuggerActionsCollector"/>
+  </extensions>
 </idea-plugin>

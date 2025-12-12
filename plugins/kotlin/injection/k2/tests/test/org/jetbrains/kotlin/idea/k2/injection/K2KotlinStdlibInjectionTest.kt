@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.injection.KotlinStdlibInjectionTestBase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 class K2KotlinStdlibInjectionTest: KotlinStdlibInjectionTestBase() {
 

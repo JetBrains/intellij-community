@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.jackson"/>
@@ -13,5 +13,5 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

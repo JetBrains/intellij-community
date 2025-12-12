@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.MockDocumentEvent
@@ -526,7 +525,7 @@ class TerminalViewImpl(
   ) {
     InlineCompletion.install(editor, coroutineScope)
     // Inline completion handler needs to be manually disposed
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       InlineCompletion.remove(editor)
     }
 

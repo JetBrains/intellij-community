@@ -4,15 +4,15 @@ package com.intellij.xdebugger.impl.actions.handlers
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetDto
-import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 
 internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
     return XDebuggerProxySuspendedActionHandler.isEnabled(session)
   }
 
-  override suspend fun computeTargets(session: XDebugSessionProxy): List<XSmartStepIntoTargetDto> {
+  override suspend fun computeTargets(session: XDebugSessionProxy): List<XSmartStepIntoTargetDto>? {
     return XDebugSessionApi.getInstance().computeStepTargets(session.id)
   }
 

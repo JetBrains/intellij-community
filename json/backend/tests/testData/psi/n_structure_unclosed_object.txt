@@ -1,0 +1,11 @@
+JsonFile: n_structure_unclosed_object.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"asd"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"asd"')
+    PsiErrorElement:',' or '}' expected
+      <empty list>

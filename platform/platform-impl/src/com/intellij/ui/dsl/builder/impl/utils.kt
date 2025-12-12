@@ -62,6 +62,8 @@ enum class DslComponentPropertyInternal {
    * Value: Int
    */
   @ApiStatus.Experimental
+  @Deprecated("Not needed anymore, because IJPL-62164 has been implemented")
+  @ApiStatus.ScheduledForRemoval
   PREFERRED_COLUMNS_LABEL_WORD_WRAP
 }
 
@@ -97,6 +99,11 @@ val JComponent.interactiveComponent: JComponent
     val interactiveComponent = getClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT) as JComponent?
     return interactiveComponent ?: this
   }
+
+@get:ApiStatus.Internal
+@Deprecated("Quick workaround. Don't use this method, get rid of <html> instead")
+val String?.trimHtml: String?
+  get() = this?.removeSurrounding("<html>", "</html>")
 
 internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =

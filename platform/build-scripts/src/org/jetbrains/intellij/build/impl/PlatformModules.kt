@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.UTIL_RT_JAR
 import org.jetbrains.intellij.build.classPath.getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -99,8 +100,6 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
-const val LIB_MODULE_PREFIX: String = "intellij.libraries."
-
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val productLayout = context.productProperties.productLayout
@@ -152,8 +151,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "javax.activation",
     "jaxb-runtime",
     "jaxb-api",
-    // todo - convert to product module
-    "netty-codec-compression"
   ))
 
   layout.withProjectLibraries(
@@ -315,8 +312,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
-  layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
-    val libName = lib.name
+  layout.collectProjectLibrariesFromIncludedModules(context.outputProvider) { libName, module ->
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
     if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
       return@collectProjectLibrariesFromIncludedModules
@@ -469,8 +465,8 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
  * This ensures that when computing transitive dependencies, modules don't incorrectly
  * include dependencies that should belong to their own dependencies.
  */
-private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleItem>, moduleOutputProvider: ModuleOutputProvider): List<ModuleItem> {
-  val graph = EmbeddedModuleGraph(embeddedModules, moduleOutputProvider)
+private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleItem>, outputProvider: ModuleOutputProvider): List<ModuleItem> {
+  val graph = EmbeddedModuleGraph(embeddedModules, outputProvider)
   val builder = DFSTBuilder(graph)
   builder.circularDependency?.let { (from, to) ->
     throw IllegalStateException("Circular dependency detected: ${from.moduleName} -> ${to.moduleName}")
@@ -480,14 +476,14 @@ private fun sortEmbeddedModulesTopologically(embeddedModules: Collection<ModuleI
 
 private class EmbeddedModuleGraph(
   private val modules: Collection<ModuleItem>,
-  private val moduleOutputProvider: ModuleOutputProvider,
+  private val outputProvider: ModuleOutputProvider,
 ) : OutboundSemiGraph<ModuleItem> {
   private val moduleByName = modules.associateBy { it.moduleName }
 
   override fun getNodes(): Collection<ModuleItem> = modules
 
   override fun getOut(node: ModuleItem): Iterator<ModuleItem> {
-    val jpsModule = moduleOutputProvider.findRequiredModule(node.moduleName)
+    val jpsModule = outputProvider.findRequiredModule(node.moduleName)
     return jpsModule.dependenciesList.dependencies
       .asSequence()
       .filterIsInstance<JpsModuleDependency>()
@@ -514,7 +510,7 @@ private fun computeEmbeddedModuleDependencies(
   val result = LinkedHashSet<ModuleItem>()
   val rootChain = persistentListOf<String>()
 
-  for (embeddedModule in sortEmbeddedModulesTopologically(embeddedModules, context).asReversed()) {
+  for (embeddedModule in sortEmbeddedModulesTopologically(embeddedModules, context.outputProvider).asReversed()) {
     val moduleName = embeddedModule.moduleName
     val relativeOutputFile = embeddedModule.relativeOutputFile
     val moduleSet = embeddedModule.moduleSet
@@ -522,7 +518,7 @@ private fun computeEmbeddedModuleDependencies(
     // Prepare list for dependency computation - same pattern as computeImplicitRequiredModules
     val rootList = listOf(moduleName to rootChain)
     val deps = mutableListOf<Pair<String, PersistentList<String>>>()
-    computeTransitive(list = rootList, unique = alreadyIncluded, result = deps, context = context)
+    computeTransitive(list = rootList, unique = alreadyIncluded, result = deps, outputProvider = context.outputProvider)
 
     // Add dependencies to result, filtering out excluded modules
     for ((depName, chain) in deps) {
@@ -590,7 +586,7 @@ private suspend fun computeImplicitRequiredModules(
   val pluginsContents = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
   val requiredDependencies = mutableListOf<Pair<String, PersistentList<String>>>()
-  computeTransitive(list = rootList, unique = unique, result = requiredDependencies, context = context)
+  computeTransitive(list = rootList, unique = unique, result = requiredDependencies, outputProvider = context.outputProvider)
   val requiredModules = requiredDependencies.filter { it.first !in pluginsContents }
 
   if (validateImplicitPlatformModule) {
@@ -620,11 +616,11 @@ private fun computeTransitive(
   list: List<Pair<String, PersistentList<String>>>,
   unique: HashSet<String>,
   result: MutableList<Pair<String, PersistentList<String>>>,
-  context: BuildContext,
+  outputProvider: ModuleOutputProvider,
 ) {
   val oldSize = result.size
   for ((dependentName, dependentChain) in list) {
-    val dependentModule = context.findRequiredModule(dependentName)
+    val dependentModule = outputProvider.findRequiredModule(dependentName)
     val chain = dependentChain.add(dependentName)
     JpsJavaExtensionService.dependencies(dependentModule).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).processModules { module ->
       val name = module.name
@@ -635,7 +631,7 @@ private fun computeTransitive(
   }
 
   if (oldSize != result.size) {
-    computeTransitive(list = result.subList(oldSize, result.size).sortedBy { it.first }, unique = unique, result = result, context = context)
+    computeTransitive(list = result.subList(oldSize, result.size).sortedBy { it.first }, unique = unique, result = result, outputProvider = outputProvider)
   }
 }
 

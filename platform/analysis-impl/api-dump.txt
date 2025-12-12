@@ -219,6 +219,10 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
+c:com.intellij.codeInsight.lookup.EqTailType
+- com.intellij.codeInsight.ModNavigatorTailType
+- p:isSpaceAroundAssignmentOperators(com.intellij.psi.PsiFile,I):Z
+- processTail(com.intellij.openapi.editor.ModNavigator,I):I
 com.intellij.codeInsight.template.CaretAutoMoveController
 - sf:KEY:com.intellij.openapi.util.Key
 - s:forbidCaretMovementInsideIfNeeded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V

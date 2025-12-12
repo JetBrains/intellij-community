@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +193,7 @@ public final class FileTextFieldUtil {
   }
 
   private static MinusculeMatcher createMatcher(String prefix) {
-    return NameUtil.buildMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher("*" + prefix, MatchingMode.IGNORE_CASE);
   }
 
   private static @Nullable FileLookup.LookupFile getClosestParent(String typed, Finder finder) {

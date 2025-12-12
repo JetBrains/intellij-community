@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -26,11 +28,13 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.RangeBlinker;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -53,6 +57,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EditorEx myEditor;
   private final JPanel myTopPanel;
+  private final RangeBlinker myRangeBlinker;
 
   private final PreviewTextModel myTextModel;
 
@@ -61,6 +66,9 @@ public class FontEditorPreview implements PreviewPanel{
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   private static final ShortcutSet TOGGLE_BOLD_SHORTCUT = CustomShortcutSet.fromString("control B");
+
+  private final FontGlyphHashCache myGlyphCache = new FontGlyphHashCache();
+  private @Nullable FontGlyphHashCache.FontKey myFontKey = null;
 
   public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
     mySchemeSupplier = schemeSupplier;
@@ -89,6 +97,8 @@ public class FontEditorPreview implements PreviewPanel{
 
     registerActions(myEditor);
     installTrafficLights(myEditor);
+
+    myRangeBlinker = new RangeBlinker(myEditor, EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES), 4, null);
   }
 
   protected Border getBorder() {
@@ -160,7 +170,7 @@ public class FontEditorPreview implements PreviewPanel{
 
     myEditor.setColorsScheme(scheme);
     myEditor.reinitSettings();
-
+    blinkGlyphDifferences(scheme);
   }
 
   protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
@@ -174,6 +184,52 @@ public class FontEditorPreview implements PreviewPanel{
   @Override
   public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
+  }
+
+  private void blinkGlyphDifferences(@NotNull EditorColorsScheme scheme) {
+    CharSequence text = myEditor.getDocument().getCharsSequence();
+    FontGlyphHashCache.FontKey newKey = myGlyphCache.computeCaches(scheme, text);
+
+    if (myFontKey == null) {
+      // Showing preview for the first time
+      myFontKey = newKey;
+      return;
+    } else if (myFontKey == newKey) {
+      // Font features haven't changed
+      return;
+    } else if (!Strings.areSameInstance(myFontKey.getFontFamily(), newKey.getFontFamily())) {
+      // Font family changed, avoid blinking everything
+      myFontKey = newKey;
+      return;
+    }
+
+    List<TextRange> changedRanges = new ArrayList<>();
+
+    int rangeStart = -1;
+    int rangeEnd = -1;
+
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      int oldGlyphs = myGlyphCache.getGlyphCache(myFontKey, ch);
+      int newGlyphs = myGlyphCache.getGlyphCache(newKey, ch);
+
+      if (oldGlyphs != newGlyphs) {
+        if (rangeStart == -1) rangeStart = i;
+        rangeEnd = i;
+      }
+      else if (rangeStart != -1) {
+        changedRanges.add(new TextRange(rangeStart, rangeEnd + 1));
+        rangeStart = -1;
+      }
+    }
+
+    if (rangeStart != -1) {
+      changedRanges.add(new TextRange(rangeStart, rangeEnd + 1));
+    }
+
+    myRangeBlinker.resetMarkers(changedRanges, true);
+    myRangeBlinker.startBlinking();
+    myFontKey = newKey;
   }
 
   @Override

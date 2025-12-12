@@ -7,7 +7,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -74,7 +74,7 @@ public class CoAuthoredCompletionContributorTest extends LightPlatformCodeInsigh
 
     @Override
     public @NotNull VcsUser createUser(@NotNull String name, @NotNull String email) {
-      return new VcsUserImpl(name, email);
+      return VcsUserUtil.createUser(name, email);
     }
   }
 }

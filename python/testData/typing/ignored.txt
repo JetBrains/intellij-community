@@ -8,7 +8,6 @@ callables_annotation.py
 callables_kwargs.py
 callables_protocol.py
 callables_subtyping.py
-constructors_call_init.py
 constructors_call_new.py
 constructors_call_type.py
 constructors_callable.py
@@ -32,7 +31,6 @@ generics_variance_inference.py
 literals_literalstring.py
 literals_semantics.py
 namedtuples_define_class.py
-namedtuples_define_functional.py
 namedtuples_usage.py
 narrowing_typeis.py
 overloads_consistency.py

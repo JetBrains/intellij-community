@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nls
 interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
   suspend fun supportedLanguages(projectId: ProjectId, editorsProviderId: XDebuggerEditorsProviderId, sourcePositionDto: XSourcePositionDto?): List<LanguageDto>
+  suspend fun getAlternativeSourceKindFlow(sessionId: XDebugSessionId): Flow<Boolean>
 
   suspend fun resume(sessionId: XDebugSessionId)
 
@@ -46,8 +47,8 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun smartStepInto(smartStepTargetId: XSmartStepIntoTargetId)
   suspend fun smartStepIntoEmpty(sessionId: XDebugSessionId)
-  suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>
-  suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>
+  suspend fun computeSmartStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>?
+  suspend fun computeStepTargets(sessionId: XDebugSessionId): List<XSmartStepIntoTargetDto>?
 
   suspend fun forceStepInto(sessionId: XDebugSessionId)
 

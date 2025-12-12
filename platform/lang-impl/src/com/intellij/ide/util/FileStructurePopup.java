@@ -703,26 +703,28 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     Ref<Boolean> succeeded = new Ref<>();
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, () -> {
-      if (selectedNode != null) {
-        if (selectedNode.canNavigateToSource()) {
-          selectedNode.navigate(true);
-          if (myCallbackAfterNavigation != null) {
-            myCallbackAfterNavigation.accept(selectedNode);
+    WriteIntentReadAction.run(() -> {
+      commandProcessor.executeCommand(myProject, () -> {
+        if (selectedNode != null) {
+          if (selectedNode.canNavigateToSource()) {
+            selectedNode.navigate(true);
+            if (myCallbackAfterNavigation != null) {
+              myCallbackAfterNavigation.accept(selectedNode);
+            }
+            myPopup.cancel();
+            succeeded.set(true);
           }
-          myPopup.cancel();
-          succeeded.set(true);
+          else {
+            succeeded.set(false);
+          }
         }
         else {
           succeeded.set(false);
         }
-      }
-      else {
-        succeeded.set(false);
-      }
 
-      IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
-    }, LangBundle.message("command.name.navigate"), null);
+        IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
+      }, LangBundle.message("command.name.navigate"), null);
+    });
     return succeeded.get();
   }
 

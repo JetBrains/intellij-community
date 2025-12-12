@@ -95,7 +95,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core",
     "//platform/core-ui",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//platform/util",
     "//platform/build-scripts/downloader",
     "//platform/lang-core",

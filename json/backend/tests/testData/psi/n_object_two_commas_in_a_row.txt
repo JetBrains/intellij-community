@@ -1,0 +1,19 @@
+JsonFile: n_object_two_commas_in_a_row.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"b"')
+    PsiElement(,)(',')
+    PsiErrorElement:',' unexpected
+      PsiElement(,)(',')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"c"')
+      PsiElement(:)(':')
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"d"')
+    PsiElement(})('}')

@@ -118,8 +118,8 @@ suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, con
   val items = if (config.uploadOnly && config.saveMetadata) {  // no metadata.json
     context.project.modules.flatMap { module ->
       listOf(
-        "production/${module.name}" to context.getModuleOutputRoots(module, forTests = false).singleOrNull(),
-        "test/${module.name}" to context.getModuleOutputRoots(module, forTests = true).singleOrNull(),
+        "production/${module.name}" to context.outputProvider.getModuleOutputRoots(module, forTests = false).singleOrNull(),
+        "test/${module.name}" to context.outputProvider.getModuleOutputRoots(module, forTests = true).singleOrNull(),
       )
     }.filter { (_, output) ->
       output != null && ImmutableZipFile.load(output) !is EmptyZipFile  // ignore empty
@@ -187,7 +187,7 @@ private suspend fun packCompilationResult(zipDir: Path, context: CompilationCont
             continue
           }
 
-          if (context.findModule(fileName) == null) {
+          if (context.outputProvider.findModule(fileName) == null) {
             span.addEvent("skip module output from missing in project module", Attributes.of(AttributeKey.stringKey("module"), fileName))
           }
           else {

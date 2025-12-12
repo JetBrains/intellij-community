@@ -455,7 +455,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public static JvmClassNodeBuilder createForLibrary(String filePath, ClassReader cr) {
     JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, false, true);
     try {
-      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
+      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
     }
     catch (RuntimeException e) {
       throw new RuntimeException("Corrupted .class file: " + filePath, e);
@@ -920,7 +920,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     };
 
-    return isInlined? new TraceMethodVisitor(visitor, printer) : visitor;
+    // in library mode skip instructions for non-inlined methods
+    return isInlined? new TraceMethodVisitor(visitor, printer) : myIsLibraryMode? new SkipCodeMethodVisitor(visitor) : visitor;
   }
 
   /**

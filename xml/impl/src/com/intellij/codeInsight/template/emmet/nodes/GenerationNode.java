@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
-import com.intellij.codeInsight.template.emmet.XmlEmmetParser;
+import com.intellij.codeInsight.template.emmet.XmlEmmetConstants;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.filters.SingleLineEmmetFilter;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
@@ -409,9 +409,9 @@ public class GenerationNode extends UserDataHolderBase {
                                   @NotNull CustomTemplateCallback callback,
                                   boolean isHtml) {
     // default and implied attributes
-    final String defaultAttributeValue = attributes.get(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
+    final String defaultAttributeValue = attributes.get(XmlEmmetConstants.DEFAULT_ATTRIBUTE_NAME);
     if (defaultAttributeValue != null) {
-      attributes.remove(XmlEmmetParser.DEFAULT_ATTRIBUTE_NAME);
+      attributes.remove(XmlEmmetConstants.DEFAULT_ATTRIBUTE_NAME);
 
       // exclude user defined attributes
       final List<XmlAttribute> xmlAttributes = ContainerUtil.filter(tag.getAttributes(),
@@ -490,7 +490,7 @@ public class GenerationNode extends UserDataHolderBase {
   private static boolean isBooleanAttribute(@Nullable String attributeValue,
                                             @NotNull XmlAttribute xmlAttribute,
                                             @NotNull CustomTemplateCallback callback) {
-    if (XmlEmmetParser.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
+    if (XmlEmmetConstants.BOOLEAN_ATTRIBUTE_VALUE.equals(attributeValue)) {
       return true;
     }
     if (StringUtil.isEmpty(attributeValue)) {

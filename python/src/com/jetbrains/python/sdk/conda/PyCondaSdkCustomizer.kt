@@ -2,11 +2,6 @@
 package com.jetbrains.python.sdk.conda
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.sdk.configuration.CreateSdkInfo
-import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.jetbrains.annotations.ApiStatus
 
@@ -35,10 +30,5 @@ interface PyCondaSdkCustomizer {
     val instance: PyCondaSdkCustomizer
       get() = EP_NAME.extensionList.first()
 
-    @RequiresBackgroundThread
-    fun checkEnvironmentAndPrepareSdkCreatorBlocking(extension: PyProjectSdkConfigurationExtension, module: Module): CreateSdkInfoWithTool? =
-      runBlockingMaybeCancellable {
-        extension.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, extension.toolId) }
-      }
   }
 }

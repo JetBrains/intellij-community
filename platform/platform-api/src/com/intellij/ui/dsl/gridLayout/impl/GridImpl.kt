@@ -237,7 +237,7 @@ internal class GridImpl : Grid {
     }
 
     layoutData.visibleCellsData = visibleCellsData
-    layoutData.minimumWidth = layoutData.columnsSizeCalculator.calculateMinimumSize()
+    layoutData.minimumWidth = layoutData.columnsSizeCalculator.calculateMinimumSize(resizableColumns)
     layoutData.preferredWidth = layoutData.columnsSizeCalculator.calculatePreferredSize()
     layoutData.dimension.setSize(columnsCount, rowsCount)
   }
@@ -277,6 +277,7 @@ internal class GridImpl : Grid {
           if (componentWidth >= 0) {
             baseline = cell.component.getBaseline(componentWidth, layoutCellData.preferredSize.height)
             // getBaseline changes preferredSize, at least for JLabel
+            layoutCellData.minimumSize.height = cell.component.minimumSize.height
             layoutCellData.preferredSize.height = cell.component.preferredSize.height
           }
           else {
@@ -292,6 +293,7 @@ internal class GridImpl : Grid {
         is GridCell -> {
           val grid = cell.content
           grid.calculateLayoutDataStep3()
+          layoutCellData.minimumSize.height = grid.layoutData.minimumHeight
           layoutCellData.preferredSize.height = grid.layoutData.preferredHeight
           if (grid.layoutData.dimension.height == 1 && isSupportedBaseline(constraints)) {
             // Calculate baseline for grid
@@ -337,7 +339,7 @@ internal class GridImpl : Grid {
                                                   minSize = minimumHeight, prefSize = preferredHeight)
     }
 
-    layoutData.minimumHeight = layoutData.rowsSizeCalculator.calculateMinimumSize()
+    layoutData.minimumHeight = layoutData.rowsSizeCalculator.calculateMinimumSize(resizableRows)
     layoutData.preferredHeight = layoutData.rowsSizeCalculator.calculatePreferredSize()
   }
 

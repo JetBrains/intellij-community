@@ -27,7 +27,8 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
@@ -36,7 +37,12 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPr
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.presentations.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.withPresentation
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.awt.RelativePoint

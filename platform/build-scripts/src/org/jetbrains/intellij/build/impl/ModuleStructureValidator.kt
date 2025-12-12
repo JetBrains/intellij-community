@@ -11,15 +11,12 @@ import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
@@ -58,7 +55,7 @@ class ModuleStructureValidator(
     @Suppress("NAME_SHADOWING")
     return libraryFiles.computeIfAbsent(library) { library ->
       val result = HashSet<String>()
-      for (libraryRootPath in getLibraryRoots(library, context)) {
+      for (libraryRootPath in getLibraryRoots(library, context.outputProvider)) {
         FileSystems.newFileSystem(libraryRootPath).use {
           it.rootDirectories.forEach { rootDirectory ->
             rootDirectory.walk().forEach { file ->
@@ -200,7 +197,7 @@ class ModuleStructureValidator(
       // Generate product XML with inlined module sets
       val productXml = buildProductContentXml(
         spec = productContentSpec,
-        moduleOutputProvider = context,
+        outputProvider = context.outputProvider,
         inlineXmlIncludes = true,
         inlineModuleSets = true,
         productPropertiesClass = context.productProperties.javaClass.name,
@@ -227,7 +224,7 @@ class ModuleStructureValidator(
   private fun validateXmlDescriptorsRec(descriptor: Path, roots: List<Path>, libraries: Set<JpsLibrary>, allDescriptors: MutableSet<Path>) {
     allDescriptors.add(descriptor)
     val xml = Files.newInputStream(descriptor).use(::readXmlAsModel)
-    processXmlIncludes(xml, roots + listOf(descriptor.parent), libraries, allDescriptors, sourceName = descriptor.name)
+    processXmlIncludes(xml = xml, roots = roots + listOf(descriptor.parent), libraries = libraries, allDescriptors = allDescriptors, sourceName = descriptor.name)
   }
   
   /**
@@ -240,7 +237,7 @@ class ModuleStructureValidator(
     libraries: Set<JpsLibrary>, 
     allDescriptors: MutableSet<Path>
   ) {
-    processXmlIncludes(xml, roots, libraries, allDescriptors, sourceName = "generated product XML")
+    processXmlIncludes(xml = xml, roots = roots, libraries = libraries, allDescriptors = allDescriptors, sourceName = "generated product XML")
   }
   
   /**
@@ -386,12 +383,11 @@ private fun <T> JpsModule.processProductionOutput(processor: (outputRoot: Path) 
     return processor(outputDirectoryPath)
   }
   else {
-    return FileSystems.newFileSystem(Path(outputJarPath)).use {
+    return FileSystems.newFileSystem(Path.of(outputJarPath)).use {
       processor(it.rootDirectories.single())
     }
   }
 }
-
 
 private fun removeSuffixStrict(string: String, @Suppress("SameParameterValue") suffix: String?): String {
   if (suffix.isNullOrEmpty()) {

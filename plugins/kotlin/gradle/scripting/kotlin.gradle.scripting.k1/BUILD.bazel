@@ -85,7 +85,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//platform/backend/workspace",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/completion/tests-k1:kotlin-completion-tests-k1_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

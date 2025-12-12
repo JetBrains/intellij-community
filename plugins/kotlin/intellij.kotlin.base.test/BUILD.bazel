@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/plugin",
@@ -39,6 +39,21 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//platform/projectModel-api:projectModel",
+    "//libraries/guava",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
+    "//plugins/kotlin/base/facet",
+    "//platform/lang-core",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/code-insight/utils",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/kotlin/inspections",
+    "//platform/code-style-api:codeStyle",
+    "//plugins/kotlin/formatter/minimal",
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//libraries/gson",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.commons.cli"/>
     <module name="intellij.libraries.fastutil"/>
@@ -20,7 +20,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 
   <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml"/>

@@ -395,7 +395,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
 
     if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
-      List<TreeStructureProvider> providers = ReadAction.compute(treeStructure::getProviders);
+      List<TreeStructureProvider> providers = treeStructure.getProviders();
       if (providers != null && !providers.isEmpty()) {
         //noinspection unchecked
         List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(

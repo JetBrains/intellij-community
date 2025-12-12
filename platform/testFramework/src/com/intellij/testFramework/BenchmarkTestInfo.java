@@ -11,19 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 
 public interface BenchmarkTestInfo {
-  // to warn about not calling .start() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .start() in the end
   BenchmarkTestInfo setup(@NotNull ThrowableRunnable<?> setup);
 
-  // to warn about not calling .start() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .start() in the end
   BenchmarkTestInfo attempts(int attempts);
 
   /**
    * Runs the perf test {@code iterations} times before starting the final measuring.
    */
-  // to warn about not calling .start() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .start() in the end
   BenchmarkTestInfo warmupIterations(int iterations);
 
   /**
@@ -32,8 +29,7 @@ public interface BenchmarkTestInfo {
    * inStressTest disables many debug-level checks, and rises logLevel from DEBUG to INFO, which makes benchmark run much
    * closer to production run, thus making benchmark results more representative.
    */
-  // to warn about not calling .start() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .start() in the end
   BenchmarkTestInfo runAsStressTest();
 
   String getUniqueTestName();

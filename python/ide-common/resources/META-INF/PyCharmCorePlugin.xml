@@ -1,6 +1,6 @@
   <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
   <!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
-  <!-- Source: org.jetbrains.intellij.build.pycharm.PyCharmCommunityWithProPluginsProperties -->
+  <!-- Source: org.jetbrains.intellij.build.pycharm.PyCharmCommunityWithProPluginsProperties.getProductContentDescriptor() -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.pycharm"/>
   <module value="com.intellij.modules.pycharm.community"/>
@@ -18,11 +18,11 @@
   <xi:include href="/META-INF/pycharm-core-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
-  <!-- <editor-fold desc="additional"> -->
+  <!-- region additional -->
   <content namespace="jetbrains">
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
   </content>
-  <!-- </editor-fold> -->
+  <!-- endregion -->
 </idea-plugin>

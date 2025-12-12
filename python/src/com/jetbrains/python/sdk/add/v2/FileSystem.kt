@@ -352,7 +352,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
     .getAllSdks()
     .filter { sdk ->
       if (sdk.isCondaVirtualEnv) return@filter false
-      if (sdk.targetAdditionalData != null) return@filter false
+      if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) return@filter false
 
       try {
         val associatedModulePath = sdk.associatedModulePath?.let { Path(it) } ?: return@filter true
@@ -366,7 +366,11 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       val languageLevel = sdk.versionString?.let {
         PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
-        ExecService().validatePythonAndGetInfo(sdk.asBinToExecute()).orLogException(LOG)?.languageLevel
+        val binToExecute = sdk.asBinToExecute().orLogException(LOG)
+        val pythonInfo = binToExecute?.let {
+          ExecService().validatePythonAndGetInfo(binToExecute).orLogException(LOG)
+        }
+        pythonInfo?.languageLevel
       }
 
       languageLevel?.let {

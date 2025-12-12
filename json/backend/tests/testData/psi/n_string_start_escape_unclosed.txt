@@ -1,0 +1,7 @@
+JsonFile: n_string_start_escape_unclosed.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"')
+    PsiErrorElement:',' or ']' expected, got '\'
+      PsiElement(BAD_CHARACTER)('\')

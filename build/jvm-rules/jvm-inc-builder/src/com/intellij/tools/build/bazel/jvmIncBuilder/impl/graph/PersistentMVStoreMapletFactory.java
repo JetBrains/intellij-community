@@ -72,7 +72,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   @Override
-  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMVStoreMultiMaplet<K, V, Set<V>> maplet = new PersistentMVStoreMultiMaplet<K, V, Set<V>>(
       myStore, storageName, new GraphDataType<>(keyExternalizer, myEnumerator, myDataInterner), new GraphDataType<>(valueExternalizer, myEnumerator, myDataInterner), HashSet::new, Set[]::new
     );
@@ -80,7 +80,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   @Override
-  public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> Maplet<K, V> createMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMVStoreMaplet<K, V> maplet = new PersistentMVStoreMaplet<>(
       myStore, storageName, new GraphDataType<>(keyExternalizer, myEnumerator, myDataInterner), new GraphDataType<>(valueExternalizer, myEnumerator, myDataInterner)
     );
@@ -110,11 +110,11 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
   }
 
   private static class GraphDataType<T> extends BasicDataType<T> {
-    private final Externalizer<T> myExternalizer;
+    private final ComparableTypeExternalizer<T> myExternalizer;
     private final @Nullable Enumerator myEnumerator;
     private final @Nullable Function<Object, Object> myObjectInterner;
 
-    GraphDataType(Externalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
+    GraphDataType(ComparableTypeExternalizer<T> externalizer, @Nullable Enumerator enumerator, @Nullable Function<Object, Object> objectInterner) {
       myExternalizer = externalizer;
       myEnumerator = enumerator;
       myObjectInterner = objectInterner;
@@ -122,7 +122,7 @@ public final class PersistentMVStoreMapletFactory implements MapletFactory, Clos
 
     @Override
     public int compare(T a, T b) {
-      return a.toString().compareTo(b.toString());
+      return myExternalizer.compare(a, b);
     }
 
     @Override

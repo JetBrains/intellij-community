@@ -24,6 +24,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.hover.HoverListener
 import com.intellij.util.SlowOperations
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -69,7 +70,10 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
         cell(component)
           .customize(UnscaledGaps(0))
           .resizableColumn()
-          .applyToComponent { border = BorderFactory.createEmptyBorder() }
+          .applyToComponent {
+            border = BorderFactory.createEmptyBorder()
+            minimumSize = JBUI.emptySize()
+          }
 
         iconLabel = cell(JLabel(AllIcons.General.OpenDisk))
           .customize(UnscaledGaps(0))

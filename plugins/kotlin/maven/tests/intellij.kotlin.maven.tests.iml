@@ -44,8 +44,8 @@
     <orderEntry type="module" module-name="kotlin.jvm.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
     <orderEntry type="module" module-name="intellij.kotlin.maven" />
-    <orderEntry type="module" module-name="kotlin.tests-common" />
-    <orderEntry type="module" module-name="kotlin.test-framework" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.allopen.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />

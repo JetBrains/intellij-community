@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.chain
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@Service(Service.Level.PROJECT)
+@Service(Service.Level.APP)
 @State(name = "DeclarativeCallChainInlaySettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-class DeclarativeCallChainInlaySettings : SimplePersistentStateComponent<DeclarativeCallChainInlaySettings.CallChainsState>(CallChainsState()) {
+class DeclarativeCallChainInlaySettings 
+  : SimplePersistentStateComponent<DeclarativeCallChainInlaySettings.CallChainsState>(CallChainsState()) {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) : DeclarativeCallChainInlaySettings {
-      return project.service()
+    fun getInstance() : DeclarativeCallChainInlaySettings {
+      return ApplicationManager.getApplication().service()
     }
   }
 

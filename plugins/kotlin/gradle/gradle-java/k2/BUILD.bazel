@@ -37,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "//plugins/kotlin/base/plugin",

@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import org.jetbrains.annotations.ApiStatus
 
 /**

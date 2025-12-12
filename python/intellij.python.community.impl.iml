@@ -80,7 +80,7 @@
     <orderEntry type="library" name="libthrift" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
@@ -113,7 +113,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />

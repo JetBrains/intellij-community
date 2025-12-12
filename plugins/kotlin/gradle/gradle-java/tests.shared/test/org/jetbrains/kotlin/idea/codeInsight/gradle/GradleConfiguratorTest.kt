@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigu
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.tools.projectWizard.Versions
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.GradleToPluginsCompatibilityStore
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
@@ -50,10 +50,12 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     private lateinit var foojayPropertyMap: Map<String, String>
     override fun setUp() {
         super.setUp()
-        foojayPropertyMap = mapOf("FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION.text)
+        val defaultFoojayVersion = GradleToPluginsCompatibilityStore.getDefaultFoojayVersion()
+        foojayPropertyMap = mapOf("FOOJAY_VERSION" to defaultFoojayVersion)
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testProjectWithModule() {
         val propertyKey = LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
         val propertiesComponent = PropertiesComponent.getInstance()
@@ -134,7 +136,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0+")
+    @TargetVersions("6.0 <=> 7.6")
     fun testProjectWithSubmodule() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -147,7 +149,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0+")
+    @TargetVersions("6.0 <=> 7.6")
     fun testProjectWithSubmoduleKts() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -160,6 +162,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testConfigure10() {
         val files = importProjectFromTestData()
 
@@ -553,6 +556,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testConfigureGSK() {
         val files = importProjectFromTestData()
 
@@ -598,7 +602,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinJvmToolchainOnlySourceCompat() {
         runJvmToolchainTest()
     }
@@ -610,7 +614,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinJvmToolchainSourceCompatWithDot() {
         runJvmToolchainTest()
     }
@@ -628,13 +632,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinJvmToolchainMultipleTarget() {
         runJvmToolchainTest()
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinJvmToolchainOnlyTargetCompat() {
         runJvmToolchainTest()
     }
@@ -697,18 +701,19 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinVersionPluginManagementGradleProperties() {
         runJvmToolchainTest()
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testConfigureKotlinVersionPluginManagementGradlePropertiesKts() {
         runJvmToolchainTest()
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testListNonConfiguredModules() {
         importProjectFromTestData()
 
@@ -744,6 +749,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testListNonConfiguredModulesConfiguredWithImplementation() {
         importProjectFromTestData()
 
@@ -885,6 +891,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testAddLanguageVersion() {
         val files = importProjectFromTestData()
 
@@ -949,6 +956,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testAddLanguageVersionIfKotlinOptionsDslExistsGroovy() {
         changeLanguageVersion("1.1")
     }
@@ -959,6 +967,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testAddLanguageVersionIfCompilerOptionsDslExistsGroovy() {
         changeLanguageVersion("1.3")
     }
@@ -969,6 +978,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testDontTouchSameLanguageVersionInCompilerOptionsGroovy() {
         changeLanguageVersion("1.7")
     }
@@ -979,6 +989,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testDontTouchSameLanguageVersionInKotlinOptionsGroovy() {
         changeLanguageVersion("1.7")
     }
@@ -1008,6 +1019,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testDontTouchSameFreeCompilerArgsInKotlinOptionsGroovy() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
@@ -1018,11 +1030,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testDontTouchSameFreeCompilerArgsInCompilerOptionsGroovy() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testReplaceLanguageVersionInCompilerOptionsGroovy() {
         changeLanguageVersion("1.9")
     }
@@ -1033,6 +1047,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testReplaceLanguageVersionInKotlinOptionsGroovy() {
         changeLanguageVersion("2.1")
     }
@@ -1043,6 +1058,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeLanguageVersion() {
         val files = importProjectFromTestData()
 
@@ -1069,12 +1085,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("8.2+") // Don't want to bring a new version of Gradle only because of this test because it will increase common test time
+    @TargetVersions("9.0.0+") // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
     fun testChangeLanguageVersionInCompilerOptionsKts() {
         changeLanguageVersion("2.3")
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testAddLibrary() {
         val files = importProjectFromTestData()
 
@@ -1093,6 +1110,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeFeatureSupport() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
@@ -1110,20 +1128,23 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeFeatureSupportCompilerOptions() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeFeatureSupportCompilerOptionsAssignmentSyntax() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testChangeFeatureSupportWithXFlag() = testChangeFeatureSupport()
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testDisableFeatureSupport() {
         val files = importProjectFromTestData()
 
@@ -1139,7 +1160,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testDisableFeatureSupportWithXFlag() = testDisableFeatureSupport()
 
     @Test
@@ -1147,6 +1168,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testDisableFeatureSupportWithXFlagModernKotlinSyntax() = testDisableFeatureSupport()
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testEnableFeatureSupport() {
         val files = importProjectFromTestData()
 
@@ -1162,11 +1184,12 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     @JvmName("testEnableFeatureSupportWithXFlag")
     fun testEnableFeatureSupportWithXFlag() = testEnableFeatureSupport()
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testEnableFeatureSupportToExistentArguments() {
         val files = importProjectFromTestData()
 
@@ -1187,6 +1210,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testEnableFeatureSupportToExistentArgumentsCompilerOptions() {
         addLanguageFeature(LanguageFeature.InlineClasses)
     }
@@ -1198,11 +1222,13 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testTurningAddToAddAllInFreeCompilerArgs() {
         addLanguageFeature(LanguageFeature.AdditionalBuiltInsMembers)
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testAddAllToAddAllInFreeCompilerArgs() {
         addLanguageFeature(LanguageFeature.ProhibitAllMultipleDefaultsInheritedFromSupertypes)
     }
@@ -1213,22 +1239,26 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeLanguageVersionInCompilerOptionsGroovy() {
         changeLanguageVersion("1.6")
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeLanguageVersionInCompilerOptionsGroovy2() {
         changeLanguageVersion("1.5")
     }
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testChangeLanguageVersionInKotlinOptionsGroovy() {
         changeLanguageVersion("1.4")
     }
 
 
     @Test
+    @TargetVersions("<9.0.0")
     fun testEnableFeatureSupportGSKWithoutFoundKotlinVersion() {
         val files = importProjectFromTestData()
 
@@ -1244,7 +1274,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testEnableFeatureSupportToExistentArgumentsWithXFlag() = testEnableFeatureSupportToExistentArguments()
 
     @Test
@@ -1263,7 +1293,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testChangeFeatureSupportGSKWithXFlag() = testChangeFeatureSupportGSK()
 
     @Test
@@ -1282,7 +1312,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testDisableFeatureSupportGSKWithXFlag() = testDisableFeatureSupportGSK()
 
     @Test
@@ -1301,7 +1331,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testEnableFeatureSupportGSKWithXFlag() = testEnableFeatureSupportGSK()
 
     @Test
@@ -1309,15 +1339,15 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testEnableFeatureSupportGSKWithXFlagModernKotlinSyntax() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testEnableFeatureSupportGSKWithNotInfixVersionCallAndXFlag() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("4.7+")
+    @TargetVersions("4.7 <=> 7.6")
     fun testEnableFeatureSupportGSKWithSpecifyingPluginThroughIdAndXFlag() = testEnableFeatureSupportGSK()
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("7.6")
     fun testAddToolchainAndFoojayKts() {
         val files = importProjectFromTestData()
 
@@ -1340,7 +1370,30 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("7.6+")
+    @TargetVersions("9.1.0+") // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
+    fun testAddToolchainAndNewFoojayKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get("2.2.21"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files, foojayPropertyMap)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6")
     fun testAddToolchainAndFoojayGroovy() {
         val files = importProjectFromTestData()
 
@@ -1356,6 +1409,75 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                         IdeKotlinVersion.get("1.8.0"),
                         collector,
                         kotlinVersionsAndModules,
+                )
+                checkFiles(files, foojayPropertyMap)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("9.1.0+") // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
+    fun testAddToolchainAndNewFoojayGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get("2.2.21"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files, foojayPropertyMap)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("9.1.0+")
+    fun addToolchain24InsteadOf25() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get("2.2.21"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files, foojayPropertyMap)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("9.1.0+")
+    fun addToolchain24InsteadOf25Groovy() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get("2.2.21"),
+                    collector,
+                    kotlinVersionsAndModules,
                 )
                 checkFiles(files, foojayPropertyMap)
             }

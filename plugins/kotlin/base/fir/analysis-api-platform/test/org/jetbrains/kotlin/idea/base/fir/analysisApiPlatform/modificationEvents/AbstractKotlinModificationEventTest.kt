@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractKotlinModificationEventTest : AbstractMultiModuleTest() {
-protected abstract val expectedEventKind: KotlinModificationEventKind
-
     protected open val defaultAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet()
+
     override fun getTestDataDirectory(): File = error("Should not be called")
 
     final override val pluginMode: KotlinPluginMode
@@ -37,6 +36,7 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
      */
     protected fun createGlobalTracker(
         label: String,
+        expectedEventKind: KotlinModificationEventKind,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModificationEventTracker {
         require(expectedEventKind.isGlobalLevel)
@@ -57,6 +57,7 @@ protected abstract val expectedEventKind: KotlinModificationEventKind
     protected fun createModuleTracker(
         module: KaModule,
         label: String,
+        expectedEventKind: KotlinModificationEventKind,
         additionalAllowedEventKinds: Set<KotlinModificationEventKind> = emptySet(),
     ): ModuleModificationEventTracker {
         require(expectedEventKind.isModuleLevel)

@@ -10,13 +10,13 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="library" exported="" name="rd-core" level="project" />
-    <orderEntry type="library" exported="" name="rd-framework" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" />
     <orderEntry type="module" module-name="intellij.libraries.rd.text" />
-    <orderEntry type="library" exported="" name="rd-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.swing" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.framework" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

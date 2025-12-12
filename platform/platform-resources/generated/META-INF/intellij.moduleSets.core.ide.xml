@@ -1,11 +1,11 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
-<!-- To regenerate, run: UltimateModuleSets.main() -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
 <!-- Source: see moduleSet("core.ide") function in UltimateModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="nested: core.platform"> -->
-    <!-- <editor-fold desc="nested: core.platform > libraries.platform"> -->
+    <!-- region nested: core.platform -->
+    <!-- region nested: core.platform > libraries.platform -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.cbor" loading="embedded"/>
@@ -65,7 +65,12 @@
     <module name="intellij.libraries.lz4" loading="embedded"/>
     <module name="intellij.libraries.markdown" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
+    <module name="intellij.libraries.netty.buffer" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.compression" loading="embedded"/>
+    <module name="intellij.libraries.netty.codec.http" loading="embedded"/>
+    <module name="intellij.libraries.netty.handler.proxy" loading="embedded"/>
     <module name="intellij.libraries.oro.matcher" loading="embedded"/>
+    <module name="intellij.libraries.protobuf" loading="embedded"/>
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>
     <module name="intellij.libraries.rhino" loading="embedded"/>
     <module name="intellij.libraries.snakeyaml" loading="embedded"/>
@@ -74,10 +79,10 @@
     <module name="intellij.libraries.velocity" loading="embedded"/>
     <module name="intellij.libraries.xtext.xbase" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="nested: core.platform > rpc.minimal"> -->
-    <!-- <editor-fold desc="nested: core.platform > rpc.minimal > fleet"> -->
+    <!-- region nested: core.platform > rpc.minimal -->
+    <!-- region nested: core.platform > rpc.minimal > fleet -->
     <module name="fleet.bifurcan" loading="embedded"/>
     <module name="fleet.fastutil" loading="embedded"/>
     <module name="fleet.kernel" loading="embedded"/>
@@ -91,17 +96,18 @@
     <module name="fleet.util.logging.api" loading="embedded"/>
     <module name="fleet.util.serialization" loading="embedded"/>
     <module name="fleet.rpc.server" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="direct modules"> -->
+    <!-- region direct modules -->
     <module name="intellij.platform.rpc" loading="embedded"/>
     <module name="intellij.platform.kernel" loading="embedded"/>
-    <!-- </editor-fold> -->
-    <!-- </editor-fold> -->
+    <!-- endregion -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="direct modules"> -->
+    <!-- region direct modules -->
     <module name="intellij.platform.util.ex" loading="embedded"/>
     <module name="intellij.platform.util.ui" loading="embedded"/>
+    <module name="intellij.platform.locking.impl" loading="embedded"/>
     <module name="intellij.platform.core" loading="embedded"/>
     <module name="intellij.platform.core.ui" loading="embedded"/>
     <module name="intellij.platform.core.impl" loading="embedded"/>
@@ -110,10 +116,10 @@
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.analysis.impl" loading="embedded"/>
     <module name="intellij.platform.ide.core" loading="embedded"/>
-    <!-- </editor-fold> -->
-    <!-- </editor-fold> -->
+    <!-- endregion -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="nested: libraries.ide"> -->
+    <!-- region nested: libraries.ide -->
     <module name="intellij.libraries.jcef" loading="embedded"/>
     <module name="intellij.libraries.jediterm.core" loading="embedded"/>
     <module name="intellij.libraries.jediterm.ui" loading="embedded"/>
@@ -124,11 +130,14 @@
     <module name="intellij.libraries.sshj" loading="embedded"/>
     <module name="intellij.libraries.swingx" loading="embedded"/>
     <module name="intellij.libraries.winp" loading="embedded"/>
+    <module name="intellij.libraries.rd.core" loading="embedded"/>
+    <module name="intellij.libraries.rd.framework" loading="embedded"/>
+    <module name="intellij.libraries.rd.swing" loading="embedded"/>
     <module name="intellij.libraries.rd.text" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
 
-    <!-- <editor-fold desc="direct modules"> -->
+    <!-- region direct modules -->
     <module name="intellij.platform.ide" loading="embedded"/>
-    <!-- </editor-fold> -->
+    <!-- endregion -->
   </content>
 </idea-plugin>

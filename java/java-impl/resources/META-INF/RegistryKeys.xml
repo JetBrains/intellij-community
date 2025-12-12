@@ -52,8 +52,6 @@
     <registryKey key="jdk.configure.existing" defaultValue="false" description="Attempt to add an existing SDK to the SDK table."/>
     <registryKey key="java.telescope.usages.single.threaded" defaultValue="true"
                  description="Make Java usage inlays computation single-threaded"/>
-    <registryKey key="java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations" defaultValue="false"
-                 description="Use exclamation mark instead of annotation name inlays for inferred and external @NotNull annotations"/>
     <registryKey key="compiler.process.new.session" defaultValue="true"
                  description="Runs the build process in a new session on Linux via setsid(1)"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>

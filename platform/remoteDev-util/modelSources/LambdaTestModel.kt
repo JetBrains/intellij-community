@@ -38,18 +38,14 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("cause", LambdaRdTestSessionExceptionCause.nullable)
   }
 
-  private val LambdaRdKeyValueEntry = structdef {
-    field("key", string)
-    field("value", string)
-  }
-
   private val LambdaRdTestActionParameters = structdef {
     field("reference", string)
-    // Can't use maps in struct
-    field("parameters", immutableList(LambdaRdKeyValueEntry).nullable)
+    field("testClass", string)
+    field("testMethod", string)
+    field("methodArgumentssBase64", immutableList(string))
   }
 
-  private val LambdaRdSerializedLambda = structdef {
+  private val LambdaRdSerialized = structdef {
     field("stepName", string)
     field("serializedDataBase64", string)
     field("classPath", immutableList(string))
@@ -62,10 +58,9 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     signal("sendException", LambdaRdTestSessionException).async
     call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
-    call("runSerializedLambda", LambdaRdSerializedLambda, string).async
+    call("runSerializedLambda", LambdaRdSerialized, string).async
     call("cleanUp", void, void).async
     call("projectsNames", void, immutableList(string)).async
-    call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async
     call("projectsAreInitialised", void, bool).async
   }

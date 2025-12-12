@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenBuildIssueHandler
+import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.junit.Assume
 import org.junit.Test
 import java.nio.file.Path
@@ -24,9 +25,36 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
       <version>1.0.0</version>
       
 """)
-    val issues = testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at ${projectPom.path}:-1:-1", TRIGGER_LINES_UNIX) {
+    val issues = testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at ${projectPom.path}:-1:-1",
+                            TRIGGER_LINES_UNIX) {
       it.pathString == projectPom.path
     }
+    assertEquals(1, issues.size)
+    assertEquals(MessageEvent.Kind.ERROR, issues[0].second)
+  }
+
+  @Test
+  fun testShouldCreateBuildIssueForProblem() = runBlocking {
+    assumeModel_4_0_0("test is applicable for model 4.0 only")
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>test</artifactId>
+      <version>1.0.0</version>
+""")
+    val issues = ArrayList<Pair<BuildIssue, MessageEvent.Kind>>()
+
+    Maven4ModelVersionErrorParser(
+      {
+        object : MavenBuildIssueHandler {
+          override fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) {
+            issues.add(issue to kind)
+          }
+        }
+      }, { true }, listOf())
+      .processProjectProblem(project,
+                             MavenProjectProblem.createStructureProblem("/path/to/file:-1:-1",
+                                                                        "'subprojects' unexpected subprojects element",
+                                                                        false))
     assertEquals(1, issues.size)
     assertEquals(MessageEvent.Kind.ERROR, issues[0].second)
   }
@@ -36,14 +64,19 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
   fun testShouldCreateBuildIssueForWindowsPath() = runBlocking {
     assumeModel_4_0_0("test is applicable for model 4.0 only")
     Assume.assumeTrue("hard to mock the path check on windows, we test only strings", SystemInfo.isUnix)
-    testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml:-1:-1", TRIGGER_LINES_WINDOWS) {
+    testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml:-1:-1",
+               TRIGGER_LINES_WINDOWS) {
       it.pathString == "C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml"
     }
     Unit
   }
 
 
-  private suspend fun testString(message: String, triggerLines: List<Regex>, pathChecker: (Path) -> Boolean): ArrayList<Pair<BuildIssue, MessageEvent.Kind>> {
+  private suspend fun testString(
+    message: String,
+    triggerLines: List<Regex>,
+    pathChecker: (Path) -> Boolean,
+  ): ArrayList<Pair<BuildIssue, MessageEvent.Kind>> {
     val issues = ArrayList<Pair<BuildIssue, MessageEvent.Kind>>()
 
     importProjectAsync("""

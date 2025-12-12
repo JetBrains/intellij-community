@@ -17,13 +17,13 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.util.Consumer
+import org.jetbrains.kotlin.idea.codeinsight.utils.doesBelongToLoop
 import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.*
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowOrLambdaUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -340,46 +340,38 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 is KtWhileExpression -> relevantLoop.node.findChildByType(KtTokens.WHILE_KEYWORD)?.psi?.let(::addOccurrence)
             }
 
-
-
-            relevantLoop.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
-                var nestedLoopExpressions = Stack<KtLoopExpression>()
-
+            relevantLoop.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
                 }
 
                 override fun visitExpression(expression: KtExpression) {
-                    val nestedLoopFound = if (expression != relevantLoop && expression is KtLoopExpression) {
-                        val nestedLoopLabelName = (expression.parent as? KtLabeledExpression)?.getLabelName()
-                        // no reasons to step into another loop with the same label name or no label name
-                        if (loopLabelName == null || loopLabelName == nestedLoopLabelName) return
+                    when (expression) {
+                        is KtBlockExpression -> {
+                            val containerNode = expression.parent as? KtContainerNode
+                            val loopExpression = containerNode?.parent as? KtLoopExpression
 
-                        nestedLoopExpressions.push(expression)
-                        true
-                    } else {
-                        false
-                    }
-
-                    if (expression is KtBreakExpression || expression is KtContinueExpression) {
-                        val expressionLabelName = (expression as? KtExpressionWithLabel)?.getLabelName()
-                        if (nestedLoopExpressions.isEmpty()) {
-                            if (expressionLabelName == null || expressionLabelName == loopLabelName) {
-                                addOccurrence(expression)
+                            if (loopExpression != null && loopExpression != relevantLoop) {
+                                val nestedLoopLabelName = (loopExpression.parent as? KtLabeledExpression)?.getLabelName()
+                                // no reasons to step into another loop with the same label name or no label name
+                                if (loopLabelName == nestedLoopLabelName) return
+                                if (loopLabelName == null) return
                             }
-                        } else if (expressionLabelName == loopLabelName) {
-                            addOccurrence(expression)
+                        }
+                        is KtBreakExpression, is KtContinueExpression -> {
+                            val expressionLabelName = (expression as? KtExpressionWithLabel)?.getLabelName()
+                            if (expressionLabelName != null && expressionLabelName == loopLabelName) {
+                                addOccurrence(expression)
+                            } else {
+                                if (expressionLabelName == null && expression.doesBelongToLoop(relevantLoop)) {
+                                    addOccurrence(expression)
+                                }
+                            }
                         }
                     }
 
-                    try {
-                        super.visitExpression(expression)
-                    } finally {
-                        if (nestedLoopFound) {
-                            nestedLoopExpressions.pop()
-                        }
-                    }
+                    super.visitExpression(expression)
                 }
             })
         }

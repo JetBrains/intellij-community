@@ -1,0 +1,8 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.libraries.maven.resolver.provider"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

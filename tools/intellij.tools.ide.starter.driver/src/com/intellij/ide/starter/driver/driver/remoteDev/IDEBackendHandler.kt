@@ -2,7 +2,6 @@ package com.intellij.ide.starter.driver.driver.remoteDev
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
-import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitNotNull
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.includeRuntimeModuleRepositoryInIde
@@ -17,16 +16,14 @@ import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
-import com.intellij.tools.ide.util.common.logError
-import com.intellij.tools.ide.util.common.logOutput
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-internal class IDEBackendHandler(private val ideRemDevTestContext: IDERemDevTestContext, private val options: DriverOptions, private val debugPort: Int) {
+internal class IDEBackendHandler(
+  private val ideRemDevTestContext: IDERemDevTestContext,
+  private val options: DriverOptions,
+  private val debugPort: Int,
+) {
   companion object {
     internal fun Driver.remoteDevDirectLink(): String {
       return waitNotNull("Join link", 20.seconds) {
@@ -42,7 +39,16 @@ internal class IDEBackendHandler(private val ideRemDevTestContext: IDERemDevTest
     }
   }
 
-  fun run(commands: Iterable<MarshallableCommand>, runTimeout: Duration, useStartupScript: Boolean, launchName: String, expectedKill: Boolean, expectedExitCode: Int, collectNativeThreads: Boolean, configure: IDERunContext.() -> Unit): BackgroundRun {
+  fun run(
+    commands: Iterable<MarshallableCommand>,
+    runTimeout: Duration,
+    useStartupScript: Boolean,
+    launchName: String,
+    expectedKill: Boolean,
+    expectedExitCode: Int,
+    collectNativeThreads: Boolean,
+    configure: IDERunContext.() -> Unit = {},
+  ): BackgroundRun {
     if (ConfigurationStorage.useInstaller()) {
       ConfigurationStorage.includeRuntimeModuleRepositoryInIde(true)
     }

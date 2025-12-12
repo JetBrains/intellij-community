@@ -1,0 +1,10 @@
+JsonFile: n_array_items_separated_by_semicolon.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:',' or ']' expected, got ':'
+      PsiElement(:)(':')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('2')
+    PsiElement(])(']')

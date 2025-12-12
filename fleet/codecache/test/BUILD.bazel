@@ -28,11 +28,10 @@ jvm_library(
   kotlinc_opts = ":custom_test",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//fleet/junit4",
+    "//fleet/junit",
     "//fleet/codecache",
     "@lib//:kotlinx-coroutines-core",
     "//fleet/bundles",
-    "@lib//:kotlin-test",
     "//fleet/util/network",
     "//fleet/ktor/client/core",
     "@lib//:kotlinx-serialization-core",

@@ -1,0 +1,7 @@
+- name: dist.all/lib/intellij.libraries.netty.handler.proxy.jar
+  modules:
+  - name: intellij.libraries.netty.handler.proxy
+    libraries:
+      netty-handler-proxy:
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-handler-proxy/4/netty-handler-proxy-4.jar
+      - name: $MAVEN_REPOSITORY$/io/netty/netty-codec-socks/4/netty-codec-socks-4.jar

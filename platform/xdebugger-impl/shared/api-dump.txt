@@ -9,6 +9,15 @@ com.intellij.xdebugger.impl.XWatch
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:isPaused():Z
 - a:setPaused(Z):V
+com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
+- com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
+- a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
+com.intellij.xdebugger.impl.frame.XStackFrameWithCustomBackgroundColor
+- a:getBackgroundColor():java.awt.Color
+com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
+- a:getCaptionAboveOf():java.lang.String
+- a:hasSeparatorAbove():Z
+- setWithSeparator(Z):V
 Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - canMarkValue(com.intellij.xdebugger.frame.XValue):Z
 - clear():V
@@ -37,6 +46,23 @@ c:com.intellij.xdebugger.impl.ui.XDebugSessionData
 - isBreakpointsMuted():Z
 - setBreakpointsMuted(Z):V
 - setWatchExpressions(java.util.List):V
+f:com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
+- sf:CHANGED_VALUE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:EQ_TEXT:java.lang.String
+- sf:ERROR_MESSAGE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:ERROR_MESSAGE_ICON:javax.swing.Icon
+- sf:EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:EXCEPTION_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:INFORMATION_MESSAGE_ICON:javax.swing.Icon
+- sf:LAYOUT_VIEW_BREAKPOINT_CONDITION:java.lang.String
+- sf:LAYOUT_VIEW_FINISH_CONDITION:java.lang.String
+- sf:MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:TYPE_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- sf:VALUE_NAME_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- s:getCollectingDataMessage():java.lang.String
+- s:getEvaluatingExpressionMessage():java.lang.String
+- s:getModifyingValueMessage():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 - <init>(java.lang.String,java.awt.Color,java.lang.String):V
 - getColor():java.awt.Color

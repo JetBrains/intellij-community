@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.codeInsight.hints.settings
@@ -218,9 +218,10 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
         if (item.description != null) {
           addDescription(item.description)
         }
-        if (item.component !is JPanel || item.component.componentCount > 0) {
-          item.component.border = JBUI.Borders.empty()
-          rightPanel.add(item.component)
+        val component = item.component
+        if (component !is JPanel || component.componentCount > 0) {
+          component.border = JBUI.Borders.empty()
+          rightPanel.add(component)
         }
         if (treeNode.isLeaf) {
           addPreview(item.getCasePreview(null) ?: item.previewText, item, null, treeNode)

@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle
 
-import com.intellij.util.text.matching.KeyboardLayoutUtil
+import com.intellij.util.text.matching.KeyboardLayoutConverter
+import com.intellij.util.text.matching.MatchingMode
 import kotlin.jvm.JvmStatic
 
 /**
@@ -10,15 +11,22 @@ import kotlin.jvm.JvmStatic
  */
 open class FixingLayoutMatcher(
   pattern: String,
-  options: NameUtil.MatchingCaseSensitivity,
+  matchingMode: MatchingMode,
   hardSeparators: String,
+  keyboardLayoutConverter: KeyboardLayoutConverter,
 ) : MatcherWithFallback(
-  MinusculeMatcherImpl(pattern, options, hardSeparators),
-  withFixedLayout(pattern, options, hardSeparators)
+  MinusculeMatcherImpl(pattern, matchingMode, hardSeparators),
+  withFixedLayout(pattern, matchingMode, hardSeparators, keyboardLayoutConverter)
 ) {
+
+  @Deprecated("Use {@link #FixingLayoutMatcher(String, MatchingCaseSensitivity, String, KeyboardLayoutConverter)} instead")
+  constructor(pattern: String,
+              options: NameUtil.MatchingCaseSensitivity,
+              hardSeparators: String) : this(pattern, options.matchingMode(), hardSeparators, PlatformKeyboardLayoutConverter)
+
   companion object {
     @JvmStatic
-    fun fixLayout(pattern: String): String? {
+    fun fixLayout(pattern: String, keyboardLayoutConverter: KeyboardLayoutConverter): String? {
       var hasLetters = false
       var onlyWrongLetters = true
       for (c in pattern) {
@@ -34,7 +42,7 @@ open class FixingLayoutMatcher(
       return if (hasLetters && onlyWrongLetters) {
         val alternatePattern = CharArray(pattern.length)
         pattern.forEachIndexed { i, c ->
-          alternatePattern[i] = KeyboardLayoutUtil.getAsciiForChar(c) ?: c
+          alternatePattern[i] = keyboardLayoutConverter.convert(c) ?: c
         }
         String(alternatePattern)
       }
@@ -45,12 +53,13 @@ open class FixingLayoutMatcher(
 
     private fun withFixedLayout(
       pattern: String,
-      options: NameUtil.MatchingCaseSensitivity,
+      matchingMode: MatchingMode,
       hardSeparators: String,
+      keyboardLayoutConverter: KeyboardLayoutConverter
     ): MinusculeMatcher? {
-      val s: String? = fixLayout(pattern)
+      val s: String? = fixLayout(pattern, keyboardLayoutConverter)
       return if (s != null && s != pattern) {
-        MinusculeMatcherImpl(s, options, hardSeparators)
+        MinusculeMatcherImpl(s, matchingMode, hardSeparators)
       }
       else {
         null

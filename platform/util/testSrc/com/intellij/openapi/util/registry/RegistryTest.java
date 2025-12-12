@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
@@ -238,7 +238,7 @@ public class RegistryTest {
   public void checkOptionsUpdatedProperly() {
     String registryName = "testOptions";
     String registryValue = "[option1*|option2|option3]";
-    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null));
+    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null, null));
     assertEquals("option1", registry.getSelectedOption());
     registry.setSelectedOption("option2");
     assertThat(registry.getSelectedOption()).isEqualTo("option2");

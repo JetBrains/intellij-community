@@ -1,10 +1,10 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.bifurcan"/>
     <module name="fleet.fastutil"/>
     <module name="fleet.util.codepoints"/>
     <module name="fleet.util.core"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 </idea-plugin>

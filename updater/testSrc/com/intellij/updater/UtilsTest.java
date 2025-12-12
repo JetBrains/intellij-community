@@ -97,4 +97,8 @@ class UtilsTest {
     assertThat(Utils.splitVersionString("IntellIJ IDEA (build 123.456.78)")).containsExactly("IntellIJ IDEA (build 123.456.78)");
     assertThat(Utils.splitVersionString("IntellIJ IDEA 1234.56 #123.456.78")).containsExactly("IntellIJ IDEA 1234.56", "123.456.78");
   }
+
+  @Test void majorVersion() {
+    assertThat(Utils.majorVersion("123.456.78")).isEqualTo(123);
+  }
 }

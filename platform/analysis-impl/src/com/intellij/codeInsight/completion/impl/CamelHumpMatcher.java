@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,10 +133,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
     if (caseSensitive) {
       int setting = CodeInsightSettings.getInstance().getCompletionCaseSensitive();
       if (setting == CodeInsightSettings.FIRST_LETTER) {
-        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+        builder = builder.withMatchingMode(MatchingMode.FIRST_LETTER);
       }
       else if (setting == CodeInsightSettings.ALL) {
-        builder = builder.withCaseSensitivity(NameUtil.MatchingCaseSensitivity.ALL);
+        builder = builder.withMatchingMode(MatchingMode.MATCH_CASE);
       }
     }
     if (myTypoTolerant) {

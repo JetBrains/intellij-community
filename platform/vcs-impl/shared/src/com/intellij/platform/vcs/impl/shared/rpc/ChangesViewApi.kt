@@ -3,6 +3,7 @@ package com.intellij.platform.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -39,6 +40,8 @@ interface ChangesViewApi : RemoteApi<Unit> {
   suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean>
 
   suspend fun synchronizeInclusion(projectId: ProjectId)
+
+  suspend fun getEditedCommit(projectId: ProjectId): Flow<EditedCommitPresentation?>
 
   companion object {
     suspend fun getInstance(): ChangesViewApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewApi>())

@@ -22,8 +22,9 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
   }
 
   val visited = mutableSetOf<JpsModule>()
+  val outputProvider = context.outputProvider
   val bundledPrivateModules = context.productProperties.productLayout.bundledPluginModules.asSequence()
-    .mapNotNull { context.findModule(it) }
+    .mapNotNull { outputProvider.findModule(it) }
     .flatMap { it.transitiveDependencies(visited) }
     .filter { privateModules.contains(it.name) }
     .toList()
@@ -32,7 +33,7 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
   visited.clear()
   val pluginLayoutsPrivateModules = context.distributionState().pluginsToPublish.asSequence()
     .flatMap { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-    .mapNotNull { context.findModule(it) }
+    .mapNotNull { outputProvider.findModule(it) }
     .flatMap { it.transitiveDependencies(visited) }
     .filter { privateModules.contains(it.name) }
     .toList()
@@ -42,7 +43,7 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
   val pluginModulesMavenArtifacts = context.productProperties.mavenArtifacts
     .let { it.additionalModules + it.proprietaryModules }
     .distinct()
-    .mapNotNull { context.findModule(it) }
+    .mapNotNull { outputProvider.findModule(it) }
     .flatMap { it.transitiveDependencies(visited) }
     .filter { privateModules.contains(it.name) }
     .toList()

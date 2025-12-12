@@ -7,8 +7,8 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.frame.XFramesView
+import com.intellij.xdebugger.impl.frame.HiddenFramesStackFrame
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
 import org.jetbrains.kotlin.idea.debugger.test.util.iterator
 import java.io.PrintWriter
@@ -46,11 +46,11 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
     private fun printStackFrame(frame: XStackFrame?) {
         if (frame == null) return
 
-        if (frame is XDebuggerFramesList.ItemWithSeparatorAbove && frame.hasSeparatorAbove()) {
+        if (frame is XStackFrameWithSeparatorAbove && frame.hasSeparatorAbove()) {
             out(0, frame.captionAboveOf)
         }
 
-        if (frame is XFramesView.HiddenStackFramesItem) {
+        if (frame is HiddenFramesStackFrame) {
             out(INDENT_FRAME, "<hidden frames>")
         } else {
             out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))

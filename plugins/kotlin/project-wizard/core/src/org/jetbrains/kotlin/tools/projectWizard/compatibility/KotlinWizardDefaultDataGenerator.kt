@@ -51,6 +51,13 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
                 templatePath = "compatibility/templates/KotlinLibrariesDefaultData.kt.vm",
                 contextProvider = KotlinLibrariesCompatibilityState::provideDefaultDataContext
             ),
+            WizardDefaultDataGeneratorSettings(
+                jsonPath = "/compatibility/gradle_plugins.json",
+                ktFileName = "GradlePluginsDefaultData.kt",
+                parser = GradleToPluginsCompatibilityParser,
+                templatePath = "compatibility/templates/GradlePluginsDefaultData.kt.vm",
+                contextProvider = GradleToPluginsCompatibilityState::provideDefaultDataContext
+            ),
         )
     }
 

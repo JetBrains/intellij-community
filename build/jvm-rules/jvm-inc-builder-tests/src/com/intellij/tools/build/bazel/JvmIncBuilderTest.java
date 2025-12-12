@@ -12,4 +12,19 @@ public class JvmIncBuilderTest extends BazelIncBuildTest {
   void testConvertJavaToKotlinGetterUsages() throws Exception {
     performTest("kotlin/convertJavaToKotlinGetterUsages").assertFailure();
   }
+
+  @Test
+  void testInlineFunctionImplementationChanged() throws Exception {
+    performTest("kotlin/inlineFunctionImplementationChanged").assertSuccessful();
+  }
+
+  @Test
+  void testAssignJavaFieldFromKotlinSubclass() throws Exception {
+    performTest("kotlin/assignJavaFieldFromKotlinSubclass").assertFailure();
+  }
+
+  @Test
+  void testAssignFieldFromSubclassAcrossTargets() throws Exception {
+    performTest("java/assignFieldFromSubclassAcrossTargets").assertFailure();
+  }
 }

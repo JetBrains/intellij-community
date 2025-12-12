@@ -632,7 +632,7 @@ productLayout.productImplementationModules = listOf(
 override fun getProductContentDescriptor() = productModules {
   module("fleet.andel")
   // Or better: use module set that already includes it
-  moduleSet(CoreModuleSets.essential())
+  moduleSet(CommunityModuleSets.essential())
 }
 ```
 
@@ -683,7 +683,7 @@ productLayout.productImplementationModules = listOf(
 )
 
 override fun getProductContentDescriptor() = productModules {
-  moduleSet(CoreModuleSets.essential())  // Includes fleet.rpc
+  moduleSet(CommunityModuleSets.essential())  // Includes fleet.rpc
 }
 // Result: Duplicate content module declaration!
 ```
@@ -735,7 +735,7 @@ Before committing changes:
    execute_run_configuration(name="Generate Product Layouts")
    
    # Or directly
-   bazel run //platform/buildScripts:product-model-tool
+   bazel run //platform/buildScripts:plugin-model-tool
    ```
 
 2. **Check for duplicate content modules**
@@ -767,7 +767,8 @@ Before committing changes:
 
 ## See Also
 
-- [Module Sets Documentation](module-sets.md)
+- [Module Sets Documentation](module-sets.md) - How module sets work and composition
+- [Validation Documentation](validation.md) - Dependency validation and troubleshooting
 - `ProductModulesContentSpec` class documentation
 - `ModuleSet` and `ContentModule` classes
 - Example: `GatewayProperties.getProductContentModules()`

@@ -4,6 +4,9 @@
     <plugin id="com.intellij.java"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.devkit.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <!-- endregion -->
   </dependencies>
 
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>

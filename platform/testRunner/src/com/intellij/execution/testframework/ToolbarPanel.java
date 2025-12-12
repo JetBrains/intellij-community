@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -44,15 +43,16 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   private final AnAction[] actionsToMerge;
   private final AnAction[] additionalActionsToMerge;
 
-  public ToolbarPanel(final TestConsoleProperties properties,
-                      final JComponent parent) {
+  public ToolbarPanel(TestConsoleProperties properties, JComponent parent) {
     super(new BorderLayout());
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
+    actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), 
+                                                                     ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                                      AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
     actionGroup.add(new DumbAwareToggleInvertedBooleanProperty(TestRunnerBundle.message("action.show.ignored.text"),
-                                                               TestRunnerBundle.message("action.show.ignored.description"), AllIcons.RunConfigurations.ShowIgnored,
+                                                               TestRunnerBundle.message("action.show.ignored.description"), 
+                                                               AllIcons.RunConfigurations.ShowIgnored,
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
@@ -137,8 +137,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     }
 
     final RunProfile configuration = properties.getConfiguration();
-    if (configuration instanceof RunConfiguration) {
-      myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), (RunConfiguration)configuration, parent);
+    if (configuration instanceof RunConfiguration runConfiguration) {
+      myExportAction = ExportTestResultsAction.create(properties.getExecutor().getToolWindowId(), runConfiguration, parent);
       moreGroup.addAction(myExportAction);
     }
 
@@ -157,9 +157,20 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     }
 
     secondaryGroup.addSeparator();
-    secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.name"),
-                                                 ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.description"),
-                                                 null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
+    DefaultActionGroup scrollToGroup = new DefaultActionGroup();
+    scrollToGroup.getTemplatePresentation().setText(ExecutionBundle.message("junit.running.info.scroll.to.group.name"));
+    scrollToGroup.setPopup(true);
+    scrollToGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.name"),
+                                                         ExecutionBundle.message("junit.running.info.scroll.to.stacktrace.action.description"),
+                                                         null, properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE));
+    scrollToGroup.addSeparator();
+    scrollToGroup.add(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.running.info.scroll.to.top.action.name"),
+                                                                 ExecutionBundle.message("junit.running.info.scroll.to.top.action.description"),
+                                                                 null, properties, TestConsoleProperties.SCROLL_TO_BOTTOM));
+    scrollToGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.running.info.scroll.to.bottom.action.name"),
+                                                         ExecutionBundle.message("junit.running.info.scroll.to.bottom.action.description"),
+                                                         null, properties, TestConsoleProperties.SCROLL_TO_BOTTOM));
+    secondaryGroup.add(scrollToGroup);
     secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.running.info.open.source.at.exception.action.name"),
                                                  ExecutionBundle.message("junit.running.info.open.source.at.exception.action.description"),
                                                  null, properties, TestConsoleProperties.OPEN_FAILURE_LINE));
@@ -195,7 +206,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     return myOccurenceNavigator.getActionUpdateThread();
   }
 
-  public void setModel(final TestFrameworkRunningModel model) {
+  public void setModel(TestFrameworkRunningModel model) {
     TestFrameworkActions.installFilterAction(model);
     myScrollToSource.setModel(model);
     myTreeExpander.setModel(model);

@@ -9,12 +9,19 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.RowIcon
 import com.intellij.ui.icons.CachedImageIcon
+import com.intellij.ui.icons.ImageDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 import kotlin.math.min
 
 internal fun getIconData(icon: Icon?): CachedIconPresentation? {
-  return findCachedImageIcon(icon)?.getCoords()?.let {
+  val cachedIcon = findCachedImageIcon(icon) ?: return null
+
+  if (cachedIcon.imageFlags and ImageDescriptor.NO_TREE_PRESENTATION_CACHE != 0) {
+    return null
+  }
+  
+  return cachedIcon.getCoords()?.let {
     getIconData(it)
   }
 }

@@ -82,7 +82,7 @@ sealed class IdeaPluginDescriptorImpl(
   @Deprecated("Deprecated in Java")
   override fun setEnabled(enabled: Boolean) {
     if (setEnabledLogCount++ < 10) {
-      LOG.warn("no-op deprecated method call on $this", Throwable())
+      LOG.error("no-op deprecated method call on $this", Throwable())
     }
   }
 

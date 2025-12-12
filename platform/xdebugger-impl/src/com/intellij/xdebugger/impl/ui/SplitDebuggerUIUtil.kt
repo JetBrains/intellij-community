@@ -60,7 +60,7 @@ object SplitDebuggerUIUtil {
   fun getXDebuggerTreeSelectedBackendValues(dataContext: DataContext): List<XDebuggerTreeSelectedValue> {
     if (showSplitWarnings() && getFrontendType() is FrontendType.Remote) {
       LOG.error("SplitDebuggerUIUtil#getXDebuggerTreeSelectedBackendValues should not be called from the frontend. " +
-                "Please use XDebuggerTree.SELECTED_NODES#getData instead.")
+                "Please use XDebuggerTreeSplitActionBase#getSelectedNode instead.")
     }
     return if (SplitDebuggerMode.isSplitDebugger()) {
       // In Split mode, find backend values by the ids passed from the frontend

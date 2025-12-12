@@ -62,6 +62,8 @@ interface EditorContextManager {
 
   @RequiresWriteLock
   fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts)
+  @ApiStatus.Internal
+  fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts)
 
   val eventFlow: Flow<ChangeEvent>
 

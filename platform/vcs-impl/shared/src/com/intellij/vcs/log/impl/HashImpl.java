@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.platform.vcs.VcsUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -20,6 +21,11 @@ public final class HashImpl implements Hash {
 
   private final byte @NotNull [] myData;
   private final int myHashCode;
+
+  @ApiStatus.Internal
+  public static @NotNull Hash build(byte @NotNull [] hash) {
+    return new HashImpl(hash);
+  }
 
   public static @NotNull Hash build(@NotNull String inputStr) {
     byte[] data = buildData(inputStr);

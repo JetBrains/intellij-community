@@ -33,6 +33,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" />
   </component>
 </module>

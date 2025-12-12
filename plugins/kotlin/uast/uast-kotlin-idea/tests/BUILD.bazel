@@ -20,7 +20,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/uast/uast-kotlin-idea",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/util-ex",
     "//platform/core-impl",
     "//platform/testFramework",

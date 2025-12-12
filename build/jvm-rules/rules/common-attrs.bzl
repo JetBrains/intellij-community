@@ -109,7 +109,9 @@ common_attr = add_dicts(
             allow_single_file = True,
             cfg = scrubbed_host_platform_transition,
         ),
-        "_jvm_builder_jvm_flags": attr.label(
+        "jvm_builder_jvm_flags": attr.label(
+            doc = """Worker jvm_flags to use. Usually this is not needed, but can be used to override the default
+            worker jvm_flags to build compiler plugins used in default worker.""",
             default = "//:jvm-builder-jvm_flags",
         ),
         "_jvm_builder_launcher": attr.label(

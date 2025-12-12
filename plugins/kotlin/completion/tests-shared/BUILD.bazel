@@ -37,7 +37,7 @@ jvm_library(
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/completion/api",
     "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/analysis-impl",
     "//platform/service-container",

@@ -1,5 +1,5 @@
 <idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.commons.imaging"/>
@@ -9,6 +9,9 @@
     <module name="intellij.libraries.jackson"/>
     <module name="intellij.libraries.jackson.jr.objects"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.compression"/>
+    <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.core"/>
@@ -19,7 +22,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler" dynamic="true"/>

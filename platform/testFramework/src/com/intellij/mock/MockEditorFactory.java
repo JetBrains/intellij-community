@@ -25,6 +25,16 @@ public final class MockEditorFactory extends EditorFactory {
   }
 
   @Override
+  public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
+    return new DocumentImpl("", allowUpdatesWithoutWriteAction);
+  }
+
+  @Override
+  public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
+    return new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
+  }
+
+  @Override
   public Editor createEditor(@NotNull Document document) {
     return null;
   }

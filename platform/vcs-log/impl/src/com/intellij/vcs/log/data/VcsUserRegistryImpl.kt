@@ -15,7 +15,7 @@ import com.intellij.util.io.PersistentEnumeratorBase
 import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
-import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -61,7 +61,7 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
 
   override fun createUser(name: String, email: String): VcsUser {
     synchronized(interner) {
-      return interner.intern(VcsUserImpl(name, email))
+      return interner.intern(VcsUserUtil.createUser(name, email))
     }
   }
 

@@ -1,0 +1,9 @@
+JsonFile: n_structure_open_object_open_array.json
+  JsonObject
+    PsiElement({)('{')
+    PsiErrorElement:<property> or '}' expected, got '['
+      <empty list>
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> or ']' expected
+      <empty list>

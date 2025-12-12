@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ConsoleViewUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
@@ -48,7 +48,7 @@ class CompositeFilterWrapper(private val project: Project, coroutineScope: Corou
         filterFlow.value = newValue
         // Using UiWithModelAccess because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
-        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
           filterFlow.value = newValue.copy(listenersFired = true)
         }

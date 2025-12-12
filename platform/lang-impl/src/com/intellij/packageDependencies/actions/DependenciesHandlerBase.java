@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,6 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
@@ -102,7 +102,7 @@ public abstract class DependenciesHandlerBase {
 
   private void onSuccess(final DependencyAnalysisResult result) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (shouldShowDependenciesPanel(result)) {
         final String displayName = result.getPanelDisplayName();
         DependenciesPanel panel = new DependenciesPanel(myProject, result.getBuilders(), myExcluded);

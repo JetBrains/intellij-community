@@ -80,7 +80,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       splitByCamelHumpsMergingNumbers(s).map { it.lowercase(Locale.US) }
     }.joinToString(separator = "-")
     return context.productProperties.mavenArtifacts.patchCoordinates(
-      context.findRequiredModule(moduleName.removeSuffix(SQUASHED_SUFFIX)),
+      context.outputProvider.findRequiredModule(moduleName.removeSuffix(SQUASHED_SUFFIX)),
       MavenCoordinates(groupId, artifactId, version),
     )
   }
@@ -185,7 +185,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
 
     val squashingMavenArtifactsData = generateMavenArtifactData(moduleNamesToSquashAndPublish, ignoreNonMavenizable)
     for (moduleName in moduleNamesToSquashAndPublish) {
-      val module = context.findRequiredModule(moduleName)
+      val module = context.outputProvider.findRequiredModule(moduleName)
       val modules = JpsJavaExtensionService.dependencies(module)
         .recursively().withoutSdk().includedIn(JpsJavaClasspathKind.runtime(false)).modules
 
@@ -545,7 +545,7 @@ private suspend fun layoutMavenArtifacts(
         buildJar(
           targetFile = jar,
           sources = modulesWithSources.flatMap {
-            context.getModuleOutputRoots(it).map { moduleOutput ->
+            context.outputProvider.getModuleOutputRoots(it).map { moduleOutput ->
               check(Files.exists(moduleOutput)) {
                 "$it module output directory doesn't exist: $moduleOutput"
               }

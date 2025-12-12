@@ -93,7 +93,7 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/jcef",
     "//platform/util-class-loader:util-classLoader",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//libraries/lz4",
     "//libraries/caffeine",
     "//libraries/jackson/jackson",

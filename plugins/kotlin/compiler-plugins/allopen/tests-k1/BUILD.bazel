@@ -22,7 +22,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/test:test_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -7,7 +7,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
 class NotificationMessageCollector(
     private val project: Project,
@@ -40,7 +40,7 @@ class NotificationMessageCollector(
     companion object {
         @JvmStatic
         fun create(project: Project): NotificationMessageCollector {
-            KotlinConfigurationFUSCollector.logShowConfiguredKtNotification(project)
+            KotlinJ2KOnboardingFUSCollector.logShowConfiguredKtNotification(project)
             @Suppress("DialogTitleCapitalization")
             val title = KotlinProjectConfigurationBundle.message("configure.kotlin")
 

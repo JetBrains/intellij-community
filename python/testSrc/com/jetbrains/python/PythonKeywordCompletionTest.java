@@ -360,4 +360,23 @@ public class PythonKeywordCompletionTest extends PyTestCase {
       assertContainsElements(variants, PyNames.DEF, PyNames.WITH, PyNames.FOR);
       assertDoesntContain(variants, "some_variable", "some_function", "SomeClass");
   }
+
+  // PY-46932
+  public void testAsyncKeywordConstructCompletion() {
+    List<String> variants = doTestByText("""
+                   some_variable = 42
+                   def some_function():
+                       pass
+                   class SomeClass:
+                       pass
+                   as<caret>
+                   """);
+
+    assertContainsElements(
+      variants,
+      PyNames.ASYNC + " " + PyNames.DEF,
+      PyNames.ASYNC + " " + PyNames.FOR,
+      PyNames.ASYNC + " " + PyNames.WITH
+    );
+  }
 }

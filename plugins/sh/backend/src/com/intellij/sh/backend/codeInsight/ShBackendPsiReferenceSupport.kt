@@ -6,7 +6,7 @@ import com.intellij.sh.codeInsight.ShPsiReferenceSupport
 import com.intellij.sh.psi.*
 import org.jetbrains.annotations.NotNull
 
-class ShBackendPsiReferenceSupport : ShPsiReferenceSupport {
+internal class ShBackendPsiReferenceSupport : ShPsiReferenceSupport {
   override fun getReferences(@NotNull o: ShLiteral): Array<PsiReference> {
     if (o is ShString || o.word != null) {
       val array = ReferenceProvidersRegistry.getReferencesFromProviders(o)

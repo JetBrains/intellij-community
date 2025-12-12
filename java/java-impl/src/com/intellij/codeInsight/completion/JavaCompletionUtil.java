@@ -240,43 +240,6 @@ public final class JavaCompletionUtil {
                                                           @NotNull JavaCompletionProcessor.Options options,
                                                           @NotNull Condition<? super String> nameCondition,
                                                           @NotNull CompletionParameters parameters) {
-    PsiElement elementParent = element.getContext();
-    if (elementParent instanceof PsiReferenceExpression) {
-      PsiExpression qualifierExpression = ((PsiReferenceExpression)elementParent).getQualifierExpression();
-      if (qualifierExpression instanceof PsiReferenceExpression) {
-        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-        if (resolve instanceof PsiParameter) {
-          PsiElement declarationScope = ((PsiParameter)resolve).getDeclarationScope();
-          if (((PsiParameter)resolve).getType() instanceof PsiLambdaParameterType) {
-            PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)declarationScope;
-            if (PsiTypesUtil.getExpectedTypeByParent(lambdaExpression) == null) {
-              int parameterIndex = lambdaExpression.getParameterList().getParameterIndex((PsiParameter)resolve);
-              Set<LookupElement> set = new LinkedHashSet<>();
-              boolean overloadsFound = LambdaUtil.processParentOverloads(lambdaExpression, functionalInterfaceType -> {
-                PsiType qualifierType = LambdaUtil.getLambdaParameterFromType(functionalInterfaceType, parameterIndex);
-                if (qualifierType instanceof PsiWildcardType) {
-                  qualifierType = ((PsiWildcardType)qualifierType).getBound();
-                }
-                if (qualifierType == null) return;
-
-                PsiReferenceExpression fakeRef = createReference("xxx.xxx", createContextWithXxxVariable(element, qualifierType));
-                set.addAll(processJavaQualifiedReference(fakeRef.getReferenceNameElement(), fakeRef, elementFilter, options, nameCondition, parameters));
-              });
-              if (overloadsFound) return set;
-            }
-          }
-        }
-      }
-    }
-    return processJavaQualifiedReference(element, javaReference, elementFilter, options, nameCondition, parameters);
-  }
-
-  private static @NotNull Set<LookupElement> processJavaQualifiedReference(@NotNull PsiElement element,
-                                                                           @NotNull PsiJavaCodeReferenceElement javaReference,
-                                                                           @NotNull ElementFilter elementFilter,
-                                                                           @NotNull JavaCompletionProcessor.Options options,
-                                                                           @NotNull Condition<? super String> nameCondition,
-                                                                           @NotNull CompletionParameters parameters) {
     Set<LookupElement> set = new LinkedHashSet<>();
 
     JavaCompletionProcessor processor = new JavaCompletionProcessor(element, elementFilter, options, nameCondition);

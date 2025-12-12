@@ -718,8 +718,7 @@ public final class PlatformTestUtil {
    * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
    * @see BenchmarkTestInfo#start()
    */
-  // to warn about not calling .assertTiming() in the end
-  @Contract(pure = true)
+  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static @NotNull BenchmarkTestInfo newBenchmark(@NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
     return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();

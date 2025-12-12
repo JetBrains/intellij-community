@@ -1,0 +1,9 @@
+JsonFile: n_string_no_quotes_with_bad_escape.json
+  JsonArray
+    PsiElement([)('[')
+    PsiErrorElement:<value> expected, got '\'
+      PsiElement(BAD_CHARACTER)('\')
+  JsonReferenceExpression
+    PsiElement(IDENTIFIER)('n')
+  PsiErrorElement:<value> expected, got ']'
+    PsiElement(])(']')

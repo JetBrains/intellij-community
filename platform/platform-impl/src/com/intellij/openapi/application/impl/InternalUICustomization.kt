@@ -110,7 +110,13 @@ open class InternalUICustomization {
 
   open fun installEditorBackground(component: JComponent) {}
 
+  open fun updateEditorHeader(editorHeaderPanel: JComponent) {}
+
   open fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
+
+  open fun configureEditorTopComponent(component: JComponent, top: Boolean): JComponent? = null
+
+  open fun configureEditorTopContainer(container: JComponent) {}
 
   open fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean = true
 
@@ -166,11 +172,20 @@ open class InternalUICustomization {
 
   open fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {}
 
-  open fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
+  open fun paintProjectTab(
+    frame: JFrame,
+    label: TabLabel,
+    g: Graphics,
+    tabs: JBTabsImpl,
+    selected: Boolean,
+    index: Int,
+    lastIndex: Int,
+  ): Boolean = false
 
   open fun paintTab(g: Graphics, position: JBTabsPosition, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean = false
 
-  open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean = false
+  open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean =
+    false
 
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
 

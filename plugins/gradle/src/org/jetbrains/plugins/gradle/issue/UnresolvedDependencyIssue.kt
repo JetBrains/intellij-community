@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildView
-import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,9 +10,15 @@ import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
+import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.runAsync
@@ -22,12 +27,18 @@ import java.util.concurrent.CompletableFuture.runAsync
 abstract class UnresolvedDependencyIssue(
   dependencyName: String,
   private val dependencyOwner: String? = null,
-) : BuildIssue {
-  override val title: String = "Could not resolve $dependencyName" + if (dependencyOwner != null) " for $dependencyOwner" else ""
+) : ConfigurableGradleBuildIssue() {
+
+  init {
+    val title =
+      if (dependencyOwner == null) GradleBundle.message("gradle.build.issue.unresolved.dependency.title", dependencyName)
+      else GradleBundle.message("gradle.build.issue.unresolved.dependency.for.owner.title", dependencyName, dependencyOwner)
+    setTitle(title)
+  }
 
   override fun getNavigatable(project: Project): Navigatable? = null
 
-  fun buildDescription(failureMessage: String?, isOfflineMode: Boolean, offlineModeQuickFixText: String): String {
+  fun buildDescription(failureMessage: String?): @NlsSafe String {
     val issueDescription = StringBuilder()
     if(dependencyOwner != null) {
       issueDescription.append(dependencyOwner)
@@ -35,16 +46,39 @@ abstract class UnresolvedDependencyIssue(
     }
 
     issueDescription.append(failureMessage?.trim())
+    return issueDescription.toString()
+  }
+
+  fun configureQuickFix(
+    failureMessage: String?,
+    isOfflineMode: Boolean,
+    @Nls offlineModeQuickFixText: String,
+    projectPath: String? = null,
+    requiredGradleJVM: Int? = null,
+  ) {
     val noRepositoriesDefined = failureMessage?.contains("no repositories are defined") ?: false
 
-    issueDescription.append("\n\nPossible solution:\n")
     when {
-      isOfflineMode && !noRepositoriesDefined -> issueDescription.append(
-        " - <a href=\"$offlineQuickFixId\">$offlineModeQuickFixText</a>\n")
-      else -> issueDescription.append(
-        " - Declare repository providing the artifact, see the documentation at $declaringRepositoriesLink\n")
+      projectPath != null && requiredGradleJVM != null -> addGradleJvmOrNewerQuickFix(projectPath, requiredGradleJVM)
+      isOfflineMode && !noRepositoriesDefined -> addQuickFixPrompt(offlineModeQuickFixText)
+      else -> addQuickFixPrompt(
+        GradleBundle.message("gradle.build.quick.fix.artifact.declare.repository", declaringRepositoriesLink)
+      )
     }
-    return issueDescription.toString()
+  }
+
+  private fun addGradleJvmOrNewerQuickFix(projectPath: String, requiredGradleJVM: Int) {
+    // Android Studio doesn't have Gradle JVM setting
+    if ("AndroidStudio" == PlatformUtils.getPlatformPrefix()) return
+    val javaVersion = JavaVersion.compose(requiredGradleJVM)
+
+    val quickFix = GradleSettingsQuickFix(
+      projectPath, true,
+      GradleSettingsQuickFix.GradleJvmChangeDetector,
+      GradleBundle.message("gradle.settings.text.jvm.path")
+    )
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm.or.newer", hyperlinkReference, javaVersion))
   }
 
   companion object {
@@ -61,11 +95,24 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
   private val isOfflineMode: Boolean,
   private val dependencyOwner: String? = null,
 ) : UnresolvedDependencyIssue(dependencyName, dependencyOwner) {
-  override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndReimport(projectPath)) else emptyList()
-  override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and reload the project")
 
-  inner class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
-    override val id = offlineQuickFixId
+  init {
+    val jvmIssueInfo = GradleJVMIssuePatternMatcher.analyzeFailureMessage(failureMessage)
+    val cleanedMessage = jvmIssueInfo?.cleanedMessage ?: failureMessage
+
+    addDescription(buildDescription(cleanedMessage))
+    configureQuickFix(
+      cleanedMessage,
+      isOfflineMode,
+      GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.reload", offlineQuickFixId),
+      projectPath,
+      jvmIssueInfo?.requiredJvmVersion
+    )
+    if (isOfflineMode) addQuickFix(DisableOfflineAndReimport(projectPath))
+  }
+
+  class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
+    override val id: String = offlineQuickFixId
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
       return tryRerun(dataContext) ?: ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
@@ -77,11 +124,18 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
 class UnresolvedDependencyBuildIssue(dependencyName: String,
                                      failureMessage: String?,
                                      isOfflineMode: Boolean) : UnresolvedDependencyIssue(dependencyName) {
-  override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndRerun()) else emptyList()
-  override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and rerun the build")
+  init {
+    addDescription(buildDescription(failureMessage))
+    configureQuickFix(
+      failureMessage,
+      isOfflineMode,
+      GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.rebuild", offlineQuickFixId)
+    )
+    if (isOfflineMode) addQuickFix(DisableOfflineAndRerun())
+  }
 
-  inner class DisableOfflineAndRerun : BuildIssueQuickFix {
-    override val id = offlineQuickFixId
+  class DisableOfflineAndRerun : BuildIssueQuickFix {
+    override val id: String = offlineQuickFixId
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
       return tryRerun(dataContext) ?: CompletableFuture.completedFuture(null)
@@ -104,4 +158,79 @@ private fun tryRerun(dataContext: DataContext): CompletableFuture<*>? {
     }
   }
   return null
+}
+
+/**
+ * A utility class that encapsulates pattern matching logic for identifying and processing
+ * different types of Gradle build issues, particularly JVM version compatibility issues.
+ */
+@ApiStatus.Internal
+object GradleJVMIssuePatternMatcher {
+
+  data class GradleJVMIssueMatchResult(
+    val cleanedMessage: String,
+    val requiredJvmVersion: Int
+  )
+
+  // Gradle 8.8+
+  private val JVM_VERSION_ISSUE_PATTERN_8_8 = Regex("""is only compatible with JVM runtime version (\d+) or newer\.""")
+
+  // Gradle 6.4-8.7
+  private val JVM_VERSION_ISSUE_PATTERN_6_4 = Regex(
+    """Incompatible because this component declares a component( for use during compile-time)?,? compatible with Java (\d+) """ +
+    """and the consumer needed a component( for use during runtime)?,? compatible with Java (\d+)"""
+  )
+  private val JVM_VERSION_ISSUE_PATTERN_6_4_CLEANER = Regex(
+    """\n {6}- Other compatible attributes?:[^\n]*(\n {10}[^\n]*)*"""
+  )
+
+  // Gradle 6.0-6.3
+  private val JVM_VERSION_ISSUE_PATTERN_6_2 = Regex(
+    """Required org\.gradle\.jvm\.version '(\d+)' and found incompatible value '(\d+)'\."""
+  )
+  private val JVM_VERSION_ISSUE_PATTERN_6_2_CLEANER = Regex(
+    """\n {6}- Other attributes?:[^\n]*(\n {10}[^\n]*)*"""
+  )
+
+  private val JVM_VERSION_ISSUE_PATTERN_6_0 = Regex("""Required org\.gradle\.jvm\.version '(\d+)' but no value provided\.""")
+  private const val JVM_VERSION_ISSUE_JUNIT6_START = "Cannot choose between the following variants of org.junit.jupiter:junit-jupiter:6"
+
+  /**
+   * Analyzes the given failure message and determines the particular Gradle JVM issue type, cleaned message,
+   * and required JVM version.
+   */
+  fun analyzeFailureMessage(failureMessage: String?): GradleJVMIssueMatchResult? {
+    if (failureMessage.isNullOrEmpty()) return null
+
+    return when {
+      JVM_VERSION_ISSUE_PATTERN_8_8.find(failureMessage) != null -> {
+        val requiredVersion = JVM_VERSION_ISSUE_PATTERN_8_8.find(failureMessage)?.groupValues?.get(1)?.toInt() ?: return null
+        GradleJVMIssueMatchResult(failureMessage.trim(), requiredVersion)
+      }
+
+      JVM_VERSION_ISSUE_PATTERN_6_4.find(failureMessage) != null -> {
+        val cleanedMessage = failureMessage.replace(JVM_VERSION_ISSUE_PATTERN_6_4_CLEANER, "").trim()
+        val requiredVersion = JVM_VERSION_ISSUE_PATTERN_6_4.find(failureMessage)?.groupValues?.get(2)?.toInt() ?: return null
+        GradleJVMIssueMatchResult(cleanedMessage, requiredVersion)
+      }
+
+      JVM_VERSION_ISSUE_PATTERN_6_2.find(failureMessage) != null -> {
+        val cleanedMessage = failureMessage.replace(JVM_VERSION_ISSUE_PATTERN_6_2_CLEANER, "").trim()
+        val requiredVersion = JVM_VERSION_ISSUE_PATTERN_6_2.find(failureMessage)?.groupValues?.get(2)?.toInt() ?: return null
+        GradleJVMIssueMatchResult(cleanedMessage, requiredVersion)
+      }
+
+      // Gradle 6.0-6.1 JUnit 6 specific fix
+      failureMessage.startsWith(JVM_VERSION_ISSUE_JUNIT6_START) -> {
+        val currentGradleJVM = JVM_VERSION_ISSUE_PATTERN_6_0.find(failureMessage)?.groupValues?.get(1)?.toInt()
+        val description = GradleBundle.message(
+          "gradle.build.issue.unresolved.dependency.junit6.gradle6.description",
+          currentGradleJVM
+        )
+        GradleJVMIssueMatchResult(description, 17)
+      }
+
+      else -> null
+    }
+  }
 }

@@ -352,7 +352,7 @@ class GroovyBuildScriptManipulator(
         return null
     }
 
-    override fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles) {
+    override fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles, foojayVersion: String) {
         val settingsFile = scriptFile.module?.let {
             it.getTopLevelBuildScriptSettingsPsiFile() as? GroovyFile
         } ?: return
@@ -362,14 +362,13 @@ class GroovyBuildScriptManipulator(
         }
 
         changedFiles.storeOriginalFileContent(settingsFile)
-        addFoojayPlugin(settingsFile)
+        addFoojayPlugin(settingsFile, foojayVersion)
     }
 
-    override fun addFoojayPlugin(settingsFile: PsiFile) {
+    override fun addFoojayPlugin(settingsFile: PsiFile, foojayVersion: String) {
         if (settingsFile !is GroovyFile) return
         val pluginBlock = settingsFile.getSettingsPluginsBlock()
         if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return
-        val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
         pluginBlock.addLastStatementInBlockIfNeeded("id '$FOOJAY_RESOLVER_CONVENTION_NAME' version '$foojayVersion'")
     }
 

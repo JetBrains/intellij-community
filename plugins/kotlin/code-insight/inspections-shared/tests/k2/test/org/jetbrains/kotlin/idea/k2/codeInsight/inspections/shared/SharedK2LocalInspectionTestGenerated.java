@@ -1176,6 +1176,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/constantConditionIf/constant.kt");
         }
 
+        @TestMetadata("constantTrueWithCommentAndStatements.kt")
+        public void testConstantTrueWithCommentAndStatements() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/constantTrueWithCommentAndStatements.kt");
+        }
+
+        @TestMetadata("constantTrueWithEmptyLines.kt")
+        public void testConstantTrueWithEmptyLines() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/constantTrueWithEmptyLines.kt");
+        }
+
         @TestMetadata("delete.kt")
         public void testDelete() throws Exception {
             runTest("../testData/inspectionsLocal/constantConditionIf/delete.kt");
@@ -1224,6 +1234,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("noStatements.kt")
         public void testNoStatements() throws Exception {
             runTest("../testData/inspectionsLocal/constantConditionIf/noStatements.kt");
+        }
+
+        @TestMetadata("noStatements2.kt")
+        public void testNoStatements2() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/noStatements2.kt");
         }
 
         @TestMetadata("noStatementsElseIf.kt")

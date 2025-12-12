@@ -14,7 +14,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase;
-import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue;
 import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +48,8 @@ public class JumpToAllocationSourceAction extends XDebuggerTreeBackendOnlyAction
 
   private static @Nullable List<StackFrameItem> getStack(AnActionEvent e) {
     final Project project = e.getProject();
-    final XDebuggerTreeSelectedValue selectedValue = getSelectedValue(e.getDataContext());
-    final ObjectReference ref = selectedValue != null ? getObjectReference(selectedValue.getXValue()) : null;
+    final XValue selectedValue = getSelectedValue(e.getDataContext());
+    final ObjectReference ref = selectedValue != null ? getObjectReference(selectedValue) : null;
     if (project == null || ref == null) {
       return null;
     }

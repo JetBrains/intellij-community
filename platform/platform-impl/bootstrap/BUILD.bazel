@@ -42,7 +42,7 @@ jvm_library(
     "//libraries/hash4j",
     "//libraries/jbr",
     "@lib//:googlecode-plist-dd",
-    "@lib//:netty-codec-http",
+    "//libraries/netty/codec-http:libraries-netty-codec-http",
     "//platform/eel-impl",
     "//platform/platform-impl/initial-config-import",
     "//platform/eel-provider",

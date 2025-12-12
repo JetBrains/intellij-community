@@ -4,7 +4,6 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.spellcheck.SpellingCheckerRunner
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.TextContent.TextDomain
-import com.intellij.grazie.utils.ijRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -17,10 +16,10 @@ class ProofreadingService(private val root: PsiElement) {
 
   fun getProblems(): ProofreadingProblems {
     val texts = findAllUniqueTexts(GrazieInspection.checkedDomains())
-    if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return ProofreadingProblems.NONE
+    if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return ProofreadingProblems(emptyList())
     val textProblems = texts.flatMap { CheckerRunner(it).run() }
     val typos = findAllTextsExactlyAt().flatMap { SpellingCheckerRunner(it).run() }
-    return ProofreadingProblems(textProblems, typos)
+    return ProofreadingProblems(textProblems + typos)
   }
 
   private fun findAllUniqueTexts(domains: Set<TextDomain>): Set<TextContent> {
@@ -42,35 +41,28 @@ class ProofreadingService(private val root: PsiElement) {
 }
 
 
-data class ProofreadingProblems(val problems: List<TextProblem>, val typos: List<TypoProblem>) {
+data class ProofreadingProblems(val problems: List<TextProblem>) {
+  // Replace with `ProblemAggregator` with the next platform-update
   fun filterOutDuplicatedTypos(): ProofreadingProblems {
-    val typoRanges = typos
-      .map { typo -> typo.text.textRangeToFile(typo.range.ijRange()) }
+    val typos = problems.filterIsInstance<TypoProblem>()
+    val typoRanges = typos.map { typo -> typo.text.textRangeToFile(typo.range) }
 
     val filteredTextProblems = problems.asSequence()
       .map { problem -> problem to problem.highlightRanges.map { problem.text.textRangeToFile(it) } }
-      .filter { (_, ranges) -> typoRanges.none { ranges.any { range -> range == it } } }
+      .filter { (problem, ranges) -> problem is TypoProblem || typoRanges.none { ranges.any { range -> range == it } } }
       .map { it.first }
       .toList()
 
-    return ProofreadingProblems(filteredTextProblems, typos)
+    return ProofreadingProblems(filteredTextProblems)
   }
 
-  val grammarErrors: List<TextProblem>
-    get() = problems.filterNot { it.isStyleLike }
-
-  val styleErrors: List<TextProblem>
-    get() = problems.filter { it.isStyleLike }
+  val isEmpty: Boolean
+    get() = this.problems.isEmpty()
 
   val textRanges: List<TextRange>
     get() {
-      val ranges = (problems.flatMap { it.text.rangesInFile } + typos.flatMap { it.text.rangesInFile })
+      val ranges = problems.flatMap { it.text.rangesInFile }
         .sortedBy { it.startOffset }.distinct()
       return TextRangeUtil.mergeRanges(ranges)
     }
-
-  companion object {
-    @JvmStatic
-    val NONE: ProofreadingProblems = ProofreadingProblems(emptyList(), emptyList())
-  }
 }

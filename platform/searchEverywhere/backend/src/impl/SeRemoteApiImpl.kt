@@ -7,6 +7,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.channels.ReceiveChannel

@@ -14,9 +14,9 @@ import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
-import org.jetbrains.intellij.build.productLayout.PRODUCT_REGISTRY_PATH
-import org.jetbrains.intellij.build.productLayout.ProductConfiguration
-import org.jetbrains.intellij.build.productLayout.ProductConfigurationRegistry
+import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -133,7 +133,7 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
           val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
           createProductProperties(
             productConfiguration = productConfiguration,
-            moduleOutputProvider = compilationContext,
+            outputProvider = compilationContext.outputProvider,
             projectDir = request.projectDir,
             platformPrefix = request.platformPrefix,
           )

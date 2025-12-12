@@ -22,6 +22,8 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.IOException
 import java.net.*
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.nio.file.Files
@@ -30,6 +32,10 @@ import kotlin.io.path.Path
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.pathString
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val logger = fileLogger()
 
@@ -55,9 +61,10 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
   }
 
   private suspend fun listenOnUnixSocket(socketFile: Path): ListenOnUnixSocketResult = withContext(Dispatchers.IO) {
-    val tx = EelPipe()
-    val rx = EelPipe()
+    val tx = EelPipe(prefersDirectBuffers = true)
+    val rx = EelPipe(prefersDirectBuffers = true)
     val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+    // TODO serverChannel.configureBlocking(false)
 
     // File might already be created.
     // On Windows file can't be used.
@@ -79,17 +86,17 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
       client.use {
         val fromClient = launch {
           copyWithLoggingAndErrorHandling(client.consumeAsEelChannel(), rx.sink, "fromClient $socketFile") {
-            rx.closePipe(it)
+            rx.sink.close(it)
           }
         }
         val toClient = launch {
           copyWithLoggingAndErrorHandling(tx.source, client.asEelChannel(), "toClient $socketFile") {
-            tx.closePipe(it)
+            tx.sink.close(it)
           }
         }
         listOf(fromClient, toClient).joinAll()
-        tx.closePipe(null)
-        tx.closePipe(null)
+        tx.sink.close(null)
+        tx.sink.close(null)
       }
     }
     object : ListenOnUnixSocketResult {
@@ -123,20 +130,34 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
     SocketChannel.open(it)
   } ?: SocketChannel.open()
   args.configureSocketBeforeConnection(ConfigurableClientSocketImpl(socketChannel.socket()))
-  val connKiller = async {
-    delay(args.timeout)
-    socketChannel.close()
-  }
-  return@withContext try {
-    socketChannel.connect(args.asInetSocketAddress)
-    SocketAdapter(socketChannel)
+  socketChannel.configureBlocking(false)
+  try {
+    Selector.open().use { selector ->
+      if (!socketChannel.connect(args.asInetSocketAddress)) {
+        socketChannel.register(selector, SelectionKey.OP_CONNECT)
+        val pollUntil = System.nanoTime().nanoseconds + args.timeout
+        do {
+          var timeout: Duration
+          do {
+            // 100 was taken just as a beautiful number with no research.
+            timeout = (pollUntil - System.nanoTime().nanoseconds).coerceAtMost(100.milliseconds)
+            ensureActive()
+          }
+          while (timeout.isPositive() && selector.select(timeout.inWholeMilliseconds) == 0)
+          selector.selectedKeys().clear()
+        }
+        while (!socketChannel.finishConnect() && timeout > ZERO)
+      }
+    }
   }
   catch (e: IOException) {
-    throw EelConnectionError.UnknownFailure(e.toString())
+    throw EelConnectionError.UnknownFailure(e.toString(), e)
   }
-  finally {
-    connKiller.cancel()
+  if (!socketChannel.isConnected) {
+    // TODO IMO Timeouts deserve a dedicated exception.
+    throw EelConnectionError.ConnectionProblem("Timed out waiting ${args.timeout}")
   }
+  SocketAdapter(socketChannel)
 }
 
 private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): ConnectionAcceptor {
@@ -147,7 +168,7 @@ private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): Connec
     }
   }
   catch (e: IOException) {
-    throw EelConnectionError.UnknownFailure(e.localizedMessage)
+    throw EelConnectionError.UnknownFailure(e.localizedMessage, e)
   }
   args.configureServerSocket(ConfigurableServerSocketImpl(channel.socket()))
   return ConnectionAcceptorImpl(channel)
@@ -167,19 +188,33 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
 
   init {
     assert(boundServerSocket.isOpen)
+    boundServerSocket.configureBlocking(false)
     listenSocket = ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("eel socket accept")) {
+      val selector = Selector.open()
+      boundServerSocket.register(selector, SelectionKey.OP_ACCEPT)
+
       try {
-        val channel = boundServerSocket.accept()
-        logger.info("Connection from ${channel.socket().remoteSocketAddress}")
-        try {
-          _incomingConnections.send(SocketAdapter(channel))
-        }
-        catch (_: ClosedSendChannelException) {
-          channel.close()
+        while (isActive) {
+          while (selector.select(100) == 0) {  // 100 was taken just as a beautiful number with no research.
+            ensureActive()
+          }
+          selector.selectedKeys().clear()
+
+          val channel = boundServerSocket.accept()
+          logger.info("Connection from ${channel.socket().remoteSocketAddress}")
+          try {
+            _incomingConnections.send(SocketAdapter(channel))
+          }
+          catch (_: ClosedSendChannelException) {
+            channel.close()
+          }
         }
       }
       catch (e: IOException) {
         closeImpl(e)
+      }
+      finally {
+        selector.close()
       }
     }
   }

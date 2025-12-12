@@ -28,8 +28,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.formatter" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.api" />
     <orderEntry type="module" module-name="kotlin.completion.impl.shared" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
   </component>

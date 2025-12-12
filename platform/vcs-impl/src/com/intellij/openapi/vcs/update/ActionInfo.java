@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
@@ -33,29 +32,8 @@ public interface ActionInfo {
 
     @Override
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
-      return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.update.scope", scopeName), envToConfMap) {
-        @Override
-        protected @NlsSafe String getActionNameForDimensions() {
-          return "update-v2";
-        }
-
-        @Override
-        protected @NotNull String getDoNotShowMessage() {
-          return VcsBundle.message("update.checkbox.don.t.show.again");
-        }
-
-        @Override
-        protected boolean isToBeShown() {
-          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
-        }
-
-        @Override
-        protected void setToBeShown(boolean value, boolean onOk) {
-          if (onOk) {
-            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
-          }
-        }
-      };
+      String title = VcsBundle.message("action.display.name.update.scope", scopeName);
+      return UpdateOptionsDialogProvider.createOptionsDialog(project, title, envToConfMap);
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.KeyboardLayoutConverter
+import com.intellij.util.text.matching.MatchingMode
 import kotlin.jvm.JvmStatic
 
 /**
@@ -11,10 +13,16 @@ import kotlin.jvm.JvmStatic
  */
 class AllOccurrencesMatcher private constructor(
   pattern: String,
-  options: NameUtil.MatchingCaseSensitivity,
+  matchingMode: MatchingMode,
   hardSeparators: String,
+  keyboardLayoutConverter: KeyboardLayoutConverter,
 ) : MinusculeMatcher() {
-  private val delegate: MinusculeMatcher = FixingLayoutMatcher(pattern, options, hardSeparators)
+  @Deprecated("Use {@link #AllOccurrencesMatcher(String, MatchingCaseSensitivity, String, KeyboardLayoutConverter)} instead")
+  constructor(pattern: String,
+              options: NameUtil.MatchingCaseSensitivity,
+              hardSeparators: String) : this(pattern, options.matchingMode(), hardSeparators, PlatformKeyboardLayoutConverter)
+
+  private val delegate: MinusculeMatcher = FixingLayoutMatcher(pattern, matchingMode, hardSeparators, keyboardLayoutConverter)
 
   override val pattern: String
     get() = delegate.pattern
@@ -49,8 +57,14 @@ class AllOccurrencesMatcher private constructor(
 
   companion object {
     @JvmStatic
+    fun create(pattern: String, matchingMode: MatchingMode, hardSeparators: String, keyboardLayoutConverter: KeyboardLayoutConverter): MinusculeMatcher {
+      return AllOccurrencesMatcher(pattern, matchingMode, hardSeparators, keyboardLayoutConverter)
+    }
+
+    @Deprecated("Use {@link #create(String, MatchingCaseSensitivity, String)} instead")
+    @JvmStatic
     fun create(pattern: String, options: NameUtil.MatchingCaseSensitivity, hardSeparators: String): MinusculeMatcher {
-      return AllOccurrencesMatcher(pattern, options, hardSeparators)
+      return AllOccurrencesMatcher(pattern, options.matchingMode(), hardSeparators, PlatformKeyboardLayoutConverter)
     }
   }
 }

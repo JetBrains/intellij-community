@@ -4,16 +4,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.getAndUpdate
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
@@ -65,7 +56,7 @@ fun EelOutputChannel.ensureClosed(error: Throwable?) {
 }
 
 @ApiStatus.Internal
-class EelOutputChannelImpl : EelOutputChannel, EelReceiveChannel {
+class EelOutputChannelImpl(override val prefersDirectBuffers: Boolean) : EelOutputChannel, EelReceiveChannel {
   private var state: MutableStateFlow<State> = MutableStateFlow(State.default())
 
   /**
@@ -231,4 +222,4 @@ suspend fun EelOutputChannel.sendUntilEnd(flow: Flow<ByteArray>, end: Deferred<*
 
 
 @ApiStatus.Internal
-fun EelOutputChannel(): EelOutputChannel = EelOutputChannelImpl()
+fun EelOutputChannel(prefersDirectBuffers: Boolean): EelOutputChannel = EelOutputChannelImpl(prefersDirectBuffers)

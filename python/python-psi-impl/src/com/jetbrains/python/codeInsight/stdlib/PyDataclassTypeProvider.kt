@@ -28,13 +28,14 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    val result = when {
-      referenceTarget is PyClass && anchor is PyCallExpression -> getDataclassTypeForClass(referenceTarget, context)
-      referenceTarget is PyParameter && referenceTarget.isSelf && anchor is PyCallExpression -> {
+    val result = when (referenceTarget) {
+      // MyDataclass() call
+      is PyClass if anchor is PyCallExpression -> getDataclassTypeForClass(context.getType(referenceTarget), context)
+      // cls() call
+      is PyParameter if referenceTarget.isSelf && anchor is PyCallExpression -> {
         PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
           ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
-          ?.containingClass
-          ?.let { getDataclassTypeForClass(it, context) }
+          ?.let { getDataclassTypeForClass(context.getType(it), context) }
       }
       else -> null
     }
@@ -68,8 +69,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (!t.isDefinition) {
         continue
       }
-      val dataclassType =
-        getDataclassTypeForClass(t.pyClass, context)
+      val dataclassType = getDataclassTypeForClass(t, context)
       if (dataclassType != null) {
         return Ref.create(dataclassType)
       }
@@ -154,9 +154,9 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     @ApiStatus.Internal
     class InitVarInfo(val targetExpression: PyTargetExpression, val type: PyType?)
 
-    fun getGeneratedMatchArgs(cls: PyClass, context: TypeEvalContext): List<String>? {
-      if (parseDataclassParameters(cls, context)?.matchArgs != true) return null
-      return getDataclassTypeForClass(cls, context)?.getParameters(context)?.mapNotNull { it.name }
+    fun getGeneratedMatchArgs(classType: PyClassType, context: TypeEvalContext): List<String>? {
+      if (parseDataclassParameters(classType.pyClass, context)?.matchArgs != true) return null
+      return getDataclassTypeForClass(classType, context)?.getParameters(context)?.mapNotNull { it.name }
     }
 
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
@@ -180,7 +180,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val objType = context.getType(obj) as? PyClassType ?: return null
       if (objType.isDefinition) return null
 
-      val dataclassType = getDataclassTypeForClass(objType.pyClass, context) ?: return null
+      val dataclassType = getDataclassTypeForClass(objType, context) ?: return null
       val dataclassParameters = dataclassType.getParameters(context) ?: return null
 
       val parameters = mutableListOf<PyCallableParameter>()
@@ -195,11 +195,11 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       return PyCallableTypeImpl(parameters, dataclassType.getReturnType(context))
     }
 
-    fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
-      val clsType = (context.getType(cls) as? PyClassLikeType) ?: return null
+    fun getDataclassTypeForClass(clsType: PyType?, context: TypeEvalContext): PyCallableType? {
+      if (clsType !is PyClassType) return null
 
       val resolveContext = PyResolveContext.defaultContext(context)
-      val elementGenerator = PyElementGenerator.getInstance(cls.project)
+      val elementGenerator = PyElementGenerator.getInstance(clsType.pyClass.project)
       val ellipsis = elementGenerator.createEllipsis()
 
       val collected = linkedMapOf<String, PyCallableParameter>()
@@ -208,7 +208,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       var seenKeywordOnlyClass = false
       val seenNames = mutableSetOf<String>()
 
-      for (currentType in StreamEx.of(clsType).append(cls.getAncestorTypes(context))) {
+      for (currentType in StreamEx.of<PyClassLikeType>(clsType).append(clsType.getAncestorTypes(context))) {
         if (currentType == null ||
             !currentType.resolveMember(PyNames.INIT, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty() ||
             !currentType.resolveMember(PyNames.NEW, null, AccessDirection.READ, resolveContext, false).isNullOrEmpty() ||

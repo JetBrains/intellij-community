@@ -46,18 +46,14 @@ class GitBrancherImpl implements GitBrancher {
     createBranch(name, startPoints, null);
   }
 
-  private @NotNull GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
+  private @NotNull GitBranchWorker newWorker(@NotNull GitBranchUiHandler uiHandler) {
+    return new GitBranchWorker(myProject, Git.getInstance(), uiHandler);
   }
 
-  private @NotNull GitBranchWorker newWorkerWithoutRollback(@NotNull ProgressIndicator indicator) {
-    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator) {
-      @Override
-      public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull String rollbackProposal) {
-        return false;
-      }
-    });
+  private @NotNull GitBranchWorker newWorker(@NotNull ProgressIndicator indicator) {
+    return newWorker(new GitBranchUiHandlerImpl(myProject, indicator));
   }
+
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, @Nullable Runnable callInAwtLater) {
     createBranch(name, startPoints, false, callInAwtLater);
@@ -81,8 +77,8 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void createNewTag(@NotNull String name, @NotNull String reference,
-                            @NotNull List<? extends GitRepository> repositories,
-                            @Nullable Runnable callInAwtLater) {
+                           @NotNull List<? extends GitRepository> repositories,
+                           @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.new.branch.process", name), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -117,10 +113,34 @@ class GitBrancherImpl implements GitBrancher {
                                             @NotNull String startPoint, boolean overwriteIfNeeded,
                                             @NotNull List<? extends GitRepository> repositories,
                                             @Nullable Runnable callInAwtLater) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.branch.from.process", newBranchName, startPoint), callInAwtLater) {
+    checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, false, repositories, callInAwtLater);
+  }
+
+  @Override
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                            @NotNull String startPoint, boolean overwriteIfNeeded, boolean alwaysSmartCheckout,
+                                            @NotNull List<? extends GitRepository> repositories,
+                                            @Nullable Runnable callInAwtLater) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.checking.out.branch.from.process", newBranchName, startPoint),
+                             callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, repositories);
+        GitBranchWorker worker = newWorker(new GitBranchUiHandlerImpl(GitBrancherImpl.this.myProject, indicator) {
+          @Override
+          public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
+                                                                         @NotNull List<? extends Change> changes,
+                                                                         @NotNull Collection<String> paths,
+                                                                         @NotNull String operation,
+                                                                         @Nullable String forceButtonTitle) {
+            if (alwaysSmartCheckout) {
+              return GitSmartOperationDialog.Choice.SMART;
+            }
+            else {
+              return super.showSmartOperationDialog(project, changes, paths, operation, forceButtonTitle);
+            }
+          }
+        });
+        worker.checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, repositories);
       }
     }.runInBackground();
   }
@@ -207,7 +227,12 @@ class GitBrancherImpl implements GitBrancher {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        GitBranchWorker worker = allowRollback ? newWorker(indicator) : newWorkerWithoutRollback(indicator);
+        GitBranchWorker worker = newWorker(new GitBranchUiHandlerImpl(GitBrancherImpl.this.myProject, indicator) {
+          @Override
+          public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull String rollbackProposal) {
+            return allowRollback && super.showUnmergedFilesMessageWithRollback(operationName, rollbackProposal);
+          }
+        });
         worker.merge(reference, deleteOnMerge, repositories);
       }
     }.runInBackground();
@@ -328,10 +353,14 @@ class GitBrancherImpl implements GitBrancher {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      execute(indicator);
-      if (myCallInAwtAfterExecution != null) {
-        Application application = ApplicationManager.getApplication();
-        application.invokeAndWait(myCallInAwtAfterExecution, application.getDefaultModalityState());
+      try {
+        execute(indicator);
+      }
+      finally {
+        if (myCallInAwtAfterExecution != null) {
+          Application application = ApplicationManager.getApplication();
+          application.invokeAndWait(myCallInAwtAfterExecution, application.getDefaultModalityState());
+        }
       }
     }
 

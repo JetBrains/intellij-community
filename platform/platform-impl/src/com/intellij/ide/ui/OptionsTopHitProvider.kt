@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.util.text.Matcher
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -39,7 +40,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     }
 
     @VisibleForTesting
-    fun buildMatcher(pattern: String): Matcher = WordPrefixMatcher(pattern)
+    fun buildMatcher(pattern: String): Matcher = WordPrefixMatcher(pattern, PlatformKeyboardLayoutConverter)
 
     @JvmStatic
     fun messageApp(property: @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String): @Nls String {

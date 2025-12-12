@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.impl.LIB_MODULE_PREFIX
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
@@ -15,6 +14,7 @@ import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
 import org.jetbrains.intellij.build.io.zipWriter
+import org.jetbrains.intellij.build.productLayout.LIB_MODULE_PREFIX
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files

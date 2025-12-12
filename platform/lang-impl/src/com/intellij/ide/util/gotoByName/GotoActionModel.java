@@ -38,6 +38,7 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.OnOffButton;
@@ -478,7 +479,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return MatchMode.SYNONYM;
       }
     }
-    if (!Strings.isNullOrEmpty(description) && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
+    if (!Strings.isNullOrEmpty(description) && !description.equals(text) && new WordPrefixMatcher(pattern, PlatformKeyboardLayoutConverter.INSTANCE).matches(description)) {
       return MatchMode.DESCRIPTION;
     }
     if (text == null) {

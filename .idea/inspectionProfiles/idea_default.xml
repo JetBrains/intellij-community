@@ -3664,6 +3664,10 @@
       <searchConfiguration name="Use nio.Path instead of io.File" suppressId="IO_FILE_USAGE" text="java.io.File" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Use nio.Path instead of io.File" text="$File$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="File" nameOfExprType="java\.io\.File" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />

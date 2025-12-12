@@ -7,9 +7,7 @@ import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ModNavigator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
@@ -26,9 +24,8 @@ public abstract class ParenthesesTailType extends ModNavigatorTailType {
   }
 
   @Override
-  public int processTail(@NotNull Project project, @NotNull ModNavigator editor, int tailOffset) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    assert psiFile != null;
+  public int processTail(@NotNull ModNavigator editor, int tailOffset) {
+    PsiFile psiFile = editor.getPsiFile();
     Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(psiFile, language);
     if (isSpaceBeforeParentheses(styleSettings, tailOffset)) {

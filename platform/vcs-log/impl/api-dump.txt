@@ -336,6 +336,8 @@ f:com.intellij.vcs.log.impl.CommonUiProperties
 - sf:PREFER_COMMIT_DATE:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_DETAILS:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_DIFF_PREVIEW:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
+- sf:SHOW_ISSUE_PREVIEW_ON_HOVER:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
+- sf:SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_ROOT_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_TAG_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - <init>():V
@@ -441,12 +443,14 @@ f:com.intellij.vcs.log.impl.VcsLogApplicationSettings$State
 - f:getColumnIdOrder():java.util.List
 - f:getColumnIdVisibility():java.util.Map
 - f:getCustomBooleanProperties():java.util.Map
+- f:getShowIssuePreviewOnHoverDelay():I
 - f:isCompactReferenceView():Z
 - f:isDiffPreviewVerticalSplit():Z
 - f:isLabelsLeftAligned():Z
 - f:isPreferCommitDate():Z
 - f:isShowChangesFromParents():Z
 - f:isShowDiffPreview():Z
+- f:isShowIssuePreviewOnHover():Z
 - f:isShowTagNames():Z
 - f:setColumnIdOrder(java.util.List):V
 - f:setColumnIdVisibility(java.util.Map):V
@@ -457,6 +461,8 @@ f:com.intellij.vcs.log.impl.VcsLogApplicationSettings$State
 - f:setPreferCommitDate(Z):V
 - f:setShowChangesFromParents(Z):V
 - f:setShowDiffPreview(Z):V
+- f:setShowIssuePreviewOnHover(Z):V
+- f:setShowIssuePreviewOnHoverDelay(I):V
 - f:setShowTagNames(Z):V
 f:com.intellij.vcs.log.impl.VcsLogContentUtil
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsLogContentUtil

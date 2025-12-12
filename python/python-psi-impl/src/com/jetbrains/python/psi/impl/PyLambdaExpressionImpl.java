@@ -10,7 +10,10 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
@@ -34,7 +37,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       }
     }
 
-    @Nullable PyType expected = PyTypeChecker.getExpectedType(this, context);
+    @Nullable PyType expected = PyExpectedTypeJudgement.getExpectedType(this, context);
 
     if (expected instanceof PyCallableType expectedCallable) {
       var params = new ArrayList<PyCallableParameter>();

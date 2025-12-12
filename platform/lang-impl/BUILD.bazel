@@ -87,6 +87,8 @@ jvm_library(
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/tracing:tracing-rt",
     "//platform/rd-platform-community:rd-community",
+    "//libraries/rd/core",
+    "//libraries/rd/swing",
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
     "//platform/util/zip",

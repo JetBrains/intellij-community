@@ -21,6 +21,7 @@ fun deprecatedLoadCorePluginForModuleBasedLoader(
   useCoreClassLoader: Boolean,
   classLoader: ClassLoader,
   jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
+  pool: ZipEntryResolverPool,
 ): PluginMainDescriptor? {
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
@@ -31,7 +32,8 @@ fun deprecatedLoadCorePluginForModuleBasedLoader(
       reader = reader,
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = false,
-      isDeprecatedLoader = true
+      isDeprecatedLoader = true,
+      pool = pool,
     )
   }
   else {
@@ -45,6 +47,7 @@ fun deprecatedLoadCorePluginForModuleBasedLoader(
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
       isDeprecatedLoader = true,
+      pool = pool,
     )
   }
 }
@@ -145,6 +148,7 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
         jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
         isDeprecatedLoader = true,
+        pool = pool,
       )
       DiscoveredPluginsList(Java11Shim.INSTANCE.listOf(corePlugin), PluginsSourceContext.Product)
     }
@@ -161,6 +165,7 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
       jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
       isDeprecatedLoader = true,
+      pool = pool,
     )
   }
 

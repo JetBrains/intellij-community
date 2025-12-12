@@ -1,2 +1,1 @@
-com/intellij/xdebugger/impl/ui/EmbeddedComboBoxUI
 com/intellij/xdebugger/memory/component/InstancesTracker$MyState

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.application.options.CodeCompletionConfigurable;
@@ -185,7 +185,7 @@ final class LookupUi {
     }
 
     LookupElement item = lookup.getCurrentItem();
-    if (item != null && item.isValid()) {
+    if (item != null && ReadAction.compute(() -> item.isValid())) {
       ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
         .finishOnUiThread(modalityState, actions -> {

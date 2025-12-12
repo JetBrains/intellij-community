@@ -46,7 +46,7 @@ public class KotlinHighlighter extends SyntaxHighlighterBase {
                 TokenSet.andNot(KtTokens.OPERATIONS, TokenSet.orSet(TokenSet.create(KtTokens.IDENTIFIER, KtTokens.AT), KtTokens.KEYWORDS)),
                 KotlinHighlightingColors.OPERATOR_SIGN
         );
-
+        keys1.put(KtTokens.AND, KotlinHighlightingColors.AMPERSAND);
         keys1.put(KtTokens.LPAR, KotlinHighlightingColors.PARENTHESIS);
         keys1.put(KtTokens.RPAR, KotlinHighlightingColors.PARENTHESIS);
         keys1.put(KtTokens.LBRACE, KotlinHighlightingColors.BRACES);

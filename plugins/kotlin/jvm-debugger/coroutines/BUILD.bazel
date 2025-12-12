@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:maven-resolver-provider",
+    "//libraries/maven-resolver-provider",
     "//libraries/gson",
     "//libraries/asm",
     "//platform/analysis-api:analysis",

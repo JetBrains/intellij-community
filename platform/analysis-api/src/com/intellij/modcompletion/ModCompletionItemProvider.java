@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -99,6 +100,15 @@ public interface ModCompletionItemProvider {
     @Override
     public PsiElement getPosition() {
       return element;
+    }
+
+    @Override
+    public CompletionType getCompletionType() {
+      return type;
+    }
+
+    public Project getProject() {
+      return originalFile.getProject();
     }
   }
 }

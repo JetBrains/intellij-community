@@ -6799,6 +6799,43 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-51768
+  public void testImportedDecoratedFunctionWithParamSpec() {
+    doMultiFileStubAwareTest("(x: int) -> None", """
+      from mod import f
+      
+      expr = f
+      """);
+  }
+
+  // PY-85027
+  public void testImportedBoundMethodDecoratedWithParamSpec() {
+    doMultiFileStubAwareTest("(x: float, y: float) -> float", """
+      from mod import NonWorkingClass
+      
+      expr = NonWorkingClass().add_two
+      """);
+  }
+
+  // PY-85027
+  public void testBoundMethodDecoratedWithParamSpec() {
+    doTest("(x: float, y: float) -> float", """
+      from typing import Callable
+      
+      def outer_decorator[**P, T](f: Callable[P, T]) -> Callable[P, T]:
+          return f
+      
+      
+      class NonWorkingClass:
+          @outer_decorator
+          def add_two(self, x: float, y: float) -> float:
+              return x + y
+      
+      
+      expr = NonWorkingClass().add_two
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

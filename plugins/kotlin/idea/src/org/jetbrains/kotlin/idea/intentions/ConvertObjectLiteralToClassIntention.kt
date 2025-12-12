@@ -66,7 +66,23 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     ReferencesSearch.search(it, element.useScope).findFirst() != null
         } ?: false
 
-        val newClass = psiFactory.createClass("class $className")
+        // Collect type parameters only from accessible ancestor classes
+        val ancestorTypeParameters = mutableListOf<KtTypeParameter>()
+        var currentClass = containingClass
+        while (currentClass != null) {
+            currentClass.typeParameters.let { ancestorTypeParameters.addAll(it) }
+            // Stop if this class is not inner - its outer classes' type parameters are not accessible
+            if (!currentClass.isInner()) break
+            currentClass = currentClass.containingClass()
+        }
+
+        val typeParamsSuffix = ancestorTypeParameters
+            .mapNotNull { it.name }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(prefix = "<", postfix = ">")
+            ?: ""
+
+        val newClass = psiFactory.createClass("class $className$typeParamsSuffix")
         objectDeclaration.getSuperTypeList()?.let {
             newClass.add(psiFactory.createColon())
             newClass.add(it)
@@ -85,9 +101,23 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
                     onFinish: (ExtractionResult) -> Unit
                 ) {
                     project.executeCommand(text) {
-                        val descriptor = descriptorWithConflicts.descriptor.copy(suggestedNames = listOf(className))
+                        val descriptor = descriptorWithConflicts.descriptor
+                        
+                        // Add outer class type parameters to force them in the call site
+                        val typeParameters = descriptor.typeParameters
+                        val outerTypeParameters = ancestorTypeParameters
+                            .filter { typeParam -> 
+                                typeParameters.none { it.originalDeclaration.name == typeParam.name }
+                            }
+                            .map { TypeParameter(it, it.collectRelevantConstraints()) }
+                        
+                        val modifiedDescriptor = descriptor.copy(
+                            suggestedNames = listOf(className),
+                            typeParameters = typeParameters + outerTypeParameters
+                        )
+                        
                         doRefactor(
-                            ExtractionGeneratorConfiguration(descriptor, ExtractionGeneratorOptions.DEFAULT),
+                            ExtractionGeneratorConfiguration(modifiedDescriptor, ExtractionGeneratorOptions.DEFAULT),
                             onFinish
                         )
                     }
@@ -107,10 +137,15 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
             }
 
             val introducedClass = runWriteAction {
-                functionDeclaration.replaced(newClass).apply {
-                    if (hasMemberReference && containingClass == (parent.parent as? KtClass)) addModifier(KtTokens.INNER_KEYWORD)
-                    primaryConstructor?.reformatted()
-                }.let { CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(it) }
+                val replaced = functionDeclaration.replaced(newClass)
+                // Should be inner if: uses outer members OR uses outer type parameters
+                val usesOuterTypeParams = ancestorTypeParameters.isNotEmpty()
+                val shouldBeInner = hasMemberReference || usesOuterTypeParams
+                if (shouldBeInner && containingClass == (replaced.parent.parent as? KtClass)) {
+                    replaced.addModifier(KtTokens.INNER_KEYWORD)
+                }
+                replaced.primaryConstructor?.reformatted()
+                CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(replaced)
             } ?: return@run
 
             val file = introducedClass.containingFile

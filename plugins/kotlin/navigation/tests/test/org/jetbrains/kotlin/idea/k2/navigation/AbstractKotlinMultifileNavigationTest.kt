@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.navigation
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractKotlinMultifileNavigationTest : AbstractReferenceResolveTest() {

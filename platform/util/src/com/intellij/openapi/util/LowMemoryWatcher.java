@@ -39,26 +39,25 @@ public final class LowMemoryWatcher {
   }
 
   public static void onLowMemorySignalReceived(boolean memorySubsystemOverloaded) {
-    if (notificationsSuppressed()) {
-      LOG.info("Low memory signal received (gc overloaded: " + memorySubsystemOverloaded + ") but suppressed");
-      return;
-    }
-
-    LOG.info("Low memory signal received (gc overloaded: " + memorySubsystemOverloaded + ")");
-    for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
-      try {
-        if (watcher.myType == LowMemoryWatcherType.ALWAYS
-            || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && memorySubsystemOverloaded) {
-          watcher.myRunnable.run();
+    boolean notificationsSuppressed = notificationsSuppressed();
+    LOG.info("Low memory signal received (gc overloaded: " + memorySubsystemOverloaded + ")" +
+             (notificationsSuppressed ? ", suppressed" : ""));
+    if (!notificationsSuppressed) {
+      for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
+        try {
+          if (watcher.myType == LowMemoryWatcherType.ALWAYS
+              || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && memorySubsystemOverloaded) {
+            watcher.myRunnable.run();
+          }
         }
-      }
-      catch (Throwable e) {
-        LOG.info(e);
+        catch (Throwable e) {
+          LOG.info(e);
+        }
       }
     }
   }
 
-  static boolean notificationsSuppressed() {
+  private static boolean notificationsSuppressed() {
     return ourNotificationsSuppressed.get();
   }
 

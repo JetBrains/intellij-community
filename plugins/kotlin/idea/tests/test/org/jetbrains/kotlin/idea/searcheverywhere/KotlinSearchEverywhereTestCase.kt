@@ -23,7 +23,6 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
 
     protected fun findByPattern(pattern: String, action: (List<Any>) -> Unit) {
         setRegistryPropertyForTest("search.everywhere.new.enabled", "false")
-        setRegistryPropertyForTest("search.everywhere.new.internal.enabled", "false")
         val disposable = Disposer.newDisposable("ui disposer")
         try {
             val event = ChooseByNameTest.createEvent(project)
@@ -50,7 +49,6 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
 
     protected fun configureAndCheckActions(text: String, expected: List<String>, pattern: String) {
         setRegistryPropertyForTest("search.everywhere.new.enabled", "false")
-        setRegistryPropertyForTest("search.everywhere.new.internal.enabled", "false")
         myFixture.configureByText("TestFile.kt", text)
         findByPattern(pattern) { elements ->
             val actions = elements.filterIsInstance<GotoActionModel.MatchedValue>()

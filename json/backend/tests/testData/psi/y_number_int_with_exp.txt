@@ -1,0 +1,6 @@
+JsonFile: y_number_int_with_exp.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('20e1')
+    PsiElement(])(']')

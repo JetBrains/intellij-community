@@ -16,7 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.2.21-0.1/rpc-compiler-plugin-2.2.21-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.3.0-RC3-0.2/rpc-compiler-plugin-2.3.0-RC3-0.2.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -80,7 +80,7 @@
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
-    <orderEntry type="library" name="rd-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />

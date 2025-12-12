@@ -18,8 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.*
 
 internal class IfThenToSafeAccessInspection :
-    KotlinApplicableInspectionBase.Simple<KtIfExpression, IfThenTransformationStrategy>(),
-    CleanupLocalInspectionTool {
+    KotlinApplicableInspectionBase.Simple<KtIfExpression, IfThenTransformationStrategy>(){
 
     override fun getProblemDescription(element: KtIfExpression, context: IfThenTransformationStrategy): @InspectionMessage String =
         KotlinBundle.message("foldable.if.then")

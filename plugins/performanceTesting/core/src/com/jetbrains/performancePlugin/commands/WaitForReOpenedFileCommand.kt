@@ -30,15 +30,6 @@ open class WaitForReOpenedFileCommand(text: String, line: Int) : PerformanceComm
 internal class FileOpenLoggerListener : FileEditorManagerListener.Before {
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
     logger<FileOpenLoggerListener>().info("beforeFileOpened ${file.name}")
-    startSpan(mapOf("filePath" to file.name, "startTime" to System.currentTimeMillis().toString()))
-      .end()
+    HighlightingTestUtil.storeProcessFinishedTime("beforeFileOpened", "reopenFileAfterIdeRestart")
   }
-}
-
-private fun startSpan(attributes: Map<String, String>? = null): Span {
-  val builder = PerformanceTestSpan.TRACER.spanBuilder("reopenFileAfterIdeRestart")
-    .setParent(PerformanceTestSpan.getContext())
-
-  attributes?.forEach { entry -> builder.setAttribute(entry.key, entry.value) }
-  return builder.startSpan()
 }

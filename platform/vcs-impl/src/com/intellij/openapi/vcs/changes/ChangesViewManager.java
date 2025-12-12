@@ -113,6 +113,13 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     busConnection.subscribe(ChangesViewWorkflowManager.TOPIC, () -> updateCommitWorkflow());
   }
 
+  @Override
+  @ApiStatus.Internal
+  public @NotNull ChangesViewCommitWorkflowUi createCommitPanel() {
+    ChangesViewProxy changesView = initChangesView();
+    return new ChangesViewCommitPanel(myProject, changesView);
+  }
+
   public static class DisplayNameSupplier implements Supplier<String> {
     private final @NotNull Project myProject;
 

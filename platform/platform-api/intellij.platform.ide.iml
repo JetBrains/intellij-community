@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

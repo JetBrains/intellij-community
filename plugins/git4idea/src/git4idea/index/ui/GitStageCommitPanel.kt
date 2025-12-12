@@ -8,8 +8,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
-import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
 import com.intellij.vcs.commit.NonModalCommitPanel
@@ -18,7 +16,6 @@ import git4idea.index.ContentVersion
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.createChange
-import kotlin.properties.Delegates.observable
 
 private fun GitStageTracker.State.getStaged(): Set<GitFileStatus> =
   rootStates.values.flatMapTo(mutableSetOf()) { it.getStaged() }
@@ -51,11 +48,6 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
 
   val isCommitAll get() = state.isCommitAll
 
-  private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
-  override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, _ ->
-    editedCommitListeners.forEach { it() }
-  }
-
   init {
     Disposer.register(this, commitMessage)
 
@@ -86,10 +78,6 @@ class GitStageCommitPanel(project: Project, private val settings: GitStageUiSett
     if (inclusionChanged) {
       fireInclusionChanged()
     }
-  }
-
-  fun addEditedCommitListener(listener: () -> Unit, parent: Disposable) {
-    editedCommitListeners.add(listener, parent)
   }
 
   override fun activate(): Boolean = true

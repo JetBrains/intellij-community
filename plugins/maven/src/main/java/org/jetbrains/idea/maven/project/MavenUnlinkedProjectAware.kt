@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import java.nio.file.Files
 import java.nio.file.Path
 
 class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
@@ -24,7 +25,7 @@ class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     return mavenProjectsManager.projects.any {
-      it.directoryPath == Path.of(externalProjectPath)
+      Files.isSameFile(it.directoryPath, Path.of(externalProjectPath))
     }
   }
 

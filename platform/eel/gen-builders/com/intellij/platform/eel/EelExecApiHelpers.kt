@@ -69,6 +69,16 @@ fun EelExecApi.spawnProcess(
     exe = exe,
   )
 
+/**
+ * It's obligatory to call [ExternalCliEntrypoint.consumeInvocations] on the resulting value.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelExecApi.createExternalCli(): EelExecApiHelpers.CreateExternalCli =
+  EelExecApiHelpers.CreateExternalCli(
+    owner = this,
+  )
+
 @ApiStatus.Experimental
 object EelExecApiHelpers {
   /**
@@ -313,6 +323,65 @@ object EelExecApiHelpers {
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
           workingDirectory = workingDirectory,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecApi.createExternalCli].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class CreateExternalCli(
+    private val owner: EelExecApi,
+  ) : OwnedBuilder<EelExecApi.ExternalCliEntrypoint> {
+    private var envVariablesToCapture: List<String> = emptyList()
+
+    private var filePrefix: String = ""
+
+    private var lifecycle: EelExecApi.ExternalCliLifecycle = EelExecApi.ExternalCliLifecycle.Default
+
+    /**
+     * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+     * Capturing of other environment variables is not guaranteed.
+     * If no environment variables are specified, no environment variables will be captured.
+     */
+    fun envVariablesToCapture(arg: List<String>): CreateExternalCli = apply {
+      this.envVariablesToCapture = arg
+    }
+
+    /**
+     * Allowlist of environment variables mentioned here will be captured by the entrypoint and returned in [ExternalCliProcess.environment].
+     * Capturing of other environment variables is not guaranteed.
+     * If no environment variables are specified, no environment variables will be captured.
+     */
+    fun envVariablesToCapture(vararg arg: String): CreateExternalCli = apply {
+      this.envVariablesToCapture = listOf(*arg)
+    }
+
+    /**
+     * Prefix for an entrypoint executable file that will be created. Since the path to the entrypoint is passed to some command-line tool,
+     * using a self-explaining prefix makes the command line more readable and easier to debug.
+     */
+    fun filePrefix(arg: String): CreateExternalCli = apply {
+      this.filePrefix = arg
+    }
+
+    fun lifecycle(arg: EelExecApi.ExternalCliLifecycle): CreateExternalCli = apply {
+      this.lifecycle = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.createExternalCli]
+     * with an instance of [com.intellij.platform.eel.EelExecApi.ExternalCliOptions].
+     */
+    @CheckReturnValue
+    override suspend fun eelIt(): EelExecApi.ExternalCliEntrypoint =
+      owner.createExternalCli(
+        ExternalCliOptionsImpl(
+          envVariablesToCapture = envVariablesToCapture,
+          filePrefix = filePrefix,
+          lifecycle = lifecycle,
         )
       )
   }

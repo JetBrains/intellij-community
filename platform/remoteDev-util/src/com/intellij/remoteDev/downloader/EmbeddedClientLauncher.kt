@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -33,6 +34,7 @@ import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.File
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -101,6 +103,15 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
         extraArguments,
         lifetime
       )
+    }
+    if (PlatformUtils.isGateway() && (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources())) {
+      val applicationClasspath = System.getProperty("java.class.path").split(File.pathSeparator)
+      if (applicationClasspath.any { path -> Path.of(path).any { it.pathString == "bazel-out" }}) {
+        error("""
+          |Starting embedded client from Gateway when the project is compiled by Bazel isn't supported for now (IJPL-222205).
+          |Set the registry option 'monorepo.devkit.use.bazel.compile' to 'false' as a workaround.
+        """.trimMargin())
+      }
     }
 
     val processLifetimeDef = lifetime.createNested()
@@ -211,6 +222,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "jna.noclasspath", 
       "idea.is.internal",
       "intellij.test.jars.location",
+      "skiko.library.path"
     )
     propertiesToPass.forEach { 
       vmParametersList.defineProperty(it, System.getProperty(it))

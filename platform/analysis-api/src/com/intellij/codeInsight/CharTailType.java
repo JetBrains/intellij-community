@@ -3,7 +3,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.openapi.editor.ModNavigator;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +29,7 @@ public class CharTailType extends ModNavigatorTailType {
   }
 
   @Override
-  public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+  public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
     return insertChar(navigator, tailOffset, myChar, myOverwrite);
   }
 

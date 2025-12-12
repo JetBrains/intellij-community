@@ -72,11 +72,15 @@ internal class EditorContextManagerImpl(
   //@RequiresWriteLock
   override fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts) {
     //ThreadingAssertions.assertWriteAccess()
+    setEditorContextNoFire(editor, contexts)
+
+    fireEvent(editor, contexts)
+  }
+
+  override fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts) {
     currentContextCache[editor] = contexts
 
     log.trace { "Editor context for $editor is set to $contexts" }
-
-    fireEvent(editor, contexts)
   }
 
   override val eventFlow: Flow<EditorContextManager.ChangeEvent>

@@ -52,9 +52,6 @@ kotlin {
     implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.core.jvm930800474.get().let { "${it.group}:kotlinx-coroutines-core:${it.version}" }) {
       isTransitive = false
     }
-    implementation(jps.org.jetbrains.kotlin.kotlin.test542871666.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }
@@ -64,7 +61,7 @@ kotlin {
     implementation(project(":fleet.ktor.client.core"))
   }
   sourceSets.jvmTest.dependencies {
-    implementation(project(":fleet.junit4"))
+    implementation(project(":fleet.junit"))
   }
   // KOTLIN__MARKER_END
 }

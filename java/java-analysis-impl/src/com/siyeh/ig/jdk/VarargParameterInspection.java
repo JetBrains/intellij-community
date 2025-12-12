@@ -16,6 +16,7 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -28,6 +29,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -38,8 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public final class VarargParameterInspection extends BaseInspection {
@@ -72,21 +72,14 @@ public final class VarargParameterInspection extends BaseInspection {
 
     private static void process(@Nullable ModPsiUpdater updater, PsiMethod method) {
       final PsiParameterList parameterList = method.getParameterList();
-      final PsiParameter[] parameters = parameterList.getParameters();
-      if (parameters.length == 0) {
-        return;
-      }
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (!lastParameter.isVarArgs()) {
-        return;
-      }
-      final PsiTypeElement typeElement = lastParameter.getTypeElement();
-      if (typeElement == null) {
+      int count = parameterList.getParametersCount();
+      final PsiParameter lastParameter = parameterList.getParameter(count - 1);
+      if (lastParameter == null || !lastParameter.isVarArgs()) {
         return;
       }
       final List<PsiElement> refElements = updater == null ? getReferences(method) : 
                                            ContainerUtil.map(getReferences(method), e -> updater.getWritable(e));
-      performModification(method, parameters, lastParameter, typeElement, refElements);
+      performModification(method, count - 1, lastParameter, refElements);
     }
 
     private static @NotNull @Unmodifiable List<PsiElement> getReferences(@NotNull PsiMethod method) {
@@ -97,42 +90,31 @@ public final class VarargParameterInspection extends BaseInspection {
                          ref instanceof PsiDocMethodOrFieldRef && ref.getReference() instanceof PsiReference docRef && docRef.isReferenceTo(method))
           .toList();
       }
-      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
-      final List<PsiElement> refElements = new ArrayList<>();
-      for (PsiReference reference : references) {
-        refElements.add(reference.getElement());
-      }
-      return refElements;
+      return ContainerUtil.map(ReferencesSearch.search(method).findAll(), PsiReference::getElement);
     }
 
     private static void performModification(@NotNull PsiMethod method,
-                                            @NotNull PsiParameter @NotNull [] parameters,
+                                            int indexOfFirstVarargArgument,
                                             @NotNull PsiParameter lastParameter,
-                                            @NotNull PsiTypeElement typeElement,
                                             @NotNull List<PsiElement> references) {
-      final PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
-      final PsiType componentType = type.getComponentType();
-      final String typeText;
-      if (componentType instanceof PsiClassType classType) {
-        typeText = classType.rawType().getCanonicalText();
-      }
-      else {
-        typeText = componentType.getCanonicalText();
-      }
       for (PsiElement reference : references) {
-        modifyCall(typeText, parameters.length - 1, reference);
-        modifyJavadoc(parameters.length - 1, reference);
+          if (reference instanceof PsiCall call) modifyCall(lastParameter, indexOfFirstVarargArgument, call);
+          else if (reference.getParent() instanceof PsiCall call) modifyCall(lastParameter, indexOfFirstVarargArgument, call);
+          modifyJavadoc(indexOfFirstVarargArgument, reference);
       }
+      PsiEllipsisType type = (PsiEllipsisType)lastParameter.getType();
       final PsiType arrayType = type.toArrayType();
       final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS);
       if (annotation != null) {
         annotation.delete();
       }
+      PsiTypeElement typeElement = lastParameter.getTypeElement();
+      assert typeElement != null;
       new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
     }
 
-    public static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
+    private static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
       if (!(reference instanceof PsiDocMethodOrFieldRef ref)) return;
       String[] signature = ref.getSignature();
       if (signature == null || signature.length -1 != indexOfFirstVarargArgument) return;
@@ -157,49 +139,59 @@ public final class VarargParameterInspection extends BaseInspection {
       if (newElement == null) return;
       reference.replace(newElement);
     }
+  }
 
-    public static void modifyCall(String arrayTypeText, int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
-      final PsiCall call = reference instanceof PsiCall psiCall
-                           ? psiCall
-                           : reference.getParent() instanceof PsiCall psiCall
-                             ? psiCall
-                             : null;
-      if (call == null) return;
-      JavaResolveResult result = call.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo info && info.getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-        return;
-      }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList == null) {
-        return;
-      }
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final @NonNls StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
-      if (arguments.length > indexOfFirstVarargArgument) {
-        final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
-        builder.append(firstArgument.getText());
-        for (int i = indexOfFirstVarargArgument + 1; i < arguments.length; i++) {
-          builder.append(',').append(arguments[i].getText());
-        }
-      }
-      builder.append('}');
-      final Project project = reference.getProject();
-      final PsiExpression arrayExpression =
-        JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), reference);
-      CommentTracker ct = new CommentTracker();
-      if (arguments.length > indexOfFirstVarargArgument) {
-        PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
-        PsiExpression lastArgument = arguments[arguments.length - 1];
-        for (PsiElement e = firstArgument; e != lastArgument; e = e.getNextSibling()) {
-          ct.grabComments(e);
-        }
-        argumentList.deleteChildRange(firstArgument, lastArgument);
-      }
-      argumentList.add(arrayExpression);
-      ct.insertCommentsBefore(call);
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
-      CodeStyleManager.getInstance(project).reformat(argumentList);
+  public static void modifyCall(PsiParameter varargParameter, int indexOfFirstVarargArgument, @NotNull PsiCall call) {
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (resolveResult instanceof MethodCandidateInfo info
+        && info.getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+      return;
     }
+    final PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) {
+      return;
+    }
+    final @NonNls StringBuilder builder = new StringBuilder("new ");
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    final PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
+    PsiType type = substitutor.substitute(componentType);
+    if (type instanceof PsiCapturedWildcardType wildcardType) {
+      type = wildcardType.getLowerBound();
+    }
+    builder.append(JavaGenericsUtil.isReifiableType(type)
+                   ? type.getCanonicalText()
+                   : TypeConversionUtil.erasure(type).getCanonicalText());
+    builder.append("[]{");
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    final PsiElement start;
+    final PsiElement end;
+    if (arguments.length > indexOfFirstVarargArgument) {
+      start = skipToIncludeComments(arguments[indexOfFirstVarargArgument], false);
+      end = skipToIncludeComments(arguments[arguments.length - 1], true);
+      PsiElement element = start;
+      while (true) {
+        builder.append(element.getText());
+        if (element == end) break;
+        element = element.getNextSibling();
+      }
+      argumentList.deleteChildRange(start, end);
+    }
+    builder.append('}');
+    final Project project = call.getProject();
+    final PsiExpression arrayExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), call);
+    argumentList.add(arrayExpression);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
+    CodeStyleManager.getInstance(project).reformat(argumentList);
+  }
+  
+  private static PsiElement skipToIncludeComments(PsiElement element, boolean forward) {
+    PsiElement sibling = forward ? element.getNextSibling() : element.getPrevSibling();
+    if (sibling instanceof PsiComment) return skipToIncludeComments(sibling, forward);
+    else if (sibling instanceof PsiWhiteSpace) {
+      sibling = forward ? sibling.getNextSibling() : sibling.getPrevSibling();
+      if (sibling instanceof PsiComment) return skipToIncludeComments(sibling, forward);
+    }
+    return element;
   }
 
   @Override

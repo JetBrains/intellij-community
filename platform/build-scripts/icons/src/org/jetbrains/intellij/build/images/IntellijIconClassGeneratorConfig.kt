@@ -176,6 +176,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.jpa.jpb.model"
       )
 
+      "intellij.liquibase.core" -> IntellijIconClassGeneratorModuleConfig(
+        className = "LiquibaseIcons",
+        packageName = "com.intellij.liquibase.core"
+      )
+
       "intellij.android.ml-api" -> IntellijIconClassGeneratorModuleConfig(
         className = "AndroidAIPluginIcons",
         packageName = "com.android.tools.idea.studiobot.icons",

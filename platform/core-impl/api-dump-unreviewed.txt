@@ -404,7 +404,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:enablePlugin(java.lang.String):Z
 - sf:getBuildNumber():com.intellij.openapi.util.BuildNumber
 - sf:getLoadedPlugins():java.util.List
-- f:getLoadingError(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:getPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String

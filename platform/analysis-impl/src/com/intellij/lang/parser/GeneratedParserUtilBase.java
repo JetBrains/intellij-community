@@ -95,6 +95,7 @@ public class GeneratedParserUtilBase {
     };
 
 
+  @SuppressWarnings("unused")
   public static boolean eof(PsiBuilder builder, int level) {
     return builder.eof();
   }
@@ -121,8 +122,7 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean invalid_left_marker_guard_(PsiBuilder builder, PsiBuilder.Marker marker, String funcName) {
-    //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
-    boolean goodMarker = marker != null; // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
+    boolean goodMarker = marker != null;
     if (!goodMarker) return false;
     ErrorState state = ErrorState.get(builder);
 
@@ -888,11 +888,6 @@ public class GeneratedParserUtilBase {
 
     public @NotNull Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
-    }
-
-    @Override
-    public @NotNull List<? extends Production> getProductions() {
-      return myDelegate.getProductions();
     }
   }
 

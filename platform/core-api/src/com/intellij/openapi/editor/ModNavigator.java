@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,12 +37,25 @@ public interface ModNavigator {
   /**
    * @return the document being edited 
    */
+  @Contract(pure = true)
   @NotNull Document getDocument();
 
   /**
-   * Registers a tab out scope, so pressing tab inside the scope moves the caret to the specified offset
+   * @return the PsiFile associated with the document being edited
+   */
+  @Contract(pure = true)
+  @NotNull PsiFile getPsiFile();
+
+  /**
+   * @return the current project
+   */
+  @Contract(pure = true)
+  @NotNull Project getProject();
+
+  /**
+   * Registers a tab out scope, so pressing the tab inside the scope moves the caret to the specified offset
    * instead of adding a tab character.
-   * 
+   * <p> 
    * May do nothing if tab out is not supported by the implementation.
    * 
    * @param range scope range 

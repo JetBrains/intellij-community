@@ -54,13 +54,14 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
     }
     val includedLibraries = LinkedHashSet<JpsLibrary>()
     val span = Span.current()
+    val outputProvider = context.outputProvider
     if (includeLibraries) {
       val debugMapping = mutableListOf<String>()
       for (moduleName in modules) {
-        val module = context.findRequiredModule(moduleName)
+        val module = outputProvider.findRequiredModule(moduleName)
         // We pack sources of libraries which are included in compilation classpath for platform API modules.
         // This way we'll get source files of all libraries useful for plugin developers, and the size of the archive will be reasonable.
-        if (isRelevantLibrarySourcesModule(moduleName, context)) {
+        if (isRelevantLibrarySourcesModule(moduleName, outputProvider)) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
           libraries.mapTo(debugMapping) { "${it.name} for $moduleName" }
@@ -72,8 +73,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       )
       val librariesWithMissingSources = includedLibraries
         .asSequence()
-        .map { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
-        .filterNotNull()
+        .mapNotNull { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
         .filter { library -> library.getPaths(JpsOrderRootType.SOURCES).any { Files.notExists(it) } }
         .toList()
       if (!librariesWithMissingSources.isEmpty()) {
@@ -85,7 +85,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
 
     val zipFileMap = LinkedHashMap<Path, String>()
     for (moduleName in modules) {
-      val module = context.findRequiredModule(moduleName)
+      val module = outputProvider.findRequiredModule(moduleName)
       for (root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
         if (root.file.absoluteFile.exists()) {
           val sourceFiles = filterSourceFilesOnly(root.file.name, context) { FileUtil.copyDirContent(root.file.absoluteFile, it.toFile()) }
@@ -137,9 +137,9 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
   }
 }
 
-private fun isRelevantLibrarySourcesModule(moduleName: String, context: BuildContext): Boolean {
-  return (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null
-          || moduleName.startsWith("intellij.libraries.compose."))
+private fun isRelevantLibrarySourcesModule(moduleName: String, outputProvider: ModuleOutputProvider): Boolean {
+  return (moduleName.startsWith("intellij.platform.") && outputProvider.findModule("$moduleName.impl") != null ||
+          moduleName.startsWith("intellij.libraries.compose."))
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -161,7 +161,10 @@ private fun isSourceFile(path: String): Boolean {
          path.endsWith(".form")
 }
 
-private suspend fun downloadMissingLibrarySources(librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>, context: BuildContext) {
+private suspend fun downloadMissingLibrarySources(
+  librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>,
+  context: CompilationContext,
+) {
   spanBuilder("download missing sources")
     .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
     .use { span ->

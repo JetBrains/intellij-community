@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.*;
 
 import java.util.BitSet;
@@ -16,7 +17,7 @@ import java.util.List;
 public final class TypoTolerantMatcher extends MinusculeMatcher {
   private final char[] myPattern;
   private final String myHardSeparators;
-  private final NameUtil.MatchingCaseSensitivity myOptions;
+  private final MatchingMode myMatchingMode;
   private final boolean myHasHumps;
   private final boolean myHasSeparators;
   private final boolean myHasDots;
@@ -31,13 +32,13 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
   /**
    * Constructs a matcher by a given pattern.
    * @param pattern the pattern
-   * @param options case sensitivity settings
+   * @param matchingMode case sensitivity settings
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
   @VisibleForTesting
-  public TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
-    myOptions = options;
+  public TypoTolerantMatcher(@NotNull String pattern, @NotNull MatchingMode matchingMode, @NotNull String hardSeparators) {
+    myMatchingMode = matchingMode;
     myPattern = Strings.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;
     isLowerCase = new boolean[myPattern.length];
@@ -416,7 +417,7 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
              Character.isUpperCase(myName.charAt(nextOccurrence)) ||
              NameUtilCore.isWordStart(myName, nextOccurrence) ||
              // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
-             !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL;
+             !myHasHumps && myMatchingMode != MatchingMode.MATCH_CASE;
     }
 
     private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos, @NotNull ErrorState errorState) {
@@ -492,7 +493,7 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
       }
 
       int i = 1;
-      boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
+      boolean ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE;
       while (nameIndex + i < myName.length() && patternIndex + i < patternLength(errorState)) {
         if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true, errorState)) {
           if (Character.isDigit(charAt(patternIndex + i, errorState)) && Character.isDigit(charAt(patternIndex + i - 1, errorState))) {
@@ -588,12 +589,12 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
     private boolean isFirstCharMatching(int nameIndex, int patternIndex, @NotNull ErrorState errorState) {
       if (nameIndex >= myName.length()) return false;
 
-      boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
+      boolean ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE;
       if (!charEquals(patternIndex, nameIndex, ignoreCase, true, errorState)) return false;
 
       char patternChar = charAt(patternIndex, errorState);
 
-      if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
+      if (myMatchingMode == MatchingMode.FIRST_LETTER &&
           (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
           hasCase(patternChar) &&
           Character.isUpperCase(patternChar) != Character.isUpperCase(myName.charAt(0))) {
@@ -669,7 +670,7 @@ public final class TypoTolerantMatcher extends MinusculeMatcher {
 
   @Override
   public @NonNls String toString() {
-    return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
+    return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myMatchingMode + '}';
   }
 
   private record ErrorWithIndex(int index, Error error) {}

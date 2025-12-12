@@ -14,6 +14,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.SeSortedProviderIds
@@ -32,7 +33,6 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.any
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)

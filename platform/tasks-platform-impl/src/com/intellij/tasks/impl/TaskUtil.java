@@ -17,6 +17,7 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,7 +220,7 @@ public final class TaskUtil {
       builder.append("* ");
     }
 
-    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcher(builder.toString(), MatchingMode.IGNORE_CASE);
   }
 
   static String updateToVelocity(String format) {

@@ -1425,6 +1425,8 @@ Fa:com.intellij.openapi.editor.EditorFactory
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener):V
 - a:addEditorFactoryListener(com.intellij.openapi.editor.event.EditorFactoryListener,com.intellij.openapi.Disposable):V
 - a:createDocument(java.lang.CharSequence):com.intellij.openapi.editor.Document
+- a:createDocument(java.lang.CharSequence,Z,Z):com.intellij.openapi.editor.Document
+- a:createDocument(Z):com.intellij.openapi.editor.Document
 - a:createDocument(C[]):com.intellij.openapi.editor.Document
 - a:createEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - a:createEditor(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
@@ -2056,6 +2058,7 @@ c:com.intellij.openapi.editor.colors.FontPreferences
 - <init>():V
 - copyTo(com.intellij.openapi.editor.colors.FontPreferences):V
 - getBoldSubFamily():java.lang.String
+- getCharacterVariants():java.util.Set
 - s:getDefaultFontName():java.lang.String
 - getEffectiveFontFamilies():java.util.List
 - getFontFamily():java.lang.String
@@ -2081,6 +2084,8 @@ a:com.intellij.openapi.editor.colors.ModifiableFontPreferences
 - a:register(java.lang.String,I):V
 - a:resetFontSizes():V
 - a:setBoldSubFamily(java.lang.String):V
+- setCharacterVariant(java.lang.String,Z):V
+- setCharacterVariants(java.util.Set):V
 - a:setEffectiveFontFamilies(java.util.List):V
 - setFontSize(java.lang.String,F):V
 - a:setFontSize(java.lang.String,I):V

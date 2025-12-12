@@ -30,23 +30,20 @@ import javax.swing.*;
 import java.util.Objects;
 
 @NotNullByDefault
-public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
-  private final PsiType myType;
+public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType> {
   private final boolean myIndicateAnonymous;
   private final boolean myAddArrayInitializer;
   private final String myLocationString;
   private final @Nullable Icon myIcon;
   private final boolean myStrikeout;
   private final @Nullable String myForcedPresentableName;
-  @NlsSafe private final String myLookupString;
 
   private PsiTypeCompletionItem(PsiType type, boolean indicateAnonymous, boolean addArrayInitializer, String locationString,
                                 @NonNls String lookupString) {
-    myType = type;
+    super(lookupString, type);
     myIndicateAnonymous = indicateAnonymous;
     myAddArrayInitializer = addArrayInitializer;
     myLocationString = locationString;
-    myLookupString = lookupString;
     myForcedPresentableName = null;
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     myIcon =
@@ -60,32 +57,36 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
 
   @Contract(pure = true)
   public PsiTypeCompletionItem withPresentableName(@Nullable String forcedPresentableName) {
-    return new PsiTypeCompletionItem(myType, myIndicateAnonymous, myAddArrayInitializer, myLocationString, myLookupString);
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString());
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem indicateAnonymous() {
-    return new PsiTypeCompletionItem(myType, true, myAddArrayInitializer, myLocationString, myLookupString);
+    return new PsiTypeCompletionItem(getType(), true, myAddArrayInitializer, myLocationString, mainLookupString());
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem addArrayInitializer() {
-    return new PsiTypeCompletionItem(myType, myIndicateAnonymous, true, myLocationString, myLookupString);
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, true, myLocationString, mainLookupString());
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem showPackage() {
-    PsiClass psiClass = PsiUtil.resolveClassInType(myType);
+    PsiClass psiClass = PsiUtil.resolveClassInType(getType());
     if (psiClass != null) {
-      return new PsiTypeCompletionItem(myType, myIndicateAnonymous, myAddArrayInitializer,
-                                       " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", myLookupString);
+      return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer,
+                                       " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", mainLookupString());
     }
     return this;
   }
 
+  public PsiType getType() {
+    return contextObject();
+  }
+
   @Override
   public boolean isValid() {
-    return myType.isValid();
+    return getType().isValid();
   }
 
   public @Nullable String getForcedPresentableName() {
@@ -93,18 +94,9 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public String mainLookupString() {
-    return myLookupString;
-  }
-
-  @Override
-  public PsiType contextObject() {
-    return myType;
-  }
-
-  @Override
-  public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
-    PsiClass psiClass = PsiUtil.resolveClassInType(myType);
+  public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
+    PsiFile file = updater.getPsiFile();
+    PsiClass psiClass = PsiUtil.resolveClassInType(getType());
     if (psiClass != null) {
       addImportForItem(psiClass, file, actionContext.selection().getStartOffset(), updater);
     }
@@ -127,7 +119,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
 
     int curOffset = updater.getCaretOffset();
     int targetOffset = curOffset;
-    String braces = StringUtil.repeat("[]", myType.getArrayDimensions());
+    String braces = StringUtil.repeat("[]", getType().getArrayDimensions());
     if (!braces.isEmpty()) {
       if (myAddArrayInitializer) {
         document.insertString(targetOffset, braces + "{}");
@@ -143,7 +135,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
   }
 
   private @NlsSafe String calcGenerics(@Nullable PsiElement context, @Nullable PsiClass psiClass) {
-    if (PsiTypeLookupItem.isDiamond(myType)) {
+    if (PsiTypeLookupItem.isDiamond(getType())) {
       return "<>";
     }
 
@@ -172,7 +164,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
   }
 
   private PsiSubstitutor getSubstitutor() {
-    if (myType.getDeepComponentType() instanceof PsiClassType classType) {
+    if (getType().getDeepComponentType() instanceof PsiClassType classType) {
       return classType.resolveGenerics().getSubstitutor();
     }
     return PsiSubstitutor.EMPTY;
@@ -188,10 +180,10 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
 
   @Override
   public ModCompletionItemPresentation presentation() {
-    MarkupText text = MarkupText.plainText(myLookupString);
-    text = text.concat(calcGenerics(null, PsiUtil.resolveClassInType(myType)), MarkupText.Kind.NORMAL);
-    text = text.concat("[]".repeat(myType.getArrayDimensions()), MarkupText.Kind.NORMAL);
-    if (myType instanceof PsiPrimitiveType) {
+    MarkupText text = MarkupText.plainText(mainLookupString());
+    text = text.concat(calcGenerics(null, PsiUtil.resolveClassInType(getType())), MarkupText.Kind.NORMAL);
+    text = text.concat("[]".repeat(getType().getArrayDimensions()), MarkupText.Kind.NORMAL);
+    if (getType() instanceof PsiPrimitiveType) {
       text = text.highlightAll(MarkupText.Kind.STRONG);
     }
     if (myStrikeout) {
@@ -250,12 +242,12 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
 
     return myIndicateAnonymous == item.myIndicateAnonymous &&
            myAddArrayInitializer == item.myAddArrayInitializer &&
-           myType.equals(item.myType);
+           getType().equals(item.getType());
   }
 
   @Override
   public int hashCode() {
-    int result = myType.hashCode();
+    int result = getType().hashCode();
     result = 31 * result + Boolean.hashCode(myIndicateAnonymous);
     result = 31 * result + Boolean.hashCode(myAddArrayInitializer);
     return result;

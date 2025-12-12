@@ -11,8 +11,10 @@ import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.toBuilder
@@ -24,17 +26,24 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.platform.workspace.jps.serialization.impl.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacet
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.findFacetEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import junit.framework.AssertionFailedError
-import org.junit.Assert.*
+import org.hamcrest.CoreMatchers
+import org.hamcrest.MatcherAssert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.assertDoesNotThrow
+import kotlin.test.assertNotNull
 
 internal val MOCK_FACET_TYPE_ID = FacetEntityTypeId("MockFacetId")
 
@@ -161,6 +170,23 @@ class FacetModelBridgeTest {
       assertEquals("Spring", configProperties.secondElement[0])
       assertTrue(facet.isInitialized)
     }
+  }
+
+  @Test
+  fun `find facet`() {
+    val module = projectModel.createModule()
+    val type = MockFacetType.getInstance()
+    val data = "My facet configuration"
+
+    val configuration = MockFacetConfiguration(data)
+    val facet = projectModel.addFacet(module, type, configuration)
+
+    val storage = projectModel.project.workspaceModel.currentSnapshot
+    val facetEntity = storage.findFacetEntity(facet)
+    assertNotNull(facetEntity, "No facet entry found")
+    Assertions.assertEquals(module, facetEntity.module.findModule(storage), "Wrong module")
+    MatcherAssert.assertThat("Wrong configuration", facetEntity.configurationXmlTag, CoreMatchers.containsString(data))
+    Assertions.assertEquals(facet, storage.findFacet(facetEntity), "Failed to find facet by entity")
   }
 
   @Test

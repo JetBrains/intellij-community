@@ -2,16 +2,15 @@
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.productLayout.ModuleSet
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleDistributionInfo
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetHierarchyInfo
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetReference
-import org.jetbrains.intellij.build.productLayout.analysis.ModuleUsageInfo
-import org.jetbrains.intellij.build.productLayout.analysis.ProductReference
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversalCache
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.collectAllModuleNamesFromSet
 import org.jetbrains.intellij.build.productLayout.visitAllModules
 
 // kotlinx.serialization Json instance for serializing data structures
@@ -21,257 +20,186 @@ internal val kotlinxJson = Json {
 }
 
 /**
- * Enriches products with calculated metrics.
- * Calculates totalModuleCount, directModuleCount, moduleSetCount, and uniqueModuleCount for each product.
+ * Enriches products with calculated metrics (parallelized).
+ * Calculates totalModuleCount, directModuleCount, and moduleSetCount for each product.
+ *
+ * Uses cache for O(1) module name lookups instead of repeated traversals.
  */
-fun enrichProductsWithMetrics(
+internal suspend fun enrichProductsWithMetrics(
   products: List<ProductSpec>,
   moduleSets: List<ModuleSet>
-): List<ProductSpec> {
-  return products.map { product ->
-    val contentSpec = product.contentSpec
-    if (contentSpec == null) {
-      product // Return as-is if no contentSpec
-    } else {
-      // Calculate metrics
-      val allModules = mutableSetOf<String>()
+): List<ProductSpec> = coroutineScope {
+  // Build cache for O(1) module name lookups
+  val cache = ModuleSetTraversalCache(moduleSets)
 
-      // Collect modules from module sets
-      for (msRef in contentSpec.moduleSets) {
-        val modulesFromSet = collectAllModuleNamesFromSet(moduleSets, msRef.moduleSet.name)
-        allModules.addAll(modulesFromSet)
+  products.map { product ->
+    async {
+      val contentSpec = product.contentSpec
+      if (contentSpec == null) {
+        product // Return as-is if no contentSpec
       }
-
-      // Add additional modules
-      for (module in contentSpec.additionalModules) {
-        allModules.add(module.name)
+      else {
+        val allModules = cache.collectProductModuleNames(contentSpec)
+        product.copy(
+          totalModuleCount = allModules.size,
+          directModuleCount = contentSpec.additionalModules.size,
+          moduleSetCount = contentSpec.moduleSets.size
+        )
       }
-
-      val totalModuleCount = allModules.size
-      val directModuleCount = contentSpec.additionalModules.size
-      val moduleSetCount = contentSpec.moduleSets.size
-      val uniqueModuleCount = allModules.size // Same as total after deduplication
-
-      product.copy(
-        totalModuleCount = totalModuleCount,
-        directModuleCount = directModuleCount,
-        moduleSetCount = moduleSetCount,
-        uniqueModuleCount = uniqueModuleCount
-      )
     }
-  }
+  }.awaitAll()
 }
 
 /**
  * Writes module distribution analysis.
  * For each module, lists which module sets and products use it, plus location information.
- * Replaces TypeScript analyzeModuleDistribution() function.
- * 
+ *
  * Output format: { "moduleName": { "inModuleSets": [...], "inProducts": [...], "location": "...", "imlPath": "..." } }
  */
-fun writeModuleDistribution(
+internal fun writeModuleDistribution(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
   products: List<ProductSpec>,
-  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.analysis.ModuleLocationInfo>
+  moduleLocations: Map<String, org.jetbrains.intellij.build.productLayout.analysis.ModuleLocationInfo>,
+  cache: ModuleSetTraversalCache
 ) {
-  // Build module → {inModuleSets: [], inProducts: []} mapping
-  val moduleMap = mutableMapOf<String, ModuleDistributionInfo>()
+  @Serializable
+  data class Entry(
+    val inModuleSets: List<String>,
+    val inProducts: List<String>,
+    val location: String,
+    val imlPath: String? = null
+  )
 
-  // Collect modules from module sets (recursively including nested sets)
+  // Build module → sets/products mapping
+  val inModuleSets = mutableMapOf<String, MutableSet<String>>()
+  val inProducts = mutableMapOf<String, MutableSet<String>>()
+
+  // Collect modules from module sets
   for ((moduleSet, _, _) in allModuleSets) {
     visitAllModules(moduleSet) { module ->
-      val info = moduleMap.computeIfAbsent(module.name) { ModuleDistributionInfo() }
-      info.inModuleSets.add(moduleSet.name)
+      inModuleSets.computeIfAbsent(module.name) { mutableSetOf() }.add(moduleSet.name)
     }
   }
 
-  // Collect modules from products
+  // Collect modules from products (using cache for O(1) lookups)
   for (product in products) {
     val contentSpec = product.contentSpec ?: continue
-    
-    // Collect all modules used by this product (from module sets + additional modules)
-    val allModulesInProduct = mutableSetOf<String>()
-    
-    // Collect from module sets (recursively)
-    for (msRef in contentSpec.moduleSets) {
-      val modulesFromSet = collectAllModuleNamesFromSet(allModuleSets.map { it.moduleSet }, msRef.moduleSet.name)
-      allModulesInProduct.addAll(modulesFromSet)
-    }
-    
-    // Add additional modules
-    for (module in contentSpec.additionalModules) {
-      allModulesInProduct.add(module.name)
-    }
-    
-    // Add to module map
-    for (moduleName in allModulesInProduct) {
-      val info = moduleMap.computeIfAbsent(moduleName) { ModuleDistributionInfo() }
-      if (product.name !in info.inProducts) {
-        info.inProducts.add(product.name)
-      }
+    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
+      inProducts.computeIfAbsent(moduleName) { mutableSetOf() }.add(product.name)
     }
   }
 
-  // Set location information from .idea/modules.xml
-  for ((moduleName, info) in moduleMap) {
+  // Build result map
+  val allModuleNames = (inModuleSets.keys + inProducts.keys).sorted()
+  val result = allModuleNames.associateWith { moduleName ->
     val locationInfo = moduleLocations[moduleName]
-    if (locationInfo != null) {
-      info.location = locationInfo.location
-      info.imlPath = locationInfo.imlPath
-    }
+    Entry(
+      inModuleSets = inModuleSets[moduleName]?.sorted() ?: emptyList(),
+      inProducts = inProducts[moduleName]?.sorted() ?: emptyList(),
+      location = locationInfo?.location ?: "unknown",
+      imlPath = locationInfo?.imlPath
+    )
   }
-  
-  // Write JSON as object (not array) for direct access by module name
-  for ((moduleName, info) in moduleMap.entries.sortedBy { it.key }) {
-    gen.writeObjectFieldStart(moduleName)
-    
-    gen.writeArrayFieldStart("inModuleSets")
-    for (setName in info.inModuleSets.sorted()) {
-      gen.writeString(setName)
-    }
-    gen.writeEndArray()
-    
-    gen.writeArrayFieldStart("inProducts")
-    for (productName in info.inProducts.sorted()) {
-      gen.writeString(productName)
-    }
-    gen.writeEndArray()
-    
-    gen.writeStringField("location", info.location)
-    if (info.imlPath != null) {
-      gen.writeStringField("imlPath", info.imlPath)
-    }
-    
-    gen.writeEndObject()
-  }
+
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
 }
 
 /**
  * Writes module set hierarchy analysis.
  * For each module set, lists what it includes and what includes it.
- * Replaces TypeScript buildModuleSetHierarchy() function.
- * 
+ *
  * Output format: { "setName": { "includes": [...], "includedBy": [...], "moduleCount": N } }
  */
-fun writeModuleSetHierarchy(
+internal fun writeModuleSetHierarchy(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>
 ) {
-  // Build hierarchy map: moduleSetName → {includes: [], includedBy: [], moduleCount: N}
-  val hierarchy = mutableMapOf<String, ModuleSetHierarchyInfo>()
+  @Serializable
+  data class Entry(
+    val includes: List<String>,
+    val includedBy: List<String>,
+    val moduleCount: Int
+  )
 
-  // First pass: build includes and module counts
+  // Build includes map
+  val includes = mutableMapOf<String, List<String>>()
+  val moduleCounts = mutableMapOf<String, Int>()
+  val includedBy = mutableMapOf<String, MutableList<String>>()
+
   for ((moduleSet, _, _) in allModuleSets) {
-    val info = ModuleSetHierarchyInfo(
-      includes = moduleSet.nestedSets.map { it.name },
-      moduleCount = moduleSet.modules.size
-    )
-    hierarchy[moduleSet.name] = info
+    includes[moduleSet.name] = moduleSet.nestedSets.map { it.name }.sorted()
+    moduleCounts[moduleSet.name] = moduleSet.modules.size
+    includedBy.computeIfAbsent(moduleSet.name) { mutableListOf() }
   }
 
-  // Second pass: build reverse references (includedBy)
+  // Build reverse references
   for ((moduleSet, _, _) in allModuleSets) {
     for (nestedSet in moduleSet.nestedSets) {
-      hierarchy[nestedSet.name]?.includedBy?.add(moduleSet.name)
+      includedBy.computeIfAbsent(nestedSet.name) { mutableListOf() }.add(moduleSet.name)
     }
   }
 
-  // Write JSON as flat object (no "moduleSets" wrapper) for direct access
-  for ((setName, info) in hierarchy.entries.sortedBy { it.key }) {
-    gen.writeObjectFieldStart(setName)
-    
-    gen.writeArrayFieldStart("includes")
-    for (includedSet in info.includes.sorted()) {
-      gen.writeString(includedSet)
-    }
-    gen.writeEndArray()
-    
-    gen.writeArrayFieldStart("includedBy")
-    for (parentSet in info.includedBy.sorted()) {
-      gen.writeString(parentSet)
-    }
-    gen.writeEndArray()
-    
-    gen.writeNumberField("moduleCount", info.moduleCount)
-    
-    gen.writeEndObject()
+  val result = includes.keys.sorted().associateWith { setName ->
+    Entry(
+      includes = includes[setName] ?: emptyList(),
+      includedBy = includedBy[setName]?.sorted() ?: emptyList(),
+      moduleCount = moduleCounts[setName] ?: 0
+    )
   }
+
+  gen.writeRawValue(kotlinxJson.encodeToString(result))
 }
 
 /**
  * Writes module usage index.
  * For each module, provides complete information about where it's used and how to navigate to it.
- * Replaces TypeScript findModuleUsages() function.
  */
-fun writeModuleUsageIndex(
+internal fun writeModuleUsageIndex(
   gen: JsonGenerator,
   allModuleSets: List<ModuleSetMetadata>,
-  products: List<ProductSpec>
+  products: List<ProductSpec>,
+  cache: ModuleSetTraversalCache
 ) {
-  // Build comprehensive usage index
-  val usageIndex = mutableMapOf<String, ModuleUsageInfo>()
+  @Serializable
+  data class ModuleSetRef(@JvmField val name: String, @JvmField val location: String, @JvmField val sourceFile: String)
 
-  // Collect from module sets (recursively including nested sets)
+  @Serializable
+  data class ProductRef(@JvmField val name: String, @JvmField val sourceFile: String)
+
+  @Serializable
+  data class ModuleEntry(@JvmField val moduleSets: List<ModuleSetRef>, @JvmField val products: List<ProductRef>)
+
+  @Serializable
+  data class Wrapper(@JvmField val modules: Map<String, ModuleEntry>)
+
+  val moduleSetsMap = mutableMapOf<String, MutableList<ModuleSetRef>>()
+  val productsMap = mutableMapOf<String, MutableList<ProductRef>>()
+
+  // Collect from module sets
   for ((moduleSet, location, sourceFile) in allModuleSets) {
     visitAllModules(moduleSet) { module ->
-      val info = usageIndex.computeIfAbsent(module.name) { ModuleUsageInfo() }
-      info.moduleSets.add(ModuleSetReference(moduleSet.name, location, sourceFile))
+      moduleSetsMap.computeIfAbsent(module.name) { mutableListOf() }
+        .add(ModuleSetRef(moduleSet.name, location, sourceFile))
     }
   }
 
-  // Collect from products
+  // Collect from products (using cache for O(1) lookups)
   for (product in products) {
     val contentSpec = product.contentSpec ?: continue
-    
-    // Collect all modules used by this product
-    val allModulesInProduct = mutableSetOf<String>()
-    
-    // From module sets
-    for (msRef in contentSpec.moduleSets) {
-      val modulesFromSet = collectAllModuleNamesFromSet(allModuleSets.map { it.moduleSet }, msRef.moduleSet.name)
-      allModulesInProduct.addAll(modulesFromSet)
-    }
-    
-    // From additional modules
-    for (module in contentSpec.additionalModules) {
-      allModulesInProduct.add(module.name)
-    }
-    
-    // Add to index
-    for (moduleName in allModulesInProduct) {
-      val info = usageIndex.computeIfAbsent(moduleName) { ModuleUsageInfo() }
-      info.products.add(ProductReference(product.name, product.sourceFile))
+    for (moduleName in cache.collectProductModuleNames(contentSpec)) {
+      productsMap.computeIfAbsent(moduleName) { mutableListOf() }
+        .add(ProductRef(product.name, product.sourceFile))
     }
   }
 
-  // Write JSON
-  gen.writeObjectFieldStart("modules")
-  for ((moduleName, info) in usageIndex.entries.sortedBy { it.key }) {
-    gen.writeObjectFieldStart(moduleName)
-    
-    // Module sets that include this module
-    gen.writeArrayFieldStart("moduleSets")
-    for (msRef in info.moduleSets.sortedBy { it.name }) {
-      gen.writeStartObject()
-      gen.writeStringField("name", msRef.name)
-      gen.writeStringField("location", msRef.location)
-      gen.writeStringField("sourceFile", msRef.sourceFile)
-      gen.writeEndObject()
-    }
-    gen.writeEndArray()
-    
-    // Products that use this module
-    gen.writeArrayFieldStart("products")
-    for (prodRef in info.products.sortedBy { it.name }) {
-      gen.writeStartObject()
-      gen.writeStringField("name", prodRef.name)
-      gen.writeStringField("sourceFile", prodRef.sourceFile)
-      gen.writeEndObject()
-    }
-    gen.writeEndArray()
-    
-    gen.writeEndObject()
+  val allModuleNames = (moduleSetsMap.keys + productsMap.keys).sorted()
+  val modules = allModuleNames.associateWith { moduleName ->
+    ModuleEntry(
+      moduleSets = moduleSetsMap[moduleName]?.sortedBy { it.name } ?: emptyList(),
+      products = productsMap[moduleName]?.sortedBy { it.name } ?: emptyList()
+    )
   }
-  gen.writeEndObject()
+
+  gen.writeRawValue(kotlinxJson.encodeToString(Wrapper(modules)))
 }

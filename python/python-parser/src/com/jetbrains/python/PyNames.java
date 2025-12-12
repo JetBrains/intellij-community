@@ -168,6 +168,7 @@ public final @NonNls class PyNames {
 
   public static final String CONTAINS = "__contains__";
   public static final String HASH = "__hash__";
+  public static final String HASH_FUNCTION = "hash";
   public static final String ITER = "__iter__";
   public static final String NEXT = "next";
   public static final String DUNDER_NEXT = "__next__";
@@ -177,6 +178,7 @@ public final @NonNls class PyNames {
   public static final String SETITEM = "__setitem__";
   public static final String DELITEM = "__delitem__";
   public static final String POS = "__pos__";
+  public static final String EQ = "__eq__";
   public static final String NEG = "__neg__";
   public static final String DIV = "__div__";
   public static final String TRUEDIV = "__truediv__";

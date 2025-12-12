@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.scripting-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.3.20-dev-5741">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:2.3.20-dev-6080">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-5741/scripting-compiler-plugin-for-ide-2.3.20-dev-5741.jar">
-          <sha256sum>456e21a31ffc41b1068514047829b488257989a44f4e6cd8f1109e92aacba319</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-6080/scripting-compiler-plugin-for-ide-2.3.20-dev-6080.jar">
+          <sha256sum>a418b4f1a0cd6fbd0b99c8a95d8c9b6e9b39858fa1e8b4f425207146d6330187</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-5741/scripting-compiler-plugin-for-ide-2.3.20-dev-5741.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-6080/scripting-compiler-plugin-for-ide-2.3.20-dev-6080.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-5741/scripting-compiler-plugin-for-ide-2.3.20-dev-5741-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2.3.20-dev-6080/scripting-compiler-plugin-for-ide-2.3.20-dev-6080-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

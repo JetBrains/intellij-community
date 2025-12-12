@@ -444,4 +444,11 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
       recentTemplates.retainAll(validNames);
     }
   }
+
+  @Override
+  public @NotNull Map<String, Object> getDefaultContextMap() {
+    Map<String, Object> map = super.getDefaultContextMap();
+    map.put(PROJECT_CONTEXT_VARIABLE, project);
+    return map;
+  }
 }

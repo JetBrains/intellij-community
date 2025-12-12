@@ -27,7 +27,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
@@ -112,7 +115,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        expand();
+        WriteIntentReadAction.run(() -> {
+          expand();
+        });
         return true;
       }
     }.installOn(myExpandButton);

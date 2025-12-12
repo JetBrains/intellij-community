@@ -1123,6 +1123,7 @@ fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
  * Wait for background procedures on project opening
  */
 fun <T : CommandChain> T.waitForProjectOpenProcedures(): T = apply {
+  refreshFilesInVfs()
   waitForSmartMode()
   waitForVcsLogUpdate()
 }
@@ -1314,6 +1315,10 @@ fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T 
 
 fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
   addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
+}
+
+fun <T : CommandChain> T.refreshFilesInVfs(): T = apply {
+  addCommand("${CMD_PREFIX}refreshFilesInVfs")
 }
 
 /** @see com.jetbrains.performancePlugin.commands.FindInFilesCommand */

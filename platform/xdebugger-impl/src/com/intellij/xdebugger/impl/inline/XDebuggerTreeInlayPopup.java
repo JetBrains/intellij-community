@@ -71,7 +71,7 @@ public class XDebuggerTreeInlayPopup<D> extends XDebuggerTreePopup<D> {
     }
 
     @Override
-    protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+    protected void perform(@NotNull XValueNodeImpl node, @NotNull String nodeName, @NotNull AnActionEvent e) {
       node.calculateEvaluationExpression()
         .thenAsync(expr -> {
           if (expr == null && node != myValueNode) {

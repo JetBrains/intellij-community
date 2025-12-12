@@ -17,6 +17,7 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
 import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Rule
 import org.junit.Test
@@ -358,7 +359,7 @@ class VcsLogFiltererTest {
     }
 
     operator fun GraphCommit<VcsLogCommitStorageIndex>.plus(name: String): GraphCommit<VcsLogCommitStorageIndex> {
-      data[this] = CommitMetaData(VcsUserImpl(name, "$name@example.com"))
+      data[this] = CommitMetaData(VcsUserUtil.createUser(name, "$name@example.com"))
       return this
     }
 

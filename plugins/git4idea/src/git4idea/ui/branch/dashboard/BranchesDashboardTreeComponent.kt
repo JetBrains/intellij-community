@@ -7,6 +7,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.VCS_LOG_BRANCHES_PLACE
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -132,7 +133,8 @@ object BranchesDashboardTreeComponent {
     disposable: Disposable,
   ): ProgressStripe {
     val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), disposable)
-    fun updateLoadingState() {
+
+    fun doUpdateLoadingState() {
       if (model.isLoading) {
         progressStripe.startLoading()
         tree.emptyText.text = message("action.Git.Loading.Branches.progress")
@@ -141,6 +143,10 @@ object BranchesDashboardTreeComponent {
         progressStripe.stopLoading()
         tree.emptyText.text = StatusText.getDefaultEmptyText()
       }
+    }
+
+    fun updateLoadingState() {
+      runInEdt { doUpdateLoadingState() }
     }
     model.addListener(object : BranchesTreeModel.Listener {
       override fun onLoadingStateChange() {

@@ -200,15 +200,7 @@ public final class FileTemplateUtil {
                                                @Nullable Consumer<? super VelocityException> exceptionHandler) {
     final StringWriter stringWriter = new StringWriter();
     try {
-      Project project;
-      final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
-      if (projectName instanceof String) {
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
-      }
-      else {
-        project = null;
-      }
+      Project project = getProject(context);
       VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
@@ -235,6 +227,18 @@ public final class FileTemplateUtil {
     }
 
     return result;
+  }
+
+  private static @Nullable Project getProject(VelocityContext context) {
+    Project project = (Project)context.get(FileTemplateManager.PROJECT_CONTEXT_VARIABLE);
+    if (project == null) {
+      final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
+      if (projectName instanceof String) {
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        return ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
+      }
+    }
+    return project;
   }
 
   public static @NotNull PsiElement createFromTemplate(final @NotNull FileTemplate template,

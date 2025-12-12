@@ -2,6 +2,8 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -36,7 +38,7 @@ class SeSortedProviderIds(
       val nonEssentialNonAdapted: Set<SeProviderId> = providerIds.filter { it !in essential && it !in adapted.allTab && it !in adaptedWithPresentation.allTab }.toSet()
 
       val item = SeFetchTestItem()
-      val itemData = SeItemData.createItemData(session, "", item, "".toProviderId(), item.weight(), item.presentation(), emptyMap(), emptyList())
+      val itemData = SeItemDataFactory().createItemData(session, "", item, "".toProviderId(), emptyMap())
 
       val legacyContributorsRef = SeLegacyContributorsRefImpl.create(session, providersHolder.legacyContributors)
 

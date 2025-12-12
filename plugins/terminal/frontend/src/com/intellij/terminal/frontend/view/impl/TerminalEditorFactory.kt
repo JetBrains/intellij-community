@@ -2,7 +2,7 @@ package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -113,7 +113,7 @@ object TerminalEditorFactory {
     configureSoftWraps(editor)
     CopyOnSelectionHandler.install(editor, settings)
 
-    coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
+    coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Check two things:
       // 1. If it is already disposed by the platform logic (for example, in case of project closing).
       // 2. Do not dispose if it is still showing because then it will be painted green.

@@ -6,7 +6,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2JvmBasicCompletionTestWithResolveExtension : AbstractK2JvmBasicCompletionTest() {
     override fun setUp() {

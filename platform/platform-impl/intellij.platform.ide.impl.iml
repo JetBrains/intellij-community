@@ -71,7 +71,7 @@
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
@@ -95,14 +95,14 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.blockmap" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="zip-signer" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.libraries.classgraph" />
-    <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.libraries.icu4j" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
@@ -175,6 +175,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.core" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
 </module>

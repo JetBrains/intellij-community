@@ -47,6 +47,8 @@
                  description="Enable existence of multiple workspace models, one per each isolated environment"/>
     <registryKey key="use.workspace.file.index.for.partial.scanning" defaultValue="true" restartRequired="true"
                  description="If enabled, relies on events from WorkspaceFileIndex for partial scanning"/>
+    <registryKey key="create.coroutines.for.wfi.events.processing" defaultValue="true" restartRequired="false"
+                 description="Create a coroutine for processing WFI event. For tests only"/>
 
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>

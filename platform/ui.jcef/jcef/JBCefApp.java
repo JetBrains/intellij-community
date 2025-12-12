@@ -19,7 +19,6 @@ import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.StartupUiUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefApp;
@@ -137,23 +136,7 @@ public final class JBCefApp {
         CefRenderHandler handler = osrHandlerFactory.createCefRenderHandler(component);
         return new CefRendering.CefRenderingWithHandler(handler, component);
       };
-
-      // Temporary use reflection to avoid jcef-version increment
-      // TODO: use setDefaultRenderingFactory directly
-      try {
-        Class<?> cefAppClass = Class.forName("org.cef.CefApp");
-        Class<?> supplierClass = Class.forName("java.util.function.Supplier");
-        Method setDefaultRenderingFactoryMethod = cefAppClass.getMethod("setDefaultRenderingFactory", supplierClass);
-        setDefaultRenderingFactoryMethod.invoke(cefAppClass, defaultRenderingFactory);
-      }
-      catch (NoSuchMethodException | ClassNotFoundException ignored) {
-      }
-      catch (IllegalAccessException | InvocationTargetException ex) {
-        LOG.debug(ex);
-      }
-      catch (Throwable e) {
-        LOG.warn(e);
-      }
+      CefApp.setDefaultRenderingFactory(defaultRenderingFactory);
     }
   }
 

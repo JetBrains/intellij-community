@@ -24,6 +24,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 
@@ -42,7 +43,8 @@ public class RemoveUsageAction extends AnAction {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }
 
-  private static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
+  @VisibleForTesting
+  public static void process(Usage @NotNull [] usages, @NotNull UsageView usageView) {
     ThreadingAssertions.assertEventDispatchThread();
     if (usages.length == 0) return;
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);

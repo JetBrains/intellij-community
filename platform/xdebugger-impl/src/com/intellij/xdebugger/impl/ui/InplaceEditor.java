@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -186,7 +187,10 @@ public abstract class InplaceEditor implements AWTEventListener {
     editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doOKAction();
+        WriteIntentReadAction.run(() -> {
+          doOKAction();
+          }
+        );
       }
     });
     editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeStroke");

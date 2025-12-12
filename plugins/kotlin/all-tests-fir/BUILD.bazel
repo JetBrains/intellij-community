@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/tests-from-compiler",
     "//plugins/kotlin/util/test-generator-api",
-    "//plugins/kotlin/tests-common",
+    "//plugins/kotlin/tests-common:common-tests",
     "//plugins/kotlin/code-insight/intentions-shared/tests/k2",
     "//plugins/kotlin/code-insight/inspections-k2/tests",
     "//plugins/kotlin/code-insight/intentions-k2/tests",

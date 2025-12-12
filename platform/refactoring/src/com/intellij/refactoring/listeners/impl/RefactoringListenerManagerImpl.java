@@ -7,6 +7,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public final class RefactoringListenerManagerImpl extends RefactoringListenerMan
     myListenerProviders.add(provider);
   }
 
-  public RefactoringTransaction startTransaction() {
+  public @NotNull RefactoringTransaction startTransaction() {
     List<RefactoringElementListenerProvider> providers = new ArrayList<>(myListenerProviders);
     providers.addAll(RefactoringElementListenerProvider.EP_NAME.getExtensionList(myProject));
     return new RefactoringTransactionImpl(myProject, providers);

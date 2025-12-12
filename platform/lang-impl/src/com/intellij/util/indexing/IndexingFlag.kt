@@ -20,10 +20,10 @@ import org.jetbrains.annotations.TestOnly
  *
  * For each file it saves the file mod count and [AppIndexingDependenciesService.current] at the moment when the file was indexed.
  * The IndexingFlag is used to quickly check if all indexes for a file are up to date (see IJPL-229).
- * But if IndexingFlag is not up to date, it doesn't necessarily mean that all indexes for a file are outdated.
+ * But if IndexingFlag is not up to date, it doesn't necessarily mean that indexes for a file are outdated.
  *
- * IndexingFlag can also be used to check the dirty files from the previous IDE sessions for which [IndexingStamp] may not have been updated or
- * the change was not persisted to disk.
+ * IndexingFlag can also be used to check the dirty files from the previous IDE sessions for which [IndexingStamp] may not have been updated
+ * or the change was not persisted to disk.
  *
  * The alternative is [IndexingStamp] which contains information per-index but can become outdated (see the doc) and is slower.
  * So in practice the combination of the two should be used (see [FileBasedIndexImpl.getIndexingState]).
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly
 object IndexingFlag {
   private val attribute = FileAttribute("indexing.flag", 1, true)
 
+  /** fileId -> ([FileIndexingStamp] as int64) */
   private val persistence = LongFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
@@ -54,6 +55,9 @@ object IndexingFlag {
     if (fileWithId !is VirtualFileSystemEntry) return
     if (!fileWithId.isDirectory()) return
     for (child in fileWithId.cachedChildren) {
+      //TODO RC: shouldn't we use .iterInDbChildren()? Because it could be the child was loaded at some point, left it's
+      //         mark in IndexingFlag, but then the parent GCed from the VFS cache, and reloaded later, with fewer
+      //         children in-memory
       cleanProcessedFlagRecursively(child)
     }
   }

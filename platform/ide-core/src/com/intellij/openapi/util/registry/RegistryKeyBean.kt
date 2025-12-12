@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -75,11 +75,13 @@ class RegistryKeyBean private constructor() {
     @ApiStatus.Internal
     fun createRegistryKeyDescriptor(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor): RegistryKeyDescriptor {
       val pluginId = pluginDescriptor.pluginId.idString
+      val descriptorPath = (pluginDescriptor as? IdeaPluginDescriptor)?.descriptorPath
       return RegistryKeyDescriptor(extension.key,
                                    StringUtil.unescapeStringCharacters(extension.description.replace(CONSECUTIVE_SPACES_REGEX, " ")),
                                    extension.defaultValue, extension.restartRequired,
                                    extension.overrides,
-                                   pluginId)
+                                   pluginId,
+                                   descriptorPath)
     }
 
     @ApiStatus.Internal
@@ -99,19 +101,25 @@ class RegistryKeyBean private constructor() {
       fun emitRegistryKeyWarning(message: String) {
         logger.warn(message)
       }
+      fun presentPlugin(descriptor: RegistryKeyDescriptor): String {
+        val description = StringBuilder()
+        description.append(descriptor.pluginId ?: "unknown")
+        descriptor.pluginDescriptorPath?.let { description.append(" (").append(it).append(")") }
+        return description.toString()
+      }      
 
       when (oldDescriptor.isOverrides to newDescriptor.isOverrides) {
         false to true -> { // a normal override, allow it for non-dynamic usages
           if (isDynamic) {
             emitRegistryKeyWarning(
-              "A dynamically-loaded plugin ${newDescriptor.pluginId} is forbidden to override" +
-              " the registry key ${newDescriptor.name} introduced by ${oldDescriptor.pluginId}." +
+              "A dynamically-loaded plugin ${presentPlugin(newDescriptor)} is forbidden to override" +
+              " the registry key ${newDescriptor.name} introduced by ${presentPlugin(oldDescriptor)}." +
               " Consider implementing the functionality in another way," +
               " e.g. declare and implement an extension to customize the required behavior dynamically."
             )
           } else {
-            val overrider = newDescriptor.pluginId
-            val overridden = oldDescriptor.pluginId
+            val overrider = presentPlugin(newDescriptor)
+            val overridden = presentPlugin(oldDescriptor)
             logger.info("Plugin $overrider overrides the registry key ${newDescriptor.name} declared by plugin $overridden.")
             map.put(newDescriptor.name, newDescriptor)
           }
@@ -124,8 +132,8 @@ class RegistryKeyBean private constructor() {
           map.put(newDescriptor.name, newDescriptor)
           emitRegistryKeyWarning(
             "Conflicting registry key definition for key ${oldDescriptor.name}:" +
-            " it was defined by plugin ${oldDescriptor.pluginId}" +
-            " but redefined by plugin ${newDescriptor.pluginId}." +
+            " it was defined by plugin ${presentPlugin(oldDescriptor)}" +
+            " but redefined by plugin ${presentPlugin(newDescriptor)}." +
             " Consider adding overrides=\"true\" for one of the plugins," +
             " see the documentation for com.intellij.openapi.util.registry.RegistryKeyBean.overrides for more details."
           )
@@ -134,7 +142,7 @@ class RegistryKeyBean private constructor() {
           if (oldDescriptor.defaultValue != newDescriptor.defaultValue) {
             emitRegistryKeyWarning(
               "Incorrect registry key override for key ${oldDescriptor.name}:" +
-              " both plugins ${oldDescriptor.pluginId} and ${newDescriptor.pluginId} claim to override it to different defaults."
+              " both plugins ${presentPlugin(oldDescriptor)} and ${presentPlugin(newDescriptor)} claim to override it to different defaults."
             )
           }
         }

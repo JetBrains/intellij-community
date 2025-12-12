@@ -1,7 +1,5 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
-import com.intellij.driver.client.Driver
-import com.intellij.driver.client.Remote
 import com.intellij.ide.starter.coroutine.perClassSupervisorScope
 import com.intellij.ide.starter.driver.engine.DriverOptions
 import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
@@ -10,6 +8,7 @@ import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDEHandle
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
 import com.intellij.openapi.util.SystemInfo
@@ -21,7 +20,11 @@ import kotlinx.coroutines.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-internal class IDEFrontendHandler(private val frontendContext: IDETestContext, private val driverOptions: DriverOptions, private val debugPort: Int) {
+internal class IDEFrontendHandler(
+  private val frontendContext: IDETestContext,
+  private val driverOptions: DriverOptions,
+  private val debugPort: Int,
+) {
 
   private fun VMOptions.addDisplayIfNecessary() {
     if (SystemInfo.isLinux && System.getenv("DISPLAY") == null) {
@@ -30,7 +33,12 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
     }
   }
 
-  fun runInBackground(launchName: String, joinLink: String, runTimeout: Duration): Pair<Deferred<IDEStartResult>, IDEHandle> {
+  fun runInBackground(
+    launchName: String,
+    joinLink: String,
+    runTimeout: Duration,
+    configure: IDERunContext.() -> Unit = {},
+  ): Pair<Deferred<IDEStartResult>, IDEHandle> {
     frontendContext.ide.vmOptions.let {
       //setup xDisplay
       it.addDisplayIfNecessary()
@@ -51,7 +59,8 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
     }
     val result = perClassSupervisorScope.async {
       try {
-        val thinClientCommand = if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
+        val thinClientCommand =
+          if (frontendContext.ide.vmOptions.data().contains("-Djava.awt.headless=true")) "thinClient-headless" else "thinClient"
 
         frontendContext.runIdeSuspending(
           commandLine = IDECommandLine.Args(listOf(thinClientCommand, joinLink)),
@@ -72,6 +81,8 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
               }
             }
             withScreenRecording()
+
+            configure(this)
           })
           .also {
             logOutput("Remote IDE Frontend run ${frontendContext.testName} completed")
@@ -84,6 +95,6 @@ internal class IDEFrontendHandler(private val frontendContext: IDETestContext, p
       }
     }
 
-    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() }})
+    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() } })
   }
 }

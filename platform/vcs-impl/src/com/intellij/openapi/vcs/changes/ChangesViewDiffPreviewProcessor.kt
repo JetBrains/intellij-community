@@ -124,7 +124,7 @@ internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() 
   }
 }
 
-private class AmendChangeWrapper(override val userObject: EditedCommitDetails) : ChangesViewUserObjectTag {
+internal class AmendChangeWrapper(override val userObject: EditedCommitDetails) : ChangesViewUserObjectTag {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

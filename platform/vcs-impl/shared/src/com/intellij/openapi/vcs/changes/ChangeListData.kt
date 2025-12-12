@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -28,7 +28,7 @@ data class ChangeListData @JvmOverloads constructor(
   val automatic: Boolean = false,
 ) {
 
-  private constructor(state: State) : this(VcsUserImpl(state.name ?: "", state.email ?: ""), state.date, state.automatic == true)
+  private constructor(state: State) : this(VcsUserUtil.createUser(state.name ?: "", state.email ?: ""), state.date, state.automatic == true)
 
   private var myState: State = State(author?.name, author?.email, date, automatic)
 

@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -47,6 +52,12 @@ fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
     return (this as? KtProperty)?.getter?.initializer
 }
 
+/**
+ * Finds the nearest loop expression that contains the given expression, taking into account any labels
+ * and outer loops.
+ *
+ * Returns null if no relevant loop is found.
+ */
 fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
     val expressionLabelName = when (expression) {
         is KtExpressionWithLabel -> expression.getLabelName()
@@ -55,12 +66,33 @@ fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
     }
 
     for (loopExpression in expression.parentsOfType<KtLoopExpression>(withSelf = true)) {
-        if (expressionLabelName == null || (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName) {
+        if (loopExpression == expression)
             return loopExpression
-        }
+
+        if (expressionLabelName != null && (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName)
+            return loopExpression
+
+        if (expressionLabelName == null && expression.doesBelongToLoop(loopExpression))
+            return loopExpression
     }
 
     return null
+}
+
+@ApiStatus.Internal
+fun KtExpression.doesBelongToLoop(loopExpression: KtExpression): Boolean {
+    val allowNonLocalBreaks =
+        loopExpression.module?.languageVersionSettings?.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas) == true
+    val structureBodies = PsiTreeUtil.collectParents(
+        /* element = */ this,
+        /* parent = */ KtContainerNodeForControlStructureBody::class.java,
+        /* includeMyself = */ false
+    ) {
+        val p = it.parent
+        p is KtDeclaration && !(allowNonLocalBreaks && p is KtFunctionLiteral)
+    }
+    // expression belongs to the loop when it is inside the loop body
+    return structureBodies.firstOrNull { it.parent is KtLoopExpression }?.parent == loopExpression
 }
 
 fun KtNamedFunction.isRecursive(): Boolean {

@@ -45,7 +45,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -86,6 +85,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.MatcherHolder;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -898,7 +898,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   @ApiStatus.Internal
   public static void associateMatcherToResultsList(JComponent resultsList, String rawPattern, String namePattern) {
     MinusculeMatcher matcher =
-      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, MatchingMode.IGNORE_CASE);
     MatcherHolder.associateMatcher(resultsList, matcher);
   }
 

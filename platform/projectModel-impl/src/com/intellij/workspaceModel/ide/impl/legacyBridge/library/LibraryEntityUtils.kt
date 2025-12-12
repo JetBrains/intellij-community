@@ -7,9 +7,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator.getLibraryTableId
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.projectModel.ProjectModelBundle
+import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -48,4 +52,20 @@ fun findLibraryId(library: Library): LibraryId {
     is LibraryBridge -> library.libraryId
     else -> LibraryId(library.name!!, getLibraryTableId(library.table.tableLevel))
   }
+}
+
+/**
+ * Returns the user-visible name of this [LibraryEntity]
+ *
+ * @return name of this [LibraryEntity] to be shown to user.
+ */
+@get:ApiStatus.Internal
+val LibraryEntity.presentableName: String
+  get() {
+  return LibraryNameGenerator.getLegacyLibraryName(symbolicId) ?: getPresentableNameForUnnamedLibrary()
+}
+
+private fun LibraryEntity.getPresentableNameForUnnamedLibrary(): String {
+  val url = roots.firstOrNull { it.type == LibraryRootTypeId.COMPILED }?.url?.url
+  return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
 }

@@ -10,10 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
  */
 class FoldersComponentTools(private val folders: MutableList<VirtualFile>) {
 
-  fun getFoldersAsStrings(): List<String> {
-    return folders.map { it.path }
-  }
-
   fun setFoldersAsStrings(folders: List<String>) {
     this.folders.apply {
       clear()

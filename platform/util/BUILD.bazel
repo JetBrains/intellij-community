@@ -180,7 +180,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/fastutil",
     "//platform/util-ex",
-    "@lib//:netty-buffer",
+    "//libraries/netty/buffer",
     "//libraries/caffeine",
     "//libraries/aalto-xml",
     "//platform/util/xmlDom",

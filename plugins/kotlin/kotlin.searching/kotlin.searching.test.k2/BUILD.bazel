@@ -21,7 +21,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/kotlin.searching",
     "//java/testFramework",
     "//platform/testFramework",

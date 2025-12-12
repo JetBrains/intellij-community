@@ -75,7 +75,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
   }
 
   @Override
-  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> MultiMaplet<K, V> createSetMultiMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     PersistentMultiMaplet<K, V, Set<V>> maplet = new PersistentMultiMaplet<>(
       getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator, null), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner), HashSet::new
     );
@@ -85,7 +85,7 @@ public final class PersistentMapletFactory implements MapletFactory, Closeable {
   }
 
   @Override
-  public <K, V> Maplet<K, V> createMaplet(String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer) {
+  public <K, V> Maplet<K, V> createMaplet(String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer) {
     Maplet<K, V> container = new CachingMaplet<>(
       new PersistentMaplet<>(getMapFile(storageName), new GraphKeyDescriptor<>(keyExternalizer, myEnumerator, null), new GraphDataExternalizer<>(valueExternalizer, myEnumerator, myDataInterner)),
       myCacheSize

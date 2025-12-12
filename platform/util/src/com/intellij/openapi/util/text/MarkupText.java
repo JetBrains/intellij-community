@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +34,7 @@ public final class MarkupText {
   public List<Fragment> fragments() { return fragments; }
 
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
     MarkupText that = (MarkupText)obj;
@@ -340,7 +341,7 @@ public final class MarkupText {
     public Kind kind() { return kind; }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj == this) return true;
       if (obj == null || obj.getClass() != this.getClass()) return false;
       Fragment that = (Fragment)obj;

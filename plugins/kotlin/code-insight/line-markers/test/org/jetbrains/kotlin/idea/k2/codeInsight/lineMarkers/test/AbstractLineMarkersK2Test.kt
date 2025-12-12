@@ -8,12 +8,12 @@ import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.SuperDeclarationPopupHandler
-import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 import kotlin.io.path.Path

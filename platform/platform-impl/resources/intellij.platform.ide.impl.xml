@@ -1,5 +1,5 @@
-<idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.andel"/>
     <module name="fleet.util.core"/>
@@ -34,8 +34,12 @@
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.libraries.lz4"/>
     <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.libraries.oro.matcher"/>
+    <module name="intellij.libraries.protobuf"/>
     <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.libraries.rd.core"/>
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.swingx"/>
     <module name="intellij.libraries.winp"/>
@@ -52,12 +56,13 @@
     <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.locking.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
       key="ide.project.frame.auto.fix.size.windows.interval"

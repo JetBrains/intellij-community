@@ -8,27 +8,32 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-internal class CommitToolWindowViewModel(
+@ApiStatus.Internal
+class CommitToolWindowViewModel(
   private val project: Project,
   cs: CoroutineScope,
 ) {
-  val commitTwEnabled = flow {
+  val commitTwEnabled: StateFlow<Boolean> = flow {
     durable {
       emitAll(ChangesViewApi.getInstance().isCommitToolWindowEnabled(project.projectId()))
     }
   }.stateIn(cs, SharingStarted.Eagerly, true)
 
-  val canExcludeFromCommit = flow {
+  val canExcludeFromCommit: StateFlow<Boolean> = flow {
     durable {
       emitAll(ChangesViewApi.getInstance().canExcludeFromCommit(project.projectId()))
     }
   }.stateIn(cs, SharingStarted.Eagerly, false)
+
+  val editedCommit: StateFlow<EditedCommitPresentation?> = flow {
+    durable {
+      emitAll(ChangesViewApi.getInstance().getEditedCommit(project.projectId()))
+    }
+  }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val diffPreviewOnDoubleClickOrEnter: Boolean
     get() =

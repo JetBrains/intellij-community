@@ -52,8 +52,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -272,9 +272,9 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
       String parameterName = parameter.getName();
       FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
-      Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
-      props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
-      props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
+      Map<String, Object> props = FileTemplateManager.getInstance(project).getDefaultContextMap();
+      props.put(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+      props.put(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
       PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
       if (directory != null) {
         JavaTemplateUtil.setPackageNameAttribute(props, directory);

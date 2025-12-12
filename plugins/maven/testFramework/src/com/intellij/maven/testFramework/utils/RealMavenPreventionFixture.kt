@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.io.File
+import java.nio.file.Path
 import java.util.function.Predicate
 
 class RealMavenPreventionFixture(val project: Project) : IdeaTestFixture {
@@ -65,6 +66,10 @@ class NoRealMavenServerManager : MavenServerManager {
   }
 
   override fun getMavenEventListener(): File {
+    noRealMavenAllowed()
+  }
+
+  override fun getMavenEventListenerPath(): Path {
     noRealMavenAllowed()
   }
 

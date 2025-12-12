@@ -38,6 +38,7 @@ import java.awt.Cursor
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -90,7 +91,7 @@ import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
  */
 @Composable
 public fun Link(
-    text: String,
+    @Nls text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -139,7 +140,7 @@ public fun Link(
  */
 @Composable
 public fun ExternalLink(
-    text: String,
+    @Nls text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -191,7 +192,7 @@ public fun ExternalLink(
  */
 @Composable
 public fun ExternalLink(
-    text: String,
+    @Nls text: String,
     uri: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -217,7 +218,7 @@ public fun ExternalLink(
 
 @Composable
 private fun ExternalLinkImpl(
-    text: String,
+    @Nls text: String,
     onClick: () -> Unit,
     uri: String,
     enabled: Boolean,
@@ -303,7 +304,7 @@ private fun openUri(uriHandler: UriHandler, link: String) {
 @Suppress("ComposableParamOrder") // To fix in JEWEL-928
 @Composable
 public fun DropdownLink(
-    text: String,
+    @Nls text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
@@ -357,7 +358,7 @@ public fun DropdownLink(
 
 @Composable
 private fun LinkImpl(
-    text: String,
+    @Nls text: String,
     style: LinkStyle,
     onClick: () -> Unit,
     enabled: Boolean,

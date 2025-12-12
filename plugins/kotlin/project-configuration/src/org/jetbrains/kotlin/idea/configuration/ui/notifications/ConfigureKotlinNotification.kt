@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
 import org.jetbrains.kotlin.idea.configuration.getConfiguratorByName
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import javax.swing.event.HyperlinkEvent
 
 data class ConfigureKotlinNotificationState(
@@ -39,7 +39,7 @@ class ConfigureKotlinNotification(
                 val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
                 notification.expire()
 
-                KotlinConfigurationFUSCollector.logClickConfigureKtNotification(project)
+                KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                 configurator.configure(project, excludeModules)
             }
         })

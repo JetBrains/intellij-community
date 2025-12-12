@@ -77,7 +77,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-impl",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
     "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",

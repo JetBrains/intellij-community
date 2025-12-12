@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.productLayout.analysis
 
 import com.intellij.openapi.util.JDOMUtil
-import org.jetbrains.intellij.build.productLayout.collectAllModuleNamesFromSet
 import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Parses .idea/modules.xml to determine module locations (community vs ultimate).
+ * Parses .idea/modules.xml to determine module locations (community vs. ultimate).
  * This information is used by validation functions to ensure architectural constraints.
  * 
  * @param projectRoot Absolute path to the project root directory
@@ -44,7 +45,7 @@ internal fun parseModulesXml(projectRoot: Path): ParseResult<Map<String, ModuleL
       var filepath = moduleElement.getAttributeValue("filepath") ?: continue
       
       // Replace $PROJECT_DIR$ with actual project root
-      filepath = filepath.replace("\$PROJECT_DIR\$", projectRoot.toString())
+      filepath = filepath.replace($$"$PROJECT_DIR$", projectRoot.toString())
       
       // Extract module name from .iml filename
       val moduleName = Path.of(filepath).fileName.toString().removeSuffix(".iml")
@@ -84,9 +85,12 @@ internal fun validateCommunityProducts(
   products: List<ProductSpec>,
   allModuleSets: List<ModuleSetMetadata>,
   moduleLocations: Map<String, ModuleLocationInfo>,
-  projectRoot: Path
+  projectRoot: Path,
+  cache: ModuleSetTraversalCache,
 ): List<CommunityProductViolation> {
   val violations = mutableListOf<CommunityProductViolation>()
+  // O(1) lookup for metadata by name
+  val metadataByName = allModuleSets.associateBy { it.moduleSet.name }
   
   for (product in products) {
     if (product.pluginXmlPath == null || product.contentSpec == null) continue
@@ -99,10 +103,10 @@ internal fun validateCommunityProducts(
       // Check each module set used by this product
       for (msRef in product.contentSpec.moduleSets) {
         val setName = msRef.moduleSet.name
-        val msEntry = allModuleSets.firstOrNull { it.moduleSet.name == setName } ?: continue
+        val msEntry = metadataByName.get(setName) ?: continue
         
-        // Get ALL modules including those from nested sets (pre-calculated)
-        val allModules = collectAllModuleNamesFromSet(allModuleSets.map { it.moduleSet }, setName)
+        // Get ALL modules including those from nested sets (using cache)
+        val allModules = cache.getModuleNames(setName)
         
         // Find ultimate modules
         val ultimateModules = mutableListOf<String>()
@@ -138,7 +142,7 @@ internal fun validateCommunityProducts(
 }
 
 /**
- * Validates that module sets are in correct locations (community vs ultimate).
+ * Validates that module sets are in correct locations (community vs. ultimate).
  * Reports violations where:
  * - A module set in community/ contains ultimate modules
  * - A module set in ultimate/ contains only community modules
@@ -161,7 +165,7 @@ internal fun validateModuleSetLocations(
     val isInCommunity = setFile.contains("/community/")
     val isInUltimate = setFile.contains("/ultimate/")
     
-    // Count community vs ultimate modules in this set
+    // Count community vs. ultimate modules in this set
     val ultimateModules = mutableListOf<String>()
     val communityModules = mutableListOf<String>()
     var unknownCount = 0

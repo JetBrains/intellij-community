@@ -22,6 +22,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/hash4j",
     "//platform/core-nio-fs",
+    "//platform/external-process-auth-helper/rt",
   ],
   exports = ["//platform/eel"]
 )

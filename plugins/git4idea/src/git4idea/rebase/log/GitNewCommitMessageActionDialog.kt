@@ -1,40 +1,63 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
-import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.data.VcsLogData
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitSingleCommitEditingAction
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
+import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.MultipleCommitEditingData>(
-  private val commitEditingData: T,
+
+internal class GitNewCommitMessageActionDialog(
+  private val project: Project,
   private val originMessage: String,
+  private val selectedChanges: List<Change>?,
+  private val validateCommitEditable: () -> ValidationInfo?,
   @Nls title: String,
-  @Nls private val dialogLabel: String
-) : DialogWrapper(commitEditingData.project, true) {
-  private val originalHEAD = commitEditingData.repository.info.currentRevision
+  @Nls private val dialogLabel: String,
+) : DialogWrapper(project, true) {
   private val commitEditor = createCommitEditor()
   private var onOk: (String) -> Unit = {}
   private var repositoryValidationResult: ValidationInfo? = null
+
+  constructor(
+    commitEditingData: GitCommitEditingActionBase.MultipleCommitEditingData,
+    originMessage: String,
+    @Nls title: String,
+    @Nls dialogLabel: String,
+  ) : this(commitEditingData.project,
+           originMessage,
+           commitEditingData.selectedChanges,
+           {
+             validateCommitsEditable(
+               commitEditingData.logData,
+               commitEditingData.repository,
+               commitEditingData.selection.commits.map { it.hash },
+               commitEditingData.repository.info.currentRevision
+             )
+           },
+           title,
+           dialogLabel)
 
   init {
     Disposer.register(disposable, commitEditor)
@@ -64,32 +87,9 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     show()
   }
 
-  private fun validate(commitEditingData: T, originalHEAD: String?): ValidationInfo? {
-    val logData = commitEditingData.logData
-    val repository = commitEditingData.repository
-    val commits = commitEditingData.selection.commits
-    if (repository.info.currentRevision != originalHEAD || logData.isDisposed) {
-      return ValidationInfo(
-        GitBundle.message("rebase.log.reword.dialog.failed.repository.changed.message", commits.size)
-      )
-    }
-    val lastCommitHash = commits.last().hash
-    val branches = findContainingBranches(logData, repository.root, lastCommitHash)
-    val protectedBranch = findProtectedRemoteBranch(repository, branches)
-    if (protectedBranch != null) {
-      return ValidationInfo(
-        GitBundle.message("rebase.log.reword.dialog.failed.pushed.to.protected.message", commits.size, lastCommitHash, protectedBranch)
-      )
-    }
-    return null
-  }
-
   override fun createCenterPanel(): JComponent {
     return panel {
       commitMessageWithLabelAndToolbar(commitEditor, dialogLabel)
-    }.also {
-      // Temporary workaround for IDEA-302779
-      it.minimumSize = JBUI.size(400, 120)
     }
   }
 
@@ -97,25 +97,18 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 
   override fun getDimensionServiceKey() = "Git.Rebase.Log.Action.NewCommitMessage.Dialog"
 
-  private fun createCommitEditor(): CommitMessage {
-    val editor = object : CommitMessage(commitEditingData.project, false, false, true) {
-      override fun uiDataSnapshot(sink: DataSink) {
-        super.uiDataSnapshot(sink)
-        sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = commitEditingData.selection
-        sink[VcsLogInternalDataKeys.LOG_DATA] = commitEditingData.logData
+  private fun createCommitEditor() =
+    CommitMessage(project, false, false, true).apply {
+      text = originMessage
+      editorField.setCaretPosition(0)
+
+      if (selectedChanges != null) {
+        setChangesSupplier { selectedChanges }
       }
     }
-    if (commitEditingData is GitSingleCommitEditingAction.SingleCommitEditingData
-        && commitEditingData.selectedChanges.isNotEmpty()) {
-      editor.setChangesSupplier { commitEditingData.selectedChanges }
-    }
-    editor.text = originMessage
-    editor.editorField.setCaretPosition(0)
-    return editor
-  }
 
   override fun doValidate(): ValidationInfo? {
-    repositoryValidationResult = validate(commitEditingData, originalHEAD)
+    repositoryValidationResult = validateCommitEditable()
     return repositoryValidationResult
   }
 
@@ -127,7 +120,7 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
 
   override fun dispose() {
     if (shouldUpdateCommitHistory()) {
-      VcsConfiguration.getInstance(commitEditingData.project).saveCommitMessage(commitEditor.comment)
+      VcsConfiguration.getInstance(project).saveCommitMessage(commitEditor.comment)
     }
 
     super.dispose()
@@ -137,18 +130,47 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     return commitEditor.comment != originMessage
   }
 
+  companion object {
+    fun validateCommitsEditable(
+      logData: VcsLogData,
+      repository: GitRepository,
+      commits: List<Hash>,
+      originalHEAD: String?,
+    ): ValidationInfo? {
+      if (repository.info.currentRevision != originalHEAD || logData.isDisposed) {
+        return ValidationInfo(
+          GitBundle.message("rebase.log.reword.dialog.failed.repository.changed.message", commits.size)
+        )
+      }
+      val lastCommitHash = commits.last()
+      val branches = findContainingBranches(logData, repository.root, lastCommitHash)
+      val protectedBranch = findProtectedRemoteBranch(repository, branches)
+      if (protectedBranch != null) {
+        return ValidationInfo(
+          GitBundle.message("rebase.log.reword.dialog.failed.pushed.to.protected.message", commits.size, lastCommitHash, protectedBranch)
+        )
+      }
+      return null
+    }
+  }
 }
 
 internal fun Panel.commitMessageWithLabelAndToolbar(commitMessage: CommitMessage, label: @NlsContexts.Label String) {
   row {
     label(label).also { it.component.labelFor = commitMessage.editorField }
       .resizableColumn()
-      .align(Align.FILL)
+      .align(AlignX.FILL)
     cell(commitMessage.createToolbar(true))
   }
   row {
     cell(commitMessage)
-      .resizableColumn()
       .align(Align.FILL)
+      .applyToComponent {
+        minimumSize = JBUI.size(300, 60)
+      }
   }.resizableRow()
 }
+
+private val GitCommitEditingActionBase.MultipleCommitEditingData.selectedChanges: List<Change>?
+  get() = asSafely<GitSingleCommitEditingAction.SingleCommitEditingData>()?.selectedChanges?.takeIf { it.isNotEmpty() }
+

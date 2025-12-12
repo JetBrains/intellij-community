@@ -131,7 +131,6 @@ data class SuspendData(
   val suspendContextDto: XSuspendContextDto,
   val executionStack: XExecutionStackDto?,
   val stackFrame: XStackFrameDto?,
-  val sourcePositionDto: XSourcePositionDto?,
   val topSourcePositionDto: XSourcePositionDto?,
 )
 

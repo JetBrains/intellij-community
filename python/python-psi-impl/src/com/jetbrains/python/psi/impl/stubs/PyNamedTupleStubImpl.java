@@ -33,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens;
@@ -217,7 +219,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     LinkedHashMap<String, FieldTypeAndHasDefault> result = new LinkedHashMap<>(fieldNames.size());
     for (int i = 0; i < fieldNames.size(); i++) {
-      if (PyNames.PY3_KEYWORDS.contains(fieldNames.get(i))) {
+      if (PyNames.PY3_KEYWORDS.contains(fieldNames.get(i)) || fieldNames.get(i).startsWith(PyNames.UNDERSCORE)) {
         fieldNames.set(i, "_" + i);
       }
       result.put(fieldNames.get(i), new FieldTypeAndHasDefault(null, i >= defaultStart));

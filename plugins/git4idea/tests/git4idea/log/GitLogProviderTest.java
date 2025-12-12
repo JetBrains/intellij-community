@@ -12,7 +12,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
-import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.config.GitVersion;
 import git4idea.test.GitExecutor;
@@ -143,7 +143,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false, false);
     VcsLogBranchFilter branchFilter = VcsLogFilterObject.fromBranch("feature");
-    VcsUser user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    VcsUser user = VcsUserUtil.createUser(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
     VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
     repo.update();
     List<String> actualHashes = getFilteredHashes(VcsLogFilterObject.collection(branchFilter, userFilter));
@@ -233,7 +233,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   private void filter_by_text_and_user(boolean regexp) throws Exception {
     List<String> hashes = generateHistoryForFilters(false, true);
-    VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    VcsUser user = VcsUserUtil.createUser(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
     VcsLogUserFilter userFilter = VcsLogFilterObject.fromUser(user, singleton(user));
     VcsLogTextFilter textFilter = VcsLogFilterObject.fromPattern(regexp ? ".*" : "", regexp, false);
     assertEquals(hashes, getFilteredHashes(VcsLogFilterObject.collection(userFilter, textFilter)));
@@ -360,7 +360,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   @NotNull
   private static VcsUser getDefaultUser() {
-    return new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
+    return VcsUserUtil.createUser(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
   }
 
   @NotNull

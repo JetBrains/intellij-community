@@ -284,6 +284,7 @@ e:git4idea.config.UpdateMethod
 - sf:BRANCH_DEFAULT:git4idea.config.UpdateMethod
 - sf:MERGE:git4idea.config.UpdateMethod
 - sf:REBASE:git4idea.config.UpdateMethod
+- sf:RESET:git4idea.config.UpdateMethod
 - getMethodName():java.lang.String
 - getPresentation():java.lang.String
 - s:valueOf(java.lang.String):git4idea.config.UpdateMethod

@@ -8,6 +8,7 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.xdebugger.XDebugProcess
 
@@ -17,7 +18,7 @@ import com.intellij.xdebugger.XDebugProcess
  * Use this class if the logic of the action is split and needs to operate on the frontend.
  *
  * This action uses frontend node instances ([XValueNodeImpl]) which are only available on the frontend. 
- * Moreover, for nodes used by this action [XValueContainerNode#getValueContainer] returns frontend-specific [XValue]s, 
+ * Moreover, for nodes used by this action [XValueContainerNode.getValueContainer] returns frontend-specific [XValue]s,
  * which cannot be cast to an [XValue] obtained from plugin-specific [XDebugProcess].
  * 
  * For backend actions, use [XDebuggerTreeBackendOnlyActionBase] instead, which works with backend [XValue] instances.
@@ -46,15 +47,26 @@ abstract class XDebuggerTreeSplitActionBase : AnAction(), SplitDebuggerAction {
   }
 
   companion object {
+
+    /**
+     * Returns the list of [XValueNodeImpl]s corresponding to the selected nodes in the tree.
+     * For the resulting nodes [XValueContainerNode.getValueContainer] returns frontend-specific [XValue]s.
+     */
     @JvmStatic
     fun getSelectedNodes(dataContext: DataContext): List<XValueNodeImpl> {
       return XDebuggerTree.getSelectedNodes(dataContext)
     }
 
+    /**
+     * Returns the first of the selected nodes returned by [getSelectedNodes] or null if no nodes were selected.
+     */
     @JvmStatic
     fun getSelectedNode(dataContext: DataContext): XValueNodeImpl? =
       getSelectedNodes(dataContext).firstOrNull()
 
+    /**
+     * Returns the frontend-specific [XValue] corresponding to the selected node.
+     */
     @JvmStatic
     fun getSelectedValue(dataContext: DataContext): XValue? =
       getSelectedNode(dataContext)?.valueContainer

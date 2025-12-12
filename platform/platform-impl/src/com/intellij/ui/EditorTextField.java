@@ -529,7 +529,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     });
   }
 
-  private EditorEx initEditor() {
+  private @NotNull EditorEx initEditor() {
     if (myDisposable == null) {
       initEditorDisposables();
     }

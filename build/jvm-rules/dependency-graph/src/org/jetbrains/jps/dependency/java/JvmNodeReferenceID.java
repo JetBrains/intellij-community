@@ -32,6 +32,11 @@ public final class JvmNodeReferenceID implements ReferenceID {
   }
 
   @Override
+  public int compareTo(@NotNull ReferenceID other) {
+    return myName.compareTo(other instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)other).myName : other.toString());
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

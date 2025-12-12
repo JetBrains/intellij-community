@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.doPerformActionOrShowPopup
+import com.intellij.openapi.application.WriteIntentReadAction
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 
@@ -23,6 +24,8 @@ abstract class ActionProcessor {
 
   open fun performAction(inputEvent: InputEvent, action: AnAction, event: AnActionEvent) {
     inputEvent.consume()
-    doPerformActionOrShowPopup(action, event, null)
+    WriteIntentReadAction.run {
+      doPerformActionOrShowPopup(action, event, null)
+    }
   }
 }

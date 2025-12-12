@@ -1,5 +1,5 @@
-<idea-plugin visibility="internal">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.analysis"/>
@@ -11,7 +11,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
 
   <extensionPoints>
     <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>

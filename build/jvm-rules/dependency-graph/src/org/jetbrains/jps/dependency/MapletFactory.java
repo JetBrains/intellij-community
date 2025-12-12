@@ -3,10 +3,10 @@ package org.jetbrains.jps.dependency;
 
 public interface MapletFactory {
   <K, V> MultiMaplet<K, V> createSetMultiMaplet(
-    String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer
+    String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer
   );
 
   <K, V> Maplet<K, V> createMaplet(
-    String storageName, Externalizer<K> keyExternalizer, Externalizer<V> valueExternalizer
+    String storageName, ComparableTypeExternalizer<K> keyExternalizer, ComparableTypeExternalizer<V> valueExternalizer
   );
 }

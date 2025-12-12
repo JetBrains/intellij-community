@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
  * Operation type for module set merge/move/inline analysis.
  * Using enum instead of String for type safety.
  */
-enum class MergeOperation {
+internal enum class MergeOperation {
   /** Combine source modules into target module set */
   MERGE,
   /** Move source module set to a different location */
@@ -28,51 +28,13 @@ enum class MergeOperation {
 }
 
 /**
- * Result type for operations that can fail with partial data.
- * Use instead of exceptions for recoverable errors or when partial results are useful.
+ * Represents the result of a parsing operation that may fail.
+ * Used for operations like parsing modules.xml where partial results may be available.
  */
-sealed class ParseResult<out T> {
-  /** Successful parse with complete data */
+internal sealed class ParseResult<out T> {
   data class Success<T>(val value: T) : ParseResult<T>()
-  
-  /** Failed parse, optionally with partial data */
-  data class Failure<T>(
-    val error: String,
-    val partial: T? = null
-  ) : ParseResult<T>()
-  
-  fun isSuccess(): Boolean = this is Success
-  fun isFailure(): Boolean = this is Failure
-  
-  fun getOrNull(): T? = when (this) {
-    is Success -> value
-    is Failure -> partial
-  }
-  
-  fun getOrThrow(): T = when (this) {
-    is Success -> value
-    is Failure -> error(error)
-  }
-  
-  inline fun <R> map(transform: (T) -> R): ParseResult<R> = when (this) {
-    is Success -> Success(transform(value))
-    is Failure -> Failure(error, partial?.let(transform))
-  }
+  data class Failure<T>(val error: String, val partial: T? = null) : ParseResult<T>()
 }
-
-/**
- * Dependency resolution error for a single module.
- * Used by validation functions to report missing dependencies.
- */
-@Serializable
-data class DependencyError(
-  val dependency: String,
-  val existsGlobally: Boolean,
-  val affectedModules: List<String>,
-  val suggestedModuleSets: List<String>,
-  val isTransitive: Boolean = false,
-  val transitiveChains: List<String> = emptyList()
-)
 
 /**
  * Metadata about a module set including its location and source file.
@@ -127,6 +89,7 @@ enum class ProductCategory {
  * Contains essential product metadata with source file paths for AI navigation,
  * plus complete ProductModulesContentSpec for full DSL representation.
  */
+@Serializable
 data class ProductSpec(
   val name: String,
   val className: String?,
@@ -135,10 +98,9 @@ data class ProductSpec(
   val contentSpec: ProductModulesContentSpec?,
   val buildModules: List<String>,
   val category: ProductCategory = ProductCategory.BACKEND,  // Product architecture category
-  val totalModuleCount: Int = 0,      // All modules including from module sets
+  val totalModuleCount: Int = 0,      // All modules including from module sets (deduplicated)
   val directModuleCount: Int = 0,     // Just additionalModules count
-  val moduleSetCount: Int = 0,        // Number of module sets included
-  val uniqueModuleCount: Int = 0      // Deduplicated module count
+  val moduleSetCount: Int = 0         // Number of module sets included
 )
 
 /**
@@ -147,7 +109,7 @@ data class ProductSpec(
  * @param location Module location: "community", "ultimate", or "unknown"
  * @param imlPath Absolute path to the .iml file
  */
-data class ModuleLocationInfo(
+internal data class ModuleLocationInfo(
   val location: String,  // "community", "ultimate", or "unknown"
   val imlPath: String?
 )
@@ -155,7 +117,8 @@ data class ModuleLocationInfo(
 /**
  * Violation when a community product uses ultimate modules.
  */
-data class CommunityProductViolation(
+@Serializable
+internal data class CommunityProductViolation(
   val product: String,
   val productFile: String,
   val moduleSet: String,
@@ -167,9 +130,10 @@ data class CommunityProductViolation(
 )
 
 /**
- * Violation when a module set is in the wrong location (community vs ultimate).
+ * Violation when a module set is in the wrong location (community vs. ultimate).
  */
-data class ModuleSetLocationViolation(
+@Serializable
+internal data class ModuleSetLocationViolation(
   val moduleSet: String,
   val file: String,
   val issue: String,  // "community_contains_ultimate" or "ultimate_contains_only_community"
@@ -198,8 +162,8 @@ internal data class ProductSimilarityPair(
 
 /**
  * Overlap between two module sets.
- * Correctly identifies intentional nested set inclusions vs actual duplications.
- * Intentional nesting (e.g., libraries includes libraries.core) is filtered out.
+ * Correctly identifies intentional nested set inclusions vs. actual duplications.
+ * Intentional nesting (e.g., libraries include `libraries.core`) is filtered out.
  */
 @Serializable
 internal data class ModuleSetOverlap(
@@ -309,7 +273,7 @@ internal data class SizeImpact(
 
 /**
  * Impact analysis result for merging, moving, or inlining module sets.
- * Used to assess safety and predict consequences before refactoring.
+ * Used to assess safety and predict consequences of refactoring.
  */
 @Serializable
 internal data class MergeImpactResult(
@@ -347,42 +311,3 @@ internal data class ProductUsageAnalysis(
   val totalProducts: Int
 )
 
-// Private helper data classes for internal analysis
-
-/**
- * Helper data class for module distribution analysis.
- */
-internal data class ModuleDistributionInfo(
-  val inModuleSets: MutableList<String> = mutableListOf(),
-  val inProducts: MutableList<String> = mutableListOf(),
-  var location: String = "unknown",  // "community", "ultimate", or "unknown"
-  var imlPath: String? = null
-)
-
-/**
- * Helper data class for module set hierarchy analysis.
- */
-internal data class ModuleSetHierarchyInfo(
-  val includes: List<String>,
-  val includedBy: MutableList<String> = mutableListOf(),
-  val moduleCount: Int
-)
-
-/**
- * Helper data classes for module usage index.
- */
-internal data class ModuleUsageInfo(
-  val moduleSets: MutableList<ModuleSetReference> = mutableListOf(),
-  val products: MutableList<ProductReference> = mutableListOf()
-)
-
-internal data class ModuleSetReference(
-  val name: String,
-  val location: String,
-  val sourceFile: String
-)
-
-internal data class ProductReference(
-  val name: String,
-  val sourceFile: String
-)

@@ -390,13 +390,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val allOptions = if (options.shellCommand != null) {
-        options
-      }
-      else {
-        val shellCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
-        options.builder().shellCommand(shellCommand).build()
-      }
+      val allOptions = options.builder().modify { builder ->
+        if (options.shellCommand == null) {
+          builder.shellCommand(TerminalSessionTestUtil.createShellCommand(shellPath.toString()))
+        }
+        if (options.workingDirectory == null) {
+          builder.workingDirectory(System.getProperty("user.home"))
+        }
+      }.build()
 
       TerminalSessionTestUtil.assumeCommandBlockShellIntegration(allOptions.shellCommand!!)
 
@@ -405,7 +406,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
         allOptions,
         isLowLevelSession,
         childScope("TerminalSession"),
-      )
+      ).session
       val inputChannel = session.getInputChannel()
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()

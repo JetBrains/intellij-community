@@ -34,8 +34,10 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal object GHPRTimelineThreadComponentFactory {
-  fun createIn(cs: CoroutineScope,
-               vm: GHPRTimelineThreadViewModel): JComponent =
+  fun createIn(
+    cs: CoroutineScope,
+    vm: GHPRTimelineThreadViewModel,
+  ): JComponent =
     VerticalListPanel().apply {
       name = "GitHub Thread Panel ${vm.id}"
       add(cs.createThreadItem(vm))
@@ -181,13 +183,19 @@ internal object GHPRTimelineThreadComponentFactory {
     })
     return TimelineDiffComponentFactory.createDiffWithHeader(this, vm, vm.filePath, fileNameClickListener) {
       Wrapper().apply {
-        bindContentIn(this@createDiffWithHeader, vm.patchHunkWithAnchor) { (hunk, anchorRange) ->
-          if (hunk.lines.isEmpty()) {
+        bindContentIn(this@createDiffWithHeader, vm.patchHunkWithAnchor) {
+          if (it == null) {
             JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
           }
           else {
-            TimelineDiffComponentFactory
-              .createDiffComponentIn(this, vm.project, EditorFactory.getInstance(), hunk, anchorRange)
+            val (hunk, anchorRange) = it
+            if (hunk.lines.isEmpty()) {
+              JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
+            }
+            else {
+              TimelineDiffComponentFactory
+                .createDiffComponentIn(this, vm.project, EditorFactory.getInstance(), hunk, anchorRange)
+            }
           }
         }
       }

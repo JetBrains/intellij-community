@@ -295,13 +295,13 @@ PROBLEMS:
 
     org.jetbrains.kotlin.idea.script.ScriptConfigurationHighlightingTestGenerated
     org.jetbrains.kotlin.checkers.KotlinHighlightVisitorTestGenerated.Scripts
-    org.jetbrains.kotlin.idea.highlighter.HighlightingTestGenerated.Uncategorized.testKotlinInJavaInjection
+    org.jetbrains.kotlin.idea.highlighter.K1HighlightingTestGenerated.Uncategorized.testKotlinInJavaInjection
 ```
 
 ```
 [HIGHLIGHTING OF EMBEDDED SCRIPTS]
 
-        org.jetbrains.kotlin.idea.highlighter.HighlightingTestGenerated.Uncategorized.testKotlinInJavaInjection
+        org.jetbrains.kotlin.idea.highlighter.K1HighlightingTestGenerated.Uncategorized.testKotlinInJavaInjection
 ```
 
 

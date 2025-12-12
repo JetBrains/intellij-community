@@ -24,6 +24,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import kotlin.Deprecated;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +104,7 @@ public abstract class XDebuggerUtil {
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 
+  @Deprecated(message = "Use XDebuggerTreeActionBase#getSelectedValue instead.")
   public abstract @Nullable XValueContainer getValueContainer(DataContext dataContext);
 
   /**

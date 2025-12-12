@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common.k1" />
-    <orderEntry type="module" module-name="kotlin.test-framework" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.psi" />

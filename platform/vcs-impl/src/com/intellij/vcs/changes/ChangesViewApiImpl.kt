@@ -60,8 +60,8 @@ internal class ChangesViewApiImpl : ChangesViewApi {
 
   override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->
     LOG.trace { "Showing resolve conflicts dialog for ${changeIds.size} changes" }
-    val cache = ChangeListChangeIdCache.getInstance(project)
-    val changes = changeIds.mapNotNull { cache.getChange(it) }
+    val cache = ChangesViewChangeIdCache.getInstance(project)
+    val changes = changeIds.mapNotNull { cache.getChangeListChange(it) }
     withContext(Dispatchers.EDT) {
       AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(changes).toList())
     }
@@ -79,6 +79,10 @@ internal class ChangesViewApiImpl : ChangesViewApi {
       ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.synchronizeInclusion(changeLists, unversionedFiles)
     }
   }
+
+  override suspend fun getEditedCommit(projectId: ProjectId): Flow<EditedCommitPresentation?> = getProjectScoped(projectId) { project ->
+    project.serviceAsync<ChangesViewWorkflowManager>().editedCommit
+  } ?: flowOf(null)
 
   private suspend fun handleNewInclusionModel(newModel: InclusionModel, channel: SendChannel<BackendChangesViewEvent>): Nothing {
     coroutineScope {

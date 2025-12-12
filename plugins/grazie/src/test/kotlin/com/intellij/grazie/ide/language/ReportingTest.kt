@@ -40,7 +40,7 @@ class ReportingTest : BasePlatformTestCase() {
     val highlightings = myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id }
     val info = assertOneElement(highlightings)
     assertEquals(TextProblemSeverities.GRAMMAR_ERROR_ATTRIBUTES, info.type.attributesKey)
-    val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
+    val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
@@ -48,7 +48,7 @@ class ReportingTest : BasePlatformTestCase() {
   fun `test tooltip and description texts in commit annotator`() {
     configureCommit(myFixture, "I have an new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
-    val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
+    val message = "Use 'a' instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }

@@ -35,6 +35,7 @@ import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
 import com.intellij.workspaceModel.core.fileIndex.impl.getEntityPointer
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -89,21 +90,30 @@ class ProjectEntityIndexingService(
   }
 
   private fun computeScanningParametersFromWFIEvent(event: WorkspaceFileIndexChangedEvent): Deferred<ScanningParameters> {
-    return scope.async {
-      ReadAction.nonBlocking(Callable {
-        val iterators = ArrayList<IndexableFilesIterator>()
-
-        //generateIteratorsFromWFIChangedEvent(event.removedFileSets, event.storageBefore, iterators)
-        generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
-
-        return@Callable if (iterators.isEmpty()) {
-          CancelledScanning
-        }
-        else {
-          ScanningIterators("Changes from WorkspaceFileIndex", predefinedIndexableFilesIterators = iterators)
-        }
-      }).executeSynchronously()
+    return if (Registry.`is`("create.coroutines.for.wfi.events.processing")) {
+      scope.async {
+        processWfiEvent(event)
+      }
     }
+    else {
+      CompletableDeferred(processWfiEvent(event))
+    }
+  }
+
+  private fun processWfiEvent(event: WorkspaceFileIndexChangedEvent): ScanningParameters {
+    return ReadAction.nonBlocking(Callable {
+      val iterators = ArrayList<IndexableFilesIterator>()
+
+      //generateIteratorsFromWFIChangedEvent(event.removedFileSets, event.storageBefore, iterators)
+      generateIteratorsFromWFIChangedEvent(event.registeredFileSets, event.storageAfter, iterators)
+
+      return@Callable if (iterators.isEmpty()) {
+        CancelledScanning
+      }
+      else {
+        ScanningIterators("Changes from WorkspaceFileIndex", predefinedIndexableFilesIterators = iterators)
+      }
+    }).executeSynchronously()
   }
 
   private enum class Change {

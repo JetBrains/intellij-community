@@ -35,7 +35,9 @@
                      implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
                      key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
                      suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
-    <registryKey defaultValue="10" description="How ofter system pythons must be refreshed (minutes)" key="python.system.refresh.minutes"/>
+    <registryKey defaultValue="10" description="How often system pythons must be refreshed (minutes)" key="python.system.refresh.minutes" restartRequired="true"/>
+    <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)" key="python.conda.envs.refresh.seconds" restartRequired="true"/>
+    <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds" restartRequired="true"/>
     <!-- Only modules with `baseDir` support Python SDKs -->
     <registryKey defaultValue="true" description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir" key="python.show.modules.with.base.dir" restartRequired="true"/>
     <fileType name="Requirements.txt"

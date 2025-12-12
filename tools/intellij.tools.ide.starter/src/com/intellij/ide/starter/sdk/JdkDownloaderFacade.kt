@@ -13,7 +13,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.*
 
-class DownloadJDKException() : SetupException("JDK list is empty")
+class DownloadJDKException : SetupException("JDK list is empty")
 
 object JdkDownloaderFacade {
 
@@ -24,6 +24,7 @@ object JdkDownloaderFacade {
   val jdk20: JdkDownloadItem get() = jdkDownloader(JdkVersion.JDK_20.toString())
   val jdk21: JdkDownloadItem get() = jdkDownloader(JdkVersion.JDK_21.toString())
   val jbr21: JdkDownloadItem get() = jdkDownloader(JdkVersion.JDK_21.toString(), jbr = true)
+  val jdk25: JdkDownloadItem get() = jdkDownloader(JdkVersion.JDK_25.toString())
 
   const val MINIMUM_JDK_FILES_COUNT: Int = 42
 

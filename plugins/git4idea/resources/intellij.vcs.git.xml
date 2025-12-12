@@ -567,7 +567,7 @@
     <advancedSetting id="git.commit.do.not.run.commit.hooks" default="false"  groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
-    <advancedSetting id="git.recent.projects.show.branch" enumClass="git4idea.repo.RecentProjectsShowBranchMode" default="DUPLICATE_NAMES"
+    <advancedSetting id="git.recent.projects.show.branch" enumClass="git4idea.repo.RecentProjectsShowBranchMode" default="ALWAYS"
                      bundle="messages.GitBundle" groupKey="advanced.settings.git"/>
 
     <registryKey key="git.blocking.read" defaultValue="true"
@@ -639,8 +639,10 @@
                  description="Search for available executables in WSL on Windows"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
                  description="Show toolwindow tab with stashes"/>
-    <registryKey defaultValue="true" description="Use the new API for OS abstraction for non-local projects."
-                 key="git.use.eel.for.non.local.projects"/>
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for projects in containers."
+                 key="git.use.eel.for.container.projects"/>
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for WSL projects."
+                 key="git.use.eel.for.wsl.projects"/>
     <registryKey defaultValue="false" description="Use the new API for OS abstraction for local projects."
                  key="git.use.eel.for.local.projects"/>
     <registryKey key="git.can.use.restore.command" defaultValue="true"
@@ -654,6 +656,8 @@
                  When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
+    <registryKey key="git.log.branches.use.async.tree.model" defaultValue="true"
+                 description="Use asynchronous branches dashboard tree model in Git Log. If disabled, use the synchronous model instead."/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
     <registryKey key="git.recent.checkout.branches.reflog.entries.count" defaultValue="50"
@@ -723,6 +727,7 @@
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
                                  location="confirmations"/>
+    <vcs.updateOptionsDialogProvider implementation="git4idea.update.GitUpdateOptionsDialogProvider"/>
 
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
@@ -928,6 +933,9 @@
     <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
+
+    <vcs.commitSuccessNotificationActionProvider
+      implementation="git4idea.rebase.log.GitCommitSuccessNotificationRewordProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

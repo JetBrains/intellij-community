@@ -15,16 +15,15 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -65,15 +64,6 @@ import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
-@Obsolete
-fun createCompilationContextBlocking(
-  projectHome: Path,
-  defaultOutputRoot: Path,
-  options: BuildOptions = BuildOptions(),
-): CompilationContext = runBlocking(Dispatchers.Default) {
-  createCompilationContext(projectHome, defaultOutputRoot, options)
-}
-
 suspend fun createCompilationContext(
   projectHome: Path,
   defaultOutputRoot: Path,
@@ -81,7 +71,12 @@ suspend fun createCompilationContext(
 ): CompilationContext {
   val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false).asBazelIfNeeded
+  return createCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = { defaultOutputRoot },
+    options = options,
+    setupTracer = false,
+  ).asBazelIfNeeded
 }
 
 internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHome: Path, artifactDir: Path? = null): BuildPaths {
@@ -98,8 +93,75 @@ internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHom
   return result
 }
 
+suspend fun createCompilationContext(
+  projectHome: Path,
+  buildOutputRootEvaluator: (JpsProject) -> Path,
+  options: BuildOptions,
+  setupTracer: Boolean,
+  enableCoroutinesDump: Boolean = true,
+  customBuildPaths: BuildPaths? = null,
+): CompilationContextImpl {
+  if (!options.useCompiledClassesFromProjectOutput) {
+    // disable compression - otherwise, our zstd/zip cannot compress efficiently
+    System.setProperty("jps.storage.do.compression", "false")
+    System.setProperty("jps.new.storage.cache.size.mb", "96")
+  }
+
+  check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
+    Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
+  }) {
+    "communityHome ($COMMUNITY_ROOT) doesn't point to a directory containing IntelliJ Community sources"
+  }
+
+  val messages = BuildMessagesImpl.create()
+  if (options.printEnvironmentInfo) {
+    Span.current().addEvent("environment info", Attributes.of(
+      AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
+      AttributeKey.stringKey("project home"), projectHome.toString(),
+    ))
+    printEnvironmentDebugInfo()
+  }
+
+  if (options.printFreeSpace) {
+    logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
+  }
+
+  val model = loadProject(projectHome = projectHome, kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired = isCompilationRequired(options))
+
+  val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
+
+  // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
+  // (see createCopyForProduct)
+  if (setupTracer) {
+    JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
+  }
+
+  val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
+  /**
+   * [defineJavaSdk] may be skipped using [isCompilationRequired]
+   * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
+   */
+  spanBuilder("define JDK").use {
+    defineJavaSdk(context)
+  }
+  if (enableCoroutinesDump) {
+    spanBuilder("enable coroutines dump").use {
+      enableCoroutinesDump(it)
+    }
+  }
+
+  spanBuilder("prepare for build").use {
+    context.prepareForBuild()
+  }
+
+  messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
+  // this is not a proper place to initialize logging, but this is the only place called in most build scripts
+  BuildMessagesHandler.initLogging(messages)
+  return context
+}
+
 @Internal
-class CompilationContextImpl private constructor(
+class CompilationContextImpl internal constructor(
   private val model: JpsModel,
   override val messages: BuildMessages,
   override val paths: BuildPaths,
@@ -108,7 +170,7 @@ class CompilationContextImpl private constructor(
   val global: JpsGlobal
     get() = model.global
 
-  private val moduleOutputProvider = JpsModuleOutputProvider(project)
+  override val outputProvider: ModuleOutputProvider = JpsModuleOutputProvider(project)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
@@ -150,73 +212,6 @@ class CompilationContextImpl private constructor(
         System.setProperty("io.netty.tryReflectionSetAccessible", "true")
       }
     }
-
-    suspend fun createCompilationContext(
-      projectHome: Path,
-      buildOutputRootEvaluator: (JpsProject) -> Path,
-      options: BuildOptions,
-      setupTracer: Boolean,
-      enableCoroutinesDump: Boolean = true,
-      customBuildPaths: BuildPaths? = null,
-    ): CompilationContextImpl {
-      if (!options.useCompiledClassesFromProjectOutput) {
-        // disable compression - otherwise, our zstd/zip cannot compress efficiently
-        System.setProperty("jps.storage.do.compression", "false")
-        System.setProperty("jps.new.storage.cache.size.mb", "96")
-      }
-
-      check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
-        Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
-      }) {
-        "communityHome ($COMMUNITY_ROOT) doesn't point to a directory containing IntelliJ Community sources"
-      }
-
-      val messages = BuildMessagesImpl.create()
-      if (options.printEnvironmentInfo) {
-        Span.current().addEvent("environment info", Attributes.of(
-          AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
-          AttributeKey.stringKey("project home"), projectHome.toString(),
-        ))
-        printEnvironmentDebugInfo()
-      }
-
-      if (options.printFreeSpace) {
-        logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
-      }
-
-      val model = loadProject(projectHome, KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired(options))
-
-      val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
-
-      // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
-      // (see createCopyForProduct)
-      if (setupTracer) {
-        JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
-      }
-
-      val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
-      /**
-       * [defineJavaSdk] may be skipped using [isCompilationRequired]
-       * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
-       */
-      spanBuilder("define JDK").use {
-        defineJavaSdk(context)
-      }
-      if (enableCoroutinesDump) {
-        spanBuilder("enable coroutines dump").use {
-          context.enableCoroutinesDump(it)
-        }
-      }
-
-      spanBuilder("prepare for build").use {
-        context.prepareForBuild()
-      }
-
-      messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
-      // this is not a proper place to initialize logging, but this is the only place called in most build scripts
-      BuildMessagesHandler.initLogging(messages)
-      return context
-    }
   }
 
   override suspend fun getStableJdkHome(): Path {
@@ -235,7 +230,7 @@ class CompilationContextImpl private constructor(
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    val copy = CompilationContextImpl(projectModel, messages, paths, options)
+    val copy = CompilationContextImpl(model = projectModel, messages = messages, paths = paths, options = options)
     copy.compilationData = compilationData
     return copy
   }
@@ -306,14 +301,6 @@ class CompilationContextImpl private constructor(
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
 
-  override fun findRequiredModule(name: String): JpsModule = moduleOutputProvider.findRequiredModule(name)
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
-    moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
-
-  override fun findModule(name: String): JpsModule? = moduleOutputProvider.findModule(name)
-
-  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
-
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
     return JpsJavaExtensionService.dependencies(module).recursively()
       // if a project requires different SDKs, they all shouldn't be added to the test classpath
@@ -329,10 +316,6 @@ class CompilationContextImpl private constructor(
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
     return org.jetbrains.intellij.build.findFileInModuleSources(module, relativePath)
-  }
-
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    return moduleOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
@@ -354,19 +337,19 @@ class CompilationContextImpl private constructor(
     }
     messages.artifactBuilt(pathToReport)
   }
+}
 
-  private fun enableCoroutinesDump(span: Span) {
-    try {
-      enableCoroutineDump()
-      JBR.getJstack()?.includeInfoFrom { """
+private fun enableCoroutinesDump(span: Span) {
+  try {
+    enableCoroutineDump()
+    JBR.getJstack()?.includeInfoFrom { """
 $COROUTINE_DUMP_HEADER
 ${dumpCoroutines()}
 """ // dumpCoroutines is multiline, trimIndent won't work
-      }
     }
-    catch (e: NoClassDefFoundError) {
-      span.addEvent("Cannot enable coroutines dump, JetBrains Runtime is required: ${e.message}")
-    }
+  }
+  catch (e: NoClassDefFoundError) {
+    span.addEvent("Cannot enable coroutines dump, JetBrains Runtime is required: ${e.message}")
   }
 }
 

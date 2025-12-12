@@ -3,9 +3,7 @@ package org.jetbrains.idea.maven.maven3;
 
 import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,18 +13,16 @@ import org.jetbrains.idea.maven.project.BundledMaven3;
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
+import static org.jetbrains.idea.maven.MavenClasspathBuilder.*;
 import static org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput;
 
 public class Maven3Support implements MavenVersionAwareSupportExtension {
@@ -49,7 +45,6 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
 
   @Override
   public @NotNull List<Path> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
 
     final List<Path> classpath = new ArrayList<>();
 
@@ -59,7 +54,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     }
     else {
       MavenLog.LOG.debug("collecting classpath for production");
-      prepareClassPathForProduction(distribution.getVersion(), classpath, pluginFileOrDir.getParent());
+      prepareClassPathForProduction(distribution.getVersion(), classpath);
     }
 
     addMavenLibs(classpath, distribution.getMavenHome());
@@ -67,32 +62,17 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     return classpath;
   }
 
-  private static void prepareClassPathForProduction(@NotNull String mavenVersion,
-                                                    List<Path> classpath,
-                                                    Path rootPath) {
-
-    classpath.add(PathManager.getJarForClass(MavenId.class));
-    classpath.add(rootPath.resolve("maven-server.jar"));
-
-    classpath.add(rootPath.resolve("maven-server-telemetry.jar"));
-    try {
-      classpath.add(PathManager.getJarForClass(Class.forName("io.opentelemetry.sdk.trace.export.SpanExporter")));
-    }
-    catch (ClassNotFoundException e) {
-      MavenLog.LOG.error(e);
-    }
-    addDir(classpath, rootPath.resolve("maven-telemetry-lib"), f -> true);
-
-    classpath.add(rootPath.resolve("maven3-server-common.jar"));
-    addDir(classpath, rootPath.resolve("maven3-server-lib"), f -> true);
-
-    classpath.add(rootPath.resolve("maven3-server.jar"));
+  private void prepareClassPathForProduction(@NotNull String mavenVersion,
+                                             List<Path> classpath) {
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-      classpath.add(rootPath.resolve("maven36-server.jar"));
+      addMavenServerLibraries(classpath, "intellij.maven.server3", "intellij.maven.server36");
+    }
+    else {
+      addMavenServerLibraries(classpath, "intellij.maven.server3");
     }
   }
 
-  private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
+  private void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
     BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
@@ -109,24 +89,6 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     classpath.add(locateModuleOutput("intellij.maven.server.m3.impl"));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
       classpath.add(locateModuleOutput("intellij.maven.server.m36.impl"));
-    }
-  }
-
-  private static void addMavenLibs(List<Path> classpath, Path mavenHome) {
-    addDir(classpath, mavenHome.resolve("lib"), f -> !f.getFileName().toString().contains("maven-slf4j-provider"));
-    Path bootFolder = mavenHome.resolve("boot");
-    List<Path> classworldsJars =
-      NioFiles.list(bootFolder).stream().filter((f) -> StringUtil.contains(f.getFileName().toString(), "classworlds")).toList();
-    classpath.addAll(classworldsJars);
-  }
-
-  private static void addDir(List<Path> classpath, Path dir, Predicate<Path> filter) {
-    List<Path> files = NioFiles.list(dir);
-
-    for (Path jar : files) {
-      if (Files.isRegularFile(jar) && jar.getFileName().toString().endsWith(".jar") && filter.test(jar)) {
-        classpath.add(jar);
-      }
     }
   }
 

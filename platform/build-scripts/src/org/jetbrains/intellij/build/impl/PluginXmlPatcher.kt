@@ -54,7 +54,7 @@ internal suspend fun patchPluginXml(
   context: BuildContext,
 ) {
   val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
-  val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context).decodeToString(), context)
+  val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString(), context)
 
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
@@ -66,6 +66,7 @@ internal suspend fun patchPluginXml(
   }
 
   val pluginVersion = getPluginVersion(plugin = pluginLayout, descriptorContent = descriptorContent, context = context)
+
   @Suppress("TestOnlyProblems")
   val content = try {
     val element = JDOMUtil.load(descriptorContent)
@@ -87,7 +88,8 @@ internal suspend fun patchPluginXml(
         DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorCache),
         DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorCache),
       ),
-      context = context)
+      context = context,
+    )
     resolveIncludes(element = element, elementResolver = xIncludeResolver)
 
     val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
@@ -105,7 +107,7 @@ internal suspend fun patchPluginXml(
         dependencyHelper = dependencyHelper,
         pluginLayout = pluginLayout,
         frontendModuleFilter = frontendModuleFilter,
-        context = context
+        outputProvider = context.outputProvider,
       )
     }
     pluginLayout.pluginXmlPatcher(JDOMUtil.write(element), context)

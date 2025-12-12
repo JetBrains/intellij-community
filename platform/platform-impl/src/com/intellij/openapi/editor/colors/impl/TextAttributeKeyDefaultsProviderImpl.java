@@ -10,6 +10,6 @@ import org.jetbrains.annotations.Nullable;
 final class TextAttributeKeyDefaultsProviderImpl implements TextAttributesKey.TextAttributeKeyDefaultsProvider {
   @Override
   public @Nullable TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
-    return ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getDefaultAttributes(key);
+    return EditorColorsManager.getInstance() instanceof EditorColorsManagerImpl mgr ? mgr.getDefaultAttributes(key) : null;
   }
 }

@@ -74,8 +74,8 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
   "plugins/maven/lib/maven-server.jar" to "1.8",
-  "plugins/maven/lib/maven3-server-common.jar" to "1.8",
-  "plugins/maven/lib/maven3-server.jar" to "1.8",
+  "plugins/maven/lib/intellij.maven.server3/maven3-server-common.jar" to "1.8",
+  "plugins/maven/lib/intellij.maven.server3/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",

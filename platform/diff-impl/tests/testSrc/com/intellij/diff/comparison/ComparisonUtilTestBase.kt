@@ -93,7 +93,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
-  private fun checkConsistencyLineInner(fragments: List<LineFragment>, before: Document, after: Document) {
+  fun checkConsistencyLineInner(fragments: List<LineFragment>, before: Document, after: Document) {
     assertTrue(fragments.size == 1)
     val fragment = fragments[0]
 
@@ -106,7 +106,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     checkConsistency(fragment.innerFragments!!, before, after)
   }
 
-  private fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
+  fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
     for (fragment in fragments) {
       assertTrue(fragment.startOffset1 <= fragment.endOffset1)
       assertTrue(fragment.startOffset2 <= fragment.endOffset2)

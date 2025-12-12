@@ -1,0 +1,8 @@
+JsonFile: n_array_unclosed_trailing_comma.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('1')
+    PsiElement(,)(',')
+    PsiErrorElement:<value> or ']' expected
+      <empty list>

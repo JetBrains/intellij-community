@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -51,32 +51,28 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull PsiFile psiFile,
-                     final @Nullable Editor editor,
+                     @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiElement myPsiElement = startElement;
-
-    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
-    if (myPsiElement instanceof PsiEnumConstant) {
-      final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
-      chooseMethodsToImplement(editor, startElement,
-                               ((PsiEnumConstant)myPsiElement).getContainingClass(),
-                               hasClassInitializer, chooser -> {
+    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(startElement.getContainingFile())) return;
+    if (startElement instanceof PsiEnumConstant constant) {
+      final PsiEnumConstantInitializer aClass = constant.getInitializingClass();
+      final boolean hasInitializer = aClass != null;
+      chooseMethodsToImplement(editor, startElement, hasInitializer ? aClass : constant.getContainingClass(), hasInitializer , chooser -> {
           if (chooser == null) return;
 
           final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
           if (selectedElements == null || selectedElements.isEmpty()) return;
 
           WriteCommandAction.writeCommandAction(project, psiFile).run(() -> {
-            final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
+            final PsiClass psiClass = constant.getOrCreateInitializingClass();
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.getOptions());
           });
         });
     }
     else {
-      OverrideImplementUtil.chooseAndImplementMethods(project, editor, (PsiClass)myPsiElement);
+      OverrideImplementUtil.chooseAndImplementMethods(project, editor, (PsiClass)startElement);
     }
-
   }
 
   @Override

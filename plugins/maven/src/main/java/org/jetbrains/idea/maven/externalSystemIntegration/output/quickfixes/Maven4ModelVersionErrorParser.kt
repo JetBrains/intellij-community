@@ -20,6 +20,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.psi.PsiDocumentManager
@@ -39,6 +42,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.*
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.MavenImportLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -60,11 +64,18 @@ class Maven4ModelVersionErrorParser(
                        { it.exists() },
                        if (SystemInfo.isWindows) TRIGGER_LINES_WINDOWS else TRIGGER_LINES_UNIX
   )
+
   override fun supportsType(type: LogMessageType?): Boolean {
     return true;
   }
 
-  override fun checkLogLine(parentId: Any, parsingContext: MavenParsingContext, logLine: MavenLogEntryReader.MavenLogEntry, logEntryReader: MavenLogEntryReader, messageConsumer: Consumer<in BuildEvent>): Boolean {
+  override fun checkLogLine(
+    parentId: Any,
+    parsingContext: MavenParsingContext,
+    logLine: MavenLogEntryReader.MavenLogEntry,
+    logEntryReader: MavenLogEntryReader,
+    messageConsumer: Consumer<in BuildEvent>,
+  ): Boolean {
 
     return processLogLine(parentId, parsingContext, logLine.line, messageConsumer)
   }
@@ -87,11 +98,66 @@ class Maven4ModelVersionErrorParser(
     }
   }
 
-  override fun processLogLine(parentId: Any, parsingContext: MavenParsingContext, logLine: String, messageConsumer: Consumer<in BuildEvent>): Boolean {
+  override fun processLogLine(
+    parentId: Any,
+    parsingContext: MavenParsingContext,
+    logLine: String,
+    messageConsumer: Consumer<in BuildEvent>,
+  ): Boolean {
     val buildIssue = createBuildIssue(logLine, parsingContext.ideaProject) ?: return false
     messageConsumer.accept(BuildIssueEventImpl(parentId, buildIssue, MessageEvent.Kind.ERROR))
     return true
   }
+
+  override fun processProjectProblem(project: Project, problem: MavenProjectProblem): Boolean {
+    val description = problem.description ?: return false
+    if (description in TRIGGER_LINES_PROBLEM) {
+      val filePath = extractFilePath(problem.path)
+      val path = project.getEelDescriptor().getPath(filePath).asNioPath()
+      if (pathChecker(path)) {
+        val modelAndOffset = getModelFromPath(project, path)
+        if (modelAndOffset == null || modelAndOffset.first == MavenConstants.MODEL_VERSION_4_0_0) {
+          val buildIssue = newBuildIssue(createLogLikeDescription(problem), path, modelAndOffset?.second)
+          val console = eventHandlerProvider(project)
+          console.addBuildIssue(buildIssue, MessageEvent.Kind.ERROR)
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  private fun createLogLikeDescription(problem: MavenProjectProblem): String {
+    return "[ERROR] Maven model problem: ${problem.description} at ${problem.path}"
+  }
+
+
+  fun extractFilePath(input: String): String {
+    val parts = input.split(':')
+
+    // If there is no ':' at all → entire string is a path
+    if (parts.size == 1) return input
+
+    // Try parse last part as column or line
+    val last = parts.last()
+    val lastIsInt = last.toIntOrNull() != null
+
+    if (!lastIsInt) {
+      // No trailing numbers → entire string is path
+      return input
+    }
+
+    // Try parse second-to-last part as line (if present)
+    val secondLast = parts.getOrNull(parts.size - 2)
+    val secondLastIsInt = secondLast?.toIntOrNull() != null
+
+    val pathPartsCount =
+      if (secondLastIsInt) parts.size - 2 // line:col present
+      else parts.size - 1                 // :line present
+
+    return parts.take(pathPartsCount).joinToString(":")
+  }
+
 
   private fun createBuildIssue(
     logLine: String,
@@ -100,6 +166,7 @@ class Maven4ModelVersionErrorParser(
     for (trigger in triggers) {
       val match = trigger.find(logLine)
       if (match == null) continue
+
 
       val fileName = match.groupValues[1]
       val path = Path(fileName)
@@ -125,10 +192,15 @@ class Maven4ModelVersionErrorParser(
     }
   }
 
-  override fun processLogLine(project: Project, logLine: String, reader: BuildOutputInstantReader?, messageConsumer: Consumer<in BuildEvent>): Boolean {
+  override fun processLogLine(
+    project: Project,
+    logLine: String,
+    reader: BuildOutputInstantReader?,
+    messageConsumer: Consumer<in BuildEvent>,
+  ): Boolean {
     val buildIssue = createBuildIssue(logLine, project) ?: return false
     val console = eventHandlerProvider(project)
-    val kind = if(logLine.startsWith("[ERROR]")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
+    val kind = if (logLine.startsWith("[ERROR]")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     console.addBuildIssue(buildIssue, kind)
     return true
   }
@@ -173,7 +245,8 @@ class UpdateVersionQuickFix(val path: Path) : BuildIssueQuickFix {
         updateFiles(project, filesToUpdate)
         withContext(Dispatchers.EDT) {
           FileDocumentManager.getInstance().saveAllDocuments()
-          MavenProjectsManager.getInstance(project).scheduleUpdateAllMavenProjects(MavenSyncSpec.full("Update model version quick fix", true))
+          MavenProjectsManager.getInstance(project)
+            .scheduleUpdateAllMavenProjects(MavenSyncSpec.full("Update model version quick fix", true))
         }
         future.complete(null)
       }
@@ -243,6 +316,10 @@ val TRIGGER_LINES_UNIX: List<Regex> = listOf(
   "the model contains elements that require a model version of 4.1.0 @ .*? file://(.*?)[:,$]",
   "the model contains elements that require a model version of 4.1.0 at file://(.*?)[:,$]",
 ).map { it.toRegex() };
+
+@ApiStatus.Internal
+val TRIGGER_LINES_PROBLEM: List<String> = listOf("'subprojects' unexpected subprojects element",
+                                                 "the model contains elements that require a model version of 4.1.0")
 
 @ApiStatus.Internal
 val TRIGGER_LINES_WINDOWS: List<Regex> = listOf(

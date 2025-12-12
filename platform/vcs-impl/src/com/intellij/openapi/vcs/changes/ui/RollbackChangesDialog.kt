@@ -57,6 +57,9 @@ class RollbackChangesDialog private constructor(private val project: Project,
       row {
         cell(browser)
           .align(Align.FILL)
+          .applyToComponent {
+            minimumSize = JBUI.size(100, 100)
+          }
       }.resizableRow()
       row {
         cell(commitLegend.component)
@@ -67,9 +70,6 @@ class RollbackChangesDialog private constructor(private val project: Project,
                         { newValue -> PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, newValue) })
           .component
       }
-    }.also {
-      // Temporary workaround for IDEA-302779
-      it.minimumSize = JBUI.size(200, 150)
     }
   }
 

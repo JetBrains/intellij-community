@@ -3,15 +3,18 @@ package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.*
-import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataFile
+import com.intellij.testFramework.TestDataPath
+import com.intellij.vcs.log.util.VcsUserUtil
 import java.io.File
 
 @TestDataPath("\$CONTENT_ROOT/testData/diff/patchReader/")
 class PatchReaderTest : HeavyPlatformTestCase() {
-  private val author = VcsUserImpl("D D", "aaaa@gmail.com")
-  private val doubleSurname = VcsUserImpl("D D-D", "aaaa@gmail.com")
-  private val longName = VcsUserImpl("very long author-surname", "aaaa@gmail.com")
+  private val author = VcsUserUtil.createUser("D D", "aaaa@gmail.com")
+  private val doubleSurname = VcsUserUtil.createUser("D D-D", "aaaa@gmail.com")
+  private val longName = VcsUserUtil.createUser("very long author-surname", "aaaa@gmail.com")
   private val baseRevision = "d48bebc211cc216aaa78bdf25d7f0b0143d6333b"
   private val subjectLine = "Subject line"
 

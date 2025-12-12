@@ -117,9 +117,8 @@
 - name: lib/grazie.jar
   modules:
   - name: intellij.grazie
-  - name: intellij.grazie.core
-    reason: <- intellij.grazie
   contentModules:
+  - name: intellij.grazie.core
   - name: intellij.grazie.json
   - name: intellij.grazie.markdown
   - name: intellij.grazie.xml

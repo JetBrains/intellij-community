@@ -1,3 +1,5 @@
+f:com.intellij.dvcs.commit.EditedCommitDetailsExtKt
+- *sf:create(com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails$Companion,com.intellij.vcs.log.VcsUser,com.intellij.vcs.log.VcsFullCommitDetails):com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 f:com.intellij.dvcs.push.PushController
 - com.intellij.openapi.Disposable
 - *:createCustomPanels(java.util.Collection):java.util.Map

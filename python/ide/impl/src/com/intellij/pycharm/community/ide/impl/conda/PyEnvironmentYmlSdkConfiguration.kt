@@ -199,7 +199,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   private suspend fun createCondaEnv(project: Project, condaExecutable: String, environmentYml: String): PyResult<Sdk> {
     val binaryToExec = BinOnEel(Path.of(condaExecutable))
-    val existingEnvs = PyCondaEnv.getEnvs(binaryToExec).getOrNull() ?: emptyList()
+    val existingEnvs = PyCondaEnv.getEnvs(binaryToExec, forceRefresh = true).getOrNull() ?: emptyList()
 
     val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks
     val newCondaEnvInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(Path.of(environmentYml),

@@ -20,7 +20,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.changes.ChangeListChangeIdCache;
+import com.intellij.vcs.changes.ChangesViewChangeIdCache;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.*;
@@ -871,7 +871,7 @@ public final class ChangeListWorker {
       Map<ListData, Set<Change>> mapping = getChangesMapping();
       myReadOnlyChangesCache = mapping;
       if (myMainWorker) {
-        ChangeListChangeIdCache.getInstance(myProject).updateCache(mapping.values());
+        ChangesViewChangeIdCache.getInstance(myProject).updateChangeListsCache(mapping.values());
       }
     }
 

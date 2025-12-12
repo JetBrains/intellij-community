@@ -17,7 +17,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
@@ -63,7 +65,14 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.9.1/kotlinx-html-jvm-0.9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/korte/korte-jvm/4.0.10/korte-jvm-4.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.9.1/kotlinx-html-jvm-0.9.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
@@ -79,7 +88,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

@@ -4,9 +4,9 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.text
 import com.intellij.find.impl.TextSearchListAgnosticRenderer
 import com.intellij.find.impl.UsagePresentation
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.presentations.SeTextSearchItemPresentation
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap

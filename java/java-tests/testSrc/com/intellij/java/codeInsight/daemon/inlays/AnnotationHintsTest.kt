@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.codeInsight.hints.AnnotationInlaySettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
@@ -279,16 +279,19 @@ public final class Optional</*<# @NotNull #>*/T> {
     }
 }
 """
-    val registry = Registry.get("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")
-    val old = registry.asBoolean()
-    registry.setValue(true)
-    doTestProviderWithConfigured(myFixture.editor.document.text,
-                                 convert(expected),
-                                 AnnotationInlayProvider(),
-                                 enabledOptions = mapOf(AnnotationInlayProvider.SHOW_INFERRED to false,
-                                                        AnnotationInlayProvider.SHOW_EXTERNAL to true),
-                                 testMode = ProviderTestMode.SIMPLE)
-    registry.setValue(old)
+    val settings = AnnotationInlaySettings.getInstance()
+    val old = settings.shortenNotNull
+    settings.shortenNotNull = true
+    try {
+      doTestProviderWithConfigured(myFixture.editor.document.text,
+                                   convert(expected),
+                                   AnnotationInlayProvider(),
+                                   enabledOptions = mapOf(AnnotationInlayProvider.SHOW_INFERRED to false,
+                                                          AnnotationInlayProvider.SHOW_EXTERNAL to true),
+                                   testMode = ProviderTestMode.SIMPLE)
+    } finally {
+      settings.shortenNotNull = old
+    }
   }
   
   private fun convert(text: String): String{
@@ -315,24 +318,27 @@ public final class Optional</*<# @NotNull #>*/T> {
     @Language("JAVA") nullnessMarkerText: String,
     enabledOptions: Map<String, Boolean> = mapOf("showInferred" to true, "showExternal" to true),
   ) {
-    val registry = Registry.get("java.exclamation.mark.inlay.for.inferred.and.external.notnull.annotations")
-    val old = registry.asBoolean()
-    registry.setValue(false)
-    doTestProvider(
-      "test.java",
-      annotatedText,
-      AnnotationInlayProvider(),
-      enabledOptions,
-      testMode = ProviderTestMode.SIMPLE,
-    )
-    registry.setValue(true)
-    doTestProvider(
-      "test.java",
-      nullnessMarkerText,
-      AnnotationInlayProvider(),
-      enabledOptions,
-      testMode = ProviderTestMode.SIMPLE,
-    )
-    registry.setValue(old)
+    val settings = AnnotationInlaySettings.getInstance()
+    val old = settings.shortenNotNull
+    settings.shortenNotNull = false
+    try {
+      doTestProvider(
+        "test.java",
+        annotatedText,
+        AnnotationInlayProvider(),
+        enabledOptions,
+        testMode = ProviderTestMode.SIMPLE,
+      )
+      settings.shortenNotNull = true
+      doTestProvider(
+        "test.java",
+        nullnessMarkerText,
+        AnnotationInlayProvider(),
+        enabledOptions,
+        testMode = ProviderTestMode.SIMPLE,
+      )
+    } finally {
+      settings.shortenNotNull = old
+    }
   }
 }

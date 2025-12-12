@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems")
+
 package org.jetbrains.intellij.build.impl.plugins
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -105,18 +107,27 @@ private suspend fun buildNonBundledPlugins(
   val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins && isPluginArchiveEnabled
   val plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
   val isPluginValidationEnabled = !isUpdateFromSources && !context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)
-  val json = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
+  val json: Lazy<JSON> = lazy { JSON.std.without(JSON.Feature.USE_FIELDS) }
   val mappings = buildPlugins(
-    moduleOutputPatcher, plugins, os = null, stageDir, state, buildPlatformLibJob, searchableOptionSet, descriptorCacheContainer, context
+    moduleOutputPatcher = moduleOutputPatcher,
+    plugins = plugins,
+    os = null,
+    targetDir = stageDir,
+    state = state,
+    buildPlatformJob = buildPlatformLibJob,
+    searchableOptionSet = searchableOptionSet,
+    descriptorCacheContainer = descriptorCacheContainer,
+    context = context,
   ) { plugin, pluginDirOrFile ->
     val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
       context.buildNumber
     }
     else {
+      val outputProvider = context.outputProvider
       plugin.versionEvaluator.evaluate(
-        pluginXmlSupplier = { getUnprocessedPluginXmlContent(context.findRequiredModule(plugin.mainModule), context).decodeToString() },
+        pluginXmlSupplier = { getUnprocessedPluginXmlContent(outputProvider.findRequiredModule(plugin.mainModule), outputProvider).decodeToString() },
         ideBuildVersion = context.pluginBuildNumber,
-        context,
+        context = context,
       ).pluginVersion
     }
 
@@ -130,13 +141,7 @@ private suspend fun buildNonBundledPlugins(
     val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
     pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
 
-    val entries = handleCustomPlatformSpecificAssets(
-      layout = plugin,
-      targetPlatform = null,
-      context = context,
-      pluginDir = pluginDirOrFile,
-      isDevMode = true,
-    )
+    val entries = handleCustomPlatformSpecificAssets(layout = plugin, targetPlatform = null, context = context, pluginDir = pluginDirOrFile, isDevMode = true)
 
     if (isPluginArchiveEnabled) {
       archivePlugin(

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.compiler.options.CompileStepBeforeRun
@@ -17,6 +17,7 @@ import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -85,8 +86,12 @@ abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnviron
     val runProfile = executeRunConfigurationTask.runProfile
     if (runProfile !is JavaRunConfigurationBase) return null
 
-    val mainClass = getMainClass(runProfile) ?: return null
-    val configurationRunName = getConfigurationRunName(runProfile) ?: return null
+    val mainClass = runReadAction {
+      getMainClass (runProfile)
+    } ?: return null
+    val configurationRunName = runReadAction {
+      getConfigurationRunName(runProfile)
+    } ?: return null
     val module = runProfile.configurationModule.module ?: return null
     val javaModuleName = runProfile.findJavaModuleName(isTestModule(module))
 

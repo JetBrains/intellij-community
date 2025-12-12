@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
+import com.intellij.dvcs.repo.rpcId
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
@@ -36,9 +37,9 @@ class GitRepositoriesFrontendHolderTest : GitRepositoriesFrontendHolderTestBase(
     val allReposInHolder = holder.getAll()
     assertSize(1, allReposInHolder)
     val singleRepoInHolder = allReposInHolder.single()
-    assertEquals(repo.rpcId, singleRepoInHolder.repositoryId)
+    assertEquals(repo.rpcId(), singleRepoInHolder.repositoryId)
 
-    assertEquals(holder.get(repo.rpcId), singleRepoInHolder)
+    assertEquals(holder.get(repo.rpcId()), singleRepoInHolder)
 
     assertTrue(holder.initialized)
   }

@@ -81,6 +81,7 @@ public final class CompletionParameters implements BaseCompletionParameters {
     return myOriginalFile;
   }
 
+  @Override
   public @NotNull CompletionType getCompletionType() {
     return myCompletionType;
   }

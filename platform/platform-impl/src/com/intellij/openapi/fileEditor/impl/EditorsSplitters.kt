@@ -500,7 +500,7 @@ open class EditorsSplitters internal constructor(
     val frame = getFrame() ?: return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
-      withContext(Dispatchers.UiWithModelAccess) {
+      withContext(Dispatchers.EDT) {
         frame.setFileTitle(null, null)
       }
     }
@@ -512,7 +512,7 @@ open class EditorsSplitters internal constructor(
       catch (ignored: InvalidPathException) {
         null
       }
-      withContext(Dispatchers.UiWithModelAccess) {
+      withContext(Dispatchers.EDT) {
         frame.setFileTitle(title, ioFile)
       }
     }
@@ -986,7 +986,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       )
     }
     else {
-      val splitter = withContext(Dispatchers.UiWithModelAccess) {
+      val splitter = withContext(Dispatchers.EDT) {
         val splitter = createSplitter(
           isVertical = splitState.isVertical,
           proportion = splitState.proportion,
@@ -1059,7 +1059,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }
     }.mapNotNull { it.getCompleted() }
 
-    span("file opening in EDT", Dispatchers.UiWithModelAccess) {
+    span("file opening in EDT", Dispatchers.EDT) {
       var window: EditorWindow? = null
       val windowAddedDeferred = CompletableDeferred<Unit>()
       try {

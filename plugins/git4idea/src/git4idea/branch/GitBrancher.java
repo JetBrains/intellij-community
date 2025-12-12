@@ -140,6 +140,24 @@ public interface GitBrancher {
                                      @Nullable Runnable callInAwtLater);
 
   /**
+   * Creates and checks out a new local branch starting from the given reference:
+   * {@code git checkout -b <branchname> <start-point>}. <br/>
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, boolean, List, Runnable)}.
+   *
+   * @param newBranchName       the name of the new local branch.
+   * @param startPoint          the reference to checkout.
+   * @param overwriteIfNeeded   reset existing branch to {@code startPoint} if needed.
+   * @param alwaysSmartCheckout when true, automatically performs smart checkout without prompting the user
+   * @param repositories        repositories to operate on.
+   * @param callInAwtLater      the Runnable that should be called after execution of the method (both successful and unsuccessful).
+   *                            If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+   */
+  void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                     @NotNull String startPoint, boolean overwriteIfNeeded, boolean alwaysSmartCheckout,
+                                     @NotNull List<? extends @NotNull GitRepository> repositories,
+                                     @Nullable Runnable callInAwtLater);
+
+  /**
    * <p>Deletes the branch with the specified name.</p>
    * <p>{@code git branch -d <name>}</p>
    * <p>If the branch can't be deleted, because it is unmerged neither to the HEAD nor to its upstream,

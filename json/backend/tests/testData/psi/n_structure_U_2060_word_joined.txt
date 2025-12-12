@@ -1,0 +1,6 @@
+JsonFile: n_structure_U_2060_word_joined.json
+  JsonArray
+    PsiElement([)('[')
+    JsonReferenceExpression
+      PsiElement(IDENTIFIER)('⁠')
+    PsiElement(])(']')

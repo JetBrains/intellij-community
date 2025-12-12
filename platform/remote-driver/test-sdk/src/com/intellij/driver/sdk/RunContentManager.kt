@@ -19,6 +19,7 @@ interface RunContentManager {
 interface RunContentDescriptorRef {
   fun getDisplayName(): String
   fun getProcessHandler(): ProcessHandlerRef?
+  fun getExecutionId(): Long
 }
 
 @Remote("com.intellij.execution.process.ProcessHandler")
@@ -27,4 +28,5 @@ interface ProcessHandlerRef {
   fun isProcessTerminating(): Boolean
   fun waitFor(millis: Long): Boolean
   fun destroyProcess()
+  fun getExitCode(): Int?
 }

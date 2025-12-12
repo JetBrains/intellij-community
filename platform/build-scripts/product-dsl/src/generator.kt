@@ -4,6 +4,17 @@
 package org.jetbrains.intellij.build.productLayout
 
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.stats.ModuleSetFileResult
+import org.jetbrains.intellij.build.productLayout.stats.ProductFileResult
+import org.jetbrains.intellij.build.productLayout.util.DryRunCollector
+import org.jetbrains.intellij.build.productLayout.util.FileUpdateUtils
+import org.jetbrains.intellij.build.productLayout.xml.appendContentBlock
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleLine
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleSetXml
+import org.jetbrains.intellij.build.productLayout.xml.appendModuleSetsStrategyComment
+import org.jetbrains.intellij.build.productLayout.xml.appendOpeningTag
+import org.jetbrains.intellij.build.productLayout.xml.appendXmlHeader
+import org.jetbrains.intellij.build.productLayout.xml.generateXIncludes
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -29,25 +40,11 @@ import java.nio.file.Path
  * @param label Description label ("community" or "ultimate") for header generation
  * @return Result containing file status and statistics
  */
-internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String): ModuleSetFileResult {
+internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: String, dryRunCollector: DryRunCollector? = null): ModuleSetFileResult {
   val fileName = "${MODULE_SET_PREFIX}${moduleSet.name}.xml"
   val outputPath = outputDir.resolve(fileName)
-
   val buildResult = buildModuleSetXml(moduleSet, label)
-
-  // determine change status
-  val status = when {
-    !Files.exists(outputPath) -> FileChangeStatus.CREATED
-    Files.readString(outputPath) == buildResult.xml -> FileChangeStatus.UNCHANGED
-    else -> FileChangeStatus.MODIFIED
-  }
-
-  // Only write if changed
-  if (status != FileChangeStatus.UNCHANGED) {
-    Files.createDirectories(outputPath.parent)
-    Files.writeString(outputPath, buildResult.xml)
-  }
-
+  val status = FileUpdateUtils.updateIfChanged(outputPath, buildResult.xml, dryRunCollector)
   return ModuleSetFileResult(fileName, status, buildResult.directModuleCount)
 }
 
@@ -57,25 +54,26 @@ internal fun generateModuleSetXml(moduleSet: ModuleSet, outputDir: Path, label: 
  * @param isUltimateBuild Whether this is an Ultimate build (vs. Community build)
  * @return Result containing file status and statistics
  */
-fun generateProductXml(
+internal fun generateProductXml(
   pluginXmlPath: Path,
   spec: ProductModulesContentSpec,
   productName: String,
   productPropertiesClass: String,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   projectRoot: Path,
   isUltimateBuild: Boolean,
+  dryRunCollector: DryRunCollector? = null,
 ): ProductFileResult {
   // Determine which generator to recommend based on plugin.xml file location
   // Community products are under community/ directory, Ultimate products are not
-  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateModuleSets") + GENERATOR_SUFFIX
+  val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateGenerator") + GENERATOR_SUFFIX
 
   // Build complete plugin.xml file
   // inlineModuleSets = false means: use xi:include to reference module set XML files in product XML
   // Note: Module set XML files themselves always contain inlined module definitions
   val buildResult = buildProductContentXml(
     spec = spec,
-    moduleOutputProvider = moduleOutputProvider,
+    outputProvider = outputProvider,
     inlineXmlIncludes = false,
     inlineModuleSets = false,
     productPropertiesClass = productPropertiesClass,
@@ -83,12 +81,8 @@ fun generateProductXml(
     isUltimateBuild = isUltimateBuild
   )
 
-  // Compare with existing file if it exists
   val originalContent = Files.readString(pluginXmlPath)
-  val status = if (originalContent == buildResult.xml) FileChangeStatus.UNCHANGED else FileChangeStatus.MODIFIED
-  if (status != FileChangeStatus.UNCHANGED) {
-    Files.writeString(pluginXmlPath, buildResult.xml)
-  }
+  val status = FileUpdateUtils.writeIfChanged(pluginXmlPath, originalContent, buildResult.xml, dryRunCollector)
 
   // Calculate statistics using the contentBlocks from generation
   val totalModules = buildResult.contentBlocks.sumOf { it.modules.size }
@@ -109,7 +103,7 @@ fun generateProductXml(
  * Generates module alias, xi:include directives (or inlined content), and `<content>` blocks for each module set.
  * 
  * @param spec The product modules specification
- * @param moduleOutputProvider Provider for module output paths
+ * @param outputProvider Provider for module output paths
  * @param inlineXmlIncludes Whether to inline legacy XML includes (vs. using xi:include)
  * @param inlineModuleSets Controls how module sets are rendered in PRODUCT XML files only.
  *                         - false (default): Use xi:include directives to reference module set XML files
@@ -124,7 +118,7 @@ fun generateProductXml(
  */
 fun buildProductContentXml(
   spec: ProductModulesContentSpec,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   inlineXmlIncludes: Boolean,
   inlineModuleSets: Boolean,
   productPropertiesClass: String,
@@ -152,7 +146,7 @@ fun buildProductContentXml(
 
     // Generate xi:include directives or inline content
     if (spec.deprecatedXmlIncludes.isNotEmpty()) {
-      generateXIncludes(spec = spec, moduleOutputProvider = moduleOutputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this, isUltimateBuild = isUltimateBuild)
+      generateXIncludes(spec = spec, outputProvider = outputProvider, inlineXmlIncludes = inlineXmlIncludes, sb = this, isUltimateBuild = isUltimateBuild)
     }
 
     // Generate module sets as xi:includes or inline content blocks

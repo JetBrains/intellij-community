@@ -20,6 +20,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
@@ -227,7 +230,8 @@ class SeTabVmImpl(
     return if (itemData.presentation is SeAdaptedItemEmptyPresentation) {
       availableLegacyContributors[itemData.providerId]?.let { contributor ->
         val fetchedItem = itemData.fetchItemIfExists() as? SeAdaptedItem ?: return null
-        val newItemData = itemData.withPresentation(SeAdaptedItemPresentation(itemData.presentation.isMultiSelectionSupported, fetchedItem.rawObject) {
+        val newItemData = itemData.withPresentation(SeAdaptedItemPresentation(itemData.presentation.isMultiSelectionSupported,
+                                                                              fetchedItem.rawObject) {
           contributor.elementsRenderer
         })
 

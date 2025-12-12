@@ -32,11 +32,10 @@ jvm_library(
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/code-insight/utils",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
     "//plugins/kotlin/fir/tests:tests_test_lib",
-    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -60,6 +59,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
     "//plugins/kotlin/base/scripting/scripting.shared",
+    "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.inspections.tests` end

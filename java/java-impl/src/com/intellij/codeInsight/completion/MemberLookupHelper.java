@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class MemberLookupHelper {
+public final class MemberLookupHelper {
   private final PsiMember myMember;
   private final boolean myMergedOverloads;
   private final @Nullable PsiClass myContainingClass;
@@ -61,7 +61,7 @@ public class MemberLookupHelper {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    boolean constructor = myMember instanceof PsiMethod && ((PsiMethod)myMember).isConstructor();
+    boolean constructor = myMember instanceof PsiMethod method && method.isConstructor();
     if (constructor) {
       presentation.setItemText("new " + memberName);
       if (myContainingClass != null && myContainingClass.getTypeParameters().length > 0) {
@@ -81,8 +81,8 @@ public class MemberLookupHelper {
 
     final String params = myMergedOverloads
                           ? "(...)"
-                          : myMember instanceof PsiMethod
-                            ? getMethodParameterString((PsiMethod)myMember, substitutor)
+                          : myMember instanceof PsiMethod method
+                            ? getMethodParameterString(method, substitutor)
                             : "";
 
     presentation.appendTailText(params, false);

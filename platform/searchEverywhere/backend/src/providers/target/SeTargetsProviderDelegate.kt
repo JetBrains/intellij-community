@@ -16,10 +16,13 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
 import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -37,7 +40,9 @@ class SeTargetItem(
   val isMultiSelectionSupported: Boolean,
 ) : SeLegacyItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, extendedInfo, isMultiSelectionSupported)
+  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentationBuilder()
+    .withTargetPresentation(legacyItem.presentation, matchers, extendedInfo, isMultiSelectionSupported)
+    .build()
   override val rawObject: Any get() = legacyItem
 }
 
@@ -115,8 +120,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     }
     val (startOffset, endOffset) = rangeResult ?: return null
 
-    return SePreviewInfo(usageInfo.virtualFile!!.rpcId(),
-                         listOf(startOffset to endOffset))
+    return SePreviewInfoFactory().create(usageInfo.virtualFile!!.rpcId(), listOf(startOffset to endOffset))
   }
 
   /**
@@ -128,7 +132,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributor.filterControlSymbols(rawPattern)
-    val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
+    val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", MatchingMode.IGNORE_CASE)
     return ItemMatchers(matcher, null)
   }
 

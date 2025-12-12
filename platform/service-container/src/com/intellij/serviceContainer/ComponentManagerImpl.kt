@@ -52,6 +52,7 @@ import com.intellij.util.messages.impl.*
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Job
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -1034,16 +1035,23 @@ abstract class ComponentManagerImpl(
         }
 
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
+          fun looksLikeJetBrainsCode(impl: String): Boolean {
+            return impl.startsWith("com.intellij.")
+                   || impl.startsWith("org.jetbrains.")
+                   || impl.startsWith("com.jetbrains.")
+          }
+
           val impl = getServiceImplementation(service, this)
           val message = "`preload=${service.preload.name}` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
-          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl)
+          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl.replace("\$", "."))
+
           if (service.preload == PreloadMode.AWAIT && !isKnown) {
             LOG.error(PluginException(message, plugin.pluginId))
           }
-          else if (!isKnown || !impl.startsWith("com.intellij.")) {
+          else if (!isKnown || !looksLikeJetBrainsCode(impl)) {
             val application = ApplicationManager.getApplication()
 
-            if (impl.startsWith("com.intellij.")) {
+            if (looksLikeJetBrainsCode(impl)) {
               // logged only in the IJ project, let's not spam developers of plugins
               if (AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources()) {
                 LOG.warn(message)
@@ -1472,16 +1480,16 @@ private fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl, 
 }
 
 // Ask Core team approve before changing this set
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
-private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
-  "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
-  "com.intellij.completion.ml.experiment.ClientExperimentStatus",
+@Internal
+@VisibleForTesting
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@Language("jvm-class-name")
+val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.compiler.server.BuildManager",
   "com.intellij.openapi.module.WebModuleTypeRegistrar",
-  "com.intellij.tasks.config.PasswordConversionEnforcer",
   "com.intellij.ide.RecentProjectsManagerBase",
-  "org.jetbrains.android.AndroidPlugin",
   "com.intellij.remoteDev.tests.impl.DistributedTestHost",
+  "com.intellij.remoteDev.tests.impl.LambdaTestHost", // AT-3387
   "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
   // use lazy listener
   "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
@@ -1492,20 +1500,44 @@ private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   // use lazy listener
   "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
   "org.jetbrains.idea.maven.tasks.MavenShortcutsManager",
-  "com.jetbrains.rd.platform.codeWithMe.toolbar.CodeWithMeToolbarUpdater",
-  "com.jetbrains.rdserver.portForwarding.cwm.CodeWithMeBackendPortForwardingToolWindowManager",
-  "com.jetbrains.rdserver.followMe.FollowMeManagerService",
-  "com.jetbrains.rdserver.diagnostics.BackendPerformanceHost",
-  "com.jetbrains.rdserver.followMe.BackendUserManager",
-  "com.jetbrains.rdserver.followMe.BackendUserFocusManager",
-  "com.jetbrains.rdserver.projectView.BackendProjectViewSync",
-  "com.jetbrains.rdserver.editors.BackendFollowMeEditorsHost",
-  "com.jetbrains.rdserver.debugger.BackendFollowMeDebuggerHost",
-  "com.jetbrains.rdserver.editors.BackendEditorService",
-  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
-  "com.jetbrains.rdserver.toolbar.CWMHostClosedToolbarNotification",
   "com.jetbrains.rider.protocol.RiderProtocolProjectSessionsManager",
-  "com.jetbrains.rider.projectView.workspace.impl.RiderWorkspaceModel",
+  "com.jetbrains.rider.workspaceModel.RiderWorkspaceModel",
+  "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
+
+  // Remote Development
+  "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
+  "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",
+  "com.intellij.cwm.plugin.following.FollowMeManagerService",
+  "com.intellij.cwm.plugin.following.GuestFollowMeManager",
+  "com.intellij.cwm.plugin.ports.CwmPortForwardingToolWindowManager",
+  "com.intellij.cwm.plugin.users.BackendUserManager",
+  "com.intellij.platform.vcs.backend.split.BackendLocalChangesHost",
+  "com.jetbrains.rdserver.BackendFileStructureHost",
+  "com.jetbrains.rdserver.build.BuildHost",
+  "com.jetbrains.rdserver.codeInsight.BackendCtrlClickHost",
+  "com.jetbrains.rdserver.daemon.BackendDaemonStatusHost",
+  "com.jetbrains.rdserver.daemon.BackendHighlighterRegistrationsHost",
+  "com.jetbrains.rdserver.daemon.inlays.BackendCodeVisionHost.Settings",
+  "com.jetbrains.rdserver.debugger.BackendBreakpointHost",
+  "com.jetbrains.rdserver.debugger.BackendConsoleInfoHost",
+  "com.jetbrains.rdserver.debugger.BackendDebuggerHost",
+  "com.jetbrains.rdserver.execution.BackendExternalSystemHost",
+  "com.jetbrains.rdserver.execution.configurations.BackendRunContentHost",
+  "com.jetbrains.rdserver.filters.BackendConsoleFilterHost",
+  "com.jetbrains.rdserver.internal.BackendWriteLocksMonitor",
+  "com.jetbrains.rdserver.lux.services.LuxHostConnection",
+  "com.jetbrains.rdserver.pluginsSync.BackendLanguagePluginsSyncManager",
+  "com.jetbrains.rdserver.portForwarding.internal.BackendPortForwardingModelHost",
+  "com.jetbrains.rdserver.portForwarding.internal.PerClientPortForwardingManagerImpl",
+  "com.jetbrains.rdserver.problems.BackendProblemFileHost",
+  "com.jetbrains.rdserver.projectView.BackendProjectViewHost",
+  "com.jetbrains.rdserver.quickDoc.BackendEditorMouseHoverPopupHost",
+  "com.jetbrains.rdserver.settings.BackendPerClientSettingsStorageService",
+  "com.jetbrains.rdserver.status.BackendStatusBarHost",
+  "com.jetbrains.rdserver.tests.BackendTestsContentHost",
+  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
+  "com.jetbrains.rdserver.toolWindow.BackendToolWindowHost",
+  "com.jetbrains.rdserver.ui.BackendUserFocusHost",
 )
 
 private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, createIfNeeded: Boolean): Any? {

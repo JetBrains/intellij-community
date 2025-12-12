@@ -13,8 +13,6 @@ internal class GradleSettingScriptBuilderImpl(
 ) : AbstractGradleSettingScriptBuilderCore<GradleSettingScriptBuilderImpl>(gradleVersion, gradleDsl),
     GradleSettingScriptBuilder<GradleSettingScriptBuilderImpl> {
 
-  private val foojayPluginVersion = getFoojayPluginVersion()
-
   override fun apply(action: GradleSettingScriptBuilderImpl.() -> Unit) = applyKt(action)
 
   override fun include(relativePath: Path) = apply {
@@ -37,6 +35,6 @@ internal class GradleSettingScriptBuilderImpl(
 
   override fun withFoojayPlugin() = apply {
     assert(isFoojayPluginSupported(gradleVersion))
-    withPlugin("org.gradle.toolchains.foojay-resolver-convention", foojayPluginVersion)
+    withPlugin("org.gradle.toolchains.foojay-resolver-convention", getFoojayPluginVersion(gradleVersion))
   }
 }

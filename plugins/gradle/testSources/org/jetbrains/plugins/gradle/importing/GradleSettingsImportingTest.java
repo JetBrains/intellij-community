@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.io.File;
@@ -58,6 +59,7 @@ import static org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilde
  */
 public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase {
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testInspectionSettingsImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
@@ -77,6 +79,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("application");
     maskRunImporter(testExtension);
@@ -116,6 +119,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testGradleRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("gradle");
     maskRunImporter(testExtension);
@@ -156,6 +160,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testDefaultRCSettingsImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
@@ -184,6 +189,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testDefaultsAreUsedDuringImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
@@ -224,6 +230,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testBeforeRunTaskImport() throws Exception {
     RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     maskRunImporter(appcConfigImporter);
@@ -263,6 +270,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testJarApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("jarApplication");
     maskRunImporter(testExtension);
@@ -301,6 +309,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testJarApplicationBeforeRunGradleTaskImport() throws Exception {
     RunConfigurationImporter jarAppConfigImporter = new JarApplicationRunConfigurationImporter();
     maskRunImporter(jarAppConfigImporter);
@@ -339,6 +348,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testFacetSettingsImport() throws Exception {
     TestFacetConfigurationImporter testExtension = new TestFacetConfigurationImporter("spring");
     ExtensionTestUtil
@@ -388,6 +398,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testTaskTriggersImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
@@ -421,6 +432,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testIdeaPostProcessingHook() throws Exception {
     File layoutFile = new File(getProjectPath(), "test_output.txt");
     assertThat(layoutFile).doesNotExist();
@@ -462,6 +476,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
@@ -520,6 +537,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testImportFileEncodingSettings() throws IOException {
     VirtualFile aDir = createProjectSubDir("src/main/java/a");
     VirtualFile bDir = createProjectSubDir("src/main/java/b");
@@ -592,6 +612,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testActionDelegationImport() throws Exception {
     importProject(
       withGradleIdeaExtPlugin(
@@ -682,6 +703,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testPostponedImportPackagePrefix() throws Exception {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
@@ -716,6 +738,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testPartialImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
@@ -738,6 +761,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testImportPackagePrefixWithRemoteSourceRoot() throws IOException {
     createProjectSubFile("src/test/java/Main.java", "");
     createProjectSubFile("../subproject/src/test/java/Main.java", "");
@@ -764,6 +788,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
@@ -783,6 +808,9 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   }
 
   @Test
+  // The idea ext plugin is only compatible with Gradle 4.7+
+  // The idea ext plugin uses API that was deprecated in Gradle 6.0.
+  @TargetVersions({"4.7+", "!6.0"})
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
@@ -817,6 +845,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
 
   @Test
+  @TargetVersions("4.7+") // The idea ext plugin is only compatible with Gradle 4.7+
   public void testModuleTypesImport() throws Exception {
     importProject(
       createBuildScriptBuilder()

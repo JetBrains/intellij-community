@@ -5,12 +5,16 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.HelperName
 import com.intellij.python.community.execService.python.addHelper
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 // Various functions to execute code against SDK
@@ -23,7 +27,10 @@ suspend fun ExecService.execGetStdout(
   args: Args,
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
-): PyResult<String> = execGetStdout(sdk.asBinToExecute(), args, options, procListener)
+): PyResult<String> {
+  val binToExecute = sdk.asBinToExecute().getOr { return it }
+  return execGetStdout(binToExecute, args, options, procListener)
+}
 
 // See function it calls for more info
 @ApiStatus.Internal
@@ -34,7 +41,10 @@ suspend fun <T> ExecService.execute(
   options: ExecOptions = ExecOptions(),
   procListener: PyProcessListener? = null,
   processOutputTransformer: ProcessOutputTransformer<T>,
-): PyResult<T> = execute(sdk.asBinToExecute(), args, options, procListener, processOutputTransformer)
+): PyResult<T> {
+  val binToExecute = sdk.asBinToExecute().getOr { return it }
+  return execute(binToExecute, args, options, procListener, processOutputTransformer)
+}
 
 
 /**
@@ -72,16 +82,39 @@ suspend fun ExecService.executeGetProcess(
   args: Args = Args(),
   scopeToBind: CoroutineScope? = null,
   options: ExecGetProcessOptions = ExecGetProcessOptions(),
-): Result<Process, ExecuteGetProcessError<*>> = executeGetProcess(sdk.asBinToExecute(), args, scopeToBind, options)
+): Result<Process, ExecuteGetProcessError<*>> {
+  val binary = sdk.asBinToExecute().getOr {
+    return Result.failure(ExecuteGetProcessError.EnvironmentError(it.error))
+  }
+  return executeGetProcess(binary, args, scopeToBind, options)
+}
 
 /**
  * Converts SDK to [BinOnTarget] to be used by [ExecService]
  */
 @ApiStatus.Internal
-fun Sdk.asBinToExecute(): BinaryToExec = when (val additionalData = getOrCreateAdditionalData()) {
-  is PyTargetAwareAdditionalData -> BinOnTarget(
-    configureTargetCmdLine = this::configureBuilderToRunPythonOnTarget,
-    target = additionalData.targetEnvironmentConfiguration ?: error("Target is not configured"),
-  )
-  else -> BinOnEel(Path.of(homePath ?: error("Home path is not set")))
+fun Sdk.asBinToExecute(): Result<BinaryToExec, MessageError> {
+  val binaryToExec = when (val additionalData = getOrCreateAdditionalData()) {
+    is PyTargetAwareAdditionalData -> {
+      additionalData.targetEnvironmentConfiguration?.let { target ->
+        BinOnTarget(
+          configureTargetCmdLine = this::configureBuilderToRunPythonOnTarget,
+          target = target,
+        )
+      }
+    }
+    is PyRemoteSdkAdditionalData -> null
+    else -> homePath?.let {
+      try {
+        BinOnEel(Path.of(it))
+      }
+      catch (e: InvalidPathException) {
+        LOGGER.warn("Can't convert ${homePath} to path", e)
+        null
+      }
+    }
+  }
+
+  return binaryToExec?.let { PyResult.success(it) }
+         ?: PyResult.localizedError(PyBundle.message("python.sdk.broken.configuration", name))
 }

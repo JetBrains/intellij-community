@@ -1,19 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import sun.font.CompositeGlyphMapper;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.util.Set;
 
 public final class FontInfo {
   static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
@@ -50,6 +53,19 @@ public final class FontInfo {
   public FontInfo(Font font, float size, boolean useLigatures, FontRenderContext fontRenderContext) {
     mySize = size;
     myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
+    myContext = fontRenderContext;
+  }
+
+  public FontInfo(Font font, float size, boolean useLigatures, @Unmodifiable @NotNull Set<@NotNull String> variants, FontRenderContext fontRenderContext) {
+    mySize = size;
+    Font f = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
+    if (variants.isEmpty()) {
+      myFont = f;
+    }
+    else {
+      String[] features = ArrayUtil.toStringArray(variants);
+      myFont = JBR.getFontExtensions().deriveFontWithFeatures(f, features);
+    }
     myContext = fontRenderContext;
   }
 

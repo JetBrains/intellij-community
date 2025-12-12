@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.isPackageManagementSupported
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
@@ -127,21 +126,6 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
-
-    /**
-     * Looks for [TargetPanelExtension] with additional rows that corresponds to the provided [configuration],
-     * applies its UI to [this] [Panel] via [TargetPanelExtension.extendDialogPanelWithOptionalFields] and returns [TargetPanelExtension].
-     *
-     * Does nothing if [project] is `null` or it is the default project.
-     */
-    @JvmStatic
-    fun Panel.extendWithTargetSpecificFields(project: Project?, configuration: TargetEnvironmentConfiguration?): TargetPanelExtension? =
-      if (configuration != null && project != null && !project.isDefault) {
-        findPanelExtension(project, configuration)?.also { panelExtension ->
-          panelExtension.extendDialogPanelWithOptionalFields(this)
-        }
-      }
-      else null
 
     private fun getFallbackSdkName(data: PyTargetAwareAdditionalData, version: String?): String =
       "Remote ${version ?: UNKNOWN_INTERPRETER_VERSION} (${data.interpreterPath})"

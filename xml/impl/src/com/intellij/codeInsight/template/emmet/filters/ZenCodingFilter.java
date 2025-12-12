@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -9,23 +9,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class ZenCodingFilter {
   private static final ExtensionPointName<ZenCodingFilter> EP_NAME = new ExtensionPointName<>("com.intellij.xml.zenCodingFilter");
-
-  private static class Holder {
-    private static final ZenCodingFilter[] OUR_STANDARD_FILTERS = new ZenCodingFilter[]{
-      new XslZenCodingFilter(),
-      new CommentZenCodingFilter(),
-      new EscapeZenCodingFilter(),
-      new SingleLineEmmetFilter(),
-      new BemEmmetFilter(),
-      new TrimZenCodingFilter()
-    };
-  }
 
   public @NotNull String filterText(@NotNull String text, @NotNull TemplateToken token) {
     return text;
@@ -53,9 +40,6 @@ public abstract class ZenCodingFilter {
   public abstract @NotNull @NlsContexts.Label String getDisplayName();
 
   public static List<ZenCodingFilter> getInstances() {
-    List<ZenCodingFilter> generators = new ArrayList<>();
-    Collections.addAll(generators, Holder.OUR_STANDARD_FILTERS);
-    generators.addAll(EP_NAME.getExtensionList());
-    return generators;
+    return EP_NAME.getExtensionList();
   }
 }

@@ -108,6 +108,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         }
     }
   }
+
   private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromCompactFile(descriptorsFile) }
 
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
@@ -197,8 +198,8 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         //additional libraries shouldn't cause problems because their resources should not be loaded unless they are requested from modules
         continue
       }
-      val module = context.findModule(rawModuleId)
-      if (module != null && hasModuleOutputPath(module = module, relativePath = "${module.name}.xml", context = context)) {
+      val module = context.outputProvider.findModule(rawModuleId)
+      if (module != null && hasModuleOutputPath(module = module, relativePath = "${module.name}.xml", outputProvider = context.outputProvider)) {
         // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
         // so including its JAR to classpath should not cause problems
         continue
@@ -286,7 +287,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
-    val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    val content = context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
@@ -295,11 +296,11 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       throw MalformedRepositoryException("Failed to load module group from $debugName", e)
     }
   }
-  
+
   private fun loadRawProductModules(productModulesModule: String): RawProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
-    val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
+    val content = context.outputProvider.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.readProductModulesAndMergeIncluded(content.inputStream(), debugName, ResourceFileResolver.createDefault(repository))
@@ -309,16 +310,6 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, path: FList<String>, result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap()): MutableMap<RuntimeModuleId, FList<String>> {
-    if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
-      val newPath = path.prepend(moduleDescriptor.moduleId.stringId)
-      for (dependency in moduleDescriptor.dependencies) {
-        collectDependencies(dependency, newPath, result)
-      }
-    }
-    return result
-  }
-
   override fun close() {
     if (osSpecificDistPath != null) {
       osSpecificFilePaths.forEach {
@@ -326,4 +317,18 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
     }
   }
+}
+
+private fun RuntimeModuleRepository.collectDependencies(
+  moduleDescriptor: RuntimeModuleDescriptor,
+  path: FList<String>,
+  result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap(),
+): MutableMap<RuntimeModuleId, FList<String>> {
+  if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
+    val newPath = path.prepend(moduleDescriptor.moduleId.stringId)
+    for (dependency in moduleDescriptor.dependencies) {
+      collectDependencies(dependency, newPath, result)
+    }
+  }
+  return result
 }

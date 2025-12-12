@@ -147,11 +147,11 @@ public final class GroovyOverrideImplementUtil {
     if (returnType != null) {
       returnTypeText = returnType.getPresentableText();
     }
-    Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
 
-    properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
+    properties.put(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
+    properties.put(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.put(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(method, resultMethod));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, method.getContainingClass(), resultMethod);
 
     try {

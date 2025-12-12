@@ -1,5 +1,5 @@
 <idea-plugin visibility="public">
-  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.jackson"/>
@@ -28,7 +28,7 @@
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.util.ex"/>
   </dependencies>
-  <!-- end editor-fold -->
+  <!-- endregion -->
   <applicationListeners>
     <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
@@ -100,7 +100,6 @@
     <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
 
     <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.FrameTypeValidator"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
@@ -154,7 +153,6 @@
                     serviceImplementation="com.intellij.xdebugger.impl.DefaultRunToCursorService"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.hotswap.HotSwapStatistics"/>
 
@@ -171,6 +169,7 @@
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.proxy.MonolithXDebugManagerProxy" order="last"/>
+    <xdebugger.monolithAccessPoint implementation="com.intellij.xdebugger.impl.proxy.XDebuggerMonolithAccessPointImpl"/>
 
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
 

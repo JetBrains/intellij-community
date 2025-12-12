@@ -8006,6 +8006,65 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall")
+    public static class SimplifiableFlowCall extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("filterIsInstanceSimple.kt")
+        public void testFilterIsInstanceSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/filterIsInstanceSimple.kt");
+        }
+
+        @TestMetadata("filterNotNullSimple.kt")
+        public void testFilterNotNullSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/filterNotNullSimple.kt");
+        }
+
+        @TestMetadata("flatMapConcatExplicitLambdaParameter.kt")
+        public void testFlatMapConcatExplicitLambdaParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapConcatExplicitLambdaParameter.kt");
+        }
+
+        @TestMetadata("flatMapConcatSimple.kt")
+        public void testFlatMapConcatSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapConcatSimple.kt");
+        }
+
+        @TestMetadata("flatMapMergeConcurrency.kt")
+        public void testFlatMapMergeConcurrency() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapMergeConcurrency.kt");
+        }
+
+        @TestMetadata("flatMapMergeConcurrencyNamed.kt")
+        public void testFlatMapMergeConcurrencyNamed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapMergeConcurrencyNamed.kt");
+        }
+
+        @TestMetadata("flatMapMergeConcurrencyNamedShuffled.kt")
+        public void testFlatMapMergeConcurrencyNamedShuffled() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapMergeConcurrencyNamedShuffled.kt");
+        }
+
+        @TestMetadata("flatMapMergeExplicitLambdaParameter.kt")
+        public void testFlatMapMergeExplicitLambdaParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapMergeExplicitLambdaParameter.kt");
+        }
+
+        @TestMetadata("flatMapMergeSimple.kt")
+        public void testFlatMapMergeSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCall/flatMapMergeSimple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow")
     public static class UnusedFlow extends AbstractK2LocalInspectionTest {
         @java.lang.Override

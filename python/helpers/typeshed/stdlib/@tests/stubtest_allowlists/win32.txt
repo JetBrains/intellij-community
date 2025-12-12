@@ -9,14 +9,6 @@ _winapi.OpenFileMapping
 _winapi.VirtualQuerySize
 
 
-# =======
-# <= 3.14
-# =======
-
-# Added in Python 3.9.25, 3.10.20, 3.11.15, 3.12.13, 3.13.10, 3.14.1 (parameter `scripting`)
-html.parser.HTMLParser.__init__
-
-
 # ============================================
 # Modules that do not exist on Windows systems
 # ============================================

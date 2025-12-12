@@ -43,7 +43,6 @@ import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuil
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -51,6 +50,7 @@ import org.jetbrains.intellij.build.impl.asArchived
 import org.jetbrains.intellij.build.impl.asArchivedIfNeeded
 import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jetbrains.intellij.build.impl.copyDistFiles
+import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.impl.createIdeaPropertyFile
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
@@ -59,7 +59,7 @@ import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
-import org.jetbrains.intellij.build.productLayout.ProductConfiguration
+import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.readSearchableOptionIndex
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -458,7 +458,7 @@ private suspend fun createBuildContext(
         result.distAllDir = runDir
         Files.createDirectories(tempDir)
 
-        CompilationContextImpl.createCompilationContext(
+        createCompilationContext(
           projectHome = request.projectDir,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,
@@ -507,48 +507,62 @@ private suspend fun createBuildContext(
 
 internal suspend fun createProductProperties(
   productConfiguration: ProductConfiguration,
-  moduleOutputProvider: ModuleOutputProvider,
+  outputProvider: ModuleOutputProvider,
   projectDir: Path,
   platformPrefix: String?,
 ): ProductProperties {
-  val classPathFiles = buildList {
-    for (moduleName in getBuildModules(productConfiguration)) {
-      addAll(moduleOutputProvider.getModuleOutputRoots(moduleOutputProvider.findRequiredModule(moduleName)))
-    }
+  val classPathFiles = getBuildModules(productConfiguration)
+    .flatMap { outputProvider.getModuleOutputRoots(outputProvider.findRequiredModule(it)) }
+    .toList()
+
+  @Suppress("SimpleRedundantLet")
+  (ProductConfiguration::class.java.classLoader as? PathClassLoader)?.let {
+    it.getClassPath().addFiles(classPathFiles)
   }
 
   val classLoader = spanBuilder("create product properties classloader").use {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  return spanBuilder("create product properties").use {
-    val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-      "org.jetbrains.intellij.build.IjVoidProperties"
-    }
-    else {
-      productConfiguration.className
-    }
-    val productPropertiesClass = try {
-      classLoader.loadClass(className)
-    }
-    catch (e: ClassNotFoundException) {
-      val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
-        "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
-      }
-      val projectPropertiesPath = getProductPropertiesPath(projectDir)
-      throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
-    }
-
-    val lookup = MethodHandles.lookup()
-    try {
-      lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
-    }
-    catch (_: NoSuchMethodException) {
-      lookup
-        .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
-    } as ProductProperties
+  val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
+    "org.jetbrains.intellij.build.IjVoidProperties"
   }
+  else {
+    productConfiguration.className
+  }
+  return spanBuilder("create product properties").setAttribute("className", className).use {
+    doCreateProductProperties(classLoader = classLoader, className = className, classPathFiles = classPathFiles, projectDir = projectDir, platformPrefix = platformPrefix)
+  }
+}
+
+private val lookup = MethodHandles.lookup()
+
+private fun doCreateProductProperties(
+  classLoader: PathClassLoader,
+  className: String,
+  classPathFiles: List<Path>,
+  projectDir: Path,
+  platformPrefix: String?,
+): ProductProperties {
+  val productPropertiesClass = try {
+    classLoader.loadClass(className)
+  }
+  catch (e: ClassNotFoundException) {
+    val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
+      "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
+    }
+    val projectPropertiesPath = getProductPropertiesPath(projectDir)
+    throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
+  }
+
+  return try {
+    lookup.findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE)).invoke()
+  }
+  catch (_: NoSuchMethodException) {
+    lookup
+      .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
+      .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
+  } as ProductProperties
 }
 
 private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> = sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
