@@ -263,3 +263,18 @@ class PluginDependencyIsNotInstalled(
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has dependency on '${dependencyNameOrId}' which is not installed"
 }
+
+@ApiStatus.Internal
+class PluginVersionIsSuperseded(
+  override val plugin: PluginMainDescriptor,
+  val supersededBy: PluginMainDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.plugin.version.is.superseded", plugin.name, plugin.version, supersededBy.version)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.plugin.version.is.superseded", supersededBy.version)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) of version ${plugin.version} is superseded by version ${supersededBy.version}"
+  override val shouldNotifyUser: Boolean
+    get() = false
+}
