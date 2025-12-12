@@ -6,6 +6,6 @@ class Test {
     if(!targetMap.containsKey(key)) {
       targetMap.put(key, v);
     }
-    return targetMap.get(key);
+    return targetMap.<caret>get(key);
   }
 }

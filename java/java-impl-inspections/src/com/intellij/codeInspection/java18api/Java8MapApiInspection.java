@@ -78,7 +78,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       checkbox("mySideEffects", JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects")));
   }
 
-    @Override
+  @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
   }
@@ -177,50 +177,77 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
                                QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
       }
 
-      @Override
-      public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-        if(!mySuggestMapComputeIfAbsent) return;
-        PsiExpression retValue = returnStatement.getReturnValue();
-        PsiMethodCallExpression getCall = extractMapMethodCall(retValue, "get");
-        if(getCall == null) return;
-        PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(returnStatement);
+      private void processComputeIfAbsentPattern(@NotNull PsiMethodCallExpression getCall) {
+        if (!mySuggestMapComputeIfAbsent) return;
+        PsiExpression getQualifier = getCall.getMethodExpression().getQualifierExpression();
+        if (getQualifier == null) return;
+        PsiStatement statement = PsiTreeUtil.getParentOfType(getCall, PsiStatement.class);
+        if (statement == null) return;
+        PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
         PsiIfStatement ifStmt = ObjectUtils.tryCast(prev, PsiIfStatement.class);
-        if(ifStmt == null) return;
+        if (ifStmt == null) return;
         PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStmt.getThenBranch());
         PsiStatement elseBranch = ControlFlowUtils.stripBraces(ifStmt.getElseBranch());
-        if(elseBranch != null || !(thenBranch instanceof PsiExpressionStatement)) return;
+        if (elseBranch != null || !(thenBranch instanceof PsiExpressionStatement)) return;
         PsiExpression rawCond = PsiUtil.skipParenthesizedExprDown(ifStmt.getCondition());
-        PsiMethodCallExpression containsCall = null;
-        if(rawCond instanceof PsiPrefixExpression prefix && prefix.getOperationTokenType() == JavaTokenType.EXCL) {
+        PsiMethodCallExpression containsOrGetNullCall = null;
+        if (rawCond instanceof PsiPrefixExpression prefix && prefix.getOperationTokenType() == JavaTokenType.EXCL) {
           PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefix.getOperand());
-          containsCall = extractMapMethodCall(operand, "containsKey");
+          containsOrGetNullCall = extractMapMethodCall(operand, "containsKey");
         }
-        if(containsCall == null) return;
+        if (containsOrGetNullCall == null && myTreatGetNullAsContainsKey && rawCond instanceof PsiBinaryExpression binExpr) {
+          PsiExpression lOperand = PsiUtil.skipParenthesizedExprDown(binExpr.getLOperand());
+          PsiExpression rOperand = PsiUtil.skipParenthesizedExprDown(binExpr.getROperand());
+          if (lOperand == null || rOperand == null) return;
+          boolean isEqNull = binExpr.getOperationTokenType() == JavaTokenType.EQEQ;
+          PsiExpression getCandidate = extractMapMethodCall(lOperand, "get");
+          PsiExpression nullCandidate = rOperand;
+          if (getCandidate == null) {
+            getCandidate = extractMapMethodCall(rOperand, "get");
+            nullCandidate = lOperand;
+          }
+          if (getCandidate instanceof PsiMethodCallExpression getInCond && ExpressionUtils.isNullLiteral(nullCandidate) && isEqNull) {
+            containsOrGetNullCall = getInCond;
+          }
+        }
+        if (containsOrGetNullCall == null) return;
         MapCheckCondition condition = fromConditional(ifStmt, myTreatGetNullAsContainsKey);
-        if(condition != null && condition.hasVariable()) return;
+        if (condition != null && condition.hasVariable()) return;
         PsiMethodCallExpression putCall = extractMapMethodCall(((PsiExpressionStatement)thenBranch).getExpression(), "put");
-        if(putCall == null) return;
+        if (putCall == null) return;
         PsiExpression[] putArgs = putCall.getArgumentList().getExpressions();
-        if(putArgs.length != 2) return;
+        if (putArgs.length != 2) return;
         PsiExpression keyPut = putArgs[0];
         PsiExpression valPut = putArgs[1];
         if (NullabilityUtil.getExpressionNullability(valPut) == Nullability.NULLABLE) return;
         if (condition != null && !condition.isMapValueType(valPut.getType())) return;
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(valPut)) return;
         EquivalenceChecker eq = getCanonicalPsiEquivalence();
         PsiExpression keyGet = getCall.getArgumentList().getExpressions().length == 1 ? getCall.getArgumentList().getExpressions()[0] : null;
-        PsiExpression keyCond = containsCall.getArgumentList().getExpressions().length == 1 ? containsCall.getArgumentList().getExpressions()[0] : null;
-        if(keyGet == null || keyCond == null) return;
-        if(!eq.expressionsAreEquivalent(keyGet, keyPut) || !eq.expressionsAreEquivalent(keyGet, keyCond)) return;
-        PsiExpression getQualifier = getCall.getMethodExpression().getQualifierExpression();
+        PsiExpression keyCond = containsOrGetNullCall.getArgumentList().getExpressions().length == 1 ? containsOrGetNullCall.getArgumentList().getExpressions()[0] : null;
+        if (keyGet == null || keyCond == null) return;
+        if (!eq.expressionsAreEquivalent(keyGet, keyPut) || !eq.expressionsAreEquivalent(keyGet, keyCond)) return;
         PsiExpression putQualifier = putCall.getMethodExpression().getQualifierExpression();
-        PsiExpression condQualifier = containsCall.getMethodExpression().getQualifierExpression();
-        if(getQualifier == null || putQualifier == null || condQualifier == null) return;
-        if(!eq.expressionsAreEquivalent(getQualifier, putQualifier) || !eq.expressionsAreEquivalent(getQualifier, condQualifier)) return;
+        PsiExpression condQualifier = containsOrGetNullCall.getMethodExpression().getQualifierExpression();
+        if (putQualifier == null || condQualifier == null) return;
+        if (!eq.expressionsAreEquivalent(getQualifier, putQualifier) || !eq.expressionsAreEquivalent(getQualifier, condQualifier)) return;
         if (condition != null && !condition.isMap(getQualifier)) return;
+        PsiReturnStatement returnStatement = ObjectUtils.tryCast(statement, PsiReturnStatement.class);
+        if (returnStatement == null) return;
         holder.registerProblem(getCall, QuickFixBundle.message("java.8.map.api.inspection.description", "computeIfAbsent"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ContainsKeyPutReturnComputeIfAbsentFix(ifStmt, returnStatement, getCall, putCall, valPut));
       }
+
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        PsiMethodCallExpression getCall = extractMapMethodCall(expression, "get");
+        if (getCall != null) {
+          processComputeIfAbsentPattern(getCall);
+        }
+      }
+
 
       private static PsiMethodCallExpression findPutMethodParent(PsiElement element) {
         while (element != null && !(element instanceof PsiMethod)) {
@@ -645,9 +672,22 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       }
       String lambdaText = paramName + " -> " + ct.text(value);
       String replacementText = ct.text(mapExpr) + ".computeIfAbsent(" + ct.text(keyExpr) + ", " + lambdaText + ")";
-      PsiExpression newRetExpr = factory.createExpressionFromText(replacementText, ret);
       PsiExpression oldRetExpr = ret.getReturnValue();
-      if(oldRetExpr != null) ct.replace(oldRetExpr, newRetExpr);
+      if (oldRetExpr == null) return;
+      PsiExpression unwrappedRetExpr = PsiUtil.skipParenthesizedExprDown(oldRetExpr);
+      PsiExpression newCallExpr = factory.createExpressionFromText(replacementText, oldRetExpr);
+      if (unwrappedRetExpr != null && PsiEquivalenceUtil.areElementsEquivalent(unwrappedRetExpr, getCall)) {
+        // Simple case: `return map.get(key);` – replace the whole return value
+        ct.replace(oldRetExpr, newCallExpr);
+      }
+      else if (oldRetExpr instanceof PsiMethodCallExpression && PsiTreeUtil.isAncestor(oldRetExpr, getCall, true)) {
+        // Wrapped case: `return Optional.of(map.get(key));` – replace only the inner get() call
+        PsiExpression innerNewCall = factory.createExpressionFromText(replacementText, getCall);
+        ct.replace(getCall, innerNewCall);
+      }
+      else {
+        return;
+      }
       ct.deleteAndRestoreComments(ifStmt);
       CodeStyleManager.getInstance(project).reformat(ret);
     }
