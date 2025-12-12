@@ -18,8 +18,8 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.UIUtil
-import com.sun.management.OperatingSystemMXBean
 import com.jetbrains.JBR
+import com.sun.management.OperatingSystemMXBean
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -30,7 +30,7 @@ import kotlin.math.roundToInt
 
 @ApiStatus.Internal
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.runtime", 22)
+  private val GROUP = EventLogGroup("system.runtime", 23)
 
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
@@ -41,9 +41,16 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   @Suppress("SpellCheckingInspection")
   private val OS_VMS = listOf("none", "xen", "kvm", "vmware", "hyperv", "other", "unknown")
 
-  private val CORES = GROUP.registerEvent("cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
+  // make it futureproof with ^2 logic and exceptions
+  private val CORES =
+    GROUP.registerEvent(
+      "cores",
+      EventFields.BoundedInt("value", (IntArray(20) { 1 shl it } + intArrayOf(6, 10, 12, 14, 20, 24, 28, 48, 192)).sortedArray()))
   private val MEMORY_SIZE =
-    GROUP.registerEvent("memory.size", EventFields.BoundedInt("gigabytes", intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)))
+    GROUP.registerEvent(
+      "memory.size",
+      EventFields.BoundedInt("gigabytes", (IntArray(20) { 1 shl it } + intArrayOf(12, 24, 36, 48, 96, 192)).sortedArray()))
+
   private val SWAP_SIZE = GROUP.registerEvent("swap.size", Int("gigabytes"))
   private val DISK_SIZE = GROUP.registerEvent("disk.size", Int("index_partition_size"), Int("index_partition_free"))
   private val GC = GROUP.registerEvent("garbage.collector", String("name", COLLECTORS))
