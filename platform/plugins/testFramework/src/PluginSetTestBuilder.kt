@@ -88,6 +88,12 @@ class PluginSetTestBuilder private constructor(
     )
   }
 
+  fun discoverPlugins(): Pair<PluginDescriptorLoadingContext, PluginDescriptorLoadingResult> {
+    val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
+    val pluginList = DiscoveredPluginsList(pluginDescriptorLoader(loadingContext), PluginsSourceContext.Custom)
+    return loadingContext to PluginDescriptorLoadingResult.build(listOf(pluginList))
+  }
+
   fun buildLoadingResult(initContext: PluginInitializationContext? = null): Pair<PluginDescriptorLoadingContext, PluginLoadingResult> {
     val initContext = initContext ?: buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
