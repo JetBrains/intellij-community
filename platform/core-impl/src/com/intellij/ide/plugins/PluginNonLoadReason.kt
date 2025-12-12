@@ -278,3 +278,30 @@ class PluginVersionIsSuperseded(
   override val shouldNotifyUser: Boolean
     get() = false
 }
+
+@ApiStatus.Internal
+class PluginDeclaresConflictingId(
+  val module: PluginModuleDescriptor,
+  val conflictingModule: PluginModuleDescriptor,
+  /** either [PluginId] or [PluginModuleId] */
+  val conflictingId: Any,
+  override val shouldNotifyUser: Boolean = true,
+) : PluginNonLoadReason {
+  init {
+    require(conflictingId is PluginId || conflictingId is PluginModuleId)
+  }
+
+  override val plugin: PluginMainDescriptor get() = module.getMainDescriptor()
+
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.declares.conflicting.id", plugin.name, conflictingId, conflictingModule.getMainDescriptor().name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.declares.conflicting.id", conflictingId)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}" +
+            (module as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() +
+            ") declares id '${conflictingId}' " +
+            "which conflicts with the same id " +
+            "from plugin '${conflictingModule.getMainDescriptor().name}' (${conflictingModule.getMainDescriptor().pluginId}" +
+            (conflictingModule as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() + ")"
+}
