@@ -108,8 +108,7 @@ internal class PyCommunityToUnifiedPromoService(val serviceScope: CoroutineScope
             return@withTimeout availableUpdate
           }
 
-          val updateCheckerFacade = service<UpdateCheckerFacade>()
-          val product = updateCheckerFacade.loadProductData(null)
+          val product = UpdateCheckerFacade.getInstance().loadProductData(null)
           if (product == null) {
             LOG.info("Failed to check PY release update: product data is null")
             return@withTimeout null

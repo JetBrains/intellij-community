@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.notification.NotificationGroup
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -18,6 +19,9 @@ import org.jetbrains.annotations.ApiStatus
 interface UpdateCheckerFacade {
   companion object {
     const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
+
+    @JvmStatic
+    fun getInstance(): UpdateCheckerFacade = service()
   }
 
   val disabledToUpdate: Set<PluginId>
