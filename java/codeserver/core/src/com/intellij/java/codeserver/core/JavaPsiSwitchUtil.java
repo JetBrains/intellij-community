@@ -189,7 +189,7 @@ public final class JavaPsiSwitchUtil {
       if (isConstantLabelElement(overWhom)) {
         PsiExpression constExpr = ObjectUtils.tryCast(overWhom, PsiExpression.class);
         assert constExpr != null;
-        if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr.getType())) {
+        if (JavaPsiPatternUtil.dominatesOverConstant(currentElement, constExpr)) {
           return true;
         }
       }
@@ -197,6 +197,13 @@ public final class JavaPsiSwitchUtil {
         if (JavaPsiPatternUtil.dominates(currentElement, overWhom)) {
           return true;
         }
+      }
+      // A default case is considered in
+      // com.intellij.java.codeserver.highlighting.SwitchChecker.checkNoDefaultBranchAllowed
+      if (PsiUtil.isAvailable(JavaFeature.PATTERNS_WITH_TIGHTENED_DOMINANCE, overWhom) &&
+          (overWhom instanceof PsiPattern || isConstantLabelElement(overWhom)) &&
+          JavaPsiPatternUtil.isUnconditionalForType(currentElement, selectorType)) {
+        return true;
       }
     }
     return false;

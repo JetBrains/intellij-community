@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -58,4 +59,8 @@ public class LightPrimitivePatternsHighlightingTest extends LightJavaCodeInsight
   public void testSwitchRecordPrimitiveJava25() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, this::doTest);
   }
+
+  public void testSwitchConstantExpression() { doTest(); }
+
+  public void testPrimitiveSwitchValueDomination() { doTest(); }
 }
