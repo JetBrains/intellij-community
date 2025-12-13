@@ -1,8 +1,7 @@
 f:com.intellij.openapi.updateSettings.impl.UpdateChecker
 - *sf:getPluginUpdates(com.intellij.openapi.extensions.PluginId):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
-- *sf:getPluginUpdates(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.util.BuildNumber):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
-- *sf:getPluginUpdates(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
-- *bs:getPluginUpdates$default(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
+- *sf:getPluginUpdates(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
+- *bs:getPluginUpdates$default(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
 *f:com.intellij.openapi.updateSettings.impl.UpdateChecker$PluginUpdatesInfo
 - f:component1():java.util.Collection
 - f:component2():java.util.Collection

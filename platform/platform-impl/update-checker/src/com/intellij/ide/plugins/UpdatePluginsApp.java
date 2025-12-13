@@ -54,7 +54,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
     final Collection<PluginDownloader> availableUpdates;
     try {
       updateCheckResult = ApplicationManager.getApplication().executeOnPooledThread(
-        () -> UpdateChecker.getInternalPluginUpdates()
+        () -> UpdateChecker.checkInstalledPluginUpdates()
       ).get();
     }
     catch (InterruptedException | ExecutionException e) {

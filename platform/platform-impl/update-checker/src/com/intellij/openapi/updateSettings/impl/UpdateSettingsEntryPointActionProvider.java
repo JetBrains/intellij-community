@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginStateListener;
 import com.intellij.ide.plugins.PluginStateManager;
-import com.intellij.ide.plugins.marketplace.PluginUpdateActivity;
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
@@ -34,9 +33,6 @@ import java.util.*;
 
 import static com.intellij.ide.actions.SettingsEntryPointAction.*;
 
-/**
- * @author Alexander Lobas
- */
 final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
@@ -265,8 +261,9 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
               private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator, null,
-                                                              PluginUpdateActivity.INSTALLED_VERSIONS);
+                return UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
+                  indicator, loadedResult.getNewBuild().getApiVersion()
+                );
               }
             });
 

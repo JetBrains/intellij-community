@@ -2,8 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.InstalledPluginsState
-import com.intellij.ide.plugins.marketplace.PluginUpdateActivity
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -38,7 +36,8 @@ interface UpdateCheckerFacade {
 
   fun loadProductData(indicator: ProgressIndicator?): Product?
 
-  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState)
+  @IntellijInternalApi
+  fun updateDescriptorsForInstalledPlugins()
 
   /**
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
@@ -50,10 +49,21 @@ interface UpdateCheckerFacade {
   @ApiStatus.Internal
   @Deprecated("Use [getPluginUpdates] instead", ReplaceWith("getPluginUpdates(pluginId, buildNumber, indicator)"))
   fun getInternalPluginUpdates(
-    buildNumber: BuildNumber? = null,
+    plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
-    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
-    activity: PluginUpdateActivity = PluginUpdateActivity.AVAILABLE_VERSIONS
+    buildNumber: BuildNumber? = null,
+  ): InternalPluginResults
+
+  /**
+   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
+   * otherwise, returns versions compatible with the specified build.
+   */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  @IntellijInternalApi
+  fun checkInstalledPluginUpdates(
+    indicator: ProgressIndicator? = null,
+    buildNumber: BuildNumber? = null,
   ): InternalPluginResults
 
   fun saveDisabledToUpdatePlugins()
