@@ -224,7 +224,10 @@ enum class JavaFeature {
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
 
-  //JEP 507
+  /**
+   * JEP 507
+   * @see PATTERNS_WITH_TIGHTENED_DOMINANCE
+   */
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
   /**
@@ -286,6 +289,14 @@ enum class JavaFeature {
    * @see JAVA_LANG_IO
    */
   JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
+
+  /**
+   * JEP 530
+   * @see PRIMITIVE_TYPES_IN_PATTERNS
+   */
+  //todo change to 26_PREVIEW
+  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_X, "feature.patterns.with.tightened.dominance"),
+
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;

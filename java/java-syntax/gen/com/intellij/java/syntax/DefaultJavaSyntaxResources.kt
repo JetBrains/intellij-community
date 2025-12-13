@@ -137,6 +137,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.varargs" to "Variable arity methods",
     "feature.virtual.threads" to "Virtual Threads",
     "feature.with.initial" to "ThreadLocal.withInitial()",
+    "feature.patterns.with.tightened.dominance" to "Patterns with tightened dominance",
     "finally.without.try" to "'finally' without 'try'",
     "import.statement.identifier.or.asterisk.expected." to "Identifier or '*' expected",
     "jdk.1.3.language.level.description" to "1.3 - Plain old Java",
