@@ -28,6 +28,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.createBuildContext
+import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jetbrains.intellij.build.productLayout.analysis.ModelValidationResult
 import org.jetbrains.intellij.build.productLayout.analysis.XIncludeResolutionError
 import org.jetbrains.intellij.build.productLayout.analysis.formatValidationError
@@ -75,18 +76,13 @@ fun createContentCheckTests(
   productProperties.buildDocAuthoringAssets = false
 
   // Setup is async - validation and packaging tasks will await it
-  val contextDeferred: Deferred<BuildContext> = scope.async {
-    val context = createBuildContext(
+  val compilationContextDeferred = scope.async {
+    val context = createCompilationContext(
       projectHome = homePath,
       productProperties = productProperties,
+      scope = scope,
+      options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, testInfo = testInfo).also { it.customizeBuildOptions() },
       setupTracer = false,
-      proprietaryBuildTools = buildTools,
-      options = createBuildOptionsForTest(
-        productProperties = productProperties,
-        homeDir = homePath,
-        testInfo = testInfo,
-        customizer = { it.customizeBuildOptions() },
-      ),
     )
     // needed for TC, otherwise modelValidator will fail (as no module compilation outputs)
     context.compileProductionModules()
@@ -95,12 +91,18 @@ fun createContentCheckTests(
 
   // Start both tasks immediately in caller's scope (parallel after context is ready)
   val validationDeferred: Deferred<ModelValidationResult> = scope.async {
-    val context = contextDeferred.await()
+    val context = compilationContextDeferred.await()
     modelValidator?.invoke(homePath, context.outputProvider) ?: ModelValidationResult(diffs = emptyList(), errors = emptyList())
   }
 
   val packagingDeferred: Deferred<PackageResult> = scope.async {
-    computePackageResult(testInfo = testInfo, context = contextDeferred.await())
+    val buildContext = createBuildContext(
+      compilationContext = compilationContextDeferred.await(),
+      projectHome = homePath,
+      productProperties = productProperties,
+      proprietaryBuildTools = buildTools,
+    )
+    computePackageResult(testInfo = testInfo, context = buildContext)
   }
 
   return sequence {

@@ -5,8 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -35,10 +34,10 @@ import kotlin.io.path.pathString
 @Internal
 class BazelCompilationContext(
   private val delegate: CompilationContext,
+  private val scope: CoroutineScope?,
 ) : CompilationContext {
   override val outputProvider: ModuleOutputProvider by lazy {
-    @OptIn(DelicateCoroutinesApi::class)
-    BazelModuleOutputProvider(modules = delegate.project.modules, projectHome = delegate.paths.projectHome, bazelOutputRoot = bazelOutputRoot!!, scope = GlobalScope)
+    BazelModuleOutputProvider(modules = delegate.project.modules, projectHome = delegate.paths.projectHome, bazelOutputRoot = bazelOutputRoot!!, scope = scope)
   }
 
   override val options: BuildOptions
@@ -105,7 +104,7 @@ class BazelCompilationContext(
   override fun notifyArtifactBuilt(artifactPath: Path): Unit = delegate.notifyArtifactBuilt(artifactPath)
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    return BazelCompilationContext(delegate.createCopy(messages, options, paths)/*, modulesToOutputRoots*/)
+    return BazelCompilationContext(delegate = delegate.createCopy(messages, options, paths), scope = scope)
   }
 
   override suspend fun prepareForBuild(): Unit = delegate.prepareForBuild()
@@ -203,9 +202,11 @@ internal val bazelOutputRoot: Path? by lazy {
 }
 
 val CompilationContextImpl.asBazelIfNeeded: CompilationContext
-  get() {
-    return when {
-      isRunningFromBazelOut() -> BazelCompilationContext(this)
-      else -> this
-    }
+  get() = toBazelIfNeeded(scope = null)
+
+internal fun CompilationContextImpl.toBazelIfNeeded(scope: CoroutineScope?): CompilationContext {
+  return when {
+    isRunningFromBazelOut() -> BazelCompilationContext(delegate = this, scope = scope)
+    else -> this
   }
+}

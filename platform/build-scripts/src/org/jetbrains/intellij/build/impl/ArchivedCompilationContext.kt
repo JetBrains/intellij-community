@@ -2,8 +2,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.toByteArray
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -40,6 +42,7 @@ class ArchivedCompilationContext internal constructor(
       delegate.messages.info("Loading archived compilation mappings: " + getMapping())
     }
   },
+  scope: CoroutineScope?,
 ) : CompilationContext by delegate {
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
@@ -48,9 +51,7 @@ class ArchivedCompilationContext internal constructor(
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 
-  override val outputProvider: ModuleOutputProvider by lazy {
-    ArchivedModuleOutputProvider(delegate.outputProvider, this)
-  }
+  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, context = this, scope = scope)
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
@@ -59,7 +60,7 @@ class ArchivedCompilationContext internal constructor(
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
-    return ArchivedCompilationContext(delegate.createCopy(messages, options, paths), storage)
+    return ArchivedCompilationContext(delegate = delegate.createCopy(messages, options, paths), storage = storage, scope = null)
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
@@ -95,9 +96,22 @@ class ArchivedCompilationContext internal constructor(
 private class ArchivedModuleOutputProvider(
   private val delegateOutputProvider: ModuleOutputProvider,
   private val context: ArchivedCompilationContext,
+  scope: CoroutineScope?,
 ) : ModuleOutputProvider by delegateOutputProvider {
+  private val zipFilePool = ModuleOutputZipFilePool(scope)
+
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     return delegateOutputProvider.getModuleOutputRoots(module, forTests).map { context.replaceWithCompressedIfNeeded(it) }
+  }
+
+  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    for (moduleOutput in getModuleOutputRoots(module, forTests)) {
+      if (!moduleOutput.startsWith(context.archivesLocation)) {
+        return delegateOutputProvider.readFileContentFromModuleOutputAsync(module, relativePath, forTests)
+      }
+      zipFilePool.getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
+    }
+    return null
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
@@ -144,20 +158,25 @@ private class ArchivedModuleOutputProvider(
 }
 
 val CompilationContext.asArchivedIfNeeded: CompilationContext
-  get() {
-    return when {
-      this is ArchivedCompilationContext -> this
-      TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.asArchived
-      else -> this
-    }
+  get() = this.toArchivedIfNeeded(scope = null)
+
+@Experimental
+internal fun CompilationContext.toArchivedIfNeeded(scope: CoroutineScope?): CompilationContext {
+  return when {
+    this is ArchivedCompilationContext -> this
+    TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.toArchivedContext(scope)
+    else -> this
   }
+}
 
 val CompilationContext.asArchived: CompilationContext
-  get() {
-    return when (this) {
-      is ArchivedCompilationContext -> this
-      is BazelCompilationContext -> error("BazelCompilationContext must not be used as archived")
-      is BuildContextImpl -> compilationContext.asArchived
-      else -> ArchivedCompilationContext(this)
-    }
+  get() = toArchivedContext(scope = null)
+
+private fun CompilationContext.toArchivedContext(scope: CoroutineScope?): CompilationContext {
+  return when (this) {
+    is ArchivedCompilationContext -> this
+    is BazelCompilationContext -> error("BazelCompilationContext must not be used as archived")
+    is BuildContextImpl -> compilationContext.asArchived
+    else -> ArchivedCompilationContext(delegate = this, scope = scope)
   }
+}

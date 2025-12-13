@@ -18,7 +18,11 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.DelicateCoroutinesApi
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
 import org.jetbrains.intellij.build.BuildContext
@@ -68,25 +72,44 @@ import kotlin.time.Duration
 @Suppress("SpellCheckingInspection")
 private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
+@OptIn(DelicateCoroutinesApi::class)
 suspend fun createBuildContext(
   projectHome: Path,
   productProperties: ProductProperties,
   setupTracer: Boolean = true,
   proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   options: BuildOptions = BuildOptions(),
+  scope: CoroutineScope? = null,
 ): BuildContext {
   val compilationContext = createCompilationContext(
     projectHome = projectHome,
     buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
     options = options,
     setupTracer = setupTracer,
-  ).asBazelIfNeeded
+  ).toBazelIfNeeded(scope).toArchivedIfNeeded(scope)
   return createBuildContext(
     compilationContext = compilationContext,
     projectHome = projectHome,
     productProperties = productProperties,
     proprietaryBuildTools = proprietaryBuildTools,
   )
+}
+
+@Experimental
+@Internal
+suspend fun createCompilationContext(
+  projectHome: Path,
+  productProperties: ProductProperties,
+  options: BuildOptions,
+  scope: CoroutineScope,
+  setupTracer: Boolean,
+): CompilationContext {
+  return createCompilationContext(
+    projectHome = projectHome,
+    buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
+    options = options,
+    setupTracer = setupTracer,
+  ).toBazelIfNeeded(scope).toArchivedIfNeeded(scope)
 }
 
 fun createBuildContext(

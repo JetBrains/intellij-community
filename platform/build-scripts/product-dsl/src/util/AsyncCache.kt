@@ -54,5 +54,21 @@ class AsyncCache<K : Any, V>(private val scope: CoroutineScope) {
     }
   }
 
+  /**
+   * Closes the cache by processing all completed values and cancelling pending computations.
+   * Each entry is atomically removed before processing.
+   */
+  @Suppress("UNCHECKED_CAST")
+  fun close(action: (V) -> Unit) {
+    val iterator = cache.keys.iterator()
+    while (iterator.hasNext()) {
+      val key = iterator.next()
+      when (val entry = cache.remove(key)) {
+        is CachedValue<*> -> action(entry.value as V)
+        is Deferred<*> -> entry.cancel()
+      }
+    }
+  }
+
   private class CachedValue<V>(@JvmField val value: V)
 }

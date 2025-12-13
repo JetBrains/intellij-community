@@ -4,17 +4,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.toByteArray
-import com.intellij.util.lang.ImmutableZipFile
-import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
-import org.jetbrains.intellij.build.productLayout.util.AsyncCache
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
@@ -23,35 +17,18 @@ internal class BazelModuleOutputProvider(
   modules: List<JpsModule>,
   private val projectHome: Path,
   val bazelOutputRoot: Path,
-  scope: CoroutineScope,
+  scope: CoroutineScope?,
 ) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 
-  // pool of opened ImmutableZipFile instances for efficient O(1) lookups
-  private val zipFileCache = AsyncCache<Path, ZipFile?>(scope)
-
-  private suspend fun getZipFile(file: Path): ZipFile? {
-    return zipFileCache.getOrPut(file) {
-      withContext(Dispatchers.IO) {
-        try {
-          ImmutableZipFile.load(file)
-        }
-        catch (e: IOException) {
-          if (Files.notExists(file)) {
-            return@withContext null
-          }
-          throw e
-        }
-      }
-    }
-  }
+  private val zipFilePool = ModuleOutputZipFilePool(scope)
 
   /**
-   * Suspend version of [readFileContentFromModuleOutput] using cached [ImmutableZipFile] instances.
+   * Suspend version of [readFileContentFromModuleOutput] using cached zip file instances.
    */
   override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
-      getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
+      zipFilePool.getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
     }
     return null
   }
