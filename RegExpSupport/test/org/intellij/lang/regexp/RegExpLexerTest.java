@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.*;
@@ -301,17 +300,24 @@ public class RegExpLexerTest extends LexerTestCase {
   /** three digit octal (\100) always valid, either octal or backreference under js, ruby and python */
   public void testThreeDigitOctalNoLeadingZero() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(OCTAL_NO_LEADING_ZERO));
-    doTest("\\100" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()" +
-           "()()()()()()()()()()\\100[\\100]", null, lexer);
+    String result = printTokens(lexer, "\\100" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()" +
+                                       "()()()()()()()()()()\\100[\\100]", 0);
+    
+    assertTrue(result.endsWith("""
+                                 BACKREF ('\\100')
+                                 CLASS_BEGIN ('[')
+                                 OCT_CHAR ('\\100')
+                                 CLASS_END (']')
+                                 """));
   }
 
   public void testOctalFollowedByDigit() {
@@ -355,42 +361,133 @@ public class RegExpLexerTest extends LexerTestCase {
 
   public void testBackReference() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
-    doTest("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\105", null, lexer);
+    doTest("(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\105", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('b')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('c')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('d')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('e')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('f')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('g')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('h')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('i')
+      GROUP_END (')')
+      GROUP_BEGIN ('(')
+      CHARACTER ('j')
+      GROUP_END (')')
+      BACKREF ('\\10')
+      CHARACTER ('5')""", lexer);
   }
 
   public void testPcreBackReference() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
-    doTest("(a)\\g105", null, lexer);
+    doTest("(a)\\g105", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      GROUP_END (')')
+      BACKREF ('\\g105')""", lexer);
   }
 
   public void testPcreRelativeBackReference() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
-    doTest("(a)\\g{105}", null, lexer);
+    doTest("(a)\\g{105}", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      GROUP_END (')')
+      BACKREF ('\\g{105}')""", lexer);
   }
 
   public void testPcreRelativeNegativeBackReference() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
-    doTest("(a)\\g{-105}", null, lexer);
+    doTest("(a)\\g{-105}", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      GROUP_END (')')
+      BACKREF ('\\g{-105}')""", lexer);
   }
 
   public void testPcreRelativeNegativeInvalidBackReference() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_BACK_REFERENCES));
-    doTest("(a)\\g-105", null, lexer);
+    doTest("(a)\\g-105", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      GROUP_END (')')
+      INVALID_CHARACTER_ESCAPE_TOKEN ('\\g')
+      CHARACTER ('-')
+      CHARACTER ('1')
+      CHARACTER ('0')
+      CHARACTER ('5')""", lexer);
   }
 
   public void testPcreConditionDefine() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_CONDITIONS));
-    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", null, lexer);
+    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", """
+      CONDITIONAL ('(?')
+      GROUP_BEGIN ('(')
+      PCRE_DEFINE ('DEFINE')
+      GROUP_END (')')
+      RUBY_NAMED_GROUP ('(?<')
+      NAME ('Name')
+      GT ('>')
+      CHAR_CLASS ('\\w')
+      PLUS ('+')
+      GROUP_END (')')
+      GROUP_END (')')
+      PCRE_RECURSIVE_NAMED_GROUP ('(?P>')
+      NAME ('Name')
+      GROUP_END (')')""", lexer);
   }
 
   public void testPcreConditionVersion() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_CONDITIONS));
-    doTest("(?(VERSION>=10.7)yes|no)", null, lexer);
+    doTest("(?(VERSION>=10.7)yes|no)", """
+      CONDITIONAL ('(?')
+      GROUP_BEGIN ('(')
+      PCRE_VERSION ('VERSION>=10.7')
+      GROUP_END (')')
+      CHARACTER ('y')
+      CHARACTER ('e')
+      CHARACTER ('s')
+      UNION ('|')
+      CHARACTER ('n')
+      CHARACTER ('o')
+      GROUP_END (')')""", lexer);
   }
 
   public void testNoPcreCondition() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
-    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", null, lexer);
+    doTest("(?(DEFINE)(?<Name>\\w+))(?P>Name)", """
+      CONDITIONAL ('(?')
+      GROUP_BEGIN ('(')
+      NAME ('DEFINE')
+      GROUP_END (')')
+      RUBY_NAMED_GROUP ('(?<')
+      NAME ('Name')
+      GT ('>')
+      CHAR_CLASS ('\\w')
+      PLUS ('+')
+      GROUP_END (')')
+      GROUP_END (')')
+      PCRE_RECURSIVE_NAMED_GROUP ('(?P>')
+      NAME ('Name')
+      GROUP_END (')')""", lexer);
   }
 
   public void testNoNestedCharacterClasses1() {
@@ -857,19 +954,23 @@ public class RegExpLexerTest extends LexerTestCase {
 
   public void testNumberedGroupRef() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(PCRE_NUMBERED_GROUP_REF));
-    doTest("(abcd)(?1)", null, lexer);
+    doTest("(abcd)(?1)", """
+      GROUP_BEGIN ('(')
+      CHARACTER ('a')
+      CHARACTER ('b')
+      CHARACTER ('c')
+      CHARACTER ('d')
+      GROUP_END (')')
+      PCRE_NUMBERED_GROUP_REF ('(?1)')""", lexer);
   }
 
   @Override
   protected @NotNull Lexer createLexer() {
-    return null;
+    throw new AssertionError();
   }
 
   @Override
   protected @NotNull String getDirPath() {
-    if (new File(getHomePath(), "community/RegExpSupport").isDirectory()) {
-      return "/community/RegExpSupport/testData/lexer";
-    }
-    return "/RegExpSupport/testData/lexer";
+    throw new AssertionError();
   }
 }
