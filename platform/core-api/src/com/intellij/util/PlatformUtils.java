@@ -54,6 +54,7 @@ public final class PlatformUtils {
   public static final String MPS_PREFIX = "MPS";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
+  public static final String ANDROID_STUDIO_PREFIX = "AndroidStudio";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
@@ -215,6 +216,10 @@ public final class PlatformUtils {
 
   public static boolean isRustRover() {
     return is(RUSTROVER_PREFIX);
+  }
+
+  public static boolean isAndroidStudio() {
+    return is(ANDROID_STUDIO_PREFIX);
   }
 
   public static boolean isQodana() {
