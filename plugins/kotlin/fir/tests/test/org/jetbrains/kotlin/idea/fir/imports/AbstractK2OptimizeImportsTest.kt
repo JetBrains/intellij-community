@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.fir.imports
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
