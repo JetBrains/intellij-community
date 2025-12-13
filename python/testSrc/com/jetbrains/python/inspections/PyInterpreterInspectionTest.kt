@@ -14,6 +14,14 @@ class PyInterpreterInspectionTest : PyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPyLatestDescriptor
 
   fun testNoInterpreterConfiguredShowsProblem() {
+    assertInterpreterWarning("test.py", "print('hello')\n")
+  }
+
+  fun testNoInterpreterConfiguredShowsProblemInEmptyFile() {
+    assertInterpreterWarning("__init__.py", "")
+  }
+
+  private fun assertInterpreterWarning(fileName: String, content: String) {
     val project = myFixture.project
     val module = myFixture.module
 
@@ -29,7 +37,7 @@ class PyInterpreterInspectionTest : PyTestCase() {
 
       val expectedMsg = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module")
 
-      myFixture.configureByText("test.py", "print('hello')\n")
+      myFixture.configureByText(fileName, content)
       myFixture.enableInspections(PyInterpreterInspection::class.java)
 
       val highlights = myFixture.doHighlighting()

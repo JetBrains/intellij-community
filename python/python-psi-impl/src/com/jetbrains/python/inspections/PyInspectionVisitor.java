@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
@@ -91,7 +92,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message,
                                        LocalQuickFix @NotNull ... quickFixes) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
@@ -102,12 +103,24 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message,
                                        @NotNull ProblemHighlightType type) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
       myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, type, myHolder.isOnTheFly()));
     }
+  }
+
+  private static boolean canRegisterProblem(@Nullable PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+
+    if (element.getTextLength() > 0) {
+      return true;
+    }
+
+    return element instanceof PyFile;
   }
 
   /**
