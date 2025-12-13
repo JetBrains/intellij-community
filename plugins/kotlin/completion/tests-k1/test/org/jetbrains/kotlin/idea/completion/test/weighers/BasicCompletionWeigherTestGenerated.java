@@ -409,6 +409,45 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/weighers/basic/namedArguments")
+    public static class NamedArguments extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("PreferInMultiLine.kt")
+        public void testPreferInMultiLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferInMultiLine.kt");
+        }
+
+        @TestMetadata("PreferLowerArgumentIndex.kt")
+        public void testPreferLowerArgumentIndex() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferLowerArgumentIndex.kt");
+        }
+
+        @TestMetadata("PreferLowestMissingArgument.kt")
+        public void testPreferLowestMissingArgument() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferLowestMissingArgument.kt");
+        }
+
+        @TestMetadata("PreferMatchingTypeSingleLine.kt")
+        public void testPreferMatchingTypeSingleLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferMatchingTypeSingleLine.kt");
+        }
+
+        @TestMetadata("PreferWhenUsingNamedArgumentsSingleLine.kt")
+        public void testPreferWhenUsingNamedArgumentsSingleLine() throws Exception {
+            runTest("../testData/weighers/basic/namedArguments/PreferWhenUsingNamedArgumentsSingleLine.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
         @java.lang.Override
