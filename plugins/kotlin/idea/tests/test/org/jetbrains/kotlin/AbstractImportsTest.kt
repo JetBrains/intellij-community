@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
-import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.ClassImportFilter
@@ -53,7 +52,7 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 val file = fixture.file as KtFile
 
                 if (file.isScript()) {
-                    ScriptConfigurationManager.updateScriptDependenciesSynchronously(file)
+                    updateScriptDependencies(file)
                 }
 
                 val fileText = file.text
@@ -116,6 +115,8 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
             }
         }
     }
+
+    protected open fun updateScriptDependencies(psiFile: KtFile) {}
 
     // returns test log
     protected abstract fun doTest(file: KtFile): String?
