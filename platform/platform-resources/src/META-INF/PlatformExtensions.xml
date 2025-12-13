@@ -1571,6 +1571,9 @@
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation="" open="true"/>
+    <applicationService
+      serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacade"
+      serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerPluginsFacadeImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivity" order="last"/>
 
     <registryKey key="ide.enable.notification.trace.data.sharing" defaultValue="true" description="Enables notification about sharing trace data"/>
@@ -2050,7 +2053,7 @@
 
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
-    
+
     <!-- Remove all this stuff when the notification is no longer needed -->
     <typedHandler implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />
     <editorFactoryMouseListener implementation="com.intellij.ide.ui.WaylandUserActivityTracker" />

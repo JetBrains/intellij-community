@@ -364,7 +364,7 @@ object UpdateChecker {
     val customRepoPlugins = HashMap<PluginId, PluginUiModel>()
     val errors = LinkedHashMap<String?, Exception>()
     val state = InstalledPluginsState.getInstance()
-    for (host in RepositoryHelper.getPluginHosts()) {
+    for (host in UpdateCheckerPluginsFacade.getInstance().getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
           findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator, activity)
@@ -401,7 +401,7 @@ object UpdateChecker {
         .filterNotNull()
         .filter { it.isEnabled }
         .filterNot { it.isBundled || it.allowBundledUpdate() }
-        .filterNot { PluginManagerCore.isCompatible(it, buildNumber) }
+        .filterNot { UpdateCheckerPluginsFacade.getInstance().isCompatible(it, buildNumber) }
         .toSet()
     }
 
@@ -412,12 +412,12 @@ object UpdateChecker {
     val updateable = HashMap<PluginId, IdeaPluginDescriptor?>()
 
     // installed plugins that could be updated (either downloaded or updateable bundled)
-    PluginManagerCore.plugins
+    UpdateCheckerPluginsFacade.getInstance().getInstalledPlugins()
       .filter { !it.isBundled || it.allowBundledUpdate() }
       .associateByTo(updateable) { it.pluginId }
 
     // plugins installed in an instance from which the settings were imported
-    val onceInstalled = PluginManager.getOnceInstalledIfExists()
+    val onceInstalled = UpdateCheckerPluginsFacade.getInstance().getOnceInstalledIfExists()
     if (onceInstalled != null) {
       try {
         Files.readAllLines(onceInstalled).forEach { line ->
@@ -507,7 +507,7 @@ object UpdateChecker {
   ) {
     val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
     state.onDescriptorDownload(descriptor)
-    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate,
+    checkAndPrepareToInstall(downloader, state, if (UpdateCheckerPluginsFacade.getInstance().isDisabled(downloader.id)) toUpdateDisabled else toUpdate,
                              buildNumber, indicator)
   }
 
@@ -554,7 +554,7 @@ object UpdateChecker {
   ) {
     val pluginId = originalDownloader.id
     val pluginVersion = originalDownloader.pluginVersion
-    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
+    val installedPlugin = UpdateCheckerPluginsFacade.getInstance().getPlugin(pluginId)
     if (installedPlugin == null
         || pluginVersion == null
         || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
@@ -562,7 +562,7 @@ object UpdateChecker {
         || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
             && allowedDowngrade(installedPlugin, originalDownloader.descriptor))) {
       val oldDownloader = ourUpdatedPlugins[pluginId]
-      val downloader = if (PluginManagerCore.isDisabled(pluginId)) {
+      val downloader = if (UpdateCheckerPluginsFacade.getInstance().isDisabled(pluginId)) {
         originalDownloader
       }
       else if (oldDownloader == null
@@ -582,7 +582,7 @@ object UpdateChecker {
       }
 
       val descriptor = downloader.descriptor
-      if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+      if (UpdateCheckerPluginsFacade.getInstance().isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate[pluginId] = downloader
       }
     }
