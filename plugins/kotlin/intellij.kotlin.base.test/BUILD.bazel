@@ -74,6 +74,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:jet_check",
     "//platform/structure-view-impl:structureView-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

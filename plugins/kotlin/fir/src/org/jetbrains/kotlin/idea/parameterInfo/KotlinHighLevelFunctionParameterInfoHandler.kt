@@ -9,8 +9,6 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -89,8 +87,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 ) : ParameterInfoHandlerWithTabActionSupport<TArgumentList, KotlinHighLevelParameterInfoWithCallHandlerBase.CandidateInfo, TArgument> {
 
     companion object {
-        @JvmField
-        val GREEN_BACKGROUND: Color = JBColor(Color(231, 254, 234), Gray._100)
+        val GREEN_BACKGROUND: Color = KotlinParameterInfoBase.GREEN_BACKGROUND
 
         val STOP_SEARCH_CLASSES: Set<Class<out KtElement>> = setOf(
             KtNamedFunction::class.java,
