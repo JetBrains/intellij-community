@@ -2121,23 +2121,24 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     CorruptionMarker.requestInvalidation();
   }
 
+  private static final @NotNull IntPredicate ACCEPT_ALL = (fileId -> true);
   @Override
   @Internal
   public @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
     boolean dumb = ActionUtil.isDumbMode(project);
-    if (!dumb) return f -> true;
+    if (!dumb) return ACCEPT_ALL;
 
     if (DumbServiceImpl.ALWAYS_SMART && project != null && UnindexedFilesUpdater.isScanningInProgress(project)) {
-      return f -> true;
+      return ACCEPT_ALL;
     }
 
     DumbModeAccessType dumbModeAccessType = getCurrentDumbModeAccessType(project);
     if (dumbModeAccessType == null) {
       //throw new IllegalStateException("index access is not allowed in dumb mode");
-      return __ -> true;
+      return ACCEPT_ALL;
     }
 
-    if (dumbModeAccessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) return f -> true;
+    if (dumbModeAccessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) return ACCEPT_ALL;
 
     assert dumbModeAccessType == DumbModeAccessType.RELIABLE_DATA_ONLY;
     return fileId -> !myFilesToUpdateCollector.containsFileId(fileId);
