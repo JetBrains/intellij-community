@@ -4,6 +4,7 @@ import com.intellij.database.csv.CsvFormat;
 import com.intellij.database.csv.CsvFormatter;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
+import com.intellij.database.datagrid.mutating.ColumnDescriptor;
 import com.intellij.database.util.Out;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -71,7 +72,10 @@ public final class FormatBasedExtractor extends TranspositionAwareExtractor {
         List<GridColumn> columns = new ArrayList<>();
         Int2ObjectMap<? extends GridColumn> columnsMap = GridExtractorsUtilCore.getColumnNumsToColumnsMapping(myAllColumns);
         for (int selectedColumn : GridExtractorsUtilCore.getNonEmptySelection(myAllColumns, mySelectedColumnIndices)) {
-          ContainerUtil.addIfNotNull(columns, columnsMap.get(selectedColumn));
+          GridColumn column = columnsMap.get(selectedColumn);
+          if (column != null && !column.getAttributes().contains(ColumnDescriptor.Attribute.INDEX)) {
+            columns.add(column);
+          }
         }
 
         for (final GridRow row : rows) {
@@ -95,7 +99,7 @@ public final class FormatBasedExtractor extends TranspositionAwareExtractor {
         Int2ObjectMap<? extends GridColumn> columnsMap = GridExtractorsUtilCore.getColumnNumsToColumnsMapping(myAllColumns);
         for (int selectedColumn : GridExtractorsUtilCore.getNonEmptySelection(myAllColumns, mySelectedColumnIndices)) {
           GridColumn column = columnsMap.get(selectedColumn);
-          if (column == null) continue;
+          if (column == null || column.getAttributes().contains(ColumnDescriptor.Attribute.INDEX)) continue;
           columnNames.add(column.getName());
         }
 

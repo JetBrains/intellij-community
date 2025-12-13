@@ -83,7 +83,7 @@ public abstract class TranspositionAwareExtractor extends DefaultValuesExtractor
         Object rowNumber = ROW_NAMES_COLUMN.getValue(row);
         return rowNumber instanceof String ? (String)rowNumber : "";
       }
-      return String.valueOf(row.getRowNum());
+      return String.valueOf(row.getRowNum() - 1);
     }
 
     @Override
@@ -166,7 +166,7 @@ public abstract class TranspositionAwareExtractor extends DefaultValuesExtractor
     public final GridRow originalRow;
 
     public TransposedColumn(int columnNum, GridRow originalRow) {
-      super(columnNum, "Value (" + originalRow.getRowNum() + ")", Types.VARCHAR, "", "");
+      super(columnNum, "Value (" + (originalRow.getRowNum() - 1) + ")", Types.VARCHAR, "", "");
       this.originalRow = originalRow;
     }
   }

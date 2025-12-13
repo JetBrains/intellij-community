@@ -540,7 +540,7 @@ public class GridUtil extends GridUtilCore {
     if (row == null) return DataGridBundle.message("column.name.not.applicable");
     if (isInsertedRow(grid, rowIndex)) return String.valueOf(getInsertedRowIdx(grid, relativeIndex));
     GridRow previousRow = rowIndex.asInteger() == 0 ? null : grid.getDataModel(DATA_WITH_MUTATIONS).getRow(ModelIndex.forRow(grid, rowIndex.asInteger() - 1));
-    return previousRow != null && previousRow.getRowNum() == row.getRowNum() ? "" : String.valueOf(row.getRowNum());
+    return previousRow != null && previousRow.getRowNum() == row.getRowNum() ? "" : String.valueOf(row.getRowNum() - 1);
   }
 
   public static void suggestPlugin(@NotNull String id, @Nullable Project project) {
