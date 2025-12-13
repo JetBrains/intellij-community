@@ -2,9 +2,9 @@ package com.intellij.mcpserver.impl.util.network
 
 import io.modelcontextprotocol.kotlin.sdk.shared.McpJson
 import io.modelcontextprotocol.kotlin.sdk.types.*
+import io.kotest.common.runBlocking
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class StreamableHttpServerTransportTest {
 
   @Test
-  fun `send completes pending request and updates protocol version`() = runTest {
+  fun `send completes pending request and updates protocol version`() = runBlocking {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -47,7 +47,7 @@ class StreamableHttpServerTransportTest {
   }
 
   @Test
-  fun `send emits notification to SSE when subscriber present`() = runTest {
+  fun `send emits notification to SSE when subscriber present`() = runBlocking {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -78,7 +78,7 @@ class StreamableHttpServerTransportTest {
   }
 
   @Test
-  fun `send drops notification when no SSE subscriber`() = runTest {
+  fun `send drops notification when no SSE subscriber`() = runBlocking {
     val transport = StreamableHttpServerTransport()
     transport.start()
 
@@ -95,7 +95,7 @@ class StreamableHttpServerTransportTest {
   }
 
   @Test
-  fun `close cancels pending requests and closes SSE channel`() = runTest {
+  fun `close cancels pending requests and closes SSE channel`() = runBlocking {
     val transport = StreamableHttpServerTransport()
     transport.start()
 

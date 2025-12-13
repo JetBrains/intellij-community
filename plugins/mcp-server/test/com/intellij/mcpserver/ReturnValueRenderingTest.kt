@@ -1,7 +1,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.util.asTool
-import kotlinx.coroutines.test.runTest
+import io.kotest.common.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -47,7 +47,7 @@ class ReturnValueRenderingTest {
 
   @ParameterizedTest
   @MethodSource("functions")
-  fun test(callable: KFunction<*>, expected: String) = runTest {
+  fun test(callable: KFunction<*>, expected: String) = runBlocking {
     val asTool = callable.asTool()
     val actualResult = asTool.call(buildJsonObject {})
     assertEquals(expected, actualResult.toString())
