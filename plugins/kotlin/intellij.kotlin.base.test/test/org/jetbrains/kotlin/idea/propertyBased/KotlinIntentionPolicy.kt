@@ -1,15 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.propertyBased
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.propertyBased.IntentionPolicy
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ConvertToScopeIntention
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFixBase
-import org.jetbrains.kotlin.idea.refactoring.move.changePackage.ChangePackageIntention
 
 abstract class KotlinIntentionPolicy : IntentionPolicy() {
     override fun shouldSkipIntention(actionText: String): Boolean =

@@ -61,5 +61,6 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
+    <orderEntry type="library" name="jetCheck" level="project" />
   </component>
 </module>
