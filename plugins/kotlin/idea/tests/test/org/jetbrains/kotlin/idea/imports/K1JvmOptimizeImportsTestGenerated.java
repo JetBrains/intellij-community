@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimizeImportsTest {
+public abstract class K1JvmOptimizeImportsTestGenerated extends AbstractK1JvmOptimizeImportsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/optimizeImports/jvm")
-    public abstract static class Jvm extends AbstractJvmOptimizeImportsTest {
+    public abstract static class Jvm extends AbstractK1JvmOptimizeImportsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/jvm/allUnderImports")
-        public static class AllUnderImports extends AbstractJvmOptimizeImportsTest {
+        public static class AllUnderImports extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -148,7 +148,7 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/jvm")
-        public static class Uncategorized extends AbstractJvmOptimizeImportsTest {
+        public static class Uncategorized extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -358,10 +358,10 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/optimizeImports/common")
-    public abstract static class Common extends AbstractJvmOptimizeImportsTest {
+    public abstract static class Common extends AbstractK1JvmOptimizeImportsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/basic")
-        public static class Basic extends AbstractJvmOptimizeImportsTest {
+        public static class Basic extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -480,7 +480,7 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/contextSensitiveResolution")
-        public static class ContextSensitiveResolution extends AbstractJvmOptimizeImportsTest {
+        public static class ContextSensitiveResolution extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -509,7 +509,7 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kDoc")
-        public static class KDoc extends AbstractJvmOptimizeImportsTest {
+        public static class KDoc extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -533,7 +533,7 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kt21515")
-        public static class Kt21515 extends AbstractJvmOptimizeImportsTest {
+        public static class Kt21515 extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -572,7 +572,7 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common")
-        public static class Uncategorized extends AbstractJvmOptimizeImportsTest {
+        public static class Uncategorized extends AbstractK1JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {

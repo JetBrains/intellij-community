@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.fe10.testGenerator
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
-import org.jetbrains.kotlin.addImport.AbstractAddImportTest
-import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
+import org.jetbrains.kotlin.addImport.AbstractK1AddImportTest
+import org.jetbrains.kotlin.addImportAlias.AbstractK1AddImportAliasTest53
 import org.jetbrains.kotlin.asJava.classes.AbstractIdeCompiledLightClassesByFqNameTest
 import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByFqNameTest
 import org.jetbrains.kotlin.asJava.classes.AbstractIdeLightClassesByPsiTest
@@ -68,8 +68,8 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
-import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JsOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
@@ -138,7 +138,7 @@ import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInfere
 import org.jetbrains.kotlin.psi.patternMatching.AbstractK1PsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
-import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
+import org.jetbrains.kotlin.shortenRefs.AbstractK1ShortenRefsTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -1060,15 +1060,15 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = CODE_INSIGHT) {
-        testClass<AbstractShortenRefsTest> {
+        testClass<AbstractK1ShortenRefsTest> {
             model("shortenRefs", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractAddImportTest> {
+        testClass<AbstractK1AddImportTest> {
             model("addImport", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractAddImportAliasTest53> {
+        testClass<AbstractK1AddImportAliasTest53> {
             model("addImportAlias", pattern = KT_WITHOUT_DOTS)
         }
 
@@ -1100,12 +1100,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractJvmOptimizeImportsTest> {
+        testClass<AbstractK1JvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_OR_KTS_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractJsOptimizeImportsTest> {
+        testClass<AbstractK1JsOptimizeImportsTest> {
             model("editor/optimizeImports/js", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }

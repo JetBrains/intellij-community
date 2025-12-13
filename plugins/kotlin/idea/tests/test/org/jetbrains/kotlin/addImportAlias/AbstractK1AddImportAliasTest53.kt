@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.addImportAlias
 
-import org.jetbrains.kotlin.AbstractImportsTest
+import org.jetbrains.kotlin.AbstractK1ImportsTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceImportAlias.KotlinIntroduceImportAliasHandler
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.utils.sure
 
-abstract class AbstractAddImportAliasTest53 : AbstractImportsTest() {
+abstract class AbstractK1AddImportAliasTest53 : AbstractK1ImportsTest() {
     override fun doTest(file: KtFile): String? {
         val element = findNameReferenceExpression()
         KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)

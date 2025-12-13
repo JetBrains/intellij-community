@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.addImport
 
 import com.intellij.psi.PsiDocumentManager
-import org.jetbrains.kotlin.AbstractImportsTest
+import org.jetbrains.kotlin.AbstractK1ImportsTest
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 
-abstract class AbstractAddImportTest : AbstractImportsTest() {
+abstract class AbstractK1AddImportTest : AbstractK1ImportsTest() {
     override fun doTest(file: KtFile): String? {
         var descriptorName = InTextDirectivesUtils.stringWithDirective(file.text, "IMPORT")
 

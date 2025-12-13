@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/addImportAlias")
-public class AddImportAliasTest53Generated extends AbstractAddImportAliasTest53 {
+public class K1AddImportAliasTest53Generated extends AbstractK1AddImportAliasTest53 {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

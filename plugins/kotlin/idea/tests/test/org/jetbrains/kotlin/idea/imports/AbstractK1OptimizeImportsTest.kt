@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
+abstract class AbstractK1OptimizeImportsTest : AbstractImportsTest() {
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
@@ -36,12 +36,12 @@ abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
         get() = Integer.MAX_VALUE
 }
 
-abstract class AbstractJvmOptimizeImportsTest : AbstractOptimizeImportsTest() {
+abstract class AbstractK1JvmOptimizeImportsTest : AbstractK1OptimizeImportsTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor =
         if (fileName().endsWith(".kts")) KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
         else KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 }
 
-abstract class AbstractJsOptimizeImportsTest : AbstractOptimizeImportsTest() {
+abstract class AbstractK1JsOptimizeImportsTest : AbstractK1OptimizeImportsTest() {
     override fun getProjectDescriptor() = KotlinStdJSProjectDescriptor
 }

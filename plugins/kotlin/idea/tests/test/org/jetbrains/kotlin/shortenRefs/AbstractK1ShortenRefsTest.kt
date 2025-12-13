@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.shortenRefs
 
-import org.jetbrains.kotlin.AbstractImportsTest
+import org.jetbrains.kotlin.AbstractK1ImportsTest
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractShortenRefsTest : AbstractImportsTest() {
+abstract class AbstractK1ShortenRefsTest : AbstractK1ImportsTest() {
     override fun doTest(file: KtFile): String? {
         val selectionModel = myFixture.editor.selectionModel
         if (!selectionModel.hasSelection()) error("No selection in input file")

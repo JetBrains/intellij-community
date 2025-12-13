@@ -19,10 +19,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/shortenRefs")
-public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
+public abstract class K1ShortenRefsTestGenerated extends AbstractK1ShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/constructor")
-    public static class Constructor extends AbstractShortenRefsTest {
+    public static class Constructor extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -116,7 +116,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/imports")
-    public static class Imports extends AbstractShortenRefsTest {
+    public static class Imports extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -145,7 +145,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/java")
-    public static class Java extends AbstractShortenRefsTest {
+    public static class Java extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -224,7 +224,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/kt21515")
-    public static class Kt21515 extends AbstractShortenRefsTest {
+    public static class Kt21515 extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -268,7 +268,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/this")
-    public static class This extends AbstractShortenRefsTest {
+    public static class This extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -322,7 +322,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/type")
-    public static class Type extends AbstractShortenRefsTest {
+    public static class Type extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -431,7 +431,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/typealias")
-    public static class Typealias extends AbstractShortenRefsTest {
+    public static class Typealias extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -465,7 +465,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs")
-    public static class Uncategorized extends AbstractShortenRefsTest {
+    public static class Uncategorized extends AbstractK1ShortenRefsTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
