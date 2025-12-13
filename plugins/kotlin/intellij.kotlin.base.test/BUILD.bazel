@@ -73,6 +73,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/idea-ui:ui",
     "@lib//:jet_check",
+    "//platform/structure-view-impl:structureView-impl",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end
