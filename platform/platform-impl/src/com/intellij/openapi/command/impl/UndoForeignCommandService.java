@@ -33,4 +33,9 @@ public interface UndoForeignCommandService {
     }
     return null;
   }
+
+  static boolean isCommandInProgress() {
+    UndoForeignCommandService service = getInstance();
+    return service != null && service.getForeignEditorProvider(null) != null;
+  }
 }
