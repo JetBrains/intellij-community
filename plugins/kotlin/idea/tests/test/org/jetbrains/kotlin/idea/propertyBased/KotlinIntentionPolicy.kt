@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ConvertToScopeInt
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFixBase
 import org.jetbrains.kotlin.idea.refactoring.move.changePackage.ChangePackageIntention
 
-internal class KotlinIntentionPolicy : IntentionPolicy() {
+abstract class KotlinIntentionPolicy : IntentionPolicy() {
     override fun shouldSkipIntention(actionText: String): Boolean =
         // These intentions don't modify code (probably should not start in write-action?)
         actionText == "Enable a trailing comma by default in the formatter" ||
@@ -23,22 +23,4 @@ internal class KotlinIntentionPolicy : IntentionPolicy() {
     override fun mayBreakCode(action: IntentionAction, editor: Editor, file: PsiFile): Boolean = false
 
     override fun shouldTolerateIntroducedError(info: HighlightInfo): Boolean = false
-
-    override fun shouldCheckPreview(action: IntentionAction): Boolean {
-        val unwrapped = IntentionActionDelegate.unwrap(action)
-        val skipPreview =
-          action.familyName == "Create from usage" || // Starts template but may also perform modifications before that; thus not so easy to support
-          unwrapped is ConvertToScopeIntention || // Performs reference search which must be run under progress. Probably we can generate diff excluding references?..
-          unwrapped is CreateCallableFromUsageFixBase<*> || // Performs too much of complex stuff. Not sure whether it should start in write action...
-          unwrapped is ChangePackageIntention || // Just starts the template; no reasonable preview could be displayed
-          unwrapped.javaClass.name in skipPreviewIntentionClassNames
-        return !skipPreview
-    }
-
-    private val skipPreviewIntentionClassNames =
-        setOf(
-            "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangePackageIntention",
-            "org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix",
-            "org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix"
-        )
 }

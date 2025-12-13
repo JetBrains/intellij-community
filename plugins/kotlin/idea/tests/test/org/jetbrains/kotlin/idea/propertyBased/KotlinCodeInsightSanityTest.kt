@@ -19,7 +19,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 
 @SkipSlowTestLocally
-open class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
     private val seed: String? = System.getProperty("seed")
 
     override fun setUp() {
@@ -52,7 +52,7 @@ open class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase()
         AbstractImportFixInfo.ignoreModuleError(testRootDisposable)
         val actionSupplier = actionOnKotlinFiles { file: PsiFile ->
             Generator.sampledFrom(
-                InvokeIntention(file, KotlinIntentionPolicy()),
+                InvokeIntention(file, createIntentionPolicy()),
                 //TODO: support completion mutators
                 //InvokeCompletion(file, KotlinCompletionPolicy()),
                 StripTestDataMarkup(file),
@@ -66,6 +66,8 @@ open class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase()
             }
             .checkScenarios(actionSupplier)
     }
+
+    protected abstract fun createIntentionPolicy(): KotlinIntentionPolicy
 
     private fun enableInspections() {
         MadTestingUtil.enableAllInspections(project, KotlinLanguage.INSTANCE)
