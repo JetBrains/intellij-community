@@ -40,6 +40,10 @@ abstract class AbstractK2OptimizeImportsTest : AbstractImportsTest() {
 
     override val nameCountToUseStarImportDefault: Int
         get() = Integer.MAX_VALUE
+
+    override fun registerClassImportFilterExtensions(classImportFilterVetoRegexRules: MutableList<String>) {
+        // Not supported in K2 Mode
+    }
 }
 
 abstract class AbstractK2JvmOptimizeImportsTest : AbstractK2OptimizeImportsTest() {
