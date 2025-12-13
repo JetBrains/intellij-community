@@ -131,6 +131,9 @@ public final class FileSystemUtil {
     return null;
   }
 
+  // Android Studio (b/432885937): Enable overriding readParentCaseSensitivity.
+  public static volatile java.util.function.Function<java.io.File, FileAttributes.CaseSensitivity> parentCaseSensitivityReader = null;
+
   /**
    * Detects case-sensitivity of the directory containing {@code anyChild} (or {@code anyChild} itself, if it happens to be
    * a filesystem root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
@@ -138,7 +141,13 @@ public final class FileSystemUtil {
    */
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
-    FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
+    // Android Studio (b/432885937): Enable overriding readParentCaseSensitivity.
+    FileAttributes.CaseSensitivity detected = FileAttributes.CaseSensitivity.UNKNOWN;
+    final java.util.function.Function<java.io.File, FileAttributes.CaseSensitivity> parentCaseSensitivityReader = FileSystemUtil.parentCaseSensitivityReader;
+    if (parentCaseSensitivityReader != null) detected = parentCaseSensitivityReader.apply(anyChild);
+    if (detected.isKnown()) return detected;
+
+    detected = readCaseSensitivityByNativeAPI(anyChild);
     if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
     return readCaseSensitivityByJavaIO(anyChild);
