@@ -116,6 +116,42 @@ public fun VerticalScrollbar(
 }
 
 /**
+ * A vertical scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control
+ * @param adapter The [ScrollbarAdapter] to use for this scrollbar.
+ * @param modifier The modifier to apply to this layout node
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
+@Composable
+public fun VerticalScrollbar(
+    scrollState: @Composable () -> ScrollableState,
+    adapter: @Composable () -> ScrollbarAdapter,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+) {
+    BaseScrollbar(
+        scrollState = scrollState(),
+        reverseLayout = reverseLayout,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        isVertical = true,
+        style = style,
+        keepVisible = keepVisible,
+        modifier = modifier,
+        fallbackScrollableAdapterProvider = adapter,
+    )
+}
+
+/**
  * A horizontal scrollbar that can be tied to a [ScrollableState].
  *
  * @param scrollState The [ScrollableState] to control.
@@ -148,6 +184,42 @@ public fun HorizontalScrollbar(
     )
 }
 
+/**
+ * A horizontal scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control.
+ * @param adapter The [ScrollbarAdapter] to use for this scrollbar.
+ * @param modifier The modifier to apply to this layout node.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
+@Composable
+public fun HorizontalScrollbar(
+    scrollState: @Composable () -> ScrollableState,
+    adapter: @Composable () -> ScrollbarAdapter,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    keepVisible: Boolean = false,
+) {
+    BaseScrollbar(
+        scrollState = scrollState(),
+        reverseLayout = reverseLayout,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        isVertical = false,
+        style = style,
+        keepVisible = keepVisible,
+        modifier = modifier,
+        fallbackScrollableAdapterProvider = adapter,
+    )
+}
+
 @Composable
 private fun BaseScrollbar(
     scrollState: ScrollableState,
@@ -158,6 +230,9 @@ private fun BaseScrollbar(
     style: ScrollbarStyle,
     keepVisible: Boolean,
     modifier: Modifier = Modifier,
+    fallbackScrollableAdapterProvider: @Composable () -> ScrollbarAdapter = {
+        error("Unsupported scroll state type: ${scrollState::class.qualifiedName}")
+    },
 ) {
     val isHovered by interactionSource.collectIsHoveredAsState()
 
@@ -205,7 +280,7 @@ private fun BaseScrollbar(
             is LazyGridState -> rememberScrollbarAdapter(scrollState)
             is ScrollState -> rememberScrollbarAdapter(scrollState)
             is TextFieldScrollState -> rememberScrollbarAdapter(scrollState)
-            else -> error("Unsupported scroll state type: ${scrollState::class.qualifiedName}")
+            else -> fallbackScrollableAdapterProvider()
         }
 
     with(LocalDensity.current) {
