@@ -10,13 +10,11 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.*
@@ -24,7 +22,6 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
 import com.intellij.util.Processors
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
@@ -973,14 +970,3 @@ private fun CallTypeAndReceiver<*, *>.toFilter() = { descriptor: DeclarationDesc
     callType.descriptorKindFilter.accepts(descriptor)
 }
 
-object AbstractImportFixInfo {
-    @Volatile
-    internal var IGNORE_MODULE_ERROR = false
-
-    @TestOnly
-    fun ignoreModuleError(disposable: Disposable) {
-        IGNORE_MODULE_ERROR = true
-        Disposer.register(disposable) { IGNORE_MODULE_ERROR = false }
-    }
-
-}
