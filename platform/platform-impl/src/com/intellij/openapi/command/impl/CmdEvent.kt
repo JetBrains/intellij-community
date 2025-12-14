@@ -19,7 +19,8 @@ interface CmdEvent {
   fun confirmationPolicy(): UndoConfirmationPolicy
   fun recordOriginalDocument(): Boolean
   fun isTransparent(): Boolean
-  fun editorProvider(project: Project?, ifAbsent: () -> ForeignEditorProvider?): ForeignEditorProvider?
+  fun putEditorProvider(project: Project?, provider: ForeignEditorProvider)
+  fun editorProviders(): Map<Project?, ForeignEditorProvider>
 
   companion object {
     @JvmStatic

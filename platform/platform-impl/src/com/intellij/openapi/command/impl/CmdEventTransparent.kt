@@ -8,7 +8,7 @@ import java.util.Collections
 internal class CmdEventTransparent(
   id: CommandId,
   private val project: Project?,
-  projectToProvider: MutableMap<Project?, ForeignEditorProvider?> = Collections.synchronizedMap(mutableMapOf()),
+  projectToProvider: MutableMap<Project?, ForeignEditorProvider> = Collections.synchronizedMap(mutableMapOf()),
 ) : CmdEventBase(id, projectToProvider) {
 
   fun withProject(project: Project?): CmdEvent {

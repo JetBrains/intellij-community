@@ -18,8 +18,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UndoSpy {
 
-  fun commandBeforeStarted(undoProject: Project?, editor: FileEditor?, originator: DocumentReference?)
-
   fun commandStarted(cmdEvent: CmdEvent)
 
   fun undoableActionAdded(undoProject: Project?, action: UndoableAction, type: UndoableActionType)

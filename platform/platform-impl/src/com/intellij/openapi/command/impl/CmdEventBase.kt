@@ -9,8 +9,10 @@ import java.util.Collections
 
 internal abstract class CmdEventBase(
   private val id: CommandId,
-  protected val projectToProvider: MutableMap<Project?, ForeignEditorProvider?> = Collections.synchronizedMap(mutableMapOf()),
+  protected val projectToProvider: MutableMap<Project?, ForeignEditorProvider> = Collections.synchronizedMap(mutableMapOf()),
 ) : CmdEvent {
+
+  private val projectToProviderView = Collections.unmodifiableMap(projectToProvider)
 
   override fun id(): CommandId {
     return id
@@ -32,9 +34,14 @@ internal abstract class CmdEventBase(
     return false
   }
 
-  override fun editorProvider(project: Project?, ifAbsent: () -> ForeignEditorProvider?): ForeignEditorProvider? {
-    return projectToProvider.computeIfAbsent(project) {
-      ifAbsent()
+  override fun putEditorProvider(project: Project?, provider: ForeignEditorProvider) {
+    val put = projectToProvider.put(project, provider)
+    check(put == null) {
+      "Provider for $project already registered"
     }
+  }
+
+  override fun editorProviders(): Map<Project?, ForeignEditorProvider> {
+    return projectToProviderView
   }
 }

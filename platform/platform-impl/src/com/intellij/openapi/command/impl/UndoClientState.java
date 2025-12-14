@@ -162,7 +162,13 @@ final class UndoClientState implements Disposable {
     commandBuilder.commandStarted(cmdEvent, editorProvider);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandBeforeStarted(project, editorProvider.getCurrentEditor(project), commandBuilder.getOriginalDocument());
+      cmdEvent.putEditorProvider(
+        project,
+        new ForeignEditorProvider(
+          editorProvider.getCurrentEditor(project),
+          commandBuilder.getOriginalDocument()
+        )
+      );
     }
   }
 
