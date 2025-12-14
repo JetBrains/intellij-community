@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtCodeFragment
 
-abstract class AbstractCodeFragmentAutoImportTest : AbstractKotlinHighlightVisitorTest() {
-    override fun doTest(filePath: String) {
+abstract class AbstractCodeFragmentAutoImportTest : KotlinLightCodeInsightFixtureTestCase() {
+    protected open fun doTest(filePath: String) {
         configureByCodeFragment(filePath)
         myFixture.doHighlighting()
 
