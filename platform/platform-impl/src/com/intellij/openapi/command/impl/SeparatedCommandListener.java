@@ -6,6 +6,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+/**
+ * Notifies about commands and transparent actions in a separated manner,
+ * as opposed to {@link com.intellij.openapi.command.CommandListener} allowing overlapping of them.
+ * <p>
+ * See {@link CommandSeparator}
+ */
 @ApiStatus.Internal
 public interface SeparatedCommandListener {
 

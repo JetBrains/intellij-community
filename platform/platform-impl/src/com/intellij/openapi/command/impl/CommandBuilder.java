@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.util.ArrayUtil;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,6 +257,9 @@ final class CommandBuilder {
 
     @Override
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @Nullable ForeignEditorProvider editorProvider(@Nullable Project project, @NotNull Function0<@Nullable ForeignEditorProvider> ifAbsent) { throw new UnsupportedOperationException(); }
 
     // endregion
   }

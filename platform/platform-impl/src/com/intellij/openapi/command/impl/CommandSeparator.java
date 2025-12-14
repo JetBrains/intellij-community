@@ -4,14 +4,13 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 
 /**
- * Cs -- command started, Cf -- command finished, Ts -- transparent started, Tf -- transparent finished.
+ * CommandSeparator prevents overlapping of commands and transparent actions by the following rules:
  * <p>
  * [Cs, (Ts, Tf), Cf] -- Ts and Tf are ignored
  * <p>
@@ -20,6 +19,8 @@ import org.jetbrains.annotations.TestOnly;
  * (Ts, [Cs, Tf), Cf] -- Cf and Tf are ignored, Cf is actual Tf
  * <p>
  * [Cs, (Ts, Cf], Tf) -- Ts is ignored, Cf is pair Cf Ts
+ * <p>
+ * where Cs -- command started, Cf -- command finished, Ts -- transparent started, Tf -- transparent finished
  * <p>
  */
 @ApiStatus.Internal
@@ -153,27 +154,11 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private static @NotNull CmdEvent createCmdEvent(@NotNull CommandEvent event) {
-    return CmdEvent.create(
-      CommandIdService.currCommandId(),
-      event.getProject(),
-      event.getCommandName(),
-      event.getCommandGroupId(),
-      event.getUndoConfirmationPolicy(),
-      event.shouldRecordActionForOriginalDocument(),
-      false
-    );
+    return CmdEvent.create(CommandIdService.currCommandId(), event);
   }
 
   private static @NotNull CmdEvent createTransparentCmdEvent() {
-    return CmdEvent.create(
-      CommandIdService.currCommandId(),
-      null,
-      "",
-      null,
-      UndoConfirmationPolicy.DEFAULT,
-      false,
-      true
-    );
+    return CmdEvent.createTransparent(CommandIdService.currCommandId(), null);
   }
 
   private static @NotNull SeparatedCommandListener getPublisher() {
