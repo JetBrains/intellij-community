@@ -7,18 +7,16 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class UndoForeignCommandServiceImpl : UndoForeignCommandService {
 
-  private val currentForeignRef = AtomicReference<MutableMap<Project?, ForeignEditorProvider>>()
+  private val currentForeignRef = AtomicReference<Map<Project?, ForeignEditorProvider>>()
 
   fun isCommandInProgress(): Boolean {
     return currentForeignRef.get() != null
   }
 
   override fun startForeignCommand(commandId: CommandId, editorProviders: List<ForeignEditorProvider>) {
+    val map = editorProviders.associateBy { it.undoProject() }.toMap()
     CommandIdService.setForcedCommand(commandId)
-    val map: MutableMap<Project?, ForeignEditorProvider> = mutableMapOf()
-    for (provider in editorProviders) {
-      map[provider.undoProject()] = provider
-    }
+    currentForeignRef.set(map)
   }
 
   override fun finishForeignCommand() {
