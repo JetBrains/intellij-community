@@ -15,7 +15,8 @@ fun IdeaFrameUI.showUsagesPopupUi(block: ShowUsagesPopupUi.() -> Unit = {}) =
   }.apply(block)
 
 class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
-  val usagesFoundLabel = x { contains(byAccessibleName("usages")) }
+  val usagesPopupTitle = x { byClass("DialogPanel") }
+  val usagesFoundLabel = usagesPopupTitle. x { contains(byAccessibleName("usages")) }
   val previewButton = actionButton { byAccessibleName("Preview Source") }
   val openInFindTWButton = actionButton { byAccessibleName("Open in Find Tool Window") }
   val settingsButton = actionButton { byAccessibleName("Settings…") }
