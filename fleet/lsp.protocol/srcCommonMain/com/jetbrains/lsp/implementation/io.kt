@@ -31,26 +31,52 @@ fun ByteReader.cancel() {
   cancel(IOException("Channel was cancelled"))
 }
 
+private const val CR = 0x0D.toByte()
+private const val LF = 0x0A.toByte()
+
+// The implementation is derived from ByteReadChannel#readUTF8LineTo.
+@OptIn(InternalIoApi::class)
 suspend fun ByteReader.readUTF8Line(): String? {
-  val builder = StringBuilder()
-  do {
-    val linefeed = readBuffer.indexOf(0x0A)
-    if (linefeed != -1L) {
-      builder.append(readBuffer.readString(linefeed))
-      if (builder.isNotEmpty() && builder[builder.length - 1] == '\r') {
-        builder.deleteAt(builder.length - 1)
+  val out = StringBuilder()
+  val completed = run {
+    Buffer().use { lineBuffer ->
+      while (!isClosedForRead) {
+        while (!readBuffer.exhausted()) {
+          when (val b = readBuffer.readByte()) {
+            CR -> {
+              // Check if LF follows CR after awaiting.
+              if (readBuffer.exhausted()) awaitContent()
+              if (readBuffer.buffer[0] == LF) {
+                readBuffer.buffer.skip(1)
+              }
+              else {
+                throw IOException("Unexpected line ending <CR>")
+              }
+              out.append(lineBuffer.readString())
+              return@run true
+            }
+
+            LF -> {
+              out.append(lineBuffer.readString())
+              return@run true
+            }
+
+            else -> lineBuffer.writeByte(b)
+          }
+        }
+
+        awaitContent()
       }
-      check(readBuffer.readByte() == 0x0A.toByte()) { "expected to see the previously found line terminator" }
 
-      return builder.toString()
+      (lineBuffer.size > 0).also { remaining ->
+        if (remaining) {
+          out.append(lineBuffer.readString())
+        }
+      }
     }
-
-    builder.append(readBuffer.readString())
   }
-  while (awaitContent())
 
-  // Line terminator was never found before the byte stream was closed.
-  return null
+  return if (completed) out.toString() else null
 }
 
 suspend fun ByteReader.readByteArray(count: Int): ByteArray {
