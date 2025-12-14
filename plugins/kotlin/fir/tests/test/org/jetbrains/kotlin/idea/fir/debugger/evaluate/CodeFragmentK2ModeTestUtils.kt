@@ -44,9 +44,16 @@ private fun createK2ModeCodeFragment(filePath: String, contextElement: PsiElemen
     val contextTuner = CodeFragmentContextTuner.getInstance()
     val effectiveContextElement = contextTuner.tuneContextElement(contextElement)
 
-    val fileNameForFragment = "$filePath.fragment.k2"
+    val fragmentExtensions = listOf(
+        "fragment.k2",
+        "fragment",
+    )
 
-    val fileForFragment = File(fileNameForFragment)
+    val fileForFragment = fragmentExtensions.firstNotNullOfOrNull { extension ->
+        val candidateFile = File("$filePath.$extension")
+        candidateFile.takeIf { it.exists() }
+    } ?: error(".fragment file corresponding to '$filePath' should exist")
+
     val codeFragmentText = FileUtil.loadFile(fileForFragment, true).trim()
     val psiFactory = KtPsiFactory(contextElement.project)
 
