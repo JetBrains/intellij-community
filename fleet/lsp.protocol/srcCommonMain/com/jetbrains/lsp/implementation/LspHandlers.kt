@@ -51,24 +51,6 @@ class LspNotificationHandler<Params>(
     val handler: suspend context(LspHandlerContext) CoroutineScope.(Params) -> Unit,
 )
 
-interface LspHandlersMiddleware {
-  fun <P, R, E> requestHandler(handler: LspRequestHandler<P, R, E>): LspRequestHandler<P, R, E>
-
-  fun <P> notificationHandler(handler: LspNotificationHandler<P>): LspNotificationHandler<P>
-
-  companion object {
-    val IDENTITY: LspHandlersMiddleware = object : LspHandlersMiddleware {
-      override fun <P, R, E> requestHandler(handler: LspRequestHandler<P, R, E>): LspRequestHandler<P, R, E> {
-        return handler
-      }
-
-      override fun <P> notificationHandler(handler: LspNotificationHandler<P>): LspNotificationHandler<P> {
-        return handler
-      }
-    }
-  }
-}
-
 fun lspHandlers(builder: LspHandlersBuilder.() -> Unit): LspHandlers {
     val requests = mutableMapOf<String, LspRequestHandler<*, *, *>>()
     val notifications = mutableMapOf<String, LspNotificationHandler<*>>()

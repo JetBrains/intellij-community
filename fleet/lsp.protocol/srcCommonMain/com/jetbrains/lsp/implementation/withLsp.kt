@@ -36,7 +36,6 @@ suspend fun withLsp(
     incoming: ReceiveChannel<JsonElement>,
     outgoing: SendChannel<JsonElement>,
     handlers: LspHandlers,
-    middleware: LspHandlersMiddleware = LspHandlersMiddleware.IDENTITY,
     createCoroutineContext: (LspClient) -> CoroutineContext = { EmptyCoroutineContext },
     body: suspend CoroutineScope.(LspClient) -> Unit,
 ) {
@@ -115,7 +114,6 @@ suspend fun withLsp(
                             val request = LSP.json.decodeFromJsonElement(RequestMessage.serializer(), jsonMessage)
                             supervisor.launch(context = CoroutineName("handler for ${request.method}"), start = CoroutineStart.ATOMIC) {
                                 val maybeHandler = handlers.requestHandler(request.method)
-                                    ?.let { handler -> middleware.requestHandler(handler) }
                                 runCatching {
                                     val handler = requireNotNull(maybeHandler) {
                                         "no handler for request: ${request.method}"
@@ -123,13 +121,18 @@ suspend fun withLsp(
                                     val deserializedParams = request.params?.let { params ->
                                         LSP.json.decodeFromJsonElement(handler.requestType.paramsSerializer, params)
                                     }
-                                    val result = (handler as LspRequestHandler<Any?, Any?, Any?>).handler(
-                                        lspHandlerContext,
-                                        this,
-                                        deserializedParams
-                                    )
+
+                                    @Suppress("UNCHECKED_CAST")
+                                    handler as LspRequestHandler<Any?, Any?, Any?>
+
+                                    val result = handler.handler(
+                                          lspHandlerContext,
+                                          this,
+                                          deserializedParams
+                                      )
+
                                     LSP.json.encodeToJsonElement(
-                                        serializer = handler.requestType.resultSerializer as KSerializer<Any?>,
+                                        serializer = handler.requestType.resultSerializer,
                                         value = result
                                     )
                                 }.fold(
@@ -155,9 +158,11 @@ suspend fun withLsp(
                                                     code = x.errorCode,
                                                     message = x.message ?: x::class.simpleName ?: "unknown error",
                                                     data = runCatching {
+                                                        @Suppress("UNCHECKED_CAST")
                                                         val errorSerializer = requireNotNull(maybeHandler) {
                                                             "we could not have caught LspException if we didn't find the handler"
                                                         }.requestType.errorSerializer as KSerializer<Any?>
+
                                                         LSP.json.encodeToJsonElement(
                                                             serializer = errorSerializer,
                                                             value = x.payload
@@ -206,10 +211,11 @@ suspend fun withLsp(
                                             null -> {
                                                 val result = response.result?.let { result ->
                                                     runCatching {
-                                                        LSP.json.decodeFromJsonElement(
-                                                            client.requestType.resultSerializer as KSerializer<Any?>,
-                                                            result
-                                                        )
+                                                      @Suppress("UNCHECKED_CAST")
+                                                      LSP.json.decodeFromJsonElement(
+                                                          client.requestType.resultSerializer as KSerializer<Any?>,
+                                                          result
+                                                      )
                                                     }.onFailure { error ->
                                                         currentCoroutineContext().job.ensureActive()
                                                         LOG.error(error)
@@ -226,10 +232,11 @@ suspend fun withLsp(
                                                         cause = null,
                                                         payload = error.data?.let { data ->
                                                             runCatching {
-                                                                LSP.json.decodeFromJsonElement(
-                                                                    client.requestType.errorSerializer as KSerializer<Any?>,
-                                                                    data
-                                                                )
+                                                              @Suppress("UNCHECKED_CAST")
+                                                              LSP.json.decodeFromJsonElement(
+                                                                  client.requestType.errorSerializer as KSerializer<Any?>,
+                                                                  data
+                                                              )
                                                             }.onFailure { decodingError ->
                                                                 currentCoroutineContext().job.ensureActive()
                                                                 LOG.error(decodingError)
@@ -255,15 +262,15 @@ suspend fun withLsp(
 
                                 else ->
                                     runCatching {
-                                        when (val originalHandler = handlers.notificationHandler(notification.method)) {
+                                        when (val handler = handlers.notificationHandler(notification.method)) {
                                             null ->
                                                 LOG.debug("no handler for notification: ${notification.method}")
 
                                             else -> {
-                                                val handler = middleware.notificationHandler(originalHandler)
                                                 val deserializedParams = notification.params?.let { params ->
                                                     LSP.json.decodeFromJsonElement(handler.notificationType.paramsSerializer, params)
                                                 }
+                                                @Suppress("UNCHECKED_CAST")
                                                 (handler as LspNotificationHandler<Any?>).handler(lspHandlerContext, this, deserializedParams)
                                             }
                                         }
