@@ -71,8 +71,6 @@ jvm_library(
     "//plugins/kotlin/fir",
     "//plugins/gradle:gradle-tests",
     "//plugins/gradle:gradle-tests_test_lib",
-    "//plugins/kotlin/idea/tests",
-    "//plugins/kotlin/idea/tests:tests_test_lib",
     "//xml/xml-psi-api:psi",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

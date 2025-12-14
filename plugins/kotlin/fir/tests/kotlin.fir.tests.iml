@@ -66,7 +66,6 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="intellij.gradle.tests" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
