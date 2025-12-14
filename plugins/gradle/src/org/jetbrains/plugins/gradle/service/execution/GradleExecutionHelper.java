@@ -637,9 +637,9 @@ public final class GradleExecutionHelper {
     @NotNull GradleExecutionContext context,
     @NotNull BuildEnvironment buildEnvironment
   ) {
-    if (isLatestMinorVersionInspectionDisabled(context)) return;
-
     GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentVersion)) return;
+    if (isLatestMinorVersionInspectionDisabled(context)) return;
     if (isMinorGradleVersionOutdated(currentVersion)) return;
 
     final var issue = new OutdatedGradleVersionIssue(context, currentVersion);

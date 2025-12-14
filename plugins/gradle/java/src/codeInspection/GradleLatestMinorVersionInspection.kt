@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_WRAPPER_PROPERTI
 
 class GradleLatestMinorVersionInspection : LocalInspectionTool() {
   override fun isAvailableForFile(file: PsiFile): Boolean {
-    // TODO not sure if this should be limited to "gradle-wrapper.properties" file
     return FileUtilRt.fileNameEquals(file.name, GRADLE_WRAPPER_PROPERTIES_FILE_NAME)
   }
 
@@ -38,6 +37,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
           return
         }
 
+        if (GradleJvmSupportMatrix.isGradleDeprecatedByIdea(currentGradleVersion)) return
         val latestMinorGradleVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)
         if (currentGradleVersion >= latestMinorGradleVersion) return
 
