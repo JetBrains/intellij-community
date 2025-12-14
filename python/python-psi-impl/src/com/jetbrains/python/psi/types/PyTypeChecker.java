@@ -686,7 +686,7 @@ public final class PyTypeChecker {
 
     GenericSubstitutions substitutions = collectTypeSubstitutions(expectedProtocol, matchContext.context);
     for (kotlin.Pair<PyTypeMember, List<PyTypeMember>> pair : protocolElements) {
-      PsiElement pm = pair.getFirst().getMainElement();
+      PsiElement pm = pair.getFirst().getElement();
       if (!(pm instanceof PsiNamedElement protocolMember)) {
         continue;
       }

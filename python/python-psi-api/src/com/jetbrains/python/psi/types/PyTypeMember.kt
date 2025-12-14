@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class PyTypeMember @JvmOverloads @ApiStatus.Internal constructor(
-  val mainElement: PsiElement?,
+  mainElement: PsiElement?,
   val type: PyType?,
   val isClassVar: Boolean = false,
   val getter: PsiElement? = mainElement,
@@ -35,7 +35,11 @@ class PyTypeMember @JvmOverloads @ApiStatus.Internal constructor(
   val isWritable: Boolean get() = setter != null
   val isDeletable: Boolean get() = deleter != null
 
-  val name: String? get() = if (mainElement is PsiNamedElement) mainElement.name else null
+  val name: String?
+    get() {
+      val e = element
+      return if (e is PsiNamedElement) e.name else null
+    }
 
   private companion object {
     fun getSetterFromMainElement(element: PsiElement?): PsiElement? {

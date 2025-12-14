@@ -131,9 +131,9 @@ class PyProtocolInspection : PyInspection() {
     ) {
       subclassMembers
         .asSequence()
-        .filter { it.mainElement?.containingFile == type.pyClass.containingFile }
+        .filter { it.element?.containingFile == type.pyClass.containingFile }
         .forEach {
-          val element = it.mainElement
+          val element = it.element
           val place = if (element is PsiNameIdentifierOwner) element.nameIdentifier else element ?: return@forEach
           val elementName = if (element is PsiNameIdentifierOwner) element.name else return@forEach
 

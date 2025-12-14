@@ -36,7 +36,7 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
   protocolMembers.addAll(superClassesMembers)
 
   for (protocolMember in protocolMembers) {
-    val protocolElement = protocolMember.mainElement ?: continue
+    val protocolElement = protocolMember.element ?: continue
     if (protocolElement is PyPossibleClassMember) {
       val cls = protocolElement.containingClass
       if (cls != null && !isProtocol(cls, context)) {
