@@ -11,6 +11,15 @@ on:
         description: 'artifacts directory'
         type: string
         required: true
+      system_properties:
+        default: ''
+        description: 'any custom system properties'
+        type: string
+        required: false
+      upload_artifacts:
+        default: true
+        description: 'whether to make artifacts available for download'
+        type: boolean
 
 jobs:
   build-linux-x64:
@@ -23,9 +32,9 @@ jobs:
           arch: x64
           extension: tar.gz
           product: ${{inputs.product}}
-          system_properties: '-Dintellij.build.skip.build.steps=os_specific_distributions' # IDEA-382998
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
-        if: false # IDEA-382998
+        if: ${{inputs.upload_artifacts}}
         with:
           os: linux
           arch: x64
@@ -41,9 +50,9 @@ jobs:
           arch: x64
           extension: exe
           product: ${{inputs.product}}
-          system_properties: '-Dintellij.build.skip.build.steps=os_specific_distributions' # IDEA-382998
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
-        if: false # IDEA-382998
+        if: ${{inputs.upload_artifacts}}
         with:
           os: windows
           arch: x64
@@ -59,7 +68,9 @@ jobs:
           arch: aarch64
           extension: sit
           product: ${{inputs.product}}
+          system_properties: ${{inputs.system_properties}}
       - uses: ./.github/actions/upload_ide
+        if: ${{inputs.upload_artifacts}}
         with:
           os: mac
           arch: aarch64
@@ -67,6 +78,7 @@ jobs:
           artifacts_dir: ${{inputs.artifacts_dir}}
       - name: Upload .dmg build scripts
         uses: actions/upload-artifact@v4.4.3
+        if: ${{inputs.upload_artifacts}}
         with:
           name: dmg-build-scripts
           if-no-files-found: 'error'
@@ -75,6 +87,7 @@ jobs:
   build-dmg:
     runs-on: macos-latest
     needs: build-macos-aarch64
+    if: ${{inputs.upload_artifacts}}
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Download .dmg build scripts
