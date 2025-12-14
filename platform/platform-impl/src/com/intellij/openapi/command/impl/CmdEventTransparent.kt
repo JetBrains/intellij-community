@@ -8,14 +8,14 @@ import java.util.Collections
 internal class CmdEventTransparent(
   id: CommandId,
   private val project: Project?,
-  projectToProvider: MutableMap<Project?, ForeignEditorProvider> = Collections.synchronizedMap(mutableMapOf()),
-) : CmdEventBase(id, projectToProvider) {
+  editorProviders: MutableList<ForeignEditorProvider> = Collections.synchronizedList(mutableListOf()),
+) : CmdEventBase(id, editorProviders) {
 
   fun withProject(project: Project?): CmdEvent {
     if (project === this.project) {
       return this
     }
-    return CmdEventTransparent(id(), project, projectToProvider)
+    return CmdEventTransparent(id(), project, editorProviders)
   }
 
   override fun project(): Project? {

@@ -2,17 +2,16 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.UndoConfirmationPolicy
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
-import java.util.Collections
+import java.util.*
 
 
 internal abstract class CmdEventBase(
   private val id: CommandId,
-  protected val projectToProvider: MutableMap<Project?, ForeignEditorProvider> = Collections.synchronizedMap(mutableMapOf()),
+  protected val editorProviders: MutableList<ForeignEditorProvider> = Collections.synchronizedList(mutableListOf()),
 ) : CmdEvent {
 
-  private val projectToProviderView = Collections.unmodifiableMap(projectToProvider)
+  private val editorProvidersView = Collections.unmodifiableList(editorProviders)
 
   override fun id(): CommandId {
     return id
@@ -34,14 +33,11 @@ internal abstract class CmdEventBase(
     return false
   }
 
-  override fun putEditorProvider(project: Project?, provider: ForeignEditorProvider) {
-    val put = projectToProvider.put(project, provider)
-    check(put == null) {
-      "Provider for $project already registered"
-    }
+  override fun addEditorProvider(provider: ForeignEditorProvider) {
+    editorProviders.add(provider)
   }
 
-  override fun editorProviders(): Map<Project?, ForeignEditorProvider> {
-    return projectToProviderView
+  override fun editorProviders(): List<ForeignEditorProvider> {
+    return editorProvidersView
   }
 }

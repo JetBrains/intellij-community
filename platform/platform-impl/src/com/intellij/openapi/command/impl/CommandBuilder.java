@@ -258,10 +258,10 @@ final class CommandBuilder {
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
 
     @Override
-    public void putEditorProvider(@Nullable Project project, @NotNull ForeignEditorProvider provider) { throw new UnsupportedOperationException(); }
+    public void addEditorProvider(@NotNull ForeignEditorProvider provider) { throw new UnsupportedOperationException(); }
 
     @Override
-    public @NotNull Map<@Nullable Project, @NotNull ForeignEditorProvider> editorProviders() { throw new UnsupportedOperationException(); }
+    public @NotNull List<@NotNull ForeignEditorProvider> editorProviders() { throw new UnsupportedOperationException(); }
 
     // endregion
   }
