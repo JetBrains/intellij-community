@@ -168,12 +168,12 @@ private class DiffEditorModel(
   }
 
   override fun canCreateComment(lineRange: LineRange): Boolean {
-    if (lineRange.start == lineRange.end) return true
     val loc1 = lineToLocation(lineRange.start) ?: return false
     val loc2 = lineToLocation(lineRange.end) ?: return false
     val gutterControls = gutterControlsState.value ?: return false
     return loc1.first == loc2.first &&
-           (lineRange.start..lineRange.end).all { gutterControls.isLineCommentable(it) }
+           gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
   }
 
   override fun requestNewComment(lineRange: LineRange) {

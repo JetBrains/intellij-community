@@ -182,10 +182,9 @@ internal class GHPRReviewFileEditorModel internal constructor(
   }
 
   override fun canCreateComment(lineRange: LineRange): Boolean {
-    val gutterControlState = gutterControlsState.value ?: return false
-    return (lineRange.start..lineRange.end).all {
-      gutterControlState.isLineCommentable(it)
-    }
+    val gutterControls = gutterControlsState.value ?: return false
+    return gutterControls.isLineCommentable(lineRange.start) &&
+           gutterControls.isLineCommentable(lineRange.end)
   }
 
   private inner class ShiftedThread(vm: GHPRReviewFileEditorThreadViewModel)
