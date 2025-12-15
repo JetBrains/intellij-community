@@ -613,7 +613,7 @@ object PluginManagerCore {
     pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
 
     if (initContext.checkEssentialPlugins) {
-      checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins)
+      checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins, pluginNonLoadReasons)
     }
 
     val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
@@ -640,7 +640,7 @@ object PluginManagerCore {
     activity?.end()
   }
 
-  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: Set<PluginId>) {
+  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: Set<PluginId>, pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>) {
     val corePlugin = idMap.get(CORE_ID)
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
@@ -655,7 +655,7 @@ object PluginManagerCore {
         if (missing == null) {
           missing = ArrayList()
         }
-        missing.add(id.idString to pluginsState.pluginNonLoadReasons?.get(id))
+        missing.add(id.idString to pluginNonLoadReasons[id])
       }
     }
     if (missing != null) {
