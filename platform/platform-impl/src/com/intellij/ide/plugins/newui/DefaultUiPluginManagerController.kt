@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
 import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
-import com.intellij.ide.plugins.PluginManagerCore.getLoadingError
+import com.intellij.ide.plugins.PluginManagerCore.getPluginNonLoadReason
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.plugins.PluginManagerCore.isCompatible
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
@@ -796,7 +796,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult()
     }
 
-    val loadingError = getLoadingError(pluginId)
+    val loadingError = getPluginNonLoadReason(pluginId)
     val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
     if (disabledDependency == null) {
       return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)

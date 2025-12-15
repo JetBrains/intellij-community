@@ -354,10 +354,10 @@ object PluginManagerCore {
   }
 
   @Internal
-  fun getLoadingError(pluginId: PluginId): PluginNonLoadReason? = pluginsState.pluginNonLoadReasons!!.get(pluginId)
+  fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? = pluginsState.pluginNonLoadReasons!!.get(pluginId)
 
   @Internal
-  fun clearLoadingErrorsFor(pluginId: PluginId) {
+  fun clearPluginNonLoadReasonFor(pluginId: PluginId) {
     pluginsState.pluginNonLoadReasons = pluginsState.pluginNonLoadReasons?.minus(pluginId)
   }
 
