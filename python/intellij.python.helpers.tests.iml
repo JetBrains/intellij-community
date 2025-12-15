@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/helpersTestResources" type="java-test-resource" />
     </content>
     <content url="file://$MODULE_DIR$/helpersTests">
-      <sourceFolder url="file://$MODULE_DIR$/helpersTests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/helpersTests" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/helpersTests/.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/helpersTests/.tox" />
       <excludeFolder url="file://$MODULE_DIR$/helpersTests/build" />
