@@ -38,11 +38,11 @@ internal class ShellJsonBasedCommandSpec(
     get() = data.requiresSubcommand
 
   override val parserOptions: ShellCommandParserOptions by lazy {
-    ShellCommandParserOptions.create(
-      data.parserDirectives.flagsArePosixNoncompliant,
-      data.parserDirectives.optionsMustPrecedeArguments,
-      data.parserDirectives.optionArgSeparators
-    )
+    ShellCommandParserOptions.builder()
+      .flagsArePosixNonCompliant(data.parserDirectives.flagsArePosixNoncompliant)
+      .optionsMustPrecedeArguments(data.parserDirectives.optionsMustPrecedeArguments)
+      .optionArgSeparators(data.parserDirectives.optionArgSeparators)
+      .build()
   }
 
   val fullSpecRef: String?

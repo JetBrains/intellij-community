@@ -124,7 +124,9 @@ internal class ShellCommandTreeBuilderTest(private val engine: TerminalEngine) {
       }
 
       subcommand("nonPosix") {
-        parserOptions = ShellCommandParserOptions.create(flagsArePosixNonCompliant = true)
+        parserOptions = ShellCommandParserOptions.builder()
+          .flagsArePosixNonCompliant(true)
+          .build()
         option("-a")
         option("-b")
       }

@@ -32,7 +32,11 @@ internal class ShellCommandNode(
     val flagsArePosixNonCompliant = if (child.flagsArePosixNonCompliant) true else base.flagsArePosixNonCompliant
     val optionsMustPrecedeArguments = if (child.optionsMustPrecedeArguments) true else base.optionsMustPrecedeArguments
     val optionArgSeparators = (base.optionArgSeparators + child.optionArgSeparators).distinct()
-    return ShellCommandParserOptions.create(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
+    return ShellCommandParserOptions.builder()
+      .flagsArePosixNonCompliant(flagsArePosixNonCompliant)
+      .optionsMustPrecedeArguments(optionsMustPrecedeArguments)
+      .optionArgSeparators(optionArgSeparators)
+      .build()
   }
 }
 

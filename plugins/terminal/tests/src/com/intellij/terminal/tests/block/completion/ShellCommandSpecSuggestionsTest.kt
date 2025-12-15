@@ -131,7 +131,9 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
       }
 
       subcommand("optPrecedeArgs") {
-        parserOptions = ShellCommandParserOptions.create(optionsMustPrecedeArguments = true)
+        parserOptions = ShellCommandParserOptions.builder()
+          .optionsMustPrecedeArguments(true)
+          .build()
         option("-c")
         option("-d")
         argument {

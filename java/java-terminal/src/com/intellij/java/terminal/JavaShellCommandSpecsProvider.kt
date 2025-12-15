@@ -19,7 +19,10 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   }
 
   private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
-    parserOptions = ShellCommandParserOptions.create(flagsArePosixNonCompliant = true, optionsMustPrecedeArguments = true)
+    parserOptions = ShellCommandParserOptions.builder()
+      .flagsArePosixNonCompliant(true)
+      .optionsMustPrecedeArguments(true)
+      .build()
 
     dynamicOptions { terminalContext ->
       val javaContext = JavaShellCommandContext.create(terminalContext)
