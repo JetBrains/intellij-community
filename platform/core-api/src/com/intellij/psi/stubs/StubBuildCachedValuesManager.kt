@@ -25,12 +25,12 @@ import java.util.function.Function
  * Each [com.intellij.psi.StubBuilder] should ensure that [startBuildingStubs] is called before starting the stub building process
  * and [finishBuildingStubs] is called after the stub building process is finished.
  *
- * The main scenario is to replace [com.intellij.psi.util.CachedValuesManager.getCachedValue] or
- * [com.intellij.psi.util.CachedValuesManager.getParameterizedCachedValue] calls, which are used during stub building,
- * with calls to [getCachedValueStubBuildOptimized]. The [com.intellij.psi.util.CachedValuesManager.getCachedValue] call performs quite
+ * The main scenario is to replace [CachedValuesManager.getCachedValue] or
+ * [CachedValuesManager.getParameterizedCachedValue] calls, which are used during stub building,
+ * with calls to [getCachedValueStubBuildOptimized]. The [CachedValuesManager.getCachedValue] call performs quite
  * costly checks to ensure that a cached value is up to date, which is an unnecessary work during stub building,
  * as none of the other AST elements of the file can change in the meanwhile. You should use [getCachedValueStubBuildOptimized]
- * overload with [com.intellij.psi.util.ParameterizedCachedValueProvider], because it avoids instantiation of a lambda object,
+ * overload with [ParameterizedCachedValueProvider], because it avoids instantiation of a lambda object,
  * saving some tiny, but precious, amount of time during indexing.
  *
  * The other scenario is to use [getCachedValueIfBuildingStubs] to cache some results only during stub building,
@@ -107,7 +107,6 @@ object StubBuildCachedValuesManager {
     )
   }
 
-  // Avoid using recursion manager and other complex logic when building stubs - improves speed by 10%.
   @JvmStatic
   fun <T, P> getCachedValueStubBuildOptimized(
     dataHolder: PsiElement,
@@ -131,6 +130,34 @@ object StubBuildCachedValuesManager {
     return CachedValuesManager.getManager(dataHolder.getProject()).getParameterizedCachedValue(
       dataHolder, key, provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
       false, parameter
+    )
+  }
+
+  @JvmStatic
+  fun <T, P: PsiElement> getCachedValueStubBuildOptimized(
+    psiElement: P,
+    provider: StubBuildCachedValueProvider<T, P>,
+  ): T {
+    val stubBuildId = stubBuildId
+    if (stubBuildId != null) {
+      val node = psiElement.getNode() ?: psiElement
+      var current = node.getUserData(provider.stubCacheKey)
+      if (current == null || current.buildId != stubBuildId) {
+        myComputingCachedValue.set(true)
+        val value = try {
+          provider.parametrizedCachedValueProvider.compute(psiElement)
+        }
+        finally {
+          myComputingCachedValue.remove()
+        }
+        current = StubBuildCachedValue(stubBuildId, value.getValue())
+        node.putUserData(provider.stubCacheKey, current)
+      }
+      return current.value
+    }
+    return CachedValuesManager.getManager(psiElement.getProject()).getParameterizedCachedValue(
+      psiElement, provider.parametrizedCacheKey, provider.parametrizedCachedValueProvider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(psiElement),
+      false, psiElement
     )
   }
 
@@ -158,6 +185,14 @@ object StubBuildCachedValuesManager {
       return current.value
     }
     return CachedValuesManager.getCachedValue(dataHolder, provider)
+  }
+
+  class StubBuildCachedValueProvider<ResultType, ParameterType>(
+    key: String,
+    val parametrizedCachedValueProvider: ParameterizedCachedValueProvider<ResultType, ParameterType>
+  ) {
+    val stubCacheKey: Key<StubBuildCachedValue<ResultType>> = Key.create("$key.stub.building")
+    val parametrizedCacheKey: Key<ParameterizedCachedValue<ResultType, ParameterType>> = Key.create(key)
   }
 
   class StubBuildCachedValue<T> internal constructor(internal val buildId: Long, internal val value: T)
