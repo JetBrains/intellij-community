@@ -372,6 +372,10 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
       return true
     }
 
+    if (contributorModules?.firstNotNullOf { it.anyElementFitsScope(myScopeDescriptor.scope, element) } == false) {
+      return true
+    }
+
     return consumer.process(
       FoundItemDescriptor(
         element, contributorModules?.firstNotNullOf { it.adjustFoundElementWeight(element, degree) } ?: degree
