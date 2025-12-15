@@ -405,6 +405,10 @@ private class MockModuleOutputProvider : ModuleOutputProvider {
     throw UnsupportedOperationException("Not available in mock")
   }
 
+  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    throw UnsupportedOperationException("Not available in mock")
+  }
+
   override fun findModule(name: String): JpsModule? {
     throw UnsupportedOperationException("Not available in mock")
   }

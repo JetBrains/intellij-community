@@ -16,7 +16,7 @@ import java.nio.file.Path
  * Pool of opened [ImmutableZipFile] instances for efficient O(1) lookups.
  * Uses [AsyncCache] to deduplicate concurrent requests for the same file.
  *
- * If [scope] is provided, caching is enabled and all cached files are closed when the scope is cancelled/completed.
+ * If [scope] is provided, caching is enabled and all cached files are closed when the scope is canceled/completed.
  * If [scope] is null, no caching is performed - each call loads the file directly.
  */
 internal class ModuleOutputZipFilePool(scope: CoroutineScope?) {
@@ -28,12 +28,12 @@ internal class ModuleOutputZipFilePool(scope: CoroutineScope?) {
     }
   }
 
-  suspend fun getZipFile(file: Path): ZipFile? {
+  suspend fun getData(file: Path, entryPath: String): ByteArray? {
     if (cache == null) {
-      return loadZipFile(file)
+      return loadZipFile(file)?.use { it.getData(entryPath) }
     }
     else {
-      return cache.getOrPut(file) { loadZipFile(file) }
+      return cache.getOrPut(file) { loadZipFile(file) }?.getData(entryPath)
     }
   }
 

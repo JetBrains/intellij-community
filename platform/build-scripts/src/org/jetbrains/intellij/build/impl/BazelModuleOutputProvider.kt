@@ -28,7 +28,7 @@ internal class BazelModuleOutputProvider(
    */
   override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRootsImpl(module, forTests)) {
-      zipFilePool.getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
+      zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
   }

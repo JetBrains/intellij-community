@@ -30,6 +30,10 @@ internal class JpsModuleOutputProvider(private val project: JpsProject) : Module
     }
   }
 
+  override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    return readFileContentFromModuleOutput(module, relativePath, forTests)
+  }
+
   override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
   override fun findRequiredModule(name: String): JpsModule {

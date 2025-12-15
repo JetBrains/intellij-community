@@ -52,7 +52,7 @@ class ArchivedCompilationContext internal constructor(
     buildOriginalModuleRepository(this@ArchivedCompilationContext)
   }
 
-  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, context = this, scope = scope)
+  override val outputProvider: ModuleOutputProvider = ArchivedModuleOutputProvider(delegateOutputProvider = delegate.outputProvider, storage = storage, scope = scope)
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
@@ -88,28 +88,28 @@ class ArchivedCompilationContext internal constructor(
 
 private class ArchivedModuleOutputProvider(
   private val delegateOutputProvider: ModuleOutputProvider,
-  private val context: ArchivedCompilationContext,
+  private val storage: ArchivedCompilationOutputStorage,
   scope: CoroutineScope?,
 ) : ModuleOutputProvider by delegateOutputProvider {
   private val zipFilePool = ModuleOutputZipFilePool(scope)
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    return delegateOutputProvider.getModuleOutputRoots(module, forTests).map { context.replaceWithCompressedIfNeeded(it) }
+    return delegateOutputProvider.getModuleOutputRoots(module, forTests).map { storage.getArchived(it) }
   }
 
   override suspend fun readFileContentFromModuleOutputAsync(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     for (moduleOutput in getModuleOutputRoots(module, forTests)) {
-      if (!moduleOutput.startsWith(context.archivesLocation)) {
+      if (!moduleOutput.startsWith(storage.archivedOutputDirectory)) {
         return delegateOutputProvider.readFileContentFromModuleOutputAsync(module, relativePath, forTests)
       }
-      zipFilePool.getZipFile(moduleOutput)?.getData(relativePath)?.let { return it }
+      zipFilePool.getData(moduleOutput, relativePath)?.let { return it }
     }
     return null
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
-      if (!moduleOutput.startsWith(context.archivesLocation)) {
+      if (!moduleOutput.startsWith(storage.archivedOutputDirectory)) {
         return delegateOutputProvider.readFileContentFromModuleOutput(module, relativePath)
       }
 
@@ -143,10 +143,26 @@ private class ArchivedModuleOutputProvider(
 
   override fun toString(): String {
     return "ArchivedModuleOutputProvider(" +
-           "archivesLocation=${context.archivesLocation}, " +
+           "archivesLocation=${storage.archivedOutputDirectory}, " +
            "delegate.outputProvider=$delegateOutputProvider, " +
-           "context=$context" +
+           "storage=$storage" +
            ")"
+  }
+
+  override suspend fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
+    for ((unarchivedPath, archivedPath) in storage.getMapping()) {
+      val moduleName = unarchivedPath.fileName.toString()
+      if (moduleNamePrefix != null && !moduleName.startsWith(moduleNamePrefix)) {
+        continue
+      }
+      if (processedModules != null && !processedModules.add(moduleName)) {
+        continue
+      }
+      zipFilePool.getData(archivedPath, relativePath)?.let {
+        return it
+      }
+    }
+    return null
   }
 }
 
