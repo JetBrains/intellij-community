@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
  * preferring essential plugins to non-essential ones.
  * 
  * Note: Input should already be filtered for compatibility and version selection using
- * [PluginInitializationContext.selectCompatibleAndMostRecentPlugins].
+ * [PluginInitializationContext.selectPluginsToLoad].
  * 
  * @param compatiblePlugins List of discovered plugins (already filtered for compatibility and version selection)
  * @param onPluginExcluded Callback invoked for each excluded plugin

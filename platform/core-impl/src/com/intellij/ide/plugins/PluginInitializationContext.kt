@@ -124,28 +124,39 @@ fun PluginInitializationContext.validatePluginIsCompatible(plugin: PluginMainDes
 data class PluginsPerProjectConfig(val isMainProcess: Boolean)
 
 /**
- * Filters discovered plugins to keep only compatible plugins with the most recent version per plugin ID.
- * 
+ * Selects plugins to load by applying all business logic for plugin selection.
+ * This is a single comprehensive phase that:
+ * - Filters out disabled plugins
+ * - Validates plugin compatibility
+ * - Selects the most recent version per plugin ID
+ *
  * @param onPluginExcluded Callback invoked for each excluded plugin
- * @return Filtered list containing only compatible plugins, one per plugin ID (the most recent).
+ * @return Filtered list containing only plugins selected for loading.
  *         Returns the original list if no exclusions occurred, otherwise returns filtered lists.
  */
 @ApiStatus.Internal
-fun PluginInitializationContext.selectCompatibleAndMostRecentPlugins(
+fun PluginInitializationContext.selectPluginsToLoad(
   discoveredPlugins: List<DiscoveredPluginsList>,
   onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit,
 ): List<DiscoveredPluginsList> {
   if (discoveredPlugins.isEmpty()) {
     return emptyList()
   }
-  
+
   val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
   var hasExclusions = false
-  
+
   // Process regular lists first
   for (pluginList in discoveredPlugins) {
     for (plugin in pluginList.plugins) {
-      // Check compatibility first
+      // Check if plugin is disabled first
+      if (isPluginDisabled(plugin.pluginId)) {
+        onPluginExcluded(plugin, PluginIsMarkedDisabled(plugin))
+        hasExclusions = true
+        continue
+      }
+
+      // Check compatibility
       validatePluginIsCompatible(plugin)?.let { reason ->
         onPluginExcluded(plugin, reason)
         hasExclusions = true

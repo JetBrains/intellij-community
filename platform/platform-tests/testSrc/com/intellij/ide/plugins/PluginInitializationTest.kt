@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Tests for the complete plugin initialization pipeline:
- * - Phase 1: Compatibility checking and version selection ([PluginInitializationContext.selectCompatibleAndMostRecentPlugins])
+ * - Phase 1: Plugin selection ([PluginInitializationContext.selectPluginsToLoad])
  * - Phase 2: ID conflict resolution ([PluginInitializationContext.resolveIdConflicts])
  */
 class PluginInitializationTest {
@@ -64,12 +64,12 @@ class PluginInitializationTest {
   ): Pair<List<DiscoveredPluginsList>, MutableList<ExcludedPluginInfo>> {
     val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
     val initContext = createInitContext(productBuildNumber = productBuildNumber)
-    
-    val filteredResult = initContext.selectCompatibleAndMostRecentPlugins(
+
+    val filteredResult = initContext.selectPluginsToLoad(
       discoveryResult.discoveredPlugins,
       onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
     )
-    
+
     return filteredResult to excludedPlugins
   }
 
@@ -80,24 +80,24 @@ class PluginInitializationTest {
   ): Pair<UnambiguousPluginSet, MutableList<ExcludedPluginInfo>> {
     val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
     val initContext = createInitContext(essentialPlugins, emptySet(), productBuildNumber)
-    
-    // Phase 1: Compatibility & version selection
-    val compatiblePlugins = initContext.selectCompatibleAndMostRecentPlugins(
+
+    // Phase 1: Plugin selection (disabled filtering, compatibility & version selection)
+    val compatiblePlugins = initContext.selectPluginsToLoad(
       discoveryResult.discoveredPlugins,
       onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
     )
-    
+
     // Phase 2: ID conflict resolution
     val result = initContext.resolveIdConflicts(
       compatiblePlugins = compatiblePlugins,
       onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
     )
-    
+
     return result to excludedPlugins
   }
 
   @Nested
-  inner class Phase1CompatibilityAndVersionSelection {
+  inner class Phase1PluginSelection {
 
     @Test
     fun `select newer version when multiple versions exist`() {
@@ -161,7 +161,7 @@ class PluginInitializationTest {
         DiscoveredPluginsList(systemPlugins.discoveredPlugins[0].plugins, PluginsSourceContext.SystemPropertyProvided)
       )
       
-      val filteredResult = initContext.selectCompatibleAndMostRecentPlugins(
+      val filteredResult = initContext.selectPluginsToLoad(
         discoveredPlugins,
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
@@ -246,7 +246,7 @@ class PluginInitializationTest {
       val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
       val initContext = createInitContext()
       
-      val filteredResult = initContext.selectCompatibleAndMostRecentPlugins(
+      val filteredResult = initContext.selectPluginsToLoad(
         emptyList(),
         onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
       )
