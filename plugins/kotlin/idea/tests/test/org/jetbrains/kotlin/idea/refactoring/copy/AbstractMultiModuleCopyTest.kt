@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.copy
 
-import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
+import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import java.io.File

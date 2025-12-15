@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.google.gson.JsonObject
@@ -11,7 +10,7 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
-import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
+import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase

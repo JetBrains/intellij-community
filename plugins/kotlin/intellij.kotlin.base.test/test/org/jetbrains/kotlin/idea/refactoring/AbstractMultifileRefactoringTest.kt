@@ -17,11 +17,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.extractMultipleMarkerOffsets
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.util.prefixIfNot
 import java.io.File
 
@@ -49,7 +51,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         if (!isEnabled(config)) return
         doTestCommittingDocuments(testFile) { rootDir ->
-            val opts = config.getNullableString("customCompilerOpts")?.prefixIfNot("// ") ?: ""
+            val opts = config["customCompilerOpts"]?.asString?.prefixIfNot("// ") ?: ""
             withCustomCompilerOptions(opts, project, module) {
                 runRefactoring(testFile.path, config, rootDir, project)
             }
@@ -70,7 +72,7 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
 
         val afterDir = File(testFile.parentFile, "after")
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDir)?.apply {
-            UsefulTestCase.refreshRecursively(this)
+            refreshRecursively(this)
         } ?: error("`after` directory not found")
 
         action(beforeVFile)
@@ -97,11 +99,11 @@ fun runRefactoringTest(
     action: AbstractMultifileRefactoringTest.RefactoringAction,
     alternativeConflicts: String? = null
 ) {
-    val mainFilePath = config.getNullableString("mainFile") ?: config.getAsJsonArray("filesToMove").first().asString
+    val mainFilePath = config["mainFile"]?.asString ?: config.getAsJsonArray("filesToMove").first().asString
 
     val conflictFile = (alternativeConflicts
         ?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
-        ?: File(File(path).parentFile, "conflicts.k2.txt").takeIf { KotlinPluginModeProvider.isK2Mode() && it.exists() }
+        ?: File(File(path).parentFile, "conflicts.k2.txt").takeIf { KotlinPluginModeProvider.Companion.isK2Mode() && it.exists() }
         ?: File(File(path).parentFile, "conflicts.txt")).normalize()
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!

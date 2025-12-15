@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.util.getString
+import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import java.io.File

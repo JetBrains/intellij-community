@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser.parseString
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.Property
@@ -13,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -40,6 +38,7 @@ import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
+import org.jetbrains.kotlin.idea.refactoring.loadTestConfiguration
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.k1DiagnosticsProvider
@@ -466,12 +465,6 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 }
 
 private fun String.toClassId(): ClassId = ClassId.fromString(this)
-
-fun loadTestConfiguration(testFile: File): JsonObject {
-    val fileText = FileUtil.loadFile(testFile, true)
-
-    return parseString(fileText) as JsonObject
-}
 
 fun runRenameProcessor(
     project: Project,
