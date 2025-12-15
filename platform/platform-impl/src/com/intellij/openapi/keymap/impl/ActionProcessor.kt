@@ -24,7 +24,11 @@ abstract class ActionProcessor {
 
   open fun performAction(inputEvent: InputEvent, action: AnAction, event: AnActionEvent) {
     inputEvent.consume()
-    WriteIntentReadAction.run {
+    if (action.templatePresentation.isRWLockRequired) {
+      WriteIntentReadAction.run {
+        doPerformActionOrShowPopup(action, event, null)
+      }
+    } else {
       doPerformActionOrShowPopup(action, event, null)
     }
   }
