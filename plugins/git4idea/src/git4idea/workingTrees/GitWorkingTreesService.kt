@@ -28,7 +28,9 @@ import kotlin.io.path.Path
 internal class GitWorkingTreesService(private val project: Project, val coroutineScope: CoroutineScope) {
 
   companion object {
-    private const val WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
+    private const val WORKING_TREE_TAB_STATUS_PROPERTY: String = "Git.Working.Tree.Tab.closed.by.user"
+    private const val WORKING_TREE_TAB_STATUS_OPENED_BY_USER: String = "opened"
+    private const val WORKING_TREE_TAB_STATUS_CLOSED_BY_USER: String = "closed"
 
     fun getInstance(project: Project): GitWorkingTreesService = project.getService(GitWorkingTreesService::class.java)
 
@@ -48,18 +50,23 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
   }
 
   fun shouldWorkingTreesTabBeShown(): Boolean {
-    if (getRepoForWorkingTreesSupport(project) == null) {
-      return false
+    val repository = getRepoForWorkingTreesSupport(project) ?: return false
+    val value = PropertiesComponent.getInstance(project).getValue(WORKING_TREE_TAB_STATUS_PROPERTY)
+    return when (value) {
+      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER -> false
+      WORKING_TREE_TAB_STATUS_OPENED_BY_USER -> true
+      else -> repository.workingTreeHolder.getWorkingTrees().size > 1
     }
-    return !PropertiesComponent.getInstance(project).getBoolean(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, false)
   }
 
   fun workingTreesTabOpenedByUser() {
-    PropertiesComponent.getInstance(project).unsetValue(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY)
+    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_STATUS_PROPERTY,
+                                                      WORKING_TREE_TAB_STATUS_OPENED_BY_USER)
   }
 
   fun workingTreesTabClosedByUser() {
-    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_CLOSED_BY_USER_PROPERTY, true)
+    PropertiesComponent.getInstance(project).setValue(WORKING_TREE_TAB_STATUS_PROPERTY,
+                                                      WORKING_TREE_TAB_STATUS_CLOSED_BY_USER)
   }
 
   class Result private constructor(
