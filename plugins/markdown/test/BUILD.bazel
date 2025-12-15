@@ -21,6 +21,7 @@ jvm_library(
   resources = [":tests_test_resources"],
   deps = [
     "//plugins/markdown/core:markdown",
+    "//plugins/markdown/core/backend",
     "//plugins/markdown/fenceInjection",
     "//plugins/markdown/frontmatter",
     "//plugins/markdown/frontmatter/toml",
