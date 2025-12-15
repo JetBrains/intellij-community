@@ -245,164 +245,306 @@ internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngin
 
   @Test
   fun `main command`() {
-    assertSameElements(getSuggestions(emptyList()), listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
-                                                           "withTwoOptArgs", "withDynamicOptions", "multipleDynamicOptionsCalls", "withMultipleSubcommandsCalls",
-                                                           "-a", "--asd", "--bcde", "--argum", "abc"))
+    assertSameElements(
+      getSuggestions(arguments = emptyList()),
+      listOf(
+        "sub",
+        "excl",
+        "reqSub",
+        "manyArgs",
+        "optPrecedeArgs",
+        "variadic",
+        "variadic2",
+        "cdWithSuggestions",
+        "cd",
+        "withTwoOptArgs",
+        "withDynamicOptions",
+        "multipleDynamicOptionsCalls",
+        "withMultipleSubcommandsCalls",
+        "-a",
+        "--asd",
+        "--bcde",
+        "--argum",
+        "abc"
+      )
+    )
   }
 
   @Test
   fun `suggest arguments and other options for option`() {
-    assertSameElements(getSuggestions(listOf("--argum")), listOf("all", "none", "default", "-a", "--asd", "--bcde", "abc"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("--argum")),
+      listOf("all", "none", "default", "-a", "--asd", "--bcde", "abc")
+    )
   }
 
   @Test
   fun `suggest persistent option for subcommand`() {
-    assertSameElements(getSuggestions(listOf("sub")), listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub")),
+      listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file")
+    )
   }
 
   @Test
   fun `suggest twice repeating option for the second time`() {
-    assertSameElements(getSuggestions(listOf("--bcde")), listOf("-a", "--asd", "--bcde", "--argum", "abc"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("--bcde")),
+      listOf("-a", "--asd", "--bcde", "--argum", "abc")
+    )
   }
 
   @Test
   fun `do not suggest twice repeating option for the third time`() {
-    assertSameElements(getSuggestions(listOf("--bcde", "--bcde")), listOf("-a", "--asd", "--argum", "abc"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("--bcde", "--bcde")),
+      listOf("-a", "--asd", "--argum", "abc")
+    )
   }
 
   @Test
   fun `suggest infinitely repeating option again`() {
-    assertSameElements(getSuggestions(listOf("sub", "-a", "-a", "-a")), listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub", "-a", "-a", "-a")),
+      listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "--bcde", "file")
+    )
   }
 
   @Test
   fun `do not suggest excluded option`() {
-    assertSameElements(getSuggestions(listOf("excl", "-a")), listOf("-c", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("excl", "-a")),
+      listOf("-c", "--bcde")
+    )
   }
 
   @Test
   fun `suggest option only if dependants present`() {
-    assertSameElements(getSuggestions(listOf("excl", "-a", "-c")), listOf("-d", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("excl", "-a", "-c")),
+      listOf("-d", "--bcde")
+    )
   }
 
   @Test
   fun `do not suggest options if command requires subcommand`() {
-    assertSameElements(getSuggestions(listOf("reqSub")), listOf("abc"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("reqSub")),
+      listOf("abc")
+    )
   }
 
   @Test
   fun `do not suggest next options if current option have required argument`() {
-    assertSameElements(getSuggestions(listOf("sub", "--withReqArg")), listOf("argValue"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub", "--withReqArg")),
+      listOf("argValue")
+    )
   }
 
   @Test
   fun `suggest arguments till first required arg (no existing args)`() {
-    assertSameElements(getSuggestions(listOf("manyArgs")), listOf("--bcde", "arg1", "arg2", "arg22"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("manyArgs")),
+      listOf("--bcde", "arg1", "arg2", "arg22")
+    )
   }
 
   @Test
   fun `suggest arguments till first required arg (with existing args)`() {
-    assertSameElements(getSuggestions(listOf("manyArgs", "arg22")), listOf("--bcde", "arg3", "arg4", "arg44"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("manyArgs", "arg22")),
+      listOf("--bcde", "arg3", "arg4", "arg44")
+    )
   }
 
   @Test
   fun `suggest variadic argument of option again`() {
-    assertSameElements(getSuggestions(listOf("variadic", "--var", "var1", "var2")), listOf("var1", "var2", "-a", "--bcde", "req"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic", "--var", "var1", "var2")),
+      listOf("var1", "var2", "-a", "--bcde", "req")
+    )
   }
 
   @Test
   fun `suggest variadic argument of command again`() {
-    assertSameElements(getSuggestions(listOf("variadic", "req", "v")), listOf("v", "opt", "-a", "--var", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic", "req", "v")),
+      listOf("v", "opt", "-a", "--var", "--bcde")
+    )
   }
 
   @Test
   fun `do not suggest variadic arg again after other arg`() {
-    assertSameElements(getSuggestions(listOf("variadic", "req", "v", "opt")), listOf("-a", "--var", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic", "req", "v", "opt")),
+      listOf("-a", "--var", "--bcde")
+    )
   }
 
   @Test
   fun `suggest options after argument`() {
-    assertSameElements(getSuggestions(listOf("sub", "-a", "file")), listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "s1", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("sub", "-a", "file")),
+      listOf("-o", "--opt1", "-a", "--long", "--withReqArg", "--withOptArg", "s1", "--bcde")
+    )
   }
 
   @Test
   fun `do not suggest options after argument if it is restricted`() {
-    assertSameElements(getSuggestions(listOf("optPrecedeArgs", "-c", "arg")), listOf())
+    assertSameElements(
+      getSuggestions(arguments = listOf("optPrecedeArgs", "-c", "arg")),
+      listOf()
+    )
   }
 
   @Test
   fun `do not suggest options after argument if it is restricted (parser directive is propagated from parent command)`() {
-    assertSameElements(getSuggestions(listOf("optPrecedeArgs", "sub", "-f", "arg2")), listOf())
+    assertSameElements(
+      getSuggestions(arguments = listOf("optPrecedeArgs", "sub", "-f", "arg2")),
+      listOf()
+    )
   }
 
   @Test
   fun `suggest variadic arg of command and options after breaking variadic arg with option`() {
-    assertSameElements(getSuggestions(listOf("variadic", "req", "v", "-a")), listOf("--var", "--bcde", "v", "opt"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic", "req", "v", "-a")),
+      listOf("--var", "--bcde", "v", "opt")
+    )
   }
 
   @Test
   fun `do not suggest options after variadic arg of command if it is restricted`() {
-    assertSameElements(getSuggestions(listOf("variadic2", "v", "v")), listOf("v", "end"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic2", "v", "v")),
+      listOf("v", "end")
+    )
   }
 
   @Test
   fun `do not suggest options after variadic arg of option if it is restricted`() {
-    assertSameElements(getSuggestions(listOf("variadic2", "---", "var")), listOf("var"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("variadic2", "---", "var")),
+      listOf("var")
+    )
   }
 
   @Test
   fun `suggest hardcoded suggestions with files`() {
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
-    assertSameElements(getSuggestions(listOf("cdWithSuggestions")), listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("cdWithSuggestions")),
+      listOf("dir$separator", "folder$separator", "-", "~", "--bcde")
+    )
   }
 
   @Test
   fun `suggest filenames for path in single quotes`() {
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
-    assertSameElements(getSuggestions(listOf("cd"), "'someDir$separator"), listOf("dir$separator", "folder$separator"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("cd"), incompleteToken = "'someDir$separator"),
+      listOf("dir$separator", "folder$separator")
+    )
   }
 
   @Test
   fun `suggest filenames for path in double quotes`() {
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
-    assertSameElements(getSuggestions(listOf("cd"), "\"someDir$separator"), listOf("dir$separator", "folder$separator"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("cd"), incompleteToken = "\"someDir$separator"),
+      listOf("dir$separator", "folder$separator")
+    )
   }
 
   @Test
   fun `do not duplicate suggestions for command arguments`() {
-    assertSameElements(getSuggestions(listOf("withTwoOptArgs")), listOf("1", "2", "3", "4", "--opt", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("withTwoOptArgs")),
+      listOf("1", "2", "3", "4", "--opt", "--bcde")
+    )
   }
 
   @Test
   fun `do not duplicate suggestions for option arguments and command arguments`() {
-    assertSameElements(getSuggestions(listOf("withTwoOptArgs", "--opt")), listOf("1", "2", "3", "4", "5", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("withTwoOptArgs", "--opt")),
+      listOf("1", "2", "3", "4", "5", "--bcde")
+    )
   }
 
   /** It also tests that if any option is declared as static and dynamic, it won't be suggested twice */
   @Test
   fun `suggest both static and dynamic options`() {
-    assertSameElements(getSuggestions(listOf("withDynamicOptions")), listOf("-a", "-b", "-c", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("withDynamicOptions")),
+      listOf("-a", "-b", "-c", "--bcde")
+    )
   }
 
   @Test
   fun `suggest dynamic options if they are defined in separate 'dynamicOptions' calls`() {
-    assertSameElements(getSuggestions(listOf("multipleDynamicOptionsCalls")), listOf("-a", "-b", "-c", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("multipleDynamicOptionsCalls")),
+      listOf("-a", "-b", "-c", "--bcde")
+    )
   }
 
   @Test
   fun `suggest subcommands if they are defined in separate 'subcommands' calls`() {
-    assertSameElements(getSuggestions(listOf("withMultipleSubcommandsCalls")), listOf("sub1", "sub2", "--bcde"))
+    assertSameElements(
+      getSuggestions(arguments = listOf("withMultipleSubcommandsCalls")),
+      listOf("sub1", "sub2", "--bcde")
+    )
   }
 
-  private fun getSuggestions(arguments: List<String>): List<String> = getSuggestions(arguments, "")
+  @Test
+  fun `suggest if command is an absolute path (unix)`() {
+    assertSameElements(
+      getSuggestions(command = "/usr/bin/$commandName", arguments = listOf("manyArgs")),
+      listOf("--bcde", "arg1", "arg2", "arg22")
+    )
+  }
+
+  @Test
+  fun `suggest if command is an absolute path (windows)`() {
+    assertSameElements(
+      getSuggestions(command = "C:\\Users\\User\\Programs\\$commandName", arguments = listOf("manyArgs")),
+      listOf("--bcde", "arg1", "arg2", "arg22")
+    )
+  }
+
+  @Test
+  fun `suggest if command is a relative path (unix)`() {
+    assertSameElements(
+      getSuggestions(command = "./$commandName", arguments = listOf("manyArgs")),
+      listOf("--bcde", "arg1", "arg2", "arg22")
+    )
+  }
+
+  @Test
+  fun `suggest if command is a relative path (windows)`() {
+    assertSameElements(
+      getSuggestions(command = ".\\$commandName", arguments = listOf("manyArgs")),
+      listOf("--bcde", "arg1", "arg2", "arg22")
+    )
+  }
 
   private fun getSuggestions(
+    command: String = commandName,
+    arguments: List<String>,
+  ): List<String> {
+    return getSuggestions(command, arguments, "")
+  }
+
+  private fun getSuggestions(
+    command: String = commandName,
     arguments: List<String>,
     incompleteToken: String,
   ): List<String> {
     val completion = createCompletion(filePathSuggestions)
     return runBlocking {
-      completion.computeCompletionItems(commandName, arguments + incompleteToken)
+      completion.computeCompletionItems(command, arguments + incompleteToken)
         ?.map { it.name }
       ?: fail { "Completion suggestions are null" }
     }
