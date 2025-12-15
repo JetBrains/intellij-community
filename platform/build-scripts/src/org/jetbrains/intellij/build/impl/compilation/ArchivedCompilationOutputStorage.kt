@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,31 +17,13 @@ import kotlin.io.path.invariantSeparatorsPathString
 internal class ArchivedCompilationOutputStorage(
   private val paths: BuildPaths,
   private val classesOutputDirectory: Path,
-  private val messages: BuildMessages,
-  @JvmField internal val archivedOutputDirectory: Path = getArchiveStorage(classesOutputDirectory.parent),
+  @JvmField internal val archivedOutputDirectory: Path,
+  initialMapping: Map<Path, Path>,
+  private var archiveIfAbsent: Boolean = initialMapping.isEmpty(),
 ) {
-  private val unarchivedToArchivedMap = ConcurrentHashMap<Path, Path>()
-  private var archiveIfAbsent = true
+  private val unarchivedToArchivedMap = ConcurrentHashMap(initialMapping)
 
-  internal fun loadMetadataFile(metadataFile: Path) {
-    messages.info("Loading archived compilation mappings from metadata file: $metadataFile")
-    val metadata = Files.newInputStream(metadataFile).use { Json.decodeFromStream<CompilationPartsMetadata>(it) }
-    for (entry in metadata.files) {
-      unarchivedToArchivedMap.put(classesOutputDirectory.resolve(entry.key), archivedOutputDirectory.resolve(entry.key).resolve("${entry.value}.jar"))
-    }
-    archiveIfAbsent = false
-  }
-
-  internal fun loadMapping(mappingFile: Path) {
-    messages.info("Loading archived compilation mappings from mapping file: $mappingFile")
-    for (line in Files.readAllLines(mappingFile)) {
-      val eq = line.indexOf('=')
-      if (eq == -1) continue
-      unarchivedToArchivedMap.put(classesOutputDirectory.resolve(line.substring(0, eq)), Path.of(line.substring(eq + 1)))
-    }
-  }
-
-   fun getArchived(path: Path): Path {
+  fun getArchived(path: Path): Path {
     if (Files.isRegularFile(path)) {
       return path
     }
@@ -82,3 +64,31 @@ internal class ArchivedCompilationOutputStorage(
 
   internal fun getMapping(): List<Map.Entry<Path, Path>> = unarchivedToArchivedMap.entries.sortedBy { it.key.invariantSeparatorsPathString }
 }
+
+internal fun createArchivedStorage(delegate: CompilationContext): ArchivedCompilationOutputStorage {
+  val classesOutputDirectory = delegate.classesOutputDirectory
+  val archivedOutputDirectory = getArchiveStorage(classesOutputDirectory.parent)
+
+  val mapping = delegate.options.pathToCompiledClassesArchivesMetadata?.let { paths ->
+    delegate.messages.info("Loading archived compilation mappings from metadata file: $paths")
+    val metadata = Files.newInputStream(paths).use { Json.decodeFromStream<CompilationPartsMetadata>(it) }
+    metadata.files.entries.associateTo(HashMap(metadata.files.size)) { (key, value) ->
+      classesOutputDirectory.resolve(key) to archivedOutputDirectory.resolve(key).resolve("$value.jar")
+    }
+  } ?: System.getProperty("intellij.test.jars.mapping.file")?.let {
+    delegate.messages.info("Loading archived compilation mappings from mapping file: $it")
+    Files.readAllLines(Path.of(it)).asSequence().mapNotNull { line ->
+      val eq = line.indexOf('=')
+      if (eq == -1) null
+      else classesOutputDirectory.resolve(line.substring(0, eq)) to Path.of(line.substring(eq + 1))
+    }.toMap(HashMap())
+  } ?: emptyMap()
+
+  return ArchivedCompilationOutputStorage(
+    paths = delegate.paths,
+    classesOutputDirectory = classesOutputDirectory,
+    archivedOutputDirectory = archivedOutputDirectory,
+    initialMapping = mapping,
+  )
+}
+
