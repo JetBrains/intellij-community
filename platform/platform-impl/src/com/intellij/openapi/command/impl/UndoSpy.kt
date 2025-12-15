@@ -4,7 +4,7 @@ package com.intellij.openapi.command.impl
 import com.intellij.ide.impl.UndoRemoteBehaviorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.UndoableAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
@@ -30,7 +30,7 @@ interface UndoSpy {
       return ProgressManager.getInstance().computeInNonCancelableSection<UndoSpy?, Exception> {
         if (UndoRemoteBehaviorService.isSpeculativeUndoEnabled()) {
           val application = ApplicationManager.getApplication()
-          application?.service<UndoSpy>()
+          application?.serviceOrNull<UndoSpy>()
         } else {
           null
         }
