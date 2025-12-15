@@ -5,8 +5,8 @@ import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessOptionsImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessOptionsImpl
 
 @ApiStatus.Internal
 class ShellCommandExecutorReworked(

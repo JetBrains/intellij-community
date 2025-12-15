@@ -8,6 +8,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.plugins.terminal.block.completion.spec.EEL_DESCRIPTOR_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.IS_REWORKED_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 

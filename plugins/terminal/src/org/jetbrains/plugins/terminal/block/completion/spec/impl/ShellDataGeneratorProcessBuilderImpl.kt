@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellDataGeneratorProcessBuilder
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessOptionsImpl
 
 internal class ShellDataGeneratorProcessBuilderImpl(
   private val executable: String,

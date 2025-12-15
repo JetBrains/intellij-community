@@ -5,6 +5,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
 
 @ApiStatus.Internal
 class ShellRuntimeContextImpl(

@@ -1,10 +1,10 @@
-package com.intellij.terminal.frontend.view.completion
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelExecApi.RedirectStdErr
-import com.intellij.platform.eel.EelExecApi.RedirectTo
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.toEelApi
@@ -14,8 +14,8 @@ import com.intellij.platform.eel.spawnProcess
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessOptions
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessOptions
 import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
@@ -43,7 +43,7 @@ class ShellDataGeneratorProcessExecutorImpl(
         .args(options.args)
         .workingDirectory(eelDirectory)
         .env(baseEnvVariables + options.env)
-        .interactionOptions(RedirectStdErr(RedirectTo.STDOUT))
+        .interactionOptions(EelExecApi.RedirectStdErr(EelExecApi.RedirectTo.STDOUT))
         .scope(scope) // Terminate the process if the coroutine was canceled
         .eelIt()
       val result = process.awaitProcessResult()
