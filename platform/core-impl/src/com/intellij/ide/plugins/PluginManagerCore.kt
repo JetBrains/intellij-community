@@ -105,8 +105,8 @@ object PluginManagerCore {
   class PluginsMutableState {
     @Volatile
     var nullablePluginSet: PluginSet? = null
-    var pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>? = null
-    val pluginErrors: ArrayList<PluginLoadingError> = ArrayList<PluginLoadingError>()
+    private val pluginNonLoadReasons: MutableMap<PluginId, PluginNonLoadReason> = hashMapOf()
+    private val pluginErrors: ArrayList<PluginLoadingError> = ArrayList<PluginLoadingError>()
     var pluginsToDisable: Set<PluginId>? = null
     var pluginsToEnable: Set<PluginId>? = null
 
@@ -139,6 +139,16 @@ object PluginManagerCore {
       pluginsToEnable = null
       pluginsToDisable = null
       return toEnable to toDisable
+    }
+
+    fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? = pluginNonLoadReasons[pluginId]
+
+    fun clearPluginNonLoadReason(pluginId: PluginId) {
+      pluginNonLoadReasons.remove(pluginId)
+    }
+
+    fun addPluginNonLoadReasons(pluginNonLoadReasons: Map<PluginId, PluginNonLoadReason>) {
+      this.pluginNonLoadReasons.putAll(pluginNonLoadReasons)
     }
   }
 
@@ -354,12 +364,10 @@ object PluginManagerCore {
   }
 
   @Internal
-  fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? = pluginsState.pluginNonLoadReasons!!.get(pluginId)
+  fun getPluginNonLoadReason(pluginId: PluginId): PluginNonLoadReason? = pluginsState.getPluginNonLoadReason(pluginId)
 
   @Internal
-  fun clearPluginNonLoadReasonFor(pluginId: PluginId) {
-    pluginsState.pluginNonLoadReasons = pluginsState.pluginNonLoadReasons?.minus(pluginId)
-  }
+  fun clearPluginNonLoadReasonFor(pluginId: PluginId): Unit = pluginsState.clearPluginNonLoadReason(pluginId)
 
   @Internal
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {
@@ -608,8 +616,7 @@ object PluginManagerCore {
 
     val errorList = preparePluginErrors(pluginNonLoadReasons, globalErrors)
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginsState.pluginNonLoadReasons = pluginNonLoadReasons
-    // FIXME this thing adds to `pluginsState.pluginErrors`, not `pluginsState.pluginLoadingErrors` :igor-dead-inside:
+    pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
     pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
 
     if (initContext.checkEssentialPlugins) {
