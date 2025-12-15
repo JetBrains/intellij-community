@@ -136,7 +136,8 @@
         "background": "BackgroundLight",
         "borderColor": "BorderTransparent",
         "separatorColor": "Gray5"
-      }
+      },
+      "Button.DragAndDrop.stripeBackground": "BackgroundLight"
     },
 
     "StripeToolbar.Button": {
@@ -722,6 +723,7 @@
 
       "ToolWindow.Header.inactiveBackground": "#212326",
       "ToolWindow.background": "#212326",
+      "ToolWindow.Button.DragAndDrop.stripeBackground": "AltBackgroundLight",
 
       "Borders.color": "#2E3033",
       "Borders.ContrastBorderColor": "#2E3033",
