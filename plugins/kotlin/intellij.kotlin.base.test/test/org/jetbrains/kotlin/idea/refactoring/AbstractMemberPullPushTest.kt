@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.google.gson.JsonParser
@@ -19,6 +18,8 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.util.findElementsByCommentPrefix
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
+import kotlin.collections.forEach
+import kotlin.collections.iterator
 
 abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCase() {
     val fixture: JavaCodeInsightTestFixture get() = myFixture

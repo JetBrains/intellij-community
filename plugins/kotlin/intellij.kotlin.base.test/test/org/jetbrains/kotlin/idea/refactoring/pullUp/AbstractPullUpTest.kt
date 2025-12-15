@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -15,10 +14,8 @@ import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringHierarchyUtil
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode.K2
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.refactoring.AbstractMemberPullPushTest
@@ -30,7 +27,7 @@ abstract class AbstractPullUpTest : AbstractMemberPullPushTest() {
     private fun getTargetClassName(file: PsiFile) = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TARGET_CLASS: ")
 
     protected fun doKotlinTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), if (pluginMode === K2) IGNORE_K2 else IGNORE_K1) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), if (pluginMode === KotlinPluginMode.K2) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1) {
             doTest(path) { file ->
                 val targetClassName = getTargetClassName(file)
                 val helper = object : KotlinPullUpHandler.TestHelper {
