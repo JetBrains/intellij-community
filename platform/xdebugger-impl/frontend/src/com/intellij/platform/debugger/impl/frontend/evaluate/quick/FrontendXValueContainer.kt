@@ -8,10 +8,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.VariablesPreloadManage
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.xdebugger.frame.XCompositeNode
-import com.intellij.xdebugger.frame.XNamedValue
-import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.frame.XValueContainer
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import kotlinx.coroutines.CoroutineScope
@@ -66,8 +63,8 @@ internal class FrontendXValueContainer(
           is XValueComputeChildrenEvent.AddChildren -> {
             val childrenList = XValueChildrenList()
             for ((name, xValue) in event.names zip event.children) {
-              val (presentationFlow, fullValueEvaluatorFlow) = builder.createFlows(xValue.id)
-              val value = FrontendXValue.create(project, scope, xValue, presentationFlow, fullValueEvaluatorFlow, hasParentValue)
+              val flows = builder.createFlows(xValue.id)
+              val value = FrontendXValue.create(project, scope, xValue, flows, hasParentValue)
               childrenList.add(name, value)
             }
 
@@ -84,8 +81,8 @@ internal class FrontendXValueContainer(
             }
 
             for (topValue in event.topValues) {
-              val (presentationFlow, fullValueEvaluatorFlow) = builder.createFlows(topValue.id)
-              val xValue = FrontendXValue.create(project, scope, topValue, presentationFlow, fullValueEvaluatorFlow, hasParentValue)
+              val flows = builder.createFlows(topValue.id)
+              val xValue = FrontendXValue.create(project, scope, topValue, flows, hasParentValue)
               childrenList.addTopValue(xValue as XNamedValue)
             }
 
@@ -95,7 +92,7 @@ internal class FrontendXValueContainer(
             node.setAlreadySorted(event.value)
           }
           is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(event.message, event.link)
+            node.setErrorMessage(event.message, event.link?.hyperlink())
           }
           is XValueComputeChildrenEvent.SetMessage -> {
             // TODO[IJPL-160146]: support SimpleTextAttributes serialization -- don't pass SimpleTextAttributes.REGULAR_ATTRIBUTES
@@ -103,7 +100,7 @@ internal class FrontendXValueContainer(
               event.message,
               event.icon?.icon(),
               event.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES,
-              event.link
+              event.link?.hyperlink()
             )
           }
           is XValueComputeChildrenEvent.TooManyChildren -> {
@@ -122,8 +119,15 @@ internal class FrontendXValueContainer(
           is XValueComputeChildrenEvent.XValuePresentationEvent -> {
             builder.consume(event)
           }
+          is XValueComputeChildrenEvent.XValueAdditionalLinkEvent -> {
+            builder.consume(event)
+          }
         }
       }
     }
   }
+}
+
+internal fun XDebuggerTreeNodeHyperlinkDto.hyperlink(): XDebuggerTreeNodeHyperlink? {
+  return local
 }

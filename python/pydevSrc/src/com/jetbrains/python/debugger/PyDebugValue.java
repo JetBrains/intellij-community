@@ -15,7 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
@@ -423,7 +423,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private void setAdditionalLinks(@NotNull XValueNode node) {
-    if (node instanceof XValueNodeImpl valueNode) {
+    if (node instanceof XValueNodeEx valueNode) {
       if (checkAndEnableViewAsImageVisibility(this)) {
         addViewAsImageLink(valueNode);
       }
@@ -431,7 +431,7 @@ public class PyDebugValue extends XNamedValue {
     }
   }
 
-  private void addConfigureTypeRendererLink(@NotNull XValueNodeImpl valueNode) {
+  private void addConfigureTypeRendererLink(@NotNull XValueNodeEx valueNode) {
     String typeRendererId = getTypeRendererId();
     if (typeRendererId != null) {
       XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
@@ -544,14 +544,14 @@ public class PyDebugValue extends XNamedValue {
       return;
     }
 
-    if (node instanceof XValueNodeImpl valueNode) {
+    if (node instanceof XValueNodeEx valueNode) {
       addViewAsImageLink(valueNode);
     }
     String linkText = PydevBundle.message("pydev.view.as", postfix);
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
-  private static void addViewAsImageLink(XValueNodeImpl valueNode) {
+  private static void addViewAsImageLink(XValueNodeEx valueNode) {
     PyDebugValue debugValue = (PyDebugValue)valueNode.getXValue();
     if (!checkAndShowViewAsImageOnScreen(debugValue))
       return;

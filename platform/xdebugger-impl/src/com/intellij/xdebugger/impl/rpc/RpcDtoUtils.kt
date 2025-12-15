@@ -9,10 +9,12 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.debugger.impl.rpc.XDebuggerTreeNodeHyperlinkDto
 import com.intellij.platform.debugger.impl.rpc.XSourcePositionDto
 import com.intellij.platform.debugger.impl.shared.XDebuggerUtilImplShared
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import org.jetbrains.annotations.ApiStatus
 
@@ -54,4 +56,8 @@ private class SerializedXSourcePosition(private val dto: XSourcePositionDto) : X
   }
 
   override fun getHighlightRange(): TextRange? = dto.textRangeDto?.textRange()
+}
+
+fun XDebuggerTreeNodeHyperlink.toRpc(): XDebuggerTreeNodeHyperlinkDto {
+  return XDebuggerTreeNodeHyperlinkDto(this)
 }

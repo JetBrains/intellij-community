@@ -15,12 +15,10 @@ import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.ui.JBColor
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.frame.XNamedValue
-import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.pinned.items.PinToTopValue
+import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import fleet.rpc.core.RpcFlow
@@ -60,6 +58,9 @@ class BackendXValueModel internal constructor(
   private val _fullValueEvaluator = MutableStateFlow<XFullValueEvaluator?>(null)
   val fullValueEvaluator: StateFlow<XFullValueEvaluator?> = _fullValueEvaluator.asStateFlow()
 
+  private val _additionalLinkFlow = MutableStateFlow<XDebuggerTreeNodeHyperlink?>(null)
+  val additionalLinkFlow: StateFlow<XDebuggerTreeNodeHyperlink?> = _additionalLinkFlow.asStateFlow()
+
   private val _presentation = MutableSharedFlow<XValueSerializedPresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val presentation: Flow<XValueSerializedPresentation> = _presentation.asSharedFlow()
 
@@ -78,7 +79,10 @@ class BackendXValueModel internal constructor(
       },
       fullValueEvaluatorHandler = {
         _fullValueEvaluator.value = it
-      }
+      },
+      hyperlinkHandler = {
+        _additionalLinkFlow.value = it
+      },
     )
   }
 
@@ -93,7 +97,10 @@ class BackendXValueModel internal constructor(
         },
         fullValueEvaluatorHandler = {
           // ignore, take TREE into account only
-        }
+        },
+        hyperlinkHandler = {
+          // ignore, take TREE into account only
+        },
       )
     }.buffer(1)
   }
@@ -127,7 +134,8 @@ suspend fun BackendXValueModel.toXValueDtoWithPresentation(): XValueDtoWithPrese
   return XValueDtoWithPresentation(
     value,
     presentation.toRpc(),
-    getEvaluatorDtoFlow().toRpc(),
+    fullValueEvaluator.map { it?.toRpc() }.toRpc(),
+    additionalLinkFlow.map { it?.toRpc() }.toRpc(),
   )
 }
 
@@ -154,10 +162,6 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     textProvider?.toRpc(),
     (xValue as? PinToTopValue)?.pinToTopDataFuture?.asDeferred(),
   )
-}
-
-private fun BackendXValueModel.getEvaluatorDtoFlow(): Flow<XFullValueEvaluatorDto?> {
-  return fullValueEvaluator.map { it?.toRpc() }
 }
 
 @ApiStatus.Internal
