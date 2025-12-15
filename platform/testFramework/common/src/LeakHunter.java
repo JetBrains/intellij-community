@@ -77,6 +77,8 @@ public final class LeakHunter {
 
   /**
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
+   * <p/>
+   * <b>Note</b>: This check may load neighbor test classes and find problematic leaks there, (e.g., problematic static fields initialization).
    */
   @TestOnly
   public static <T> void checkLeak(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
