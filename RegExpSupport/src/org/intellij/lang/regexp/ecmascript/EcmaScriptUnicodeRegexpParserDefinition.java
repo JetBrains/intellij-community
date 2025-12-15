@@ -16,12 +16,15 @@ import java.util.EnumSet;
  */
 public class EcmaScriptUnicodeRegexpParserDefinition extends RegExpParserDefinition {
 
-  public static final IFileElementType JS_REGEXP_FILE = new IFileElementType("JS_UNICODE_REGEXP_FILE", EcmaScriptUnicodeRegexpLanguage.INSTANCE);
+  public static final IFileElementType JS_REGEXP_FILE = 
+    new IFileElementType("JS_UNICODE_REGEXP_FILE", EcmaScriptUnicodeRegexpLanguage.INSTANCE);
   private final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.OCTAL_NO_LEADING_ZERO,
                                                                     RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS,
                                                                     RegExpCapability.NO_DANGLING_METACHARACTERS,
                                                                     RegExpCapability.PROPERTY_VALUES,
-                                                                    RegExpCapability.EXTENDED_UNICODE_CHARACTER);
+                                                                    RegExpCapability.EXTENDED_UNICODE_CHARACTER,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_START_ERROR,
+                                                                    RegExpCapability.SHORTHAND_CLASS_RANGE_END_ERROR);
 
   @Override
   public @NotNull EnumSet<RegExpCapability> getCapabilities() {

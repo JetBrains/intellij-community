@@ -19,7 +19,9 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
                                                                       OCTAL_NO_LEADING_ZERO,
                                                                       OMIT_NUMBERS_IN_QUANTIFIERS,
                                                                       OMIT_BOTH_NUMBERS_IN_QUANTIFIERS,
-                                                                      MIN_OCTAL_3_DIGITS);
+                                                                      MIN_OCTAL_3_DIGITS,
+                                                                      SHORTHAND_CLASS_RANGE_START_ERROR,
+                                                                      SHORTHAND_CLASS_RANGE_END_ERROR);
 
   @Override
   public @NotNull EnumSet<RegExpCapability> getCapabilities() {
