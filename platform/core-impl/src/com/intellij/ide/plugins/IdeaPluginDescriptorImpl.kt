@@ -17,6 +17,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -405,6 +406,9 @@ val IdeaPluginDescriptorImpl.contentModules: List<ContentModuleDescriptor>
 val IdeaPluginDescriptorImpl.isLoaded: Boolean
   get() = pluginClassLoader != null
 
+private val ULTIMATE_PLUGIN_ID = PluginId.getId("com.intellij.modules.ultimate")
+private val DATABASE_PLUGIN_ID = PluginId.getId("com.intellij.database")
+
 internal fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
   if (dependencies.isEmpty()) {
     return ModuleDependencies.EMPTY
@@ -430,6 +434,9 @@ internal fun convertDependencies(dependencies: List<DependenciesElement>, parent
       }
       else -> LOG.error("Unknown dependency type: $dep")
     }
+  }
+  if (PlatformUtils.isPyCharmPro() && parent?.pluginId == DATABASE_PLUGIN_ID) {
+    pluginDeps.add(ULTIMATE_PLUGIN_ID)
   }
   return ModuleDependencies(moduleDeps, pluginDeps)
 }
