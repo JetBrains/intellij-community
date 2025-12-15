@@ -19,12 +19,6 @@ authlib.jose.rfc7518.jwe_algs.ECDHESAlgorithm.name
 authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.description
 authlib.jose.rfc7518.jwe_algs.RSAAlgorithm.name
 
-# Re-exports of hashlib functions whose signatures changed in Python 3.13.4.
-# (Remove once 3.13.4 is consistently available)
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA256)?
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA384)?
-(authlib.jose.rfc7518.jws_algs.HMACAlgorithm.SHA512)?
-
 # Methods whose *args and **kwargs arguments are added dynamically due to the @hooked decorator:
 authlib.oauth2.rfc6749.AuthorizationCodeGrant.create_token_response
 authlib.oauth2.rfc6749.AuthorizationCodeGrant.validate_token_request

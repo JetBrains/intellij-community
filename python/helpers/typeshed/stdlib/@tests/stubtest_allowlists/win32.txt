@@ -1,15 +1,4 @@
 # ============================================
-# TODO: Allowlist entries that should be fixed
-# ============================================
-
-# Exists at runtime, but missing from stubs
-_winapi.CreateFileMapping
-_winapi.MapViewOfFile
-_winapi.OpenFileMapping
-_winapi.VirtualQuerySize
-
-
-# ============================================
 # Modules that do not exist on Windows systems
 # ============================================
 

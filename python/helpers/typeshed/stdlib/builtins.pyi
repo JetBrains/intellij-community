@@ -954,11 +954,15 @@ class memoryview(Sequence[_I]):
     def hex(self, sep: str | bytes = ..., bytes_per_sep: SupportsIndex = 1) -> str: ...
     def __buffer__(self, flags: int, /) -> memoryview: ...
     def __release_buffer__(self, buffer: memoryview, /) -> None: ...
+    if sys.version_info >= (3, 14):
+        def index(self, value: object, start: SupportsIndex = 0, stop: SupportsIndex = sys.maxsize, /) -> int: ...
+        def count(self, value: object, /) -> int: ...
+    else:
+        # These are inherited from the Sequence ABC, but don't actually exist on memoryview.
+        # See https://github.com/python/cpython/issues/125420
+        index: ClassVar[None]  # type: ignore[assignment]
+        count: ClassVar[None]  # type: ignore[assignment]
 
-    # These are inherited from the Sequence ABC, but don't actually exist on memoryview.
-    # See https://github.com/python/cpython/issues/125420
-    index: ClassVar[None]  # type: ignore[assignment]
-    count: ClassVar[None]  # type: ignore[assignment]
     if sys.version_info >= (3, 14):
         def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
 

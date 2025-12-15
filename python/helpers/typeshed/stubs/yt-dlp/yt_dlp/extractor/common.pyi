@@ -32,6 +32,7 @@ class _InfoDict(TypedDict, total=False):
     title: str | None
     uploader: str | None
     url: str | None
+    requested_formats: Iterable[_InfoDict]
 
 _StrNoDefaultOrNone: TypeAlias = str | None | type[NO_DEFAULT]
 _T = TypeVar("_T")

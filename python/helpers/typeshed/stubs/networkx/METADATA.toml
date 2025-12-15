@@ -1,4 +1,4 @@
-version = "3.6"
+version = "3.6.1"
 upstream_repository = "https://github.com/networkx/networkx"
 # requires a version of numpy with a `py.typed` file
 requires = ["numpy>=1.20"]

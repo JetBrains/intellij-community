@@ -1477,34 +1477,66 @@ else:
     def WEXITSTATUS(status: int) -> int: ...
     def WSTOPSIG(status: int) -> int: ...
     def WTERMSIG(status: int) -> int: ...
-    def posix_spawn(
-        path: StrOrBytesPath,
-        argv: _ExecVArgs,
-        env: _ExecEnv,
-        /,
-        *,
-        file_actions: Sequence[tuple[Any, ...]] | None = ...,
-        setpgroup: int | None = ...,
-        resetids: bool = ...,
-        setsid: bool = ...,
-        setsigmask: Iterable[int] = ...,
-        setsigdef: Iterable[int] = ...,
-        scheduler: tuple[Any, sched_param] | None = ...,
-    ) -> int: ...
-    def posix_spawnp(
-        path: StrOrBytesPath,
-        argv: _ExecVArgs,
-        env: _ExecEnv,
-        /,
-        *,
-        file_actions: Sequence[tuple[Any, ...]] | None = ...,
-        setpgroup: int | None = ...,
-        resetids: bool = ...,
-        setsid: bool = ...,
-        setsigmask: Iterable[int] = ...,
-        setsigdef: Iterable[int] = ...,
-        scheduler: tuple[Any, sched_param] | None = ...,
-    ) -> int: ...
+
+    if sys.version_info >= (3, 13):
+        def posix_spawn(
+            path: StrOrBytesPath,
+            argv: _ExecVArgs,
+            env: _ExecEnv | None,  # None allowed starting in 3.13
+            /,
+            *,
+            file_actions: Sequence[tuple[Any, ...]] | None = ...,
+            setpgroup: int | None = ...,
+            resetids: bool = ...,
+            setsid: bool = ...,
+            setsigmask: Iterable[int] = ...,
+            setsigdef: Iterable[int] = ...,
+            scheduler: tuple[Any, sched_param] | None = ...,
+        ) -> int: ...
+        def posix_spawnp(
+            path: StrOrBytesPath,
+            argv: _ExecVArgs,
+            env: _ExecEnv | None,  # None allowed starting in 3.13
+            /,
+            *,
+            file_actions: Sequence[tuple[Any, ...]] | None = ...,
+            setpgroup: int | None = ...,
+            resetids: bool = ...,
+            setsid: bool = ...,
+            setsigmask: Iterable[int] = ...,
+            setsigdef: Iterable[int] = ...,
+            scheduler: tuple[Any, sched_param] | None = ...,
+        ) -> int: ...
+    else:
+        def posix_spawn(
+            path: StrOrBytesPath,
+            argv: _ExecVArgs,
+            env: _ExecEnv,
+            /,
+            *,
+            file_actions: Sequence[tuple[Any, ...]] | None = ...,
+            setpgroup: int | None = ...,
+            resetids: bool = ...,
+            setsid: bool = ...,
+            setsigmask: Iterable[int] = ...,
+            setsigdef: Iterable[int] = ...,
+            scheduler: tuple[Any, sched_param] | None = ...,
+        ) -> int: ...
+        def posix_spawnp(
+            path: StrOrBytesPath,
+            argv: _ExecVArgs,
+            env: _ExecEnv,
+            /,
+            *,
+            file_actions: Sequence[tuple[Any, ...]] | None = ...,
+            setpgroup: int | None = ...,
+            resetids: bool = ...,
+            setsid: bool = ...,
+            setsigmask: Iterable[int] = ...,
+            setsigdef: Iterable[int] = ...,
+            scheduler: tuple[Any, sched_param] | None = ...,
+        ) -> int: ...
+
     POSIX_SPAWN_OPEN: Final = 0
     POSIX_SPAWN_CLOSE: Final = 1
     POSIX_SPAWN_DUP2: Final = 2

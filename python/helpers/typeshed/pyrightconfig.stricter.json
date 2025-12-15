@@ -72,7 +72,7 @@
         "stubs/pika",
         "stubs/pony",
         "stubs/protobuf",
-        "stubs/psutil",
+        "stubs/psutil/psutil/__init__.pyi",
         "stubs/psycopg2",
         "stubs/pyasn1",
         "stubs/pycurl",
