@@ -6,11 +6,12 @@ import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
+import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.block.completion.spec.specs.make.ShellMakeCommandSpec
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 
 @Language("makefile")
 private const val MAKEFILE: String = """
@@ -37,8 +38,14 @@ private const val INVALID_MAKEFILE: String = """
 This is an incorrect Makefile
 """
 
-@RunWith(JUnit4::class)
-class ShellMakefileCompletionTest : BasePlatformTestCase() {
+@RunWith(Parameterized::class)
+class ShellMakefileCompletionTest(private val engine: TerminalEngine) : BasePlatformTestCase() {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun engine(): List<TerminalEngine> = listOf(TerminalEngine.REWORKED, TerminalEngine.NEW_TERMINAL)
+  }
+
   private val commandName = "make"
 
   private val spec = ShellMakeCommandSpec.create()
@@ -62,6 +69,7 @@ class ShellMakefileCompletionTest : BasePlatformTestCase() {
 
   private fun getMakefileSuggestions(makefile: String): List<ShellCompletionSuggestion> {
     val fixture = ShellCompletionTestFixture.builder(project)
+      .setIsReworkedTerminal(engine == TerminalEngine.REWORKED)
       .mockCommandSpecs(spec)
       .mockShellCommandResults { command ->
         if (command.startsWith("command cat ") || command.startsWith("cat ")) {

@@ -77,6 +77,13 @@ object TerminalCompletionUtil {
     return ShellName(this.toString().lowercase())
   }
 
+  fun String.toShellFileInfo(fileSeparator: Char): ShellFileInfo {
+    return if (endsWith(fileSeparator)) {
+      ShellFileInfo.create(removeSuffix(fileSeparator.toString()), ShellFileInfo.Type.DIRECTORY)
+    }
+    else ShellFileInfo.create(this, ShellFileInfo.Type.FILE)
+  }
+
   suspend fun <T : Any> doExecuteGenerator(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T? {
     return try {
       generator.generate(context)

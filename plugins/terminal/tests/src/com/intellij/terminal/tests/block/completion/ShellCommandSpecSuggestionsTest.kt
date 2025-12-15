@@ -5,10 +5,15 @@ import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellFileInfo
+import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellFileInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestCommandSpecsManager
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.testFramework.completion.impl.TestRuntimeContextProvider
@@ -16,11 +21,17 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 import java.io.File
 
-@RunWith(JUnit4::class)
-internal class ShellCommandSpecSuggestionsTest {
+@RunWith(Parameterized::class)
+internal class ShellCommandSpecSuggestionsTest(private val engine: TerminalEngine) {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun engine(): List<TerminalEngine> = TerminalTestUtil.enginesWithCompletionSupport()
+  }
+
   private val commandName = "command"
 
   /**
@@ -29,6 +40,7 @@ internal class ShellCommandSpecSuggestionsTest {
    * Long story short: Use to mock `ls`.
    */
   private var filePathSuggestions: List<String> = emptyList()
+  private val separator = File.separatorChar
 
   @Before
   fun setUp() {
@@ -340,21 +352,18 @@ internal class ShellCommandSpecSuggestionsTest {
 
   @Test
   fun `suggest hardcoded suggestions with files`() {
-    val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     assertSameElements(getSuggestions(listOf("cdWithSuggestions")), listOf("dir$separator", "folder$separator", "-", "~", "--bcde"))
   }
 
   @Test
   fun `suggest filenames for path in single quotes`() {
-    val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     assertSameElements(getSuggestions(listOf("cd"), "'someDir$separator"), listOf("dir$separator", "folder$separator"))
   }
 
   @Test
   fun `suggest filenames for path in double quotes`() {
-    val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     assertSameElements(getSuggestions(listOf("cd"), "\"someDir$separator"), listOf("dir$separator", "folder$separator"))
   }
@@ -409,10 +418,20 @@ internal class ShellCommandSpecSuggestionsTest {
         return ShellCommandResult.create(output, exitCode = 0)
       }
     }
+    val fileSystemSupport = object : ShellFileSystemSupport {
+      override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
+        return mockFiles.map { it.toShellFileInfo(separator) }
+      }
+    }
+    val runtimeContextProvider = TestRuntimeContextProvider(
+      isReworkedTerminal = engine == TerminalEngine.REWORKED,
+      generatorCommandsRunner = generatorCommandsRunner,
+      fileSystemSupport = fileSystemSupport
+    )
     val completion = ShellCommandSpecCompletion(
       TestCommandSpecsManager(spec),
       TestGeneratorsExecutor(),
-      TestRuntimeContextProvider(generatorCommandsRunner = generatorCommandsRunner)
+      runtimeContextProvider,
     )
     return completion
   }

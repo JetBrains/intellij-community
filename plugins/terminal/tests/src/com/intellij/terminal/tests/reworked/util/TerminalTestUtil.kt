@@ -64,4 +64,11 @@ object TerminalTestUtil {
       this.set(prevValue)
     }
   }
+
+  /**
+   * Can be used to provide parameter values for a parameterized test.
+   */
+  fun enginesWithCompletionSupport(): List<TerminalEngine> {
+    return listOf(TerminalEngine.REWORKED, TerminalEngine.NEW_TERMINAL)
+  }
 }
