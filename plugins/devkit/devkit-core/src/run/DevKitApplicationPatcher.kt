@@ -35,8 +35,9 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 
-@Suppress("SpellCheckingInspection")
-private class DevKitApplicationPatcher : RunConfigurationExtension() {
+private val LOG = logger<DevKitApplicationPatcher>()
+
+internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(
     configuration: T,
     javaParameters: JavaParameters,
@@ -123,86 +124,87 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
   }
 
-  private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase, project: Project) {
-    val vmParameters = javaParameters.vmParametersList
-    if (configuration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
-      vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
-      vmParameters.addProperty("compile.server.project", project.locationHash)
-      vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
-    }
+  override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
+    return configuration is ApplicationConfiguration ||
+           configuration.factory?.id == "JetRunConfigurationType" // to avoid a dependency on the Kotlin plugin
+  }
+}
 
-    var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
-    productClassifier = when (productClassifier) {
-      null -> "idea"
-      PlatformUtils.IDEA_CE_PREFIX -> "idea-community"
-      else -> productClassifier
-    }
-
-    val workingDirectory = Path.of(configuration.workingDirectory!!)
-    if (!vmParameters.hasProperty("idea.config.path")) {
-      val configDirPath = workingDirectory.asEelPath().toString()
-      val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
-      vmParameters.addProperty("idea.config.path", "$dir/config")
-      vmParameters.addProperty("idea.system.path", "$dir/system")
-    }
-
-    val runDir = workingDirectory.resolve("out/dev-run/$productClassifier")
-    for ((name, value) in getIdeSystemProperties(runDir)) {
-      vmParameters.addProperty(name, value)
-    }
-
-    if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
-      vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
-      val files = try {
-        Files.readAllLines(runDir.resolve("core-classpath.txt"))
-      }
-      catch (_: NoSuchFileException) {
-        null
-      }
-
-      if (files != null) {
-        javaParameters.classPath.clear()
-        javaParameters.classPath.addAll(files)
-        javaParameters.mainClass = "com.intellij.idea.Main"
-      }
-    }
-
-    vmParameters.addProperty("idea.vendor.name", "JetBrains")
-    vmParameters.addProperty("idea.use.dev.build.server", "true")
-    setPropertyIfAbsent(vmParameters, "idea.dev.build.unpacked")
-
-    vmParameters.addProperty("sun.io.useCanonCaches", "false")
-    vmParameters.addProperty("sun.awt.disablegrab", "true")
-    vmParameters.addProperty("sun.java2d.metal", "true")
-    vmParameters.addProperty("idea.debug.mode", "true")
-    vmParameters.addProperty("idea.is.internal", "true")
-    vmParameters.addProperty("fus.internal.test.mode", "true")
-    vmParameters.addProperty("jdk.attach.allowAttachSelf")
+private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase, project: Project) {
+  val vmParameters = javaParameters.vmParametersList
+  if (configuration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
+    vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
+    vmParameters.addProperty("compile.server.project", project.locationHash)
+    vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
   }
 
-  override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean =
-    configuration is ApplicationConfiguration ||
-    configuration.factory?.id == "JetRunConfigurationType"  // to avoid a dependency on the Kotlin plugin
+  var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
+  productClassifier = when (productClassifier) {
+    null -> "idea"
+    PlatformUtils.IDEA_CE_PREFIX -> "idea-community"
+    else -> productClassifier
+  }
 
-  private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SameParameterValue") name: String) {
-    if (!vmParameters.hasProperty(name)) {
-      vmParameters.addProperty(name, "true")
+  val workingDirectory = Path.of(configuration.workingDirectory!!)
+  if (!vmParameters.hasProperty("idea.config.path")) {
+    val configDirPath = workingDirectory.asEelPath().toString()
+    val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
+    vmParameters.addProperty("idea.config.path", "$dir/config")
+    vmParameters.addProperty("idea.system.path", "$dir/system")
+  }
+
+  val runDir = workingDirectory.resolve("out/dev-run/$productClassifier")
+  for ((name, value) in getIdeSystemProperties(runDir)) {
+    vmParameters.addProperty(name, value)
+  }
+
+  if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
+    vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
+    val files = try {
+      Files.readAllLines(runDir.resolve("core-classpath.txt"))
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
+
+    if (files != null) {
+      javaParameters.classPath.clear()
+      javaParameters.classPath.addAll(files)
+      javaParameters.mainClass = "com.intellij.idea.Main"
     }
   }
 
-  private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
-    // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
-    val libDir = runDir.resolve("lib")
-    return mapOf(
-      "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
-      // todo "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
-      "pty4j.preferred.native.folder" to "$libDir/pty4j",
-      // require bundled JNA dispatcher lib
-      "jna.nosys" to "true",
-      "jna.noclasspath" to "true",
-      "compose.swing.render.on.graphics" to "true",
-    )
+  vmParameters.addProperty("idea.vendor.name", "JetBrains")
+  vmParameters.addProperty("idea.use.dev.build.server", "true")
+  setPropertyIfAbsent(vmParameters, "idea.dev.build.unpacked")
+
+  vmParameters.addProperty("sun.io.useCanonCaches", "false")
+  vmParameters.addProperty("sun.awt.disablegrab", "true")
+  vmParameters.addProperty("sun.java2d.metal", "true")
+  vmParameters.addProperty("idea.debug.mode", "true")
+  vmParameters.addProperty("idea.is.internal", "true")
+  vmParameters.addProperty("fus.internal.test.mode", "true")
+  vmParameters.addProperty("jdk.attach.allowAttachSelf")
+}
+
+private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SameParameterValue") name: String) {
+  if (!vmParameters.hasProperty(name)) {
+    vmParameters.addProperty(name, "true")
   }
+}
+
+private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
+  val libDir = runDir.resolve("lib")
+  return mapOf(
+    "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
+    // todo "skiko.library.path" to "$libDir/skiko-awt-runtime-all",
+    "pty4j.preferred.native.folder" to "$libDir/pty4j",
+    // require bundled JNA dispatcher lib
+    "jna.nosys" to "true",
+    "jna.noclasspath" to "true",
+    "compose.swing.render.on.graphics" to "true",
+  )
 }
 
 /**
@@ -214,25 +216,26 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
 private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(project: Project, platformPrefix: String?): Boolean {
   try {
     val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(project) ?: return false
-    val method =
-      try {
-        constantsClass.getDeclaredMethod("isMultiRoutingFileSystemEnabledForProduct", String::class.java)
-      } catch (_: NoSuchMethodException) {
-        constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
-      }
+    val method = try {
+      constantsClass.getDeclaredMethod("isMultiRoutingFileSystemEnabledForProduct", String::class.java)
+    }
+    catch (_: NoSuchMethodException) {
+      @Suppress("SpellCheckingInspection")
+      constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
+    }
     return method.invoke(null, platformPrefix) as Boolean
   }
-  catch (err: Throwable) {
-    when (err) {
+  catch (e: Throwable) {
+    when (e) {
       is ClassNotFoundException, is NoSuchMethodException, is IllegalAccessException, is java.lang.reflect.InvocationTargetException -> {
         logger<DevKitApplicationPatcher>().warn(
           "Failed to reflectively load IjentWslFsEnabledByDefaultForProduct from built classes." +
           " Maybe the file didn't exist in this revision, so the ijent WSL FS was disabled.",
-          err,
+          e,
         )
         return false
       }
-      else -> throw err
+      else -> throw e
     }
   }
 }
@@ -352,5 +355,3 @@ private fun getOutputByModule(project: Project, moduleName: String, requestMonik
 
   return outputRoot
 }
-
-private val LOG = logger<DevKitApplicationPatcher>()
