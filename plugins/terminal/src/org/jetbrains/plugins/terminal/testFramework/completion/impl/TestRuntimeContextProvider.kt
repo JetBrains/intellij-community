@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.terminal.testFramework.completion.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
+import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 
 @ApiStatus.Internal
@@ -16,6 +15,7 @@ class TestRuntimeContextProvider(
   private val project: Project? = null,
   private val directory: String = "",
   private val envVariables: Map<String, String> = emptyMap(),
+  private val isReworkedTerminal: Boolean = true,
   private val generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor,
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null,
   private val fileSystemSupport: ShellFileSystemSupport? = null,
@@ -29,8 +29,14 @@ class TestRuntimeContextProvider(
       generatorCommandsRunner = generatorCommandsRunner,
       generatorProcessExecutor = generatorProcessExecutor,
       fileSystemSupport = fileSystemSupport,
-    ).also {
-      it.putUserData(PROJECT_KEY, project)
+    ).also { context ->
+      context.putUserData(PROJECT_KEY, project)
+      if (isReworkedTerminal) {
+        context.putUserData(IS_REWORKED_KEY, true)
+      }
+      project?.getEelDescriptor()?.let {
+        context.putUserData(EEL_DESCRIPTOR_KEY, it)
+      }
     }
   }
 }

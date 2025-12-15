@@ -20,6 +20,7 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 internal class ShellCompletionTestFixtureBuilderImpl(private val project: Project) : ShellCompletionTestFixtureBuilder {
   private var curDirectory: String = project.guessProjectDir()!!.path
   private var envVariables: Map<String, String> = emptyMap()
+  private var isReworkedTerminal: Boolean = true
   private var commandSpecs: List<ShellCommandSpec>? = null
   private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor
   private var generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null
@@ -32,6 +33,11 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
 
   override fun setEnvVariables(envVars: Map<String, String>): ShellCompletionTestFixtureBuilder {
     envVariables = envVars
+    return this
+  }
+
+  override fun setIsReworkedTerminal(isReworkedTerminal: Boolean): ShellCompletionTestFixtureBuilder {
+    this.isReworkedTerminal = isReworkedTerminal
     return this
   }
 
@@ -66,6 +72,7 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
       project = project,
       curDirectory = curDirectory,
       envVariables = envVariables,
+      isReworkedTerminal = isReworkedTerminal,
       commandSpecs = commandSpecs,
       generatorCommandsRunner = generatorCommandsRunner,
       generatorProcessExecutor = processExecutor,

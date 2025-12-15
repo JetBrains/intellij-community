@@ -27,6 +27,14 @@ interface ShellCompletionTestFixtureBuilder {
   fun setEnvVariables(envVars: Map<String, String>): ShellCompletionTestFixtureBuilder
 
   /**
+   * Allows mocking the result of [org.jetbrains.plugins.terminal.block.completion.spec.isReworkedTerminal] check.
+   * By default, it is **true**.
+   *
+   * Set this flag to false only if you need to test the logic that relates to the Experimental 2024 Terminal.
+   */
+  fun setIsReworkedTerminal(isReworkedTerminal: Boolean): ShellCompletionTestFixtureBuilder
+
+  /**
    * Allows replacing the available command specs for which completion can be provided.
    * By default, we use all command specs available in production (depends on the class path used to start the test).
    */
