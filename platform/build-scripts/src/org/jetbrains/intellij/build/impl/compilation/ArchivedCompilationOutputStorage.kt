@@ -1,16 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -25,7 +25,7 @@ internal class ArchivedCompilationOutputStorage(
 
   internal fun loadMetadataFile(metadataFile: Path) {
     messages.info("Loading archived compilation mappings from metadata file: $metadataFile")
-    val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
+    val metadata = Files.newInputStream(metadataFile).use { Json.decodeFromStream<CompilationPartsMetadata>(it) }
     for (entry in metadata.files) {
       unarchivedToArchivedMap.put(classesOutputDirectory.resolve(entry.key), archivedOutputDirectory.resolve(entry.key).resolve("${entry.value}.jar"))
     }
@@ -54,7 +54,7 @@ internal class ArchivedCompilationOutputStorage(
       return path
     }
 
-    if (!Files.exists(path)) {
+    if (Files.notExists(path)) {
       return path
     }
 
@@ -81,6 +81,4 @@ internal class ArchivedCompilationOutputStorage(
   }
 
   internal fun getMapping(): List<Map.Entry<Path, Path>> = unarchivedToArchivedMap.entries.sortedBy { it.key.invariantSeparatorsPathString }
-
-  internal fun getMappingMap(): Map<Path, Path> = Collections.unmodifiableMap(unarchivedToArchivedMap)
 }

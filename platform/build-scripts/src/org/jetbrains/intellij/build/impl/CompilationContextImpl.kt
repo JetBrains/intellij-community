@@ -113,7 +113,6 @@ suspend fun createCompilationContext(
     "communityHome ($COMMUNITY_ROOT) doesn't point to a directory containing IntelliJ Community sources"
   }
 
-  val messages = BuildMessagesImpl.create()
   if (options.printEnvironmentInfo) {
     Span.current().addEvent("environment info", Attributes.of(
       AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
@@ -136,6 +135,7 @@ suspend fun createCompilationContext(
     JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
   }
 
+  val messages = BuildMessagesImpl.create()
   val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
   /**
    * [defineJavaSdk] may be skipped using [isCompilationRequired]
