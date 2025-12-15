@@ -79,6 +79,8 @@ data class BuildOptions(
       add(REPAIR_UTILITY_BUNDLE_STEP)
       // IJI-1070
       add(LIBRARY_URL_CHECK_STEP)
+      // IJI-725
+      add(FUS_METADATA_BUNDLE_STEP)
     },
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
