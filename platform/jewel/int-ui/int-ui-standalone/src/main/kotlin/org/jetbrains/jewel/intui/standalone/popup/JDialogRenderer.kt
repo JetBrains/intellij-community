@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
+import androidx.compose.ui.awt.RenderSettings
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -51,6 +52,7 @@ import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.FocusTraversalPolicy
 import java.awt.Point
 import java.awt.Rectangle
@@ -71,6 +73,7 @@ import kotlin.math.floor
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.PopupRenderer
+import org.jetbrains.skiko.hostOs
 
 /**
  * A popup renderer implementation that uses [JDialog] to display popups in a Compose UI.
@@ -195,17 +198,20 @@ private fun JPopupImpl(
         JDialog(window).apply {
             isUndecorated = true
             rootPane.isOpaque = false
-            background = Color(0, 0, 0, 0)
-            contentPane.background = Color(0, 0, 0, 0)
-            rootPane.putClientProperty("Window.shadow", true)
+            background = TRANSPARENT_WITH_WINDOWS_HACK
+            contentPane.background = TRANSPARENT_WITH_WINDOWS_HACK
+            if (hostOs.isMacOS) {
+                rootPane.putClientProperty("Window.shadow", true)
+            }
         }
     }
 
     val composePanel = remember {
-        ComposePanel().apply {
+        ComposePanel(renderSettings = DEFAULT_RENDER_SETTINGS).apply {
             layout = null
             isOpaque = false
-            background = Color(0, 0, 0, 0)
+            background = TRANSPARENT_WITH_WINDOWS_HACK
+            preferredSize = Dimension(1, 1)
 
             // Prevent focus from moving outside the popup
             focusTraversalPolicy =
@@ -514,3 +520,8 @@ private fun AWTKeyEvent.toComposeKeyEvent(): KeyEvent =
         isShiftPressed = isShiftDown,
         nativeEvent = this,
     )
+
+private val TRANSPARENT_WITH_WINDOWS_HACK = if (hostOs.isWindows) Color(0, 0, 0, 1) else Color(0, 0, 0, 0)
+
+private val DEFAULT_RENDER_SETTINGS
+    get() = if (hostOs.isWindows) RenderSettings.SwingGraphics() else ComposePanel.DefaultRenderSettings
