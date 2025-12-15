@@ -1697,7 +1697,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     DaemonProgressIndicator oldProgress = myUpdateProgress.put(fileEditor, progress);
     if (oldProgress != null && !oldProgress.isCanceled()) {
-      oldProgress.cancel(new Throwable(), "Old indicator: " + oldProgress);
+      cancelIndicator(oldProgress, true, new Throwable(), "daemon restarted for existing indicator: " + fileEditor);
     }
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(progress, null, "createUpdateProgress(" + fileEditor + "); oldProgress=" + oldProgress);
