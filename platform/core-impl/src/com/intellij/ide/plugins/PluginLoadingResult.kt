@@ -8,7 +8,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
-class PluginLoadingResult {
+class PluginLoadingResult() {
   private val incompletePlugins = HashMap<PluginId, PluginMainDescriptor>()
 
   @JvmField
@@ -20,20 +20,16 @@ class PluginLoadingResult {
   private val idMap = HashMap<PluginId, PluginMainDescriptor>() // FIXME this does not account plugin aliases in content modules
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<PluginMainDescriptor>>? = null
   // the order of errors matters
-  private val pluginErrors = LinkedHashMap<PluginId, PluginNonLoadReason>()
+  private val pluginNonLoadReasons = LinkedHashMap<PluginId, PluginNonLoadReason>()
 
   @VisibleForTesting
   @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
 
   @get:TestOnly
-  val hasPluginErrors: Boolean
-    get() = !pluginErrors.isEmpty()
-
-  @get:TestOnly
   val enabledPlugins: List<PluginMainDescriptor>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
-  internal fun copyPluginErrors(): MutableMap<PluginId, PluginNonLoadReason> = LinkedHashMap(pluginErrors)
+  internal fun copyPluginNonLoadReasons(): MutableMap<PluginId, PluginNonLoadReason> = LinkedHashMap(pluginNonLoadReasons)
 
   fun getIncompleteIdMap(): Map<PluginId, PluginMainDescriptor> = incompletePlugins
 
@@ -51,11 +47,11 @@ class PluginLoadingResult {
       incompletePlugins[plugin.pluginId] = plugin
       if (error != null) {
         // force put
-        pluginErrors[plugin.pluginId] = error
+        pluginNonLoadReasons[plugin.pluginId] = error
       }
     }
     else if (error != null) {
-      pluginErrors.putIfAbsent(plugin.pluginId, error)
+      pluginNonLoadReasons.putIfAbsent(plugin.pluginId, error)
     }
   }
 
@@ -87,7 +83,7 @@ class PluginLoadingResult {
 
     // remove any error that occurred for a plugin with the same `id`
     val pluginId = descriptor.pluginId
-    pluginErrors.remove(pluginId)
+    pluginNonLoadReasons.remove(pluginId)
     incompletePlugins.remove(pluginId)
     val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
