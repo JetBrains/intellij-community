@@ -115,7 +115,7 @@ internal enum class KotlinGradlePluginVersionKeyVersion(val version: KotlinTooli
 }
 
 internal fun MultiplatformModelImportingContext.useKgpDependencyResolution(): Boolean {
-    return this.importReflection != null && getProperty(ENABLE_KGP_DEPENDENCY_RESOLUTION)
+    return this.importReflection != null
 }
 
 internal class MultiplatformModelImportingContextImpl(
