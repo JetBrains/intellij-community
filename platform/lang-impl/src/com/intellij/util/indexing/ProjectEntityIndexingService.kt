@@ -84,8 +84,19 @@ class ProjectEntityIndexingService(
     }
 
     if (event.registeredFileSets.isNotEmpty() || event.removedFileSets.isNotEmpty()) {
-      val parameters =  computeScanningParametersFromWFIEvent(event)
-      UnindexedFilesScanner(project, parameters).queue()
+      val registeredIndexableFileSets = event.registeredFileSets.filter { it.kind.isIndexable }
+      val removedIndexableFileSets = event.removedFileSets.filter { it.kind.isIndexable }
+
+      if (registeredIndexableFileSets.isNotEmpty() || removedIndexableFileSets.isNotEmpty()) {
+        val event  = WorkspaceFileIndexChangedEvent(
+          removedFileSets = removedIndexableFileSets,
+          registeredFileSets = registeredIndexableFileSets,
+          storageBefore = event.storageBefore,
+          storageAfter = event.storageAfter,
+        )
+        val parameters =  computeScanningParametersFromWFIEvent(event)
+        UnindexedFilesScanner(project, parameters).queue()
+      }
     }
   }
 
@@ -143,7 +154,6 @@ class ProjectEntityIndexingService(
     for (fileSet in fileSets) {
       fileSet as WorkspaceFileSetWithCustomData<*>
       val entityPointer = fileSet.getEntityPointer() ?: continue
-      if (!fileSet.kind.isIndexable) continue
       if (fileSet.data is ModuleRelatedRootData) continue
       if (fileSet.kind.isContent) continue
 
