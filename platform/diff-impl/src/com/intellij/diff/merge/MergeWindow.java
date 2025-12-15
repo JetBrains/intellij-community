@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
@@ -50,7 +51,7 @@ public abstract class MergeWindow {
       .setDimensionServiceKey(dialogGroupKey)
       .setInitialSize(JBUI.DialogSizes.extraLarge())
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
-      .setOnShowCallback(() -> initProcessor(myProcessor))
+      .setOnShowCallback(() -> WriteIntentReadAction.run(() -> initProcessor(myProcessor)))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
       .build();
     myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS.getValue());
