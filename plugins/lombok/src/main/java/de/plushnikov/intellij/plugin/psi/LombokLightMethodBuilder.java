@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -38,6 +41,11 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   private boolean myReadWriteAccess = false;
 
+  private Function<LombokLightMethodBuilder, Collection<PsiElement>> myRelatedMembersFunction = builder -> {
+    return List.of();
+  };
+  private Collection<PsiElement> myRelatedMembers;
+
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
           new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
@@ -46,6 +54,29 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
           new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     getModifierList().withParent(this);
     setBaseIcon(LombokIcons.Nodes.LombokMethod);
+  }
+
+  public LombokLightMethodBuilder withRelatedMembers(@NotNull Function<LombokLightMethodBuilder, Collection<PsiElement>> buildFunction) {
+    myRelatedMembersFunction = buildFunction;
+    myRelatedMembers = null;
+    return this;
+  }
+
+  public LombokLightMethodBuilder withRelatedMember(@Nullable PsiElement member) {
+    if(null != member) {
+      if (myRelatedMembers == null) {
+        myRelatedMembers = new ArrayList<>();
+      }
+      myRelatedMembers.add(member);
+    }
+    return this;
+  }
+
+  public boolean hasRelatedMember(@NotNull PsiMember member) {
+    if(myRelatedMembers == null) {
+      myRelatedMembers = myRelatedMembersFunction.apply(this);
+    }
+    return myRelatedMembers.contains(member);
   }
 
   public LombokLightMethodBuilder withNavigationElement(PsiElement navigationElement) {

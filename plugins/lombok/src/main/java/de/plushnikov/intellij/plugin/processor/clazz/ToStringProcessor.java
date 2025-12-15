@@ -126,6 +126,10 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
     LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
 
+    for (MemberInfo memberInfo : memberInfos) {
+      methodBuilder.withRelatedMember(memberInfo.getField());
+    }
+
     return methodBuilder;
   }
 

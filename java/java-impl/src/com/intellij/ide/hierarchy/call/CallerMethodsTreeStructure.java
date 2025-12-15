@@ -17,10 +17,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Stream;
 
 public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   private final String myScopeType;
@@ -119,6 +117,11 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
           }
           return true;
         });
+
+        // add other method elements without references
+        for (CallHierarchyElementProvider provider : CallHierarchyElementProvider.EP_NAME.getExtensionList()) {
+            provider.appendReferencedMethods(methodToFind, data);
+        }
       }
 
       return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
@@ -127,9 +130,19 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     assert enclosingElement instanceof PsiField || enclosingElement instanceof PsiRecordComponent
       : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
 
-    return ReferencesSearch
+    final Stream<@NotNull PsiElement> referencedElements = ReferencesSearch
       .search(enclosingElement, searchScope).findAll().stream()
-      .map(PsiReference::getElement)
+      .map(PsiReference::getElement);
+
+    // collect other field elements without references
+    Collection<@NotNull PsiElement> providedElements = new ArrayList<>();
+    for (CallHierarchyElementProvider provider : CallHierarchyElementProvider.EP_NAME.getExtensionList()) {
+      if(provider.canProvide(enclosingElement)) {
+        providedElements.addAll(provider.provideReferencedMembers(enclosingElement));
+      }
+    }
+
+    return Stream.concat(referencedElements, providedElements.stream())
       .distinct()
       .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false))
       .filter(n -> n.getEnclosingElement() != null)

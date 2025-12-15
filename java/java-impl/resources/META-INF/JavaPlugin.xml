@@ -106,6 +106,8 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor"
                     interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.hierarchy.elementProvider"
+                    interface="com.intellij.ide.hierarchy.call.CallHierarchyElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>

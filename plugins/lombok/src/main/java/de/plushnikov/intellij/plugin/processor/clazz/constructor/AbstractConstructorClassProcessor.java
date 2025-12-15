@@ -328,6 +328,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withModifier(modifier)
       .withWriteAccess();
 
+    for (PsiField param : params) {
+      constructorBuilder.withRelatedMember(param);
+    }
+
     LombokCopyableAnnotations.copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
 
     if (useJavaDefaults) {
@@ -394,6 +398,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withModifier(methodModifier)
       .withModifier(PsiModifier.STATIC)
       .withWriteAccess();
+
+    for (PsiField param : params) {
+      methodBuilder.withRelatedMember(param);
+    }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (psiClass.hasTypeParameters()) {

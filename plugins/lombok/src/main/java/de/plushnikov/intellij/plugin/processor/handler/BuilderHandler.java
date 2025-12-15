@@ -23,10 +23,7 @@ import de.plushnikov.intellij.plugin.provider.LombokUserDataKeys;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -766,6 +763,16 @@ public class BuilderHandler {
       .withContainingClass(builderClass)
       .withNavigationElement(parentClass)
       .withModifier(getBuilderInnerAccessVisibility(psiAnnotation));
+
+    if (null == psiMethod) {
+      Stream.of(parentClass.getConstructors())
+        .filter(m -> sameParameters(m.getParameterList().getParameters(), builderInfos))
+        .findFirst().ifPresent(methodBuilder::withRelatedMember);
+    }
+    else if (psiMethod.isConstructor()) {
+      methodBuilder.withRelatedMember(psiMethod);
+    }
+
     final String codeBlockText =
       createBuildMethodCodeBlockText(psiMethod, builderClass, returnType, buildMethodPrepare, buildMethodParameters);
     methodBuilder.withBodyText(codeBlockText);
