@@ -251,6 +251,10 @@ final class UndoClientState implements Disposable {
     redoStacksHolder.invalidateActionsFor(ref);
   }
 
+  void resetOriginalDocument() {
+    commandBuilder.resetOriginalDocument();
+  }
+
   boolean isUndoInProgress() {
     return undoRedoInProgress == UndoRedoInProgress.UNDO;
   }

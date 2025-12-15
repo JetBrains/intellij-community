@@ -19,25 +19,26 @@ public enum UndoableActionType {
   MENTION_ONLY,
   EDITOR_CHANGE,
   NON_UNDOABLE,
+  RESET_ORIGINATOR,
   GLOBAL,
   OTHER,
   ;
 
   public static @NotNull UndoableAction getAction(
-    @NotNull String actionType,
+    @NotNull UndoableActionType actionType,
     @Nullable Collection<DocumentReference> docRefs,
     boolean isGlobal
   ) {
     if (docRefs == null) {
       return new MockUndoableAction(docRefs, isGlobal);
     }
-    UndoableActionType type = valueOf(actionType);
-    return switch (type) {
+    return switch (actionType) {
       case START_MARK -> new StartMarkAction(first(docRefs), "", isGlobal);
       case FINISH_MARK -> new FinishMarkAction(first(docRefs), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> new MockEditorChangeAction(first(docRefs));
       case NON_UNDOABLE -> new NonUndoableAction(first(docRefs), isGlobal);
+      case RESET_ORIGINATOR -> new ResetOriginatorAction();
       case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };
