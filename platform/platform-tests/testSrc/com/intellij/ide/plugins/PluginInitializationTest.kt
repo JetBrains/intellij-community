@@ -75,11 +75,12 @@ class PluginInitializationTest {
 
   private fun testBothPhases(
     essentialPlugins: Set<PluginId> = emptySet(),
+    disabledPlugins: Set<PluginId> = emptySet(),
     productBuildNumber: BuildNumber = BuildNumber.fromString("241.0")!!,
     discoveryResult: PluginDescriptorLoadingResult,
   ): Pair<UnambiguousPluginSet, MutableList<ExcludedPluginInfo>> {
     val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
-    val initContext = createInitContext(essentialPlugins, emptySet(), productBuildNumber)
+    val initContext = createInitContext(essentialPlugins, disabledPlugins, productBuildNumber)
 
     // Phase 1: Plugin selection (disabled filtering, compatibility & version selection)
     val compatiblePlugins = initContext.selectPluginsToLoad(
@@ -303,6 +304,33 @@ class PluginInitializationTest {
       assertThat(excludedPlugins).hasSize(2)
       assertThat(excludedPlugins.all { it.reason is PluginUntilBuildConstraintViolation }).isTrue()
       assertThat(excludedPlugins.map { it.plugin.version }).containsExactlyInAnyOrder("2.0", "3.0")
+    }
+
+    @Test
+    fun `disabled plugin is filtered before compatibility check`() {
+      plugin("foo") {
+        version = "1.0"
+        untilBuild = "100.*" // incompatible
+      }.buildDir(pluginsDirPath.resolve("foo"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      val excludedPlugins = mutableListOf<ExcludedPluginInfo>()
+      val initContext = createInitContext(
+        disabledPlugins = setOf(PluginId.getId("foo")),
+        productBuildNumber = BuildNumber.fromString("250.0")!!
+      )
+
+      val filteredResult = initContext.selectPluginsToLoad(
+        discoveryResult.discoveredPlugins,
+        onPluginExcluded = { plugin, reason -> excludedPlugins.add(ExcludedPluginInfo(plugin, reason)) }
+      )
+
+      // Plugin should be excluded as disabled, not as incompatible
+      assertThat(filteredResult).hasSize(1)
+      assertThat(filteredResult[0].plugins).isEmpty()
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
     }
   }
 
@@ -612,6 +640,59 @@ class PluginInitializationTest {
       assertThat(result.plugins[0].version).isEqualTo("3.0")
       assertThat(excludedPlugins).hasSize(2)
       assertThat(excludedPlugins.all { it.reason is PluginVersionIsSuperseded }).isTrue()
+    }
+
+    @Test
+    fun `conflicting plugins - neither disabled results in conflict`() {
+      plugin("foo") {
+        version = "1.0"
+        pluginAliases = listOf("shared")
+      }.buildDir(pluginsDirPath.resolve("foo"))
+      
+      plugin("bar") {
+        version = "1.0"
+        pluginAliases = listOf("shared")
+      }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      
+      // Neither plugin disabled
+      val (result, excludedPlugins) = testBothPhases(discoveryResult = discoveryResult)
+
+      // Both should be excluded due to ID conflict
+      assertThat(result.plugins).isEmpty()
+      assertThat(excludedPlugins).hasSize(2)
+      assertThat(excludedPlugins.all { it.reason is PluginDeclaresConflictingId }).isTrue()
+    }
+
+    @Test
+    fun `conflicting plugins - one disabled allows other to load`() {
+      plugin("foo") {
+        version = "1.0"
+        pluginAliases = listOf("shared")
+      }.buildDir(pluginsDirPath.resolve("foo"))
+      
+      plugin("bar") {
+        version = "1.0"
+        pluginAliases = listOf("shared")
+      }.buildDir(pluginsDirPath.resolve("bar"))
+
+      val (_, discoveryResult) = PluginSetTestBuilder.fromPath(pluginsDirPath).discoverPlugins()
+      
+      // Disable foo, keep bar enabled
+      val (result, excludedPlugins) = testBothPhases(
+        disabledPlugins = setOf(PluginId.getId("foo")),
+        discoveryResult = discoveryResult
+      )
+
+      // bar should load successfully
+      assertThat(result.plugins).hasSize(1)
+      assertThat(result.plugins[0].pluginId.idString).isEqualTo("bar")
+      
+      // foo should be excluded as disabled
+      assertThat(excludedPlugins).hasSize(1)
+      assertThat(excludedPlugins[0].plugin.pluginId.idString).isEqualTo("foo")
+      assertThat(excludedPlugins[0].reason).isInstanceOf(PluginIsMarkedDisabled::class.java)
     }
   }
 }
