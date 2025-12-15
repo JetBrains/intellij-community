@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.extensions
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -28,7 +28,9 @@ class KotlinK1andK2ModesTest {
     plugin("foo") {
       depends("org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
-    assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
+    val (_, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNotNull()
+    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
   }
 
   @Test
@@ -37,7 +39,9 @@ class KotlinK1andK2ModesTest {
       depends("org.jetbrains.kotlin")
       extensions("""<supportsKotlinPluginMode supportsK2="false"/>""", ns = "org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
-    assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
+    val (_, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNotNull()
+    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
   }
 
   @Test
@@ -46,7 +50,9 @@ class KotlinK1andK2ModesTest {
       depends("org.jetbrains.kotlin")
       extensions("""<supportsKotlinPluginMode supportsK1="false"/>""", ns = "org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
-    assertThat(getSinglePlugin(rootDir).isEnabled).isFalse()
+    val (_, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNotNull()
+    assertThat(reason).isInstanceOf(PluginIsIncompatibleWithKotlinMode::class.java)
   }
 
   @Test
@@ -55,7 +61,8 @@ class KotlinK1andK2ModesTest {
       depends("org.jetbrains.kotlin")
       extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
-    assertThat(getSinglePlugin(rootDir).isEnabled).isTrue()
+    val (_, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNull()
   }
 
 
@@ -64,8 +71,8 @@ class KotlinK1andK2ModesTest {
     plugin("foo") {
       depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
     }.buildDir(rootDir.resolve("foo"))
-    val plugin = getSinglePlugin(rootDir)
-    assertThat(plugin.isEnabled).isTrue()
+    val (plugin, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNull()
   }
@@ -76,18 +83,17 @@ class KotlinK1andK2ModesTest {
       depends("org.jetbrains.kotlin", configFile = "kt.xml") { }
       extensions("""<supportsKotlinPluginMode supportsK2="true"/>""", ns = "org.jetbrains.kotlin")
     }.buildDir(rootDir.resolve("foo"))
-    val plugin = getSinglePlugin(rootDir)
-    assertThat(plugin.isEnabled).isTrue()
+    val (plugin, reason) = getSinglePlugin(rootDir)
+    assertThat(reason).isNull()
     val dependency = plugin.dependencies.single()
     assertThat(dependency.subDescriptor).isNotNull()
   }
 }
 
-private fun getSinglePlugin(rootDir: Path): IdeaPluginDescriptorImpl {
-  val pluginResult = runBlocking { loadDescriptors(rootDir) }
-  val allPlugins = pluginResult.getIncompleteIdMap().values + pluginResult.enabledPlugins
+private fun getSinglePlugin(rootDir: Path): Pair<IdeaPluginDescriptorImpl, PluginNonLoadReason?> {
+  val allPlugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
   val plugin = allPlugins.single()
-  return plugin
+  return plugin to ProductPluginInitContext().validatePluginIsCompatible(plugin)
 }
 
 private inline fun withKotlinPluginMode(isK2: Boolean, action: () -> Unit) {
