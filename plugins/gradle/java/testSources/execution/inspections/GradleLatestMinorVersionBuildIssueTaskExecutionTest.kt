@@ -41,7 +41,7 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
           assertNode(":task")
         }
       }
-      if (gradleVersion < GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion)) {
+      if (shouldShowMinorGradleVersionWarning(gradleVersion)) {
         assertRunViewConsoleText("New Minor Gradle Version Available") { consoleText ->
           assertNewMinorGradleVersionNodeConsoleText(gradleVersion, consoleText)
         }
@@ -77,10 +77,14 @@ class GradleLatestMinorVersionBuildIssueTaskExecutionTest : GradleExecutionTestC
     }
 
     internal fun SimpleTreeAssertion.Node<Nothing?>.assertNodeWithNewMinorGradleVersionInfo(gradleVersion: GradleVersion) {
-      if (gradleVersion < GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion)) {
+      if (shouldShowMinorGradleVersionWarning(gradleVersion)) {
         assertNode("New Minor Gradle Version Available")
       }
     }
+
+    internal fun shouldShowMinorGradleVersionWarning(gradleVersion: GradleVersion) =
+      !GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion) &&
+      gradleVersion < GradleJvmSupportMatrix.getLatestMinorGradleVersion(gradleVersion.majorVersion)
 
     internal fun assertNewMinorGradleVersionNodeConsoleText(gradleVersion: GradleVersion, consoleText: String) {
       val oldVersion = gradleVersion.version

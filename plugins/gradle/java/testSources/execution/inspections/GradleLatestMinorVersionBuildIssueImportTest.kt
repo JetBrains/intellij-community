@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.execution.inspections
 import org.jetbrains.plugins.gradle.execution.inspections.GradleLatestMinorVersionBuildIssueTaskExecutionTest.Companion.assertNewMinorGradleVersionNodeConsoleText
 import org.jetbrains.plugins.gradle.execution.inspections.GradleLatestMinorVersionBuildIssueTaskExecutionTest.Companion.assertNodeWithNewMinorGradleVersionInfo
 import org.jetbrains.plugins.gradle.execution.inspections.GradleLatestMinorVersionBuildIssueTaskExecutionTest.Companion.enableGradleLatestMinorVersionInspection
+import org.jetbrains.plugins.gradle.execution.inspections.GradleLatestMinorVersionBuildIssueTaskExecutionTest.Companion.shouldShowMinorGradleVersionWarning
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
-import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
@@ -23,7 +23,7 @@ class GradleLatestMinorVersionBuildIssueImportTest : BuildViewMessagesImportingT
         assertNodeWithNewMinorGradleVersionInfo(currentGradleVersion)
       }
     }
-    if (currentGradleVersion < GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentGradleVersion.majorVersion)) {
+    if (shouldShowMinorGradleVersionWarning(currentGradleVersion)) {
       assertSyncViewNode("New Minor Gradle Version Available") { consoleText ->
         assertNewMinorGradleVersionNodeConsoleText(currentGradleVersion, consoleText)
       }
