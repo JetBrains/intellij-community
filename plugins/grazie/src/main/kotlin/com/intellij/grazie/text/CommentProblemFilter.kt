@@ -3,6 +3,7 @@ package com.intellij.grazie.text
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
+import com.intellij.grazie.utils.ProblemFilterUtil
 import com.intellij.grazie.utils.Text
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.project.DumbService
@@ -32,7 +33,8 @@ internal class CommentProblemFilter : ProblemFilter() {
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
         return true
       }
-      if (Text.isSingleSentence(text) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)) {
+      if (Text.isSingleSentence(text) &&
+          (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) || ProblemFilterUtil.isMissingArticleIssue(problem))) {
         return true
       }
     }

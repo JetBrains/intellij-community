@@ -3,7 +3,6 @@ package com.intellij.grazie.mlec
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.locale
-import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
@@ -130,11 +129,7 @@ class MlecChecker : ExternalTextChecker() {
         override fun getDescription(): String = description
         override fun isEnabledByDefault(domain: TextStyleDomain): Boolean {
           if (this.globalId != enMissingArticle.globalId) return super.isEnabledByDefault(domain)
-          return featuredSettings(Language.ENGLISH).asSequence()
-            .filterIsInstance<RuleSetting>()
-            .map { it.rule }
-            .find { it.id == "Grammar.MISSING_ARTICLE" }!!
-            .isEnabledInState(GrazieConfig.get(), domain)
+          return getAssociatedGrazieRule(this)!!.isEnabledInState(GrazieConfig.get(), domain)
         }
       }
   }

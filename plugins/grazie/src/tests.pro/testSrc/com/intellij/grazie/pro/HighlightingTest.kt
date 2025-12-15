@@ -244,14 +244,24 @@ class HighlightingTest : BaseTestCase() {
   @NeedsCloud
   @Test
   fun `test avoid LT false positives where TextExtractor provides no text`() {
-    GrazieConfig.update {
-      it.withDomainEnabledRules(TextStyleDomain.CodeComment, setOf("Grazie.RuleEngine.En.Grammar.MISSING_ARTICLE"))
-    }
     configureByText("a.html",
                     """
                     <b>Hello. I need your <GRAMMAR_ERROR descr="NEED_HELPS">helps</GRAMMAR_ERROR>. Another sentence.</b> <!-- checking works overall -->
-                    <code>public int compareTo(A a) {return s.length() - a.s.length();}</code> <!-- ...but not in <GRAMMAR_ERROR descr="Grazie.MLEC.En.MissingArticle: Missing article">code tag</GRAMMAR_ERROR> -->
+                    <code>public int compareTo(A a) {return s.length() - a.s.length();}</code> <!-- Another sentence! But not in <GRAMMAR_ERROR descr="Grazie.MLEC.En.MissingArticle: Missing article">code tag</GRAMMAR_ERROR> -->
                     """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  @NeedsCloud
+  @Test
+  fun `test missing article are suppressed in single sentence comments`() {
+    configureByText("a.html",
+      """
+      <!-- But not in code tag -->
+                    
+      <!-- this is mistake. -->
+      """.trimIndent()
+    )
     myFixture.checkHighlighting()
   }
 

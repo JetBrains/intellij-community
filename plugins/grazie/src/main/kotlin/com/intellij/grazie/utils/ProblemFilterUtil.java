@@ -1,5 +1,7 @@
 package com.intellij.grazie.utils;
 
+import ai.grazie.nlp.langs.Language;
+import com.intellij.grazie.text.Rule;
 import com.intellij.grazie.text.RuleGroup;
 import com.intellij.grazie.text.TextProblem;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,5 +22,20 @@ public final class ProblemFilterUtil {
    */
   public static boolean isUndecoratedSingleSentenceIssue(TextProblem problem) {
     return Text.isSingleSentence(problem.getText()) && problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE);
+  }
+
+  /**
+   * Check if this problem reports a missing article issue in a single-sentence text fragment.
+   * Such issues are often ignored in comments.
+   */
+  public static boolean isMissingArticleIssue(TextProblem problem) {
+    Rule rule = problem.getRule();
+    if (rule.getLanguage() != Language.ENGLISH) return false;
+    return getAssociatedRuleGlobalId(rule).endsWith(".MISSING_ARTICLE");
+  }
+
+  private static String getAssociatedRuleGlobalId(Rule rule) {
+    var grazieRule = GrazieUtilsKt.getAssociatedGrazieRule(rule);
+    return grazieRule == null ? rule.getGlobalId() : grazieRule.globalId();
   }
 }

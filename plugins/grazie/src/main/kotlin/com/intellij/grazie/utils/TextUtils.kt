@@ -27,7 +27,7 @@ object Text {
   fun isQuote(char: Char) = char == '\'' || char == '\"'
 
   @JvmStatic
-  fun isSingleSentence(text: CharSequence) = !text.contains(Regex("\\.\\s"))
+  fun isSingleSentence(text: CharSequence): Boolean = !text.contains(Regex("[.?!]\\s"))
 
   @JvmStatic
   fun findParagraphRange(text: CharSequence, range: TextRange): TextRange {

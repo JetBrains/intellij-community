@@ -14,6 +14,7 @@ import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.mlec.LanguageHolder
+import com.intellij.grazie.mlec.MlecChecker
 import com.intellij.grazie.rule.RuleIdeClient
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.Companion.runWithSentenceBatcher
@@ -30,6 +31,12 @@ private val associatedGrazieRules = ConcurrentHashMap<Language, Map<String, Rule
 
 fun getAssociatedGrazieRule(rule: com.intellij.grazie.text.Rule): Rule? {
   if (rule.language !in ruleEngineLanguages) return null
+  if (rule.globalId == MlecChecker.Constants.enMissingArticle.globalId) {
+    return featuredSettings(Language.ENGLISH).asSequence()
+      .filterIsInstance<RuleSetting>()
+      .map { it.rule }
+      .find { it.id == "Grammar.MISSING_ARTICLE" }!!
+  }
   return associatedGrazieRules
     .computeIfAbsent(rule.language) { buildAssociatedGrazieMapping(rule.language) }
     .get(rule.globalId)
