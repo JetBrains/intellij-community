@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.terminal
+package com.intellij.vcs.git.terminal
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
-import com.intellij.vcs.git.terminal.*
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitBranch
@@ -19,11 +19,17 @@ import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.mockito.Mockito.*
 
-class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
+@RunWith(Parameterized::class)
+class GitShellCommandOverrideSpecTest(private val engine: TerminalEngine) : BasePlatformTestCase() {
   private data class MultiTestFixture(
     val fixture: ShellCompletionTestFixture,
     val assertions: SoftAssertions = SoftAssertions()
@@ -53,12 +59,14 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     "git switch "
   )
 
+  @Test
   fun `test command completions contain local branches for repository-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitRepositoryFixture())
     commandsThatShouldCompleteWithLocalBranches.forEach { test.localBranchesCompleteFor(it) }
     test.finish()
   }
 
+  @Test
   fun `test command completions contain local branches for commandline-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitCommandLineFixture())
     commandsThatShouldCompleteWithLocalBranches.forEach { test.localBranchesCompleteFor(it) }
@@ -66,7 +74,8 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
   }
 
   // Ignored, needs context changes to be able to find -r/--remotes in prefix
-  fun `_test command completions contain remote branches`(): Unit = runBlocking {
+  //@Test
+  fun `test command completions contain remote branches`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitRepositoryFixture())
     test.remoteBranchesCompleteFor("git branch -D -r ")
     test.remoteBranchesCompleteFor("git branch -d --remotes ")
@@ -85,12 +94,14 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     "git merge ",
   )
 
+  @Test
   fun `test command completions contain all branches for repository-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitRepositoryFixture())
     commandsThatShouldCompleteWithAllBranches.forEach { test.allBranchesCompleteFor(it) }
     test.finish()
   }
 
+  @Test
   fun `test command completions contain all branches for commandline-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitCommandLineFixture())
     commandsThatShouldCompleteWithAllBranches.forEach { test.allBranchesCompleteFor(it) }
@@ -108,12 +119,14 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     "git fetch ",
   )
 
+  @Test
   fun `test command completions contain all remotes for repository-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitRepositoryFixture())
     commandsThatShouldCompleteWithRemotes.forEach { test.remotesCompleteFor(it) }
     test.finish()
   }
 
+  @Test
   fun `test command completions contain all remotes for commandline-based generator`(): Unit = runBlocking {
     val test = MultiTestFixture(createGitCommandLineFixture())
     commandsThatShouldCompleteWithRemotes.forEach { test.remotesCompleteFor(it) }
@@ -121,6 +134,7 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
   }
 
   // depends on `test command completions contain local branches` to pass
+  @Test
   fun `test current branch is a higher priority completion than others`(): Unit = runBlocking {
     val fixture = createGitRepositoryFixture(localBranches = ALL_LOCAL_BRANCHES, currentBranch = BRANCH_C)
     val completions = fixture.getCompletions("git branch -d ")
@@ -224,6 +238,7 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     project.replaceService(GitRepositoryManager::class.java, repositoryManager, testRootDisposable)
 
     val fixture = ShellCompletionTestFixture.builder(project)
+      .setIsReworkedTerminal(engine == TerminalEngine.REWORKED)
       .mockShellCommandResults { command ->
         if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
           return@mockShellCommandResults ShellCommandResult.create("file1\nfile2", exitCode = 0)
@@ -235,6 +250,14 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
           else -> error("Unknown command: $command")
         }
       }
+      .mockFileSystemSupport(object : ShellFileSystemSupport {
+        override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
+          return listOf(
+            ShellFileInfo.create("file1", ShellFileInfo.Type.FILE),
+            ShellFileInfo.create("file2", ShellFileInfo.Type.FILE),
+          )
+        }
+      })
       .build()
 
     return fixture
@@ -248,6 +271,10 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     }
 
   companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun engine(): List<TerminalEngine> = listOf(TerminalEngine.REWORKED, TerminalEngine.NEW_TERMINAL)
+
     private val ORIGIN = GitRemote("origin", listOf("https://origin.com/some/repo"), listOf("https://origin.com/some/repo"), listOf(),
                                    listOf())
     private val GITHUB = GitRemote("github", listOf("https://github.com/some/repo"), listOf("https://github.com/some/repo"), listOf(),
