@@ -3,10 +3,13 @@ package org.jetbrains.plugins.terminal.testFramework.completion.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorProcessExecutorImpl
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixtureBuilder
 
@@ -17,6 +20,7 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
   private var envVariables: Map<String, String> = emptyMap()
   private var commandSpecs: List<ShellCommandSpec>? = null
   private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor
+  private var generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null
 
   override fun setCurrentDirectory(directory: String): ShellCompletionTestFixtureBuilder {
     curDirectory = directory
@@ -40,13 +44,21 @@ internal class ShellCompletionTestFixtureBuilderImpl(private val project: Projec
     return this
   }
 
+  override fun mockProcessesExecutor(executor: ShellDataGeneratorProcessExecutor): ShellCompletionTestFixtureBuilder {
+    generatorProcessExecutor = executor
+    return this
+  }
+
   override fun build(): ShellCompletionTestFixture {
+    val processExecutor = generatorProcessExecutor
+                          ?: ShellDataGeneratorProcessExecutorImpl(project.getEelDescriptor(), envVariables)
     return ShellCompletionTestFixtureImpl(
       project = project,
       curDirectory = curDirectory,
       envVariables = envVariables,
       commandSpecs = commandSpecs,
-      generatorCommandsRunner = generatorCommandsRunner
+      generatorCommandsRunner = generatorCommandsRunner,
+      generatorProcessExecutor = processExecutor,
     )
   }
 }

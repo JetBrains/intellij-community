@@ -8,6 +8,7 @@ import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 
 @Suppress("TestOnlyProblems")
@@ -18,6 +19,7 @@ internal class ShellCompletionTestFixtureImpl(
   private val envVariables: Map<String, String>,
   private val commandSpecs: List<ShellCommandSpec>?,
   private val generatorCommandsRunner: ShellCommandExecutor,
+  private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor,
 ) : ShellCompletionTestFixture {
   override suspend fun getCompletions(commandText: String): List<ShellCompletionSuggestion> {
     val tokens = commandText.split(Regex(" +"))
@@ -28,10 +30,18 @@ internal class ShellCompletionTestFixtureImpl(
     }
     else ShellCommandSpecsManagerImpl.getInstance()
 
+    val contextProvider = TestRuntimeContextProvider(
+      project = project,
+      directory = curDirectory,
+      envVariables = envVariables,
+      generatorCommandsRunner = generatorCommandsRunner,
+      generatorProcessExecutor = generatorProcessExecutor,
+    )
+
     val completion = ShellCommandSpecCompletion(
-      commandSpecsManager,
-      TestGeneratorsExecutor(),
-      TestRuntimeContextProvider(project, curDirectory, envVariables, generatorCommandsRunner)
+      commandSpecManager = commandSpecsManager,
+      generatorsExecutor = TestGeneratorsExecutor(),
+      contextProvider = contextProvider,
     )
 
     val command = tokens.first()

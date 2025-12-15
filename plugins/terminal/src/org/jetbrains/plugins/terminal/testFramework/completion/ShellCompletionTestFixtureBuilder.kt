@@ -7,6 +7,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -36,6 +37,17 @@ interface ShellCompletionTestFixtureBuilder {
    * because this test fixture is not running the real shell session.
    */
   fun mockShellCommandResults(mock: suspend (command: String) -> ShellCommandResult): ShellCompletionTestFixtureBuilder
+
+  /**
+   * Allows mocking the results of the [ShellRuntimeContext.createProcessBuilder] calls in the [ShellRuntimeDataGenerator]'s.
+   * By default, the same executor is used as in production,
+   * i.e., it launches a real process in the environment where a project is opened.
+   *
+   * You can override [ShellDataGeneratorProcessExecutor] and provide it here, for example, to not launch any real processes,
+   * and return mocked process execution results.
+   * This way you can test the logic of the command spec without configuring a real environment.
+   */
+  fun mockProcessesExecutor(executor: ShellDataGeneratorProcessExecutor): ShellCompletionTestFixtureBuilder
 
   fun build(): ShellCompletionTestFixture
 }
