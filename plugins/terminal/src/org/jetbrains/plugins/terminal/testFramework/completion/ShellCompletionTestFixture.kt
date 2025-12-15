@@ -25,7 +25,7 @@ interface ShellCompletionTestFixture {
 
   companion object {
     @TestOnly
-    fun builder(project: Project?): ShellCompletionTestFixtureBuilder {
+    fun builder(project: Project): ShellCompletionTestFixtureBuilder {
       return ShellCompletionTestFixtureBuilderImpl(project)
     }
   }

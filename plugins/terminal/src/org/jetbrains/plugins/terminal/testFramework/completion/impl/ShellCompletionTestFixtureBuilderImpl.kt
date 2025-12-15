@@ -12,8 +12,8 @@ import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTe
 
 @Suppress("TestOnlyProblems")
 @TestOnly
-internal class ShellCompletionTestFixtureBuilderImpl(private val project: Project?) : ShellCompletionTestFixtureBuilder {
-  private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
+internal class ShellCompletionTestFixtureBuilderImpl(private val project: Project) : ShellCompletionTestFixtureBuilder {
+  private var curDirectory: String = project.guessProjectDir()!!.path
   private var envVariables: Map<String, String> = emptyMap()
   private var commandSpecs: List<ShellCommandSpec>? = null
   private var generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor

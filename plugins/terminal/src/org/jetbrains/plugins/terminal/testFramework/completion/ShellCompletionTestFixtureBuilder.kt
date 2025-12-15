@@ -14,7 +14,7 @@ import org.jetbrains.annotations.TestOnly
 interface ShellCompletionTestFixtureBuilder {
   /**
    * This current directory will be used in the [ShellRuntimeContext] provided to [ShellRuntimeDataGenerator]'s.
-   * By default, it is a path of the [project] dir if it is provided, or an empty string if it is not.
+   * By default, it is a path of the [project] dir.
    */
   fun setCurrentDirectory(directory: String): ShellCompletionTestFixtureBuilder
 
@@ -25,9 +25,8 @@ interface ShellCompletionTestFixtureBuilder {
   fun setEnvVariables(envVars: Map<String, String>): ShellCompletionTestFixtureBuilder
 
   /**
-   * Allows mocking the available command specs for which completion can be provided.
-   * By default, we use all command specs available in production, but it requires starting the IDE application.
-   * If your test is not starting the IDE, available command specs must be provided using this method.
+   * Allows replacing the available command specs for which completion can be provided.
+   * By default, we use all command specs available in production (depends on the class path used to start the test).
    */
   fun mockCommandSpecs(vararg specs: ShellCommandSpec): ShellCompletionTestFixtureBuilder
 

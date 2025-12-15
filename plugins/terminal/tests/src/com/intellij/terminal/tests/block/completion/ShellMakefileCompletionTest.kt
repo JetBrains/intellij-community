@@ -3,8 +3,7 @@ package com.intellij.terminal.tests.block.completion
 
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.terminal.block.completion.spec.specs.make.ShellMakeCommandSpec
@@ -39,7 +38,7 @@ This is an incorrect Makefile
 """
 
 @RunWith(JUnit4::class)
-class ShellMakefileCompletionTest {
+class ShellMakefileCompletionTest : BasePlatformTestCase() {
   private val commandName = "make"
 
   private val spec = ShellMakeCommandSpec.create()
@@ -62,7 +61,7 @@ class ShellMakefileCompletionTest {
   }
 
   private fun getMakefileSuggestions(makefile: String): List<ShellCompletionSuggestion> {
-    val fixture = ShellCompletionTestFixture.builder(project = null)
+    val fixture = ShellCompletionTestFixture.builder(project)
       .mockCommandSpecs(spec)
       .mockShellCommandResults { command ->
         if (command.startsWith("command cat ") || command.startsWith("cat ")) {
