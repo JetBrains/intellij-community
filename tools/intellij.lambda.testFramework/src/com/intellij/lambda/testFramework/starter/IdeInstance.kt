@@ -17,6 +17,7 @@ import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.starterLogger
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = starterLogger<IdeInstance>()
@@ -114,7 +115,8 @@ object IdeInstance {
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(testSuiteSupervisorScope.coroutineContext) {
-      withTimeout(5.seconds) {
+      val inDebug = runContext.frontendContext.calculateVmOptions().isUnderDebug()
+      withTimeout(if (!inDebug) 10.seconds else 10.minutes) {
         catchAll("IDE instance cleanup") {
           ide.cleanUp()
         }
