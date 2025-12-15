@@ -124,36 +124,6 @@ object StubBuildCachedValuesManager {
   }
 
   @JvmStatic
-  fun <T, P> getCachedValueStubBuildOptimized(
-    dataHolder: PsiElement,
-    key: Key<ParameterizedCachedValue<T, P>>,
-    stubBuildingKey: Key<StubBuildCachedValue<T>>,
-    provider: ParameterizedCachedValueProvider<T, P>,
-    parameter: P,
-  ): T {
-    val stubBuildId = stubBuildId
-    if (stubBuildId != null) {
-      val node = dataHolder.getNode() ?: dataHolder
-      var current = node.getUserData(stubBuildingKey)
-      if (current == null || current.buildId != stubBuildId) {
-        myComputingCachedValue.set(true)
-        val value =  try {
-          provider.compute(parameter)
-        } finally {
-          myComputingCachedValue.remove()
-        }
-        current = StubBuildCachedValue(stubBuildId, value.getValue())
-        node.putUserData(stubBuildingKey, current)
-      }
-      return current.value
-    }
-    return CachedValuesManager.getManager(dataHolder.getProject()).getParameterizedCachedValue(
-      dataHolder, key, provider.wrapWithNonPhysicalPsiHandlerProviderIfNeeded(parameter),
-      false, parameter
-    )
-  }
-
-  @JvmStatic
   fun <T, P: PsiElement> getCachedValueStubBuildOptimized(
     psiElement: P,
     provider: StubBuildCachedValueProvider<T, P>,
