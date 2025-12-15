@@ -300,10 +300,6 @@ public class UndoManagerImpl extends UndoManager {
       } finally {
         Disposer.dispose(disposable);
       }
-      UndoSpy undoSpy = UndoSpy.getInstance();
-      if (undoSpy != null) {
-        undoSpy.undoRedoPerformed(myProject, editor, isUndo);
-      }
     }
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.undo.UndoableAction
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,12 +30,6 @@ open class UndoSpyImpl : UndoSpy {
     }
   }
 
-  final override fun undoRedoPerformed(project: Project?, editor: FileEditor?, isUndo: Boolean) {
-    if (!isBlindSpot) {
-      undoRedoPerformed0(project, editor, isUndo)
-    }
-  }
-
   override fun <T> withBlind(action: () -> T): T {
     val isBlind = isBlindSpot
     isBlindSpot = true
@@ -54,8 +47,5 @@ open class UndoSpyImpl : UndoSpy {
   }
 
   protected open fun commandFinished0(cmdEvent: CmdEvent) {
-  }
-
-  protected open fun undoRedoPerformed0(project: Project?, editor: FileEditor?, isUndo: Boolean) {
   }
 }
