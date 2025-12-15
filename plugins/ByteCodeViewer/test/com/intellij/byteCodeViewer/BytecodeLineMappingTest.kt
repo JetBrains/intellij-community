@@ -716,10 +716,10 @@ internal class BytecodeLineMappingTest : BasePlatformTestCase() {
     private val testDataPath: String
       get() = PathManager.getHomePath() + "/community/plugins/byteCodeViewer/testData/lineMapping"
 
-    private val simple1: Fixture = createFixture("simple1")
+    private val simple1: Fixture by lazy { createFixture("simple1") }
 
-    private val simple2: Fixture = createFixture("simple2")
+    private val simple2: Fixture by lazy { createFixture("simple2") }
 
-    private val simple3: Fixture = createFixture("simple3")
+    private val simple3: Fixture by lazy { createFixture("simple3") }
   }
 }
