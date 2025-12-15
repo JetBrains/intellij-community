@@ -32,7 +32,7 @@ repositories {
 
 dependencies {
     api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
-    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
+    intellijPlatform { intellijIdea(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
