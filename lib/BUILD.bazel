@@ -2004,6 +2004,762 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "grazie-tests-pro-ai-grazie-model-def-jvm",
+  jar = "@ai_grazie_model-model-def-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-def-jvm-0_8_74_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-tests-pro-ai-grazie-model-ner-jvm",
+  jar = "@ai_grazie_model-model-ner-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-ner-jvm-0_8_74_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-tests-pro-ai-grazie-model-swagger-annotations-jvm",
+  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-tests-pro-ai-grazie-model-tree-jvm",
+  jar = "@ai_grazie_model-model-tree-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-tree-jvm-0_8_74_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "grazie-tests-pro-ai-grazie-nlp-detect-jvm",
+  exports = [
+    ":ai_grazie_nlp-nlp-detect-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-common-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-common-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-text-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-common-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-langs-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-detect-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_model-model-text-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file"
+)
+
+java_library(
+  name = "grazie-tests-pro-ai-grazie-spell-gec-engine-local-jvm",
+  exports = [
+    ":ai_grazie_spell-gec-spell-engine-local-0_8_74_http_import",
+    ":ai_grazie_model-model-gec-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "ai_grazie_spell-gec-spell-engine-local-0_8_74_http_import",
+  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file",
+  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_model-model-gec-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file"
+)
+
+jvm_import(
+  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file"
+)
+
+java_library(
+  name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-core",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",
+    ":com_carrotsearch-hppc-0_8_2_http_import",
+    ":com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
+    ":com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
+    ":com_fasterxml_jackson_core-jackson-core-2_18_0_http_import",
+    ":com_gitlab_dumonts-hunspell-2_1_2_http_import",
+    ":net_java_dev_jna-jna-platform-5_12_1_http_import",
+    ":net_java_dev_jna-jna-5_12_1_http_import",
+    ":com_google_guava-guava-33_3_1-jre_http_import",
+    ":com_google_guava-failureaccess-1_0_2_http_import",
+    ":com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+    ":com_google_code_findbugs-jsr305-3_0_2_http_import",
+    ":org_checkerframework-checker-qual-3_43_0_http_import",
+    ":org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
+    ":com_google_errorprone-error_prone_annotations-2_28_0_http_import",
+    ":com_google_j2objc-j2objc-annotations-3_0_0_http_import",
+    ":com_google_protobuf-protobuf-java-3_25_8_http_import",
+    ":com_hankcs-aho-corasick-double-array-trie-1_2_2_http_import",
+    ":com_optimaize_languagedetector-language-detector-0_6_http_import",
+    ":net_arnx-jsonic-1_2_11_http_import",
+    ":com_intellij-annotations-12_0_http_import",
+    ":commons-logging-commons-logging-1_3_4_http_import",
+    ":commons-validator-commons-validator-1_9_0_http_import",
+    ":commons-digester-commons-digester-2_1_http_import",
+    ":io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http_import",
+    ":io_vavr-vavr-0_10_2_http_import",
+    ":io_vavr-vavr-match-0_10_2_http_import",
+    ":io_github_resilience4j-resilience4j-core-1_7_1_http_import",
+    ":io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
+    ":io_opentelemetry-opentelemetry-api-1_42_1_http_import",
+    ":io_opentelemetry-opentelemetry-context-1_42_1_http_import",
+    ":io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http_import",
+    ":io_grpc-grpc-netty-shaded-1_75_0_http_import",
+    ":io_grpc-grpc-util-1_75_0_http_import",
+    ":io_grpc-grpc-core-1_75_0_http_import",
+    ":com_google_code_gson-gson-2_11_0_http_import",
+    ":com_google_android-annotations-4_1_1_4_http_import",
+    ":io_grpc-grpc-context-1_75_0_http_import",
+    ":io_perfmark-perfmark-api-0_27_0_http_import",
+    ":io_grpc-grpc-api-1_75_0_http_import",
+    ":io_grpc-grpc-protobuf-1_75_0_http_import",
+    ":com_google_api_grpc-proto-google-common-protos-2_59_2_http_import",
+    ":io_grpc-grpc-protobuf-lite-1_75_0_http_import",
+    ":io_grpc-grpc-stub-1_75_0_http_import",
+    ":io_micrometer-micrometer-registry-prometheus-1_7_12_http_import",
+    ":io_micrometer-micrometer-core-1_7_12_http_import",
+    ":org_hdrhistogram-HdrHistogram-2_1_12_http_import",
+    ":org_latencyutils-LatencyUtils-2_0_3_http_import",
+    ":io_prometheus-simpleclient_common-0_10_0_http_import",
+    ":io_prometheus-simpleclient-0_16_0_http_import",
+    ":io_prometheus-simpleclient_tracer_otel-0_16_0_http_import",
+    ":io_prometheus-simpleclient_tracer_common-0_16_0_http_import",
+    ":io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http_import",
+    ":io_prometheus-simpleclient_guava-0_16_0_http_import",
+    ":javax_activation-javax_activation-api-1_2_0-api_http_import",
+    ":javax_annotation-javax_annotation-api-1_3_2-api_http_import",
+    ":javax_measure-unit-api-1_0_http_import",
+    ":javax_xml_bind-jaxb-api-2_3_1_http_import",
+    ":net_loomchild-segment-2_0_3_http_import",
+    ":org_apache_commons-commons-lang3-3_18_0_http_import",
+    ":org_apache_commons-commons-pool2-2_12_0_http_import",
+    ":org_apache_commons-commons-text-1_12_0_http_import",
+    ":org_apache_lucene-lucene-backward-codecs-5_5_5_http_import",
+    ":org_apache_lucene-lucene-core-5_5_5_http_import",
+    ":org_carrot2-morfologik-fsa-2_1_9_http_import",
+    ":org_carrot2-morfologik-fsa-builders-2_1_9_http_import",
+    ":org_carrot2-morfologik-speller-2_1_9_http_import",
+    ":org_carrot2-morfologik-stemming-2_1_9_http_import",
+    ":org_glassfish_jaxb-jaxb-runtime-4_0_5_http_import",
+    ":org_glassfish_jaxb-jaxb-core-4_0_5_http_import",
+    ":org_glassfish_jaxb-txw2-4_0_5_http_import",
+    ":com_sun_istack-istack-commons-runtime-4_1_2_http_import",
+    ":org_eclipse_angus-angus-activation-2_0_2_http_import",
+    ":it_unimi_dsi-fastutil-core-8_5_14_http_import",
+    ":com_sun_activation-jakarta_activation-1_2_2_http_import",
+    ":jakarta_activation-jakarta_activation-api-2_1_3-api_http_import",
+    ":jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-api_http_import",
+    ":com_sun_xml_bind-jaxb-core-2_3_0_1_http_import",
+    ":com_sun_xml_bind-jaxb-impl-2_3_3_http_import",
+    ":org_json-json-20240303_http_import",
+    ":org_slf4j-slf4j-api-2_0_16_http_import",
+    ":tech_units-indriya-1_3_http_import",
+    ":tech_uom_lib-uom-lib-common-1_1_http_import",
+    ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
+    ":io_github_java-diff-utils-java-diff-utils-4_12_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_carrotsearch-hppc-0_8_2_http_import",
+  jar = "@com_carrotsearch-hppc-0_8_2_http//file",
+  source_jar = "@com_carrotsearch-hppc-0_8_2_http//file"
+)
+
+jvm_import(
+  name = "com_fasterxml_jackson_core-jackson-databind-2_18_0_http_import",
+  jar = "@com_fasterxml_jackson_core-jackson-databind-2_18_0_http//file",
+  source_jar = "@com_fasterxml_jackson_core-jackson-databind-2_18_0_http//file"
+)
+
+jvm_import(
+  name = "com_fasterxml_jackson_core-jackson-annotations-2_18_0_http_import",
+  jar = "@com_fasterxml_jackson_core-jackson-annotations-2_18_0_http//file",
+  source_jar = "@com_fasterxml_jackson_core-jackson-annotations-2_18_0_http//file"
+)
+
+jvm_import(
+  name = "com_fasterxml_jackson_core-jackson-core-2_18_0_http_import",
+  jar = "@com_fasterxml_jackson_core-jackson-core-2_18_0_http//file",
+  source_jar = "@com_fasterxml_jackson_core-jackson-core-2_18_0_http//file"
+)
+
+jvm_import(
+  name = "com_gitlab_dumonts-hunspell-2_1_2_http_import",
+  jar = "@com_gitlab_dumonts-hunspell-2_1_2_http//file",
+  source_jar = "@com_gitlab_dumonts-hunspell-2_1_2_http//file"
+)
+
+jvm_import(
+  name = "net_java_dev_jna-jna-platform-5_12_1_http_import",
+  jar = "@net_java_dev_jna-jna-platform-5_12_1_http//file",
+  source_jar = "@net_java_dev_jna-jna-platform-5_12_1_http//file"
+)
+
+jvm_import(
+  name = "net_java_dev_jna-jna-5_12_1_http_import",
+  jar = "@net_java_dev_jna-jna-5_12_1_http//file",
+  source_jar = "@net_java_dev_jna-jna-5_12_1_http//file"
+)
+
+jvm_import(
+  name = "com_google_guava-guava-33_3_1-jre_http_import",
+  jar = "@com_google_guava-guava-33_3_1-jre_http//file",
+  source_jar = "@com_google_guava-guava-33_3_1-jre_http//file"
+)
+
+jvm_import(
+  name = "com_google_guava-failureaccess-1_0_2_http_import",
+  jar = "@com_google_guava-failureaccess-1_0_2_http//file",
+  source_jar = "@com_google_guava-failureaccess-1_0_2_http//file"
+)
+
+jvm_import(
+  name = "com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http_import",
+  jar = "@com_google_guava-listenablefuture-9999_0-empty-to-avoid-conflict-with-guava_http//file"
+)
+
+jvm_import(
+  name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
+  jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
+  source_jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file"
+)
+
+jvm_import(
+  name = "org_checkerframework-checker-qual-3_43_0_http_import",
+  jar = "@org_checkerframework-checker-qual-3_43_0_http//file",
+  source_jar = "@org_checkerframework-checker-qual-3_43_0_http//file"
+)
+
+jvm_import(
+  name = "org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
+  jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
+  source_jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file"
+)
+
+jvm_import(
+  name = "com_google_errorprone-error_prone_annotations-2_28_0_http_import",
+  jar = "@com_google_errorprone-error_prone_annotations-2_28_0_http//file",
+  source_jar = "@com_google_errorprone-error_prone_annotations-2_28_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_j2objc-j2objc-annotations-3_0_0_http_import",
+  jar = "@com_google_j2objc-j2objc-annotations-3_0_0_http//file",
+  source_jar = "@com_google_j2objc-j2objc-annotations-3_0_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_protobuf-protobuf-java-3_25_8_http_import",
+  jar = "@com_google_protobuf-protobuf-java-3_25_8_http//file",
+  source_jar = "@com_google_protobuf-protobuf-java-3_25_8_http//file"
+)
+
+jvm_import(
+  name = "com_hankcs-aho-corasick-double-array-trie-1_2_2_http_import",
+  jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_2_http//file",
+  source_jar = "@com_hankcs-aho-corasick-double-array-trie-1_2_2_http//file"
+)
+
+jvm_import(
+  name = "com_optimaize_languagedetector-language-detector-0_6_http_import",
+  jar = "@com_optimaize_languagedetector-language-detector-0_6_http//file",
+  source_jar = "@com_optimaize_languagedetector-language-detector-0_6_http//file"
+)
+
+jvm_import(
+  name = "net_arnx-jsonic-1_2_11_http_import",
+  jar = "@net_arnx-jsonic-1_2_11_http//file",
+  source_jar = "@net_arnx-jsonic-1_2_11_http//file"
+)
+
+jvm_import(
+  name = "com_intellij-annotations-12_0_http_import",
+  jar = "@com_intellij-annotations-12_0_http//file",
+  source_jar = "@com_intellij-annotations-12_0_http//file"
+)
+
+jvm_import(
+  name = "commons-logging-commons-logging-1_3_4_http_import",
+  jar = "@commons-logging-commons-logging-1_3_4_http//file",
+  source_jar = "@commons-logging-commons-logging-1_3_4_http//file"
+)
+
+jvm_import(
+  name = "commons-validator-commons-validator-1_9_0_http_import",
+  jar = "@commons-validator-commons-validator-1_9_0_http//file",
+  source_jar = "@commons-validator-commons-validator-1_9_0_http//file"
+)
+
+jvm_import(
+  name = "commons-digester-commons-digester-2_1_http_import",
+  jar = "@commons-digester-commons-digester-2_1_http//file",
+  source_jar = "@commons-digester-commons-digester-2_1_http//file"
+)
+
+jvm_import(
+  name = "io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http_import",
+  jar = "@io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http//file",
+  source_jar = "@io_github_resilience4j-resilience4j-circuitbreaker-1_7_1_http//file"
+)
+
+jvm_import(
+  name = "io_vavr-vavr-0_10_2_http_import",
+  jar = "@io_vavr-vavr-0_10_2_http//file",
+  source_jar = "@io_vavr-vavr-0_10_2_http//file"
+)
+
+jvm_import(
+  name = "io_vavr-vavr-match-0_10_2_http_import",
+  jar = "@io_vavr-vavr-match-0_10_2_http//file",
+  source_jar = "@io_vavr-vavr-match-0_10_2_http//file"
+)
+
+jvm_import(
+  name = "io_github_resilience4j-resilience4j-core-1_7_1_http_import",
+  jar = "@io_github_resilience4j-resilience4j-core-1_7_1_http//file",
+  source_jar = "@io_github_resilience4j-resilience4j-core-1_7_1_http//file"
+)
+
+jvm_import(
+  name = "io_github_resilience4j-resilience4j-micrometer-1_7_1_http_import",
+  jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1_http//file",
+  source_jar = "@io_github_resilience4j-resilience4j-micrometer-1_7_1_http//file"
+)
+
+jvm_import(
+  name = "io_opentelemetry-opentelemetry-api-1_42_1_http_import",
+  jar = "@io_opentelemetry-opentelemetry-api-1_42_1_http//file",
+  source_jar = "@io_opentelemetry-opentelemetry-api-1_42_1_http//file"
+)
+
+jvm_import(
+  name = "io_opentelemetry-opentelemetry-context-1_42_1_http_import",
+  jar = "@io_opentelemetry-opentelemetry-context-1_42_1_http//file",
+  source_jar = "@io_opentelemetry-opentelemetry-context-1_42_1_http//file"
+)
+
+jvm_import(
+  name = "io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http_import",
+  jar = "@io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http//file",
+  source_jar = "@io_opentelemetry-opentelemetry-semconv-1_30_1-alpha_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-netty-shaded-1_75_0_http_import",
+  jar = "@io_grpc-grpc-netty-shaded-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-netty-shaded-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-util-1_75_0_http_import",
+  jar = "@io_grpc-grpc-util-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-util-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-core-1_75_0_http_import",
+  jar = "@io_grpc-grpc-core-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-core-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_code_gson-gson-2_11_0_http_import",
+  jar = "@com_google_code_gson-gson-2_11_0_http//file",
+  source_jar = "@com_google_code_gson-gson-2_11_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_android-annotations-4_1_1_4_http_import",
+  jar = "@com_google_android-annotations-4_1_1_4_http//file",
+  source_jar = "@com_google_android-annotations-4_1_1_4_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-context-1_75_0_http_import",
+  jar = "@io_grpc-grpc-context-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-context-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_perfmark-perfmark-api-0_27_0_http_import",
+  jar = "@io_perfmark-perfmark-api-0_27_0_http//file",
+  source_jar = "@io_perfmark-perfmark-api-0_27_0_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-api-1_75_0_http_import",
+  jar = "@io_grpc-grpc-api-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-api-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-protobuf-1_75_0_http_import",
+  jar = "@io_grpc-grpc-protobuf-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-protobuf-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_api_grpc-proto-google-common-protos-2_59_2_http_import",
+  jar = "@com_google_api_grpc-proto-google-common-protos-2_59_2_http//file",
+  source_jar = "@com_google_api_grpc-proto-google-common-protos-2_59_2_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-protobuf-lite-1_75_0_http_import",
+  jar = "@io_grpc-grpc-protobuf-lite-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-protobuf-lite-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_grpc-grpc-stub-1_75_0_http_import",
+  jar = "@io_grpc-grpc-stub-1_75_0_http//file",
+  source_jar = "@io_grpc-grpc-stub-1_75_0_http//file"
+)
+
+jvm_import(
+  name = "io_micrometer-micrometer-registry-prometheus-1_7_12_http_import",
+  jar = "@io_micrometer-micrometer-registry-prometheus-1_7_12_http//file",
+  source_jar = "@io_micrometer-micrometer-registry-prometheus-1_7_12_http//file"
+)
+
+jvm_import(
+  name = "io_micrometer-micrometer-core-1_7_12_http_import",
+  jar = "@io_micrometer-micrometer-core-1_7_12_http//file",
+  source_jar = "@io_micrometer-micrometer-core-1_7_12_http//file"
+)
+
+jvm_import(
+  name = "org_hdrhistogram-HdrHistogram-2_1_12_http_import",
+  jar = "@org_hdrhistogram-HdrHistogram-2_1_12_http//file",
+  source_jar = "@org_hdrhistogram-HdrHistogram-2_1_12_http//file"
+)
+
+jvm_import(
+  name = "org_latencyutils-LatencyUtils-2_0_3_http_import",
+  jar = "@org_latencyutils-LatencyUtils-2_0_3_http//file",
+  source_jar = "@org_latencyutils-LatencyUtils-2_0_3_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient_common-0_10_0_http_import",
+  jar = "@io_prometheus-simpleclient_common-0_10_0_http//file",
+  source_jar = "@io_prometheus-simpleclient_common-0_10_0_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient-0_16_0_http_import",
+  jar = "@io_prometheus-simpleclient-0_16_0_http//file",
+  source_jar = "@io_prometheus-simpleclient-0_16_0_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient_tracer_otel-0_16_0_http_import",
+  jar = "@io_prometheus-simpleclient_tracer_otel-0_16_0_http//file",
+  source_jar = "@io_prometheus-simpleclient_tracer_otel-0_16_0_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient_tracer_common-0_16_0_http_import",
+  jar = "@io_prometheus-simpleclient_tracer_common-0_16_0_http//file",
+  source_jar = "@io_prometheus-simpleclient_tracer_common-0_16_0_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http_import",
+  jar = "@io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http//file",
+  source_jar = "@io_prometheus-simpleclient_tracer_otel_agent-0_16_0_http//file"
+)
+
+jvm_import(
+  name = "io_prometheus-simpleclient_guava-0_16_0_http_import",
+  jar = "@io_prometheus-simpleclient_guava-0_16_0_http//file",
+  source_jar = "@io_prometheus-simpleclient_guava-0_16_0_http//file"
+)
+
+jvm_import(
+  name = "javax_activation-javax_activation-api-1_2_0-api_http_import",
+  jar = "@javax_activation-javax_activation-api-1_2_0-api_http//file",
+  source_jar = "@javax_activation-javax_activation-api-1_2_0-api_http//file"
+)
+
+jvm_import(
+  name = "javax_annotation-javax_annotation-api-1_3_2-api_http_import",
+  jar = "@javax_annotation-javax_annotation-api-1_3_2-api_http//file",
+  source_jar = "@javax_annotation-javax_annotation-api-1_3_2-api_http//file"
+)
+
+jvm_import(
+  name = "javax_measure-unit-api-1_0_http_import",
+  jar = "@javax_measure-unit-api-1_0_http//file",
+  source_jar = "@javax_measure-unit-api-1_0_http//file"
+)
+
+jvm_import(
+  name = "javax_xml_bind-jaxb-api-2_3_1_http_import",
+  jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file",
+  source_jar = "@javax_xml_bind-jaxb-api-2_3_1_http//file"
+)
+
+jvm_import(
+  name = "net_loomchild-segment-2_0_3_http_import",
+  jar = "@net_loomchild-segment-2_0_3_http//file",
+  source_jar = "@net_loomchild-segment-2_0_3_http//file"
+)
+
+jvm_import(
+  name = "org_apache_commons-commons-lang3-3_18_0_http_import",
+  jar = "@org_apache_commons-commons-lang3-3_18_0_http//file",
+  source_jar = "@org_apache_commons-commons-lang3-3_18_0_http//file"
+)
+
+jvm_import(
+  name = "org_apache_commons-commons-pool2-2_12_0_http_import",
+  jar = "@org_apache_commons-commons-pool2-2_12_0_http//file",
+  source_jar = "@org_apache_commons-commons-pool2-2_12_0_http//file"
+)
+
+jvm_import(
+  name = "org_apache_commons-commons-text-1_12_0_http_import",
+  jar = "@org_apache_commons-commons-text-1_12_0_http//file",
+  source_jar = "@org_apache_commons-commons-text-1_12_0_http//file"
+)
+
+jvm_import(
+  name = "org_apache_lucene-lucene-backward-codecs-5_5_5_http_import",
+  jar = "@org_apache_lucene-lucene-backward-codecs-5_5_5_http//file",
+  source_jar = "@org_apache_lucene-lucene-backward-codecs-5_5_5_http//file"
+)
+
+jvm_import(
+  name = "org_apache_lucene-lucene-core-5_5_5_http_import",
+  jar = "@org_apache_lucene-lucene-core-5_5_5_http//file",
+  source_jar = "@org_apache_lucene-lucene-core-5_5_5_http//file"
+)
+
+jvm_import(
+  name = "org_carrot2-morfologik-fsa-2_1_9_http_import",
+  jar = "@org_carrot2-morfologik-fsa-2_1_9_http//file",
+  source_jar = "@org_carrot2-morfologik-fsa-2_1_9_http//file"
+)
+
+jvm_import(
+  name = "org_carrot2-morfologik-fsa-builders-2_1_9_http_import",
+  jar = "@org_carrot2-morfologik-fsa-builders-2_1_9_http//file",
+  source_jar = "@org_carrot2-morfologik-fsa-builders-2_1_9_http//file"
+)
+
+jvm_import(
+  name = "org_carrot2-morfologik-speller-2_1_9_http_import",
+  jar = "@org_carrot2-morfologik-speller-2_1_9_http//file",
+  source_jar = "@org_carrot2-morfologik-speller-2_1_9_http//file"
+)
+
+jvm_import(
+  name = "org_carrot2-morfologik-stemming-2_1_9_http_import",
+  jar = "@org_carrot2-morfologik-stemming-2_1_9_http//file",
+  source_jar = "@org_carrot2-morfologik-stemming-2_1_9_http//file"
+)
+
+jvm_import(
+  name = "org_glassfish_jaxb-jaxb-runtime-4_0_5_http_import",
+  jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_5_http//file",
+  source_jar = "@org_glassfish_jaxb-jaxb-runtime-4_0_5_http//file"
+)
+
+jvm_import(
+  name = "org_glassfish_jaxb-jaxb-core-4_0_5_http_import",
+  jar = "@org_glassfish_jaxb-jaxb-core-4_0_5_http//file",
+  source_jar = "@org_glassfish_jaxb-jaxb-core-4_0_5_http//file"
+)
+
+jvm_import(
+  name = "org_glassfish_jaxb-txw2-4_0_5_http_import",
+  jar = "@org_glassfish_jaxb-txw2-4_0_5_http//file",
+  source_jar = "@org_glassfish_jaxb-txw2-4_0_5_http//file"
+)
+
+jvm_import(
+  name = "com_sun_istack-istack-commons-runtime-4_1_2_http_import",
+  jar = "@com_sun_istack-istack-commons-runtime-4_1_2_http//file",
+  source_jar = "@com_sun_istack-istack-commons-runtime-4_1_2_http//file"
+)
+
+jvm_import(
+  name = "org_eclipse_angus-angus-activation-2_0_2_http_import",
+  jar = "@org_eclipse_angus-angus-activation-2_0_2_http//file",
+  source_jar = "@org_eclipse_angus-angus-activation-2_0_2_http//file"
+)
+
+jvm_import(
+  name = "it_unimi_dsi-fastutil-core-8_5_14_http_import",
+  jar = "@it_unimi_dsi-fastutil-core-8_5_14_http//file",
+  source_jar = "@it_unimi_dsi-fastutil-core-8_5_14_http//file"
+)
+
+jvm_import(
+  name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
+  jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
+  source_jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file"
+)
+
+jvm_import(
+  name = "jakarta_activation-jakarta_activation-api-2_1_3-api_http_import",
+  jar = "@jakarta_activation-jakarta_activation-api-2_1_3-api_http//file",
+  source_jar = "@jakarta_activation-jakarta_activation-api-2_1_3-api_http//file"
+)
+
+jvm_import(
+  name = "jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-api_http_import",
+  jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-api_http//file",
+  source_jar = "@jakarta_xml_bind-jakarta_xml_bind-api-2_3_3-api_http//file"
+)
+
+jvm_import(
+  name = "com_sun_xml_bind-jaxb-core-2_3_0_1_http_import",
+  jar = "@com_sun_xml_bind-jaxb-core-2_3_0_1_http//file",
+  source_jar = "@com_sun_xml_bind-jaxb-core-2_3_0_1_http//file"
+)
+
+jvm_import(
+  name = "com_sun_xml_bind-jaxb-impl-2_3_3_http_import",
+  jar = "@com_sun_xml_bind-jaxb-impl-2_3_3_http//file",
+  source_jar = "@com_sun_xml_bind-jaxb-impl-2_3_3_http//file"
+)
+
+jvm_import(
+  name = "org_json-json-20240303_http_import",
+  jar = "@org_json-json-20240303_http//file",
+  source_jar = "@org_json-json-20240303_http//file"
+)
+
+jvm_import(
+  name = "org_slf4j-slf4j-api-2_0_16_http_import",
+  jar = "@org_slf4j-slf4j-api-2_0_16_http//file",
+  source_jar = "@org_slf4j-slf4j-api-2_0_16_http//file"
+)
+
+jvm_import(
+  name = "tech_units-indriya-1_3_http_import",
+  jar = "@tech_units-indriya-1_3_http//file",
+  source_jar = "@tech_units-indriya-1_3_http//file"
+)
+
+jvm_import(
+  name = "tech_uom_lib-uom-lib-common-1_1_http_import",
+  jar = "@tech_uom_lib-uom-lib-common-1_1_http//file",
+  source_jar = "@tech_uom_lib-uom-lib-common-1_1_http//file"
+)
+
+jvm_import(
+  name = "io_github_java-diff-utils-java-diff-utils-4_12_http_import",
+  jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file",
+  source_jar = "@io_github_java-diff-utils-java-diff-utils-4_12_http//file"
+)
+
+java_library(
+  name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-de",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-language-de-6_7_19_http_import",
+    ":de_danielnaber-german-pos-dict-1_2_4_http_import",
+    ":de_danielnaber-jwordsplitter-4_7_http_import",
+    ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
+    ":org_apache_commons-commons-lang3-3_18_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-el",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http_import",
+    ":org_ioperm-morphology-el-1_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-el-6_7_19_http//file"
+)
+
+jvm_import(
+  name = "org_ioperm-morphology-el-1_0_0_http_import",
+  jar = "@org_ioperm-morphology-el-1_0_0_http//file",
+  source_jar = "@org_ioperm-morphology-el-1_0_0_http//file"
+)
+
+java_library(
+  name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-ru",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http_import",
+    ":edu_washington_cs_knowitall-openregex-1_1_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-ru-6_7_19_http//file"
+)
+
+java_library(
+  name = "grazie-tests-pro-jetbrains-intellij-deps-languagetool-language-uk",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-language-uk-6_7_19_http_import",
+    ":ua_net_nlp-morfologik-ukrainian-lt-6_7_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "groovy-spock-rt-spockframework-spock-core",
   exports = [
@@ -2055,24 +2811,6 @@ jvm_import(
   name = "io_grpc-grpc-api-1_73_0_http_import",
   jar = "@io_grpc-grpc-api-1_73_0_http//file",
   source_jar = "@io_grpc-grpc-api-1_73_0_http//file"
-)
-
-jvm_import(
-  name = "com_google_android-annotations-4_1_1_4_http_import",
-  jar = "@com_google_android-annotations-4_1_1_4_http//file",
-  source_jar = "@com_google_android-annotations-4_1_1_4_http//file"
-)
-
-jvm_import(
-  name = "org_codehaus_mojo-animal-sniffer-annotations-1_24_http_import",
-  jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file",
-  source_jar = "@org_codehaus_mojo-animal-sniffer-annotations-1_24_http//file"
-)
-
-jvm_import(
-  name = "io_perfmark-perfmark-api-0_27_0_http_import",
-  jar = "@io_perfmark-perfmark-api-0_27_0_http//file",
-  source_jar = "@io_perfmark-perfmark-api-0_27_0_http//file"
 )
 
 jvm_import(
@@ -2783,12 +3521,6 @@ jvm_import(
   name = "com_sun_istack-istack-commons-runtime-3_0_12_http_import",
   jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file",
   source_jar = "@com_sun_istack-istack-commons-runtime-3_0_12_http//file"
-)
-
-jvm_import(
-  name = "com_sun_activation-jakarta_activation-1_2_2_http_import",
-  jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file",
-  source_jar = "@com_sun_activation-jakarta_activation-1_2_2_http//file"
 )
 
 jvm_import(
@@ -4450,54 +5182,6 @@ java_library(
     ":ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "ai_grazie_spell-gec-spell-engine-local-0_8_74_http_import",
-  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file",
-  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_model-model-gec-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_model-model-text-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file"
-)
-
-jvm_import(
-  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http_import",
-  jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file"
 )
 
 jvm_import(
@@ -6166,12 +6850,6 @@ jvm_import(
   name = "com_google_guava-guava-25_1-android_http_import",
   jar = "@com_google_guava-guava-25_1-android_http//file",
   source_jar = "@com_google_guava-guava-25_1-android_http//file"
-)
-
-jvm_import(
-  name = "com_google_code_findbugs-jsr305-3_0_2_http_import",
-  jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file",
-  source_jar = "@com_google_code_findbugs-jsr305-3_0_2_http//file"
 )
 
 jvm_import(
