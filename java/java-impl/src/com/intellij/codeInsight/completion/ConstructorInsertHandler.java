@@ -244,7 +244,8 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
 
-    JavaFrontendCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
+    var isVoidMethod = delegate.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)delegate.getObject()).getReturnType());
+    JavaFrontendCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous, isVoidMethod);
 
     if (constructor != null) {
       PsiCallExpression call = JavaMethodCallInsertHandlerHelper.findCallAtOffset(context, refEnd.getStartOffset());

@@ -196,24 +196,26 @@ private fun createDiamondInsertHandler(item: JavaMethodCallElement): InsertHandl
 private class MethodCallParenthesesInsertHandler private constructor(
   private val hasParameters: Boolean,
   private val hasTailType: Boolean,
+  private val isVoidMethod: Boolean,
 ) : InsertHandler<JavaMethodCallElement>, FrontendConvertibleInsertHandler<JavaMethodCallElement> {
   override fun handleInsert(context: InsertionContext, item: JavaMethodCallElement) {
     val method = item.getObject()
     val allItems = context.elements
     val hasParams = if (hasParameters) MethodParenthesesHandler.overloadsHaveParameters(allItems, method) else ThreeState.NO
-    FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams)
+    FrontendFriendlyParenthesesInsertHandler.insertParenthesesForJavaMethod(item, context, hasParams, isVoidMethod)
   }
 
   override fun asFrontendFriendly(): FrontendFriendlyInsertHandler? {
     if (hasTailType) return null
-    return FrontendFriendlyParenthesesInsertHandler(hasParameters)
+    return FrontendFriendlyParenthesesInsertHandler(hasParameters, isVoidMethod)
   }
 
   companion object {
     fun create(item: JavaMethodCallElement): InsertHandler<JavaMethodCallElement> {
       val method = item.getObject()
       val hasTailType = item.tailType != TailTypes.unknownType()
-      return MethodCallParenthesesInsertHandler(!method.parameterList.isEmpty, hasTailType)
+      val isVoidMethod = method.returnType == PsiTypes.voidType()
+      return MethodCallParenthesesInsertHandler(!method.parameterList.isEmpty, hasTailType, isVoidMethod)
     }
   }
 }

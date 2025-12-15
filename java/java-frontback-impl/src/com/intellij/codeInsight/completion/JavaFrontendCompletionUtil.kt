@@ -28,6 +28,7 @@ object JavaFrontendCompletionUtil {
     overloadsMatter: Boolean,
     hasParams: ThreeState,  // UNSURE if providing no arguments is a valid situation
     forceClosingParenthesis: Boolean,
+    isVoidMethod: Boolean,
   ) {
     var hasParams = hasParams
     val editor = context.editor
@@ -85,7 +86,7 @@ object JavaFrontendCompletionUtil {
       return
     }
 
-    if (!insertTail(context, item, tailType, hasTail)) {
+    if (!insertTail(context, item, tailType, hasTail, isVoidMethod)) {
       return
     }
 
@@ -104,6 +105,7 @@ object JavaFrontendCompletionUtil {
     item: LookupElement,
     tailType: TailType,
     hasTail: Boolean,
+    isVoidMethod: Boolean,
   ): Boolean {
     var toInsert = tailType
     if (toInsert === EqTailType.INSTANCE) {
@@ -112,7 +114,7 @@ object JavaFrontendCompletionUtil {
 
     val lookupItem = item.`as`(LookupItem.CLASS_CONDITION_KEY)
     if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) !== TailTypes.unknownType()) {
-      if (!hasTail && item.getObject() is PsiMethod && PsiTypes.voidType() == (item.getObject() as PsiMethod).returnType) {
+      if (!hasTail && isVoidMethod) {
         PsiDocumentManager.getInstance(context.project).commitAllDocuments()
         if (PlatformPatterns.psiElement().beforeLeaf(PlatformPatterns.psiElement().withText(".")).accepts(context.file.findElementAt(context.tailOffset - 1))) {
           return false

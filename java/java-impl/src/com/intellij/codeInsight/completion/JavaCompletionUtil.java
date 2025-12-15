@@ -750,7 +750,8 @@ public final class JavaCompletionUtil {
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
-    JavaFrontendCompletionUtil.insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false);
+    var isVoidMethod = item.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)item.getObject()).getReturnType());
+    JavaFrontendCompletionUtil.insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false, isVoidMethod);
   }
 
   //need to shorten references in type argument list
