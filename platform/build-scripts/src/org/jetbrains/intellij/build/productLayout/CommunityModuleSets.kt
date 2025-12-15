@@ -158,6 +158,9 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
 
+    module("intellij.platform.todo")
+    module("intellij.platform.todo.backend")
+
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
 
