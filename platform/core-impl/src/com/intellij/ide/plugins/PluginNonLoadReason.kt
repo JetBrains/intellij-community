@@ -305,3 +305,16 @@ class PluginDeclaresConflictingId(
             "from plugin '${conflictingModule.getMainDescriptor().name}' (${conflictingModule.getMainDescriptor().pluginId}" +
             (conflictingModule as? ContentModuleDescriptor)?.let { ", content module ${it.moduleId.name}" }.orEmpty() + ")"
 }
+
+@ApiStatus.Internal
+class PluginIsNotRequiredForLoadingTheExplicitlyConfiguredSubsetOfPlugins(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.not.required.for.explicitly.configured.subset", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.not.required.for.explicitly.configured.subset")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not required for loading the explicitly configured subset of plugins"
+  override val shouldNotifyUser: Boolean = false
+}
