@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 @ApiStatus.Internal
-public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
+public class XAddToWatchesFromEditorActionHandler extends XDebuggerSplitActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
     Promise<String> textPromise = getTextToEvaluate(dataContext, session);

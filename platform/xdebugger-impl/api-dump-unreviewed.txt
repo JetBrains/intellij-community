@@ -201,9 +201,7 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - <init>():V
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
-- p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
 com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeWithDocumentDelegation
 - a:getDocumentForHighlighting(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Document
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil

@@ -36,6 +36,9 @@ com.intellij.xdebugger.attach.XLocalAttachDebugger
 - a:attachDebugSession(com.intellij.openapi.project.Project,com.intellij.execution.process.ProcessInfo):V
 - attachDebugSession(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo):V
 - a:getDebuggerDisplayName():java.lang.String
+a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
+- pa:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
+- pa:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion

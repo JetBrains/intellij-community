@@ -2,18 +2,14 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
-import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerSplitActionHandler
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * This API is obsolete. Use [com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler] instead.
- */
-@ApiStatus.Obsolete
 abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
-  @Suppress("UsagesOfObsoleteApi")
   override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
     return isEnabled(session)
   }
@@ -27,19 +23,10 @@ abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
   }
 }
 
-@Suppress("UsagesOfObsoleteApi")
 @ApiStatus.Internal
-abstract class XDebuggerProxySuspendedActionHandler : XDebuggerActionHandler() {
+abstract class XDebuggerProxySuspendedActionHandler : XDebuggerSplitActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
     return isEnabled(session)
-  }
-
-  final override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
-    return super.isEnabled(session, dataContext)
-  }
-
-  final override fun perform(session: XDebugSession, dataContext: DataContext) {
-    super.perform(session, dataContext)
   }
 
   companion object {

@@ -41,7 +41,7 @@ import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvalua
 import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandlerKt.showCustomEvaluateDialog;
 
 @ApiStatus.Internal
-public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
+public class XDebuggerEvaluateActionHandler extends XDebuggerSplitActionHandler {
   @Override
   public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     XDebuggerCustomEvaluateHandler customHandler = getAvailableCustomEvaluateHandler(project, event);
