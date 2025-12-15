@@ -24,6 +24,7 @@ import com.jetbrains.python.PythonBinary
 import java.awt.datatransfer.DataFlavor
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Collections
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -31,8 +32,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.debug.DebugProbes
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -49,6 +52,19 @@ class ProcessOutputControllerServiceTest {
         @PythonBinaryPath python: PythonBinary,
     ): Unit = timeoutRunBlocking(15.minutes) {
         val service = projectFixture.get().service<ProcessOutputControllerService>()
+        val history = Collections.synchronizedMap(mutableMapOf<Int, LoggedProcess>())
+        var historyUpdates = 0
+
+        val watcher = launch {
+            service.loggedProcesses.collect {
+                historyUpdates += 1
+                for (process in it) {
+                    if (!history.contains(process.id)) {
+                        history[process.id] = process
+                    }
+                }
+            }
+        }
 
         val newLineLen = if (SystemInfoRt.isWindows) 2 else 1
         val binOnEel = BinOnEel(python, cwd)
@@ -72,11 +88,12 @@ class ProcessOutputControllerServiceTest {
         }
 
         waitUntil {
-            val processMap = service.processMap()
             val index = ProcessOutputControllerServiceLimits.MAX_PROCESSES - 1
+            val process = history.toList().find { (_, it) ->
+                it.lines.replayCache.getOrNull(0)?.text == "test $index"
+            }
 
-            processMap.contains("test $index")
-                && processMap["test $index"]!!.lines.replayCache.size == 3
+            process != null && process.second.lines.replayCache.size == 3
         }
 
         // the amount of processes logged should exactly equal to MAX_PROCESSES
@@ -84,9 +101,10 @@ class ProcessOutputControllerServiceTest {
             ProcessOutputControllerServiceLimits.MAX_PROCESSES,
             service.loggedProcesses.value.size,
         )
+        assert(historyUpdates >= ProcessOutputControllerServiceLimits.MAX_PROCESSES)
 
         run {
-            val processMap = service.processMap()
+            val processMap = history.remapByFirstLine()
 
             repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
                 val process = processMap["test $it"]
@@ -116,11 +134,12 @@ class ProcessOutputControllerServiceTest {
         }
 
         waitUntil {
-            val processMap = service.processMap()
             val index = (ProcessOutputControllerServiceLimits.MAX_PROCESSES * 3) - 1
+            val process = history.toList().find { (_, it) ->
+                it.lines.replayCache.getOrNull(0)?.text == "test $index"
+            }
 
-            processMap.contains("test $index")
-                && processMap["test $index"]!!.lines.replayCache.size == 3
+            process != null && process.second.lines.replayCache.size == 3
         }
 
         // older processes beyond MAX_PROCESSES should be truncated
@@ -128,9 +147,10 @@ class ProcessOutputControllerServiceTest {
             ProcessOutputControllerServiceLimits.MAX_PROCESSES,
             service.loggedProcesses.value.size,
         )
+        assert(historyUpdates >= ProcessOutputControllerServiceLimits.MAX_PROCESSES * 3)
 
         run {
-            val processMap = service.processMap()
+            val processMap = history.remapByFirstLine()
 
             repeat(ProcessOutputControllerServiceLimits.MAX_PROCESSES) {
                 val newIt = it + ProcessOutputControllerServiceLimits.MAX_PROCESSES * 2
@@ -153,6 +173,8 @@ class ProcessOutputControllerServiceTest {
                 }
             }
         }
+
+        watcher.cancelAndJoin()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -304,12 +326,11 @@ class ProcessOutputControllerServiceTest {
             ?.getOrNull(0)
             ?.text
 
-    private fun ProcessOutputControllerService.processMap(): Map<String, LoggedProcess> =
+    private fun Map<Int, LoggedProcess>.remapByFirstLine(): Map<String?, LoggedProcess> =
         mapOf(
-            *loggedProcesses
-                .value
-                .map {
-                    it.lines.replayCache[0].text to it
+            *toList()
+                .map { (_, process) ->
+                    process.lines.replayCache.firstOrNull()?.text to process
                 }
                 .toTypedArray(),
         )
