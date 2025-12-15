@@ -265,10 +265,8 @@ open class EditorComposite internal constructor(
         coroutineScope = coroutineScope,
       )
 
-      span("fileOpened event executing", Dispatchers.UiWithModelAccess) {
-        writeIntentReadAction {
-          deprecatedPublisher.fileOpened(fileEditorManager, file)
-        }
+      span("fileOpened event executing", Dispatchers.EDT) {
+        deprecatedPublisher.fileOpened(fileEditorManager, file)
       }
     }
   }
