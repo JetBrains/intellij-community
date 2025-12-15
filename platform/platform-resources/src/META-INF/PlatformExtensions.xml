@@ -530,6 +530,7 @@
 
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.collectors.fus.actions.ProjectStateObserverProjectActivity"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.FeatureUsageUiEventsImpl"/>
     <dialogInvocationPlace id="Open project action"/>
