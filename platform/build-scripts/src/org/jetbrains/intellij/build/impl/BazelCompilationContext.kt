@@ -116,7 +116,7 @@ class BazelCompilationContext(
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
 
-  fun replaceWithCompressedIfNeededLF(files: List<Path>): List<Path> {
+  fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> {
     val out = ArrayList<Path>(files.size)
     for (path in files) {
       if (!path.startsWith(classesOutputDirectory)) {

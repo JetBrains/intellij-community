@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -56,7 +57,7 @@ class ArchivedCompilationContext internal constructor(
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<Path> {
-    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { it }, resultMapper = { it })
+    return doReplace(delegate.getModuleRuntimeClasspath(module, forTests))
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
@@ -66,31 +67,23 @@ class ArchivedCompilationContext internal constructor(
   @Suppress("MemberVisibilityCanBePrivate")
   fun replaceWithCompressedIfNeeded(p: Path): Path = storage.getArchived(p)
 
-  suspend fun replaceWithCompressedIfNeededLP(files: List<Path>): List<Path> {
-    return doReplace(files, inputMapper = { it }, resultMapper = { it })
-  }
+  suspend fun replaceAllWithCompressedIfNeeded(files: List<Path>): List<Path> = doReplace(files)
 
-  suspend fun replaceWithCompressedIfNeededLF(files: List<Path>): List<Path> {
-    return doReplace(files, inputMapper = { it }, resultMapper = { it })
-  }
-
-  private suspend inline fun <I : Any, R : Any> doReplace(
-    files: Collection<I>,
-    crossinline inputMapper: (I) -> Path,
-    crossinline resultMapper: (Path) -> R,
-  ): List<R> {
+  private suspend fun doReplace(files: Collection<Path>): List<Path> {
     return coroutineScope {
       files.map { file ->
         async {
-          resultMapper(replaceWithCompressedIfNeeded(inputMapper(file)))
+          replaceWithCompressedIfNeeded(file)
         }
-      }
-    }.map { it.getCompleted() }
+      }.awaitAll()
+    }
   }
 
   fun saveMapping(file: Path) {
     file.writeLines(storage.getMapping().map { "${it.key.parent.fileName}/${it.key.fileName}=${it.value}" })
   }
+
+  override fun toString(): String = "ArchivedCompilationContext(archivesLocation=$archivesLocation)"
 }
 
 private class ArchivedModuleOutputProvider(

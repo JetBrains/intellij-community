@@ -186,8 +186,7 @@ private suspend fun resolveXInclude(
     path = path,
     debugInfo = "searched ${jpsModule.name} output, dependencies, and all outputs (" +
                 "filterPrefix=$prefix, " +
-                "outputProvider=$outputProvider" +
-                "processedModules=\n  ${processedModules.sorted().joinToString("\n  ")}\n" +
+                "outputProvider=$outputProvider, " +
                 ")",
   )
 }

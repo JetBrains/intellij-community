@@ -329,7 +329,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
           excludedRootPaths.addAll(context.outputProvider.getModuleOutputRoots(module, forTests = true))
         }
       }
-      val excludedRoots = replaceWithArchivedIfNeededLP(excludedRootPaths).filter(Files::exists).map(Path::toString)
+      val excludedRoots = replaceAllWithArchivedIfNeeded(excludedRootPaths).filter(Files::exists).map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -477,12 +477,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         @Suppress("IO_FILE_USAGE")
         it.toFile()
       })
-      modulePath = replaceWithArchivedIfNeededLF(pair.first.path.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
-      testClasspath = replaceWithArchivedIfNeededLF(pair.second.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
+      modulePath = replaceAllWithArchivedIfNeeded(pair.first.path.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceAllWithArchivedIfNeeded(pair.second.map { it.toPath() }).mapNotNull(toExistingAbsolutePathConverter)
     }
     else {
       modulePath = null
-      testClasspath = replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter)
+      testClasspath = replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter)
     }
 
     val devBuildServerSettings = DevBuildServerSettings.readDevBuildServerSettingsFromIntellijYaml(mainModule)
@@ -491,7 +491,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, replaceWithArchivedIfNeededLF(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
+    Files.writeString(classpathFile, replaceAllWithArchivedIfNeeded(testRoots).mapNotNull(toExistingAbsolutePathConverter).joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.put("io.netty.allocator.type", "pooled")
@@ -555,21 +555,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private suspend fun replaceWithArchivedIfNeededLF(files: List<Path>, context: CompilationContext = this.context): List<Path> {
+  private suspend fun replaceAllWithArchivedIfNeeded(files: List<Path>, context: CompilationContext = this.context): List<Path> {
     return when (context) {
-      is BuildContextImpl -> replaceWithArchivedIfNeededLF(files, context.compilationContext)
-      is ArchivedCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
-      is BazelCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
+      is BuildContextImpl -> replaceAllWithArchivedIfNeeded(files, context.compilationContext)
+      is ArchivedCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
+      is BazelCompilationContext -> context.replaceAllWithCompressedIfNeeded(files)
       else -> files
-    }
-  }
-
-  private suspend fun replaceWithArchivedIfNeededLP(paths: List<Path>): List<Path> {
-    if (context is ArchivedCompilationContext) {
-      return context.replaceWithCompressedIfNeededLP(paths)
-    }
-    else {
-      return paths
     }
   }
 
