@@ -294,8 +294,14 @@ private var initContextForLoadingRuleDetermination: PluginInitializationContext 
 // FIXME this should not exist
 @Internal
 @TestOnly
-fun setInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext) {
+fun <T> withInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext, body: () -> T): T {
+  val prev = initContextForLoadingRuleDetermination
   initContextForLoadingRuleDetermination = initContext
+  try {
+    return body()
+  } finally {
+    initContextForLoadingRuleDetermination = prev
+  }
 }
 
 @Internal
