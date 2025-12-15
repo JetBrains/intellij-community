@@ -321,8 +321,7 @@ object PluginManagerCore {
   }
 
   @Suppress("LoggingSimilarMessage")
-  private fun preparePluginErrors(globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
-    val pluginLoadingErrors = pluginsState.pluginLoadingErrors ?: emptyMap()
+  private fun preparePluginErrors(pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>, globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
     if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
@@ -610,7 +609,7 @@ object PluginManagerCore {
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
     pluginsState.pluginLoadingErrors = pluginErrorsById
 
-    val errorList = preparePluginErrors(globalErrors)
+    val errorList = preparePluginErrors(pluginErrorsById, globalErrors)
     if (!errorList.isEmpty()) { // FIXME why actions is not checked here?
       pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
     }
