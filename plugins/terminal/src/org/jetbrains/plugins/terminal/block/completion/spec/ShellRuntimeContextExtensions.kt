@@ -11,7 +11,6 @@ import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileInfoImpl
 import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import java.io.File
 import java.nio.file.InvalidPathException
@@ -107,7 +106,7 @@ private suspend fun ShellRuntimeContext.getChildFilesExp(path: String, onlyDirec
     .filter { path.isEmpty() || (it != ".$separator" && it != "..$separator") }
     .map {
       val type = if (it.endsWith(separator)) ShellFileInfo.Type.DIRECTORY else ShellFileInfo.Type.FILE
-      ShellFileInfoImpl(it.removeSuffix(separator.toString()), type)
+      ShellFileInfo.create(it.removeSuffix(separator.toString()), type)
     }
     .toList()
 }

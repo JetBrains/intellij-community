@@ -8,6 +8,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
 
 @ApiStatus.Internal
@@ -17,6 +18,7 @@ class TestRuntimeContextProvider(
   private val envVariables: Map<String, String> = emptyMap(),
   private val generatorCommandsRunner: ShellCommandExecutor = DummyShellCommandExecutor,
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor? = null,
+  private val fileSystemSupport: ShellFileSystemSupport? = null,
 ) : ShellRuntimeContextProvider {
   override fun getContext(commandTokens: List<String>): ShellRuntimeContext {
     return ShellRuntimeContextImpl(
@@ -26,6 +28,7 @@ class TestRuntimeContextProvider(
       definedShellName = null,
       generatorCommandsRunner = generatorCommandsRunner,
       generatorProcessExecutor = generatorProcessExecutor,
+      fileSystemSupport = fileSystemSupport,
     ).also {
       it.putUserData(PROJECT_KEY, project)
     }

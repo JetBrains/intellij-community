@@ -8,6 +8,7 @@ import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -48,6 +49,16 @@ interface ShellCompletionTestFixtureBuilder {
    * This way you can test the logic of the command spec without configuring a real environment.
    */
   fun mockProcessesExecutor(executor: ShellDataGeneratorProcessExecutor): ShellCompletionTestFixtureBuilder
+
+  /**
+   * Allows mocking the results of the [ShellRuntimeContext.listDirectoryFiles] calls in the [ShellRuntimeDataGenerator]'s.
+   * By default, the same file system support is used as in production,
+   * i.e., it looks for files in the environment where a project is opened.
+   *
+   * You can override [ShellFileSystemSupport] and provide it here, for example, to return mocked files.
+   * This way you can test the logic of the command spec without configuring a real environment.
+   */
+  fun mockFileSystemSupport(support: ShellFileSystemSupport): ShellCompletionTestFixtureBuilder
 
   fun build(): ShellCompletionTestFixture
 }

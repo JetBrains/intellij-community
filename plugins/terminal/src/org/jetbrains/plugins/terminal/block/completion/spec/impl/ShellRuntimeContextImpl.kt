@@ -6,6 +6,7 @@ import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.throwUnsupportedInExpTerminalException
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 
 @ApiStatus.Internal
 class ShellRuntimeContextImpl(

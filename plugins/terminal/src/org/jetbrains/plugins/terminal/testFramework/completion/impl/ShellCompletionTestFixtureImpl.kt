@@ -9,6 +9,7 @@ import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGeneratorProcessExecutor
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 
 @Suppress("TestOnlyProblems")
@@ -20,6 +21,7 @@ internal class ShellCompletionTestFixtureImpl(
   private val commandSpecs: List<ShellCommandSpec>?,
   private val generatorCommandsRunner: ShellCommandExecutor,
   private val generatorProcessExecutor: ShellDataGeneratorProcessExecutor,
+  private val fileSystemSupport: ShellFileSystemSupport,
 ) : ShellCompletionTestFixture {
   override suspend fun getCompletions(commandText: String): List<ShellCompletionSuggestion> {
     val tokens = commandText.split(Regex(" +"))
@@ -36,6 +38,7 @@ internal class ShellCompletionTestFixtureImpl(
       envVariables = envVariables,
       generatorCommandsRunner = generatorCommandsRunner,
       generatorProcessExecutor = generatorProcessExecutor,
+      fileSystemSupport = fileSystemSupport,
     )
 
     val completion = ShellCommandSpecCompletion(

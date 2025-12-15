@@ -1,4 +1,5 @@
-package com.intellij.terminal.frontend.view.completion
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
@@ -11,8 +12,7 @@ import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.terminal.completion.spec.ShellFileInfo
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileInfoImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellFileSystemSupport
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 
 @ApiStatus.Internal
 class ShellFileSystemSupportImpl(private val eelDescriptor: EelDescriptor) : ShellFileSystemSupport {
@@ -29,7 +29,7 @@ class ShellFileSystemSupportImpl(private val eelDescriptor: EelDescriptor) : She
       val result = eelApi.fs.listDirectoryWithAttrs(eelPath).doNotResolve().eelIt()
       val files = result.getOrNull() ?: emptyList()
       files.map { (name, info) ->
-        ShellFileInfoImpl(name, info.type.toShellFileType())
+        ShellFileInfo.create(name, info.type.toShellFileType())
       }
     }
     catch (e: CancellationException) {
