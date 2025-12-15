@@ -5316,12 +5316,8 @@ f:com.intellij.openapi.command.impl.DummyProject
 f:com.intellij.openapi.command.impl.FinishMarkAction
 - com.intellij.openapi.command.undo.BasicUndoableAction
 - s:finish(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.command.impl.StartMarkAction):V
-- getAffectedDocument():com.intellij.openapi.command.undo.DocumentReference
-- getCommandName():java.lang.String
 - isGlobal():Z
 - redo():V
-- setCommandName(java.lang.String):V
-- setGlobal(Z):V
 - undo():V
 f:com.intellij.openapi.command.impl.StartMarkAction
 - com.intellij.openapi.command.undo.BasicUndoableAction
@@ -5333,7 +5329,6 @@ f:com.intellij.openapi.command.impl.StartMarkAction
 - getDocument():com.intellij.openapi.editor.Document
 - isGlobal():Z
 - redo():V
-- setCommandName(java.lang.String):V
 - setGlobal(Z):V
 - s:start(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.command.impl.StartMarkAction
 - undo():V

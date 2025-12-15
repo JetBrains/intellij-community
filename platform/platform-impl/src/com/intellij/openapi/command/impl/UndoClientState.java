@@ -515,24 +515,17 @@ final class UndoClientState implements Disposable {
   private void composeStartFinishGroup(@NotNull UndoableGroup createdGroup) {
     FinishMarkAction finishMark = createdGroup.getFinishMark();
     if (finishMark != null) {
-      boolean global = false;
-      String commandName = null;
-      UndoRedoList<UndoableGroup> stack = undoStacksHolder.getStack(finishMark.getAffectedDocument());
-      Iterator<UndoableGroup> iterator = stack.descendingIterator();
-      while (iterator.hasNext()) {
-        UndoableGroup group = iterator.next();
-        if (group.isGlobal()) {
-          global = true;
-          commandName = group.getCommandName();
-          break;
-        }
+      DocumentReference affectedDoc = finishMark.getAffectedDocuments()[0];
+      Iterator<UndoableGroup> stack = undoStacksHolder.getStack(affectedDoc).descendingIterator();
+      while (stack.hasNext()) {
+        UndoableGroup group = stack.next();
         if (group.getStartMark() != null) {
           break;
         }
-      }
-      if (global) {
-        finishMark.setGlobal(true);
-        finishMark.setCommandName(commandName);
+        if (group.isGlobal()) {
+          finishMark.markGlobal(group.getCommandName());
+          break;
+        }
       }
     }
   }

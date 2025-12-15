@@ -622,6 +622,10 @@ pc:com.intellij.openapi.actionSystem.impl.ActionButton$AccessibleActionButton
 com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 - registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - a:unregisterActions(com.intellij.openapi.actionSystem.ActionManager):V
+f:com.intellij.openapi.command.impl.FinishMarkAction
+- getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
+f:com.intellij.openapi.command.impl.StartMarkAction
+- setCommandName(java.lang.String):V
 com.intellij.openapi.editor.EditorDropHandler
 - a:canHandleDrop(java.awt.datatransfer.DataFlavor[]):Z
 - a:handleDrop(java.awt.datatransfer.Transferable,com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.impl.EditorWindow):V
