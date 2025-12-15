@@ -1035,7 +1035,7 @@ public final class ConfigImportHelper {
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
       var incompatiblePlugins = new HashMap<PluginId, PluginMainDescriptor>();
-      var compatiblePlugins = PluginInitializationContextKt.selectCompatibleAndMostRecentPlugins(
+      var compatiblePlugins = PluginInitializationContextKt.selectPluginsToLoad(
         initContext,
         oldIdePlugins.getDiscoveredPlugins(),
         (plugin, reason) -> {
