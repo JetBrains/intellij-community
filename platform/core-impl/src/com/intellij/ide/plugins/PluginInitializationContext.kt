@@ -145,32 +145,31 @@ fun PluginInitializationContext.selectPluginsToLoad(
 
   val selectedPluginsByPluginId = LinkedHashMap<PluginId, PluginMainDescriptor>()
   var hasExclusions = false
+  // name shadowing is intended
+  val onPluginExcluded: (PluginMainDescriptor, PluginNonLoadReason) -> Unit = { plugin, reason ->
+    hasExclusions = true
+    onPluginExcluded(plugin, reason)
+  }
 
-  // Process regular lists first
   for (pluginList in discoveredPlugins) {
     for (plugin in pluginList.plugins) {
-      // Check if plugin is disabled first
       if (isPluginDisabled(plugin.pluginId)) {
         onPluginExcluded(plugin, PluginIsMarkedDisabled(plugin))
-        hasExclusions = true
         continue
       }
-
-      // Check compatibility
       validatePluginIsCompatible(plugin)?.let { reason ->
         onPluginExcluded(plugin, reason)
-        hasExclusions = true
         continue
       }
       
       val pluginId = plugin.pluginId
       val existingPlugin = selectedPluginsByPluginId[pluginId]
-      
       if (existingPlugin == null) {
         selectedPluginsByPluginId[pluginId] = plugin
         continue
       }
-      
+
+      // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
       if (VersionComparatorUtil.compare(plugin.version, existingPlugin.version) > 0 ||
           pluginList.source is PluginsSourceContext.SystemPropertyProvided) {
         onPluginExcluded(existingPlugin, PluginVersionIsSuperseded(existingPlugin, plugin))
@@ -179,7 +178,6 @@ fun PluginInitializationContext.selectPluginsToLoad(
       else {
         onPluginExcluded(plugin, PluginVersionIsSuperseded(plugin, existingPlugin))
       }
-      hasExclusions = true
     }
   }
 
