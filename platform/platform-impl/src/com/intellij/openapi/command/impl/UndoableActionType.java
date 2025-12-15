@@ -19,7 +19,7 @@ public enum UndoableActionType {
   MENTION_ONLY,
   EDITOR_CHANGE,
   NON_UNDOABLE,
-  RESET_ORIGINATOR,
+  RESET_ORIGINATOR, // TODO: its a hacky way
   GLOBAL,
   OTHER,
   ;
@@ -67,6 +67,6 @@ public enum UndoableActionType {
   }
 
   private static <T> @NotNull T first(@NotNull Collection<T> collection) {
-    return collection.stream().iterator().next();
+    return collection.iterator().next();
   }
 }
