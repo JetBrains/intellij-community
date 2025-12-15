@@ -45,7 +45,9 @@ final class UndoCommandListener implements SeparatedCommandListener {
   }
 
   private @NotNull CmdEvent eventWithProject(@NotNull CmdEvent cmdEvent) {
-    return cmdEvent.isTransparent() ? cmdEvent.withProject(project) : cmdEvent;
+    return cmdEvent.isTransparent()
+           ? ((CmdEventTransparent) cmdEvent).withProject(project)
+           : cmdEvent;
   }
 
   private boolean projectNotDisposed() {

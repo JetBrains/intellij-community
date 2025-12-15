@@ -27,7 +27,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.sql.DataTruncation boolean getParameter()'>
         <annotation name='org.jetbrains.annotations.Contract'>

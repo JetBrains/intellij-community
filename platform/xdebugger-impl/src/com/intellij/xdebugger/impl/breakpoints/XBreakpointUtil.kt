@@ -150,20 +150,8 @@ object XBreakpointUtil {
 
   @JvmStatic
   @ApiStatus.Internal
-  fun subscribeOnBreakpointsChanges(project: Project, disposable: Disposable, onBreakpointChange: (XBreakpoint<*>) -> Unit) {
-    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, object : XBreakpointListener<XBreakpoint<*>> {
-      override fun breakpointAdded(breakpoint: XBreakpoint<*>) {
-        onBreakpointChange(breakpoint)
-      }
-
-      override fun breakpointChanged(breakpoint: XBreakpoint<*>) {
-        onBreakpointChange(breakpoint)
-      }
-
-      override fun breakpointRemoved(breakpoint: XBreakpoint<*>) {
-        onBreakpointChange(breakpoint)
-      }
-    })
+  fun subscribeOnBreakpointsChanges(project: Project, disposable: Disposable, onBreakpointChange: () -> Unit) {
+    XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).subscribeOnBreakpointsChanges(disposable, onBreakpointChange)
   }
 
   @ApiStatus.Internal

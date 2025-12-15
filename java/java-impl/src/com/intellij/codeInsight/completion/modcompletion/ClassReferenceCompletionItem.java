@@ -3,11 +3,13 @@ package com.intellij.codeInsight.completion.modcompletion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,7 +17,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -57,7 +64,55 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
 
   @Override
   public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
+    if (!contextObject().isValid()) return;
+    if (processInImport(updater)) return;
+    if (processJavaDoc(actionContext.offset(), updater)) return;
     AllClassesGetter.tryShorten(updater.getPsiFile(), updater, contextObject());
+  }
+
+  private boolean processJavaDoc(int startOffset, ModPsiUpdater updater) {
+    PsiFile file = updater.getPsiFile();
+    int offset = updater.getCaretOffset();
+    PsiElement position = file.findElementAt(offset - 1);
+    PsiJavaCodeReferenceElement ref = position != null && position.getParent() instanceof PsiJavaCodeReferenceElement codeRef ?
+                                      codeRef : null;
+    String qname = myQualifiedName;
+    if (qname != null && PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null &&
+        (ref == null || !ref.isQualified()) &&
+        shouldInsertFqnInJavadoc(file)) {
+      updater.getDocument().replaceString(startOffset, offset, qname);
+      return true;
+    }
+
+    return ref != null && PsiTreeUtil.getParentOfType(position, PsiDocTag.class) != null && ref.isReferenceTo(contextObject());
+  }
+
+  private boolean shouldInsertFqnInJavadoc(PsiFile file) {
+    return switch (JavaCodeStyleSettings.getInstance(file).CLASS_NAMES_IN_JAVADOC) {
+      case JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS -> true;
+      case JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED -> file instanceof PsiJavaFile javaFile && myQualifiedName != null &&
+                                                                        !ImportHelper.isAlreadyImported(javaFile, myQualifiedName);
+      default -> false;
+    };
+  }
+
+  private boolean processInImport(ModPsiUpdater updater) {
+    int offset = updater.getCaretOffset();
+    PsiFile file = updater.getPsiFile();
+    PsiImportStatementBase importStatement = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiImportStatementBase.class, false);
+    if (importStatement == null) return false;
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, offset - 1, PsiJavaCodeReferenceElement.class, false);
+    Document document = updater.getDocument();
+    if (myQualifiedName != null && (ref == null || !myQualifiedName.equals(ref.getCanonicalText()))) {
+      int start = JavaCompletionUtil.findQualifiedNameStart(offset, document);
+      document.replaceString(start, offset, myQualifiedName);
+    }
+    if (importStatement instanceof PsiImportStaticStatement) {
+      //context.setAddCompletionChar(false);
+      document.insertString(offset, ".");
+      updater.moveCaretTo(offset + 1);
+    }
+    return true;
   }
 
   @Override

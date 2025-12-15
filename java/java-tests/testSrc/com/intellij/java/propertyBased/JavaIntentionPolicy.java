@@ -23,6 +23,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Generate empty 'private' constructor") || // displays a dialog
            actionText.startsWith("Attach annotations") || // changes project model
+           actionText.startsWith("Deannotate") || // changes local XMLs
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Reformat file") || // ProblematicWhitespaceInspection: may do nothing when problematic whitespace is inside comment, related to IDEA-305318

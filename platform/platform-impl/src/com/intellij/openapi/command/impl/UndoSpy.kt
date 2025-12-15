@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl
 
 import com.intellij.ide.impl.UndoRemoteBehaviorService
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -17,8 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface UndoSpy {
-
-  fun commandBeforeStarted(undoProject: Project?, editor: FileEditor?, originator: DocumentReference?)
 
   fun commandStarted(cmdEvent: CmdEvent)
 

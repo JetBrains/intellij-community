@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.client.ClientAppSession;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -163,7 +162,13 @@ final class UndoClientState implements Disposable {
     commandBuilder.commandStarted(cmdEvent, editorProvider);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandBeforeStarted(project, editorProvider.getCurrentEditor(project), commandBuilder.getOriginalDocument());
+      cmdEvent.addEditorProvider(
+        new ForeignEditorProvider(
+          project,
+          editorProvider.getCurrentEditor(project),
+          commandBuilder.getOriginalDocument()
+        )
+      );
     }
   }
 
@@ -223,15 +228,7 @@ final class UndoClientState implements Disposable {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      CmdEvent cmdEvent = CmdEvent.create(
-        CommandIdService.currCommandId(),
-        null,
-        "",
-        null,
-        UndoConfirmationPolicy.DEFAULT,
-        false,
-        false
-      );
+      CmdEvent cmdEvent = CmdEvent.createNonUndoable(CommandIdService.currCommandId());
       commandStarted(cmdEvent, editorProvider);
       try {
         commandBuilder.addUndoableAction(action);
@@ -252,6 +249,10 @@ final class UndoClientState implements Disposable {
     commandMerger.invalidateActionsFor(ref);
     undoStacksHolder.invalidateActionsFor(ref);
     redoStacksHolder.invalidateActionsFor(ref);
+  }
+
+  void resetOriginalDocument() {
+    commandBuilder.resetOriginalDocument();
   }
 
   boolean isUndoInProgress() {

@@ -39,12 +39,6 @@ open class BaseTestCase {
   @BeforeEach
   @Throws(Exception::class)
   fun setUpBaseCase() {
-    System.setProperty("llm.enable.grazie.token.from.environment.variable.or.file", "true")
-    System.setProperty("ij.idea.grazie.is.staging", "true")
-    System.setProperty("llm.use.grazie.staging.url", "true")
-    if (System.getenv("TEAMCITY_VERSION") != null) {
-      System.setProperty("llm.endpoint.type", "[Application*]")
-    }
     myFixture = createFixture()
     initCloudProcessing()
     installLTTestChecker()
@@ -63,7 +57,6 @@ open class BaseTestCase {
   @AfterEach
   @Throws(java.lang.Exception::class)
   fun tearDownBaseCase() {
-    System.clearProperty("llm.enable.grazie.token.from.environment.variable.or.file")
     resetGrazieConfiguration()
     myFixture.tearDown()
   }

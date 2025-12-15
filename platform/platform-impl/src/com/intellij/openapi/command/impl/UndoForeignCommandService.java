@@ -3,22 +3,20 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface UndoForeignCommandService {
 
-  void beforeStartForeignCommand(@Nullable Project project, @Nullable FileEditor fileEditor, @Nullable DocumentReference originator);
-
-  void startForeignCommand(@NotNull CommandId commandId);
+  void startForeignCommand(@NotNull CommandId commandId, @NotNull List<ForeignEditorProvider> editorProviders);
 
   void finishForeignCommand();
 
@@ -32,5 +30,10 @@ public interface UndoForeignCommandService {
       );
     }
     return null;
+  }
+
+  static boolean isCommandInProgress() {
+    UndoForeignCommandServiceImpl service = (UndoForeignCommandServiceImpl) getInstance();
+    return service != null && service.isCommandInProgress();
   }
 }

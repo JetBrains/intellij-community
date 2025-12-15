@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -9,6 +9,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -241,7 +242,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
         final PsiMethod methodToSearchFor = superMethod.isEnabled() && superMethod.isSelected()
                                             ? methodToSearchIn.findDeepestSuperMethod() : methodToSearchIn;
+      WriteIntentReadAction.run(() -> {
         consumer.consume(methodToSearchIn, methodToSearchFor);
+      });
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)));
     myEnclosingMethodsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
       .setTitle(RefactoringBundle.message("refactoring.introduce.parameter.popup.title"))

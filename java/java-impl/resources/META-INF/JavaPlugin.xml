@@ -1195,6 +1195,8 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.LabelReferenceItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.AnnotationAttributeItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.GenerateMemberItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.ReferenceItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.InnerScopeVariableItemProvider"/>
     
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
     <completion.skip implementation="com.intellij.codeInsight.completion.DeprecatedSkipper" id="skipDeprecated"/>

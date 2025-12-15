@@ -80,6 +80,8 @@ import kotlin.math.max
 private const val UI_CLASS_ID = "IdeStatusBarUI"
 private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 
+private val LOG = logger<IdeStatusBarImpl>()
+
 private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
 
@@ -95,8 +97,10 @@ open class IdeStatusBarImpl @Internal constructor(
   parentCs: CoroutineScope,
   private val getProject: () -> Project?,
   addToolWindowWidget: Boolean,
-  internal val currentFileEditorFlow: StateFlow<FileEditor?>? = null,
+  currentFileEditorFlow: StateFlow<FileEditor?>? = null,
 ) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
+  internal var currentFileEditorFlow: StateFlow<FileEditor?>? = currentFileEditorFlow
+    private set
   internal val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
@@ -128,8 +132,6 @@ open class IdeStatusBarImpl @Internal constructor(
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
-
-    private val LOG = logger<IdeStatusBarImpl>()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -704,6 +706,11 @@ open class IdeStatusBarImpl @Internal constructor(
   private val defaultEditorFlow: StateFlow<FileEditor?> by lazy {
     val project = project ?: return@lazy MutableStateFlow(null)
     project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor
+  }
+
+  @Internal
+  fun setCurrentFileEditorFlow(flow: StateFlow<FileEditor?>) {
+    currentFileEditorFlow = flow
   }
 
   override fun getAccessibleContext(): AccessibleContext {

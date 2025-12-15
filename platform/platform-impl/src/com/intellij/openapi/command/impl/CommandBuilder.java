@@ -75,7 +75,7 @@ final class CommandBuilder {
   void addUndoableAction(@NotNull UndoableAction action) {
     assertInsideCommand();
     if (isRefresh()) {
-      originalDocument = null;
+      resetOriginalDocument();
     }
     undoableActions.add(action);
     affectedDocuments.addAffected(action.getAffectedDocuments());
@@ -109,6 +109,15 @@ final class CommandBuilder {
     assertInsideCommand();
     if (affectedDocuments.affects(docRef)) {
       isValid = false;
+    }
+  }
+
+  void resetOriginalDocument() {
+    assertInsideCommand();
+    originalDocument = null;
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null) {
+      undoSpy.undoableActionAdded(undoProject, new ResetOriginatorAction(), UndoableActionType.RESET_ORIGINATOR);
     }
   }
 
@@ -256,6 +265,12 @@ final class CommandBuilder {
 
     @Override
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
+
+    @Override
+    public void addEditorProvider(@NotNull ForeignEditorProvider provider) { throw new UnsupportedOperationException(); }
+
+    @Override
+    public @NotNull List<@NotNull ForeignEditorProvider> editorProviders() { throw new UnsupportedOperationException(); }
 
     // endregion
   }

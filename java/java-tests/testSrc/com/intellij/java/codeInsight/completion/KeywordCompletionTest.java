@@ -354,11 +354,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
-  private void configureByTestName() {
+  void configureByTestName() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");
   }
 
-  private void checkResultByTestName() {
+  void checkResultByTestName() {
     checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
   }
 
@@ -378,6 +378,16 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     protected void setUp() throws Exception {
       super.setUp();
       Registry.get("ide.completion.modcommand").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testNoExtraArrowMultiCaret() {
+      configureByTestName();
+      // Intermittently no-variants delegator appears here adding a second completion item 
+      // ResourceBundle (as it contains 'SO'), and now no-variants delegators 
+      // gets no information that we have no other variants.
+      selectItem(myItems[0]);
+      checkResultByTestName();
     }
 
     @Override

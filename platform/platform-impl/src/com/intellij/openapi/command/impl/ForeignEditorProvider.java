@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public record ForeignEditorProvider(
+  @Nullable Project undoProject,
   @Nullable FileEditor editor,
   @Nullable DocumentReference originator
 ) implements CurrentEditorProvider {

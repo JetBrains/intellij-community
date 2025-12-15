@@ -173,16 +173,16 @@ data class VMOptions(
    * [categories] - Could be packages, classes ...
    */
   fun configureLoggers(logLevel: LogLevel, vararg categories: String) {
+    configureLoggers(logLevel.name.lowercase(), *categories)
+  }
+
+  fun configureLoggers(logLevel: String, vararg categories: String) {
     if (categories.isNotEmpty()) {
-      val logLevelName = logLevel.name.lowercase()
+      val logLevelName = logLevel.lowercase()
       addSystemPropertyValue("idea.log.${logLevelName}.categories", categories.joinToString(separator = ",") {
         "#" + it.removePrefix("#")
       })
     }
-  }
-
-  fun configureLoggers(logLevel: String, vararg categories: String) {
-    configureLoggers(LogLevel.valueOf(logLevel), *categories)
   }
 
   fun dropDebug() {

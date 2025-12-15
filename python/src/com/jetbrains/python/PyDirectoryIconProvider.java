@@ -4,8 +4,6 @@ package com.jetbrains.python;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -41,7 +39,10 @@ public final class PyDirectoryIconProvider extends IconProvider {
     if (FileIndexFacade.getInstance(directory.getProject()).isExcludedFile(vFile)) {
       return true;
     }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(directory);
-    return module == null || PyUtil.getSourceRoots(module).contains(vFile);
+
+    // Check whether directory is a source- or content-root
+    // On large projects, using the ProjectFileIndex here is *noticeably* faster than
+    // asking for all source- and content-roots and checking .contains(vFile)
+    return ProjectRootsUtil.isSourceRoot(directory) || ProjectRootsUtil.isModuleContentRoot(directory);
   }
 }

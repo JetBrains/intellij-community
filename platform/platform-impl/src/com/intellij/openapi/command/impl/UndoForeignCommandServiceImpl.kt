@@ -1,25 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl
 
-import com.intellij.openapi.command.undo.DocumentReference
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
 
-private class UndoForeignCommandServiceImpl : UndoForeignCommandService {
+internal class UndoForeignCommandServiceImpl : UndoForeignCommandService {
 
-  private val currentForeignRef = AtomicReference<MutableMap<Project?, ForeignEditorProvider>>()
+  private val currentForeignRef = AtomicReference<Map<Project?, ForeignEditorProvider>>()
 
-  override fun beforeStartForeignCommand(project: Project?, fileEditor: FileEditor?, originator: DocumentReference?) {
-    val map = currentForeignRef.updateAndGet { prev ->
-      prev ?: mutableMapOf()
-    }
-    map[project] = ForeignEditorProvider(fileEditor, originator)
+  fun isCommandInProgress(): Boolean {
+    return currentForeignRef.get() != null
   }
 
-  override fun startForeignCommand(commandId: CommandId) {
+  override fun startForeignCommand(commandId: CommandId, editorProviders: List<ForeignEditorProvider>) {
+    val map = editorProviders.associateBy { it.undoProject() }.toMap()
     CommandIdService.setForcedCommand(commandId)
+    currentForeignRef.set(map)
   }
 
   override fun finishForeignCommand() {

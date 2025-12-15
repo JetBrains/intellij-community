@@ -607,16 +607,10 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.lang.invoke.MemberName java.lang.Class&lt;?&gt; getFieldType()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.lang.invoke.MemberName java.lang.Class&lt;?&gt;[] getParameterTypes()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;-&gt;new&quot;"/>
         </annotation>
-    </item>
-    <item name='java.lang.invoke.MemberName java.lang.ClassLoader getClassLoader()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.IllegalAccessException makeAccessException(java.lang.String, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -631,14 +625,8 @@
     <item name='java.lang.invoke.MemberName java.lang.IllegalAccessException makeAccessException(java.lang.String, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.lang.invoke.MemberName java.lang.Object getType()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.lang.invoke.MemberName java.lang.ReflectiveOperationException makeAccessException()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.lang.invoke.MemberName java.lang.String getName()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.String getName(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -646,9 +634,6 @@
         </annotation>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.String getName(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.lang.invoke.MemberName java.lang.String getSignature()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.String message()'>
@@ -683,15 +668,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.lang.invoke.MemberName java.lang.invoke.MethodType getInvocationType()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.lang.invoke.MemberName java.lang.invoke.MethodType getMethodOrFieldType()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.lang.invoke.MemberName java.lang.invoke.MethodType getMethodType()'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.lang.invoke.MemberName void init(java.lang.Class&lt;?&gt;, java.lang.String, java.lang.Object, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="mutates" val="&quot;this&quot;"/>
@@ -717,7 +693,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MemberName.Factory java.lang.invoke.MemberName resolveOrNull(byte, java.lang.invoke.MemberName, java.lang.Class&lt;?&gt;) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -754,7 +729,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.Object invokeWithArguments(java.util.List&lt;?&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -777,7 +751,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.invoke.MethodHandle asCollector(java.lang.Class&lt;?&gt;, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1603,9 +1576,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.lang.invoke.MethodHandles.Lookup java.lang.Class&lt;?&gt; findBoundCallerClass(java.lang.invoke.MemberName)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.Class&lt;?&gt; findBoundCallerClass(java.lang.invoke.MemberName) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1618,7 +1588,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.String accessFailedMessage(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1701,7 +1670,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MethodHandle findVirtualForMH(java.lang.String, java.lang.invoke.MethodType) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2006,9 +1974,6 @@
     <item name='java.lang.invoke.MethodType.WeakInternSet java.lang.invoke.MethodType add(java.lang.invoke.MethodType) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.lang.invoke.MethodType.WeakInternSet java.lang.invoke.MethodType get(java.lang.invoke.MethodType)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.lang.invoke.MethodType.WeakInternSet java.lang.invoke.MethodType get(java.lang.invoke.MethodType) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2099,7 +2064,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null,_-&gt;null&quot;"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodTypeForm java.lang.Class&lt;?&gt;[] canonicalizes(java.lang.Class&lt;?&gt;[], int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2114,9 +2078,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.lang.invoke.MethodTypeForm java.lang.invoke.MethodType canonicalize(java.lang.invoke.MethodType, int, int)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MethodTypeForm java.lang.invoke.MethodType canonicalize(java.lang.invoke.MethodType, int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
