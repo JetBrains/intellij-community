@@ -4,15 +4,12 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
-import com.intellij.util.io.directoryStreamIfExists
-import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -87,15 +84,31 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
-    val loadingResult = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
-    val plugin = loadingResult
-      .enabledPlugins
-      .get(1)
+    plugin("p_dependency") {
+      packagePrefix = "com.bar"
+      extensionPoints =
+        """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+    }.buildDir(rootDir.resolve("p_dependency"))
+    plugin("p_dependent") {
+      packagePrefix = "com.example"
+      content {
+        module("com.example.sub") {
+          packagePrefix = "com.example.extraSupportedFeature"
+          extensionPoints =
+            """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+        }
+      }
+    }.buildDir(rootDir.resolve("p_dependent"))
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
+    Assertions.assertThat(plugins).hasSize(2)
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
+    classLoaderConfigurator.configure()
+    val plugin = plugins[1]
     assertThat(plugin.contentModules[0].pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
 
     val scope = createPluginDependencyAndContentBasedScope(
       plugin,
-      PluginSetBuilder(loadingResult.enabledPlugins.toSet()).createPluginSetWithEnabledModulesMap()
+      PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap()
     )!!
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
@@ -116,7 +129,7 @@ internal class ClassLoaderConfiguratorTest {
       depends("1-foo")
     }.buildDir(rootDir.resolve("2-bar"))
 
-    val plugins = runBlocking { loadDescriptors (rootDir).enabledPlugins }
+    val plugins = PluginSetTestBuilder.fromPath(rootDir).discoverPlugins().second.discoveredPlugins.flatMap { it.plugins }
     assertThat(plugins).hasSize(2)
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
@@ -128,55 +141,4 @@ internal class ClassLoaderConfiguratorTest {
       .containsExactly("com.example.sub.xml", null)
   }
 
-  private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
-    plugin("p_dependency") {
-      packagePrefix = "com.bar"
-      extensionPoints = """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
-    }.buildDir(rootDir.resolve("p_dependency"))
-    plugin("p_dependent") {
-      packagePrefix = "com.example"
-      content {
-        module("com.example.sub") {
-          packagePrefix = modulePackage
-          extensionPoints = """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
-        }
-      }
-    }.buildDir(rootDir.resolve("p_dependent"))
-
-    val loadResult = runBlocking { loadDescriptors(rootDir) }
-    val plugins = loadResult.enabledPlugins
-    assertThat(plugins).hasSize(2)
-
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
-    classLoaderConfigurator.configure()
-    return loadResult
-  }
-}
-
-internal fun loadDescriptors(dir: Path): PluginLoadingResult {
-  val buildNumber = BuildNumber.fromString("2042.0")!!
-  val result = PluginLoadingResult()
-  val initContext = PluginInitializationContext.buildForTest(
-    essentialPlugins = emptySet(),
-    disabledPlugins = emptySet(),
-    expiredPlugins = emptySet(),
-    brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { buildNumber },
-    requirePlatformAliasDependencyForLegacyPlugins = false,
-    checkEssentialPlugins = false,
-    explicitPluginSubsetToLoad = null,
-    disablePluginLoadingCompletely = false,
-    currentProductModeId = ProductMode.MONOLITH.id,
-  )
-  val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { buildNumber })
-  // constant order in tests
-  val paths = dir.directoryStreamIfExists { it.sorted() }!!
-  val descriptors = paths.mapNotNull { loadDescriptorFromFileOrDir(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) }
-  loadingContext.use {
-    result.initAndAddAll(
-      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom))),
-      initContext = initContext
-    )
-  }
-  return result
 }
