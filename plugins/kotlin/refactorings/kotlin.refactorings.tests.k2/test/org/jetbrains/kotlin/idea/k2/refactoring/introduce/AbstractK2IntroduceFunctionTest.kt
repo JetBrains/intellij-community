@@ -7,11 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
-import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.KotlinFirExtractFunctionHandler
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
@@ -30,10 +26,11 @@ abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
         expectedReturnTypes: List<String>,
         expectedDescriptors: String,
         expectedTypes: String,
+        acceptAllScopes: Boolean,
         extractionOptions: ExtractionOptions
     ): AbstractExtractKotlinFunctionHandler {
         return KotlinFirExtractFunctionHandler(
-            false,
+            acceptAllScopes,
             helper = object : ExtractionEngineHelper(EXTRACT_FUNCTION) {
                 override fun adjustExtractionData(data: ExtractionData): ExtractionData {
                     return ActionUtil.underModalProgress(project, "adjust for tests") {

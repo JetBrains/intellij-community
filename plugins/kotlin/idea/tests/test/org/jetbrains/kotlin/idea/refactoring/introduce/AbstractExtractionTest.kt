@@ -49,9 +49,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.chooseMembers
+import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring
@@ -68,9 +66,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.Introd
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeAlias.KotlinIntroduceTypeAliasHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
-import org.jetbrains.kotlin.idea.refactoring.markMembersInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
-import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.idea.util.ElementKind
@@ -106,6 +102,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         expectedReturnTypes: List<String>,
         expectedDescriptors: String,
         expectedTypes: String,
+        acceptAllScopes: Boolean,
         extractionOptions: ExtractionOptions
     ): AbstractExtractKotlinFunctionHandler {
         return ExtractKotlinFunctionHandler(
@@ -157,7 +154,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     }
                     doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
                 }
-            }
+            },
+            allContainersEnabled = acceptAllScopes
         )
     }
 
@@ -531,6 +529,9 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         val extraFilesToPsi = extraFiles.associateBy { fixture.configureByFile(it.name) }
         val fileText = FileUtil.loadFile(mainFile, true)
 
+        val expectedTargetContainers =
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// TARGET_CONTAINER: ")
+
         withCustomCompilerOptions(fileText, project, module) {
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
 
@@ -540,7 +541,10 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             }
 
             try {
+                val actualTargetContainers = mutableListOf<String>()
                 KotlinTestHelpers.registerChooserInterceptor(fixture.testRootDisposable) { options ->
+                    actualTargetContainers.clear()
+                    actualTargetContainers += options
                     if (isIntroduceVariableTest) options.last() else options.first()
                 }
 
@@ -557,6 +561,10 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     if (caretAndSelectionState.hasExplicitCaret()) {
                         EditorTestUtil.verifyCaretAndSelectionState(editor, caretAndSelectionState)
                     }
+                }
+
+                if (expectedTargetContainers.isNotEmpty()) {
+                    assertEquals(expectedTargetContainers, actualTargetContainers)
                 }
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
@@ -575,19 +583,30 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         val expectedReturnTypes = InTextDirectivesUtils.findListWithPrefixes(fileText, "// SUGGESTED_RETURN_TYPES: ")
         val expectedDescriptors =
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// PARAM_DESCRIPTOR: ").joinToString()
+        val expectedTargetContainers =
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// TARGET_CONTAINER: ")
         val expectedTypes =
-            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// PARAM_TYPES: ").map { "[$it]" }.joinToString()
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// PARAM_TYPES: ").joinToString { "[$it]" }
 
         val extractionOptions = InTextDirectivesUtils.findListWithPrefixes(fileText, "// OPTIONS: ").let {
             if (it.isNotEmpty()) {
                 @Suppress("UNCHECKED_CAST")
-                val args = it.map { it.toBoolean() }.toTypedArray() as Array<Any?>
-                ExtractionOptions::class.java.constructors.first { it.parameterTypes.size == args.size }.newInstance(*args) as ExtractionOptions
+                val args = it.map(String::toBoolean).toTypedArray() as Array<Any?>
+                ExtractionOptions::class.java.constructors.first { ctor -> ctor.parameterTypes.size == args.size }.newInstance(*args) as ExtractionOptions
             } else ExtractionOptions.DEFAULT
         }
 
         val editor = fixture.editor
-        val handler = getExtractFunctionHandler(explicitPreviousSibling, expectedNames, expectedReturnTypes, expectedDescriptors, expectedTypes, extractionOptions)
+        val handler =
+            getExtractFunctionHandler(
+                explicitPreviousSibling,
+                expectedNames,
+                expectedReturnTypes,
+                expectedDescriptors,
+                expectedTypes,
+                acceptAllScopes = expectedTargetContainers.isNotEmpty(),
+                extractionOptions
+            )
         handler.selectElements(editor, file) { elements, previousSibling ->
             handler.doInvoke(editor, file, elements, explicitPreviousSibling ?: previousSibling)
         }

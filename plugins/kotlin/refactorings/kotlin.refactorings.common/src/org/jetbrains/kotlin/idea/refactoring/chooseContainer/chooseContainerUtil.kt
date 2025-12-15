@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.codeInsight.unwrap.RangeSplitter
 import com.intellij.codeInsight.unwrap.UnwrapHandler
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -198,9 +197,16 @@ fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object
         is KtNamedFunction -> {
             val list = mutableListOf<String>()
             for (child in allChildren) {
-                if (child is PsiComment) continue
-                if (child is KtBlockExpression) break
-                list.add(child.text)
+                when (child) {
+                    is PsiComment -> continue
+                    is KtBlockExpression -> break
+                    is KtModifierList -> {
+                        list.add(child.allChildren
+                            .filterNot { it is KtAnnotationEntry || it is KtAnnotation || it is PsiWhiteSpace }
+                            .joinToString(" ") { it.text })
+                    }
+                    else -> list.add(child.text)
+                }
             }
             StringUtil.shortenTextWithEllipsis(list.joinToString(separator = "").trim(), 53, 0)
         }

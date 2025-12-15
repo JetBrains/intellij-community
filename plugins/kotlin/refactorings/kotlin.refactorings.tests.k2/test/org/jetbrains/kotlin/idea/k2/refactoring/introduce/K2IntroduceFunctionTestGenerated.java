@@ -358,6 +358,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
         }
 
+        @TestMetadata("targetRendering.kt")
+        public void testTargetRendering() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/targetRendering.kt");
+        }
+
         @TestMetadata("topLevelValUnderSmartCast.kt")
         public void testTopLevelValUnderSmartCast() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
