@@ -14,9 +14,9 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import java.util.function.Consumer
@@ -93,13 +93,11 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     assertEquals("File was not reindexed after full project reindex request", 0, countingIndex.counter.get())
 
     fileBasedIndex.requestRebuild(countingIndex.name)
-    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex, fileA, fileB)
 
     partialReindex.accept(fileA)
     assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex, fileA, fileB)
 
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
     IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
     assertTrue("File was reindexed on requesting index rebuild", countingIndex.counter.get() > 1)
     assertEquals("File data is available after full reindex", countingIndex.getDefaultValue(),
@@ -109,6 +107,8 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   }
 
   private fun assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex: CountingIndexBase, vararg files: VirtualFile) {
+    // files are not indexed yet because no one can take write action to start dumb mode and index the files.
+    ThreadingAssertions.assertReadAccess()
     assertEquals("File was not reindexed after requesting index rebuild", 0, countingIndex.counter.get())
     if (countingIndex.dependsOnFileContent()) {
       if (!Registry.`is`("ide.dumb.mode.check.awareness")) return

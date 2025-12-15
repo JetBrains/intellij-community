@@ -1350,10 +1350,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (!myRegisteredIndexes.isInitialized()) return;
       advanceIndexVersion(indexId);
 
-      Runnable rebuildRunnable = () -> scheduleIndexRescanningForAllProjects(message);
-
-      // we do invoke later since we can have read lock acquired
-      AppUIExecutor.onWriteThread().later().expireWith(app).submit(rebuildRunnable);
+      scheduleIndexRescanningForAllProjects(message);
     }
   }
 
