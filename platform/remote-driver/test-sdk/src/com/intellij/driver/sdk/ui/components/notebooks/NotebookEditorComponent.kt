@@ -355,7 +355,7 @@ fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): I
   }
 }
 
-fun Driver.openFileWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
+fun Driver.openNotebookWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
   leftToolWindowToolbar.projectButton.open()
   projectView {
     projectViewTree.run {
@@ -363,6 +363,7 @@ fun Driver.openFileWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
     }
   }
   waitFor("the editor is present", timeout = 30.seconds) {
-    editor().present()
+    notebookEditor().present()
+
   }
 }
