@@ -25,7 +25,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="maven.packagesearch.enabled" defaultValue="true"
+    <registryKey key="maven.packagesearch.enabled" defaultValue="false"
                  description="Enable package search dependency via https://package-search.services.jetbrains.com"/>
 
     <registryKey key="packagesearch.config.url.override" defaultValue="false"
