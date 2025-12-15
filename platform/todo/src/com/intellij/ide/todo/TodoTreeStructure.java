@@ -4,7 +4,8 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.todo.nodes.ToDoRootNode;
-import com.intellij.ide.todo.rpc.TodoRemoteClient;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.getTodoCount;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -108,7 +109,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       if (virtualFile == null) {
         return 0;
       }
-      return TodoRemoteClient.getTodoCount(myProject, virtualFile, myTodoFilter);
+      return getTodoCount(myProject, virtualFile, myTodoFilter);
     }
 
     int count = 0;
@@ -138,7 +139,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       if (virtualFile == null) {
         return false;
       }
-      return TodoRemoteClient.fileMatchesFilter(myProject, virtualFile, myTodoFilter);
+      return fileMatchesFilter(myProject, virtualFile, myTodoFilter);
     }
 
     PsiTodoSearchHelper searchHelper = getSearchHelper();

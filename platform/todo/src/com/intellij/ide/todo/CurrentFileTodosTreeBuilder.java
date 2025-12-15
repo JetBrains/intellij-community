@@ -2,7 +2,7 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.todo.rpc.TodoRemoteClient;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.fileMatchesFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -37,7 +37,7 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
         VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile != null) {
           TodoFilter filter = treeStructure.getTodoFilter();
-          if (TodoRemoteClient.fileMatchesFilter(getProject(), virtualFile, filter)) {
+          if (fileMatchesFilter(getProject(), virtualFile, filter)) {
             consumer.accept(psiFile);
           }
         }

@@ -6,7 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
-import com.intellij.ide.todo.rpc.TodoRemoteClient;
+import static com.intellij.ide.todo.rpc.TodoHelperKt.getFilesWithTodos;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -353,7 +353,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     if (shouldUseSplitTodo()) {
       TodoFilter filter = getTodoTreeStructure().getTodoFilter();
-      List<VirtualFile> filesWithTodos = TodoRemoteClient.getFilesWithTodos(myProject, filter);
+      List<VirtualFile> filesWithTodos = getFilesWithTodos(myProject, filter);
 
       PsiManager psiManager = PsiManager.getInstance(myProject);
       for (VirtualFile virtualFile : filesWithTodos) {
