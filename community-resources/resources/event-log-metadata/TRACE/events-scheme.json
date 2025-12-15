@@ -416,6 +416,7 @@
         "after" : [ "{util#llm_parameters}" ],
         "anonymous_id" : [ "{regexp#hash}" ],
         "before" : [ "{util#llm_parameters}" ],
+        "completion_id" : [ "{regexp#hash}" ],
         "context" : [ "{util#llm_parameters}" ],
         "deleted_length" : [ "{regexp#integer}" ],
         "deleted_lines_number" : [ "{regexp#integer}" ],
@@ -423,7 +424,7 @@
         "diffs" : [ "{util#llm_parameters}" ],
         "editable_region" : [ "{util#llm_parameters}" ],
         "filter_reason" : [ "{enum:iter_no_diffs|iter_does_not_fit_screen|iter_one_diff_too_long|iter_file_removed|iter_internal_markers|iter_revert_last_change|iter_contains_plain_todo|iter_contains_simple_comment|iter_direct_code_repetition}", "{enum:iter_jupyter_change_cell_separators}", "{enum:iter_similar_to_rejected_suggestion}", "{enum:iter_changes_only_whitespaces}", "{enum:iter_removed_last_modified_region}" ],
-        "finish_type" : [ "{enum:ESCAPE|DOCUMENT_CHANGE|INCOMPATIBLE_CARET_CHANGE|ACCEPTED|COULD_NOT_SHOW|MANAGER_DISPOSED|INACTIVE|NEW_SESSION|NOT_APPROPRIATE|EXPIRED|SELECTION_CHANGED|ASSOCIATED_COMPLETION_FINISHED_SESSION}", "{enum:ESCAPE|DOCUMENT_CHANGE|INCOMPATIBLE_CARET_CHANGE|ACCEPTED|COULD_NOT_SHOW|MANAGER_DISPOSED|INACTIVE|NEW_SESSION|NO_SUGGESTION_FROM_PROVIDERS|DOCUMENT_EXPIRED|SELECTION_CHANGED|OLD_SESSION_EXPIRED|FOCUS_LOST|INLINE_COMPLETION_FAILED_TO_SHOW|INLINE_COMPLETION_FINISHED_WITH_UNKNOWN_REASON}" ],
+        "finish_type" : [ "{enum:ESCAPE|DOCUMENT_CHANGE|INCOMPATIBLE_CARET_CHANGE|ACCEPTED|COULD_NOT_SHOW|MANAGER_DISPOSED|INACTIVE|NEW_SESSION|NOT_APPROPRIATE|EXPIRED|SELECTION_CHANGED|ASSOCIATED_COMPLETION_FINISHED_SESSION}", "{enum:ESCAPE|DOCUMENT_CHANGE|INCOMPATIBLE_CARET_CHANGE|ACCEPTED|COULD_NOT_SHOW|MANAGER_DISPOSED|INACTIVE|NEW_SESSION|NO_SUGGESTION_FROM_PROVIDERS|DOCUMENT_EXPIRED|SELECTION_CHANGED|OLD_SESSION_EXPIRED|FOCUS_LOST|INLINE_COMPLETION_FAILED_TO_SHOW|INLINE_COMPLETION_FINISHED_WITH_UNKNOWN_REASON}", "{enum:ERROR|UNKNOWN|CANCELLATION}" ],
         "inserted_length" : [ "{regexp#integer}" ],
         "inserted_lines_number" : [ "{regexp#integer}" ],
         "invalid" : [ "{enum#boolean}" ],
@@ -450,15 +451,15 @@
         "total_diffs" : [ "{regexp#integer}" ],
         "total_insert_length" : [ "{regexp#integer}" ],
         "total_inserted_lines_number" : [ "{regexp#integer}" ],
-        "trigger_event" : [ "{enum:TYPING|REMOVAL|DIRECT_CALL|IDE_ACTION|LOOKUP_ITEM_SELECTED|INLINE_COMPLETION_SELECTED|NEXT_EDIT_SELECTED|CARET_MOVE|RESTART_AFTER_HIGHLIGHTING_FINISHED|UNKNOWN}" ]
+        "trigger_event" : [ "{enum:TYPING|REMOVAL|DIRECT_CALL|IDE_ACTION|LOOKUP_ITEM_SELECTED|INLINE_COMPLETION_SELECTED|NEXT_EDIT_SELECTED|CARET_MOVE|RESTART_AFTER_HIGHLIGHTING_FINISHED|UNKNOWN}", "{enum:SUGGESTED_REFACTORING_REMOVED}" ]
       }
     },
     "anonymized_fields" : [ {
-      "event" : "diff_finished",
-      "fields" : [ "anonymous_id" ]
-    }, {
       "event" : "session_state",
       "fields" : [ "anonymous_id" ]
+    }, {
+      "event" : "diff_finished",
+      "fields" : [ "anonymous_id", "completion_id" ]
     }, {
       "event" : "session",
       "fields" : [ "anonymous_id" ]
@@ -510,5 +511,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6518"
+  "version" : "6552"
 }
