@@ -80,7 +80,6 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
-    "//plugins/groovy-live-templates",
     "//platform/lang-api:lang",
   ]
 )

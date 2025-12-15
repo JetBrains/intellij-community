@@ -137,5 +137,6 @@
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.live.templates" scope="TEST" />
   </component>
 </module>

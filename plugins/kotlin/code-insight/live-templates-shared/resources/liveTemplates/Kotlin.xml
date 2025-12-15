@@ -50,8 +50,7 @@
     </template>
     <template resource-bundle="messages.KotlinBundle" key="livetemplate.description.soutp"
               name="soutp" toReformat="true" toShortenFQNames="true" value="println($FORMAT$)">
-        <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;'\&quot;' + _1.collect { it + ' = [${' + it + '}]'}.join(', ') + '\&quot;'&quot;, functionParameters())"
-                  name="FORMAT" />
+        <variable alwaysStopAt="false" defaultValue="" expression="functionParametersToString()" name="FORMAT" />
         <context>
             <option name="KOTLIN_STATEMENT" value="true"/>
         </context>
@@ -60,7 +59,7 @@
               name="soutf"
               toReformat="false" toShortenFQNames="true"
               value="println(&quot;$CLASS$.$METHOD$&quot;)">
-        <variable name="CLASS" expression="groovyScript(&quot;_1 ?: '&lt;top&gt;'&quot;, kotlinClassName())" defaultValue="" alwaysStopAt="false" />
+        <variable name="CLASS" expression="kotlinClassNameOrTop()" defaultValue="" alwaysStopAt="false" />
         <variable name="METHOD" expression="kotlinFunctionName()" defaultValue="" alwaysStopAt="false" />
         <context>
             <option name="KOTLIN_STATEMENT" value="true"/>
