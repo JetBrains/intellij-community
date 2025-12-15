@@ -614,9 +614,9 @@ object PluginManagerCore {
       registerLoadingError(loadingError)
     }
 
+    pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
     val errorList = preparePluginErrors(pluginNonLoadReasons, globalErrors)
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginsState.addPluginNonLoadReasons(pluginNonLoadReasons)
     pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
 
     if (initContext.checkEssentialPlugins) {

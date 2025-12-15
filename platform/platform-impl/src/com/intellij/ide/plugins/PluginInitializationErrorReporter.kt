@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object StartupPluginLoadingErrorReporter {
+object PluginInitializationErrorReporter {
   @Synchronized
   @JvmStatic
   fun onEnable(enabled: Boolean): Boolean {
