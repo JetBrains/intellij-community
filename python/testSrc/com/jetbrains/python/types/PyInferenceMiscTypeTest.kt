@@ -1153,6 +1153,21 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-72253"])
+    fun `call of unannotated always raising function terminates flow`() = test("""
+      def fail():
+          raise ValueError()
+
+      def f(x):
+          if x:
+              return 1
+          fail()
+
+      expr = f(True)
+      #└ TYPE Literal[1]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-52930"])
     fun `exception group in except star`() = test("""
       try:

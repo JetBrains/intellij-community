@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
@@ -573,6 +574,21 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
               case _:
                   assert_never(d)
           print(y)
+      """);
+  }
+
+  @TestFor(issues = "PY-72253")
+  public void testExceptPartCallsAlwaysRaisingFunction() {
+    doTestByText("""
+      def handle_error():
+          raise ValueError()
+
+      def f(arg):
+          try:
+              result = int(arg)
+          except ValueError:
+              handle_error()
+          print(result)
       """);
   }
 

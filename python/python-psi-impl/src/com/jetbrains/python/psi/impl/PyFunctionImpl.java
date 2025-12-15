@@ -85,6 +85,7 @@ import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnpackedTypedDictTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -321,7 +322,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context) {
-    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, new FlowContext(context, false));
+    return collectReturnPoints(this, context, true);
+  }
+
+  /**
+   * Implements {@link PyFunction#getReturnPoints(TypeEvalContext)}.
+   *
+   * @param inspectCalleeBodies if false, a call stops the flow only when its callee has an annotated {@code NoReturn} return type.
+   *                            Use false to analyze the body of a callee, so that the analysis does not go into the callees of the callee.
+   * @see CallInstruction#isNoReturnCall(TypeEvalContext, boolean)
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<PyStatement> collectReturnPoints(@NotNull PyFunction function,
+                                                               @NotNull TypeEvalContext context,
+                                                               boolean inspectCalleeBodies) {
+    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(function, new FlowContext(context, false));
     final Instruction[] flow = dataFlow.getInstructions();
 
     class ReturnPointCollector {
@@ -341,7 +356,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           collectImplicitReturn = oldCollectImplicitReturn;
           return ControlFlowUtil.Operation.CONTINUE;
         }
-        if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context)) {
+        if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context, inspectCalleeBodies)) {
           return ControlFlowUtil.Operation.CONTINUE;
         }
         if (instruction instanceof PyRaiseInstruction) {
