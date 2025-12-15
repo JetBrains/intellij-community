@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.VariablesPreloadManager
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -95,11 +94,10 @@ internal class FrontendXValueContainer(
             node.setErrorMessage(event.message, event.link?.hyperlink())
           }
           is XValueComputeChildrenEvent.SetMessage -> {
-            // TODO[IJPL-160146]: support SimpleTextAttributes serialization -- don't pass SimpleTextAttributes.REGULAR_ATTRIBUTES
             node.setMessage(
               event.message,
               event.icon?.icon(),
-              event.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES,
+              event.attributes.toSimpleTextAttributes(),
               event.link?.hyperlink()
             )
           }

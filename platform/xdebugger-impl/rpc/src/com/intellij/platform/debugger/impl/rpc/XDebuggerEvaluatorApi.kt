@@ -6,7 +6,6 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XDescriptor
@@ -80,12 +79,11 @@ sealed interface XValueComputeChildrenEvent {
   @Serializable
   data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlinkDto?) : XValueComputeChildrenEvent
 
-  // TODO[IJPL-160146]: support SimpleTextAttributes serialization
   @Serializable
   data class SetMessage(
     val message: String,
     val icon: IconId?,
-    @Transient val attributes: SimpleTextAttributes? = null,
+    val attributes: SerializableSimpleTextAttributes,
     val link: XDebuggerTreeNodeHyperlinkDto?,
   ) : XValueComputeChildrenEvent
 

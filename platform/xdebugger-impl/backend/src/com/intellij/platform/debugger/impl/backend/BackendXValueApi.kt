@@ -314,10 +314,9 @@ private sealed interface RawComputeChildrenEvent {
     }
   }
 
-  data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes?, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
+  data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
     override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
-      // TODO[IJPL-160146]: support SimpleTextAttributes serialization
-      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes, link?.toRpc())
+      return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes.toRpc(), link?.toRpc())
     }
   }
 
