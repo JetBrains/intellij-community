@@ -6891,13 +6891,14 @@
         "goto_within_insight_range_count" : [ "{regexp#integer}" ],
         "insight_id" : [ "{regexp#integer}" ],
         "insights_enabled" : [ "{enum#boolean}" ],
+        "insights_frequency" : [ "{enum:DEFAULT|MORE_INSIGHTS|LESS_INSIGHTS}" ],
         "new_postprocessed_insights" : [ "{regexp#integer}" ],
         "new_processed_lines" : [ "{regexp#integer}" ],
         "rating" : [ "{enum:LIKE|DISLIKE}" ],
-        "settings_source" : [ "{enum:REGULAR_SETTINGS|POPUP_MENU|AI_HUB}" ]
+        "settings_source" : [ "{enum:AI_HUB|POPUP_MENU|REGULAR_SETTINGS}" ]
       },
       "enums" : {
-        "__event_id" : [ "request", "settings_changed", "insert_as_comment", "rated", "copied", "hidden", "hovered", "interaction_batched" ]
+        "__event_id" : [ "request", "settings_changed", "insert_as_comment", "rated", "copied", "hidden", "hovered", "interaction_batched", "enabled_changed", "frequency_changed" ]
       }
     }
   }, {
@@ -13668,5 +13669,5 @@
       "version" : "Unknown|unknown.format|unknown|UNKNOWN|((\\d+\\.?)*\\d+)"
     }
   },
-  "version" : "6545"
+  "version" : "6556"
 }
