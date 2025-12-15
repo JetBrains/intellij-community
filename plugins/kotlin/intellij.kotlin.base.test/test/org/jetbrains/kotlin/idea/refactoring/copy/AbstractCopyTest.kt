@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.copy
 
 import com.google.gson.JsonObject
@@ -15,7 +14,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDest
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -30,7 +28,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
                 if (virtualFile.isDirectory) virtualFile.toPsiDirectory(project)!! else virtualFile.toPsiFile(project)!!
             }
 
-            val typesToCopy = if (config.getNullableString("extractClassOrObject") == "true")
+            val typesToCopy = if (config["extractClassOrObject"]?.asString == "true")
                 elementsToCopy.flatMap { PsiTreeUtil.collectElementsOfType(it, KtClassOrObject::class.java) }
             else elementsToCopy
 
@@ -45,7 +43,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
             val elementsToCopy = elementsAtCaret.ifEmpty { listOf(mainFile) }.toTypedArray()
             assert(CopyHandler.canCopy(elementsToCopy))
 
-            val targetDirectory = config.getNullableString("targetDirectory")?.let {
+            val targetDirectory = config["targetDirectory"]?.asString?.let {
                 rootDir.findFileByRelativePath(it)?.toPsiDirectory(project)
             }
                 ?: run {
@@ -53,7 +51,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
                     runWriteAction { MultipleRootsMoveDestination(packageWrapper).getTargetDirectory(mainFile) }
                 }
 
-            project.copyNewName = config.getNullableString("newName")
+            project.copyNewName = config["newName"]?.asString
 
             CopyHandler.doCopy(elementsToCopy, targetDirectory)
         }
@@ -63,7 +61,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
 abstract class AbstractCopyTest : AbstractMultifileRefactoringTest() {
     companion object {
         fun runCopyRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
-            val action = config.getNullableString("type")?.let { CopyAction.valueOf(it) } ?: CopyAction.DEFAULT
+            val action = config["type"]?.asString?.let { CopyAction.valueOf(it) } ?: CopyAction.DEFAULT
             runRefactoringTest(path, config, rootDir, project, action)
         }
     }
