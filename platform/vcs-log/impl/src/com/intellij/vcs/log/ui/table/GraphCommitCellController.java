@@ -173,7 +173,13 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
-      IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
+      IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)) {
+        @Override
+        public boolean canBeDismissedOnTimeout() {
+          return false;
+        }
+      };
+      tooltip.setPreferredPosition(Balloon.Position.below);
       IdeTooltipManager.getInstance().show(tooltip, now);
       return true;
     }
