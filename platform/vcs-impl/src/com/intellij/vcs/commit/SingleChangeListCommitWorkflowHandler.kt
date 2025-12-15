@@ -8,12 +8,9 @@ import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -82,6 +79,11 @@ class SingleChangeListCommitWorkflowHandler(
 
     if (workflow.isDefaultCommitEnabled) {
       LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+    }
+
+    // IJPL-84882 Cherry-pick with conflicts: commit message should be saved if I cancel modal commit
+    ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.let { workflowHandler ->
+      getCommitMessage().takeIf { it.isNotEmpty() }?.let { workflowHandler.setCommitMessage(it) }
     }
   }
 
