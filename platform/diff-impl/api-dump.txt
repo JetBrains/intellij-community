@@ -130,11 +130,15 @@ c:com.intellij.diff.actions.impl.OpenInEditorAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
 - sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- sf:openEditor(com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- sf:openEditor(com.intellij.pom.Navigatable[],java.lang.Runnable):Z
 - promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.diff.actions.impl.OpenInEditorAction$Companion
 - f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
 - f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- f:openEditor(com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- f:openEditor(com.intellij.pom.Navigatable[],java.lang.Runnable):Z
 f:com.intellij.diff.actions.impl.SetEditorSettingsAction
 - com.intellij.openapi.project.DumbAwareAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
