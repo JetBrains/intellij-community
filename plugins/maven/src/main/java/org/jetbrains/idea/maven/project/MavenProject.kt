@@ -36,6 +36,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -714,7 +716,7 @@ class MavenProject(val file: VirtualFile) {
   private fun getPropertiesFromConfig(kind: ConfigFileKind): Map<String, String> {
     var mavenConfig: Map<String, String>? = getStateCachedValue(kind.CACHE_KEY)
     if (mavenConfig == null) {
-      mavenConfig = readConfigFile(MavenUtil.getBaseDir(directoryFile).toFile(), kind)
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(directoryFile), kind)
       putStateCachedValue(kind.CACHE_KEY, mavenConfig)
     }
 
@@ -831,13 +833,13 @@ class MavenProject(val file: VirtualFile) {
     }
 
     @JvmStatic
-    fun readConfigFile(baseDir: File?, kind: ConfigFileKind): Map<String, String> {
-      val configFile = File(baseDir, FileUtil.toSystemDependentName(kind.myRelativeFilePath))
+    fun readConfigFile(baseDir: Path?, kind: ConfigFileKind): Map<String, String> {
+      val configFile = baseDir?.resolve(kind.myRelativeFilePath) ?: Path.of(kind.myRelativeFilePath)
 
       val parametersList = ParametersList()
-      if (configFile.isFile) {
+      if (configFile.isRegularFile()) {
         try {
-          parametersList.addParametersString(FileUtil.loadFile(configFile, CharsetToolkit.UTF8))
+          parametersList.addParametersString(configFile.readText(Charsets.UTF_8))
         }
         catch (ignore: IOException) {
         }

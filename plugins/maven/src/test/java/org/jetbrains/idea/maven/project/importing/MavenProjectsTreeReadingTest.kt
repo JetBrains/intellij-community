@@ -22,11 +22,17 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
 import java.util.*
 import java.util.Set
+import kotlin.collections.ArrayList
+import kotlin.collections.List
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mutableListOf
 
 class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
   @Test
@@ -467,7 +473,9 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     assertEquals("after reimport should be one root project", 1, roots.size)
     assertEquals("after reimport should be one root project and it should be $projectPom", projectPom, roots[0].file)
     assertEquals("after reimport this project should have one subproject", 1, tree.getModules(roots[0]).size)
-    assertEquals("after reimport this project should have one subproject, and this subproject should be m2", m2, tree.getModules(roots[0])[0].file)
+    assertEquals("after reimport this project should have one subproject, and this subproject should be m2",
+                 m2,
+                 tree.getModules(roots[0])[0].file)
   }
 
   @Test
@@ -1929,6 +1937,56 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target"), mavenProject.buildDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/classes"), mavenProject.outputDirectory)
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), mavenProject.testOutputDirectory)
+  }
+
+  @Test
+  fun testReadProjectsWithDynamicVersion() = runBlocking {
+    val firstRootWithChild = createModulePom("parentone",
+                                             $$"""
+                             <groupId>test</groupId>
+                             <artifactId>parentone</artifactId>
+                             <version>${version_param}</version>
+                             <properties>
+                                 <version_param>1.0</version_param>
+                             </properties>
+                             <packaging>pom</packaging>
+                             <modules>
+                                 <module>child</module>
+                             </modules>
+                             """.trimIndent())
+    val child = createModulePom("parentone/child",
+                                $$"""
+                             <parent>
+                               <groupId>test</groupId>
+                               <artifactId>parentone</artifactId>
+                               <version>${version_param}</version>                 
+                             </parent>
+                              <artifactId>child</artifactId>
+                             """.trimIndent())
+    val m2 = createModulePom("m2",
+                             """
+                             <groupId>test</groupId>
+                             <artifactId>m2</artifactId>
+                             <version>1</version>
+                             """.trimIndent())
+
+    updateAll(firstRootWithChild, m2)
+    val roots = tree.rootProjects
+    assertEquals(2, roots.size)
+    assertSameElements(
+      tree.workspaceMap.availableIds,
+      MavenId("test:parentone:1.0"),
+      MavenId("test:parentone:RELEASE"),
+      MavenId("test:parentone:LATEST"),
+
+      MavenId("test:child:1.0"),
+      MavenId("test:child:RELEASE"),
+      MavenId("test:child:LATEST"),
+
+      MavenId("test:m2:1"),
+      MavenId("test:m2:RELEASE"),
+      MavenId("test:m2:LATEST"),
+    )
   }
 
   companion object {

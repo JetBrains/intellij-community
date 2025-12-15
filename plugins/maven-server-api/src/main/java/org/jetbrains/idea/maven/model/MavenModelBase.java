@@ -31,6 +31,29 @@ public class MavenModelBase implements Serializable {
   private @NotNull List<@NotNull MavenRemoteRepository> myRemotePluginRepositories = new CopyOnWriteArrayList<>();
   private @NotNull List<@NotNull String> myModules = new CopyOnWriteArrayList<>();
 
+
+  public MavenModelBase() { }
+
+  protected MavenModelBase(@NotNull MavenModelBase other) {
+    if (other.myProperties != null) {
+      Properties p = new Properties();
+      p.putAll(other.myProperties);
+      this.myProperties = p;
+    }
+
+    this.myPlugins = new CopyOnWriteArrayList<>(other.myPlugins);
+    this.myExtensions = new CopyOnWriteArrayList<>(other.myExtensions);
+    this.myDependencies = new CopyOnWriteArrayList<>(other.myDependencies);
+    this.myDependencyTree = new CopyOnWriteArrayList<>(other.myDependencyTree);
+    this.myRemoteRepositories = new CopyOnWriteArrayList<>(other.myRemoteRepositories);
+    this.myRemotePluginRepositories = new CopyOnWriteArrayList<>(other.myRemotePluginRepositories);
+    this.myModules = new CopyOnWriteArrayList<>(other.myModules);
+  }
+
+  public MavenModelBase copy() {
+    return new MavenModelBase(this);
+  }
+
   public Properties getProperties() {
     if (myProperties == null) myProperties = new Properties();
     return myProperties;

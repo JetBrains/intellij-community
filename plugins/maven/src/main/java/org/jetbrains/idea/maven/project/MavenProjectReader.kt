@@ -5,8 +5,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.Strings
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
@@ -19,7 +17,6 @@ import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
@@ -47,8 +44,8 @@ class MavenProjectReader(
 
   suspend fun readProjectAsync(file: VirtualFile): MavenProjectReaderResult {
     val recursionGuard: MutableSet<VirtualFile> = HashSet()
-    val readResult = readProjectModel(file, recursionGuard)
-    val model = readResult.first.model
+    val readResult = readProjectModel(file, explicitProfiles, recursionGuard)
+    val model = myReadHelper.interpolate(file, readResult.first.model)
 
     val modelMap: MutableMap<String, String> = HashMap()
     val mavenId = model.mavenId
@@ -67,7 +64,11 @@ class MavenProjectReader(
                                     readResult.first.problems)
   }
 
-  private suspend fun readProjectModel(file: VirtualFile, recursionGuard: MutableSet<VirtualFile>): Pair<RawModelReadResult, MavenExplicitProfiles> {
+  private suspend fun readProjectModel(
+    file: VirtualFile,
+    explicitProfiles: MavenExplicitProfiles,
+    recursionGuard: MutableSet<VirtualFile>,
+  ): Pair<RawModelReadResult, MavenExplicitProfiles> {
     var cachedModelReadResult = myCache[file]
     if (cachedModelReadResult == null) {
       cachedModelReadResult = doReadProjectModel(myProject, file, false)
@@ -83,13 +84,11 @@ class MavenProjectReader(
       modelFromCache,
       file,
       problems,
+      explicitProfiles,
       recursionGuard)
-
     addSettingsProfiles(file, modelWithInheritance, alwaysOnProfiles, problems)
-
     repairModelBody(modelWithInheritance)
-
-    return Pair.create(RawModelReadResult(modelWithInheritance, problems, alwaysOnProfiles), MavenExplicitProfiles.NONE)
+    return Pair.create(RawModelReadResult(modelWithInheritance, problems, alwaysOnProfiles), explicitProfiles)
   }
 
   private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
@@ -98,7 +97,8 @@ class MavenProjectReader(
 
     val fileExtension = file.extension
     if (!"pom".equals(fileExtension, ignoreCase = true) && !"xml".equals(fileExtension, ignoreCase = true)) {
-      return tracer.spanBuilder("readProjectModelUsingMavenServer").useWithScope { readProjectModelUsingMavenServer(file, problems, alwaysOnProfiles) }
+      return tracer.spanBuilder("readProjectModelUsingMavenServer")
+        .useWithScope { readProjectModelUsingMavenServer(file, problems, alwaysOnProfiles) }
     }
 
     return readMavenProjectModel(file, headerOnly, problems, alwaysOnProfiles, isAutomaticVersionFeatureEnabled(file, project))
@@ -279,7 +279,8 @@ class MavenProjectReader(
     return projectFile.parent.children.filter { it.hasPomFile() }.map { it.name }
   }
 
-  private fun isMaven4Model(modelVersion: String?): Boolean = modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, MODEL_VERSION_4_0_0) > 0
+  private fun isMaven4Model(modelVersion: String?): Boolean =
+    modelVersion != null && StringUtil.compareVersionNumbers(modelVersion, MODEL_VERSION_4_0_0) > 0
 
   private fun findModules(xmlModel: Element): List<String> = findChildrenValuesByPath(xmlModel, "modules", "module")
 
@@ -287,6 +288,7 @@ class MavenProjectReader(
     model: MavenModel,
     file: VirtualFile,
     problems: MutableCollection<MavenProjectProblem>,
+    explicitProfiles: MavenExplicitProfiles,
     recursionGuard: MutableSet<VirtualFile>,
   ): MavenModel {
     if (recursionGuard.contains(file)) {
@@ -327,8 +329,10 @@ class MavenProjectReader(
           true))
       }
 
+      val assembledModel = myReadHelper.assembleInheritance(parentModel, model, file)
+
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
-      val profiles = model.profiles
+      val profiles = assembledModel.profiles
       val parentProfiles = parentModel.profiles
         .filter { !containsProfileId(profiles, it) }
         .map {
@@ -339,27 +343,13 @@ class MavenProjectReader(
           copyProfile
         }
       if (parentProfiles.isNotEmpty()) {
-        model.profiles = profiles + parentProfiles
+        assembledModel.profiles = profiles + parentProfiles
       }
-      return model
+      return assembledModel
     }
     finally {
       recursionGuard.remove(file)
     }
-  }
-
-  private suspend fun doProcessParent(parentFile: VirtualFile, recursionGuard: MutableSet<VirtualFile>): Pair<VirtualFile, RawModelReadResult> {
-    val result = readProjectModel(parentFile, recursionGuard).first
-    return Pair.create(parentFile, result)
-  }
-
-  private suspend fun findInLocalRepository(parentDesc: MavenParentDesc, recursionGuard: MutableSet<VirtualFile>): Pair<VirtualFile, RawModelReadResult>? {
-    val parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(), parentDesc.parentId, "pom")
-    val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
-    if (parentFile != null) {
-      return doProcessParent(parentFile, recursionGuard)
-    }
-    return null
   }
 
   private suspend fun readRawResult(
@@ -367,44 +357,30 @@ class MavenProjectReader(
     parentDesc: MavenParentDesc?,
     recursionGuard: MutableSet<VirtualFile>,
   ): Pair<VirtualFile, RawModelReadResult>? {
-    if (parentDesc == null) {
-      return null
-    }
-
-    val superPom = MavenUtil.resolveSuperPomFile(myProject, projectFile)
-    if (superPom == null || projectFile == superPom) return null
-
-    val locatedParentFile = locator.findProjectFile(parentDesc.parentId)
-    if (locatedParentFile != null) {
-      return doProcessParent(locatedParentFile, recursionGuard)
-    }
-
-    if (Strings.isEmpty(parentDesc.parentRelativePath)) {
-      val localRepoResult = findInLocalRepository(parentDesc, recursionGuard)
-      if (localRepoResult != null) {
-        return localRepoResult
-      }
-    }
-
-    if (projectFile.parent != null) {
-      val parentFileCandidate = projectFile.parent.findFileByRelativePath(parentDesc.parentRelativePath)
-
-      val parentFile = if (parentFileCandidate != null && parentFileCandidate.isDirectory)
-        parentFileCandidate.findFileByRelativePath(MavenConstants.POM_XML)
-      else parentFileCandidate
-
-      if (parentFile != null) {
-        val parentModel = doReadProjectModel(myProject, parentFile, true).model
-        val parentId = parentDesc.parentId
-        val parentResult = if (parentId != parentModel.mavenId) null else doProcessParent(parentFile, recursionGuard)
-        if (null != parentResult) {
-          return parentResult
+    val parentModelWithProblems =
+      object : MavenParentProjectFileAsyncProcessor<Pair<VirtualFile, RawModelReadResult>>(myProject) {
+        override fun findManagedFile(id: MavenId): VirtualFile? {
+          return locator.findProjectFile(id)
         }
-      }
-    }
 
-    val defaultParentDesc = MavenParentDesc(parentDesc.parentId, DEFAULT_RELATIVE_PATH)
-    return findInLocalRepository(defaultParentDesc, recursionGuard)
+        override suspend fun processRelativeParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
+          val parentModel = doReadProjectModel(myProject, parentFile, true).model
+          val parentId = parentDesc?.parentId
+          if (parentId != parentModel.mavenId) return null
+
+          return super.processRelativeParent(parentFile)
+        }
+
+        override suspend fun processSuperParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
+          return null // do not process superPom
+        }
+
+        override suspend fun doProcessParent(parentFile: VirtualFile): Pair<VirtualFile, RawModelReadResult>? {
+          val result = readProjectModel(parentFile, explicitProfiles, recursionGuard).first
+          return Pair.create(parentFile, result)
+        }
+      }.process(generalSettings, projectFile, parentDesc)
+    return parentModelWithProblems
   }
 
   private suspend fun addSettingsProfiles(

@@ -10,6 +10,7 @@ import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,17 +49,17 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
   private void doTestConfigFile(String text, Map<String, String> expected, final String relativePath) throws IOException {
     File baseDir = FileUtil.createTempDirectory("mavenServerConfig", null);
     FileUtil.writeToFile(new File(baseDir, relativePath), text);
-    Map<String, String> result = readProperties(baseDir);
+    Map<String, String> result = readProperties(baseDir.toPath());
     assertEquals(expected, result);
   }
 
   @NotNull
-  protected abstract Map<String, String> readProperties(File baseDir);
+  protected abstract Map<String, String> readProperties(Path baseDir);
 
   public static class ReadConfigFilesInEmbedderTest extends ReadConfigFilesTestCase {
     @Override
     @NotNull
-    protected Map<String, String> readProperties(File baseDir) {
+    protected Map<String, String> readProperties(Path baseDir) {
       Map<String, String> result = new HashMap<>();
       MavenServerConfigUtil.readConfigFiles(baseDir, result);
       return result;
@@ -68,15 +69,15 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
   public static class ReadConfigFilesInMavenConfigurationTest extends ReadConfigFilesTestCase {
     @Override
     @NotNull
-    protected Map<String, String> readProperties(File baseDir) {
-      return MavenProjectConfiguration.readConfigFiles(baseDir);
+    protected Map<String, String> readProperties(Path baseDir) {
+      return MavenProjectConfiguration.readConfigFiles(baseDir.toFile());
     }
   }
 
   public static class ReadConfigFilesInMavenProjectTest extends ReadConfigFilesTestCase {
     @Override
     @NotNull
-    protected Map<String, String> readProperties(File baseDir) {
+    protected Map<String, String> readProperties(Path baseDir) {
       Map<String, String> result = new HashMap<>();
       result.putAll(MavenProject.readConfigFile(baseDir, MavenProject.ConfigFileKind.MAVEN_CONFIG));
       result.putAll(MavenProject.readConfigFile(baseDir, MavenProject.ConfigFileKind.JVM_CONFIG));

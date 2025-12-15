@@ -404,42 +404,8 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
    */
   private fun resolveProperty(project: MavenProjectData, propertyValue: String): String? {
 
-    var value = propertyValue
-    val recursionProtector = HashSet<String>()
-    while (recursionProtector.add(value)) {
-      val start = value.indexOf("${'$'}{")
-      if (start == -1) return value
-      val end = value.indexOf("}")
-      if (start + 2 >= end) return null // some syntax error probably
-      val variable = value.substring(start + 2, end)
-      val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
-      if (start == 0 && end == value.length - 1) {
-        value = resolvedValue
-        continue
-      }
-      val tail = if (end == value.length - 1) {
-        ""
-      }
-      else {
-        value.substring(end + 1, value.length)
-      }
-      value = value.substring(0, start) + resolvedValue + tail
-    }
-    return value
+   return MavenProjectModelReadHelper.resolveProperty(propertyValue, project.properties)
   }
-
-  private fun doResolveVariable(properties: HashMap<String, String>, variable: String): String? {
-    properties[variable]?.let { return it }
-    if (variable.startsWith("env.")) {
-      val env = variable.substring(4)
-      return when {
-        env.isNotBlank() -> System.getenv(env).nullize(true)
-        else -> null
-      }
-    }
-    return System.getProperty(variable).nullize(true)
-  }
-
 
   private fun CoroutineScope.readRecursively(
     parentModel: Element,

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 public class MavenBuild extends MavenBuildBase implements Serializable {
@@ -35,5 +37,20 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
 
   public void setTestOutputDirectory(String testOutputDirectory) {
     myTestOutputDirectory = testOutputDirectory;
+  }
+
+  public MavenBuild() {
+    super();
+  }
+
+  protected MavenBuild(@NotNull MavenBuild other) {
+    super(other);
+    this.myOutputDirectory = other.myOutputDirectory;
+    this.myTestOutputDirectory = other.myTestOutputDirectory;
+  }
+
+  @Override
+  public MavenBuild copy() {
+    return new MavenBuild(this);
   }
 }

@@ -9,11 +9,25 @@ public class MavenProfile extends MavenModelBase implements Serializable {
   private final String myId;
   private final String mySource;
   private MavenProfileActivation myActivation;
-  private final MavenBuildBase myBuild = new MavenBuildBase();
+  private final MavenBuildBase myBuild;
 
   public MavenProfile(String id, String source) {
     myId = id;
     mySource = source;
+    myBuild = new MavenBuildBase();
+  }
+
+  protected MavenProfile(@NotNull MavenProfile other) {
+    super(other);
+    myId = other.myId;
+    mySource = other.mySource;
+    myActivation = other.myActivation;
+    myBuild = other.myBuild.copy();
+  }
+
+  @Override
+  public MavenProfile copy() {
+    return new MavenProfile(this);
   }
 
   public @NotNull String getId() {
