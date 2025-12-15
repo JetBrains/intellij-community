@@ -41,292 +41,295 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
  * Unfortunately, on the performance test side, we don't have enough information about the completion to make a decision.
  */
 object CodeTypingCommandGenerator {
-    private const val CODE_TYPING_SPAN_NAME = "codeTyping"
-    private const val CODE_TYPING_WARMUP_SPAN_NAME = "${CODE_TYPING_SPAN_NAME}_warmup"
+  private const val CODE_TYPING_SPAN_NAME = "codeTyping"
+  private const val CODE_TYPING_WARMUP_SPAN_NAME = "${CODE_TYPING_SPAN_NAME}_warmup"
 
-    /**
-     * A lower delay would be ideal, but at some point the code typing becomes unstable. For example, quote matching generating additional
-     * quotes.
-     */
-    private const val TYPING_DELAY_MS: Int = 50
+  /**
+   * A lower delay would be ideal, but at some point the code typing becomes unstable. For example, quote matching generating additional
+   * quotes.
+   */
+  private const val TYPING_DELAY_MS: Int = 50
 
-    /**
-     * @see CodeTypingCommandGenerator
-     */
-    fun preparePlan(input: String): CodeTypingPlan = CodeTypingPlanGenerator.generatePlan(input)
+  /**
+   * @see CodeTypingCommandGenerator
+   */
+  fun preparePlan(input: String): CodeTypingPlan = CodeTypingPlanGenerator.generatePlan(input)
 
-    /**
-     * @see CodeTypingCommandGenerator
-     */
-    fun <T : CommandChain> generateCommands(commands: T, plan: CodeTypingPlan, isWarmup: Boolean): T {
-        val spanName = if (isWarmup) CODE_TYPING_WARMUP_SPAN_NAME else CODE_TYPING_SPAN_NAME
+  /**
+   * @see CodeTypingCommandGenerator
+   */
+  fun <T : CommandChain> generateCommands(commands: T, plan: CodeTypingPlan, isWarmup: Boolean): T {
+    val spanName = if (isWarmup) CODE_TYPING_WARMUP_SPAN_NAME else CODE_TYPING_SPAN_NAME
 
-        commands.startNewSpan(spanName)
+    commands.startNewSpan(spanName)
 
-        plan.tokens.forEach { token ->
-            generateTokenCommand(commands, token, isWarmup)
-        }
-
-        // As the code typing has finished, let's wait for highlighting one more time in case we didn't finish the code with a new line.
-        commands.waitForCodeAnalysisFinished()
-
-        commands.stopSpan(spanName)
-
-        return commands
+    plan.tokens.forEach { token ->
+      generateTokenCommand(commands, token, isWarmup)
     }
 
-    private fun <T : CommandChain> generateTokenCommand(
-      commands: T,
-      token: CodeTypingPlan.Token,
-      isWarmup: Boolean
-    ) {
-        when (token) {
-            is CodeTypingPlan.TextToken -> {
-                commands.delayType(TYPING_DELAY_MS, token.text)
-            }
+    // As the code typing has finished, let's wait for highlighting one more time in case we didn't finish the code with a new line.
+    commands.waitForCodeAnalysisFinished()
 
-            CodeTypingPlan.NewLineToken -> {
-                commands.pressKey(Keys.ENTER)
+    commands.stopSpan(spanName)
 
-                // In a real-world scenario, the user's typing rhythm isn't as steady as the typing driven by performance tests. This
-                // gives natural pauses to update the highlighting. To simulate this, we insert highlighting breaks after each new line.
-                commands.waitForCodeAnalysisFinished()
-            }
+    return commands
+  }
 
-            CodeTypingPlan.SkipLineToken -> {
-                commands.pressKey(Keys.ARROW_DOWN)
-            }
+  private fun <T : CommandChain> generateTokenCommand(
+    commands: T,
+    token: CodeTypingPlan.Token,
+    isWarmup: Boolean,
+  ) {
+    when (token) {
+      is CodeTypingPlan.TextToken -> {
+        commands.delayType(TYPING_DELAY_MS, token.text)
+      }
 
-            is CodeTypingPlan.CompletionToken -> {
-                // It would be nice to pick the item from the list, but this isn't so easy with the current performance testing setup.
-                // `CompletionCommand` does not support this logic. So for now, we're invoking completion, removing the shortcut, and
-                // typing out the full name.
-                commands.delayType(TYPING_DELAY_MS, token.shortcut)
-
-                if (isWarmup) {
-                    commands.doCompleteWarmup()
-                } else {
-                    commands.doComplete()
-                }
-
-                // A short delay is necessary for stability. Nonetheless, asserting that the completion had results is currently not
-                // possible because it is still slightly unstable and might fail from time to time. For example, the completion might
-                // occasionally fail to show any candidates. Since we are not testing a single completion case but a complex mix of typing,
-                // completion, and code analysis, it's unwise to fail the whole test because of a small instability.
-                commands.delay(200)
-                commands.pressKey(Keys.ESCAPE)
-
-                repeat(token.shortcut.length) {
-                    commands.pressKey(Keys.BACKSPACE)
-                }
-
-                // Shorter delays have a higher risk of swapped letters because the coroutines on the command side are spawned all at
-                // once.
-                commands.delayType(10, token.fullIdentifier)
-            }
-        }
-    }
-
-    /**
-     * Generates a sequence of commands to undo the changes made with [generateCommands].
-     */
-    fun <T : CommandChain> generateReverseCommands(commands: T, plan: CodeTypingPlan): T {
-        // We have one line at the start where we type, and then as many lines as new line *and* skip line tokens.
-        //
-        // For the skip-line token, consider an example. We type: `run {\n}`. This becomes:
-        //   run {
-        //     <caret>
-        //   }
-        //
-        // So by adding one new line, we have two lines that need to be deleted later. The equivalent code typing input will be:
-        //   run {
-        //
-        //   ↓
-        val lines = 1 + plan.tokens.count { it is CodeTypingPlan.NewLineToken || it is CodeTypingPlan.SkipLineToken }
-        repeat(lines) {
-            commands.pressKey(Keys.DELETE_LINE)
-            commands.pressKey(Keys.ARROW_UP)
-        }
-
-        // This ENTER brings the test into a neutral position, since we've deleted one more line than we've added.
+      CodeTypingPlan.NewLineToken -> {
         commands.pressKey(Keys.ENTER)
 
-        return commands
+        // In a real-world scenario, the user's typing rhythm isn't as steady as the typing driven by performance tests. This
+        // gives natural pauses to update the highlighting. To simulate this, we insert highlighting breaks after each new line.
+        commands.waitForCodeAnalysisFinished()
+      }
+
+      CodeTypingPlan.SkipLineToken -> {
+        commands.pressKey(Keys.ARROW_DOWN)
+      }
+
+      is CodeTypingPlan.CompletionToken -> {
+        // It would be nice to pick the item from the list, but this isn't so easy with the current performance testing setup.
+        // `CompletionCommand` does not support this logic. So for now, we're invoking completion, removing the shortcut, and
+        // typing out the full name.
+        commands.delayType(TYPING_DELAY_MS, token.shortcut)
+
+        if (isWarmup) {
+          commands.doCompleteWarmup()
+        }
+        else {
+          commands.doComplete()
+        }
+
+        // A short delay is necessary for stability. Nonetheless, asserting that the completion had results is currently not
+        // possible because it is still slightly unstable and might fail from time to time. For example, the completion might
+        // occasionally fail to show any candidates. Since we are not testing a single completion case but a complex mix of typing,
+        // completion, and code analysis, it's unwise to fail the whole test because of a small instability.
+        commands.delay(200)
+        commands.pressKey(Keys.ESCAPE)
+
+        repeat(token.shortcut.length) {
+          commands.pressKey(Keys.BACKSPACE)
+        }
+
+        // Shorter delays have a higher risk of swapped letters because the coroutines on the command side are spawned all at
+        // once.
+        commands.delayType(10, token.fullIdentifier)
+      }
     }
+  }
+
+  /**
+   * Generates a sequence of commands to undo the changes made with [generateCommands].
+   */
+  fun <T : CommandChain> generateReverseCommands(commands: T, plan: CodeTypingPlan): T {
+    // We have one line at the start where we type, and then as many lines as new line *and* skip line tokens.
+    //
+    // For the skip-line token, consider an example. We type: `run {\n}`. This becomes:
+    //   run {
+    //     <caret>
+    //   }
+    //
+    // So by adding one new line, we have two lines that need to be deleted later. The equivalent code typing input will be:
+    //   run {
+    //
+    //   ↓
+    val lines = 1 + plan.tokens.count { it is CodeTypingPlan.NewLineToken || it is CodeTypingPlan.SkipLineToken }
+    repeat(lines) {
+      commands.pressKey(Keys.DELETE_LINE)
+      commands.pressKey(Keys.ARROW_UP)
+    }
+
+    // This ENTER brings the test into a neutral position, since we've deleted one more line than we've added.
+    commands.pressKey(Keys.ENTER)
+
+    return commands
+  }
 }
 
 /**
  * @see CodeTypingCommandGenerator
  */
 class CodeTypingPlan(val tokens: List<Token>) {
-    sealed class Token
+  sealed class Token
 
-    data class TextToken(val text: String) : Token()
-    data object NewLineToken : Token()
-    data object SkipLineToken : Token()
-    data class CompletionToken(val shortcut: String, val fullIdentifier: String) : Token()
+  data class TextToken(val text: String) : Token()
+  data object NewLineToken : Token()
+  data object SkipLineToken : Token()
+  data class CompletionToken(val shortcut: String, val fullIdentifier: String) : Token()
 }
 
 private object CodeTypingPlanGenerator {
-    /**
-     * Parses the input string and generates a plan according to the documented semantics of [CodeTypingCommandGenerator].
-     */
-    fun generatePlan(input: String): CodeTypingPlan {
-        val tokens = parseInput(input)
-        val simplifiedTokens = simplifyTokens(tokens)
-        return CodeTypingPlan(simplifiedTokens)
+  /**
+   * Parses the input string and generates a plan according to the documented semantics of [CodeTypingCommandGenerator].
+   */
+  fun generatePlan(input: String): CodeTypingPlan {
+    val tokens = parseInput(input)
+    val simplifiedTokens = simplifyTokens(tokens)
+    return CodeTypingPlan(simplifiedTokens)
+  }
+
+  private fun parseInput(input: String): MutableList<CodeTypingPlan.Token> {
+    val tokens = mutableListOf<CodeTypingPlan.Token>()
+    val rawBuffer = StringBuilder()
+
+    fun flushRawBuffer() {
+      if (rawBuffer.isNotEmpty()) {
+        val text = rawBuffer.toString()
+
+        // We cannot just trim the raw input, because whitespace between certain parseInput might be significant. For example,
+        // `else ~foo` would turn into `elsefoo` if `else ` gets trimmed. However, it's possible to trim the initial indent of a new
+        // line.
+        val trimmedText = if (tokens.lastOrNull() == CodeTypingPlan.NewLineToken) text.trimStart() else text
+
+        if (trimmedText.isNotEmpty()) {
+          tokens.add(CodeTypingPlan.TextToken(trimmedText))
+        }
+        rawBuffer.clear()
+      }
     }
 
-    private fun parseInput(input: String): MutableList<CodeTypingPlan.Token> {
-        val tokens = mutableListOf<CodeTypingPlan.Token>()
-        val rawBuffer = StringBuilder()
+    var i = 0
+    while (i < input.length) {
+      when (input[i]) {
+        '~' -> {
+          flushRawBuffer()
+          i += 1 // skip the `~`
 
-        fun flushRawBuffer() {
-            if (rawBuffer.isNotEmpty()) {
-                val text = rawBuffer.toString()
+          val (explicitShortcut, newIndex) = parseExplicitShortcut(input, i)
+          i = newIndex
 
-                // We cannot just trim the raw input, because whitespace between certain parseInput might be significant. For example,
-                // `else ~foo` would turn into `elsefoo` if `else ` gets trimmed. However, it's possible to trim the initial indent of a new
-                // line.
-                val trimmedText = if (tokens.lastOrNull() == CodeTypingPlan.NewLineToken) text.trimStart() else text
+          val (identifier, newIndex2) = parseIdentifier(input, i)
+          i = newIndex2
 
-                if (trimmedText.isNotEmpty()) {
-                    tokens.add(CodeTypingPlan.TextToken(trimmedText))
-                }
-                rawBuffer.clear()
-            }
+          val shortcut = explicitShortcut ?: generateShortcut(identifier)
+
+          tokens.add(CodeTypingPlan.CompletionToken(shortcut, identifier))
         }
 
-        var i = 0
-        while (i < input.length) {
-            when (input[i]) {
-                '~' -> {
-                    flushRawBuffer()
-                    i += 1 // skip the `~`
-
-                    val (explicitShortcut, newIndex) = parseExplicitShortcut(input, i)
-                    i = newIndex
-
-                    val (identifier, newIndex2) = parseIdentifier(input, i)
-                    i = newIndex2
-
-                    val shortcut = explicitShortcut ?: generateShortcut(identifier)
-
-                    tokens.add(CodeTypingPlan.CompletionToken(shortcut, identifier))
-                }
-
-                '\n' -> {
-                    flushRawBuffer()
-                    tokens.add(CodeTypingPlan.NewLineToken)
-                    i += 1
-                }
-
-                '↓' -> {
-                    flushRawBuffer()
-                    tokens.add(CodeTypingPlan.SkipLineToken)
-                    i += 1
-                }
-
-                else -> {
-                    rawBuffer.append(input[i])
-                    i += 1
-                }
-            }
+        '\n' -> {
+          flushRawBuffer()
+          tokens.add(CodeTypingPlan.NewLineToken)
+          i += 1
         }
 
-        flushRawBuffer()
-        return tokens
+        '↓' -> {
+          flushRawBuffer()
+          tokens.add(CodeTypingPlan.SkipLineToken)
+          i += 1
+        }
+
+        else -> {
+          rawBuffer.append(input[i])
+          i += 1
+        }
+      }
     }
 
-    /**
-     * Parses an explicit shortcut in brackets (e.g., `[shortcut]`).
-     *
-     * @return The shortcut and updated index, or `null` and unchanged index if no brackets found.
-     * @throws IllegalStateException If opening bracket exists but closing bracket is missing.
-     */
-    private fun parseExplicitShortcut(input: String, startIndex: Int): Pair<String?, Int> {
-        var i = startIndex
+    flushRawBuffer()
+    return tokens
+  }
 
-        return if (i < input.length && input[i] == '[') {
-            i += 1 // skip past the `[`
+  /**
+   * Parses an explicit shortcut in brackets (e.g., `[shortcut]`).
+   *
+   * @return The shortcut and updated index, or `null` and unchanged index if no brackets found.
+   * @throws IllegalStateException If opening bracket exists but closing bracket is missing.
+   */
+  private fun parseExplicitShortcut(input: String, startIndex: Int): Pair<String?, Int> {
+    var i = startIndex
 
-            val (shortcut, newIndex) = parseIdentifier(input, i)
-            i = newIndex
+    return if (i < input.length && input[i] == '[') {
+      i += 1 // skip past the `[`
 
-            if (i < input.length && input[i] == ']') {
-                i += 1 // skip past the `]`
-            } else {
-                error("Missing closing `]` in explicit shortcut for completion command!")
-            }
+      val (shortcut, newIndex) = parseIdentifier(input, i)
+      i = newIndex
 
-            shortcut to i
-        } else {
-            null to i
-        }
+      if (i < input.length && input[i] == ']') {
+        i += 1 // skip past the `]`
+      }
+      else {
+        error("Missing closing `]` in explicit shortcut for completion command!")
+      }
+
+      shortcut to i
+    }
+    else {
+      null to i
+    }
+  }
+
+  /**
+   * Generates a shortcut from an identifier using camelCase heuristics.
+   *
+   * Extracts the first camelCase word (up to the next uppercase letter).
+   * Returns the first word if it's ≤ 5 characters, otherwise returns the first 5 characters of the identifier.
+   *
+   * Examples: `transformer` → `trans`, `withFirEntry` → `with`, `check` → `check`
+   */
+  private fun generateShortcut(identifier: String): String {
+    if (identifier.isEmpty()) return ""
+
+    var firstWordEnd = 1
+    while (firstWordEnd < identifier.length && !identifier[firstWordEnd].isUpperCase()) {
+      firstWordEnd += 1
     }
 
-    /**
-     * Generates a shortcut from an identifier using camelCase heuristics.
-     *
-     * Extracts the first camelCase word (up to the next uppercase letter).
-     * Returns the first word if it's ≤ 5 characters, otherwise returns the first 5 characters of the identifier.
-     *
-     * Examples: `transformer` → `trans`, `withFirEntry` → `with`, `check` → `check`
-     */
-    private fun generateShortcut(identifier: String): String {
-        if (identifier.isEmpty()) return ""
+    val firstWord = identifier.substring(0, firstWordEnd)
+    return firstWord.take(5)
+  }
 
-        var firstWordEnd = 1
-        while (firstWordEnd < identifier.length && !identifier[firstWordEnd].isUpperCase()) {
-            firstWordEnd += 1
+  private fun parseIdentifier(input: String, startIndex: Int): Pair<String, Int> {
+    var i = startIndex
+    while (i < input.length && (input[i].isLetterOrDigit() || input[i] == '_')) {
+      i += 1
+    }
+    val identifier = input.substring(startIndex, i)
+    return identifier to i
+  }
+
+  private fun simplifyTokens(tokens: List<CodeTypingPlan.Token>): List<CodeTypingPlan.Token> {
+    return buildList {
+      tokens.forEachIndexed { index, token ->
+        // When we have a combination 'New Line' + 'Skip Line', the new line will effectively be empty because we immediately skip
+        // it. So we can remove the 'New Line' token and just skip the following line.
+        //
+        // Example:
+        //   run {
+        //     foo()
+        //   ↓
+        //
+        // Without this simplification, we would generate:
+        //
+        // TextToken("run {"), NewLineToken, TextToken("foo()"), NewLineToken, SkipLineToken
+        //
+        // This would result in the following typed code:
+        //   run {
+        //     foo()
+        //
+        //   }<caret>
+        //
+        // It would be possible to just place `↓` on the same line, but it would make the input code harder to read:
+        //   run {
+        //     foo()↓
+        //
+        // When `↓` is on its own line, it's in place of the automatically inserted closing brace/parenthesis.
+        val nextToken = tokens.getOrNull(index + 1)
+        if (token == CodeTypingPlan.NewLineToken && nextToken == CodeTypingPlan.SkipLineToken) {
+          return@forEachIndexed
         }
 
-        val firstWord = identifier.substring(0, firstWordEnd)
-        return firstWord.take(5)
+        add(token)
+      }
     }
-
-    private fun parseIdentifier(input: String, startIndex: Int): Pair<String, Int> {
-        var i = startIndex
-        while (i < input.length && (input[i].isLetterOrDigit() || input[i] == '_')) {
-            i += 1
-        }
-        val identifier = input.substring(startIndex, i)
-        return identifier to i
-    }
-
-    private fun simplifyTokens(tokens: List<CodeTypingPlan.Token>): List<CodeTypingPlan.Token> {
-        return buildList {
-            tokens.forEachIndexed { index, token ->
-                // When we have a combination 'New Line' + 'Skip Line', the new line will effectively be empty because we immediately skip
-                // it. So we can remove the 'New Line' token and just skip the following line.
-                //
-                // Example:
-                //   run {
-                //     foo()
-                //   ↓
-                //
-                // Without this simplification, we would generate:
-                //
-                // TextToken("run {"), NewLineToken, TextToken("foo()"), NewLineToken, SkipLineToken
-                //
-                // This would result in the following typed code:
-                //   run {
-                //     foo()
-                //
-                //   }<caret>
-                //
-                // It would be possible to just place `↓` on the same line, but it would make the input code harder to read:
-                //   run {
-                //     foo()↓
-                //
-                // When `↓` is on its own line, it's in place of the automatically inserted closing brace/parenthesis.
-                val nextToken = tokens.getOrNull(index + 1)
-                if (token == CodeTypingPlan.NewLineToken && nextToken == CodeTypingPlan.SkipLineToken) {
-                    return@forEachIndexed
-                }
-
-                add(token)
-            }
-        }
-    }
+  }
 }
