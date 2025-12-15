@@ -5,7 +5,10 @@ import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XDescriptor
@@ -18,12 +21,12 @@ import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Rpc
@@ -187,10 +190,19 @@ sealed interface XFullValueEvaluatorResult {
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XFullValueEvaluatorResult
 }
 
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerHyperlinkId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
 data class XDebuggerTreeNodeHyperlinkDto(
-  // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
+  val id: XDebuggerHyperlinkId,
+  val text: @Nls String,
+  val tooltip: @Nls String?,
+  val icon: IconId?,
+  val shortcut: String?,
+  val alwaysOnScreen: Boolean,
+  @Transient val attributes: SimpleTextAttributes? = null,
   @Transient val local: XDebuggerTreeNodeHyperlink? = null,
 )

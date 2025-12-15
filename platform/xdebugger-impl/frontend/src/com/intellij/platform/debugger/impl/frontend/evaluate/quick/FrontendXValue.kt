@@ -84,7 +84,7 @@ class FrontendXValue private constructor(
   }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private val additionalLink = flows.additionalLinkFlow.map {
-    it?.hyperlink()
+    it?.hyperlink(cs)
   }.stateIn(cs, SharingStarted.Eagerly, null)
 
   private val textProvider = xValueDto.textProvider?.toFlow()

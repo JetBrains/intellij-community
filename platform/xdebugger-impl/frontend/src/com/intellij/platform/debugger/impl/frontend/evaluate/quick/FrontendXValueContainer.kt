@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.VariablesPreloadManager
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -14,6 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
+import java.awt.event.MouseEvent
+import java.util.function.Supplier
+import javax.swing.Icon
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -91,14 +96,14 @@ internal class FrontendXValueContainer(
             node.setAlreadySorted(event.value)
           }
           is XValueComputeChildrenEvent.SetErrorMessage -> {
-            node.setErrorMessage(event.message, event.link?.hyperlink())
+            node.setErrorMessage(event.message, event.link?.hyperlink(scope))
           }
           is XValueComputeChildrenEvent.SetMessage -> {
             node.setMessage(
               event.message,
               event.icon?.icon(),
               event.attributes.toSimpleTextAttributes(),
-              event.link?.hyperlink()
+              event.link?.hyperlink(scope)
             )
           }
           is XValueComputeChildrenEvent.TooManyChildren -> {
@@ -126,6 +131,38 @@ internal class FrontendXValueContainer(
   }
 }
 
-internal fun XDebuggerTreeNodeHyperlinkDto.hyperlink(): XDebuggerTreeNodeHyperlink? {
-  return local
+internal fun XDebuggerTreeNodeHyperlinkDto.hyperlink(cs: CoroutineScope): XDebuggerTreeNodeHyperlink {
+  // prefer local for better onClick handling
+  val localLink = local
+  if (localLink != null) return localLink
+
+  val dto = this
+  return object : XDebuggerTreeNodeHyperlink(text) {
+    override fun alwaysOnScreen(): Boolean {
+      return dto.alwaysOnScreen
+    }
+
+    override fun getLinkIcon(): Icon? {
+      return dto.icon?.icon()
+    }
+
+    override fun getLinkTooltip(): @Nls String? {
+      return dto.tooltip
+    }
+
+    override fun getShortcutSupplier(): Supplier<String?>? {
+      return dto.shortcut?.let { Supplier { it } }
+    }
+
+    override fun getTextAttributes(): SimpleTextAttributes {
+      return dto.attributes ?: TEXT_ATTRIBUTES
+    }
+
+    override fun onClick(event: MouseEvent?) {
+      cs.launch {
+        XValueApi.getInstance().nodeLinkClicked(dto.id)
+      }
+      event?.consume()
+    }
+  }
 }

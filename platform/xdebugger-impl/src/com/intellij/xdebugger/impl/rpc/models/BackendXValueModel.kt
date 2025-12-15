@@ -135,7 +135,7 @@ suspend fun BackendXValueModel.toXValueDtoWithPresentation(): XValueDtoWithPrese
     value,
     presentation.toRpc(),
     fullValueEvaluator.map { it?.toRpc() }.toRpc(),
-    additionalLinkFlow.map { it?.toRpc() }.toRpc(),
+    additionalLinkFlow.map { it?.toRpc(cs) }.toRpc(),
   )
 }
 
