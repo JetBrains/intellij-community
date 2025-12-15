@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +19,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,13 @@ import java.util.List;
  * <p>
  * For the action which should operate on the frontend use {@link XFetchValueSplitActionBase} instead.
  */
-public abstract class XFetchValueActionBase extends DumbAwareAction {
+public abstract class XFetchValueActionBase extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
+  @ApiStatus.Internal
+  @Override
+  public @Nullable ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.BackendOnly;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     for (XValueNodeImpl node : getNodes(e)) {

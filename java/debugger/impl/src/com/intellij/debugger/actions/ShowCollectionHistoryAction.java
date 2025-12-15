@@ -7,7 +7,7 @@ import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiType;
@@ -21,11 +21,17 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @ApiStatus.Experimental
-public class ShowCollectionHistoryAction extends XFetchValueActionBase implements ActionRemoteBehaviorSpecification.Disabled {
+public class ShowCollectionHistoryAction extends XFetchValueActionBase {
+  @Override
+  public @Nullable ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.Disabled;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!Registry.is("debugger.collection.watchpoints.enabled")) {
