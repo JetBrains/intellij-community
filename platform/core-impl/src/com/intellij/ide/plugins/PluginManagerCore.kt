@@ -606,13 +606,11 @@ object PluginManagerCore {
       registerLoadingError(loadingError)
     }
 
+    val errorList = preparePluginErrors(pluginErrorsById, globalErrors)
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
     pluginsState.pluginLoadingErrors = pluginErrorsById
-
-    val errorList = preparePluginErrors(pluginErrorsById, globalErrors)
-    if (!errorList.isEmpty()) { // FIXME why actions is not checked here?
-      pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
-    }
+    // FIXME this thing adds to `pluginsState.pluginErrors`, not `pluginsState.pluginLoadingErrors` :igor-dead-inside:
+    pluginsState.addPluginLoadingErrors(errorList + actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
 
     if (initContext.checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins)
