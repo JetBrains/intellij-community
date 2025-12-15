@@ -309,11 +309,8 @@
 
     "HelpTooltip": {
       "descriptionSizeDelta": {
-        "os.linux": -2,
+        "os.linux": -1,
         "os.mac": -1
-      },
-      "fontSizeDelta": {
-        "os.linux": -2
       },
       "mouseCursorOffset": {
         "os.mac": 17
