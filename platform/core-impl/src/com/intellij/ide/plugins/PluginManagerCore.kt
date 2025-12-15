@@ -509,17 +509,27 @@ object PluginManagerCore {
 
   @Internal
   fun initializePlugins(
-    descriptorLoadingErrors: List<PluginLoadingError>,
+    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginDescriptorLoadingResult,
     coreLoader: ClassLoader,
     parentActivity: Activity?,
   ): PluginManagerState {
+    val globalErrors = ArrayList<PluginLoadingError>()
+    for (descriptorLoadingError in descriptorLoadingErrors) {
+      globalErrors.add(PluginLoadingError(
+        reason = null,
+        htmlMessageSupplier = Supplier {
+          HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+                                            PluginUtils.pluginPathToUserString(descriptorLoadingError.path)))
+        },
+        error = descriptorLoadingError.error,
+      ))
+    }
+
     val loadingResult = PluginLoadingResult()
     loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
-
     val pluginErrorsById = loadingResult.copyPluginErrors()
-    val globalErrors = descriptorLoadingErrors.toMutableList()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
         globalErrors.add(PluginLoadingError(
@@ -724,7 +734,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    descriptorLoadingErrors: List<PluginLoadingError>,
+    descriptorLoadingErrors: List<PluginDescriptorLoadingError>,
     initContext: PluginInitializationContext,
     discoveredPlugins: PluginDescriptorLoadingResult,
   ): PluginManagerState {

@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.util.xml.dom.XmlInterner
@@ -19,18 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
-/**
- * Represents a plugin loading error with both structured data and HTML message.
- */
 @ApiStatus.Internal
-class PluginLoadingError(
-  val reason: PluginNonLoadReason?,
-  private val htmlMessageSupplier: Supplier<HtmlChunk>,
-  val error: Throwable?,
-) {
-  val htmlMessage: HtmlChunk
-    get() = htmlMessageSupplier.get()
-}
+class PluginDescriptorLoadingError(
+  val path: Path,
+  val error: Throwable,
+)
 
 @ApiStatus.Internal
 class PluginDescriptorLoadingContext(
@@ -69,19 +60,13 @@ class PluginDescriptorLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-  private val descriptorLoadingErrors = CopyOnWriteArrayList<PluginLoadingError>()
+  private val descriptorLoadingErrors = CopyOnWriteArrayList<PluginDescriptorLoadingError>()
 
-  fun copyDescriptorLoadingErrors(): List<PluginLoadingError> = descriptorLoadingErrors.toList()
+  fun copyDescriptorLoadingErrors(): List<PluginDescriptorLoadingError> = descriptorLoadingErrors.toList()
 
-  internal fun reportCannotLoad(file: Path, e: Throwable?) {
+  internal fun reportCannotLoad(file: Path, e: Throwable) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
-    descriptorLoadingErrors.add(PluginLoadingError(
-      reason = null,
-      htmlMessageSupplier = Supplier {
-        HtmlChunk.text(CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file)))
-      },
-      error = e,
-    ))
+    descriptorLoadingErrors.add(PluginDescriptorLoadingError(file, e))
   }
 
   fun patchPlugin(builder: PluginDescriptorBuilder) {
