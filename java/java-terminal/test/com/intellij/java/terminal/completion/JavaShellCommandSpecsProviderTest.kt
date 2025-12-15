@@ -7,19 +7,28 @@ import com.intellij.java.terminal.JavaShellCommandUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellFileSystemSupport
 import org.jetbrains.plugins.terminal.testFramework.completion.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
 
-@RunWith(JUnit4::class)
-class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
+@RunWith(Parameterized::class)
+class JavaShellCommandSpecsProviderTest(private val engine: TerminalEngine) : BasePlatformTestCase() {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun engine(): List<TerminalEngine> = listOf(TerminalEngine.REWORKED, TerminalEngine.NEW_TERMINAL)
+  }
+
   @Test
   fun `default options are present`() = runBlocking {
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { _ ->
@@ -123,17 +132,29 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
 
   private fun createFixture(javaVersion: Int = 11): ShellCompletionTestFixture {
     ApplicationManager.getApplication().replaceService(VMOptionsService::class.java, MockVMOptionsService(), testRootDisposable)
-    val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { command ->
-      if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
-        return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home\njava.version = ${javaVersion}", exitCode = 0)
-      }
+    val fixture = ShellCompletionTestFixture.builder(project)
+      .setIsReworkedTerminal(engine == TerminalEngine.REWORKED)
+      .mockShellCommandResults { command ->
+        if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
+          return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home\njava.version = ${javaVersion}", exitCode = 0)
+        }
 
-      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
-        return@mockShellCommandResults ShellCommandResult.create("file1.jar\nfile2.jar\ndir1/", exitCode = 0)
-      }
+        if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
+          return@mockShellCommandResults ShellCommandResult.create("file1.jar\nfile2.jar\ndir1/", exitCode = 0)
+        }
 
-      return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
-    }.build()
+        return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
+      }
+      .mockFileSystemSupport(object : ShellFileSystemSupport {
+        override suspend fun listDirectoryFiles(path: String): List<ShellFileInfo> {
+          return listOf(
+            ShellFileInfo.create("file1.jar", ShellFileInfo.Type.FILE),
+            ShellFileInfo.create("file2.jar", ShellFileInfo.Type.FILE),
+            ShellFileInfo.create("dir1", ShellFileInfo.Type.DIRECTORY),
+          )
+        }
+      })
+      .build()
     return fixture
   }
 
