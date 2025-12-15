@@ -29,6 +29,7 @@
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
     <welcomeScreenProjectProvider implementation="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyCharmWelcomeScreenProjectProvider" order="first"/>
+    <editorNotificationProvider implementation="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyCharmWelcomeScreenOpenFileNotificationProvider"/>
     <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyNewScriptWelcomeScreenFeature"/>
     <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyNewNotebookWelcomeScreenFeature"/>
     <platform.ide.welcomeScreenFeatureBackend implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyLearnWelcomeScreenFeature"/>
