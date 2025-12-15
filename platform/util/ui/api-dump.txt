@@ -4704,7 +4704,6 @@ com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow$DragAndDrop
 - sf:BUTTON_DROP_BACKGROUND:java.awt.Color
 - sf:BUTTON_DROP_BORDER:java.awt.Color
 - sf:BUTTON_FLOATING_BACKGROUND:java.awt.Color
-- sf:STRIPE_BACKGROUND:java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - sf:SEPARATOR_COLOR:java.awt.Color
 - <init>():V

@@ -550,8 +550,10 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     if (!isFinishingDrop && isDroppingButton()) {
-      g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.STRIPE_BACKGROUND else background.brighter()
-      g.fillRect(0, 0, width, height)
+      if (!isNewStripes) {
+        g.color = background.brighter()
+        g.fillRect(0, 0, width, height)
+      }
       val rectangle = Rectangle(drawRectangle)
       if (!rectangle.isEmpty) {
         var round: Int? = null
