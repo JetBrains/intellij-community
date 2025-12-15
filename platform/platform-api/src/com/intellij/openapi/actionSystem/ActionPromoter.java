@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,7 +29,7 @@ public interface ActionPromoter {
   /**
    * Override and return the list of actions to try first.
    * <p>
-   * The method must be fast, must not do reference resolution, reparsing, etc.
+   * The method must be fast, must not do reference resolution, reparsing, etc. It runs <b>without</b> the read lock.
    * To ensure that the provided {@code context} returns only the already cached UI data.
    * <p>
    * For example, {@link PlatformCoreDataKeys#CONTEXT_COMPONENT}

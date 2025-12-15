@@ -1099,10 +1099,8 @@ suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataConte
   val frozenContext = Utils.getUiOnlyDataContext(dataContext)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
-      readActionUndispatchedForActionExpand {
-        val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
-        rearrangeByPromotersImpl(actions, frozenContext, promoters)
-      }
+      val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
+      rearrangeByPromotersImpl(actions, frozenContext, promoters)
     }
     catch (ex: CancellationException) {
       throw ex
