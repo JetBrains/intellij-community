@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.fileEditor.FileNavigator.Companion.getInstance
 import com.intellij.openapi.fileEditor.FileNavigatorImpl
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
@@ -59,12 +60,21 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
 
   companion object {
     @JvmStatic
-    fun openEditor(project: Project, navigatable: Navigatable, callback: Runnable?): Boolean {
-      return openEditor(project, arrayOf(navigatable), callback)
-    }
+    @Deprecated("Use openEditor(navigatable, callback)")
+    fun openEditor(project: Project, navigatable: Navigatable, callback: Runnable?): Boolean = openEditor(navigatable, callback)
 
     @JvmStatic
-    fun openEditor(project: Project, navigatables: Array<Navigatable>, callback: Runnable?): Boolean {
+    fun openEditor(navigatable: Navigatable, callback: Runnable?): Boolean = openEditor(arrayOf(navigatable), callback)
+
+    @JvmStatic
+    @Deprecated("Use openEditor(navigatables, callback)")
+    fun openEditor(project: Project, navigatables: Array<Navigatable>, callback: Runnable?): Boolean = openEditor(navigatables, callback)
+
+    /**
+     * Performs navigation ignoring [OpenFileDescriptor.NAVIGATE_IN_EDITOR]
+     */
+    @JvmStatic
+    fun openEditor(navigatables: Array<Navigatable>, callback: Runnable?): Boolean {
       val fileNavigator = getInstance() as FileNavigatorImpl
       var success = false
       for (navigatable in navigatables) {
