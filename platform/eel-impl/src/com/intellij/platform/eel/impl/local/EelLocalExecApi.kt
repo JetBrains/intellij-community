@@ -34,7 +34,6 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
 
 @OptIn(EelDelicateApi::class)
@@ -57,13 +56,11 @@ class EelLocalExecPosixApi(
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
-  private val loginNonInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
-  private val loginInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
+  private val environmentVariablesCache = EelExecApiEnvironmentVariableCache(::makeEnvironmentVariablesDeferred)
 
   @TestOnly
   fun clearCaches() {
-    loginNonInteractiveCache.set(null)
-    loginInteractiveCache.set(null)
+    environmentVariablesCache.clear()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,46 +69,46 @@ class EelLocalExecPosixApi(
       opts as? EelExecPosixApi.PosixEnvironmentVariablesOptions
       ?: object : EelExecPosixApi.PosixEnvironmentVariablesOptions, EelExecApi.EnvironmentVariablesOptions by opts {}
 
-    val (cache, interactive) = when (opts.mode) {
+    return when (val mode = opts.mode) {
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT -> {
-        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
+        EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
       }
 
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
-        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
+        EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
       }
 
-      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> {
-        loginNonInteractiveCache to false
-      }
-
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE,
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
-        loginInteractiveCache to true
+        environmentVariablesCache.getDeferred(mode, opts)
       }
     }
+  }
 
-    val result = cache.updateAndGet { old ->
-      if (old != null && !opts.onlyActual && old.isCompleted && old.getCompletionExceptionOrNull() == null) {
-        old
+  private fun makeEnvironmentVariablesDeferred(mode: EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode?): Deferred<Map<String, String>> {
+    val interactive = when (mode) {
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> false
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> true
+
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT,
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL,
+      null
+        -> error("unreachable")
+    }
+
+    return service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+      try {
+        val shell = getUserShell()
+        // Timeout is chosen at random.
+        ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
       }
-      else {
-        service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-          try {
-            val shell = getUserShell()
-            // Timeout is chosen at random.
-            ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
-          }
-          catch (err: CancellationException) {
-            throw err
-          }
-          catch (err: Exception) {
-            throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
-          }
-        }
+      catch (err: CancellationException) {
+        throw err
       }
-    }!!
-    result.start()
-    return EnvironmentVariablesDeferred(result)
+      catch (err: Exception) {
+        throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+      }
+    }
   }
 
   private suspend fun getUserShell(): String {
