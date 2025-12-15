@@ -77,6 +77,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//java/java-tests:tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

@@ -1,18 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
-import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.renameTemplate
+import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
+import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
 
 abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(unused: String) {
@@ -40,7 +39,7 @@ abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixt
         val changedName: String? = InTextDirectivesUtils.findListWithPrefixes(fileText, "// CHANGED_NAME: ").firstOrNull()
         val checkResult: Boolean = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// IGNORE_RESULT")
         if (changedName != null) {
-            renameTemplate(template, changedName)
+            ExtractMethodAndDuplicatesInplaceTest.renameTemplate(template, changedName)
         }
         nextTemplateVariable(template)
         UIUtil.dispatchAllInvocationEvents()
@@ -55,8 +54,7 @@ abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixt
         }
     }
 
-    protected open fun getExtractFunctionHandler(allContainersEnabled: Boolean): AbstractExtractKotlinFunctionHandler =
-        ExtractKotlinFunctionHandler(allContainersEnabled)
+    protected abstract fun getExtractFunctionHandler(allContainersEnabled: Boolean): AbstractExtractKotlinFunctionHandler
 
     private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
 }

@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Extracti
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
@@ -62,4 +65,32 @@ abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    override fun getIntroduceVariableHandler(): RefactoringActionHandler {
+        throw UnsupportedOperationException()
+    }
+
+    override fun doExtractSuperTest(unused: String, isInterface: Boolean) {
+        throw UnsupportedOperationException()
+    }
+
+    override fun doIntroducePropertyTest(unused: String) {
+        throw UnsupportedOperationException()
+    }
+
+    override fun getIntroduceTypeAliasHandler(
+        explicitPreviousSibling: PsiElement?,
+        aliasName: String?,
+        aliasVisibility: KtModifierKeywordToken?
+    ): RefactoringActionHandler {
+        throw UnsupportedOperationException()
+    }
+
+    override fun doIntroduceConstantTest(unused: String) {
+        throw UnsupportedOperationException()
+    }
+
+    override fun updateScriptDependenciesSynchronously(psiFile: PsiFile) {
+        // not applicable
+    }
 }

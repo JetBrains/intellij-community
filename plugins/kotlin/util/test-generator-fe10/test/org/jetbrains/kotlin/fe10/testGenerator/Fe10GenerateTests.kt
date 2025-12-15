@@ -95,8 +95,6 @@ import org.jetbrains.kotlin.idea.projectView.AbstractKotlinProjectViewTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.quickfix.AbstractSharedK1QuickFixTest
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
@@ -104,8 +102,8 @@ import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
-import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
-import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractInplaceIntroduceFunctionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1InplaceIntroduceFunctionTest
+import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractK1ExtractionTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
@@ -1231,7 +1229,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = EXTRACT_REFACTORING) {
-        testClass<AbstractExtractionTest> {
+        testClass<AbstractK1ExtractionTest>(generatedClassName = "org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated") {
             model("refactoring/introduceVariable", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
             model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest")
             model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
@@ -1244,7 +1242,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
             model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
-        testClass<AbstractInplaceIntroduceFunctionTest> {
+        testClass<AbstractK1InplaceIntroduceFunctionTest>(generatedClassName = "org.jetbrains.kotlin.idea.refactoring.introduce.InplaceIntroduceFunctionTestGenerated") {
             model("refactoring/extractFunctionInplace")
         }
     }
