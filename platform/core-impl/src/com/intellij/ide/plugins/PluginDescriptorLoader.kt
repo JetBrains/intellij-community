@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 import java.util.jar.JarInputStream
 import java.util.zip.ZipInputStream
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.isDirectory
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
@@ -946,14 +947,20 @@ private fun loadContentModuleDescriptors(
     }
 
     if (isDeprecatedLoader && jarFileForModule != null && Files.exists(jarFileForModule)) {
-      val raw = MixedDirAndJarDataLoader(files = arrayOf(FileItem(jarFileForModule, subDescriptorFile)), pool = pool, jarOnly = true).use { dataLoader ->
+      val raw = MixedDirAndJarDataLoader(files = arrayOf(FileItem(jarFileForModule, subDescriptorFile)), pool = pool, jarOnly = !isRunningFromSourcesWithoutDevBuild).use { dataLoader ->
         val consumer = PluginDescriptorFromXmlStreamConsumer(
           readContext = loadingContext.readContext,
           xIncludeLoader = createXIncludeLoader(pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, dataLoader = dataLoader),
         )
-        val data = pool.load(jarFileForModule).use {
-          it.loadZipEntry(subDescriptorFile)
-        } ?: error("Failed to load entry '$subDescriptorFile' from jar file '$jarFileForModule'")
+        val data =
+          if (isRunningFromSourcesWithoutDevBuild && jarFileForModule.isDirectory()) {
+            Files.readAllBytes(jarFileForModule.resolve(subDescriptorFile))
+          }
+          else {
+            pool.load(jarFileForModule).use {
+              it.loadZipEntry(subDescriptorFile)
+            } ?: error("Failed to load entry '$subDescriptorFile' from jar file '$jarFileForModule'")
+          }
         consumer.consume(data, dataLoader.toString())
         consumer.getBuilder()
       }
