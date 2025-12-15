@@ -49,7 +49,7 @@ public interface AnnotationPackageSupport {
    * The annotation returned first will be preferred by default
    * in {@link NullableNotNullManager#getDefaultAnnotation(Nullability, PsiElement)}. 
    */
-  default @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  default @NotNull List<@NotNull String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return Collections.emptyList();
   }
 
