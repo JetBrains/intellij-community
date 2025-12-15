@@ -1375,8 +1375,12 @@ open class FileEditorManagerImpl(
     return if (isLazy) flow else flow.shareIn(compositeCoroutineScope, started = SharingStarted.Eagerly, replay = 1)
   }
 
-  // only for remote dev
-  protected fun createCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
+  /**
+   * Only for CodeWithMe
+   *
+   * WARNING: Utilizes [PrecomputedFlow] that is handled differently from normal [Flow<EditorCompositeModel>]
+   */
+  protected fun createPrecomputedCompositeModelByProvidedList(editorsWithProviders: List<FileEditorWithProvider>): Flow<EditorCompositeModel> {
     return EditorCompositeModelManager(editorPropertyChangeListener, coroutineScope).blockingFileEditorWithProviderFlow(
       editorsWithProviders = editorsWithProviders,
     )
