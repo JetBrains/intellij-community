@@ -285,8 +285,8 @@ fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElem
 
 
 fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String, @NlsContexts.DialogTitle title: String) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) throw CommonRefactoringUtil.RefactoringErrorHintException(message);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, title, null);
+    if (ApplicationManager.getApplication().isUnitTestMode()) throw CommonRefactoringUtil.RefactoringErrorHintException(message)
+    CommonRefactoringUtil.showErrorHint(project, editor, message, title, null)
 }
 
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {

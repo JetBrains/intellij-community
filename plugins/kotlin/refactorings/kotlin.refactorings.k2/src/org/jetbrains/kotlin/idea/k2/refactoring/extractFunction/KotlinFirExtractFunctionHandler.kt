@@ -12,9 +12,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -26,12 +26,10 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractE
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractInplaceExtractionHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION_SHOULD_COLLAPSE_BODY
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
