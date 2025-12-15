@@ -15,9 +15,9 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
 data class BuildDevInfo(
-  val mainClassName: String,
-  val classPath: Collection<Path>,
-  val systemProperties: Map<String, String>,
+  @JvmField val mainClassName: String,
+  @JvmField val classPath: Collection<Path>,
+  @JvmField val systemProperties: Map<String, String>,
 )
 
 /**

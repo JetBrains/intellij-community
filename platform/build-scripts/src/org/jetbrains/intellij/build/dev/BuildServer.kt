@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.dev
 
@@ -25,7 +25,6 @@ import java.util.Properties
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
 
-
 /**
  * Custom path for product properties
  */
@@ -50,7 +49,7 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
   vmOptions.asSequence()
     .filter { it.startsWith("-D") }
     .map { it.removePrefix("-D") }
-    .associateByTo(result, { it.substringBefore("=") }, { it.substringAfter("=", "") })
+    .associateByTo(result, { it.substringBefore('=') }, { it.substringAfter('=', "") })
   
   return VmProperties(result)
 }
@@ -102,7 +101,7 @@ fun readVmOptions(runDir: Path): List<String> {
   val result = ArrayList<String>()
 
   val vmOptionsFile = Files.newDirectoryStream(runDir.resolve("bin"), "*.vmoptions").use { it.singleOrNull() }
-  require(vmOptionsFile != null) {
+  requireNotNull(vmOptionsFile) {
     "No single *.vmoptions file in ${runDir} (${NioFiles.list(runDir).map(Path::getFileName).joinToString()})}"
   }
   result.addAll(vmOptionsFile.readLines())
@@ -119,7 +118,7 @@ fun readVmOptions(runDir: Path): List<String> {
   return result
 }
 
-/** Returns IDE installation directory */
+// returns IDE installation directory
 suspend fun buildProductInProcess(request: BuildRequest): Path {
   request.tracer?.let {
     TraceManager.setTracer(it)
@@ -158,7 +157,7 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Pr
   }
 
   val projectPropertiesPath = getProductPropertiesPath(homePath)
-  return Json.decodeFromString(ProductConfigurationRegistry.serializer(), Files.readString(projectPropertiesPath))
+  return Json.decodeFromString(Files.readString(projectPropertiesPath))
 }
 
 internal fun getProductPropertiesPath(homePath: Path): Path {
@@ -168,8 +167,8 @@ internal fun getProductPropertiesPath(homePath: Path): Path {
 }
 
 private fun getProductConfiguration(configuration: ProductConfigurationRegistry, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
-  val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
-  return configuration.products[key]
+  val key = if (baseIdePlatformPrefixForFrontend == null) platformPrefix else "$baseIdePlatformPrefixForFrontend$platformPrefix"
+  return configuration.products.get(key)
          ?: throw ConfigurationException("No production configuration for `$key`; please add to `${PRODUCT_REGISTRY_PATH}` if needed")
 }
 

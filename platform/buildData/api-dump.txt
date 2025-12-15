@@ -1,12 +1,12 @@
 f:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
 - sf:Companion:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$Companion
-- f:getAdditionalJvmArguments():java.util.List
-- f:getBootClassPathJarNames():java.util.List
-- f:getCommands():java.util.List
-- f:getDataDirectoryName():java.lang.String
-- f:getEnvVarBaseName():java.lang.String
-- f:getMainClass():java.lang.String
-- f:getVmOptionsFilePath():java.lang.String
+- f:additionalJvmArguments:java.util.List
+- f:bootClassPathJarNames:java.util.List
+- f:commands:java.util.List
+- f:dataDirectoryName:java.lang.String
+- f:envVarBaseName:java.lang.String
+- f:mainClass:java.lang.String
+- f:vmOptionsFilePath:java.lang.String
 bf:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.platform.buildData.productInfo.CustomCommandLaunchData$$serializer
