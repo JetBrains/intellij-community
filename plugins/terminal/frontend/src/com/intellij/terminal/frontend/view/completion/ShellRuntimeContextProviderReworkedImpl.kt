@@ -18,7 +18,7 @@ internal class ShellRuntimeContextProviderReworkedImpl(
   private val envVariables: Map<String, String>,
   eelDescriptor: EelDescriptor,
 ) : ShellRuntimeContextProvider {
-  private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
+  private val generatorProcessExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor, envVariables)
   private val shellCommandExecutor = ShellCommandExecutorReworked(generatorProcessExecutor)
   private val fileSystemSupport = ShellFileSystemSupportImpl(eelDescriptor)
 

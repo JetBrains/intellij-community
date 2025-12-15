@@ -111,7 +111,7 @@ internal class TerminalCompletionFilesCalculationTest : BasePlatformTestCase() {
 
   private fun getChildFiles(currentDirectory: String, path: String): List<ShellFileInfo> = runBlocking {
     val eelDescriptor = LocalEelDescriptor
-    val processExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor)
+    val processExecutor = ShellDataGeneratorProcessExecutorImpl(eelDescriptor, baseEnvVariables = emptyMap())
     val context = ShellRuntimeContextImpl(
       currentDirectory = currentDirectory,
       envVariables = emptyMap(),

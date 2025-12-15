@@ -21,6 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @ApiStatus.Internal
 class ShellDataGeneratorProcessExecutorImpl(
   private val eelDescriptor: EelDescriptor,
+  private val baseEnvVariables: Map<String, String>,
 ) : ShellDataGeneratorProcessExecutor {
   override suspend fun executeProcess(options: ShellDataGeneratorProcessOptions): ShellCommandResult = coroutineScope {
     val scope = this
@@ -41,7 +42,7 @@ class ShellDataGeneratorProcessExecutorImpl(
         .spawnProcess(options.executable)
         .args(options.args)
         .workingDirectory(eelDirectory)
-        .env(options.env)
+        .env(baseEnvVariables + options.env)
         .interactionOptions(RedirectStdErr(RedirectTo.STDOUT))
         .scope(scope) // Terminate the process if the coroutine was canceled
         .eelIt()
