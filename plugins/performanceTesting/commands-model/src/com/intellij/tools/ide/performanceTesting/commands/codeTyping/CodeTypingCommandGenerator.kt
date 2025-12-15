@@ -39,6 +39,28 @@ import com.intellij.tools.ide.performanceTesting.commands.waitForCodeAnalysisFin
  * completion automatically inserts the full identifier. Because of this, the performance test cannot correctly delete the typed identifier
  * to replace it with the full one (which in turn is a workaround for not being able to pick the candidate from the completion popup).
  * Unfortunately, on the performance test side, we don't have enough information about the completion to make a decision.
+ *
+ * #### Example input
+ *
+ * Here is a possible input to prepare a plan:
+ *
+ * ```
+ * fun transformString(input: ~[Str]String) = run {
+ *     val normalizedInput = input.trim().~lowercase().~replace(" ", "-")
+ *     val shortenedInput = if (normalizedInput.~[l]length > 10) normalizedInput.~substring(0, 10) else normalizedInput
+ *
+ *     ~shortenedInput.~replaceFirstChar { firstChar ->
+ *         if (~firstChar.~isLowerCase()) ~firstChar.~titlecase()
+ *         else ~firstChar.~[toS]toString()
+ *     ↓
+ * ↓
+ * ```
+ *
+ * The whole function will be typed out.
+ *
+ * `~[Str]String` means that the test will type `Str`, then wait for completion, and finish with typing `String`. `~lowercase` without the
+ * brackets means that the test will choose its own shortcut to type and invoke completion.
+
  */
 object CodeTypingCommandGenerator {
   private const val CODE_TYPING_SPAN_NAME = "codeTyping"
