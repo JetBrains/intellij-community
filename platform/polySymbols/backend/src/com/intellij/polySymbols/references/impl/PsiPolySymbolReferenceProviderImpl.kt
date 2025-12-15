@@ -25,7 +25,6 @@ import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
-import com.intellij.polySymbols.search.PolySymbolReferenceHints
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
@@ -50,16 +49,25 @@ class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
+  internal fun getSymbolOffsetsAndReferences(
+    element: PsiExternalReferenceHost,
+    hints: PsiSymbolReferenceHints,
+  ): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> {
     val target = hints.target
     val cacheKeys =
       PsiPolySymbolReferenceCacheInfoProvider.getCacheKeys(element, target)
 
-    return CachedValuesManager.getCachedValue(element) {
+    val cache = CachedValuesManager.getCachedValue(element) {
       CachedValueProvider.Result.create(ConcurrentHashMap<Any, Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>>>(),
                                         element.containingFile, PsiModificationTracker.MODIFICATION_COUNT)
-    }.computeIfAbsent(cacheKeys) {
-      getSymbolOffsetsAndReferencesNoCache(element, target)
+    }
+
+    // Do not calculate references within computeIfAbsent, as it can lead to a blocking call in a non-IO context in coroutines,
+    // causing a coroutine to fail cancellation.
+    return cache[cacheKeys].let {
+      it ?: getSymbolOffsetsAndReferencesNoCache(element, target).also { result ->
+        cache.computeIfAbsent(cacheKeys) { result }
+      }
     }
   }
 
