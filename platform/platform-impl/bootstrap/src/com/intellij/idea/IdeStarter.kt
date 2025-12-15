@@ -6,18 +6,16 @@ import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.CommandLineProcessor
+import com.intellij.ide.ProtocolHandler
+import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginInitializationErrorReporter
 import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorUtil
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -30,8 +28,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -103,8 +99,6 @@ open class IdeStarter : ModernApplicationStarter() {
       if (Registry.`is`("ide.enable.edt.lock.load.monitor")) {
         app.serviceAsync<EdtLockLoadMonitorService>().initialize()
       }
-
-      launch { reportPluginErrors() }
 
       LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       runCatching {
@@ -317,55 +311,4 @@ private fun postOpenUiTasks(scope: CoroutineScope) {
   scope.launch {
     enableScreenReaderSupportIfNeeded()
   }
-}
-
-private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
-  if (pluginErrors.isEmpty()) {
-    return
-  }
-
-  withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-    val title = IdeBundle.message("title.plugin.error")
-    val pluginErrorMessages = pluginErrors.map { it.htmlMessage }.toMutableList()
-    val actions = linksToActions(pluginErrorMessages)
-    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
-    @Suppress("DEPRECATION")
-    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
-      .createNotification(title, content, NotificationType.ERROR)
-      .setListener { notification, event ->
-        notification.expire()
-        PluginInitializationErrorReporter.onEvent(event.description)
-      }
-      .addActions(actions)
-      .notify(null)
-  }
-}
-
-private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction> {
-  val link = "<a href=\""
-  val actions = ArrayList<AnAction>()
-
-  while (!errors.isEmpty()) {
-    val builder = StringBuilder()
-    errors[errors.lastIndex].appendTo(builder)
-    val error = builder.toString()
-
-    if (error.startsWith(link)) {
-      val descriptionEnd = error.indexOf('"', link.length)
-      val description = error.substring(link.length, descriptionEnd)
-      @Suppress("HardCodedStringLiteral")
-      val text = error.substring(descriptionEnd + 2, error.lastIndexOf("</a>"))
-      errors.removeAt(errors.lastIndex)
-
-      actions.add(NotificationAction.createSimpleExpiring(text) {
-        PluginInitializationErrorReporter.onEvent(description)
-      })
-    }
-    else {
-      break
-    }
-  }
-
-  return actions
 }
