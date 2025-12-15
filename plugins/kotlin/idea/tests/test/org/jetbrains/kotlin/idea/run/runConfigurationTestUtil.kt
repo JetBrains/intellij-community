@@ -14,17 +14,20 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.MapDataContext
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.disposeLibrary
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
@@ -53,17 +56,20 @@ fun createConfigurationFromElement(element: PsiElement, save: Boolean = false): 
     return runnerAndConfigurationSettings.configuration
 }
 
-fun createLibraryWithLongPaths(project: Project): Library {
+fun createLibraryWithLongPaths(project: Project, testRootDisposable: Disposable): Library {
     val maxCommandlineLengthWindows = 24500
     val maxFilenameLengthWindows = 245
 
     return runWriteAction {
         val modifiableModel = ProjectLibraryTable.getInstance(project).modifiableModel
-        val library = try {
-            modifiableModel.createLibrary("LibraryWithLongPaths", null)
-        } finally {
-            modifiableModel.commit()
+        val library = with(modifiableModel) {
+            try {
+                createLibrary("LibraryWithLongPaths", null)
+            } finally {
+                commit()
+            }
         }
+
         with(library.modifiableModel) {
             for (i in 0..maxCommandlineLengthWindows / maxFilenameLengthWindows) {
                 val tmpFile = VirtualFileManager.constructUrl(
@@ -74,8 +80,22 @@ fun createLibraryWithLongPaths(project: Project): Library {
             }
             commit()
         }
-        return@runWriteAction library
+        library
+    }.also { library ->
+        Disposer.register(testRootDisposable) {
+            runWriteAction {
+                val modifiableModel = ProjectLibraryTable.getInstance(project).modifiableModel
+                with(modifiableModel) {
+                    try {
+                        removeLibrary(library)
+                    } finally {
+                        commit()
+                    }
+                }
+            }
+        }
     }
+
 }
 
 

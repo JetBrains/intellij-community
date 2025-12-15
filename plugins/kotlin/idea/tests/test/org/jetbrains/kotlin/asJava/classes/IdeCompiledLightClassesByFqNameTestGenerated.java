@@ -695,6 +695,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassMembers.kt"));
         }
 
+        @TestMetadata("valueClassWithCompanion.kt")
+        public void testValueClassWithCompanion() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithCompanion.kt"));
+        }
+
         @TestMetadata("valueClassWithDelegatedSuperInterface.kt")
         public void testValueClassWithDelegatedSuperInterface() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/valueClassWithDelegatedSuperInterface.kt"));
