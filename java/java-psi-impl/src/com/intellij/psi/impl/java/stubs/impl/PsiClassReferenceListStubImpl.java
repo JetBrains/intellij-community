@@ -66,7 +66,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         TypeInfo info = myInfos[i];
         TypeAnnotationContainer annotations = info.getTypeAnnotations();
-        if (annotations == TypeAnnotationContainer.EMPTY) {
+        if (annotations == TypeAnnotationContainer.EMPTY && myParent != null) {
           PsiElement psi = myParent.getPsi();
           if (psi instanceof PsiTypeParameter) {
             annotations = ExternalTypeAnnotationContainer.create((PsiTypeParameter)psi);
