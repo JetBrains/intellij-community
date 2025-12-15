@@ -1034,44 +1034,45 @@ public final class ConfigImportHelper {
       var initContext = new ProductPluginInitContext(
         options.compatibleBuildNumber, Collections.emptySet(), Collections.emptySet(), brokenPluginVersions
       );
-      var incompatiblePlugins = new HashMap<PluginId, PluginMainDescriptor>();
-      var compatiblePlugins = PluginInitializationContextKt.selectPluginsToLoad(
+      var nonLoadablePlugins = new HashMap<PluginId, PluginMainDescriptor>();
+      var loadablePlugins = PluginInitializationContextKt.selectPluginsToLoad(
         initContext,
         oldIdePlugins.getDiscoveredPlugins(),
         (plugin, reason) -> {
           if (reason instanceof PluginVersionIsSuperseded) {
             return Unit.INSTANCE;
           }
-          var previousIncompatible = incompatiblePlugins.get(plugin.getPluginId());
-          if (previousIncompatible == null || VersionComparatorUtil.compare(plugin.getVersion(), previousIncompatible.getVersion()) > 0) {
-            incompatiblePlugins.put(plugin.getPluginId(), plugin);
+          var previousNonLoadable = nonLoadablePlugins.get(plugin.getPluginId());
+          if (previousNonLoadable == null || VersionComparatorUtil.compare(plugin.getVersion(), previousNonLoadable.getVersion()) > 0) {
+            nonLoadablePlugins.put(plugin.getPluginId(), plugin);
           }
           return Unit.INSTANCE;
         }
       ).stream().flatMap(list -> list.getPlugins().stream()).toList();
+      // TODO 'plugin is broken' is already applied by 'selectPluginsToLoad'
       if (Boolean.getBoolean(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY)) {
-        partitionNonBundled(compatiblePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
+        partitionNonBundled(loadablePlugins, pluginsToDownload, pluginsToMigrate, descriptor -> {
           var brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
           return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
         });
-        partitionNonBundled(incompatiblePlugins.values(), pluginsToDownload, pluginsToMigrate, __ -> true);
+        partitionNonBundled(nonLoadablePlugins.values(), pluginsToDownload, pluginsToMigrate, __ -> true);
       }
       else {
         // The first partition in the branch above puts only broken plugins to pluginsToDownload.
         // Here we also put there plugins for which updates are available (or they are broken).
         // So the only difference is that here we try to download more plugins.
         var nonBundledPlugins = new ArrayList<IdeaPluginDescriptor>();
-        partitionNonBundled(compatiblePlugins, nonBundledPlugins, pluginsToMigrate, __ -> true);
-        partitionNonBundled(incompatiblePlugins.values(), nonBundledPlugins, pluginsToMigrate, __ -> true);
+        partitionNonBundled(loadablePlugins, nonBundledPlugins, pluginsToMigrate, __ -> true);
+        partitionNonBundled(nonLoadablePlugins.values(), nonBundledPlugins, pluginsToMigrate, __ -> true);
         var updates = fetchPluginUpdatesFromMarketplace(options, ContainerUtil.map2Set(nonBundledPlugins, d -> d.getPluginId()));
-        partitionNonBundled(compatiblePlugins, pluginsToDownload, pluginsToMigrate, d -> {
+        partitionNonBundled(loadablePlugins, pluginsToDownload, pluginsToMigrate, d -> {
           if (updates != null && updates.containsKey(d.getPluginId()) && !updates.get(d.getPluginId()).getVersion().equals(d.getVersion())) {
             return true;
           }
           var brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(d.getPluginId()) : null;
           return brokenVersions != null && brokenVersions.contains(d.getVersion());
         });
-        partitionNonBundled(incompatiblePlugins.values(), pluginsToDownload, pluginsToMigrate, __ -> true);
+        partitionNonBundled(nonLoadablePlugins.values(), pluginsToDownload, pluginsToMigrate, __ -> true);
       }
     }
     return true;
