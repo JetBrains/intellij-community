@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
@@ -35,7 +34,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.*
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
@@ -448,10 +446,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val deferred = scope.async(
       currentCoroutineContext().minusKey(Job) +
       CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
-      // we downgrade access to read to not allow accidental clients that rely on write-intent
-      runReadAction { // will immediately succeed because lock is parallelized here
-        supplier()
-      }
+      supplier()
     }
     try {
       return deferred.await()
