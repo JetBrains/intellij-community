@@ -1,14 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
-import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -24,8 +22,6 @@ import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_S
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
-import org.jetbrains.ide.BuiltInServerManager
-import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
 import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
 import java.lang.ClassLoader.getSystemClassLoader
 import java.net.URLClassLoader
@@ -78,15 +74,10 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       }
     }
 
-    val is17 = javaParameters.jdk?.versionString?.contains("17") == true
     if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
       vmParameters.addAll("-XX:CICompilerCount=2")
-      if (!is17) {
-        //vmParameters.addAll("-XX:-TieredCompilation")
-        //vmParameters.addAll("-XX:+SegmentedCodeCache")
-        vmParameters.addAll("-XX:+UnlockDiagnosticVMOptions")
-        vmParameters.addAll("-XX:TieredOldPercentage=100000")
-      }
+      vmParameters.addAll("-XX:+UnlockDiagnosticVMOptions")
+      vmParameters.addAll("-XX:TieredOldPercentage=100000")
     }
 
     vmParameters.addAll(
@@ -104,9 +95,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-XX:JbrShrinkingGcMaxHeapFreeRatio=") }) {
       vmParameters.add("-XX:JbrShrinkingGcMaxHeapFreeRatio=40")
     }
-    if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
-      vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
-    }
+    vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
@@ -120,7 +109,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     enableIjentDefaultFsProvider(project, vmParameters)
 
     if (isDevBuild) {
-      updateParametersForDevBuild(javaParameters, configuration, project)
+      updateParametersForDevBuild(javaParameters, configuration)
     }
   }
 
@@ -130,13 +119,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   }
 }
 
-private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase, project: Project) {
+private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase) {
   val vmParameters = javaParameters.vmParametersList
-  if (configuration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
-    vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
-    vmParameters.addProperty("compile.server.project", project.locationHash)
-    vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
-  }
 
   var productClassifier = vmParameters.getPropertyValue("idea.platform.prefix")
   productClassifier = when (productClassifier) {

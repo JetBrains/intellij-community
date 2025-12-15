@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.idea.devkit.requestHandlers
@@ -33,7 +33,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.ide.HttpRequestHandler
@@ -47,11 +46,10 @@ private val LOG = logger<BuildHttpRequestHandler>()
 /**
  * Starts JPS build for targets passed in the content in JSON format (array of [BuildScopeDescription] objects).
  *
- * Currently, it's enabled for 'intellij' project only, and can be used to build additional required modules when a developer runs a test or
+ * Currently, it's enabled for 'intellij' project only and can be used to build additional required modules when a developer runs a test or
  * an application from the IDE.
  */
-@Suppress("unused")
-private class BuildHttpRequestHandler : HttpRequestHandler() {
+internal class BuildHttpRequestHandler : HttpRequestHandler() {
   override fun isSupported(request: FullHttpRequest): Boolean {
     return request.method() == HttpMethod.POST && request.uri().startsWith(PREFIX)
   }
