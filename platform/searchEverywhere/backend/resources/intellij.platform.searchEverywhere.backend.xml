@@ -11,6 +11,7 @@
     <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.recentFiles.SeRecentFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.classes.SeClassesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.symbols.SeSymbolsProviderFactory"/>

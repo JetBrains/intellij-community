@@ -55,21 +55,24 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     get() = contributor.fullGroupName
   override val contributor: SearchEverywhereContributor<Any> get() = contributorWrapper.contributor
   private val findModel = FindManager.getInstance(project).findInProjectModel
-  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
 
     val textFilter = SeTextFilter.from(params.filter)
 
-    val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+    scopeProviderDelegate?.let { scopeProviderDelegate ->
+      val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+        scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+        }
+      } ?: run {
+        textFilter?.selectedScopeId
       }
-    } ?: run {
-      textFilter?.selectedScopeId
+
+      scopeProviderDelegate.applyScope(scopeToApply, false)
     }
-    applyScope(scopeToApply)
 
     var originalModel: FindModel? = null
     val isAllTab: Boolean = SeEverywhereFilter.isAllTab(params.filter) == true
@@ -114,12 +117,8 @@ class SeTextItemsProvider(project: Project, private val contributorWrapper: SeAs
     return contributor.showInFindResults()
   }
 
-  private fun applyScope(scopeId: String?) {
-    scopeProviderDelegate.applyScope(scopeId, false)
-  }
-
   override suspend fun getSearchScopesInfo(): SearchScopesInfo? {
-    return scopeProviderDelegate.searchScopesInfo.getValue()
+    return scopeProviderDelegate?.searchScopesInfo?.getValue()
   }
 
   override suspend fun performExtendedAction(item: SeItem): Boolean {

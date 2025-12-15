@@ -49,7 +49,7 @@ class SeTargetItem(
 @OptIn(ExperimentalAtomicApi::class)
 @Internal
 class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>, parentDisposable: Disposable): Disposable {
-  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate.createOrNull(contributorWrapper)
   private val contributor = contributorWrapper.contributor
   private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
 
@@ -61,16 +61,18 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
-    SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
-        if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
-      } ?: return@let
+    scopeProviderDelegate?.let { scopeProviderDelegate ->
+      SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
+        val selectedScopeId = scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
+          if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
+        } ?: return@let
 
-      scopeProviderDelegate.applyScope(selectedScopeId, false)
-    } ?: run {
-      val targetsFilter = SeTargetsFilter.from(params.filter)
-      SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
-      scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
+        scopeProviderDelegate.applyScope(selectedScopeId, false)
+      } ?: run {
+        val targetsFilter = SeTargetsFilter.from(params.filter)
+        SeTypeVisibilityStateProviderDelegate.applyTypeVisibilityStates<T>(contributor, targetsFilter.hiddenTypes)
+        scopeProviderDelegate.applyScope(targetsFilter.selectedScopeId, targetsFilter.isAutoTogglePossible)
+      }
     }
 
     contributorWrapper.fetchElements(inputQuery, object : AsyncProcessor<Any> {
@@ -137,7 +139,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
   }
 
   suspend fun getSearchScopesInfo(): SearchScopesInfo? {
-    return scopeProviderDelegate.searchScopesInfo.getValue()
+    return scopeProviderDelegate?.searchScopesInfo?.getValue()
   }
 
   fun <T> getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {

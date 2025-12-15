@@ -10,6 +10,7 @@ object SeProviderIdUtils {
   const val ACTIONS_ID: String = "ActionSearchEverywhereContributor"
   const val CLASSES_ID: String = "ClassSearchEverywhereContributor"
   const val FILES_ID: String = "FileSearchEverywhereContributor"
+  const val NON_INDEXABLE_FILES_ID: String = "NonIndexableFilesSEContributor"
   const val SYMBOLS_ID: String = "SymbolSearchEverywhereContributor"
   const val TEXT_ID: String = TextSearchContributor.ID
   const val RECENT_FILES_ID: String = "RecentFilesSEContributor"

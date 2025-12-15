@@ -57,7 +57,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
   private val navigationHandler: SearchEverywhereNavigationHandler = FileSearchEverywhereNavigationContributionHandler(project)
 
   override fun getSearchProviderId(): String {
-    return javaClass.simpleName
+    return "NonIndexableFilesSEContributor"
   }
 
   override fun getGroupName(): @Nls String {
