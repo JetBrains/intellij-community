@@ -561,7 +561,18 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           finally {
             if (builder.myCoalesceEquality != null) {
-              release();
+              if (AppExecutorUtil.propagateContext()) {
+                // `release` should be called under [myChildContext] as well
+                // since it executes some code to check when to call computation, and this code may rely on the context
+                // e.g. in analyzer: Application and Project are stored in context and `release` uses Application
+                ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> {
+                  release();
+                  return Unit.INSTANCE;
+                });
+              }
+              else {
+                release();
+              }
             }
           }
         };
