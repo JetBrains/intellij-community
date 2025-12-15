@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibIn
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatVersionCatalogsAreSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -17,7 +17,6 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     projectFixture: GradleTestFixtureBuilder,
     test: () -> Unit,
   ) {
-    assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "Best practice added in Gradle 9.0.0" }
     test(gradleVersion, projectFixture) {
       codeInsightFixture.enableInspections(GradleRedundantKotlinStdLibInspection::class.java)
       test()
@@ -283,7 +282,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalog(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -298,7 +298,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogNoVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -313,7 +314,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogModuleAndVersion(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -328,7 +330,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogFull(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -343,7 +346,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogFullVersionReference(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -358,7 +362,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogMultilineString(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -373,7 +378,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogCustomConfiguration(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -389,7 +395,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyListVersionCatalog(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -404,7 +411,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testDependencyListVersionCatalogInBrackets(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { id 'org.jetbrains.kotlin.jvm' version '2.2.0' }
@@ -465,7 +473,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testPluginFromVersionCatalog(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { alias(libs.plugins.kotlinJvm) }
@@ -480,7 +489,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testPluginFromVersionCatalogFull(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { alias(libs.plugins.kotlinJvmFull) }
@@ -495,7 +505,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testPluginFromVersionCatalogFullWithVersionReference(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { alias(libs.plugins.kotlinJvmFullRef) }
@@ -527,7 +538,8 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun testPluginFromVersionCatalogNotApplied(gradleVersion: GradleVersion) {
-    runTest(gradleVersion, DEFAULT_FIXTURE) {
+    assumeThatVersionCatalogsAreSupported(gradleVersion)
+    runTest(gradleVersion, WITH_VERSION_CATALOGS_FIXTURE) {
       testHighlighting(
         """
         plugins { 
@@ -616,7 +628,22 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("redundant_kotlin_stdlib") { gradleVersion ->
+    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_redundant_kotlin_stdlib") { gradleVersion ->
+      withBuildFile(gradleVersion) {
+        withKotlinJvmPlugin()
+        withPrefix {
+          call("configurations") {
+            code("customConf")
+          }
+          call("sourceSets") {
+            code("customSourceSet")
+          }
+        }
+      }
+    }
+    private val WITH_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create(
+      "groovy_dsl_redundant_kotlin_stdlib_with_version_catalogs"
+    ) { gradleVersion ->
       withFile(
         "gradle/libs.versions.toml", /* language=TOML */ """
           [versions]
@@ -638,7 +665,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
           """.trimIndent()
       )
       withBuildFile(gradleVersion) {
-        withKotlinJvmPlugin("2.2.0")
+        withKotlinJvmPlugin()
         withPrefix {
           call("configurations") {
             code("customConf")
@@ -649,9 +676,9 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
         }
       }
     }
-    private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("disabled_default_stdlib") { gradleVersion ->
+    private val DISABLED_DEFAULT_STDLIB_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_disabled_default_stdlib") { gradleVersion ->
       withBuildFile(gradleVersion) {
-        withKotlinJvmPlugin("2.2.0")
+        withKotlinJvmPlugin()
       }
       withFile("gradle.properties", "kotlin.stdlib.default.dependency=false")
     }

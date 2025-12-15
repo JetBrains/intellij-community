@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
@@ -78,5 +78,11 @@ fun assumeThatConfigurationCacheIsSupported(gradleVersion: GradleVersion) {
 fun assumeThatIsolatedProjectsIsSupported(gradleVersion: GradleVersion) {
   Assumptions.assumeTrue(isIsolatedProjectsSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support isolated projects."
+  }
+}
+
+fun assumeThatVersionCatalogsAreSupported(gradleVersion: GradleVersion) {
+  Assumptions.assumeTrue(isVersionCatalogsSupported(gradleVersion)) {
+    "Gradle ${gradleVersion.version} doesn't support version catalogs."
   }
 }

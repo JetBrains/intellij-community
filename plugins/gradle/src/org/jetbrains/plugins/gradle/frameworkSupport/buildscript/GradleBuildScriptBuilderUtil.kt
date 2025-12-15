@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleBuildScriptBuilderUtil")
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
@@ -134,4 +134,8 @@ fun isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion: GradleVersi
 fun isGroovyApacheSupported(groovyVersion: String): Boolean {
   val majorVersion = groovyVersion.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
   return majorVersion >= 4
+}
+
+fun isVersionCatalogsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4")
 }

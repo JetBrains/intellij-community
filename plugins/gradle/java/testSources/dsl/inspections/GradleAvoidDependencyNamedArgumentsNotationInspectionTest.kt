@@ -8,7 +8,6 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArg
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -18,8 +17,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
     gradleVersion: GradleVersion,
     test: () -> Unit,
   ) {
-    assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
-    test(gradleVersion, CUSTOM_PROJECT) {
+    test(gradleVersion, DEFAULT_FIXTURE) {
       codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
       test()
     }
@@ -986,7 +984,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   companion object {
     private const val WARNING_START = "<weak_warning>"
     private const val WARNING_END = "</weak_warning>"
-    private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") { gradleVersion ->
+    private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("groovy_dsl_avoid_named_arguments") { gradleVersion ->
       withBuildFile(gradleVersion) {
         withJavaPlugin()
         withPrefix {

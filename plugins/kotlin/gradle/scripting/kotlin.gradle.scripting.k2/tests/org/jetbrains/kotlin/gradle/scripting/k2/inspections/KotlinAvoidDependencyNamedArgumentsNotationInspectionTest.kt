@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -9,6 +8,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -18,10 +18,9 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         gradleVersion: GradleVersion,
         test: () -> Unit,
     ) {
-        assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
-        test(gradleVersion, CUSTOM_PROJECT) {
+        assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
+        test(gradleVersion, DEFAULT_FIXTURE) {
             codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
-            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
@@ -848,7 +847,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     companion object {
         private const val WARNING_START = "<weak_warning>"
         private const val WARNING_END = "</weak_warning>"
-        private val CUSTOM_PROJECT = GradleTestFixtureBuilder.create("avoid_named_arguments") { gradleVersion ->
+        private val DEFAULT_FIXTURE = GradleTestFixtureBuilder.create("kotlin_dsl_avoid_named_arguments") { gradleVersion ->
             withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withJavaPlugin()
                 withPrefix {
