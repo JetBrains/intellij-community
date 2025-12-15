@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions
 import java.lang.management.ThreadInfo
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -86,6 +87,26 @@ class TerminalExecutionConsoleTest : BasePlatformTestCase() {
     val output = TerminalOutput.collect(console.terminalWidget)
     output.assertContainsChunk(TerminalOutputChunk("Foo", TextStyle(TerminalColor(2), null)))
     output.assertContainsChunk(TerminalOutputChunk("Bar", TextStyle(null, TerminalColor(3))))
+  }
+
+  fun `test same styled consecutive texts are merged`(): Unit = timeoutRunBlockingWithConsole { console ->
+    val processHandler = NopProcessHandler()
+    console.attachToProcess(processHandler)
+    processHandler.startNotify()
+    processHandler.notifyTextAvailable("\u001b[0m", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("\u001b[32mThis", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable(" is", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable(" the first\u001b[0m", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("\u001b[32m chu", ProcessOutputTypes.STDOUT)
+    processHandler.notifyTextAvailable("nk.\u001b[0m", ProcessOutputTypes.STDOUT)
+    console.awaitOutputContainsSubstring(substringToFind = "This is the first chunk.")
+    processHandler.notifyTextAvailable("\u001b[33m This is a different chunk.", ProcessOutputTypes.STDOUT)
+    console.awaitOutputContainsSubstring(substringToFind = " This is a different chunk.")
+
+    val output = TerminalOutput.collect(console.terminalWidget)
+    Assertions.assertThat(output.contains("This is the first chunk. This is a different chunk."))
+      .describedAs(output.lines.flatMap { it.outputChunks }.toString())
+      .isFalse
   }
 
   fun `test basic SimpleCliApp java process`(): Unit = timeoutRunBlockingWithConsole { console ->
