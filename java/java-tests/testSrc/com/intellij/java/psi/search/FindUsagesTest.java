@@ -121,20 +121,35 @@ public class FindUsagesTest extends JavaPsiTestCase {
   }
   
   public void testFindConstructorUsagesFromClass() {
-    PsiClass aClass = myJavaFacade.findClass("HeadlessHorsewoman", GlobalSearchScope.allScope(myProject));
+    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
+    options.isUsages = true;
+    options.isConstructorUsages = true;
+    doTestFindUsages("SomeClass", options, "this()");
+    options.isUsages = false;
+    doTestFindUsages("SomeClass", options, "this()");
+    options.isUsages = true;
+    options.isConstructorUsages = false;
+    doTestFindUsages("SomeClass", options, "");
+  }
+  
+  public void testFindDefaultConstructorUsagesFromClass() {
     JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
     options.isUsages = false;
     options.isConstructorUsages = true;
+    doTestFindUsages("HeadlessHorsewoman", options, "new HeadlessHorsewoman()");
+  }
+
+  private void doTestFindUsages(String className, JavaClassFindUsagesOptions options, String expected) {
+    PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
     FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(aClass, false);
     assertNotNull(handler);
     handler.processElementUsages(aClass, processor, options);
     Collection<UsageInfo> usages = processor.getResults();
-    assertEquals(1, usages.size());
-    assertEquals("new HeadlessHorsewoman()", StringUtil.join(usages, u -> u.getElement().getParent().getText() , ", "));
-  } 
-  
+    assertEquals(expected, StringUtil.join(usages, u -> u.getElement().getParent().getText() , "\n"));
+  }
+
   public void testDefaultConstructor() {
     PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
     PsiMethod main = aClass.findMethodsByName("main", false)[0];

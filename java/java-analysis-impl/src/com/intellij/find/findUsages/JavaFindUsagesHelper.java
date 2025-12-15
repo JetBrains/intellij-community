@@ -279,13 +279,10 @@ public final class JavaFindUsagesHelper {
       }
     }
     else {
-      if (!options.isUsages || !options.isConstructorUsages) { // ReferencesSearch on class already includes new instance creations.
-        PsiMethod[] methods = ReadAction.compute(() -> aClass.getMethods());
-        for (PsiMethod method : methods) {
-          boolean include = ReadAction.compute(() -> method.isConstructor()) ? options.isConstructorUsages : options.isMethodsUsages;
-          if (!include) continue;
-          if (!addElementUsages(method, options, processor)) return false;
-        }
+      for (PsiMethod method : ReadAction.compute(() -> aClass.getMethods())) {
+        boolean include = ReadAction.compute(() -> method.isConstructor()) ? options.isConstructorUsages : options.isMethodsUsages;
+        if (!include) continue;
+        if (!addElementUsages(method, options, processor)) return false;
       }
       if (!options.isUsages && options.isConstructorUsages) {
         PsiMethod defaultConstructor = ReadAction.compute(() -> LightDefaultConstructor.create(aClass));
