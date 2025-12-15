@@ -159,6 +159,10 @@ private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor
   return out.toByteArray()
 }
 
+private fun ModuleItem.isSubjectToDoubleNaming(): Boolean {
+  return moduleName.contains(".rd.") || moduleName == "intellij.platform.split.protocol"
+}
+
 private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleItem, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
@@ -174,7 +178,7 @@ private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleIt
     for (entry in entries) {
       val file = entry.path
       // the issue is that some modules embedded into some products (Rider), so, name maybe product.jar...
-      val presentablePath = if (moduleItem.moduleName.contains(".rd.") && (entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
+      val presentablePath = if (moduleItem.isSubjectToDoubleNaming() && (entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
         "<file>"
       }
       else {
