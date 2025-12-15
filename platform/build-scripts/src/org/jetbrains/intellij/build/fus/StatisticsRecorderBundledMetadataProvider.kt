@@ -48,12 +48,12 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
         val recorderId = featureUsageStatisticsProperties.recorderId
         moduleOutputPatcher.patchModuleOutput(
           moduleName = "intellij.platform.ide.impl",
-          path = "resources/event-log-metadata/$recorderId/events-scheme.json.meta",
+          path = "event-log-metadata/$recorderId/events-scheme.json.meta",
           content = lastModified(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
         moduleOutputPatcher.patchModuleOutput(
           moduleName = "intellij.platform.ide.impl",
-          path = "resources/event-log-metadata/$recorderId/events-scheme.json",
+          path = "event-log-metadata/$recorderId/events-scheme.json",
           content = download(metadataServiceUri(featureUsageStatisticsProperties, context))
         )
         val dictionaryListBytes = download(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))
@@ -63,12 +63,12 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
         if (!dictionariesList.isEmpty) {
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
-            path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json.meta",
+            path = "event-log-metadata/$recorderId/dictionaries/dictionaries.json.meta",
             content = lastModified(dictionaryServiceUri(featureUsageStatisticsProperties, context, "dictionaries.json"))
           )
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
-            path = "resources/event-log-metadata/$recorderId/dictionaries/dictionaries.json",
+            path = "event-log-metadata/$recorderId/dictionaries/dictionaries.json",
             content = dictionaryListBytes
           )
         }
@@ -77,12 +77,12 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
           val dictionaryName = dictionary.asString
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
-            path = "resources/event-log-metadata/$recorderId/dictionaries/$dictionaryName.meta",
+            path = "event-log-metadata/$recorderId/dictionaries/$dictionaryName.meta",
             content = lastModified(dictionaryServiceUri(featureUsageStatisticsProperties, context, dictionaryName))
           )
           moduleOutputPatcher.patchModuleOutput(
             moduleName = "intellij.platform.ide.impl",
-            path = "resources/event-log-metadata/$recorderId/dictionaries/$dictionaryName",
+            path = "event-log-metadata/$recorderId/dictionaries/$dictionaryName",
             content = download(dictionaryServiceUri(featureUsageStatisticsProperties, context, dictionaryName))
           )
         }

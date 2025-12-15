@@ -258,7 +258,7 @@ object FusComponentProvider {
 
   class BundledJvmFileStorage(private val recorderId: String) : FileStorage {
     private val bundledBasePath: String
-      get() = "resources/$FUS_METADATA_DIR/$recorderId/"
+      get() = "$FUS_METADATA_DIR/$recorderId/"
 
     private fun bundledResourcePath(path: String): String = if (path.startsWith('/')) {
       bundledBasePath + path.substring(1)
