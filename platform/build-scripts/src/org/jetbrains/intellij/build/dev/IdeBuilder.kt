@@ -348,17 +348,18 @@ private suspend fun computeIdeFingerprint(
   val hasher = Hashing.xxh3_64().hashStream()
   val debug = StringBuilder()
 
+  fun relativePath(path: Path): Path = when {
+    path.startsWith(runDir) -> runDir.relativize(path)
+    path.startsWith(homePath) -> homePath.relativize(path)
+    else -> path
+  }
+
   val distributionFileEntries = platformDistributionEntriesDeferred.await().distributionEntries
   hasher.putInt(distributionFileEntries.size)
   debug.append(distributionFileEntries.size).append('\n')
   for (entry in distributionFileEntries) {
     hasher.putLong(entry.hash)
-
-    var path = entry.path
-    if (path.startsWith(homePath)) {
-      path = homePath.relativize(path)
-    }
-    debug.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(path).append('\n')
+    debug.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(relativePath(entry.path)).append('\n')
   }
 
   val pluginDistributionEntries = pluginDistributionEntriesDeferred.await().pluginEntries
@@ -369,7 +370,7 @@ private suspend fun computeIdeFingerprint(
     debug.append('\n').append(plugin.layout.mainModule).append('\n')
     for (entry in plugin.distribution) {
       hasher.putLong(entry.hash)
-      debug.append("  ").append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(entry.path).append('\n')
+      debug.append("  ").append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(relativePath(entry.path)).append('\n')
     }
   }
 
