@@ -1,0 +1,8 @@
+0(1) element: null
+1(2) element: PyFunction('die')
+2(3) WRITE ACCESS: die
+3(4) element: PyExpressionStatement
+4(5) READ ACCESS: die
+5(6) element: PyCallExpression: die
+6(7) element: PyPrintStatement
+7() element: null
