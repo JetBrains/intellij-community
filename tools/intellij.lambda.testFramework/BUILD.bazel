@@ -56,6 +56,7 @@ jvm_library(
     "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
     "//libraries/rd/framework",
     "//libraries/rd/core",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.lambda.testFramework` end
