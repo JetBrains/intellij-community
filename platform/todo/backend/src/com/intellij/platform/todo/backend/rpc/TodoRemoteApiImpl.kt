@@ -26,76 +26,47 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoPattern
-import java.util.regex.Pattern
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
-  override suspend fun listTodos(projectId: ProjectId, settings: TodoQuerySettings): Flow<TodoResult> {
-    return channelFlow {
-      val project = projectId.findProjectOrNull()
-      if (project == null) {
-        LOG.warn("Project not found for projectId ${projectId}")
-        return@channelFlow
-      }
+  override suspend fun listTodos(
+    projectId: ProjectId,
+    settings: TodoQuerySettings
+  ): Flow<TodoResult> = channelFlow {
+    val project = projectId.findProjectOrNull() ?: return@channelFlow
+    val virtualFile = settings.fileId.virtualFile() ?: return@channelFlow
+    val filter = resolveFilter(project, settings.filter)
 
-      val virtualFile = settings.fileId.virtualFile()
-      if (virtualFile == null) {
-        LOG.warn("VirtualFile not found for fileId ${settings.fileId}")
-        return@channelFlow
-      }
-
-      val filter = resolveFilter(project, settings.filter)
-
-      // lightweight descriptor of a TODO occurrence containing only offsets
-      // introduced in order to separate filtering from preview computation to keep read locks as short as possible
-      data class TodoOccurrence(val start: Int, val end: Int)
-
-      val psiFile = readAction {
-        PsiManager.getInstance(project).findFile(virtualFile)
-      }
-      if (psiFile == null) {
-        LOG.warn("PsiFile not found for virtualFile path ${virtualFile.path}")
-        return@channelFlow
-      }
+    val results: List<TodoResult> = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction emptyList()
+      val document = psiFile.viewProvider?.document
 
       val allTodoItems = PsiTodoSearchHelper.getInstance(project).findTodoItems(psiFile)
       val filteredTodoItems = if (filter != null) {
         allTodoItems.filter { it.pattern != null && filter.contains(it.pattern) }
       } else allTodoItems.asList()
 
-      val todoItems = filteredTodoItems.map { todoItem ->
-        TodoOccurrence(
-          start = todoItem.textRange.startOffset,
-          end = todoItem.textRange.endOffset,
+      filteredTodoItems.map { todoItem ->
+        val (line, preview) = if (document != null) {
+          val startOffset = todoItem.textRange.startOffset
+          val line = document.getLineNumber(startOffset)
+          val previewChunks = buildPreviewChunks(document, line)
+          line to previewChunks
+        } else 0 to emptyList()
+
+        TodoResult(
+          presentation = preview,
+          fileId = virtualFile.rpcId(),
+          line = line,
+          navigationOffset = todoItem.textRange.startOffset,
+          length = todoItem.textRange.endOffset - todoItem.textRange.startOffset
         )
       }
+    }
 
-      val document: Document? = readAction {
-        PsiManager.getInstance(project).findFile(virtualFile)?.viewProvider?.document
-      }
-
-      val results: List<TodoResult> = readAction {
-        todoItems.map { item ->
-          val (line, preview) = if (document != null) {
-            val line = document.getLineNumber(item.start)
-            val previewChunks = buildPreviewChunks(document, line)
-            line to previewChunks
-          } else 0 to emptyList()
-
-          TodoResult(
-            presentation = preview,
-            fileId = virtualFile.rpcId(),
-            line = line,
-            navigationOffset = item.start,
-            length = item.end - item.start
-          )
-        }
-      }
-
-      for (result in results) {
-        trySend(result)
-      }
+    for (result in results) {
+      trySend(result)
     }
   }
 
