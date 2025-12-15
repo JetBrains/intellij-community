@@ -14,7 +14,6 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.*;
 
@@ -344,13 +343,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * to notify the action subsystem to update all toolbar actions
    * when your subsystem's determines that its actions' visibility might be affected.
    * <br/>
-   * This method is always called under the {@link com.intellij.openapi.application.ReadAction}.
+   * This method is called under the {@link com.intellij.openapi.application.ReadAction}
+   * if {@link Presentation#isRWLockRequired()} is set to {@code true}
    *
    * @see #getActionUpdateThread()
    * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
    */
   @ApiStatus.OverrideOnly
-  @RequiresReadLock(generateAssertion = false)
   public void update(@NotNull AnActionEvent e) {
   }
 
@@ -390,6 +389,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         presentation.putClientProperty("USE_SMALL_FONT_IN_TOOLBAR", true);
       }
     }
+    presentation.setRWLockRequired(getActionUpdateThread() == ActionUpdateThread.BGT);
     return presentation;
   }
 
@@ -413,6 +413,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * The method must not be called directly.
    * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performAction} or
    * (when delegating) {@link ActionWrapperUtil#actionPerformed}
+   * <p>
+   * This method is executed in {@link <a href="https://jb.gg/ij-platform-threading">Write-Intent Read Action</a>}
+   * if {@link Presentation#isRWLockRequired()} is {@code true}.
    *
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performAction
    * @see ActionWrapperUtil#actionPerformed

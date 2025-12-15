@@ -121,6 +121,10 @@ a:com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.openapi.actionSystem.AnActionEvent
 - com.intellij.ui.PlaceProvider
 - *f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
+f:com.intellij.openapi.actionSystem.Presentation
+- java.lang.Cloneable
+- *:isRWLockRequired():Z
+- *:setRWLockRequired(Z):V
 *:com.intellij.openapi.editor.CustomFoldRegion
 - com.intellij.openapi.editor.FoldRegion
 - a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer

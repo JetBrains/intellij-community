@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -68,8 +68,9 @@ public final class Presentation implements Cloneable {
   private static final int IS_PREFER_INJECTED_PSI = 0x200;
   private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
   private static final int IS_TEMPLATE = 0x1000;
+  private static final int IS_RW_LOCK_REQUIRED = 0x2000;
 
-  private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
+  private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY | IS_RW_LOCK_REQUIRED;
   private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
   private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = NULL_TEXT_WITH_MNEMONIC;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
@@ -451,6 +452,33 @@ public final class Presentation implements Cloneable {
   }
 
   /**
+   * @see Presentation#setRWLockRequired
+   */
+  @ApiStatus.Experimental
+  public boolean isRWLockRequired() {
+    return BitUtil.isSet(myFlags, IS_RW_LOCK_REQUIRED);
+  }
+
+  /**
+   * For an action presentation sets whether the action requires {@link <a href="https://jb.gg/ij-platform-threading">the Read-Write lock</a>} for update and perform.
+   * <p>
+   * <ul>
+   *   <li>If {@code true}, the action is updated in read action and performed in write-intent read action on the EDT.
+   *   Such actions may hinder the performance of the IDE, but they allow access to PSI.</li>
+   *   <li>If {@code false}, the action is updated and performed without locks.
+   *   Such actions can be executed and updated quickly, but they do not allow access to PSI and Document.</li>
+   * </ul>
+   * <p>
+   * Default value is {@code true}.
+   * <p>
+   * This property needs to be set for {@link AnAction#getTemplatePresentation()}, because it affects {@link AnAction#update}
+   */
+  @ApiStatus.Experimental
+  public void setRWLockRequired(boolean rwLockRequired) {
+    myFlags = BitUtil.set(myFlags, IS_RW_LOCK_REQUIRED, rwLockRequired);
+  }
+
+  /**
    * For an action presentation in a popup sets whether a popup is closed or kept open
    * when the action is performed.
    * <p>
@@ -700,6 +728,7 @@ public final class Presentation implements Cloneable {
     appendFlag(myFlags, IS_APPLICATION_SCOPE, sb, start, "application_scope");
     appendFlag(myFlags, IS_PREFER_INJECTED_PSI, sb, start, "prefer_injected_psi");
     appendFlag(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, sb, start, "enabled_in_modal_context");
+    appendFlag(myFlags, IS_RW_LOCK_REQUIRED, sb, start, "lock_required");
     sb.append("]");
     return sb.toString();
   }
