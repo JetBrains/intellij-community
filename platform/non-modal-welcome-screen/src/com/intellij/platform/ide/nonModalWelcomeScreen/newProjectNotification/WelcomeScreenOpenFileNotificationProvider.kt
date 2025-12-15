@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -78,7 +79,8 @@ data class ProjectRootInfo(
 /**
  * Shows a notification banner when a file is opened from the Welcome panel, suggesting to open or create a project.
  */
-class WelcomeScreenOpenFileNotificationProvider : EditorNotificationProvider, DumbAware {
+@ApiStatus.Internal
+abstract class WelcomeScreenOpenFileNotificationProvider : EditorNotificationProvider, DumbAware {
   private val PARENT_TRAVERSAL_LIMIT = 10
   private val closedNotificationFiles = mutableSetOf<String>()
 
@@ -87,9 +89,8 @@ class WelcomeScreenOpenFileNotificationProvider : EditorNotificationProvider, Du
                                            "coverage", ".git", ".cache", ".venv", ".gradle", ".idea")
 
   // avoid creating a project in these paths
-  private val restrictedPaths: Set<Path> by lazy {
+  protected open val restrictedPaths: Set<Path> by lazy {
     val home = System.getProperty("user.home")
-    val goPath = System.getenv("GOPATH")
     val knownBigFolderPaths = setOf("Desktop", "Documents", "Downloads")
     val homePath = Paths.get(home)
     buildSet {
@@ -99,9 +100,6 @@ class WelcomeScreenOpenFileNotificationProvider : EditorNotificationProvider, Du
         add(welcomeScreenProjectPath)
       }
       addAll(knownBigFolderPaths.map { homePath.resolve(it) })
-      if (goPath != null) {
-        add(Paths.get(goPath))
-      }
     }
   }
 
@@ -219,11 +217,9 @@ class WelcomeScreenOpenFileNotificationProvider : EditorNotificationProvider, Du
     }
   }
 
-  private fun isKnownProjectDirectory(file: VirtualFile): Boolean {
+  protected open fun isKnownProjectDirectory(file: VirtualFile): Boolean {
     val path = Paths.get(file.path)
-    return Files.exists(path.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
-           Files.exists(path.resolve("go.mod")) ||
-           Files.exists(path.resolve("go.work"))
+    return Files.exists(path.resolve(Project.DIRECTORY_STORE_FOLDER))
   }
 }
 
