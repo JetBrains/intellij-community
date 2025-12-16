@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl
 
 import com.intellij.ide.impl.UndoRemoteBehaviorService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.progress.ProgressManager
@@ -16,11 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UndoSpy {
 
-  fun commandStarted(cmdEvent: CmdEvent)
+  fun commandStarted(event: CommandEvent?, meta: UndoCommandMeta)
 
   fun undoableActionAdded(undoProject: Project?, action: UndoableAction, type: UndoableActionType)
 
-  fun commandFinished(cmdEvent: CmdEvent)
+  fun commandFinished(event: CommandEvent?, meta: UndoCommandMeta)
 
   fun <T> withBlind(action: () -> T): T
 

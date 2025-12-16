@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;

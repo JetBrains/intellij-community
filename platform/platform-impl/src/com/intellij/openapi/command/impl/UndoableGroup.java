@@ -6,6 +6,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.AdjustableUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;

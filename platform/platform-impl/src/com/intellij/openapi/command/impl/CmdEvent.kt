@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.CommandEvent
+import com.intellij.openapi.command.CommandId
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.Command
@@ -19,23 +20,22 @@ interface CmdEvent {
   fun confirmationPolicy(): UndoConfirmationPolicy
   fun recordOriginalDocument(): Boolean
   fun isTransparent(): Boolean
-  fun addEditorProvider(provider: ForeignEditorProvider)
-  fun editorProviders(): List<ForeignEditorProvider>
+  fun meta(): UndoCommandMeta
 
   companion object {
     @JvmStatic
-    fun create(id: CommandId, commandEvent: CommandEvent): CmdEvent {
-      return CmdEventImpl(id, commandEvent)
+    fun create(event: CommandEvent, meta: UndoCommandMeta): CmdEvent {
+      return CmdEventImpl(event, meta)
     }
 
     @JvmStatic
-    fun createTransparent(id: CommandId, project: Project?): CmdEvent {
-      return CmdEventTransparent(id, project)
+    fun createTransparent(project: Project?, meta: UndoCommandMeta): CmdEvent {
+      return CmdEventTransparent(project, meta)
     }
 
     @JvmStatic
-    fun createNonUndoable(id: CommandId): CmdEvent {
-      return CmdEventNonUndoable(id)
+    fun createNonUndoable(meta: UndoCommandMeta): CmdEvent {
+      return CmdEventNonUndoable(meta)
     }
   }
 }

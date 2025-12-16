@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
+import com.intellij.openapi.command.undo.CommandMeta;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Command;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +14,7 @@ import java.util.EventObject;
 public class CommandEvent extends EventObject {
   private final @NotNull Runnable myCommand;
   private final @Nullable Project myProject;
-  private final @NlsContexts.Command String myCommandName;
+  private final @Nullable @Command String myCommandName;
   private final @Nullable Object myCommandGroupId;
   private final @NotNull UndoConfirmationPolicy myUndoConfirmationPolicy;
   private final boolean myShouldRecordActionForActiveDocument;
@@ -24,7 +26,7 @@ public class CommandEvent extends EventObject {
 
   public CommandEvent(@NotNull CommandProcessor processor,
                       @NotNull Runnable command,
-                      @NlsContexts.Command String commandName,
+                      @Nullable @Command String commandName,
                       @Nullable Object commandGroupId,
                       @Nullable Project project,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
@@ -52,7 +54,7 @@ public class CommandEvent extends EventObject {
     return myProject;
   }
 
-  public @NlsContexts.Command String getCommandName() {
+  public @Nullable @Command String getCommandName() {
     return myCommandName;
   }
 
@@ -70,5 +72,11 @@ public class CommandEvent extends EventObject {
 
   public @Nullable Document getDocument() {
     return myDocument;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @Nullable CommandMeta getCommandMeta() {
+    return null; // TODO
   }
 }

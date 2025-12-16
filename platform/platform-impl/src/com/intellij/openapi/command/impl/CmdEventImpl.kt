@@ -8,28 +8,28 @@ import com.intellij.openapi.util.NlsContexts.Command
 
 
 internal class CmdEventImpl(
-  id: CommandId,
-  private val commandEvent: CommandEvent,
-) : CmdEventBase(id) {
+  private val event: CommandEvent,
+  meta: UndoCommandMeta,
+) : CmdEventBase(meta) {
 
   override fun project(): Project? {
-    return commandEvent.project
+    return event.project
   }
 
   override fun name(): @Command String? {
-    return commandEvent.commandName
+    return event.commandName
   }
 
   override fun groupId(): Any? {
-    return commandEvent.commandGroupId
+    return event.commandGroupId
   }
 
   override fun confirmationPolicy(): UndoConfirmationPolicy {
-    return commandEvent.undoConfirmationPolicy
+    return event.undoConfirmationPolicy
   }
 
   override fun recordOriginalDocument(): Boolean {
-    return commandEvent.shouldRecordActionForOriginalDocument()
+    return event.shouldRecordActionForOriginalDocument()
   }
 
   override fun isTransparent(): Boolean {

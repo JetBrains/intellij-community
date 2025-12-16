@@ -161,8 +161,8 @@ final class UndoClientState implements Disposable {
   void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
     commandBuilder.commandStarted(cmdEvent, editorProvider);
     UndoSpy undoSpy = UndoSpy.getInstance();
-    if (undoSpy != null) {
-      cmdEvent.addEditorProvider(
+    if (undoSpy != null && cmdEvent.meta() instanceof DomesticCommandMeta domesticMeta) {
+      domesticMeta.addEditorProvider(
         new ForeignEditorProvider(
           project,
           editorProvider.getCurrentEditor(project),
@@ -228,7 +228,8 @@ final class UndoClientState implements Disposable {
         action instanceof NonUndoableAction,
         "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())"
       );
-      CmdEvent cmdEvent = CmdEvent.createNonUndoable(CommandIdService.currCommandId());
+      UndoCommandMeta meta = new NoCommandMeta(CommandSeparator.ID_GENERATOR.nextCommandId());
+      CmdEvent cmdEvent = CmdEvent.createNonUndoable(meta);
       commandStarted(cmdEvent, editorProvider);
       try {
         commandBuilder.addUndoableAction(action);

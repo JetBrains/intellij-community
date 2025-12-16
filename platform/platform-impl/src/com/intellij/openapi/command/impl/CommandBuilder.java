@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -267,10 +268,7 @@ final class CommandBuilder {
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
 
     @Override
-    public void addEditorProvider(@NotNull ForeignEditorProvider provider) { throw new UnsupportedOperationException(); }
-
-    @Override
-    public @NotNull List<@NotNull ForeignEditorProvider> editorProviders() { throw new UnsupportedOperationException(); }
+    public @NotNull UndoCommandMeta meta() { throw new UnsupportedOperationException(); }
 
     // endregion
   }

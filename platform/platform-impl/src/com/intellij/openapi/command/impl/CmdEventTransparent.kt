@@ -2,20 +2,18 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.project.Project
-import java.util.Collections
 
 
 internal class CmdEventTransparent(
-  id: CommandId,
   private val project: Project?,
-  editorProviders: MutableList<ForeignEditorProvider> = Collections.synchronizedList(mutableListOf()),
-) : CmdEventBase(id, editorProviders) {
+  meta: UndoCommandMeta,
+) : CmdEventBase(meta) {
 
   fun withProject(project: Project?): CmdEvent {
     if (project === this.project) {
       return this
     }
-    return CmdEventTransparent(id(), project, editorProviders)
+    return CmdEventTransparent(project, meta())
   }
 
   override fun project(): Project? {

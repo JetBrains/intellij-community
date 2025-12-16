@@ -3,9 +3,12 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandId;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.undo.CommandMeta;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.TestOnly;
  */
 @ApiStatus.Internal
 public final class CommandSeparator implements CommandListener {
+
+  static final @NotNull CommandIdGenerator ID_GENERATOR = new CommandIdGenerator();
 
   private final @NotNull SeparatedCommandListener publisher;
   private boolean commandStarted;
@@ -98,34 +103,36 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void notifyCommandStarted(@NotNull CommandEvent event) {
-    notifyCommandStarted(createCmdEvent(event));
+    start(event);
   }
 
   private void notifyCommandFinished(@NotNull CommandEvent event) {
-    notifyCommandFinished(createCmdEvent(event));
+    finish(event);
   }
 
   private void notifyTransparentStarted() {
-    notifyCommandStarted(createTransparentCmdEvent());
+    start(null);
   }
 
   private void notifyTransparentFinished() {
-    notifyCommandFinished(createTransparentCmdEvent());
+    finish(null);
   }
 
-  private void notifyCommandStarted(@NotNull CmdEvent cmdEvent) {
-    publisher.onCommandStarted(cmdEvent);
+  private void start(@Nullable CommandEvent event) {
+    UndoCommandMeta meta = getUndoCommandMeta(event, true);
+    publisher.onCommandStarted(event, meta);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandStarted(cmdEvent);
+      undoSpy.commandStarted(event, meta);
     }
   }
 
-  private void notifyCommandFinished(@NotNull CmdEvent cmdEvent) {
-    publisher.onCommandFinished(cmdEvent);
+  private void finish(@Nullable CommandEvent event) {
+    UndoCommandMeta meta = getUndoCommandMeta(event, false);
+    publisher.onCommandFinished(event, meta);
     UndoSpy undoSpy = UndoSpy.getInstance();
     if (undoSpy != null) {
-      undoSpy.commandFinished(cmdEvent);
+      undoSpy.commandFinished(event, meta);
     }
   }
 
@@ -153,12 +160,20 @@ public final class CommandSeparator implements CommandListener {
     }
   }
 
-  private static @NotNull CmdEvent createCmdEvent(@NotNull CommandEvent event) {
-    return CmdEvent.create(CommandIdService.currCommandId(), event);
-  }
-
-  private static @NotNull CmdEvent createTransparentCmdEvent() {
-    return CmdEvent.createTransparent(CommandIdService.currCommandId(), null);
+  private static @NotNull UndoCommandMeta getUndoCommandMeta(@Nullable CommandEvent event, boolean isStart) {
+    if (event == null) {
+      // domestic transparent
+      CommandId commandId = isStart ? ID_GENERATOR.nextTransparentId() : ID_GENERATOR.currentCommandId();
+      return isStart ? new DomesticCommandMeta(commandId) : new NoCommandMeta(commandId);
+    }
+    CommandMeta meta = event.getCommandMeta();
+    if (meta == null) {
+      // domestic command
+      CommandId commandId = isStart ? ID_GENERATOR.nextCommandId() : ID_GENERATOR.currentCommandId();
+      return isStart ? new DomesticCommandMeta(commandId) : new NoCommandMeta(commandId);
+    }
+    // foreign command or foreign transparent
+    return (UndoCommandMeta) meta;
   }
 
   private static @NotNull SeparatedCommandListener getPublisher() {
