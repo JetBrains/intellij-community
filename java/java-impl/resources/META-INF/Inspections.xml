@@ -717,5 +717,11 @@
                      groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BulkFileAttributesReadInspection"/>
+    <!--Performance-->
+    <localInspection groupPath="Java" language="JAVA" shortName="ReplaceAllNonRegex"
+                     key="inspection.replace.all.non.regex.display.name" bundle="messages.JavaBundle"
+                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.performance.ReplaceAllNonRegexInspection"/>
   </extensions>
 </idea-plugin>

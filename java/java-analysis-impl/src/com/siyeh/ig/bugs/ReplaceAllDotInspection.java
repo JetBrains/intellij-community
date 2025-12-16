@@ -19,10 +19,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PatternUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReplaceAllDotInspection extends BaseInspection {
-
-  private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
-
   @Override
   public @NotNull String buildErrorString(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
@@ -91,7 +88,7 @@ public final class ReplaceAllDotInspection extends BaseInspection {
       int length = text.length();
       for (int i = 0; i < length; i++) {
         char c = text.charAt(i);
-        if (StringUtil.containsChar(REGEX_META_CHARS, c)) {
+        if (PatternUtil.containsMetaChar(String.valueOf(c))) {
           newExpression.append("\\\\");
         }
         newExpression.append(c);
@@ -130,7 +127,7 @@ public final class ReplaceAllDotInspection extends BaseInspection {
     }
 
     private static boolean isRegexMetaChar(String s, boolean includeErrors) {
-      return s != null && s.length() == 1 && (includeErrors ? REGEX_META_CHARS : ".$|^").contains(s);
+      return s != null && s.length() == 1 && (includeErrors ? PatternUtil.containsMetaChar(s) : ".$|^".contains(s));
     }
   }
 

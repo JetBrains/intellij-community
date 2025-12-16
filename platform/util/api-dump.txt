@@ -326,6 +326,8 @@ com.intellij.util.PathMapper
 - a:convertToRemote(java.lang.String):java.lang.String
 - a:convertToRemote(java.util.Collection):java.util.List
 - a:isEmpty():Z
+f:com.intellij.util.PatternUtil
+- s:containsMetaChar(java.lang.String):Z
 com.intellij.util.Producer
 - java.util.function.Supplier
 - get():java.lang.Object
