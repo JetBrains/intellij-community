@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,9 @@ public class ViewBreakpointsAction extends DumbAwareAction implements SplitDebug
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
-    XBreakpointId initialBreakpointId = null;
-    if (editor != null) {
+    XBreakpointProxy initialBreakpointProxy = XBreakpointProxy.DATA_KEY.getData(dataContext);
+    XBreakpointId initialBreakpointId = initialBreakpointProxy != null ? initialBreakpointProxy.getId() : null;
+    if (initialBreakpointId == null && editor != null) {
       var breakpointProxy = XBreakpointUtil.findSelectedBreakpointProxy(project, editor).second;
       if (breakpointProxy != null) {
         initialBreakpointId = breakpointProxy.getId();

@@ -7,10 +7,7 @@ import com.intellij.frontend.FrontendApplicationInfo;
 import com.intellij.frontend.FrontendType;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -349,7 +346,14 @@ public final class DebuggerUIUtil {
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(true);
 
-    final JPanel panel = editor.getMainPanel();
+    final JComponent panel = UiDataProvider.wrapComponent(editor.getMainPanel(), new UiDataProvider() {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        if (breakpoint instanceof XBreakpointProxy breakpointProxy) {
+          sink.set(XBreakpointProxy.DATA_KEY, breakpointProxy);
+        }
+      }
+    });
 
     BalloonBuilder builder = JBPopupFactory.getInstance()
       .createDialogBalloonBuilder(panel, null)
