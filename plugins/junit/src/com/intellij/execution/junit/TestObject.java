@@ -64,6 +64,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -257,8 +258,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
     javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT5_PARAMETER));
-    //include junit6 listeners for the case custom junit 6 engines would be detected on runtime
-    javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
+
+    // Add junit6_rt.jar to the classpath if the runner is -junit6
+    String runner = getRunner();
+    if (runner.equals(JUnitStarter.JUNIT6_PARAMETER)) {
+      javaParameters.getClassPath().addFirst(getJUnitRtFile(JUnitStarter.JUNIT6_PARAMETER));
+    }
 
     appendDownloadedDependenciesForForkedConfigurations(javaParameters, module);
   }
@@ -773,10 +778,18 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected @NotNull String getRunner() {
     synchronized (LOCK) {
       if (myRunner == null) {
-        myRunner = ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
-                                               JUnitBundle.message("dialog.title.preparing.test"),
-                                               true, myConfiguration.getProject());
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          myRunner = ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously(() -> ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously(),
+                                                 JUnitBundle.message("dialog.title.preparing.test"),
+                                                 true, myConfiguration.getProject());
+        }
+        else if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+          myRunner = ReadAction.nonBlocking(this::getRunnerInner).executeSynchronously();
+        }
+        else {
+          myRunner = getRunnerInner();
+        }
       }
       return myRunner;
     }
@@ -796,6 +809,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  @RequiresBackgroundThread
   private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());

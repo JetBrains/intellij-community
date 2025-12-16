@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -12,12 +13,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,12 +32,12 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   @Override
   protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk21();
+    return IdeaTestUtil.getMockJdk17();
   }
 
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_21;
+    return LanguageLevel.JDK_17;
   }
 
   @Override
@@ -293,10 +294,25 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertEmpty(output.err);
   }
 
+  public void testCheckClasspath() throws ExecutionException {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("checkClasspath.CheckerTest", GlobalSearchScope.projectScope(myProject));
+    assertNotNull(aClass);
+
+    RunConfiguration configuration = createConfiguration(aClass);
+    ProcessOutput output = doStartTestsProcess(configuration);
+
+    assertTestsStarted(output, "test()");
+    assertTestsFinished(output, "test()");
+    assertTestsFailed(output);
+    assertEmpty(output.err);
+  }
+
   private static void assertTestsStatus(ProcessOutput output, Predicate<ServiceMessage> predicate, String... testNames) {
-    var actualNames =
-      output.messages.stream().filter(predicate).map(m -> m.getAttributes().get("name")).sorted().collect(Collectors.toList());
-    assertEquals(Arrays.stream(testNames).sorted().toList(), actualNames);
+    var actualNames = output.messages.stream().filter(predicate)
+      .map(m -> m.getAttributes().get("name"))
+      .collect(Collectors.toSet());
+    assertEquals(ContainerUtil.newHashSet(testNames), actualNames);
   }
 
   private static void assertTestsStarted(ProcessOutput output, String... testNames) {
@@ -320,8 +336,9 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   }
 
   private static void assertTestsOrder(ProcessOutput output, String... expectedOrder) {
-    List<String> executionOrder =
-      output.messages.stream().filter(TestStarted.class::isInstance).map(m -> m.getAttributes().get("name")).toList();
+    List<String> executionOrder = output.messages.stream()
+      .filter(TestStarted.class::isInstance)
+      .map(m -> m.getAttributes().get("name")).toList();
 
     assertEquals("execution order is wrong", List.of(expectedOrder), executionOrder);
   }
