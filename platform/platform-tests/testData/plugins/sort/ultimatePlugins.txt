@@ -159,5 +159,3 @@ Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requi
 Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Concurrency Visualiser requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python Docker requires plugin com.intellij.modules.pycharm.professional to be installed
-<a href="disable">Disable not loaded plugins</a>
-<a href="edit">Open plugin manager</a>

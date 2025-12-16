@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.core.CoreBundle
 import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInitializationErrorReporter.reportPluginErrors
+import com.intellij.ide.plugins.PluginManagerCore.DISABLE
+import com.intellij.ide.plugins.PluginManagerCore.EDIT
+import com.intellij.ide.plugins.PluginManagerCore.ENABLE
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -20,14 +24,15 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Supplier
 
 @ApiStatus.Internal
 object PluginInitializationErrorReporter {
   @Synchronized
   @JvmStatic
   fun onEnable(enabled: Boolean): Boolean {
-    val (pluginsToEnable, pluginsToDisable) = PluginManagerCore.consumeStartupActionsPluginsToEnableDisable()
-    val pluginIds = if (enabled) pluginsToEnable else pluginsToDisable
+    val (pluginsToEnable, pluginsToDisable) = PluginManagerCore.getStartupActionsPluginsToEnableDisable()
+    val pluginIds = (if (enabled) pluginsToEnable else pluginsToDisable).map { it.pluginId }.toSet()
     if (pluginIds.isEmpty()) {
       return false
     }
@@ -67,10 +72,14 @@ object PluginInitializationErrorReporter {
 
 
   internal suspend fun reportPluginErrors() {
-    val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
     if (pluginErrors.isEmpty()) {
       return
     }
+
+    val (pluginsToEnable, pluginsToDisable) = PluginManagerCore.getStartupActionsPluginsToEnableDisable()
+    val actions = prepareActions(pluginsToDisable, pluginsToEnable)
+    pluginErrors += actions.map { PluginLoadingError(null, it, null) }
 
     withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       val title = IdeBundle.message("title.plugin.error")
@@ -114,6 +123,34 @@ object PluginInitializationErrorReporter {
       }
     }
 
+    return actions
+  }
+
+  private fun prepareActions(pluginsToDisable: List<PluginStateChangeData>, pluginsToEnable: List<PluginStateChangeData>): List<Supplier<HtmlChunk>> {
+    if (pluginsToDisable.isEmpty()) {
+      return emptyList()
+    }
+
+    val actions = ArrayList<Supplier<HtmlChunk>>()
+    val pluginToDisable = pluginsToDisable.singleOrNull()
+    val disableMessage = if (pluginToDisable != null) {
+      CoreBundle.message("link.text.disable.plugin", pluginToDisable.pluginName)
+    }
+    else {
+      CoreBundle.message("link.text.disable.not.loaded.plugins")
+    }
+    actions.add(Supplier<HtmlChunk> { HtmlChunk.link(DISABLE, disableMessage) })
+    if (!pluginsToEnable.isEmpty()) {
+      val pluginNameToEnable = pluginsToEnable.singleOrNull()?.pluginName
+      val enableMessage = if (pluginNameToEnable != null) {
+        CoreBundle.message("link.text.enable.plugin", pluginNameToEnable)
+      }
+      else {
+        CoreBundle.message("link.text.enable.all.necessary.plugins")
+      }
+      actions.add(Supplier<HtmlChunk> { HtmlChunk.link(ENABLE, enableMessage) })
+    }
+    actions.add(Supplier<HtmlChunk> { HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")) })
     return actions
   }
 }
