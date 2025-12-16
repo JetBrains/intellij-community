@@ -24,7 +24,8 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.util.io.createDirectories
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.mockito.Mockito
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.nio.file.Paths
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -34,9 +35,9 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
     val DEFAULT = LocalChangeList.getDefaultName()
 
     fun createMockFileEditor(document: Document): FileEditor {
-      val editor = Mockito.mock(FileEditor::class.java, Mockito.withSettings().extraInterfaces(DocumentReferenceProvider::class.java))
+      val editor = mock<FileEditor>(extraInterfaces = arrayOf(DocumentReferenceProvider::class))
       val references = listOf(DocumentReferenceManager.getInstance().create(document))
-      Mockito.`when`((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
+      whenever((editor as DocumentReferenceProvider).documentReferences).thenReturn(references)
       return editor
     }
   }
@@ -250,10 +251,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
     val changes = mutableMapOf<FilePath, ContentRevision?>()
     val files = mutableSetOf<VirtualFile>()
 
-    override fun getChanges(dirtyScope: VcsDirtyScope,
-                            builder: ChangelistBuilder,
-                            progress: ProgressIndicator,
-                            addGate: ChangeListManagerGate) {
+    override fun getChanges(
+      dirtyScope: VcsDirtyScope,
+      builder: ChangelistBuilder,
+      progress: ProgressIndicator,
+      addGate: ChangeListManagerGate,
+    ) {
       markerSemaphore.release()
       semaphore.acquireOrThrow()
       try {

@@ -9,7 +9,9 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import kotlin.time.Duration.Companion.seconds
 
 internal class ChangeListDnDSupportTest : BaseChangeListsTest() {
@@ -58,9 +60,9 @@ internal class ChangeListDnDSupportTest : BaseChangeListsTest() {
     refreshCLM()
     assertEmpty(clm.allChanges)
 
-    val checkinEnvironmentMock = Mockito.mock<CheckinEnvironment>()
+    val checkinEnvironmentMock = mock<CheckinEnvironment>()
     vcs.checkinEnvironment = checkinEnvironmentMock
-    Mockito.`when`(checkinEnvironmentMock.scheduleUnversionedFilesForAddition(Mockito.any())).then {
+    whenever(checkinEnvironmentMock.scheduleUnversionedFilesForAddition(any())).then {
       // After setting a base version, unversioned files will be considered as changes
       it.getArgument<List<VirtualFile>>(0).forEach { file -> setBaseVersion(file.name, null) }
       emptyList<Exception>()
