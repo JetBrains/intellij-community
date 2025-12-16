@@ -1164,8 +1164,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       val providedScope = ActionCoroutineScope(coroutineContext.minusKey(Job.Key) + Dispatchers.Default + CoroutineName("actionPerformed of $actionId"), cs)
       event.installCoroutineScope(providedScope)
       installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true) {
-        SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
-          runnable.run()
+        runInWriteIntentConditionally(action) {
+          SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+            runnable.run()
+          }
         }
       }
       AnActionResult.PERFORMED
@@ -1200,6 +1202,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       is AnActionResult.Ignored -> Unit
     }
     return result
+  }
+
+  // inlining here to reduce the number of service stacktraces
+  @Suppress("NOTHING_TO_INLINE")
+  inline fun runInWriteIntentConditionally(action: AnAction, runnable: Runnable) {
+    if (action.templatePresentation.isRWLockRequired) {
+      WriteIntentReadAction.run(runnable)
+    } else {
+      runnable.run()
+    }
   }
 
   @TestOnly
