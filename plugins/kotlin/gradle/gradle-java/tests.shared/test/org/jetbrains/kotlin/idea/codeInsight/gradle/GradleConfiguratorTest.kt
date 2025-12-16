@@ -1439,52 +1439,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("9.1.0+")
-    fun addToolchain24InsteadOf25() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-                val configurator = findGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
-                configurator.configureWithVersion(
-                    myProject,
-                    listOf(rootModule),
-                    IdeKotlinVersion.get("2.2.21"),
-                    collector,
-                    kotlinVersionsAndModules,
-                )
-                checkFiles(files, foojayPropertyMap)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("9.1.0+")
-    fun addToolchain24InsteadOf25Groovy() { // Not launched on CI so far, will be launched when KTIJ-36754 is fixed
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
-                val configurator = findGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
-                configurator.configureWithVersion(
-                    myProject,
-                    listOf(rootModule),
-                    IdeKotlinVersion.get("2.2.21"),
-                    collector,
-                    kotlinVersionsAndModules,
-                )
-                checkFiles(files, foojayPropertyMap)
-            }
-        }
-    }
-
-    @Test
     @TargetVersions("7.6")
     fun testDontAddFoojayIfItsAlreadyAddedKts() {
         val files = importProjectFromTestData()

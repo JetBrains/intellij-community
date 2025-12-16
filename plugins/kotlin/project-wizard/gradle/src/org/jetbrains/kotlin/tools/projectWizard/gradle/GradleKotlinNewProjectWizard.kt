@@ -365,13 +365,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
                 parent.selectedJdkJvmTarget?.let {
                     if (parent.isFoojayPluginSupported) {
-                        val selectedJdkJvmTarget = parent.selectedJdkJvmTarget
-                        val jmvTarget = if (selectedJdkJvmTarget != null && selectedJdkJvmTarget >= 25) {
-                            24 // FIXME Should be deleted when Kotlin 2.3.0 is released and supports JVM target 25 (KTIJ-3663)
-                        } else {
-                            it
-                        }
-                        withKotlinJvmToolchain(jmvTarget)
+                        withKotlinJvmToolchain(it)
                     }
                 }
             }
