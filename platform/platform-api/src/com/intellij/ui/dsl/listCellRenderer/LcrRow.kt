@@ -75,7 +75,7 @@ interface LcrRow<T> {
   var rowHeight: Int?
 
   /**
-   * Width of the row (excluding separator) or null for auto height calculation.
+   * Width of the row (excluding separator) or null for auto width calculation.
    */
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
