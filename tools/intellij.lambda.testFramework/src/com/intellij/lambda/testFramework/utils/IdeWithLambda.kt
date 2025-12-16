@@ -17,8 +17,10 @@ import kotlin.time.Duration.Companion.minutes
 
 class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) :
   IBackgroundRun by delegate {
+  fun defaultStepName(): String = "Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS"))
+
   suspend inline fun <T : LambdaIdeContext, R : Serializable> LambdaRdTestSession.runGetResult(
-    name: String?,
+    name: String,
     timeout: Duration = 1.minutes,
     parameters: List<Serializable> = emptyList(),
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<T, R>,
@@ -26,9 +28,14 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
     val protocol = this@runGetResult.protocol
                    ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
     SerializedLambdaWithIdeContextHelper().let { loader ->
-      val serializedLambda = loader.getSerializedLambda(parameters, lambdaConsumer)
+      val serializedLambda = try {
+        loader.getSerializedLambda(parameters, lambdaConsumer)
+      }
+      catch (t: Throwable) {
+        throw IllegalStateException("Failed to serialize lambda '$name'", t)
+      }
       val lambdaRdSerialized =
-        LambdaRdSerialized(name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS"))),
+        LambdaRdSerialized(name,
                            serializedLambda.serializedDataBase64,
                            serializedLambda.classPath.map { it.canonicalPath },
                            serializedLambda.parametersBase64)
@@ -41,7 +48,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   }
 
   suspend inline fun runInFrontendGetResult(
-    name: String? = null,
+    name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Serializable>,
   ): Serializable {
@@ -50,7 +57,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   }
 
   suspend inline fun runInFrontend(
-    name: String? = null,
+    name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaFrontendContext, Any>,
   ) {
@@ -63,7 +70,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   }
 
   suspend inline fun runInBackendGetResult(
-    name: String? = null,
+    name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Serializable>,
   ): Serializable {
@@ -72,7 +79,7 @@ class IdeWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession,
   }
 
   suspend inline fun runInBackend(
-    name: String? = null,
+    name: String = defaultStepName(),
     parameters: List<Serializable> = emptyList(),
     lambdaConsumer: SerializedLambdaWithIdeContextHelper.SuspendingSerializableConsumer<LambdaBackendContext, Any>,
   ) {
