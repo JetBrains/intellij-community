@@ -13,7 +13,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.Range
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
+import org.jetbrains.kotlin.analysis.api.compile.KaCodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -221,31 +221,35 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
-        return when (this) {
-            is CodeFragmentCapturedValue.Local ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
-            is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
-            is CodeFragmentCapturedValue.ContainingClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
-            is CodeFragmentCapturedValue.SuperClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.ExtensionReceiver ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.ContextReceiver -> {
-                val name = NameUtils.contextReceiverName(index).asString()
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
-            }
-            is CodeFragmentCapturedValue.ForeignValue -> {
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
-            }
-            is CodeFragmentCapturedValue.BackingField ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame,displayText)
-            is CodeFragmentCapturedValue.CoroutineContext ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
-            else -> null
+    private fun KaCodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? = when (this) {
+        is KaCodeFragmentCapturedValue.Local ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.LocalDelegate ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.ContainingClass ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.SuperClass ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.ExtensionReceiver ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.ContextReceiver -> {
+            val name = NameUtils.contextReceiverName(index).asString()
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame, displayText)
         }
+
+        is KaCodeFragmentCapturedValue.ForeignValue ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
+
+        is KaCodeFragmentCapturedValue.BackingField ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame, displayText)
+
+        is KaCodeFragmentCapturedValue.CoroutineContext ->
+            CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
     }
 }
 
@@ -266,8 +270,7 @@ private fun reportMutedExceptions(
 }
 
 fun isCodeFragmentClassPath(path: String): Boolean {
-    return path == "$GENERATED_CLASS_NAME.class"
-            || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
+    return path == "$GENERATED_CLASS_NAME.class" || (path.startsWith($$"$$GENERATED_CLASS_NAME$") && path.endsWith(".class"))
 }
 
 @KaExperimentalApi
