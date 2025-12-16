@@ -55,9 +55,6 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
 
-@get:ApiStatus.Internal
-val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvorov.progress.debounced.drawing", "true").toBoolean()
-
 /**
  * - `true` means that EDT runnables that require write-intent lock will acquire it in a non-blocking way
  * - `false` means that the write-intent lock will be acquired in a blocking way

@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.impl.InternalThreading
 import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
-import com.intellij.openapi.application.useDebouncedDrawingInSuvorovProgress
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -202,21 +201,14 @@ object SuvorovProgress {
     var oldTimestamp = System.currentTimeMillis()
     try {
       while (!awaitedValue.isCompleted) {
-        if (useDebouncedDrawingInSuvorovProgress) {
-          val newTimestamp = System.currentTimeMillis()
-          if (newTimestamp - oldTimestamp >= 10) {
-            // we do not want to redraw the UI too frequently
-            oldTimestamp = newTimestamp
-            niceOverlay.redrawMainComponent()
-          }
-          stealer.dispatchEvents(0)
-          stealer.waitForPing(10)
-        }
-        else {
+        val newTimestamp = System.currentTimeMillis()
+        if (newTimestamp - oldTimestamp >= 10) {
+          // we do not want to redraw the UI too frequently
+          oldTimestamp = newTimestamp
           niceOverlay.redrawMainComponent()
-          stealer.dispatchEvents(0)
-          Thread.sleep(10)
         }
+        stealer.dispatchEvents(0)
+        stealer.waitForPing(10)
       }
     }
     finally {
