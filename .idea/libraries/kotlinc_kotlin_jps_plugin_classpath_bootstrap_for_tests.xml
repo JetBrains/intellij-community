@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.3.20-ij253-45">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.3.20-ij253-65">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-45/kotlin-jps-plugin-classpath-2.3.20-ij253-45.jar">
-          <sha256sum>290744db458f813618c460312a1f35bb2ed082485385d558de368c893509d11c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-65/kotlin-jps-plugin-classpath-2.3.20-ij253-65.jar">
+          <sha256sum>8b44534106e590da5a8f1780091e0d9c477e9f19066faff962db61bd0a8b39bf</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-45/kotlin-jps-plugin-classpath-2.3.20-ij253-45.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-65/kotlin-jps-plugin-classpath-2.3.20-ij253-65.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-45/kotlin-jps-plugin-classpath-2.3.20-ij253-45-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.3.20-ij253-65/kotlin-jps-plugin-classpath-2.3.20-ij253-65-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
