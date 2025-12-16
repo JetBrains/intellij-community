@@ -165,6 +165,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             // Likely, no STDLIB
             return false
         }
+        if (DfTypes.BOOLEAN.equals(dfType) && expr !is KtConstantExpression) {
+            // Do not evaluate boolean constants: they are likely feature knobs/debug options
+            return false
+        }
         addInstruction(PushValueInstruction(DfTypes.constant(value, dfType), KotlinExpressionAnchor(expr)))
         addImplicitConversion(ktType, expr.getKotlinType())
         return true
