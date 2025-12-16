@@ -343,7 +343,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
     if (parentPath != null) {
-      String presentablePath = VcsPresentablePath.getPresentablePathAsParent(renderer.getProject(), parentPath);
+      String presentablePath = VcsPresentablePath.getPresentablePath(renderer.getProject(), parentPath, true);
       if (presentablePath.isEmpty()) return;
       renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -352,7 +352,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
     if (parentPath != null) {
       FilePath parentFilePath = VcsContextFactory.getInstance().createFilePathOn(parentPath);
-      String presentablePath = VcsPresentablePath.getPresentablePathAsParent(renderer.getProject(), parentFilePath);
+      String presentablePath = VcsPresentablePath.getPresentablePath(renderer.getProject(), parentFilePath, true);
       if (presentablePath.isEmpty()) return;
       renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }

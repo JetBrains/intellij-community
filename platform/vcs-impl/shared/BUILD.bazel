@@ -78,6 +78,7 @@ jvm_library(
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:mockito",
   ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.shared` end

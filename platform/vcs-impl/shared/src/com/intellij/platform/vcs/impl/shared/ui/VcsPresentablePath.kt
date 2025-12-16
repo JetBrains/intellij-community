@@ -22,60 +22,69 @@ import org.jetbrains.annotations.SystemIndependent
 internal object VcsPresentablePath {
   @JvmStatic
   fun getPresentablePath(parentPath: FilePath, path: FilePath): @NlsSafe @SystemDependent String {
-    val prettyPath = getRelativePathIfSuccessor(parentPath.path, path.path) ?: path.path
+    val prettyPath = relativizeSystemIndependentPaths(parentPath.path, path.path) ?: path.path
     return if (shouldHandleAsNonLocal(path)) prettyPath else getSystemDependentPath(prettyPath)
   }
 
   @JvmStatic
-  fun getPresentablePath(project: Project?, filePath: FilePath): @NlsSafe @SystemDependent String =
-    if (shouldHandleAsNonLocal(filePath)) filePath.path else getPresentablePath(project, filePath, acceptEmptyPath = false)
+  fun getPresentablePath(project: Project?, filePath: FilePath, forceRelativePath: Boolean = false): @NlsSafe @SystemDependent String =
+    if (!forceRelativePath && shouldHandleAsNonLocal(filePath)) filePath.path
+    else doGetPresentablePath(project, filePath, acceptEmptyPath = !forceRelativePath)
 
-  @JvmStatic
-  fun getPresentablePathAsParent(project: Project?, filePath: FilePath): @NlsSafe @SystemDependent String =
-    getPresentablePath(project, filePath, acceptEmptyPath = true)
+  private fun doGetPresentablePath(project: Project?, filePath: FilePath, acceptEmptyPath: Boolean): @NlsSafe @SystemDependent String {
+    if (project == null || !project.isDisposed) {
+      val projectDir = project?.service<ProjectBasePathHolder>()?.getPresentablePath()
+      if (projectDir != null) {
+        val rootRelativePath = getRootRelativePath(VcsMappingsHolder.getInstance(project), projectDir, filePath, acceptEmptyPath)
+        if (rootRelativePath != null) return getSystemDependentPath(rootRelativePath)
 
-  private fun getPresentablePath(project: Project?, filePath: FilePath, acceptEmptyPath: Boolean): @NlsSafe @SystemDependent String {
-    val projectDir = project?.service<ProjectBasePathHolder>()?.getPresentablePath()
-    if (projectDir != null) {
-      val rootRelativePath = getRootRelativePath(project, projectDir, filePath, acceptEmptyPath)
-      if (rootRelativePath != null) return getSystemDependentPath(rootRelativePath)
-
-      val projectRelativePath = getRelativePathIfSuccessor(projectDir, filePath.path)
-      if (projectRelativePath != null) return getSystemDependentPath(VcsBundle.message("label.relative.project.path.presentation", projectRelativePath))
+        val projectRelativePath = relativizeSystemIndependentPaths(projectDir.path, filePath.path)
+        if (projectRelativePath != null) return getSystemDependentPath(VcsBundle.message("label.relative.project.path.presentation",
+                                                                                         projectRelativePath))
+      }
     }
 
     return getRelativePathToUserHome(filePath)
   }
 
-  private fun getRootRelativePath(project: Project,
-    projectBaseDir: String,
+  fun getRootRelativePath(
+    vcsMappingsHolder: VcsMappingsHolder,
+    projectBaseDir: FilePath,
     filePath: FilePath,
     acceptEmptyPath: Boolean,
   ): @SystemIndependent String? {
-    if (project.isDisposed()) return null
-    val path = filePath.path
-
-    val vcsMappingsHolder = VcsMappingsHolder.getInstance(project)
     val root = vcsMappingsHolder.getRootFor(filePath) ?: return null
-
-    val rootPath = root.path
-
+    val path = filePath.path
     val roots = vcsMappingsHolder.getAllRoots()
     if (roots.size == 1) {
-      if (rootPath == path) return if (acceptEmptyPath) "" else root.getName()
-
-      return getRelativePathIfSuccessor(rootPath, path)
+      val rootPath = root.path
+      return if (rootPath == path) {
+        if (acceptEmptyPath) "" else root.getName()
+      }
+      else {
+        relativizeSystemIndependentPaths(rootPath, path)
+      }
     }
 
-    if (projectBaseDir == path) return root.getName()
-
-    val relativePath = getRelativePathIfSuccessor(projectBaseDir, path) ?: return null
-
-    return if (projectBaseDir == rootPath) root.getName() + '/' + relativePath else relativePath
+    if (projectBaseDir == filePath) return root.getName()
+    val relativePath = getRelativePathIfSuccessor(projectBaseDir.path, path) ?: return null
+    return if (projectBaseDir == root) "${root.getName()}/$relativePath" else relativePath
   }
 
-  private fun getRelativePathIfSuccessor(ancestor: String, path: String): @NlsSafe @SystemIndependent String? =
+  private fun relativizeSystemIndependentPaths(
+    ancestor: @SystemIndependent String,
+    path: @SystemIndependent String,
+  ): @NlsSafe @SystemIndependent String? =
     FileUtil.getRelativePath(ancestor, path, '/', CaseSensitivityInfoHolder.caseSensitive)
+
+  private fun getRelativePathIfSuccessor(
+    ancestor: @SystemIndependent String,
+    path: @SystemIndependent String,
+  ): @NlsSafe @SystemIndependent String? =
+    if (FileUtil.isAncestor(ancestor, path, true)) {
+      FileUtil.getRelativePath(ancestor, path, '/', CaseSensitivityInfoHolder.caseSensitive)
+    }
+    else null
 
   /**
    * In split mode we operate [com.intellij.openapi.vcs.RemoteFilePath], so it's always `filePath.isNonLocal == true`.
