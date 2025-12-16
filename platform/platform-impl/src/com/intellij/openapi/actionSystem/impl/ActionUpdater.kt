@@ -123,6 +123,7 @@ internal class ActionUpdater @JvmOverloads constructor(
   private suspend fun <T> callAction(
     opElement: OpElement,
     updateThreadOrig: ActionUpdateThread,
+    isRWLockRequired: Boolean,
     call: () -> T,
   ): T {
     val operationName = opElement.operationName
@@ -138,7 +139,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     if (isEDT || !shallEDT) {
       val spanBuilder = Utils.getTracer(true).spanBuilder(operationName)
       return spanBuilder.useWithScope(EmptyCoroutineContext) {
-        readActionUndispatchedForActionExpand {
+        conditionalUndispatchedReadAction(isRWLockRequired) {
           val start = System.nanoTime()
           try {
             ProhibitAWTEvents.start(operationName).use {
@@ -156,6 +157,14 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     return computeOnEdt(opElement, updateThread == ActionUpdateThread.EDT) {
       call()
+    }
+  }
+
+  private suspend inline fun <R> conditionalUndispatchedReadAction(needRwLock: Boolean, noinline block: () -> R): R {
+    return if (!needRwLock) {
+      block()
+    } else {
+      readActionUndispatchedForActionExpand(block)
     }
   }
 
@@ -344,7 +353,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val children = try {
       retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.getGroupChildren(group, event) {
-          callAction(opElement, group.actionUpdateThread) {
+          callAction(opElement, group.actionUpdateThread, group.templatePresentation.isRWLockRequired) {
             group.getChildren(event).apply {
               ensureNotNullChildren(opElement, this as Array<AnAction?>)
             }.asList()
@@ -519,7 +528,7 @@ internal class ActionUpdater @JvmOverloads constructor(
               AnActionResult.PERFORMED
             }
             else -> {
-              callAction(opElement, action.actionUpdateThread) {
+              callAction(opElement, action.actionUpdateThread, action.templatePresentation.isRWLockRequired) {
                 ActionUtil.updateAction(action, event)
               }
             }
@@ -659,7 +668,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       val sessionKey = SessionKey(opName, action)
       val opElement = OpElement.next(opCur, opCur?.action, OP_sessionData, updater.place, sessionKey)
       return runBlockingForActionExpand(opElement) {
-        updater.callAction(opElement, updateThread) { supplier.get() }
+        updater.callAction(opElement, updateThread, updateThread == ActionUpdateThread.BGT) { supplier.get() }
       }
     }
 
